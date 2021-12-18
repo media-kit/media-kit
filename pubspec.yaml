@@ -1,0 +1,23 @@
+name: libmpv
+description: Dart bindings to libMPV.
+version: 0.0.1
+
+environment:
+  sdk: ">=2.15.0-147.0.dev <3.0.0"
+
+dependencies:
+  path: ^1.8.0
+  ffi: ^1.0.1
+  ffigen: ^4.1.2
+
+dev_dependencies:
+  lints: ^1.0.0
+
+ffigen:
+  name: MPV
+  description: Dart bindings to libMPV.
+  output: bin/generated/bindings.dart
+  headers:
+    entry-points:
+      - headers/client.h
+  dart-bool: true
