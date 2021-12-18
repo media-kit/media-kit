@@ -1,5 +1,5 @@
 name: libmpv
-description: Dart bindings to libMPV.
+description: A complete video & audio library for Flutter.
 version: 0.0.1
 
 environment:
@@ -15,7 +15,7 @@ dev_dependencies:
 
 ffigen:
   name: MPV
-  description: Dart bindings to libMPV.
+  description: A complete video & audio library for Flutter.
   output: bin/generated/bindings.dart
   headers:
     entry-points:
