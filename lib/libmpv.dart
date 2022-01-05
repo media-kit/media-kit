@@ -4,5 +4,5 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-export 'package:libmpv/src/initializer.dart';
-export 'package:libmpv/src/utils.dart';
+export 'package:libmpv/src/core/initializer.dart';
+export 'package:libmpv/src/core/utils.dart';
