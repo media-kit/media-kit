@@ -24,7 +24,7 @@ void mainloop(SendPort port) async {
   /// Used to ensure that the last [mpv_event] is NOT reset to [mpv_event_id.MPV_EVENT_NONE] after waiting using [MPV.mpv_wait_event] again in the continuously running while loop.
   var completer = Completer();
 
-  /// Used to x the confirmation messages from the main thread about successful receive of the sent event through [SendPort].
+  /// Used to recieve the confirmation messages from the main thread about successful receive of the sent event through [SendPort].
   /// Upon confirmation, the [Completer] is completed & we jump to next iteration of the while loop waiting with [MPV.mpv_wait_event].
   var receiver = ReceivePort();
 
