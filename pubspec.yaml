@@ -1,9 +1,11 @@
 name: libmpv
 description: A complete video & audio library for Flutter.
+homepage: https://github.com/alexmercerind/libmpv.dart
+repository: https://github.com/alexmercerind/libmpv.dart
 version: 0.0.1
 
 environment:
-  sdk: ">=2.15.0-147.0.dev <3.0.0"
+  sdk: ">=2.14.0 <3.0.0"
 
 dependencies:
   path: ^1.8.0
