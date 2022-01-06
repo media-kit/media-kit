@@ -242,14 +242,84 @@ class Player {
     _handle = await core.create(
       _path,
       (event) async {
-        print(event.ref.event_id);
+        if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
+          state.isCompleted = false;
+          if (!streams.isCompletedController.isClosed) {
+            streams.isCompletedController.add(false);
+          }
+        }
+        if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
+          state.isCompleted = true;
+          if (!streams.isCompletedController.isClosed) {
+            streams.isCompletedController.add(true);
+          }
+        }
+        if (event.ref.event_id ==
+            generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
+          var prop = event.ref.data.cast<generated.mpv_event_property>();
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
+              prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+            var isPlaying = prop.ref.data.cast<Int8>().value != 0;
+            state.isPlaying = isPlaying;
+            if (!streams.isPlayingController.isClosed) {
+              streams.isPlayingController.add(isPlaying);
+            }
+          }
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
+              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+            var position = Duration(
+                microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
+            state.position = position;
+            if (!streams.positionController.isClosed) {
+              streams.positionController.add(position);
+            }
+          }
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
+              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+            var duration = Duration(
+                microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
+            state.duration = duration;
+            if (!streams.durationController.isClosed) {
+              streams.durationController.add(duration);
+            }
+          }
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos' &&
+              prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
+            var index = prop.ref.data.cast<Int64>().value;
+            state.index = index;
+            if (!streams.indexController.isClosed) {
+              streams.indexController.add(index);
+            }
+          }
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist' &&
+              prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+            var playlist = <Media>[];
+            var arr = prop.ref.data.cast<generated.mpv_node>().ref.u.list;
+            for (int i = 0; i < arr.ref.num; i++) {
+              var map = arr.ref.values[i].u.list;
+              for (int j = 0; j < map.ref.num; j++) {
+                var key = map.ref.keys[j].cast<Utf8>().toDartString();
+                var value = map.ref.values[i];
+                if (key == 'filename') {
+                  var media = value.u.string.cast<Utf8>().toDartString();
+                  playlist.add(medias[media]!);
+                  continue;
+                }
+              }
+            }
+            state.playlist = playlist;
+            if (!streams.playlistController.isClosed) {
+              streams.playlistController.add(playlist);
+            }
+          }
+        }
       },
     );
     core.mpv.mpv_observe_property(
       _handle,
       0,
       'pause'.toNativeUtf8().cast(),
-      generated.mpv_format.MPV_FORMAT_DOUBLE,
+      generated.mpv_format.MPV_FORMAT_FLAG,
     );
     core.mpv.mpv_observe_property(
       _handle,
@@ -266,20 +336,20 @@ class Player {
     core.mpv.mpv_observe_property(
       _handle,
       0,
-      'playlist-pos'.toNativeUtf8().cast(),
-      generated.mpv_format.MPV_FORMAT_DOUBLE,
+      'playlist'.toNativeUtf8().cast(),
+      generated.mpv_format.MPV_FORMAT_NODE,
     );
     core.mpv.mpv_observe_property(
       _handle,
       0,
-      'playlist'.toNativeUtf8().cast(),
-      generated.mpv_format.MPV_FORMAT_DOUBLE,
+      'playlist-pos'.toNativeUtf8().cast(),
+      generated.mpv_format.MPV_FORMAT_INT64,
     );
     core.mpv.mpv_observe_property(
       _handle,
       0,
       'seekable'.toNativeUtf8().cast(),
-      generated.mpv_format.MPV_FORMAT_DOUBLE,
+      generated.mpv_format.MPV_FORMAT_FLAG,
     );
 
     if (!_video) {
@@ -327,7 +397,7 @@ class Player {
 /// Private class to keep state of the [Player].
 class _PlayerState {
   /// [List] of currently opened [Media]s.
-  List<Media> medias = [];
+  List<Media> playlist = [];
 
   /// If the [Player] is playing.
   bool isPlaying = false;
@@ -354,7 +424,7 @@ class _PlayerState {
 /// Private class for event handling of [Player].
 class _PlayerStreams {
   /// [List] of currently opened [Media]s.
-  late Stream<List<Media>> medias;
+  late Stream<List<Media>> playlist;
 
   /// If the [Player] is playing.
   late Stream<bool> isPlaying;
@@ -379,7 +449,7 @@ class _PlayerStreams {
 
   /// Closes all the stream controllers.
   void dispose() {
-    mediasController.close();
+    playlistController.close();
     isPlayingController.close();
     isBufferingController.close();
     isCompletedController.close();
@@ -390,7 +460,7 @@ class _PlayerStreams {
   }
 
   _PlayerStreams() {
-    medias = mediasController.stream;
+    playlist = playlistController.stream;
     isPlaying = isPlayingController.stream;
     isBuffering = isBufferingController.stream;
     isCompleted = isCompletedController.stream;
@@ -401,7 +471,7 @@ class _PlayerStreams {
   }
 
   /// Internally used [StreamController].
-  final StreamController<List<Media>> mediasController =
+  final StreamController<List<Media>> playlistController =
       StreamController.broadcast();
 
   /// Internally used [StreamController].
