@@ -8,7 +8,6 @@ import 'dart:async';
 import 'package:ffi/ffi.dart';
 
 import 'package:libmpv/src/models/media.dart';
-import 'package:libmpv/src/core/utils.dart';
 
 import 'package:libmpv/src/core/initializer.dart' as core;
 import 'package:libmpv/generated/bindings.dart' as generated;
@@ -19,7 +18,7 @@ import 'package:libmpv/generated/bindings.dart' as generated;
 /// Takes libmpv's DLL or shared object path as argument.
 ///
 /// ```dart
-/// Player player = Player('/usr/lib/libmpv.so');
+/// var player = Player('/usr/lib/libmpv.so');
 /// player.open(
 ///   [
 ///   Media('https://www.example.com/music.mp3'),
@@ -30,23 +29,6 @@ import 'package:libmpv/generated/bindings.dart' as generated;
 /// ```
 ///
 class Player {
-  /// Player
-  /// ------
-  /// A [Player] object can be used for media playback.
-  /// Takes libmpv's DLL or shared object path as argument.
-  ///
-  ///
-  /// ```dart
-  /// Player player = Player('/usr/lib/libmpv.so');
-  /// player.open(
-  ///   [
-  ///     Media('https://www.example.com/music.mp3'),
-  ///     Media('file://C:/documents/video.mp4'),
-  ///   ],
-  /// );
-  /// player.play();
-  /// ```
-  ///
   Player(
     String path, {
     bool video = false,
@@ -62,7 +44,7 @@ class Player {
   /// Various event streams to listen to events of a [Player].
   ///
   /// ```dart
-  /// Player player = Player(id: 0);
+  /// var player = Player(id: 0);
   /// player.streams.position..listen((position) {
   ///   print(position.inMilliseconds);
   /// });
@@ -73,14 +55,13 @@ class Player {
   _PlayerStreams streams = _PlayerStreams();
 
   /// Disposes the [Player] instance & releases the resources.
-  Future<void> dispose() async {
+  Future<void> dispose({int code = 0}) async {
     await _completer.future;
-    core.mpv.mpv_command(
-      _handle,
+    _command(
       [
         'quit',
-        '0',
-      ].toNativeUtf8Array().cast(),
+        code.toString(),
+      ],
     );
   }
 
@@ -97,38 +78,37 @@ class Player {
   /// ```
   Future<void> open(
     List<Media> medias, {
-    bool autoStart = false,
+    bool play = false,
   }) async {
     await _completer.future;
-    core.mpv.mpv_command(
-      _handle,
+    _command(
       [
         'playlist-play-index',
         'none',
-      ].toNativeUtf8Array().cast(),
+      ],
     );
-    core.mpv.mpv_command(
-      _handle,
-      ['playlist-clear'].toNativeUtf8Array().cast(),
+    _command(
+      [
+        'playlist-clear',
+      ],
     );
     medias.asMap().forEach(
       (index, media) {
-        if (index == 0 && autoStart) {
-          core.mpv.mpv_command(
-            _handle,
+        if (index == 0 && play) {
+          _command(
             [
               'loadfile',
               media.uri,
-            ].toNativeUtf8Array().cast(),
+              'replace',
+            ],
           );
         } else {
-          core.mpv.mpv_command(
-            _handle,
+          _command(
             [
               'loadfile',
               media.uri,
               'append',
-            ].toNativeUtf8Array().cast(),
+            ],
           );
         }
       },
@@ -146,6 +126,7 @@ class Player {
       generated.mpv_format.MPV_FORMAT_FLAG,
       flag.cast(),
     );
+    calloc.free(flag);
   }
 
   /// Pauses the [Player].
@@ -159,110 +140,109 @@ class Player {
       generated.mpv_format.MPV_FORMAT_FLAG,
       flag.cast(),
     );
+    calloc.free(flag);
   }
 
   /// Appends a [Media] to the [Player]'s queue.
   Future<void> add(Media media) async {
     await _completer.future;
-    core.mpv.mpv_command(
-      _handle,
+    _command(
       [
         'loadfile',
         media.uri,
         'append',
-      ].toNativeUtf8Array().cast(),
+      ],
     );
   }
 
   /// Removes the [Media] at specified index from the [Player]'s queue.
   Future<void> remove(int index) async {
     await _completer.future;
-    core.mpv.mpv_command(
-      _handle,
+    _command(
       [
         'playlist-remove',
         index.toString(),
-      ].toNativeUtf8Array().cast(),
+      ],
     );
   }
 
   /// Jumps to next [Media] in the [Player]'s queue.
   Future<void> next() async {
     await _completer.future;
-    core.mpv.mpv_command(
-      _handle,
+    _command(
       [
         'playlist-next',
-      ].toNativeUtf8Array().cast(),
+      ],
     );
   }
 
   /// Jumps to previous [Media] in the [Player]'s queue.
-  Future<void> previous() async {
+  Future<void> back() async {
     await _completer.future;
-    core.mpv.mpv_command(
-      _handle,
+    _command(
       [
         'playlist-prev',
-      ].toNativeUtf8Array().cast(),
+      ],
     );
   }
 
   /// Jumps to specified [Media]'s index in the [Player]'s queue.
   Future<void> jump(int index) async {
     await _completer.future;
-    core.mpv.mpv_command(
-      _handle,
+    _command(
       [
         'playlist-play-index',
         index.toString(),
-      ].toNativeUtf8Array().cast(),
+      ],
     );
   }
 
   /// Seeks the currently playing [Media] in the [Player] by specified [Duration].
   Future<void> seek(Duration duration) async {
     await _completer.future;
-    core.mpv.mpv_command(
-      _handle,
+    _command(
       [
         'seek',
-        duration.inSeconds.toString(),
+        (duration.inMilliseconds / 1000).toStringAsFixed(4).toString(),
         'absolute',
-      ].toNativeUtf8Array().cast(),
+      ],
     );
   }
 
   /// Sets the playback volume of the [Player]. Defaults to `1.0`.
   Future<void> setVolume(double volume) async {
     await _completer.future;
-    var flag = calloc<Double>();
-    flag.value = volume;
+    var value = calloc<Double>();
+    value.value = volume;
     core.mpv.mpv_set_property(
       _handle,
       'volume'.toNativeUtf8().cast(),
       generated.mpv_format.MPV_FORMAT_DOUBLE,
-      flag.cast(),
+      value.cast(),
     );
+    calloc.free(value);
   }
 
   /// Sets the playback rate of the [Player]. Defaults to `1.0`.
   Future<void> setRate(double rate) async {
     await _completer.future;
-    var flag = calloc<Double>();
-    flag.value = rate;
+    var value = calloc<Double>();
+    value.value = rate;
     core.mpv.mpv_set_property(
       _handle,
       'speed'.toNativeUtf8().cast(),
       generated.mpv_format.MPV_FORMAT_DOUBLE,
-      flag.cast(),
+      value.cast(),
     );
+    calloc.free(value);
   }
 
   Future<void> _create() async {
     _handle = await core.create(
       _path,
-      (event) async {},
+      (event) async {
+        print(event.ref.event_id);
+      },
     );
     core.mpv.mpv_observe_property(
       _handle,
@@ -311,12 +291,35 @@ class Player {
     _completer.complete();
   }
 
+  void _command(List<String> args) {
+    final ptr = args
+        .map((String string) => string.toNativeUtf8())
+        .toList()
+        .cast<Pointer<Utf8>>();
+    final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join('').length);
+    for (int index = 0; index < args.length; index++) {
+      arr[index] = ptr[index];
+    }
+    core.mpv.mpv_command(
+      _handle,
+      arr.cast(),
+    );
+    for (var element in ptr) {
+      calloc.free(element);
+    }
+    calloc.free(arr);
+  }
+
+  /// Path to libmpv DLL or shared object.
   late String _path;
 
+  /// Whether video is visible or not.
   late bool _video;
 
+  /// [Pointer] to [generated.mpv_handle] of this instance.
   late Pointer<generated.mpv_handle> _handle;
 
+  /// [Completer] used to ensure initialization of [generated.mpv_handle] & synchronization on another isolate.
   final Completer<void> _completer = Completer();
 }
 
