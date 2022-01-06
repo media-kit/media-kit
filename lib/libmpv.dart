@@ -8,4 +8,3 @@ export 'package:libmpv/src/player.dart';
 export 'package:libmpv/src/models/media.dart';
 
 export 'package:libmpv/src/core/initializer.dart';
-export 'package:libmpv/src/core/utils.dart';
