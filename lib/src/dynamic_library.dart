@@ -24,7 +24,7 @@ const String kLinuxDynamicLibrary = 'libmpv.so';
 ///   final player = Player();
 ///   player.open(
 ///     [
-///       Media('https://www.example.com/music.mp3'),
+///       Media('https://alexmercerind.github.io/music.mp3'),
 ///       Media('file://C:/documents/video.mp4'),
 ///     ],
 ///   );
@@ -33,6 +33,11 @@ const String kLinuxDynamicLibrary = 'libmpv.so';
 /// ```
 ///
 abstract class MPV {
+  /// Loads the shared library & initializes the library.
+  ///
+  /// On Windows, checks for `mpv-1.dll` at `MPV_PATH` & `PATH`.
+  /// On Linux, checks for `libmpv.so` at usual places.
+  /// If no DLL or shared object is found, then checks for `mpv-1.dll` in the same directory as the script or the compiled executable.
   static Future<void> initialize({String? dynamicLibrary}) async {
     if (dynamicLibrary != null) {
       libmpvDynamicLibrary = dynamicLibrary;
@@ -73,8 +78,7 @@ abstract class MPV {
         return;
       }
       throw Exception(
-          'Cannot find mpv-1.dll in your system %PATH%. One way to deal with this is to ship mpv-1.dll '
-          'with your script or compiled executable in the same directory.');
+          'Cannot find mpv-1.dll in your system %PATH%. One way to deal with this is to ship mpv-1.dll with your script or compiled executable in the same directory.');
     }
     if (Platform.isLinux) {
       if (await File('/usr/lib/x86_64-linux-gnu/$kLinuxDynamicLibrary')
