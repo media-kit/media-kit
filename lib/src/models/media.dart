@@ -6,8 +6,7 @@
 
 Map<String, Media> medias = {};
 
-/// Media
-/// -----
+/// ## Media
 /// A [Media] object to open inside a [Player] instance using [Player.open] method for playback.
 ///
 /// ```dart
@@ -21,8 +20,7 @@ class Media {
   /// Additional optional user data.
   final dynamic extras;
 
-  /// Media
-  /// -----
+  /// ## Media
   /// A [Media] object to open inside a [Player] instance using [Player.open] method for playback.
   ///
   /// ```dart

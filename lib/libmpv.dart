@@ -6,5 +6,6 @@
 
 export 'package:libmpv/src/player.dart';
 export 'package:libmpv/src/models/media.dart';
+export 'package:libmpv/src/dynamic_library.dart';
 
 export 'package:libmpv/src/core/initializer.dart';
