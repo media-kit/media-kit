@@ -14,6 +14,8 @@ import 'package:libmpv/src/core/initializer.dart';
 
 import 'package:libmpv/generated/bindings.dart' as generated;
 
+typedef Playlist = List<Media>;
+
 /// ## Player
 ///
 /// [Player] class provides high-level interface for media playback.
@@ -64,7 +66,7 @@ class Player {
   ///
   /// ```dart
   /// final player = Player();
-  /// player._position..listen((position) {
+  /// player.position.listen((position) {
   ///   print(position.inMilliseconds);
   /// });
   /// ```
@@ -104,7 +106,7 @@ class Player {
   ///   ],
   /// );
   /// ```
-  Future<void> open(List<Media> playlist) async {
+  Future<void> open(Playlist playlist) async {
     await _completer.future;
     _command(
       [
@@ -234,36 +236,52 @@ class Player {
     );
   }
 
-  /// Sets the playback volume of the [Player]. Defaults to `1.0`.
-  Future<void> setVolume(double volume) async {
-    await _completer.future;
-    var name = 'volume'.toNativeUtf8();
-    var value = calloc<Double>();
-    value.value = volume;
-    mpv.mpv_set_property(
-      _handle,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_DOUBLE,
-      value.cast(),
-    );
-    calloc.free(name);
-    calloc.free(value);
+  /// Sets the playback volume of the [Player]. Defaults to `100.0`.
+  set volume(double volume) {
+    () async {
+      await _completer.future;
+      var name = 'volume'.toNativeUtf8();
+      var value = calloc<Double>();
+      value.value = volume;
+      mpv.mpv_set_property(
+        _handle,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_DOUBLE,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }();
   }
 
   /// Sets the playback rate of the [Player]. Defaults to `1.0`.
-  Future<void> setRate(double rate) async {
-    await _completer.future;
-    var name = 'speed'.toNativeUtf8();
-    var value = calloc<Double>();
-    value.value = rate;
-    mpv.mpv_set_property(
-      _handle,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_DOUBLE,
-      value.cast(),
-    );
-    calloc.free(name);
-    calloc.free(value);
+  set rate(double rate) {
+    () async {
+      await _completer.future;
+      var name = 'speed'.toNativeUtf8();
+      var value = calloc<Double>();
+      value.value = rate;
+      mpv.mpv_set_property(
+        _handle,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_DOUBLE,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }();
+  }
+
+  /// Enables or disables shuffle for [Player]. Default is `false`.
+  set shuffle(bool shuffle) {
+    () async {
+      await _completer.future;
+      _command(
+        [
+          shuffle ? 'playlist-shuffle' : 'playlist-unshuffle',
+        ],
+      );
+    }();
   }
 
   Future<void> _create() async {
@@ -275,6 +293,8 @@ class Player {
         _positionController,
         _durationController,
         _indexController,
+        _volumeController,
+        _rateController,
       ],
     );
     _handle = await create(
@@ -329,6 +349,22 @@ class Player {
               _indexController.add(index);
             }
           }
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'volume' &&
+              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+            var volume = prop.ref.data.cast<Double>().value;
+            state.volume = volume;
+            if (!_volumeController.isClosed) {
+              _volumeController.add(volume);
+            }
+          }
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'speed' &&
+              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+            var rate = prop.ref.data.cast<Double>().value;
+            state.rate = rate;
+            if (!_rateController.isClosed) {
+              _rateController.add(rate);
+            }
+          }
         }
       },
     );
@@ -338,6 +374,8 @@ class Player {
       'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'playlist-pos': generated.mpv_format.MPV_FORMAT_INT64,
       'seekable': generated.mpv_format.MPV_FORMAT_FLAG,
+      'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
+      'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
     };
     properties.forEach((property, format) {
       var ptr = property.toNativeUtf8();
@@ -350,20 +388,25 @@ class Player {
       calloc.free(ptr);
     });
     if (!_video) {
+      var name = 'vo'.toNativeUtf8();
+      var value = 'null'.toNativeUtf8();
       mpv.mpv_set_option_string(
         _handle,
-        'vo'.toNativeUtf8().cast(),
-        'null'.toNativeUtf8().cast(),
+        name.cast(),
+        value.cast(),
       );
+      calloc.free(name);
     }
     if (_osc) {
+      var name = 'osc'.toNativeUtf8();
       Pointer<Int8> flag = calloc<Int8>()..value = 1;
       mpv.mpv_set_option(
         _handle,
-        'osc'.toNativeUtf8().cast(),
+        name.cast(),
         generated.mpv_format.MPV_FORMAT_FLAG,
         flag.cast(),
       );
+      calloc.free(name);
       calloc.free(flag);
     }
     _completer.complete();
@@ -426,12 +469,19 @@ class Player {
 
   /// Internally used [StreamController].
   final StreamController<int> _indexController = StreamController.broadcast();
+
+  /// Internally used [StreamController].
+  final StreamController<double> _volumeController =
+      StreamController.broadcast();
+
+  /// Internally used [StreamController].
+  final StreamController<double> _rateController = StreamController.broadcast();
 }
 
 /// Private class to keep state of the [Player].
 class _PlayerState {
   /// [List] of currently opened [Media]s.
-  List<Media> playlist = [];
+  Playlist playlist = [];
 
   /// If the [Player] is playing.
   bool isPlaying = false;
@@ -447,12 +497,18 @@ class _PlayerState {
 
   /// Index of the currently playing [Media] in the playlist.
   int index = 0;
+
+  /// Current volume of the [Player].
+  double volume = 1.0;
+
+  /// Current playback rate of the [Player].
+  double rate = 1.0;
 }
 
 /// Private class for event handling of [Player].
 class _PlayerStreams {
   /// [List] of currently opened [Media]s.
-  late Stream<List<Media>> playlist;
+  late Stream<Playlist> playlist;
 
   /// If the [Player] is playing.
   late Stream<bool> isPlaying;
@@ -469,6 +525,12 @@ class _PlayerStreams {
   /// Index of the currently playing [Media] in the playlist.
   late Stream<int> index;
 
+  /// Current volume of the [Player].
+  late Stream<double> volume;
+
+  /// Current playback rate of the [Player].
+  late Stream<double> rate;
+
   _PlayerStreams(List<StreamController> controllers) {
     playlist = controllers[0].stream.cast();
     isPlaying = controllers[1].stream.cast();
@@ -476,5 +538,7 @@ class _PlayerStreams {
     position = controllers[3].stream.cast();
     duration = controllers[4].stream.cast();
     index = controllers[5].stream.cast();
+    volume = controllers[6].stream.cast();
+    rate = controllers[7].stream.cast();
   }
 }
