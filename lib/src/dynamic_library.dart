@@ -102,7 +102,7 @@ abstract class MPV {
         return;
       }
       throw Exception(
-          'Cannot find libmpv in the usual places. Depending on your distro, you may try installing an mpv-devel or libmpv-dev package.');
+          'Cannot find libmpv in the usual places. Depending on your distro, you may try installing mpv-devel or libmpv-dev package.');
     }
   }
 }
