@@ -93,6 +93,7 @@ class Player {
     _positionController.close();
     _durationController.close();
     _indexController.close();
+    mpv.mpv_terminate_destroy(_handle);
   }
 
   /// Opens a [List] of [Media]s into the [Player] as a playlist.
