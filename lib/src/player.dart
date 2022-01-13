@@ -224,6 +224,18 @@ class Player {
     );
   }
 
+  /// Moves the playlist [Media] at [from], so that it takes the place of the [Media] [to].
+  Future<void> move(int from, int to) async {
+    await _completer.future;
+    _command(
+      [
+        'playlist-move',
+        from.toString(),
+        to.toString(),
+      ],
+    );
+  }
+
   /// Seeks the currently playing [Media] in the [Player] by specified [Duration].
   Future<void> seek(Duration duration) async {
     await _completer.future;
@@ -397,6 +409,7 @@ class Player {
         value.cast(),
       );
       calloc.free(name);
+      calloc.free(value);
     }
     if (_osc) {
       var name = 'osc'.toNativeUtf8();
