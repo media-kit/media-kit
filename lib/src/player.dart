@@ -412,7 +412,7 @@ class Player {
     _completer.complete();
   }
 
-  /// Calls an MPV command. Automatically freeds memory after command sending.
+  /// Calls MPV command passed as [args]. Automatically freeds memory after command sending.
   void _command(List<String?> args) {
     final ptr = args
         .map((String? string) =>
