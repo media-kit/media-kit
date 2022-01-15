@@ -330,7 +330,7 @@ class Player {
           var prop = event.ref.data.cast<generated.mpv_event_property>();
           if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-            var isPlaying = prop.ref.data.cast<Int8>().value != 0;
+            var isPlaying = prop.ref.data.cast<Int8>().value != 1;
             state.isPlaying = isPlaying;
             if (!_isPlayingController.isClosed) {
               _isPlayingController.add(isPlaying);
