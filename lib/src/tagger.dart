@@ -13,6 +13,7 @@ import 'package:libmpv/src/dynamic_library.dart';
 import 'package:libmpv/src/core/initializer.dart';
 
 import 'package:libmpv/generated/bindings.dart' as generated;
+import 'package:path/path.dart';
 
 /// ## Tagger
 ///
@@ -50,9 +51,15 @@ class Tagger {
   ///
   /// Throws exception if an invalid, corrupt or inexistent [Media] is passed.
   ///
-  Future<Map<String, String>> parse(Media media, {File? cover}) async {
+  Future<Map<String, String>> parse(
+    Media media, {
+    File? cover,
+    Directory? coverDirectory,
+  }) async {
+    _directory = coverDirectory?.path;
     _path = cover?.absolute.path;
     await cover?.parent.create(recursive: true);
+    await coverDirectory?.create(recursive: true);
     await _completer.future;
     _cover = Completer();
     _completer = Completer();
@@ -123,6 +130,20 @@ class Tagger {
               );
               if (!_cover.isCompleted) _cover.complete();
             }
+            if (_directory != null) {
+              _command(
+                [
+                  'screenshot-to-file',
+                  join(
+                    _directory!,
+                    '${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}'
+                            .replaceAll(RegExp(r'[\\/:*?""<>| ]'), '') +
+                        '.PNG',
+                  ),
+                  null,
+                ],
+              );
+            }
             if (!_completer.isCompleted) _completer.complete(metadata);
           }
         }
@@ -189,6 +210,9 @@ class Tagger {
 
   /// Path where cover will be saved.
   String? _path;
+
+  /// Path to parent folder where cover will be saved.
+  String? _directory;
 
   /// Whether [parse] has been called before.
   bool _loaded = false;
