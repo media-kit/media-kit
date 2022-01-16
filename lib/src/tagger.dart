@@ -120,6 +120,10 @@ class Tagger {
               metadata[data.ref.keys[i].cast<Utf8>().toDartString()] =
                   data.ref.values[i].u.string.cast<Utf8>().toDartString();
             }
+            var map = <String, String>{};
+            metadata.forEach((key, value) {
+              map[key.toLowerCase()] = value;
+            });
             if (_path != null) {
               _command(
                 [
@@ -136,7 +140,7 @@ class Tagger {
                   'screenshot-to-file',
                   join(
                     _directory!,
-                    '${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}'
+                    '${map['album'] ?? 'Unknown Album'}${map['album_artist'] ?? 'Unknown Artist'}'
                             .replaceAll(RegExp(r'[\\/:*?""<>| ]'), '') +
                         '.PNG',
                   ),
@@ -144,7 +148,7 @@ class Tagger {
                 ],
               );
             }
-            if (!_completer.isCompleted) _completer.complete(metadata);
+            if (!_completer.isCompleted) _completer.complete(map);
           }
         }
       },
