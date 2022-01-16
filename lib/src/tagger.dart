@@ -56,13 +56,29 @@ class Tagger {
     File? cover,
     Directory? coverDirectory,
   }) async {
+    _result = {};
     _directory = coverDirectory?.path;
     _path = cover?.absolute.path;
     await cover?.parent.create(recursive: true);
     await coverDirectory?.create(recursive: true);
     await _completer.future;
     _cover = Completer();
-    _completer = Completer();
+    _metadata = Completer();
+    _duration = Completer();
+    _bitrate = Completer();
+    <String, int>{
+      'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
+      'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
+    }.forEach((property, format) {
+      var ptr = property.toNativeUtf8();
+      mpv.mpv_observe_property(
+        _handle,
+        0,
+        ptr.cast(),
+        format,
+      );
+      calloc.free(ptr);
+    });
     _command(
       [
         'loadfile',
@@ -71,8 +87,12 @@ class Tagger {
       ],
     );
     if (_loaded) {
-      await _completer.future;
-      _completer = Completer();
+      await _metadata.future;
+      await _duration.future;
+      await _bitrate.future;
+      _metadata = Completer();
+      _duration = Completer();
+      _bitrate = Completer();
     }
     _loaded = true;
     var name = 'pause'.toNativeUtf8();
@@ -86,8 +106,10 @@ class Tagger {
     calloc.free(name);
     calloc.free(flag);
     if (cover != null) await _cover.future;
-    Map<String, String>? metadata = await _completer.future;
-    return metadata!;
+    Map<String, String> metadata = await _metadata.future;
+    metadata['duration'] = await _duration.future;
+    metadata['bitrate'] = await _bitrate.future;
+    return metadata;
   }
 
   /// Disposes the [Tagger] instance & releases the resources.
@@ -107,11 +129,33 @@ class Tagger {
       libmpvDynamicLibrary,
       (event) async {
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
-          if (!_completer.isCompleted) _completer.complete(null);
+          if (!_metadata.isCompleted) {
+            _metadata.complete(<String, String>{});
+          }
+          if (!_duration.isCompleted) {
+            _duration.complete('0');
+          }
+          if (!_bitrate.isCompleted) {
+            _bitrate.complete('0');
+          }
         }
         if (event.ref.event_id ==
             generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
           var prop = event.ref.data.cast<generated.mpv_event_property>();
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
+              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+            if (!_duration.isCompleted) {
+              _duration.complete(
+                  (prop.ref.data.cast<Double>().value * 1e6 ~/ 1).toString());
+            }
+          }
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-bitrate' &&
+              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+            if (!_bitrate.isCompleted) {
+              _bitrate.complete(
+                  (prop.ref.data.cast<Double>().value * 1e6 ~/ 1).toString());
+            }
+          }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'metadata' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
             var metadata = <String, String>{};
@@ -120,10 +164,11 @@ class Tagger {
               metadata[data.ref.keys[i].cast<Utf8>().toDartString()] =
                   data.ref.values[i].u.string.cast<Utf8>().toDartString();
             }
-            var map = <String, String>{};
-            metadata.forEach((key, value) {
-              map[key.toLowerCase()] = value;
-            });
+            metadata.forEach(
+              (key, value) {
+                _result[key.toLowerCase()] = value;
+              },
+            );
             if (_path != null) {
               _command(
                 [
@@ -132,7 +177,9 @@ class Tagger {
                   null,
                 ],
               );
-              if (!_cover.isCompleted) _cover.complete();
+              if (!_cover.isCompleted) {
+                _cover.complete();
+              }
             }
             if (_directory != null) {
               _command(
@@ -140,7 +187,7 @@ class Tagger {
                   'screenshot-to-file',
                   join(
                     _directory!,
-                    '${map['album'] ?? 'Unknown Album'}${map['album_artist'] ?? 'Unknown Artist'}'
+                    '${_result['album'] ?? 'Unknown Album'}${_result['album_artist'] ?? 'Unknown Artist'}'
                             .replaceAll(RegExp(r'[\\/:*?""<>| ]'), '') +
                         '.PNG',
                   ),
@@ -148,7 +195,9 @@ class Tagger {
                 ],
               );
             }
-            if (!_completer.isCompleted) _completer.complete(map);
+            if (!_metadata.isCompleted) {
+              _metadata.complete(_result);
+            }
           }
         }
       },
@@ -207,9 +256,11 @@ class Tagger {
   late Pointer<generated.mpv_handle> _handle;
 
   /// [Completer] used to ensure initialization of [generated.mpv_handle] & synchronization on another isolate.
-  Completer<dynamic> _completer = Completer();
+  final Completer<void> _completer = Completer();
 
-  /// [Completer] used to ensure initialization of [generated.mpv_handle] & synchronization on another isolate.
+  Completer<Map<String, String>> _metadata = Completer();
+  Completer<String> _duration = Completer();
+  Completer<String> _bitrate = Completer();
   Completer<void> _cover = Completer();
 
   /// Path where cover will be saved.
@@ -217,6 +268,9 @@ class Tagger {
 
   /// Path to parent folder where cover will be saved.
   String? _directory;
+
+  /// Metadata
+  Map<String, String> _result = <String, String>{};
 
   /// Whether [parse] has been called before.
   bool _loaded = false;
