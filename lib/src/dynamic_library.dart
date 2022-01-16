@@ -34,15 +34,32 @@ const String kLinuxDynamicLibrary = 'libmpv.so';
 abstract class MPV {
   /// Loads the shared library & initializes the library.
   ///
+  /// Checks for `mpv-1.dll` or `libmpv.so` in the same directory as the script or the compiled executable.
+  /// If not found, then:
   /// On Windows, checks for `mpv-1.dll` at `MPV_PATH` & `PATH`.
   /// On Linux, checks for `libmpv.so` at usual places.
-  /// If no DLL or shared object is found, then checks for `mpv-1.dll` in the same directory as the script or the compiled executable.
   static Future<void> initialize({String? dynamicLibrary}) async {
     if (dynamicLibrary != null) {
       libmpvDynamicLibrary = dynamicLibrary;
       return;
     }
     if (Platform.isWindows) {
+      if (await File(join(Platform.script.path, kWindowsDynamicLibrary))
+          .exists()) {
+        libmpvDynamicLibrary =
+            join(Platform.script.path, kWindowsDynamicLibrary);
+        return;
+      }
+      if (await File(join(
+              (Platform.resolvedExecutable.split('\\')..removeLast())
+                  .join('\\'),
+              kWindowsDynamicLibrary))
+          .exists()) {
+        libmpvDynamicLibrary = join(
+            (Platform.resolvedExecutable.split('\\')..removeLast()).join('\\'),
+            kWindowsDynamicLibrary);
+        return;
+      }
       final mpvPath = Platform.environment['MPV_PATH'];
       final envPath = Platform.environment['PATH'];
       if (mpvPath != null) {
@@ -60,32 +77,10 @@ abstract class MPV {
           }
         }
       }
-      if (await File(join(Platform.script.path, kWindowsDynamicLibrary))
-          .exists()) {
-        libmpvDynamicLibrary =
-            join(Platform.script.path, kWindowsDynamicLibrary);
-        return;
-      }
-      if (await File(join(
-              (Platform.resolvedExecutable.split('\\')..removeLast())
-                  .join('\\'),
-              kWindowsDynamicLibrary))
-          .exists()) {
-        libmpvDynamicLibrary = join(
-            (Platform.resolvedExecutable.split('\\')..removeLast()).join('\\'),
-            kWindowsDynamicLibrary);
-        return;
-      }
       throw Exception(
           'Cannot find mpv-1.dll in your system %PATH%. One way to deal with this is to ship mpv-1.dll with your script or compiled executable in the same directory.');
     }
     if (Platform.isLinux) {
-      if (await File('/usr/lib/x86_64-linux-gnu/$kLinuxDynamicLibrary')
-          .exists()) {
-        libmpvDynamicLibrary =
-            '/usr/lib/x86_64-linux-gnu/$kLinuxDynamicLibrary';
-        return;
-      }
       if (await File(join(Platform.script.path, kWindowsDynamicLibrary))
           .exists()) {
         libmpvDynamicLibrary =
@@ -99,6 +94,12 @@ abstract class MPV {
         libmpvDynamicLibrary = join(
             (Platform.resolvedExecutable.split('/')..removeLast()).join('/'),
             kWindowsDynamicLibrary);
+        return;
+      }
+      if (await File('/usr/lib/x86_64-linux-gnu/$kLinuxDynamicLibrary')
+          .exists()) {
+        libmpvDynamicLibrary =
+            '/usr/lib/x86_64-linux-gnu/$kLinuxDynamicLibrary';
         return;
       }
       throw Exception(
