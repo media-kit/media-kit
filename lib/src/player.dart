@@ -308,6 +308,7 @@ class Player {
         _indexController,
         _volumeController,
         _rateController,
+        _isBufferingController,
       ],
     );
     _handle = await create(
@@ -334,6 +335,14 @@ class Player {
             state.isPlaying = isPlaying;
             if (!_isPlayingController.isClosed) {
               _isPlayingController.add(isPlaying);
+            }
+          }
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
+              prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+            var isBuffering = prop.ref.data.cast<Int8>().value != 0;
+            state.isBuffering = isBuffering;
+            if (!_isBufferingController.isClosed) {
+              _isBufferingController.add(isBuffering);
             }
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
@@ -389,6 +398,7 @@ class Player {
       'seekable': generated.mpv_format.MPV_FORMAT_FLAG,
       'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
+      'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
     };
     properties.forEach((property, format) {
       var ptr = property.toNativeUtf8();
@@ -490,6 +500,10 @@ class Player {
 
   /// Internally used [StreamController].
   final StreamController<double> _rateController = StreamController.broadcast();
+
+  /// Internally used [StreamController].
+  final StreamController<bool> _isBufferingController =
+      StreamController.broadcast();
 }
 
 /// Private class to keep state of the [Player].
@@ -517,6 +531,9 @@ class _PlayerState {
 
   /// Current playback rate of the [Player].
   double rate = 1.0;
+
+  /// Whether the [Player] has stopped for buffering.
+  bool isBuffering = false;
 }
 
 /// Private class for event handling of [Player].
@@ -545,6 +562,9 @@ class _PlayerStreams {
   /// Current playback rate of the [Player].
   late Stream<double> rate;
 
+  /// Whether the [Player] has stopped for buffering.
+  late Stream<bool> isBuffering;
+
   _PlayerStreams(List<StreamController> controllers) {
     playlist = controllers[0].stream.cast();
     isPlaying = controllers[1].stream.cast();
@@ -554,5 +574,6 @@ class _PlayerStreams {
     index = controllers[5].stream.cast();
     volume = controllers[6].stream.cast();
     rate = controllers[7].stream.cast();
+    isBuffering = controllers[8].stream.cast();
   }
 }
