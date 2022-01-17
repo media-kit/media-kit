@@ -56,6 +56,8 @@ class Tagger {
     Media media, {
     File? cover,
     Directory? coverDirectory,
+    bool duration = false,
+    bool bitrate = false,
   }) async {
     _result = {};
     _directory = coverDirectory?.path;
@@ -89,8 +91,8 @@ class Tagger {
     );
     if (_loaded) {
       await _metadata.future;
-      await _duration.future;
-      await _bitrate.future;
+      if (duration) await _duration.future;
+      if (bitrate) await _bitrate.future;
       _metadata = Completer();
       _duration = Completer();
       _bitrate = Completer();
@@ -108,8 +110,12 @@ class Tagger {
     calloc.free(flag);
     if (cover != null) await _cover.future;
     Map<String, String> metadata = await _metadata.future;
-    metadata['duration'] = await _duration.future;
-    metadata['bitrate'] = await _bitrate.future;
+    if (duration) {
+      metadata['duration'] = await _duration.future;
+    }
+    if (bitrate) {
+      metadata['bitrate'] = await _bitrate.future;
+    }
     return metadata;
   }
 
