@@ -237,7 +237,7 @@ class Player {
       ],
     );
     var name = 'playlist-pos'.toNativeUtf8();
-    var value = calloc<Int64>()..value = index;
+    var value = calloc<Int64>()..value = index + 1;
     mpv.mpv_set_property(
       _handle,
       name.cast(),
