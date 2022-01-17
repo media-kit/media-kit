@@ -106,7 +106,10 @@ class Player {
   ///   ],
   /// );
   /// ```
-  Future<void> open(Playlist playlist) async {
+  Future<void> open(
+    Playlist playlist, {
+    bool play = true,
+  }) async {
     await _completer.future;
     _command(
       [
@@ -124,7 +127,7 @@ class Player {
         [
           'loadfile',
           playlist[i].uri,
-          i == 0 ? 'replace' : 'append',
+          (i == 0 && play) ? 'replace' : 'append',
         ],
       );
     }
@@ -135,17 +138,29 @@ class Player {
   /// Starts playing the [Player].
   Future<void> play() async {
     await _completer.future;
-    var name = 'pause'.toNativeUtf8();
-    var flag = calloc<Int8>();
-    flag.value = 0;
-    mpv.mpv_set_property(
+    var name = 'playlist-pos'.toNativeUtf8();
+    var pos = calloc<Int64>();
+    mpv.mpv_get_property(
       _handle,
       name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      flag.cast(),
+      generated.mpv_format.MPV_FORMAT_INT64,
+      pos.cast(),
     );
-    calloc.free(name);
-    calloc.free(flag);
+    if ([-1, 0].contains(pos.value)) {
+      jump(0);
+    } else {
+      var name = 'pause'.toNativeUtf8();
+      var flag = calloc<Int8>();
+      flag.value = 0;
+      mpv.mpv_set_property(
+        _handle,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        flag.cast(),
+      );
+      calloc.free(name);
+      calloc.free(flag);
+    }
   }
 
   /// Pauses the [Player].
@@ -221,6 +236,16 @@ class Player {
         index.toString(),
       ],
     );
+    var name = 'playlist-pos'.toNativeUtf8();
+    var value = calloc<Int64>()..value = index;
+    mpv.mpv_set_property(
+      _handle,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_INT64,
+      value.cast(),
+    );
+    calloc.free(name);
+    calloc.free(value);
   }
 
   /// Moves the playlist [Media] at [from], so that it takes the place of the [Media] [to].
