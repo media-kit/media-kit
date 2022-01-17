@@ -139,7 +139,7 @@ class Player {
   /// Starts playing the [Player].
   Future<void> play() async {
     await _completer.future;
-    var name = 'playlist-pos'.toNativeUtf8();
+    var name = 'playlist-pos-1'.toNativeUtf8();
     var pos = calloc<Int64>();
     mpv.mpv_get_property(
       _handle,
@@ -147,7 +147,7 @@ class Player {
       generated.mpv_format.MPV_FORMAT_INT64,
       pos.cast(),
     );
-    if ([-1, 0].contains(pos.value)) {
+    if ([0, 1].contains(pos.value)) {
       jump(0);
     } else {
       var name = 'pause'.toNativeUtf8();
@@ -237,7 +237,7 @@ class Player {
         index.toString(),
       ],
     );
-    var name = 'playlist-pos'.toNativeUtf8();
+    var name = 'playlist-pos-1'.toNativeUtf8();
     var value = calloc<Int64>()..value = index + 1;
     mpv.mpv_set_property(
       _handle,
@@ -388,9 +388,9 @@ class Player {
               _durationController.add(duration);
             }
           }
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos' &&
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos-1' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
-            var index = prop.ref.data.cast<Int64>().value;
+            var index = prop.ref.data.cast<Int64>().value - 1;
             state.index = index;
             if (!_indexController.isClosed) {
               _indexController.add(index);
@@ -419,7 +419,7 @@ class Player {
       'pause': generated.mpv_format.MPV_FORMAT_FLAG,
       'time-pos': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
-      'playlist-pos': generated.mpv_format.MPV_FORMAT_INT64,
+      'playlist-pos-1': generated.mpv_format.MPV_FORMAT_INT64,
       'seekable': generated.mpv_format.MPV_FORMAT_FLAG,
       'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
