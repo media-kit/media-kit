@@ -146,7 +146,7 @@ class Player {
       generated.mpv_format.MPV_FORMAT_INT64,
       pos.cast(),
     );
-    if ([0, 1].contains(pos.value)) {
+    if (pos.value == 0) {
       jump(0);
     } else {
       var name = 'pause'.toNativeUtf8();
