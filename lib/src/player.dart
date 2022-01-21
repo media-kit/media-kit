@@ -13,6 +13,7 @@ import 'package:libmpv/src/dynamic_library.dart';
 import 'package:libmpv/src/core/initializer.dart';
 
 import 'package:libmpv/generated/bindings.dart' as generated;
+import 'package:libmpv/src/plugins/youtube.dart';
 
 typedef Playlist = List<Media>;
 
@@ -51,7 +52,7 @@ class Player {
     this.video = true,
     this.osc = true,
     this.smtc = false,
-    this.youtube = false,
+    this.yt = false,
     this.hwnd,
     void Function()? onCreate,
   }) {
@@ -421,13 +422,38 @@ class Player {
             }
           }
         }
-        if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_HOOK) {
-          var hook = event.ref.data.cast<generated.mpv_event_hook>();
-          if (hook.ref.name.cast<Utf8>().toDartString() == 'on_load') {
-            mpv.mpv_hook_continue(
-              _handle,
-              hook.ref.id,
-            );
+        if (yt) {
+          if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_HOOK) {
+            var hook = event.ref.data.cast<generated.mpv_event_hook>();
+            if (hook.ref.name.cast<Utf8>().toDartString() == 'on_load') {
+              var property = 'stream-open-filename'.toNativeUtf8();
+              var uri = mpv
+                  .mpv_get_property_string(
+                    _handle,
+                    property.cast(),
+                  )
+                  .cast<Utf8>();
+              var id = await youtube.id(uri.toDartString());
+              if (id != null) {
+                try {
+                  var stream = await youtube.stream(id);
+                  var data = stream.toNativeUtf8();
+                  mpv.mpv_set_property_string(
+                    _handle,
+                    property.cast(),
+                    data.cast(),
+                  );
+                  calloc.free(data);
+                } catch (_) {
+                  await next();
+                }
+              }
+              calloc.free(property);
+              mpv.mpv_hook_continue(
+                _handle,
+                hook.ref.id,
+              );
+            }
           }
         }
       },
@@ -475,7 +501,7 @@ class Player {
       calloc.free(name);
       calloc.free(flag);
     }
-    if (youtube) {
+    if (yt) {
       var hook = 'on_load'.toNativeUtf8();
       mpv.mpv_hook_add(
         _handle,
@@ -521,7 +547,7 @@ class Player {
   final bool smtc;
 
   /// Whether YouTube support is enabled or not.
-  final bool youtube;
+  final bool yt;
 
   /// HWND of the parent window. Used for `ITaskbarList3` based thumbnail toolbar (if non-`null`).
   final bool? hwnd;
