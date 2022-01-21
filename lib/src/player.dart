@@ -264,14 +264,16 @@ class Player {
   /// Seeks the currently playing [Media] in the [Player] by specified [Duration].
   Future<void> seek(Duration duration) async {
     await _completer.future;
-    _command(
-      [
-        'seek',
-        (duration.inMilliseconds / 1000).toStringAsFixed(4).toString(),
-        'absolute',
-        null,
-      ],
+    final args = [
+      'seek',
+      (duration.inMilliseconds / 1000).toStringAsFixed(4).toString(),
+      'absolute',
+    ].join(' ').toNativeUtf8();
+    mpv.mpv_command_string(
+      _handle,
+      args.cast(),
     );
+    calloc.free(args);
   }
 
   /// Sets the playback volume of the [Player]. Defaults to `100.0`.
