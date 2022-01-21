@@ -47,12 +47,13 @@ class Player {
   /// ```
   ///
   Player({
-    bool video = true,
-    bool osc = true,
+    this.video = true,
+    this.osc = true,
+    this.smtc = false,
+    this.youtube = false,
+    this.hwnd,
     void Function()? onCreate,
   }) {
-    _video = video;
-    _osc = osc;
     _create().then(
       (_) => onCreate?.call(),
     );
@@ -355,6 +356,7 @@ class Player {
           var prop = event.ref.data.cast<generated.mpv_event_property>();
           if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+            print(':pause:');
             var isPlaying = prop.ref.data.cast<Int8>().value != 1;
             state.isPlaying = isPlaying;
             if (!_isPlayingController.isClosed) {
@@ -363,6 +365,7 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+            print(':paused-for-cache:');
             var isBuffering = prop.ref.data.cast<Int8>().value != 0;
             state.isBuffering = isBuffering;
             if (!_isBufferingController.isClosed) {
@@ -371,6 +374,7 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+            print(':time-pos:');
             var position = Duration(
                 microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
             state.position = position;
@@ -380,6 +384,7 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+            print(':duration:');
             var duration = Duration(
                 microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
             state.duration = duration;
@@ -389,6 +394,7 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos-1' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
+            print(':playlist-pos-1:');
             var index = prop.ref.data.cast<Int64>().value - 1;
             state.index = index;
             if (!_indexController.isClosed) {
@@ -397,6 +403,7 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'volume' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+            print(':volume:');
             var volume = prop.ref.data.cast<Double>().value;
             state.volume = volume;
             if (!_volumeController.isClosed) {
@@ -405,11 +412,21 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'speed' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+            print(':speed:');
             var rate = prop.ref.data.cast<Double>().value;
             state.rate = rate;
             if (!_rateController.isClosed) {
               _rateController.add(rate);
             }
+          }
+        }
+        if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_HOOK) {
+          var hook = event.ref.data.cast<generated.mpv_event_hook>();
+          if (hook.ref.name.cast<Utf8>().toDartString() == 'on_load') {
+            mpv.mpv_hook_continue(
+              _handle,
+              hook.ref.id,
+            );
           }
         }
       },
@@ -434,7 +451,7 @@ class Player {
       );
       calloc.free(ptr);
     });
-    if (!_video) {
+    if (!video) {
       var name = 'vo'.toNativeUtf8();
       var value = 'null'.toNativeUtf8();
       mpv.mpv_set_option_string(
@@ -445,7 +462,7 @@ class Player {
       calloc.free(name);
       calloc.free(value);
     }
-    if (_osc) {
+    if (osc) {
       var name = 'osc'.toNativeUtf8();
       Pointer<Int8> flag = calloc<Int8>()..value = 1;
       mpv.mpv_set_option(
@@ -456,6 +473,16 @@ class Player {
       );
       calloc.free(name);
       calloc.free(flag);
+    }
+    if (youtube) {
+      var hook = 'on_load'.toNativeUtf8();
+      mpv.mpv_hook_add(
+        _handle,
+        0,
+        hook.cast(),
+        0,
+      );
+      calloc.free(hook);
     }
     _completer.complete();
   }
@@ -484,10 +511,19 @@ class Player {
   }
 
   /// Whether video is visible or not.
-  late bool _video;
+  final bool video;
 
   /// Whether on screen controls are visible or not.
-  late bool _osc;
+  final bool osc;
+
+  /// Whether System Media Transport Controls are enabled or not.
+  final bool smtc;
+
+  /// Whether YouTube support is enabled or not.
+  final bool youtube;
+
+  /// HWND of the parent window. Used for `ITaskbarList3` based thumbnail toolbar (if non-`null`).
+  final bool? hwnd;
 
   /// [Pointer] to [generated.mpv_handle] of this instance.
   late Pointer<generated.mpv_handle> _handle;
