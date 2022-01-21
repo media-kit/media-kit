@@ -51,9 +51,7 @@ class Player {
   Player({
     this.video = true,
     this.osc = true,
-    this.smtc = false,
-    this.yt = false,
-    this.hwnd,
+    this.yt = true,
     void Function()? onCreate,
   }) {
     _create().then(
@@ -141,8 +139,8 @@ class Player {
   /// Starts playing the [Player].
   Future<void> play() async {
     await _completer.future;
-    var name = 'playlist-pos-1'.toNativeUtf8();
-    var pos = calloc<Int64>();
+    final name = 'playlist-pos-1'.toNativeUtf8();
+    final pos = calloc<Int64>();
     mpv.mpv_get_property(
       _handle,
       name.cast(),
@@ -152,8 +150,8 @@ class Player {
     if (pos.value == 0) {
       jump(0);
     } else {
-      var name = 'pause'.toNativeUtf8();
-      var flag = calloc<Int8>();
+      final name = 'pause'.toNativeUtf8();
+      final flag = calloc<Int8>();
       flag.value = 0;
       mpv.mpv_set_property(
         _handle,
@@ -169,8 +167,8 @@ class Player {
   /// Pauses the [Player].
   Future<void> pause() async {
     await _completer.future;
-    var name = 'pause'.toNativeUtf8();
-    var flag = calloc<Int8>();
+    final name = 'pause'.toNativeUtf8();
+    final flag = calloc<Int8>();
     flag.value = 1;
     mpv.mpv_set_property(
       _handle,
@@ -239,8 +237,8 @@ class Player {
         index.toString(),
       ],
     );
-    var name = 'playlist-pos-1'.toNativeUtf8();
-    var value = calloc<Int64>()..value = index + 1;
+    final name = 'playlist-pos-1'.toNativeUtf8();
+    final value = calloc<Int64>()..value = index + 1;
     mpv.mpv_set_property(
       _handle,
       name.cast(),
@@ -280,8 +278,8 @@ class Player {
   set volume(double volume) {
     () async {
       await _completer.future;
-      var name = 'volume'.toNativeUtf8();
-      var value = calloc<Double>();
+      final name = 'volume'.toNativeUtf8();
+      final value = calloc<Double>();
       value.value = volume;
       mpv.mpv_set_property(
         _handle,
@@ -298,8 +296,8 @@ class Player {
   set rate(double rate) {
     () async {
       await _completer.future;
-      var name = 'speed'.toNativeUtf8();
-      var value = calloc<Double>();
+      final name = 'speed'.toNativeUtf8();
+      final value = calloc<Double>();
       value.value = rate;
       mpv.mpv_set_property(
         _handle,
@@ -355,11 +353,11 @@ class Player {
         }
         if (event.ref.event_id ==
             generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
-          var prop = event.ref.data.cast<generated.mpv_event_property>();
+          final prop = event.ref.data.cast<generated.mpv_event_property>();
           if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
             print(':pause:');
-            var isPlaying = prop.ref.data.cast<Int8>().value != 1;
+            final isPlaying = prop.ref.data.cast<Int8>().value != 1;
             state.isPlaying = isPlaying;
             if (!_isPlayingController.isClosed) {
               _isPlayingController.add(isPlaying);
@@ -368,7 +366,7 @@ class Player {
           if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
             print(':paused-for-cache:');
-            var isBuffering = prop.ref.data.cast<Int8>().value != 0;
+            final isBuffering = prop.ref.data.cast<Int8>().value != 0;
             state.isBuffering = isBuffering;
             if (!_isBufferingController.isClosed) {
               _isBufferingController.add(isBuffering);
@@ -377,7 +375,7 @@ class Player {
           if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
             print(':time-pos:');
-            var position = Duration(
+            final position = Duration(
                 microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
             state.position = position;
             if (!_positionController.isClosed) {
@@ -387,7 +385,7 @@ class Player {
           if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
             print(':duration:');
-            var duration = Duration(
+            final duration = Duration(
                 microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
             state.duration = duration;
             if (!_durationController.isClosed) {
@@ -397,7 +395,7 @@ class Player {
           if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos-1' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
             print(':playlist-pos-1:');
-            var index = prop.ref.data.cast<Int64>().value - 1;
+            final index = prop.ref.data.cast<Int64>().value - 1;
             state.index = index;
             if (!_indexController.isClosed) {
               _indexController.add(index);
@@ -406,7 +404,7 @@ class Player {
           if (prop.ref.name.cast<Utf8>().toDartString() == 'volume' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
             print(':volume:');
-            var volume = prop.ref.data.cast<Double>().value;
+            final volume = prop.ref.data.cast<Double>().value;
             state.volume = volume;
             if (!_volumeController.isClosed) {
               _volumeController.add(volume);
@@ -415,7 +413,7 @@ class Player {
           if (prop.ref.name.cast<Utf8>().toDartString() == 'speed' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
             print(':speed:');
-            var rate = prop.ref.data.cast<Double>().value;
+            final rate = prop.ref.data.cast<Double>().value;
             state.rate = rate;
             if (!_rateController.isClosed) {
               _rateController.add(rate);
@@ -424,20 +422,20 @@ class Player {
         }
         if (yt) {
           if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_HOOK) {
-            var hook = event.ref.data.cast<generated.mpv_event_hook>();
+            final hook = event.ref.data.cast<generated.mpv_event_hook>();
             if (hook.ref.name.cast<Utf8>().toDartString() == 'on_load') {
-              var property = 'stream-open-filename'.toNativeUtf8();
-              var uri = mpv
+              final property = 'stream-open-filename'.toNativeUtf8();
+              final uri = mpv
                   .mpv_get_property_string(
                     _handle,
                     property.cast(),
                   )
                   .cast<Utf8>();
-              var id = await youtube.id(uri.toDartString());
+              final id = await youtube.id(uri.toDartString());
               if (id != null) {
                 try {
-                  var stream = await youtube.stream(id);
-                  var data = stream.toNativeUtf8();
+                  final stream = await youtube.stream(id);
+                  final data = stream.toNativeUtf8();
                   mpv.mpv_set_property_string(
                     _handle,
                     property.cast(),
@@ -458,7 +456,7 @@ class Player {
         }
       },
     );
-    var properties = <String, int>{
+    final properties = <String, int>{
       'pause': generated.mpv_format.MPV_FORMAT_FLAG,
       'time-pos': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
@@ -469,7 +467,7 @@ class Player {
       'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
     };
     properties.forEach((property, format) {
-      var ptr = property.toNativeUtf8();
+      final ptr = property.toNativeUtf8();
       mpv.mpv_observe_property(
         _handle,
         0,
@@ -479,8 +477,8 @@ class Player {
       calloc.free(ptr);
     });
     if (!video) {
-      var name = 'vo'.toNativeUtf8();
-      var value = 'null'.toNativeUtf8();
+      final name = 'vo'.toNativeUtf8();
+      final value = 'null'.toNativeUtf8();
       mpv.mpv_set_option_string(
         _handle,
         name.cast(),
@@ -490,7 +488,7 @@ class Player {
       calloc.free(value);
     }
     if (osc) {
-      var name = 'osc'.toNativeUtf8();
+      final name = 'osc'.toNativeUtf8();
       Pointer<Int8> flag = calloc<Int8>()..value = 1;
       mpv.mpv_set_option(
         _handle,
@@ -502,7 +500,7 @@ class Player {
       calloc.free(flag);
     }
     if (yt) {
-      var hook = 'on_load'.toNativeUtf8();
+      final hook = 'on_load'.toNativeUtf8();
       mpv.mpv_hook_add(
         _handle,
         0,
@@ -543,14 +541,8 @@ class Player {
   /// Whether on screen controls are visible or not.
   final bool osc;
 
-  /// Whether System Media Transport Controls are enabled or not.
-  final bool smtc;
-
   /// Whether YouTube support is enabled or not.
   final bool yt;
-
-  /// HWND of the parent window. Used for `ITaskbarList3` based thumbnail toolbar (if non-`null`).
-  final bool? hwnd;
 
   /// [Pointer] to [generated.mpv_handle] of this instance.
   late Pointer<generated.mpv_handle> _handle;
