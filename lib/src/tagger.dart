@@ -22,7 +22,7 @@ import 'package:path/path.dart';
 ///
 /// ```dart
 /// final tagger = Tagger();
-/// var metadata = await tagger.parse(
+/// final metadata = await tagger.parse(
 ///   Media('https://alexmercerind.github.io/music.m4a'),
 ///   cover: File('cover.jpg'),
 /// );
@@ -35,7 +35,7 @@ class Tagger {
   ///
   /// ```dart
   /// final tagger = Tagger();
-  /// var metadata = await tagger.parse(
+  /// final metadata = await tagger.parse(
   ///   Media('https://alexmercerind.github.io/music.m4a'),
   ///   cover: File('cover.jpg'),
   /// );
@@ -58,8 +58,9 @@ class Tagger {
     Directory? coverDirectory,
     bool duration = false,
     bool bitrate = false,
+    Duration timeout = const Duration(seconds: 5),
   }) async {
-    _result = {};
+    _end_file_count = 0;
     _directory = coverDirectory?.path;
     _path = cover?.absolute.path;
     await cover?.parent.create(recursive: true);
@@ -73,7 +74,7 @@ class Tagger {
       'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
     }.forEach((property, format) {
-      var ptr = property.toNativeUtf8();
+      final ptr = property.toNativeUtf8();
       mpv.mpv_observe_property(
         _handle,
         0,
@@ -89,17 +90,8 @@ class Tagger {
         'replace',
       ],
     );
-    if (_loaded) {
-      await _metadata.future;
-      if (duration) await _duration.future;
-      if (bitrate) await _bitrate.future;
-      _metadata = Completer();
-      _duration = Completer();
-      _bitrate = Completer();
-    }
-    _loaded = true;
-    var name = 'pause'.toNativeUtf8();
-    var flag = calloc<Int8>()..value = 0;
+    final name = 'pause'.toNativeUtf8();
+    final flag = calloc<Int8>()..value = 0;
     mpv.mpv_set_property(
       _handle,
       name.cast(),
@@ -108,14 +100,22 @@ class Tagger {
     );
     calloc.free(name);
     calloc.free(flag);
-    if (cover != null) await _cover.future;
-    Map<String, String> metadata = await _metadata.future;
+    if (cover != null || coverDirectory != null) {
+      await _cover.future.timeout(timeout);
+    }
+    Map<String, String> metadata = await _metadata.future.timeout(timeout);
     if (duration) {
-      metadata['duration'] = await _duration.future;
+      metadata['duration'] = await _duration.future.timeout(timeout);
     }
     if (bitrate) {
-      metadata['bitrate'] = await _bitrate.future;
+      metadata['bitrate'] = await _bitrate.future.timeout(timeout);
     }
+    final stop = 'stop'.toNativeUtf8().cast();
+    mpv.mpv_command_string(
+      _handle,
+      stop.cast(),
+    );
+    calloc.free(stop);
     return metadata;
   }
 
@@ -133,22 +133,17 @@ class Tagger {
 
   Future<void> _create() async {
     _handle = await create(
-      libmpvDynamicLibrary,
+      mpvDynamicLibraryPath,
       (event) async {
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
-          if (!_metadata.isCompleted) {
-            _metadata.complete(<String, String>{});
-          }
-          if (!_duration.isCompleted) {
-            _duration.complete('0');
-          }
-          if (!_bitrate.isCompleted) {
-            _bitrate.complete('0');
+          _end_file_count++;
+          if (_end_file_count > 1 && !_metadata.isCompleted) {
+            _metadata.complete({});
           }
         }
         if (event.ref.event_id ==
             generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
-          var prop = event.ref.data.cast<generated.mpv_event_property>();
+          final prop = event.ref.data.cast<generated.mpv_event_property>();
           if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
             if (!_duration.isCompleted) {
@@ -165,15 +160,15 @@ class Tagger {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'metadata' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
-            var metadata = <String, String>{};
-            var data = prop.ref.data.cast<generated.mpv_node>().ref.u.list;
+            final metadata = <String, String>{};
+            final data = prop.ref.data.cast<generated.mpv_node>().ref.u.list;
             for (int i = 0; i < data.ref.num; i++) {
               metadata[data.ref.keys[i].cast<Utf8>().toDartString()] =
                   data.ref.values[i].u.string.cast<Utf8>().toDartString();
             }
-            metadata.forEach(
+            final _ = {...metadata}.forEach(
               (key, value) {
-                _result[key.toLowerCase()] = value;
+                metadata[key.toLowerCase()] = value;
               },
             );
             if (_path != null) {
@@ -194,7 +189,7 @@ class Tagger {
                   'screenshot-to-file',
                   join(
                     _directory!,
-                    '${_result['album'] ?? 'Unknown Album'}${_result['album_artist'] ?? 'Unknown Artist'}'
+                    '${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}'
                             .replaceAll(RegExp(r'[\\/:*?""<>| ]'), '') +
                         '.PNG',
                   ),
@@ -203,13 +198,13 @@ class Tagger {
               );
             }
             if (!_metadata.isCompleted) {
-              _metadata.complete(_result);
+              _metadata.complete(metadata);
             }
           }
         }
       },
     );
-    var property = 'metadata'.toNativeUtf8();
+    final property = 'metadata'.toNativeUtf8();
     mpv.mpv_observe_property(
       _handle,
       0,
@@ -217,9 +212,9 @@ class Tagger {
       generated.mpv_format.MPV_FORMAT_NODE,
     );
     calloc.free(property);
-    var vo = 'vo'.toNativeUtf8();
-    var ao = 'ao'.toNativeUtf8();
-    var value = 'null'.toNativeUtf8();
+    final vo = 'vo'.toNativeUtf8();
+    final ao = 'ao'.toNativeUtf8();
+    final value = 'null'.toNativeUtf8();
     mpv.mpv_set_option_string(
       _handle,
       vo.cast(),
@@ -276,9 +271,5 @@ class Tagger {
   /// Path to parent folder where cover will be saved.
   String? _directory;
 
-  /// Metadata
-  Map<String, String> _result = <String, String>{};
-
-  /// Whether [parse] has been called before.
-  bool _loaded = false;
+  int _end_file_count = 0;
 }
