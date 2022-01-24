@@ -338,7 +338,7 @@ class Player {
       ],
     );
     _handle = await create(
-      libmpvDynamicLibrary,
+      mpvDynamicLibraryPath,
       (event) async {
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
           state.isCompleted = false;

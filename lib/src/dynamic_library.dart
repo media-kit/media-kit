@@ -7,7 +7,7 @@ import 'dart:io';
 import 'package:path/path.dart';
 
 /// Path to DLL or shared object of libmpv.
-late String libmpvDynamicLibrary;
+late String mpvDynamicLibraryPath;
 
 const String kWindowsDynamicLibrary = 'mpv-1.dll';
 const String kLinuxDynamicLibrary = 'libmpv.so';
@@ -40,13 +40,13 @@ abstract class MPV {
   /// On Linux, checks for `libmpv.so` at usual places.
   static Future<void> initialize({String? dynamicLibrary}) async {
     if (dynamicLibrary != null) {
-      libmpvDynamicLibrary = dynamicLibrary;
+      mpvDynamicLibraryPath = dynamicLibrary;
       return;
     }
     if (Platform.isWindows) {
       if (await File(join(Platform.script.path, kWindowsDynamicLibrary))
           .exists()) {
-        libmpvDynamicLibrary =
+        mpvDynamicLibraryPath =
             join(Platform.script.path, kWindowsDynamicLibrary);
         return;
       }
@@ -55,7 +55,7 @@ abstract class MPV {
                   .join('\\'),
               kWindowsDynamicLibrary))
           .exists()) {
-        libmpvDynamicLibrary = join(
+        mpvDynamicLibraryPath = join(
             (Platform.resolvedExecutable.split('\\')..removeLast()).join('\\'),
             kWindowsDynamicLibrary);
         return;
@@ -64,7 +64,7 @@ abstract class MPV {
       final envPath = Platform.environment['PATH'];
       if (mpvPath != null) {
         if (await File(join(mpvPath, kWindowsDynamicLibrary)).exists()) {
-          libmpvDynamicLibrary = join(mpvPath, kWindowsDynamicLibrary);
+          mpvDynamicLibraryPath = join(mpvPath, kWindowsDynamicLibrary);
           return;
         }
       }
@@ -72,7 +72,7 @@ abstract class MPV {
         final paths = envPath.split(';');
         for (var path in paths) {
           if (await File(join(path, kWindowsDynamicLibrary)).exists()) {
-            libmpvDynamicLibrary = join(path, kWindowsDynamicLibrary);
+            mpvDynamicLibraryPath = join(path, kWindowsDynamicLibrary);
             return;
           }
         }
@@ -83,7 +83,7 @@ abstract class MPV {
     if (Platform.isLinux) {
       if (await File(join(Platform.script.path, kWindowsDynamicLibrary))
           .exists()) {
-        libmpvDynamicLibrary =
+        mpvDynamicLibraryPath =
             join(Platform.script.path, kWindowsDynamicLibrary);
         return;
       }
@@ -91,14 +91,14 @@ abstract class MPV {
               (Platform.resolvedExecutable.split('/')..removeLast()).join('/'),
               kWindowsDynamicLibrary))
           .exists()) {
-        libmpvDynamicLibrary = join(
+        mpvDynamicLibraryPath = join(
             (Platform.resolvedExecutable.split('/')..removeLast()).join('/'),
             kWindowsDynamicLibrary);
         return;
       }
       if (await File('/usr/lib/x86_64-linux-gnu/$kLinuxDynamicLibrary')
           .exists()) {
-        libmpvDynamicLibrary =
+        mpvDynamicLibraryPath =
             '/usr/lib/x86_64-linux-gnu/$kLinuxDynamicLibrary';
         return;
       }
