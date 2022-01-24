@@ -3,6 +3,8 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// ignore_for_file: non_constant_identifier_names
+
 import 'dart:ffi';
 import 'dart:async';
 import 'dart:io';
@@ -65,7 +67,6 @@ class Tagger {
     await cover?.parent.create(recursive: true);
     await coverDirectory?.create(recursive: true);
     await _completer.future;
-    _cover = Completer();
     _metadata = Completer();
     _duration = Completer();
     _bitrate = Completer();
@@ -99,9 +100,6 @@ class Tagger {
     );
     calloc.free(name);
     calloc.free(flag);
-    if (cover != null || coverDirectory != null) {
-      await _cover.future.timeout(timeout);
-    }
     Map<String, String> metadata = await _metadata.future.timeout(timeout);
     if (duration) {
       metadata['duration'] = await _duration.future.timeout(timeout);
@@ -178,9 +176,6 @@ class Tagger {
                   null,
                 ],
               );
-              if (!_cover.isCompleted) {
-                _cover.complete();
-              }
             }
             if (_directory != null) {
               _command(
@@ -262,7 +257,6 @@ class Tagger {
   Completer<Map<String, String>> _metadata = Completer();
   Completer<String> _duration = Completer();
   Completer<String> _bitrate = Completer();
-  Completer<void> _cover = Completer();
 
   /// Path where cover will be saved.
   String? _path;
