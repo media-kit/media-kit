@@ -13,6 +13,7 @@ import 'package:libmpv/src/dynamic_library.dart';
 import 'package:libmpv/src/core/initializer.dart';
 
 import 'package:libmpv/generated/bindings.dart' as generated;
+
 import 'package:libmpv/src/plugins/youtube.dart';
 
 typedef Playlist = List<Media>;
@@ -51,9 +52,12 @@ class Player {
   Player({
     this.video = true,
     this.osc = true,
-    this.yt = true,
+    bool yt = true,
     void Function()? onCreate,
   }) {
+    if (yt) {
+      youtube = YouTube();
+    }
     _create().then(
       (_) => onCreate?.call(),
     );
@@ -93,6 +97,7 @@ class Player {
     _positionController.close();
     _durationController.close();
     _indexController.close();
+    youtube?.close();
     mpv.mpv_terminate_destroy(_handle);
   }
 
@@ -422,40 +427,6 @@ class Player {
             }
           }
         }
-        if (yt) {
-          if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_HOOK) {
-            final hook = event.ref.data.cast<generated.mpv_event_hook>();
-            if (hook.ref.name.cast<Utf8>().toDartString() == 'on_load') {
-              final property = 'stream-open-filename'.toNativeUtf8();
-              final uri = mpv
-                  .mpv_get_property_string(
-                    _handle,
-                    property.cast(),
-                  )
-                  .cast<Utf8>();
-              final id = await youtube.id(uri.toDartString());
-              if (id != null) {
-                try {
-                  final stream = await youtube.stream(id);
-                  final data = stream.toNativeUtf8();
-                  mpv.mpv_set_property_string(
-                    _handle,
-                    property.cast(),
-                    data.cast(),
-                  );
-                  calloc.free(data);
-                } catch (_) {
-                  await next();
-                }
-              }
-              calloc.free(property);
-              mpv.mpv_hook_continue(
-                _handle,
-                hook.ref.id,
-              );
-            }
-          }
-        }
       },
     );
     final properties = <String, int>{
@@ -501,16 +472,6 @@ class Player {
       calloc.free(name);
       calloc.free(flag);
     }
-    if (yt) {
-      final hook = 'on_load'.toNativeUtf8();
-      mpv.mpv_hook_add(
-        _handle,
-        0,
-        hook.cast(),
-        0,
-      );
-      calloc.free(hook);
-    }
     _completer.complete();
   }
 
@@ -543,8 +504,8 @@ class Player {
   /// Whether on screen controls are visible or not.
   final bool osc;
 
-  /// Whether YouTube support is enabled or not.
-  final bool yt;
+  /// YouTube daemon to serve links.
+  YouTube? youtube;
 
   /// [Pointer] to [generated.mpv_handle] of this instance.
   late Pointer<generated.mpv_handle> _handle;

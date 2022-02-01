@@ -1,7 +1,8 @@
+// ignore_for_file: non_constant_identifier_names
+import 'dart:io';
+import 'dart:async';
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
-
-var youtube = _YouTube();
 
 const String _kRequestAuthority = 'music.youtube.com';
 const String _kRequestKey = 'AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30';
@@ -26,26 +27,24 @@ const Map<String, dynamic> _kRequestPayload = {
       'clientVersion': '16.43.34',
     },
     'thirdParty': {
-      'embedUrl': 'https://www.youtube.com',
+      'embedUrl': 'https://music.youtube.com',
     },
   },
 };
 
-class _YouTube {
-  Future<String?> id(String uri) async {
-    String? id;
-    if (uri.contains('youtu') && uri.contains('/')) {
-      if (uri.contains('/watch?v=')) {
-        id = uri.substring(uri.indexOf('=') + 1);
-      } else {
-        id = uri.substring(uri.indexOf('/') + 1);
-      }
-    }
-    return id?.split('&').first.split('/').first;
+class YouTube {
+  YouTube({
+    int port = 6900,
+  }) {
+    _port = port;
+    _create();
   }
 
-  Future<String> stream(String id) async {
-    var response = await http.post(
+  Future<void> close() => _server.close();
+
+  Future<String> _stream(String id) async {
+    await _completer.future;
+    final response = await http.post(
       Uri.https(
         _kRequestAuthority,
         'youtubei/v1/player',
@@ -63,15 +62,55 @@ class _YouTube {
       ),
       headers: _kRequestHeaders,
     );
-    var body = convert.jsonDecode(response.body)['streamingData'];
+    final body = convert.jsonDecode(response.body)['streamingData'];
     String? opus;
     String? mp4;
     String? aac;
-    for (var format in body['adaptiveFormats']) {
+    for (final format in body['adaptiveFormats']) {
       if (format['itag'] == 251) opus = format['url'];
       if (format['itag'] == 18) mp4 = format['url'];
       if (format['itag'] == 140) aac = format['url'];
     }
     return (opus ?? aac ?? mp4)!;
   }
+
+  Future<void> _create() async {
+    _server = HttpServer.listenOn(
+      await ServerSocket.bind('127.0.0.1', _port),
+    );
+    _server.listen((request) async {
+      switch (request.uri.path) {
+        case '/youtube':
+          {
+            request.response.headers.set(
+              'location',
+              await _stream(request.uri.queryParameters['id']!),
+            );
+            request.response.statusCode = 302;
+            request.response.close();
+            break;
+          }
+        default:
+          break;
+      }
+    });
+    _completer.complete();
+  }
+
+  final _completer = Completer();
+  late final HttpServer _server;
+}
+
+late int _port;
+
+String URI(String uri) {
+  if (uri.contains('youtu') && uri.contains('/')) {
+    final path = 'http://127.0.0.1:$_port/youtube?id=';
+    if (uri.contains('/watch?v=')) {
+      return path + uri.substring(uri.indexOf('=') + 1);
+    } else {
+      return path + uri.substring(uri.indexOf('/') + 1);
+    }
+  }
+  return uri;
 }
