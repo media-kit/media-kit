@@ -108,6 +108,7 @@ class Tagger {
     if (bitrate) {
       metadata['bitrate'] = await _bitrate.future.timeout(timeout);
     }
+    metadata['uri'] = media.uri;
     final stop = 'stop'.toNativeUtf8().cast();
     mpv.mpv_command_string(
       _handle,
