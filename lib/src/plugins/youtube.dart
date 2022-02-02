@@ -108,8 +108,6 @@ class YouTube {
 
 late int _port;
 
-// TODO: Move to single file in future if more `plugins` are added.
-
 abstract class Plugins {
   static Uri redirect(Uri uri) {
     final string = uri.toString();
@@ -125,11 +123,24 @@ abstract class Plugins {
     return uri;
   }
 
-  static bool isRedirected(Uri uri) => uri.toString().contains('127.0.0.1');
+  static bool isExternalMedia(Uri uri) =>
+      uri.toString().contains('youtu') && uri.toString().contains('/');
 
-  static String getArtwork(Uri uri) {
-    if (isRedirected(uri)) {
-      return 'https://img.youtube.com/vi/${uri.toString().split('=').last}/maxresdefault.jpg';
+  static String artwork(Uri uri) {
+    final string = uri.toString();
+    if (string.contains('youtu') && string.contains('/')) {
+      // YouTube links of the form https://www.youtube.com/watch?v=abcdefghijk.
+      if (string.contains('/watch?v=')) {
+        return 'https://img.youtube.com/vi/${string.substring(string.indexOf('=') + 1).split('&').first}/maxresdefault.jpg';
+      }
+      // Re-directed YouTube links of the form https://127.0.0.1:6900/youtube?id=abcdefghijk.
+      else if (string.contains('127.0.0.1')) {
+        return 'https://img.youtube.com/vi/${uri.toString().split('=').last}/maxresdefault.jpg';
+      }
+      // YouTube links of the form https://youtu.be/abcdefghijk/.
+      else {
+        return 'https://img.youtube.com/vi/${string.substring(string.indexOf('.be/') + 4).split('/').first}/maxresdefault.jpg';
+      }
     }
     throw FormatException();
   }
