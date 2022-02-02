@@ -14,7 +14,7 @@ Map<String, Media> medias = {};
 /// ```
 ///
 class Media {
-  /// The URI of the [Media].
+  /// URI of the [Media].
   final String uri;
 
   /// Additional optional user data.
