@@ -106,21 +106,31 @@ class YouTube {
   late final HttpServer _server;
 }
 
-Uri redirect(Uri uri) {
-  final string = uri.toString();
-  if (string.contains('youtu') && string.contains('/')) {
-    final path = 'http://127.0.0.1:$_port/youtube?id=';
-    if (string.contains('/watch?v=')) {
-      return Uri.parse(
-          path + string.substring(string.indexOf('=') + 1).split('&').first);
-    } else {
-      return Uri.parse(path + string.substring(string.indexOf('.be/') + 4));
-    }
-  }
-  return uri;
-}
-
-bool isRedirected(Uri uri) =>
-    uri.toString().contains('127.0.0.1:$_port/youtube');
-
 late int _port;
+
+// TODO: Move to single file in future if more `plugins` are added.
+
+abstract class Plugins {
+  static Uri redirect(Uri uri) {
+    final string = uri.toString();
+    if (string.contains('youtu') && string.contains('/')) {
+      final path = 'http://127.0.0.1:$_port/youtube?id=';
+      if (string.contains('/watch?v=')) {
+        return Uri.parse(
+            path + string.substring(string.indexOf('=') + 1).split('&').first);
+      } else {
+        return Uri.parse(path + string.substring(string.indexOf('.be/') + 4));
+      }
+    }
+    return uri;
+  }
+
+  static bool isRedirected(Uri uri) => uri.toString().contains('127.0.0.1');
+
+  static String getArtwork(Uri uri) {
+    if (isRedirected(uri)) {
+      return 'https://img.youtube.com/vi/${uri.toString().split('=').last}/maxresdefault.jpg';
+    }
+    throw FormatException();
+  }
+}

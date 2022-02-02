@@ -53,6 +53,7 @@ class Player {
     this.video = true,
     this.osc = true,
     bool yt = true,
+    this.title,
     void Function()? onCreate,
   }) {
     if (yt) {
@@ -152,7 +153,7 @@ class Player {
       generated.mpv_format.MPV_FORMAT_INT64,
       pos.cast(),
     );
-    if (pos.value == 0) {
+    if (pos.value == 0 || state.isCompleted) {
       jump(0);
     } else {
       final name = 'pause'.toNativeUtf8();
@@ -465,6 +466,17 @@ class Player {
       calloc.free(name);
       calloc.free(flag);
     }
+    if (title != null) {
+      final name = 'title'.toNativeUtf8();
+      final value = title!.toNativeUtf8();
+      mpv.mpv_set_property_string(
+        handle,
+        name.cast(),
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
     _completer.complete();
   }
 
@@ -496,6 +508,9 @@ class Player {
 
   /// Whether on screen controls are visible or not.
   final bool osc;
+
+  /// User defined window title for the MPV instance.
+  final String? title;
 
   /// YouTube daemon to serve links.
   YouTube? youtube;
