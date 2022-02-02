@@ -6,7 +6,8 @@ Future<void> main() async {
   final player = Player();
   player.open(
     [
-      Media(redirect(Uri.parse('https://www.youtube.com/watch?v=o1KWG3yRd2k'))
+      Media(Plugins.redirect(
+              Uri.parse('https://www.youtube.com/watch?v=o1KWG3yRd2k'))
           .toString())
     ],
   );
