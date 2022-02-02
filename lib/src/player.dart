@@ -362,7 +362,6 @@ class Player {
           final prop = event.ref.data.cast<generated.mpv_event_property>();
           if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-            print(':pause:');
             final isPlaying = prop.ref.data.cast<Int8>().value != 1;
             state.isPlaying = isPlaying;
             if (!_isPlayingController.isClosed) {
@@ -371,7 +370,6 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-            print(':paused-for-cache:');
             final isBuffering = prop.ref.data.cast<Int8>().value != 0;
             state.isBuffering = isBuffering;
             if (!_isBufferingController.isClosed) {
@@ -380,7 +378,6 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-            print(':time-pos:');
             final position = Duration(
                 microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
             state.position = position;
@@ -390,7 +387,6 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-            print(':duration:');
             final duration = Duration(
                 microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
             state.duration = duration;
@@ -400,7 +396,6 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos-1' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
-            print(':playlist-pos-1:');
             final index = prop.ref.data.cast<Int64>().value - 1;
             state.index = index;
             if (!_indexController.isClosed) {
@@ -409,7 +404,6 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'volume' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-            print(':volume:');
             final volume = prop.ref.data.cast<Double>().value;
             state.volume = volume;
             if (!_volumeController.isClosed) {
@@ -418,7 +412,6 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'speed' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-            print(':speed:');
             final rate = prop.ref.data.cast<Double>().value;
             state.rate = rate;
             if (!_rateController.isClosed) {
