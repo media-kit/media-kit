@@ -1,4 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert' as convert;
@@ -67,9 +66,15 @@ class YouTube {
     String? mp4;
     String? aac;
     for (final format in body['adaptiveFormats']) {
-      if (format['itag'] == 251) opus = format['url'];
-      if (format['itag'] == 18) mp4 = format['url'];
-      if (format['itag'] == 140) aac = format['url'];
+      if (format['itag'] == 251) {
+        opus = format['url'];
+      }
+      if (format['itag'] == 18) {
+        mp4 = format['url'];
+      }
+      if (format['itag'] == 140) {
+        aac = format['url'];
+      }
     }
     return (opus ?? aac ?? mp4)!;
   }
@@ -101,16 +106,21 @@ class YouTube {
   late final HttpServer _server;
 }
 
-late int _port;
-
-String URI(String uri) {
-  if (uri.contains('youtu') && uri.contains('/')) {
+Uri redirect(Uri uri) {
+  final string = uri.toString();
+  if (string.contains('youtu') && string.contains('/')) {
     final path = 'http://127.0.0.1:$_port/youtube?id=';
-    if (uri.contains('/watch?v=')) {
-      return path + uri.substring(uri.indexOf('=') + 1);
+    if (string.contains('/watch?v=')) {
+      return Uri.parse(
+          path + string.substring(string.indexOf('=') + 1).split('&').first);
     } else {
-      return path + uri.substring(uri.indexOf('/') + 1);
+      return Uri.parse(path + string.substring(string.indexOf('.be/') + 4));
     }
   }
   return uri;
 }
+
+bool isRedirected(Uri uri) =>
+    uri.toString().contains('127.0.0.1:$_port/youtube');
+
+late int _port;
