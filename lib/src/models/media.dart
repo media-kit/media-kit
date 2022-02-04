@@ -30,7 +30,14 @@ class Media {
     this.uri, {
     this.extras,
   }) {
-    medias[uri] = this;
+    medias[() {
+      // Match with format retrieved by `mpv_get_property`.
+      if (uri.startsWith('file')) {
+        return Uri.parse(uri).toFilePath().replaceAll('\\', '/');
+      } else {
+        return uri;
+      }
+    }()] = this;
   }
 
   @override
