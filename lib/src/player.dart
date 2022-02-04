@@ -327,6 +327,52 @@ class Player {
           shuffle ? 'playlist-shuffle' : 'playlist-unshuffle',
         ],
       );
+      final name = 'playlist'.toNativeUtf8();
+      final data = calloc<generated.mpv_node>();
+      mpv.mpv_get_property(
+        handle,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_NODE,
+        data.cast(),
+      );
+      try {
+        if (data.ref.format == generated.mpv_format.MPV_FORMAT_NODE_ARRAY) {
+          final playlist = <Media>[];
+          for (int i = 0; i < data.ref.u.list.ref.num; i++) {
+            if (data.ref.u.list.ref.values[i].format ==
+                generated.mpv_format.MPV_FORMAT_NODE_MAP) {
+              for (int j = 0;
+                  j < data.ref.u.list.ref.values[i].u.list.ref.num;
+                  j++) {
+                if (data.ref.u.list.ref.values[i].u.list.ref.values[j].format ==
+                    generated.mpv_format.MPV_FORMAT_STRING) {
+                  final property = data
+                      .ref.u.list.ref.values[i].u.list.ref.keys[j]
+                      .cast<Utf8>()
+                      .toDartString();
+                  if (property == 'filename') {
+                    final value = data
+                        .ref.u.list.ref.values[i].u.list.ref.values[j].u.string
+                        .cast<Utf8>()
+                        .toDartString();
+                    playlist.add(medias[value]!);
+                  }
+                }
+              }
+            }
+          }
+          state.playlist = playlist;
+          _playlistController.add(state.playlist);
+          calloc.free(name);
+          calloc.free(data);
+        }
+      } catch (_) {
+        _command(
+          [
+            'playlist-unshuffle',
+          ],
+        );
+      }
     }();
   }
 
