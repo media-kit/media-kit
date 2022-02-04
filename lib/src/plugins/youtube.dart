@@ -36,7 +36,9 @@ class YouTube {
     int port = 6900,
   }) {
     _port = port;
-    _create();
+    try {
+      _create();
+    } catch (_) {}
   }
 
   Future<void> close() => _server.close();
