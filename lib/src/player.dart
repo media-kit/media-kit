@@ -7,9 +7,10 @@ import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
 
-import 'package:libmpv/src/models/media.dart';
 import 'package:libmpv/src/dynamic_library.dart';
 import 'package:libmpv/src/core/initializer.dart';
+import 'package:libmpv/src/models/media.dart';
+import 'package:libmpv/src/models/playlist_mode.dart';
 
 import 'package:libmpv/generated/bindings.dart' as generated;
 
@@ -281,6 +282,73 @@ class Player {
     calloc.free(args);
   }
 
+  /// Sets playlist mode.
+  Future<void> setPlaylistMode(PlaylistMode playlistMode) async {
+    await _completer.future;
+    final loopFile = 'loop-file'.toNativeUtf8();
+    final loopPlaylist = 'loop-playlist'.toNativeUtf8();
+    final yes = calloc<Int8>();
+    yes.value = 1;
+    final no = calloc<Int8>();
+    no.value = 0;
+    switch (playlistMode) {
+      case PlaylistMode.none:
+        {
+          mpv.mpv_set_property(
+            handle,
+            loopFile.cast(),
+            generated.mpv_format.MPV_FORMAT_FLAG,
+            no.cast(),
+          );
+          mpv.mpv_set_property(
+            handle,
+            loopPlaylist.cast(),
+            generated.mpv_format.MPV_FORMAT_FLAG,
+            no.cast(),
+          );
+          break;
+        }
+      case PlaylistMode.single:
+        {
+          mpv.mpv_set_property(
+            handle,
+            loopFile.cast(),
+            generated.mpv_format.MPV_FORMAT_FLAG,
+            yes.cast(),
+          );
+          mpv.mpv_set_property(
+            handle,
+            loopPlaylist.cast(),
+            generated.mpv_format.MPV_FORMAT_FLAG,
+            no.cast(),
+          );
+          break;
+        }
+      case PlaylistMode.loop:
+        {
+          mpv.mpv_set_property(
+            handle,
+            loopFile.cast(),
+            generated.mpv_format.MPV_FORMAT_FLAG,
+            no.cast(),
+          );
+          mpv.mpv_set_property(
+            handle,
+            loopPlaylist.cast(),
+            generated.mpv_format.MPV_FORMAT_FLAG,
+            yes.cast(),
+          );
+          break;
+        }
+      default:
+        break;
+    }
+    calloc.free(loopFile);
+    calloc.free(loopPlaylist);
+    calloc.free(yes);
+    calloc.free(no);
+  }
+
   /// Sets the playback volume of the [Player]. Defaults to `100.0`.
   set volume(double volume) {
     () async {
@@ -335,6 +403,7 @@ class Player {
         data.cast(),
       );
       try {
+        // Shuffling updates the order of [state.playlist]. Fetching latest playlist from MPV & updating Dart stream.
         if (data.ref.format == generated.mpv_format.MPV_FORMAT_NODE_ARRAY) {
           final playlist = <Media>[];
           for (int i = 0; i < data.ref.u.list.ref.num; i++) {
