@@ -3,6 +3,7 @@ import 'package:ffi/ffi.dart';
 
 import 'package:libmpv/src/core/initializer.dart';
 import 'package:libmpv/generated/bindings.dart';
+import 'package:libmpv/src/dynamic_library.dart' as dlib;
 
 Future<void> main(List<String> args) async {
   if (args.isEmpty) {
@@ -10,8 +11,11 @@ Future<void> main(List<String> args) async {
         'Invalid usage.\nExample:\ndart raw.dart /home/path/to/a/media/file.mp4');
     return;
   }
+
+  await dlib.MPV.initialize();
+
   var handle = await create(
-    '/usr/lib/x86_64-linux-gnu/libmpv.so',
+    dlib.mpvDynamicLibraryPath,
     (event) async {
       if (event.ref.event_id == mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
         var prop = event.ref.data.cast<mpv_event_property>();
