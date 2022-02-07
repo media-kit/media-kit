@@ -97,10 +97,17 @@ abstract class MPV {
             kWindowsDynamicLibrary);
         return;
       }
+
+      // For Debian based distros
       if (await File('/usr/lib/x86_64-linux-gnu/$kLinuxDynamicLibrary')
           .exists()) {
         mpvDynamicLibraryPath =
             '/usr/lib/x86_64-linux-gnu/$kLinuxDynamicLibrary';
+        return;
+      }
+      // For Other Distros
+      else if (await File('/usr/lib/$kLinuxDynamicLibrary').exists()) {
+        mpvDynamicLibraryPath = '/usr/lib/$kLinuxDynamicLibrary';
         return;
       }
       throw Exception(

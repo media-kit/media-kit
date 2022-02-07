@@ -1,5 +1,4 @@
 import 'package:libmpv/libmpv.dart';
-import 'package:libmpv/src/plugins/youtube.dart';
 
 Future<void> main() async {
   await MPV.initialize();
