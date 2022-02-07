@@ -8,3 +8,7 @@ build/
 # libMPV headers.
 
 headers/*
+
+# Others
+.vscode
+cover.jpg
