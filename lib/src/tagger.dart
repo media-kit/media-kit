@@ -186,7 +186,7 @@ class Tagger {
                     _directory!,
                     '${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}'
                             .replaceAll(RegExp(r'[\\/:*?""<>| ]'), '') +
-                        '.PNG',
+                        '.png',
                   ),
                   null,
                 ],
