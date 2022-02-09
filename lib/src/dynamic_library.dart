@@ -9,7 +9,7 @@ import 'package:path/path.dart';
 /// Path to DLL or shared object of libmpv.
 late String mpvDynamicLibraryPath;
 
-const String kWindowsDynamicLibrary = 'mpv-1.dll';
+const String kWindowsDynamicLibrary = 'mpv-2.dll';
 const String kLinuxDynamicLibrary = 'libmpv.so';
 
 /// ## MPV
@@ -34,9 +34,9 @@ const String kLinuxDynamicLibrary = 'libmpv.so';
 abstract class MPV {
   /// Loads the shared library & initializes the library.
   ///
-  /// Checks for `mpv-1.dll` or `libmpv.so` in the same directory as the script or the compiled executable.
+  /// Checks for `mpv-2.dll` or `libmpv.so` in the same directory as the script or the compiled executable.
   /// If not found, then:
-  /// On Windows, checks for `mpv-1.dll` at `MPV_PATH` & `PATH`.
+  /// On Windows, checks for `mpv-2.dll` at `MPV_PATH` & `PATH`.
   /// On Linux, checks for `libmpv.so` at usual places.
   static Future<void> initialize({String? dynamicLibrary}) async {
     if (dynamicLibrary != null) {
@@ -78,7 +78,7 @@ abstract class MPV {
         }
       }
       throw Exception(
-          'Cannot find mpv-1.dll in your system %PATH%. One way to deal with this is to ship mpv-1.dll with your script or compiled executable in the same directory.');
+          'Cannot find mpv-2.dll in your system %PATH%. One way to deal with this is to ship mpv-2.dll with your script or compiled executable in the same directory.');
     }
     if (Platform.isLinux) {
       if (await File(join(Platform.script.path, kWindowsDynamicLibrary))
