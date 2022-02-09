@@ -184,9 +184,8 @@ class Tagger {
                   'screenshot-to-file',
                   join(
                     _directory!,
-                    '${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}'
-                            .replaceAll(RegExp(r'[\\/:*?""<>| ]'), '') +
-                        '.png',
+                    '${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}.PNG'
+                        .replaceAll(RegExp(r'[\\/:*?""<>| ]'), ''),
                   ),
                   null,
                 ],
