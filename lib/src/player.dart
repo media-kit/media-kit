@@ -140,12 +140,20 @@ class Player {
     }
     state.playlist = playlist;
     _playlistController.add(state.playlist);
+    // Even though `replace` parameter in `loadfile` automatically causes the
+    // [Media] to play but in certain cases like, where a [Media] is paused & then
+    // new [Media] is [Player.open]ed it causes [Media] to not starting playing
+    // automatically.
+    // Thanks to <github.com/DomingoMG> for the fix!
+    if (play) {
+      this.play();
+    }
   }
 
   /// Starts playing the [Player].
   Future<void> play() async {
     await _completer.future;
-    final name = 'playlist-pos-1'.toNativeUtf8();
+    var name = 'playlist-pos-1'.toNativeUtf8();
     final pos = calloc<Int64>();
     mpv.mpv_get_property(
       _handle,
@@ -155,19 +163,19 @@ class Player {
     );
     if (pos.value == 0 || state.isCompleted) {
       jump(0);
-    } else {
-      final name = 'pause'.toNativeUtf8();
-      final flag = calloc<Int8>();
-      flag.value = 0;
-      mpv.mpv_set_property(
-        _handle,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_FLAG,
-        flag.cast(),
-      );
-      calloc.free(name);
-      calloc.free(flag);
     }
+    calloc.free(name);
+    name = 'pause'.toNativeUtf8();
+    final flag = calloc<Int8>();
+    flag.value = 0;
+    mpv.mpv_set_property(
+      _handle,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_FLAG,
+      flag.cast(),
+    );
+    calloc.free(name);
+    calloc.free(flag);
   }
 
   /// Pauses the [Player].
@@ -463,14 +471,22 @@ class Player {
       (event) async {
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
           state.isCompleted = false;
+          state.isPlaying = true;
           if (!_isCompletedController.isClosed) {
             _isCompletedController.add(false);
+          }
+          if (!_isPlayingController.isClosed) {
+            _isPlayingController.add(true);
           }
         }
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
           state.isCompleted = true;
+          state.isPlaying = false;
           if (!_isCompletedController.isClosed) {
             _isCompletedController.add(true);
+          }
+          if (!_isPlayingController.isClosed) {
+            _isPlayingController.add(false);
           }
         }
         if (event.ref.event_id ==
