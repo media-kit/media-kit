@@ -127,7 +127,6 @@ class Tagger {
         code.toString(),
       ],
     );
-    mpv.mpv_terminate_destroy(_handle);
   }
 
   Future<void> _create() async {
