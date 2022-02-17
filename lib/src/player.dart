@@ -481,13 +481,19 @@ class Player {
           }
         }
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
-          state.isCompleted = true;
-          state.isPlaying = false;
-          if (!_isCompletedController.isClosed) {
-            _isCompletedController.add(true);
-          }
-          if (!_isPlayingController.isClosed) {
-            _isPlayingController.add(false);
+          // Check for `mpv_end_file_reason.MPV_END_FILE_REASON_EOF` before
+          // modifying `state.isCompleted`.
+          // Thanks to <github.com/DomingoMG> for noticing the bug.
+          if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
+              generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
+            state.isCompleted = true;
+            state.isPlaying = false;
+            if (!_isCompletedController.isClosed) {
+              _isCompletedController.add(true);
+            }
+            if (!_isPlayingController.isClosed) {
+              _isPlayingController.add(false);
+            }
           }
         }
         if (event.ref.event_id ==
