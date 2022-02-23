@@ -8,12 +8,12 @@ Future<void> main() async {
   final tagger = Tagger();
   Map<String, String> metadata;
   metadata = await tagger.parse(
-    Media('https://alexmercerind.github.io/music.m4a'),
+    'https://alexmercerind.github.io/music.m4a',
     cover: File('cover.jpg'),
   );
   println(metadata);
   metadata = await tagger.parse(
-    Media('https://alexmercerind.github.io/audio.ogg'),
+    'https://alexmercerind.github.io/audio.ogg',
     cover: null,
   );
   println(metadata);
