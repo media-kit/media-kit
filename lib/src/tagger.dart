@@ -55,7 +55,7 @@ class Tagger {
   /// Throws exception if an invalid, corrupt or inexistent [Media] is passed.
   ///
   Future<Map<String, String>> parse(
-    Media media, {
+    String uri, {
     File? cover,
     Directory? coverDirectory,
     bool duration = false,
@@ -87,7 +87,7 @@ class Tagger {
     _command(
       [
         'loadfile',
-        media.uri,
+        uri,
         'replace',
       ],
     );
@@ -108,7 +108,7 @@ class Tagger {
     if (bitrate) {
       metadata['bitrate'] = await _bitrate.future.timeout(timeout);
     }
-    metadata['uri'] = media.uri;
+    metadata['uri'] = uri;
     final stop = 'stop'.toNativeUtf8().cast();
     mpv.mpv_command_string(
       _handle,
@@ -129,74 +129,76 @@ class Tagger {
     );
   }
 
+  Future<void> _handler(Pointer<generated.mpv_event> event) async {
+    if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
+      _end_file_count++;
+      if (_end_file_count > 1 && !_metadata.isCompleted) {
+        _metadata.complete({});
+      }
+    }
+    if (event.ref.event_id ==
+        generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
+      final prop = event.ref.data.cast<generated.mpv_event_property>();
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+        if (!_duration.isCompleted) {
+          _duration.complete(
+              (prop.ref.data.cast<Double>().value * 1e6 ~/ 1).toString());
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-bitrate' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+        if (!_bitrate.isCompleted) {
+          _bitrate.complete(
+              (prop.ref.data.cast<Double>().value * 1e6 ~/ 1).toString());
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'metadata' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+        final metadata = <String, String>{};
+        final data = prop.ref.data.cast<generated.mpv_node>().ref.u.list;
+        for (int i = 0; i < data.ref.num; i++) {
+          metadata[data.ref.keys[i].cast<Utf8>().toDartString()] =
+              data.ref.values[i].u.string.cast<Utf8>().toDartString();
+        }
+        final _ = {...metadata}.forEach(
+          (key, value) {
+            metadata[key.toLowerCase()] = value;
+          },
+        );
+        if (_path != null) {
+          _command(
+            [
+              'screenshot-to-file',
+              _path!,
+              null,
+            ],
+          );
+        }
+        if (_directory != null) {
+          _command(
+            [
+              'screenshot-to-file',
+              join(
+                _directory!,
+                '${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}.PNG'
+                    .replaceAll(RegExp(r'[\\/:*?""<>| ]'), ''),
+              ),
+              null,
+            ],
+          );
+        }
+        if (!_metadata.isCompleted) {
+          _metadata.complete(metadata);
+        }
+      }
+    }
+  }
+
   Future<void> _create() async {
     _handle = await create(
       mpvDynamicLibraryPath,
-      (event) async {
-        if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
-          _end_file_count++;
-          if (_end_file_count > 1 && !_metadata.isCompleted) {
-            _metadata.complete({});
-          }
-        }
-        if (event.ref.event_id ==
-            generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
-          final prop = event.ref.data.cast<generated.mpv_event_property>();
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
-              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-            if (!_duration.isCompleted) {
-              _duration.complete(
-                  (prop.ref.data.cast<Double>().value * 1e6 ~/ 1).toString());
-            }
-          }
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-bitrate' &&
-              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-            if (!_bitrate.isCompleted) {
-              _bitrate.complete(
-                  (prop.ref.data.cast<Double>().value * 1e6 ~/ 1).toString());
-            }
-          }
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'metadata' &&
-              prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
-            final metadata = <String, String>{};
-            final data = prop.ref.data.cast<generated.mpv_node>().ref.u.list;
-            for (int i = 0; i < data.ref.num; i++) {
-              metadata[data.ref.keys[i].cast<Utf8>().toDartString()] =
-                  data.ref.values[i].u.string.cast<Utf8>().toDartString();
-            }
-            final _ = {...metadata}.forEach(
-              (key, value) {
-                metadata[key.toLowerCase()] = value;
-              },
-            );
-            if (_path != null) {
-              _command(
-                [
-                  'screenshot-to-file',
-                  _path!,
-                  null,
-                ],
-              );
-            }
-            if (_directory != null) {
-              _command(
-                [
-                  'screenshot-to-file',
-                  join(
-                    _directory!,
-                    '${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}.PNG'
-                        .replaceAll(RegExp(r'[\\/:*?""<>| ]'), ''),
-                  ),
-                  null,
-                ],
-              );
-            }
-            if (!_metadata.isCompleted) {
-              _metadata.complete(metadata);
-            }
-          }
-        }
-      },
+      _handler,
     );
     final property = 'metadata'.toNativeUtf8();
     mpv.mpv_observe_property(
@@ -208,6 +210,7 @@ class Tagger {
     calloc.free(property);
     final vo = 'vo'.toNativeUtf8();
     final ao = 'ao'.toNativeUtf8();
+    final osd = 'osd'.toNativeUtf8();
     final value = 'null'.toNativeUtf8();
     mpv.mpv_set_option_string(
       _handle,
@@ -219,33 +222,63 @@ class Tagger {
       ao.cast(),
       value.cast(),
     );
+    mpv.mpv_set_option_string(
+      _handle,
+      osd.cast(),
+      value.cast(),
+    );
     calloc.free(vo);
     calloc.free(ao);
     calloc.free(value);
+    <String, int>{
+      'demuxer-max-bytes': 10,
+      'demuxer-max-back-bytes': 10,
+    }.forEach((key, value) {
+      final _key = key.toNativeUtf8();
+      final _value = calloc<Int64>()..value = value;
+      mpv.mpv_set_property(
+        _handle,
+        _key.cast(),
+        generated.mpv_format.MPV_FORMAT_INT64,
+        _value.cast(),
+      );
+      calloc.free(_key);
+      calloc.free(_value);
+    });
+    final cache = 'cache'.toNativeUtf8();
+    final hwdec = 'hwdec'.toNativeUtf8();
+    final no = 'no'.toNativeUtf8();
+    mpv.mpv_set_property_string(
+      _handle,
+      cache.cast(),
+      no.cast(),
+    );
+    mpv.mpv_set_property_string(
+      _handle,
+      hwdec.cast(),
+      no.cast(),
+    );
+    calloc.free(cache);
+    calloc.free(no);
     _completer.complete();
   }
 
   /// Calls MPV command passed as [args]. Automatically freeds memory after command sending.
   void _command(List<String?> args) {
-    final ptr = args
-        .map((String? string) =>
-            string == null ? nullptr : string.toNativeUtf8())
-        .toList()
-        .cast<Pointer<Utf8>>();
-    final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join('').length);
-    for (int index = 0; index < args.length; index++) {
-      arr[index] = ptr[index];
+    final List<Pointer<Utf8>> pointers = args.map<Pointer<Utf8>>((e) {
+      if (e == null) return nullptr.cast();
+      return e.toNativeUtf8();
+    }).toList();
+    final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join().length);
+    for (int i = 0; i < args.length; i++) {
+      arr[i] = pointers[i];
     }
     mpv.mpv_command(
       _handle,
       arr.cast(),
     );
-    for (int i = 0; i < args.length; i++) {
-      if (args[i] != null) {
-        calloc.free(ptr[i]);
-      }
-    }
     calloc.free(arr);
+    pointers.forEach(calloc.free);
   }
 
   /// [Pointer] to [generated.mpv_handle] of this instance.

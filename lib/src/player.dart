@@ -117,6 +117,7 @@ class Player {
     Playlist playlist, {
     bool play = true,
   }) async {
+    medias.clear();
     await _completer.future;
     _command(
       [
@@ -579,15 +580,37 @@ class Player {
       );
       calloc.free(ptr);
     });
+    <String, int>{
+      'demuxer-max-bytes': 1024,
+      'demuxer-max-back-bytes': 1024,
+    }.forEach((key, value) {
+      final _key = key.toNativeUtf8();
+      final _value = calloc<Int64>()..value = value;
+      mpv.mpv_set_property(
+        _handle,
+        _key.cast(),
+        generated.mpv_format.MPV_FORMAT_INT64,
+        _value.cast(),
+      );
+      calloc.free(_key);
+      calloc.free(_value);
+    });
     if (!video) {
-      final name = 'vo'.toNativeUtf8();
+      final vo = 'vo'.toNativeUtf8();
+      final osd = 'osd'.toNativeUtf8();
       final value = 'null'.toNativeUtf8();
       mpv.mpv_set_option_string(
         _handle,
-        name.cast(),
+        vo.cast(),
         value.cast(),
       );
-      calloc.free(name);
+      mpv.mpv_set_option_string(
+        _handle,
+        osd.cast(),
+        value.cast(),
+      );
+      calloc.free(vo);
+      calloc.free(osd);
       calloc.free(value);
     }
     if (osc) {
@@ -606,37 +629,41 @@ class Player {
       final name = 'title'.toNativeUtf8();
       final value = title!.toNativeUtf8();
       mpv.mpv_set_property_string(
-        handle,
+        _handle,
         name.cast(),
         value.cast(),
       );
       calloc.free(name);
       calloc.free(value);
     }
+    final cache = 'cache'.toNativeUtf8();
+    final no = 'no'.toNativeUtf8();
+    mpv.mpv_set_property_string(
+      _handle,
+      cache.cast(),
+      no.cast(),
+    );
+    calloc.free(cache);
+    calloc.free(no);
     _completer.complete();
   }
 
   /// Calls MPV command passed as [args]. Automatically freeds memory after command sending.
   void _command(List<String?> args) {
-    final ptr = args
-        .map((String? string) =>
-            string == null ? nullptr : string.toNativeUtf8())
-        .toList()
-        .cast<Pointer<Utf8>>();
-    final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join('').length);
-    for (int index = 0; index < args.length; index++) {
-      arr[index] = ptr[index];
+    final List<Pointer<Utf8>> pointers = args.map<Pointer<Utf8>>((e) {
+      if (e == null) return nullptr.cast();
+      return e.toNativeUtf8();
+    }).toList();
+    final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join().length);
+    for (int i = 0; i < args.length; i++) {
+      arr[i] = pointers[i];
     }
     mpv.mpv_command(
       _handle,
       arr.cast(),
     );
-    for (int i = 0; i < args.length; i++) {
-      if (args[i] != null) {
-        calloc.free(ptr[i]);
-      }
-    }
     calloc.free(arr);
+    pointers.forEach(calloc.free);
   }
 
   /// Whether video is visible or not.
