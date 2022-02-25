@@ -54,11 +54,13 @@ void mainloop(SendPort port) async {
   /// Raw address is sent as [int] since we cannot transfer objects through Native Ports, only primatives.
   port.send(handle.address);
 
+  var isRelease = bool.fromEnvironment('dart.vm.product');
+
   /// Lookup for events & send to main thread through [SendPort].
   /// Ensuring the successful sending of the last event before moving to next [MPV.mpv_wait_event].
   while (true) {
     completer = Completer();
-    Pointer<mpv_event> event = mpv.mpv_wait_event(handle, -1);
+    Pointer<mpv_event> event = mpv.mpv_wait_event(handle, isRelease ? -1 : 0.1);
 
     /// Sending raw address of [mpv_event].
     port.send(event.address);
