@@ -3,7 +3,7 @@ import 'dart:async';
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
 
-const String _kRequestAuthority = 'music.youtube.com';
+const String _kRequestAuthority = 'www.youtube.com';
 const String _kRequestKey = 'AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30';
 const Map<String, String> _kRequestHeaders = {
   'accept': '*/*',
@@ -14,7 +14,7 @@ const Map<String, String> _kRequestHeaders = {
   'sec-fetch-dest': 'empty',
   'sec-fetch-mode': 'same-origin',
   'sec-fetch-site': 'same-origin',
-  'x-origin': 'https://music.youtube.com',
+  'x-origin': 'https://www.youtube.com',
   'x-youtube-client-name': '67',
   'x-youtube-client-version': '1.20210823.00.00',
 };
@@ -26,7 +26,7 @@ const Map<String, dynamic> _kRequestPayload = {
       'clientVersion': '16.43.34',
     },
     'thirdParty': {
-      'embedUrl': 'https://music.youtube.com',
+      'embedUrl': 'https://www.youtube.com',
     },
   },
 };
@@ -36,9 +36,7 @@ class YouTube {
     int port = 6900,
   }) {
     _port = port;
-    try {
-      _create();
-    } catch (_) {}
+    _create().catchError((_) {});
   }
 
   Future<void> close() => _server.close();
@@ -71,11 +69,11 @@ class YouTube {
       if (format['itag'] == 251) {
         opus = format['url'];
       }
-      if (format['itag'] == 18) {
-        mp4 = format['url'];
-      }
       if (format['itag'] == 140) {
         aac = format['url'];
+      }
+      if (format['itag'] == 18) {
+        mp4 = format['url'];
       }
     }
     return (opus ?? aac ?? mp4)!;
@@ -128,20 +126,23 @@ abstract class Plugins {
   static bool isExternalMedia(Uri uri) =>
       uri.toString().contains('youtu') && uri.toString().contains('/');
 
-  static String artwork(Uri uri) {
+  static String artwork(
+    Uri uri, {
+    bool small = false,
+  }) {
     final string = uri.toString();
     if (string.contains('youtu') && string.contains('/')) {
       // YouTube links of the form https://www.youtube.com/watch?v=abcdefghijk.
       if (string.contains('/watch?v=')) {
-        return 'https://img.youtube.com/vi/${string.substring(string.indexOf('=') + 1).split('&').first}/maxresdefault.jpg';
+        return 'https://img.youtube.com/vi/${string.substring(string.indexOf('=') + 1).split('&').first}/${small ? 'hq1' : 'maxresdefault'}.jpg';
       }
       // Re-directed YouTube links of the form https://127.0.0.1:6900/youtube?id=abcdefghijk.
       else if (string.contains('127.0.0.1')) {
-        return 'https://img.youtube.com/vi/${uri.toString().split('=').last}/maxresdefault.jpg';
+        return 'https://img.youtube.com/vi/${uri.toString().split('=').last}/${small ? 'hq1' : 'maxresdefault'}.jpg';
       }
       // YouTube links of the form https://youtu.be/abcdefghijk/.
       else {
-        return 'https://img.youtube.com/vi/${string.substring(string.indexOf('.be/') + 4).split('/').first}/maxresdefault.jpg';
+        return 'https://img.youtube.com/vi/${string.substring(string.indexOf('.be/') + 4).split('/').first}/${small ? 'hq1' : 'maxresdefault'}.jpg';
       }
     }
     throw FormatException();
