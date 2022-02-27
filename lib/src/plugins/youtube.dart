@@ -4,7 +4,7 @@ import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
 
 const String _kRequestAuthority = 'www.youtube.com';
-const String _kRequestKey = 'AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30';
+const String _kRequestKey = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8';
 const Map<String, String> _kRequestHeaders = {
   'accept': '*/*',
   'accept-language': 'en-GB,en;q=0.9,en-US;q=0.8',
