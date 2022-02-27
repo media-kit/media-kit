@@ -134,15 +134,15 @@ abstract class Plugins {
     if (string.contains('youtu') && string.contains('/')) {
       // YouTube links of the form https://www.youtube.com/watch?v=abcdefghijk.
       if (string.contains('/watch?v=')) {
-        return 'https://img.youtube.com/vi/${string.substring(string.indexOf('=') + 1).split('&').first}/${small ? 'hq1' : 'maxresdefault'}.jpg';
+        return 'https://i.ytimg.com/vi_webp/${string.substring(string.indexOf('=') + 1).split('&').first}/${small ? 'mqdefault' : 'maxresdefault'}.webp';
       }
       // Re-directed YouTube links of the form https://127.0.0.1:6900/youtube?id=abcdefghijk.
       else if (string.contains('127.0.0.1')) {
-        return 'https://img.youtube.com/vi/${uri.toString().split('=').last}/${small ? 'hq1' : 'maxresdefault'}.jpg';
+        return 'https://i.ytimg.com/vi_webp/${uri.toString().split('=').last}/${small ? 'mqdefault' : 'maxresdefault'}.webp';
       }
       // YouTube links of the form https://youtu.be/abcdefghijk/.
       else {
-        return 'https://img.youtube.com/vi/${string.substring(string.indexOf('.be/') + 4).split('/').first}/${small ? 'hq1' : 'maxresdefault'}.jpg';
+        return 'https://i.ytimg.com/vi_webp/${string.substring(string.indexOf('.be/') + 4).split('/').first}/${small ? 'mqdefault' : 'maxresdefault'}.webp';
       }
     }
     throw FormatException();
