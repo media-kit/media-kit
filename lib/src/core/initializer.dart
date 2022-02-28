@@ -13,6 +13,9 @@ import 'package:libmpv/generated/bindings.dart';
 /// Late initialized [MPV] object from ffigen.
 late MPV mpv;
 
+/// Detect if app running in release mode.
+const isReleaseMode = bool.fromEnvironment('dart.vm.product');
+
 /// Runs on separate isolate.
 /// Calls [MPV.mpv_create] & [MPV.mpv_initialize] to create a new [mpv_handle].
 /// Uses [MPV.mpv_wait_event] to wait for the next event & notifies through the passed [SendPort] as the argument.
@@ -34,6 +37,7 @@ void mainloop(SendPort port) async {
 
   /// Separately creating [MPV] object since isolates don't share variables.
   late MPV mpv;
+
   receiver.listen((message) {
     if (message is String) {
       /// Initializing the local [MPV] object.
@@ -55,13 +59,12 @@ void mainloop(SendPort port) async {
   /// Raw address is sent as [int] since we cannot transfer objects through Native Ports, only primatives.
   port.send(handle.address);
 
-  var isRelease = bool.fromEnvironment('dart.vm.product');
-
   /// Lookup for events & send to main thread through [SendPort].
   /// Ensuring the successful sending of the last event before moving to next [MPV.mpv_wait_event].
   while (true) {
     completer = Completer();
-    Pointer<mpv_event> event = mpv.mpv_wait_event(handle, isRelease ? -1 : 0.1);
+    Pointer<mpv_event> event =
+        mpv.mpv_wait_event(handle, isReleaseMode ? -1 : 0.1);
 
     /// Sending raw address of [mpv_event].
     port.send(event.address);
