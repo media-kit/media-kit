@@ -62,6 +62,7 @@ class Tagger {
     bool bitrate = false,
     Duration timeout = const Duration(seconds: 5),
   }) async {
+    _uri = uri;
     _end_file_count = 0;
     _directory = coverDirectory?.path;
     _path = cover?.absolute.path;
@@ -166,6 +167,10 @@ class Tagger {
             metadata[key.toLowerCase()] = value;
           },
         );
+        // libmpv doesn't seem to read ALBUMARTIST.
+        if (_uri!.toUpperCase().endsWith('.FLAC')) {
+          metadata['album_artist'] = metadata['artist']!.split('/').first;
+        }
         if (_path != null) {
           _command(
             [
@@ -290,6 +295,9 @@ class Tagger {
   Completer<Map<String, String>> _metadata = Completer();
   Completer<String> _duration = Completer();
   Completer<String> _bitrate = Completer();
+
+  /// Current URI
+  String? _uri;
 
   /// Path where cover will be saved.
   String? _path;
