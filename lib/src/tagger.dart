@@ -62,7 +62,6 @@ class Tagger {
     Duration timeout = const Duration(seconds: 5),
   }) async {
     _uri = uri;
-    _end_file_count = 0;
     _directory = coverDirectory?.path;
     _path = cover?.absolute.path;
     await cover?.parent.create(recursive: true);
@@ -131,9 +130,13 @@ class Tagger {
 
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
-      _end_file_count++;
-      if (_end_file_count > 1 && !_metadata.isCompleted) {
-        _metadata.complete({});
+      if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
+              generated.mpv_end_file_reason.MPV_END_FILE_REASON_ERROR ||
+          event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
+              generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
+        if (!_metadata.isCompleted) {
+          _metadata.complete({});
+        }
       }
     }
     if (event.ref.event_id ==
@@ -167,7 +170,8 @@ class Tagger {
           },
         );
         // libmpv doesn't seem to read ALBUMARTIST.
-        if (_uri!.toUpperCase().endsWith('.FLAC')) {
+        if (_uri!.toUpperCase().endsWith('.FLAC') &&
+            metadata.containsKey('artist')) {
           metadata['album_artist'] = metadata['artist']!.split('/').first;
         }
         if (_path != null) {
@@ -303,6 +307,4 @@ class Tagger {
 
   /// Path to parent folder where cover will be saved.
   String? _directory;
-
-  int _end_file_count = 0;
 }
