@@ -172,6 +172,7 @@ class Tagger {
         );
         // libmpv doesn't seem to read ALBUMARTIST.
         if (_uri!.toUpperCase().endsWith('.FLAC') &&
+            !metadata.containsKey('album_artist') &&
             metadata.containsKey('artist')) {
           metadata['album_artist'] = metadata['artist']!.split('/').first;
         }
