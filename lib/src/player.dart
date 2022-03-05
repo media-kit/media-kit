@@ -54,6 +54,7 @@ class Player {
     this.video = true,
     this.osc = true,
     bool yt = true,
+    this.crossfade = Duration.zero,
     this.title,
     void Function()? onCreate,
   }) {
@@ -465,11 +466,13 @@ class Player {
         _volumeController,
         _rateController,
         _isBufferingController,
+        _errorController,
       ],
     );
     _handle = await create(
       mpvDynamicLibraryPath,
       (event) async {
+        _error(event.ref.error);
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
           state.isCompleted = false;
           state.isPlaying = true;
@@ -581,8 +584,8 @@ class Player {
       calloc.free(ptr);
     });
     <String, int>{
-      'demuxer-max-bytes': 1024,
-      'demuxer-max-back-bytes': 1024,
+      'demuxer-max-bytes': 10240,
+      'demuxer-max-back-bytes': 10240,
     }.forEach((key, value) {
       final _key = key.toNativeUtf8();
       final _value = calloc<Int64>()..value = value;
@@ -648,6 +651,18 @@ class Player {
     _completer.complete();
   }
 
+  /// Adds an error to the [Player.stream.error].
+  void _error(int code) {
+    if (code < 0 && !_errorController.isClosed) {
+      _errorController.add(
+        _PlayerError(
+          code,
+          mpv.mpv_error_string(code).cast<Utf8>().toDartString(),
+        ),
+      );
+    }
+  }
+
   /// Calls MPV command passed as [args]. Automatically freeds memory after command sending.
   void _command(List<String?> args) {
     final List<Pointer<Utf8>> pointers = args.map<Pointer<Utf8>>((e) {
@@ -674,6 +689,9 @@ class Player {
 
   /// User defined window title for the MPV instance.
   final String? title;
+
+  /// cross-fade [Duration].
+  Duration crossfade;
 
   /// YouTube daemon to serve links.
   YouTube? youtube;
@@ -717,6 +735,18 @@ class Player {
   /// Internally used [StreamController].
   final StreamController<bool> _isBufferingController =
       StreamController.broadcast();
+
+  /// Internally used [StreamController].
+  final StreamController<_PlayerError> _errorController =
+      StreamController.broadcast();
+}
+
+/// Private class to raise errors by the [Player].
+class _PlayerError {
+  final int id;
+  final String message;
+
+  _PlayerError(this.id, this.message);
 }
 
 /// Private class to keep state of the [Player].
@@ -778,6 +808,9 @@ class _PlayerStreams {
   /// Whether the [Player] has stopped for buffering.
   late Stream<bool> isBuffering;
 
+  /// [Stream] raising [_PlayerError]s.
+  late Stream<_PlayerError> error;
+
   _PlayerStreams(List<StreamController> controllers) {
     playlist = controllers[0].stream.cast();
     isPlaying = controllers[1].stream.cast();
@@ -788,5 +821,6 @@ class _PlayerStreams {
     volume = controllers[6].stream.cast();
     rate = controllers[7].stream.cast();
     isBuffering = controllers[8].stream.cast();
+    error = controllers[9].stream.cast();
   }
 }
