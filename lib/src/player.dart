@@ -162,7 +162,7 @@ class Player {
       generated.mpv_format.MPV_FORMAT_INT64,
       pos.cast(),
     );
-    if (pos.value == 0 || state.isCompleted) {
+    if (pos.value <= 0 || state.isCompleted) {
       jump(0);
     }
     calloc.free(name);
