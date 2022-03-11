@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
+import '../core/initializer.dart' show isReleaseMode;
 
 const String _kRequestAuthority = 'www.youtube.com';
 const String _kRequestKey = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8';
@@ -35,7 +37,8 @@ class YouTube {
   YouTube({
     int port = 6900,
   }) {
-    _port = port;
+    /// If is debug mode use different port from release mode
+    _port = isReleaseMode ? port : math.Random().nextInt(999) + 6000;
     _create().catchError((_) {});
   }
 
