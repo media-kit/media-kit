@@ -55,14 +55,14 @@ class Tagger {
   /// Throws exception if an invalid, corrupt or inexistent [Media] is passed.
   ///
   Future<Map<String, String>> parse(
-    String uri, {
+    Media media, {
     File? cover,
     Directory? coverDirectory,
     bool duration = false,
     bool bitrate = false,
     Duration timeout = const Duration(seconds: 5),
   }) async {
-    _uri = uri;
+    _uri = media.uri;
     _directory = coverDirectory?.path;
     _path = cover?.absolute.path;
     await cover?.parent.create(recursive: true);
@@ -87,7 +87,7 @@ class Tagger {
     _command(
       [
         'loadfile',
-        uri,
+        media.uri,
         'replace',
       ],
     );
@@ -108,7 +108,7 @@ class Tagger {
     if (bitrate) {
       metadata['bitrate'] = await _bitrate.future.timeout(timeout);
     }
-    metadata['uri'] = uri;
+    metadata['uri'] = media.uri;
     final stop = 'stop'.toNativeUtf8().cast();
     mpv.mpv_command_string(
       _handle,
@@ -191,7 +191,7 @@ class Tagger {
               'screenshot-to-file',
               join(
                 _directory!,
-                '${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}.PNG'
+                '${metadata['title'] ?? _uri!.split('/').last}${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}.PNG'
                     .replaceAll(RegExp(r'[\\/:*?""<>| ]'), ''),
               ),
               null,
