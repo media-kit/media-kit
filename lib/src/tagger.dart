@@ -190,7 +190,10 @@ class Tagger {
               'screenshot-to-file',
               join(
                 _directory!,
-                '${metadata['title'] ?? _uri!.split('/').last}${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}.PNG'
+                '${[
+                  null,
+                  ''
+                ].contains(metadata['title']) ? basename(Uri.parse(_uri!).toFilePath()) : metadata['title']}${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}.PNG'
                     .replaceAll(RegExp(r'[\\/:*?""<>| ]'), ''),
               ),
               null,
