@@ -585,8 +585,8 @@ class Player {
       calloc.free(ptr);
     });
     <String, int>{
-      'demuxer-max-bytes': 10240,
-      'demuxer-max-back-bytes': 10240,
+      'demuxer-max-bytes': 4096000,
+      'demuxer-max-back-bytes': 4096000,
     }.forEach((key, value) {
       final _key = key.toNativeUtf8();
       final _value = calloc<Int64>()..value = value;
