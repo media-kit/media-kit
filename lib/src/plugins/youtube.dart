@@ -114,7 +114,10 @@ late int _port;
 abstract class Plugins {
   static Uri redirect(Uri uri) {
     final string = uri.toString();
-    if (string.contains('youtu') && string.contains('/')) {
+    if ((string.contains('.youtube') ||
+            string.contains('youtu.be') ||
+            string.contains('/youtu')) &&
+        string.contains('/')) {
       final path = 'http://127.0.0.1:$_port/youtube?id=';
       if (string.contains('/watch?v=')) {
         return Uri.parse(
@@ -127,23 +130,26 @@ abstract class Plugins {
   }
 
   static bool isWebMedia(Uri uri) =>
-      uri.toString().contains('youtu') && uri.toString().contains('/');
+      (uri.toString().contains('.youtube') ||
+          uri.toString().contains('youtu.be') ||
+          uri.toString().contains('/youtu')) &&
+      uri.toString().contains('/');
 
   static String artwork(
     Uri uri, {
     bool small = false,
   }) {
     final string = uri.toString();
-    if (string.contains('youtu') && string.contains('/')) {
-      // YouTube links of the form https://www.youtube.com/watch?v=abcdefghijk.
+    if (isWebMedia(uri)) {
+      // YouTube links of the form https://www.youtube.com/watch?v=abc.
       if (string.contains('/watch?v=')) {
         return 'https://i.ytimg.com/vi/${string.substring(string.indexOf('=') + 1).split('&').first}/${small ? 'mqdefault' : 'maxresdefault'}.jpg';
       }
-      // Re-directed YouTube links of the form https://127.0.0.1:6900/youtube?id=abcdefghijk.
+      // Re-directed YouTube links of the form https://127.0.0.1:6900/youtube?id=abc.
       else if (string.contains('127.0.0.1')) {
         return 'https://i.ytimg.com/vi/${uri.toString().split('=').last}/${small ? 'mqdefault' : 'maxresdefault'}.jpg';
       }
-      // YouTube links of the form https://youtu.be/abcdefghijk/.
+      // YouTube links of the form https://youtu.be/abc/.
       else {
         return 'https://i.ytimg.com/vi/${string.substring(string.indexOf('.be/') + 4).split('/').first}/${small ? 'mqdefault' : 'maxresdefault'}.jpg';
       }
