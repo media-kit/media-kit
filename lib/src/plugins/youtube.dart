@@ -126,7 +126,7 @@ abstract class Plugins {
     return uri;
   }
 
-  static bool isExternalMedia(Uri uri) =>
+  static bool isWebMedia(Uri uri) =>
       uri.toString().contains('youtu') && uri.toString().contains('/');
 
   static String artwork(
