@@ -104,9 +104,14 @@ abstract class MPV {
             '/usr/lib/x86_64-linux-gnu/$kLinuxDynamicLibrary';
         return;
       }
-      // For Other Distros
+      // For Arch and other Distros
       else if (await File('/usr/lib/$kLinuxDynamicLibrary').exists()) {
         mpvDynamicLibraryPath = '/usr/lib/$kLinuxDynamicLibrary';
+        return;
+      }
+      // For Fedora and other Distros
+      else if (await File('/usr/lib64/$kLinuxDynamicLibrary').exists()) {
+        mpvDynamicLibraryPath = '/usr/lib64/$kLinuxDynamicLibrary';
         return;
       }
       throw Exception(
