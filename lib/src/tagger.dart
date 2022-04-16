@@ -218,8 +218,9 @@ class Tagger {
   }
 
   Future<void> _create() async {
+    if (libmpv == null) return;
     _handle = await create(
-      mpvDynamicLibraryPath,
+      libmpv!,
       _handler,
     );
     final property = 'metadata'.toNativeUtf8();

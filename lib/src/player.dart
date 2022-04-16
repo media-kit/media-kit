@@ -457,6 +457,7 @@ class Player {
   }
 
   Future<void> _create() async {
+    if (libmpv == null) return;
     streams = _PlayerStreams(
       [
         _playlistController,
@@ -472,7 +473,7 @@ class Player {
       ],
     );
     _handle = await create(
-      mpvDynamicLibraryPath,
+      libmpv!,
       (event) async {
         _error(event.ref.error);
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
