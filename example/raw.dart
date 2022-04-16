@@ -15,7 +15,7 @@ Future<void> main(List<String> args) async {
   await dlib.MPV.initialize();
 
   var handle = await create(
-    dlib.mpvDynamicLibraryPath,
+    dlib.libmpv!,
     (event) async {
       if (event.ref.event_id == mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
         var prop = event.ref.data.cast<mpv_event_property>();
