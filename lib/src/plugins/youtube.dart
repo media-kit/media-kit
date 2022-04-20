@@ -3,7 +3,6 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
-import '../core/initializer.dart' show isReleaseMode;
 
 const String _kRequestAuthority = 'www.youtube.com';
 const String _kRequestKey = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8';
@@ -38,8 +37,11 @@ class YouTube {
     int port = 6900,
   }) {
     /// If is debug mode use different port from release mode
-    _port = isReleaseMode ? port : math.Random().nextInt(999) + 6000;
-    _create().catchError((_) {});
+    _port = math.Random().nextInt((1 << 16) - 1);
+    _create().catchError((exception, stacktrace) {
+      print(exception);
+      print(stacktrace);
+    });
   }
 
   Future<void> close() => _server.close();
@@ -79,6 +81,7 @@ class YouTube {
         mp4 = format['url'];
       }
     }
+    print('🕊️🕊️🕊️ ${opus ?? aac ?? mp4}');
     return (opus ?? aac ?? mp4)!;
   }
 
