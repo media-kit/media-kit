@@ -81,7 +81,6 @@ class YouTube {
         mp4 = format['url'];
       }
     }
-    print('🕊️🕊️🕊️ ${opus ?? aac ?? mp4}');
     return (opus ?? aac ?? mp4)!;
   }
 
