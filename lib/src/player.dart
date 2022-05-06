@@ -119,7 +119,19 @@ class Player {
     bool play = true,
     int? start,
   }) async {
+    // Clean-up existing cached [medias].
     medias.clear();
+    // Restore current playlist.
+    for (final media in playlist) {
+      medias[() {
+        // Match with format retrieved by `mpv_get_property`.
+        if (media.uri.startsWith('file')) {
+          return Uri.parse(media.uri).toFilePath().replaceAll('\\', '/');
+        } else {
+          return media.uri;
+        }
+      }()] = media;
+    }
     await _completer.future;
     _command(
       [
@@ -465,7 +477,9 @@ class Player {
           calloc.free(name);
           calloc.free(data);
         }
-      } catch (_) {
+      } catch (exception, stacktrace) {
+        print(exception);
+        print(stacktrace);
         _command(
           [
             'playlist-unshuffle',
