@@ -165,12 +165,14 @@ class Player {
     // automatically.
     // Thanks to <github.com/DomingoMG> for the fix!
     state.playlist = playlist;
+    // To wait for the index change [jump] call.
     if (play) {
+      state.index = start ?? 0;
       await jump(start ?? 0);
     }
-    // L557-L558
-    // To wait for the index change [jump] call.
-    // _playlistController.add(state.playlist);
+    if (!play) {
+      _playlistController.add(state.playlist);
+    }
   }
 
   /// Starts playing the [Player].
@@ -277,13 +279,14 @@ class Player {
       ],
     );
     var name = 'playlist-pos-1'.toNativeUtf8();
-    var value = calloc<Int64>()..value = index + 1;
+    final value = calloc<Int64>()..value = index + 1;
     mpv.mpv_set_property(
       _handle,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_INT64,
       value.cast(),
     );
+    calloc.free(name);
     name = 'pause'.toNativeUtf8();
     final flag = calloc<Int8>();
     flag.value = 0;
@@ -296,6 +299,8 @@ class Player {
     calloc.free(name);
     calloc.free(flag);
     calloc.free(value);
+    _playlistController.add(state.playlist);
+    _indexController.add(state.index);
   }
 
   /// Moves the playlist [Media] at [from], so that it takes the place of the [Media] [to].
@@ -577,8 +582,6 @@ class Player {
             final index = prop.ref.data.cast<Int64>().value - 1;
             state.index = index;
             if (!_indexController.isClosed) {
-              _playlistController.add(state.playlist);
-              // L159-L160
               _indexController.add(index);
             }
           }
@@ -796,7 +799,7 @@ class _PlayerState {
   bool isPlaying = false;
 
   /// If the [Player]'s playback is completed.
-  bool isCompleted = true;
+  bool isCompleted = false;
 
   /// Current playback position of the [Player].
   Duration position = Duration.zero;
