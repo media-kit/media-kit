@@ -117,6 +117,7 @@ class Player {
   Future<void> open(
     Playlist playlist, {
     bool play = true,
+    int? start,
   }) async {
     medias.clear();
     await _completer.future;
@@ -136,20 +137,28 @@ class Player {
         [
           'loadfile',
           playlist[i].uri,
-          (i == 0 && play) ? 'replace' : 'append',
+          // if [play] is true & no [start] index is given, start playing first [Media] & append other.
+          (i == 0 && play && start == null)
+              ? 'replace'
+              // if [play] is true & a [start] index is given, start playing [Media] at [start] & append others.
+              : (play && start == i)
+                  ? 'append-play'
+                  : 'append',
         ],
       );
     }
-    state.playlist = playlist;
-    _playlistController.add(state.playlist);
     // Even though `replace` parameter in `loadfile` automatically causes the
     // [Media] to play but in certain cases like, where a [Media] is paused & then
     // new [Media] is [Player.open]ed it causes [Media] to not starting playing
     // automatically.
     // Thanks to <github.com/DomingoMG> for the fix!
+    state.playlist = playlist;
     if (play) {
-      this.play();
+      await jump(start ?? 0);
     }
+    // L557-L558
+    // To wait for the index change [jump] call.
+    // _playlistController.add(state.playlist);
   }
 
   /// Starts playing the [Player].
@@ -255,15 +264,25 @@ class Player {
         index.toString(),
       ],
     );
-    final name = 'playlist-pos-1'.toNativeUtf8();
-    final value = calloc<Int64>()..value = index + 1;
+    var name = 'playlist-pos-1'.toNativeUtf8();
+    var value = calloc<Int64>()..value = index + 1;
     mpv.mpv_set_property(
       _handle,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_INT64,
       value.cast(),
     );
+    name = 'pause'.toNativeUtf8();
+    final flag = calloc<Int8>();
+    flag.value = 0;
+    mpv.mpv_set_property(
+      _handle,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_FLAG,
+      flag.cast(),
+    );
     calloc.free(name);
+    calloc.free(flag);
     calloc.free(value);
   }
 
@@ -544,6 +563,8 @@ class Player {
             final index = prop.ref.data.cast<Int64>().value - 1;
             state.index = index;
             if (!_indexController.isClosed) {
+              _playlistController.add(state.playlist);
+              // L159-L160
               _indexController.add(index);
             }
           }
@@ -761,7 +782,7 @@ class _PlayerState {
   bool isPlaying = false;
 
   /// If the [Player]'s playback is completed.
-  bool isCompleted = false;
+  bool isCompleted = true;
 
   /// Current playback position of the [Player].
   Duration position = Duration.zero;
