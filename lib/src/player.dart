@@ -4,20 +4,21 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:async';
+import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 
 import 'package:libmpv/src/dynamic_library.dart';
 import 'package:libmpv/src/core/initializer.dart';
 import 'package:libmpv/src/models/media.dart';
+import 'package:libmpv/src/models/playlist.dart';
 import 'package:libmpv/src/models/playlist_mode.dart';
 
 import 'package:libmpv/generated/bindings.dart' as generated;
 
 import 'package:libmpv/src/plugins/youtube.dart';
-
-typedef Playlist = List<Media>;
 
 /// ## Player
 ///
@@ -26,10 +27,12 @@ typedef Playlist = List<Media>;
 /// ```dart
 /// final player = Player();
 /// player.open(
-///   [
-///     Media('https://alexmercerind.github.io/music.mp3'),
-///     Media('file://C:/documents/video.mp4'),
-///   ],
+///   Playlist(
+///     [
+///       Media('https://alexmercerind.github.io/music.mp3'),
+///       Media('file://C:/documents/video.mp4'),
+///     ],
+///   ),
 /// );
 /// player.play();
 /// ```
@@ -42,10 +45,12 @@ class Player {
   /// ```dart
   /// final player = Player();
   /// player.open(
-  ///   [
-  ///     Media('https://alexmercerind.github.io/music.mp3'),
-  ///     Media('file://C:/documents/video.mp4'),
-  ///   ],
+  ///   Playlist(
+  ///     [
+  ///       Media('https://alexmercerind.github.io/music.mp3'),
+  ///       Media('file://C:/documents/video.mp4'),
+  ///     ],
+  ///   ),
   /// );
   /// player.play();
   /// ```
@@ -88,7 +93,7 @@ class Player {
   /// Disposes the [Player] instance & releases the resources.
   Future<void> dispose({int code = 0}) async {
     await _completer.future;
-    _command(
+    await _command(
       [
         'quit',
         code.toString(),
@@ -99,7 +104,6 @@ class Player {
     _isCompletedController.close();
     _positionController.close();
     _durationController.close();
-    _indexController.close();
     youtube?.close();
   }
 
@@ -108,21 +112,22 @@ class Player {
   ///
   /// ```dart
   /// player.open(
-  ///   [
-  ///     Media('https://alexmercerind.github.io/music.mp3'),
-  ///     Media('file://C:/documents/video.mp4'),
-  ///   ],
+  ///   Playlist(
+  ///     [
+  ///       Media('https://alexmercerind.github.io/music.mp3'),
+  ///       Media('file://C:/documents/video.mp4'),
+  ///     ],
+  ///   ),
   /// );
   /// ```
   Future<void> open(
     Playlist playlist, {
     bool play = true,
-    int? start,
   }) async {
     // Clean-up existing cached [medias].
     medias.clear();
     // Restore current playlist.
-    for (final media in playlist) {
+    for (final media in playlist.medias) {
       medias[() {
         // Match with format retrieved by `mpv_get_property`.
         if (media.uri.startsWith('file')) {
@@ -133,32 +138,25 @@ class Player {
       }()] = media;
     }
     await _completer.future;
-    _command(
+    final completer = Completer<void>();
+    final receiver = ReceivePort()
+      ..listen((value) {
+        if (value == true) {
+          completer.complete();
+        }
+      });
+    final isolate = await Isolate.spawn(
+      _mpvCommandLoadFileIsolate,
       [
-        'playlist-play-index',
-        'none',
+        libmpv!,
+        _handle.address,
+        receiver.sendPort,
+        ...playlist.medias.map((e) => e.uri),
       ],
     );
-    _command(
-      [
-        'playlist-clear',
-      ],
-    );
-    for (int i = 0; i < playlist.length; i++) {
-      _command(
-        [
-          'loadfile',
-          playlist[i].uri,
-          // if [play] is true & no [start] index is given, start playing first [Media] & append other.
-          (i == 0 && play && start == null)
-              ? 'replace'
-              // if [play] is true & a [start] index is given, start playing [Media] at [start] & append others.
-              : (play && start == i)
-                  ? 'append-play'
-                  : 'append',
-        ],
-      );
-    }
+    await completer.future;
+    isolate.kill();
+    receiver.close();
     // Even though `replace` parameter in `loadfile` automatically causes the
     // [Media] to play but in certain cases like, where a [Media] is paused & then
     // new [Media] is [Player.open]ed it causes [Media] to not starting playing
@@ -167,10 +165,8 @@ class Player {
     state.playlist = playlist;
     // To wait for the index change [jump] call.
     if (play) {
-      state.index = start ?? 0;
-      await jump(start ?? 0);
-    }
-    if (!play) {
+      await jump(playlist.index);
+    } else {
       _playlistController.add(state.playlist);
     }
   }
@@ -224,7 +220,7 @@ class Player {
   /// Appends a [Media] to the [Player]'s playlist.
   Future<void> add(Media media) async {
     await _completer.future;
-    _command(
+    await _command(
       [
         'loadfile',
         media.uri,
@@ -232,27 +228,27 @@ class Player {
         null,
       ],
     );
-    state.playlist.add(media);
+    state.playlist.medias.add(media);
     _playlistController.add(state.playlist);
   }
 
   /// Removes the [Media] at specified index from the [Player]'s playlist.
   Future<void> remove(int index) async {
     await _completer.future;
-    _command(
+    await _command(
       [
         'playlist-remove',
         index.toString(),
       ],
     );
-    state.playlist.removeAt(index);
+    state.playlist.medias.removeAt(index);
     _playlistController.add(state.playlist);
   }
 
   /// Jumps to next [Media] in the [Player]'s playlist.
   Future<void> next() async {
     await _completer.future;
-    _command(
+    await _command(
       [
         'playlist-next',
       ],
@@ -262,7 +258,7 @@ class Player {
   /// Jumps to previous [Media] in the [Player]'s playlist.
   Future<void> back() async {
     await _completer.future;
-    _command(
+    await _command(
       [
         'playlist-prev',
       ],
@@ -272,12 +268,6 @@ class Player {
   /// Jumps to specified [Media]'s index in the [Player]'s playlist.
   Future<void> jump(int index) async {
     await _completer.future;
-    _command(
-      [
-        'playlist-play-index',
-        index.toString(),
-      ],
-    );
     var name = 'playlist-pos-1'.toNativeUtf8();
     final value = calloc<Int64>()..value = index + 1;
     mpv.mpv_set_property(
@@ -299,14 +289,14 @@ class Player {
     calloc.free(name);
     calloc.free(flag);
     calloc.free(value);
+    state.playlist.index = index;
     _playlistController.add(state.playlist);
-    _indexController.add(state.index);
   }
 
   /// Moves the playlist [Media] at [from], so that it takes the place of the [Media] [to].
   Future<void> move(int from, int to) async {
     await _completer.future;
-    _command(
+    await _command(
       [
         'playlist-move',
         from.toString(),
@@ -437,7 +427,7 @@ class Player {
   set shuffle(bool shuffle) {
     () async {
       await _completer.future;
-      _command(
+      await _command(
         [
           shuffle ? 'playlist-shuffle' : 'playlist-unshuffle',
         ],
@@ -477,7 +467,7 @@ class Player {
               }
             }
           }
-          state.playlist = playlist;
+          state.playlist.medias = playlist;
           _playlistController.add(state.playlist);
           calloc.free(name);
           calloc.free(data);
@@ -485,7 +475,7 @@ class Player {
       } catch (exception, stacktrace) {
         print(exception);
         print(stacktrace);
-        _command(
+        await _command(
           [
             'playlist-unshuffle',
           ],
@@ -503,7 +493,6 @@ class Player {
         _isCompletedController,
         _positionController,
         _durationController,
-        _indexController,
         _volumeController,
         _rateController,
         _isBufferingController,
@@ -580,9 +569,9 @@ class Player {
           if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos-1' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
             final index = prop.ref.data.cast<Int64>().value - 1;
-            state.index = index;
-            if (!_indexController.isClosed) {
-              _indexController.add(index);
+            state.playlist.index = index;
+            if (!_playlistController.isClosed) {
+              _playlistController.add(state.playlist);
             }
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'volume' &&
@@ -705,21 +694,28 @@ class Player {
   }
 
   /// Calls MPV command passed as [args]. Automatically freeds memory after command sending.
-  void _command(List<String?> args) {
-    final List<Pointer<Utf8>> pointers = args.map<Pointer<Utf8>>((e) {
-      if (e == null) return nullptr.cast();
-      return e.toNativeUtf8();
-    }).toList();
-    final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join().length);
-    for (int i = 0; i < args.length; i++) {
-      arr[i] = pointers[i];
-    }
-    mpv.mpv_command(
-      _handle,
-      arr.cast(),
+  ///
+  /// An [Isolate] is used to prevent blocking of the main thread during native-type marshalling.
+  Future<void> _command(List<String?> args) async {
+    final completer = Completer<void>();
+    final receiver = ReceivePort()
+      ..listen((value) {
+        if (value == true) {
+          completer.complete();
+        }
+      });
+    final isolate = await Isolate.spawn(
+      _mpvCommandIsolate,
+      [
+        libmpv!,
+        _handle.address,
+        receiver.sendPort,
+        ...args,
+      ],
     );
-    calloc.free(arr);
-    pointers.forEach(calloc.free);
+    await completer.future;
+    isolate.kill();
+    receiver.close();
   }
 
   /// Whether video is visible or not.
@@ -744,7 +740,7 @@ class Player {
   final Completer<void> _completer = Completer();
 
   /// Internally used [StreamController].
-  final StreamController<List<Media>> _playlistController =
+  final StreamController<Playlist> _playlistController =
       StreamController.broadcast();
 
   /// Internally used [StreamController].
@@ -762,9 +758,6 @@ class Player {
   /// Internally used [StreamController].
   final StreamController<Duration> _durationController =
       StreamController.broadcast();
-
-  /// Internally used [StreamController].
-  final StreamController<int> _indexController = StreamController.broadcast();
 
   /// Internally used [StreamController].
   final StreamController<double> _volumeController =
@@ -793,7 +786,7 @@ class _PlayerError {
 /// Private class to keep state of the [Player].
 class _PlayerState {
   /// [List] of currently opened [Media]s.
-  Playlist playlist = [];
+  Playlist playlist = Playlist([]);
 
   /// If the [Player] is playing.
   bool isPlaying = false;
@@ -806,9 +799,6 @@ class _PlayerState {
 
   /// Duration of the currently playing [Media] in the [Player].
   Duration duration = Duration.zero;
-
-  /// Index of the currently playing [Media] in the playlist.
-  int index = 0;
 
   /// Current volume of the [Player].
   double volume = 1.0;
@@ -837,9 +827,6 @@ class _PlayerStreams {
   /// Duration of the currently playing [Media] in the [Player].
   late Stream<Duration> duration;
 
-  /// Index of the currently playing [Media] in the playlist.
-  late Stream<int> index;
-
   /// Current volume of the [Player].
   late Stream<double> volume;
 
@@ -858,10 +845,114 @@ class _PlayerStreams {
     isCompleted = controllers[2].stream.cast();
     position = controllers[3].stream.cast();
     duration = controllers[4].stream.cast();
-    index = controllers[5].stream.cast();
-    volume = controllers[6].stream.cast();
-    rate = controllers[7].stream.cast();
-    isBuffering = controllers[8].stream.cast();
-    error = controllers[9].stream.cast();
+    volume = controllers[5].stream.cast();
+    rate = controllers[6].stream.cast();
+    isBuffering = controllers[7].stream.cast();
+    error = controllers[8].stream.cast();
   }
+}
+
+/// Calls MPV command passed as [args]. Automatically freeds memory after command sending.
+///
+/// Contents of [args] should be:
+///
+/// * `args[0]` should be the dynamic library path.
+/// * `args[1]` should be the `mpv_handle` pointer address as [int].
+/// * `args[2]` should be [SendPort] that receives the confirmation of command completion.
+/// * Following arguments should be the command to be sent to MPV.
+Future<void> _mpvCommandIsolate(List<dynamic> args) async {
+  Pointer<Utf8> toNativeUtf8(String e) {
+    final units = utf8.encode(e);
+    final Pointer<Uint8> result = malloc(units.length + 1);
+    final nativeString = result.asTypedList(units.length + 1);
+    nativeString.setAll(0, units);
+    nativeString[units.length] = 0;
+    return result.cast();
+  }
+
+  final List<Pointer<Utf8>> pointers = args.skip(3).map<Pointer<Utf8>>((e) {
+    if (e == null) return nullptr.cast();
+    return toNativeUtf8(e);
+  }).toList();
+  final Pointer<Pointer<Utf8>> arr =
+      calloc.allocate(args.skip(3).join().length);
+  for (int i = 0; i < args.skip(3).length; i++) {
+    arr[i] = pointers[i];
+  }
+  DynamicLibrary.open(args[0])
+      .lookupFunction<
+          Int32 Function(Pointer<generated.mpv_handle>, Pointer<Pointer<Int8>>),
+          int Function(Pointer<generated.mpv_handle>,
+              Pointer<Pointer<Int8>>)>('mpv_command')
+      .call(
+        Pointer.fromAddress(args[1]),
+        arr.cast(),
+      );
+  calloc.free(arr);
+  pointers.forEach(calloc.free);
+  (args[2] as SendPort).send(true);
+}
+
+/// Calls MPV command `loadfile` with multiple media [Uri]s passed as String in [arguments].
+/// Automatically freeds memory after command sending.
+///
+/// Contents of [arguments] should be:
+///
+/// * `args[0]` should be the dynamic library path.
+/// * `args[1]` should be the `mpv_handle` pointer address as [int].
+/// * `args[2]` should be [SendPort] that receives the confirmation of command completion.
+/// * Following arguments should be media [Uri]s passed as [String].
+Future<void> _mpvCommandLoadFileIsolate(List<dynamic> arguments) async {
+  Pointer<Utf8> toNativeUtf8(String e) {
+    final units = utf8.encode(e);
+    final Pointer<Uint8> result = malloc(units.length + 1);
+    final nativeString = result.asTypedList(units.length + 1);
+    nativeString.setAll(0, units);
+    nativeString[units.length] = 0;
+    return result.cast();
+  }
+
+  void mpvCommand(List<String> args) {
+    final List<Pointer<Utf8>> pointers = args.map<Pointer<Utf8>>((e) {
+      return toNativeUtf8(e);
+    }).toList();
+    final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join().length);
+    for (int i = 0; i < args.length; i++) {
+      arr[i] = pointers[i];
+    }
+    DynamicLibrary.open(arguments[0])
+        .lookupFunction<
+            Int32 Function(
+                Pointer<generated.mpv_handle>, Pointer<Pointer<Int8>>),
+            int Function(Pointer<generated.mpv_handle>,
+                Pointer<Pointer<Int8>>)>('mpv_command')
+        .call(
+          Pointer.fromAddress(arguments[1]),
+          arr.cast(),
+        );
+    calloc.free(arr);
+    pointers.forEach(calloc.free);
+  }
+
+  mpvCommand(
+    [
+      'playlist-play-index',
+      'none',
+    ],
+  );
+  mpvCommand(
+    [
+      'playlist-clear',
+    ],
+  );
+  for (final uri in arguments.skip(3)) {
+    mpvCommand(
+      [
+        'loadfile',
+        uri,
+        'append',
+      ],
+    );
+  }
+  (arguments[2] as SendPort).send(true);
 }
