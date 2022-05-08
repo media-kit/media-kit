@@ -15,6 +15,6 @@ class Playlist {
 
   Playlist(
     this.medias, {
-    this.index: 0,
+    this.index = 0,
   });
 }
