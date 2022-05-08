@@ -163,11 +163,11 @@ class Player {
     // Thanks to <github.com/DomingoMG> for the fix!
     state.playlist = playlist;
     // To wait for the index change [jump] call.
-    if (play) {
-      await jump(playlist.index);
-    } else {
+    if (!play) {
+      pause();
       _playlistController.add(state.playlist);
     }
+    await jump(playlist.index, play: play);
   }
 
   /// Starts playing the [Player].
@@ -265,7 +265,10 @@ class Player {
   }
 
   /// Jumps to specified [Media]'s index in the [Player]'s playlist.
-  Future<void> jump(int index) async {
+  Future<void> jump(
+    int index, {
+    bool play = true,
+  }) async {
     await _completer.future;
     var name = 'playlist-pos-1'.toNativeUtf8();
     final value = calloc<Int64>()..value = index + 1;
@@ -276,6 +279,9 @@ class Player {
       value.cast(),
     );
     calloc.free(name);
+    if (!play) {
+      return;
+    }
     name = 'pause'.toNativeUtf8();
     final flag = calloc<Int8>();
     flag.value = 0;
@@ -613,8 +619,8 @@ class Player {
       calloc.free(ptr);
     });
     <String, int>{
-      'demuxer-max-bytes': 4096000,
-      'demuxer-max-back-bytes': 4096000,
+      'demuxer-max-bytes': 8192000,
+      'demuxer-max-back-bytes': 8192000,
     }.forEach((key, value) {
       final _key = key.toNativeUtf8();
       final _value = calloc<Int64>()..value = value;
