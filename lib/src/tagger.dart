@@ -170,11 +170,12 @@ class Tagger {
             metadata[key.toLowerCase()] = value;
           },
         );
+
         // libmpv doesn't seem to read ALBUMARTIST.
         if (_uri!.toUpperCase().endsWith('.FLAC') &&
             !metadata.containsKey('album_artist') &&
             metadata.containsKey('artist')) {
-          metadata['album_artist'] = metadata['artist']!.split('/').first;
+          metadata['album_artist'] = splitArtists(metadata['artist']!)!.first;
         }
         if (_path != null) {
           _command(
@@ -302,6 +303,31 @@ class Tagger {
     );
     calloc.free(arr);
     pointers.forEach(calloc.free);
+  }
+
+  static List<String>? splitArtists(String? tag) {
+    if (tag == null) return null;
+    const kExceptions = [
+      r'AC/DC',
+      r'Axwell /\ Ingrosso',
+    ];
+    final exempted = <String>[];
+    for (final exception in kExceptions) {
+      if (tag.contains(exception)) {
+        exempted.add(exception);
+      }
+    }
+    for (final element in kExceptions) {
+      tag = tag!.replaceAll(element, '');
+    }
+    final artists = tag!
+        .split(RegExp(r';|//|/|\\|\|'))
+        .map((e) => e.trim())
+        .toList()
+        .toSet()
+        .toList()
+      ..removeWhere((element) => element.isEmpty);
+    return artists + exempted;
   }
 
   /// [Pointer] to [generated.mpv_handle] of this instance.
