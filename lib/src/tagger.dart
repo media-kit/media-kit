@@ -186,24 +186,27 @@ class Tagger {
           );
         }
         if (_directory != null) {
+          final title = [null, ''].contains(metadata['title'])
+              ? () {
+                  // If the title is empty, use the filename.
+                  if (Uri.parse(_uri!).isScheme('FILE')) {
+                    return basename(Uri.parse(_uri!).toFilePath());
+                  }
+                  // Otherwise, use the URI's last path component.
+                  else {
+                    if (_uri!.endsWith('/')) {
+                      _uri = _uri!.substring(0, _uri!.length - 1);
+                    }
+                    return _uri!.split('/').last;
+                  }
+                }()
+              : metadata['title'];
           _command(
             [
               'screenshot-to-file',
               join(
                 _directory!,
-                '${[null, ''].contains(metadata['title']) ? () {
-                        // If the title is empty, use the filename.
-                        if (Uri.parse(_uri!).isScheme('FILE')) {
-                          return basename(Uri.parse(_uri!).toFilePath());
-                        }
-                        // Otherwise, use the URI's last path component.
-                        else {
-                          if (_uri!.endsWith('/')) {
-                            _uri = _uri!.substring(0, _uri!.length - 1);
-                          }
-                          return _uri!.split('/').last;
-                        }
-                      }() : metadata['title']}${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}.PNG'
+                '$title${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}.PNG'
                     .replaceAll(RegExp(r'[\\/:*?""<>| ]'), ''),
               ),
               null,
