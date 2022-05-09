@@ -33,10 +33,7 @@ const Map<String, dynamic> _kRequestPayload = {
 };
 
 class YouTube {
-  YouTube({
-    int port = 6900,
-  }) {
-    /// If is debug mode use different port from release mode
+  YouTube() {
     _port = math.Random().nextInt((1 << 16) - 1);
     _create().catchError((exception, stacktrace) {
       print(exception);
