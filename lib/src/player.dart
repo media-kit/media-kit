@@ -182,12 +182,14 @@ class Player {
       generated.mpv_format.MPV_FORMAT_INT64,
       pos.cast(),
     );
-    if (pos.value <= 0 ||
-        (pos.value == 1 && state.position == Duration.zero) ||
-        state.isCompleted) {
+    if ((pos.value <= 0 ||
+            (pos.value == 1 && state.position == Duration.zero) ||
+            state.isCompleted) &&
+        _isPlaybackEverStarted) {
       jump(0);
     }
     calloc.free(name);
+    _isPlaybackEverStarted = true;
     name = 'pause'.toNativeUtf8();
     final flag = calloc<Int8>();
     flag.value = 0;
@@ -283,6 +285,7 @@ class Player {
     if (!play) {
       return;
     }
+    _isPlaybackEverStarted = true;
     name = 'pause'.toNativeUtf8();
     final flag = calloc<Int8>();
     flag.value = 0;
@@ -511,11 +514,13 @@ class Player {
         _error(event.ref.error);
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
           state.isCompleted = false;
-          state.isPlaying = true;
+          if (_isPlaybackEverStarted) {
+            state.isPlaying = true;
+          }
           if (!_isCompletedController.isClosed) {
             _isCompletedController.add(false);
           }
-          if (!_isPlayingController.isClosed) {
+          if (!_isPlayingController.isClosed && _isPlaybackEverStarted) {
             _isPlayingController.add(true);
           }
         }
@@ -526,11 +531,13 @@ class Player {
           if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
               generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
             state.isCompleted = true;
-            state.isPlaying = false;
+            if (_isPlaybackEverStarted) {
+              state.isPlaying = false;
+            }
             if (!_isCompletedController.isClosed) {
               _isCompletedController.add(true);
             }
-            if (!_isPlayingController.isClosed) {
+            if (!_isPlayingController.isClosed && _isPlaybackEverStarted) {
               _isPlayingController.add(false);
             }
           }
@@ -540,10 +547,12 @@ class Player {
           final prop = event.ref.data.cast<generated.mpv_event_property>();
           if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-            final isPlaying = prop.ref.data.cast<Int8>().value != 1;
-            state.isPlaying = isPlaying;
-            if (!_isPlayingController.isClosed) {
-              _isPlayingController.add(isPlaying);
+            if (_isPlaybackEverStarted) {
+              final isPlaying = prop.ref.data.cast<Int8>().value != 1;
+              state.isPlaying = isPlaying;
+              if (!_isPlayingController.isClosed) {
+                _isPlayingController.add(isPlaying);
+              }
             }
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
@@ -575,9 +584,11 @@ class Player {
           if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos-1' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
             final index = prop.ref.data.cast<Int64>().value - 1;
-            state.playlist.index = index;
-            if (!_playlistController.isClosed) {
-              _playlistController.add(state.playlist);
+            if (_isPlaybackEverStarted) {
+              state.playlist.index = index;
+              if (!_playlistController.isClosed) {
+                _playlistController.add(state.playlist);
+              }
             }
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'volume' &&
@@ -619,21 +630,24 @@ class Player {
       );
       calloc.free(ptr);
     });
-    <String, int>{
-      'demuxer-max-bytes': 8192000,
-      'demuxer-max-back-bytes': 8192000,
-    }.forEach((key, value) {
-      final _key = key.toNativeUtf8();
-      final _value = calloc<Int64>()..value = value;
-      mpv.mpv_set_property(
-        _handle,
-        _key.cast(),
-        generated.mpv_format.MPV_FORMAT_INT64,
-        _value.cast(),
-      );
-      calloc.free(_key);
-      calloc.free(_value);
-    });
+    // No longer explicitly setting demuxer cache size.
+    // Though, it may cause rise in memory usage but still it is certainly better
+    // than files randomly stuttering or seeking to a random position on their own.
+    // <String, int>{
+    //   'demuxer-max-bytes': 8192000,
+    //   'demuxer-max-back-bytes': 8192000,
+    // }.forEach((key, value) {
+    //   final _key = key.toNativeUtf8();
+    //   final _value = calloc<Int64>()..value = value;
+    //   mpv.mpv_set_property(
+    //     _handle,
+    //     _key.cast(),
+    //     generated.mpv_format.MPV_FORMAT_INT64,
+    //     _value.cast(),
+    //   );
+    //   calloc.free(_key);
+    //   calloc.free(_value);
+    // });
     if (!video) {
       final vo = 'vo'.toNativeUtf8();
       final osd = 'osd'.toNativeUtf8();
@@ -741,6 +755,9 @@ class Player {
 
   /// [Pointer] to [generated.mpv_handle] of this instance.
   late Pointer<generated.mpv_handle> _handle;
+
+  /// libmpv API hack, to prevent [state.isPlaying] getting changed due to volume or rate being changed.
+  bool _isPlaybackEverStarted = false;
 
   /// [Completer] used to ensure initialization of [generated.mpv_handle] & synchronization on another isolate.
   final Completer<void> _completer = Completer();
