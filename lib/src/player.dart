@@ -4,7 +4,6 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-import 'dart:convert';
 import 'dart:ffi';
 import 'dart:async';
 import 'dart:isolate';
@@ -93,7 +92,7 @@ class Player {
   /// Disposes the [Player] instance & releases the resources.
   Future<void> dispose({int code = 0}) async {
     await _completer.future;
-    await _command(
+    _command(
       [
         'quit',
         code.toString(),
@@ -138,25 +137,26 @@ class Player {
       }()] = media;
     }
     await _completer.future;
-    final completer = Completer<void>();
-    final receiver = ReceivePort()
-      ..listen((value) {
-        if (value == true) {
-          completer.complete();
-        }
-      });
-    final isolate = await Isolate.spawn(
-      _mpvCommandLoadFileIsolate,
+    _command(
       [
-        libmpv!,
-        _handle.address,
-        receiver.sendPort,
-        ...playlist.medias.map((e) => e.uri),
+        'playlist-play-index',
+        'none',
       ],
     );
-    await completer.future;
-    isolate.kill();
-    receiver.close();
+    _command(
+      [
+        'playlist-clear',
+      ],
+    );
+    for (final media in playlist.medias) {
+      _command(
+        [
+          'loadfile',
+          media.uri,
+          'append',
+        ],
+      );
+    }
     // Even though `replace` parameter in `loadfile` automatically causes the
     // [Media] to play but in certain cases like, where a [Media] is paused & then
     // new [Media] is [Player.open]ed it causes [Media] to not starting playing
@@ -222,7 +222,7 @@ class Player {
   /// Appends a [Media] to the [Player]'s playlist.
   Future<void> add(Media media) async {
     await _completer.future;
-    await _command(
+    _command(
       [
         'loadfile',
         media.uri,
@@ -237,7 +237,7 @@ class Player {
   /// Removes the [Media] at specified index from the [Player]'s playlist.
   Future<void> remove(int index) async {
     await _completer.future;
-    await _command(
+    _command(
       [
         'playlist-remove',
         index.toString(),
@@ -250,7 +250,7 @@ class Player {
   /// Jumps to next [Media] in the [Player]'s playlist.
   Future<void> next() async {
     await _completer.future;
-    await _command(
+    _command(
       [
         'playlist-next',
       ],
@@ -260,7 +260,7 @@ class Player {
   /// Jumps to previous [Media] in the [Player]'s playlist.
   Future<void> back() async {
     await _completer.future;
-    await _command(
+    _command(
       [
         'playlist-prev',
       ],
@@ -305,7 +305,7 @@ class Player {
   /// Moves the playlist [Media] at [from], so that it takes the place of the [Media] [to].
   Future<void> move(int from, int to) async {
     await _completer.future;
-    await _command(
+    _command(
       [
         'playlist-move',
         from.toString(),
@@ -436,7 +436,7 @@ class Player {
   set shuffle(bool shuffle) {
     () async {
       await _completer.future;
-      await _command(
+      _command(
         [
           shuffle ? 'playlist-shuffle' : 'playlist-unshuffle',
         ],
@@ -484,7 +484,7 @@ class Player {
       } catch (exception, stacktrace) {
         print(exception);
         print(stacktrace);
-        await _command(
+        _command(
           [
             'playlist-unshuffle',
           ],
@@ -716,26 +716,21 @@ class Player {
   /// Calls MPV command passed as [args]. Automatically freeds memory after command sending.
   ///
   /// An [Isolate] is used to prevent blocking of the main thread during native-type marshalling.
-  Future<void> _command(List<String?> args) async {
-    final completer = Completer<void>();
-    final receiver = ReceivePort()
-      ..listen((value) {
-        if (value == true) {
-          completer.complete();
-        }
-      });
-    final isolate = await Isolate.spawn(
-      _mpvCommandIsolate,
-      [
-        libmpv!,
-        _handle.address,
-        receiver.sendPort,
-        ...args,
-      ],
+  void _command(List<String?> args) {
+    final List<Pointer<Utf8>> pointers = args.map<Pointer<Utf8>>((e) {
+      if (e == null) return nullptr.cast();
+      return e.toNativeUtf8();
+    }).toList();
+    final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join().length);
+    for (int i = 0; i < args.length; i++) {
+      arr[i] = pointers[i];
+    }
+    mpv.mpv_command(
+      _handle,
+      arr.cast(),
     );
-    await completer.future;
-    isolate.kill();
-    receiver.close();
+    calloc.free(arr);
+    pointers.forEach(calloc.free);
   }
 
   /// Whether video is visible or not.
@@ -873,109 +868,4 @@ class _PlayerStreams {
     isBuffering = controllers[7].stream.cast();
     error = controllers[8].stream.cast();
   }
-}
-
-/// Calls MPV command passed as [args]. Automatically freeds memory after command sending.
-///
-/// Contents of [args] should be:
-///
-/// * `args[0]` should be the dynamic library path.
-/// * `args[1]` should be the `mpv_handle` pointer address as [int].
-/// * `args[2]` should be [SendPort] that receives the confirmation of command completion.
-/// * Following arguments should be the command to be sent to MPV.
-Future<void> _mpvCommandIsolate(List<dynamic> args) async {
-  Pointer<Utf8> toNativeUtf8(String e) {
-    final units = utf8.encode(e);
-    final Pointer<Uint8> result = malloc(units.length + 1);
-    final nativeString = result.asTypedList(units.length + 1);
-    nativeString.setAll(0, units);
-    nativeString[units.length] = 0;
-    return result.cast();
-  }
-
-  final List<Pointer<Utf8>> pointers = args.skip(3).map<Pointer<Utf8>>((e) {
-    if (e == null) return nullptr.cast();
-    return toNativeUtf8(e);
-  }).toList();
-  final Pointer<Pointer<Utf8>> arr =
-      calloc.allocate(args.skip(3).join().length);
-  for (int i = 0; i < args.skip(3).length; i++) {
-    arr[i] = pointers[i];
-  }
-  DynamicLibrary.open(args[0])
-      .lookupFunction<
-          Int32 Function(Pointer<generated.mpv_handle>, Pointer<Pointer<Int8>>),
-          int Function(Pointer<generated.mpv_handle>,
-              Pointer<Pointer<Int8>>)>('mpv_command')
-      .call(
-        Pointer.fromAddress(args[1]),
-        arr.cast(),
-      );
-  calloc.free(arr);
-  pointers.forEach(calloc.free);
-  (args[2] as SendPort).send(true);
-}
-
-/// Calls MPV command `loadfile` with multiple media [Uri]s passed as String in [arguments].
-/// Automatically freeds memory after command sending.
-///
-/// Contents of [arguments] should be:
-///
-/// * `args[0]` should be the dynamic library path.
-/// * `args[1]` should be the `mpv_handle` pointer address as [int].
-/// * `args[2]` should be [SendPort] that receives the confirmation of command completion.
-/// * Following arguments should be media [Uri]s passed as [String].
-Future<void> _mpvCommandLoadFileIsolate(List<dynamic> arguments) async {
-  Pointer<Utf8> toNativeUtf8(String e) {
-    final units = utf8.encode(e);
-    final Pointer<Uint8> result = malloc(units.length + 1);
-    final nativeString = result.asTypedList(units.length + 1);
-    nativeString.setAll(0, units);
-    nativeString[units.length] = 0;
-    return result.cast();
-  }
-
-  void mpvCommand(List<String> args) {
-    final List<Pointer<Utf8>> pointers = args.map<Pointer<Utf8>>((e) {
-      return toNativeUtf8(e);
-    }).toList();
-    final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join().length);
-    for (int i = 0; i < args.length; i++) {
-      arr[i] = pointers[i];
-    }
-    DynamicLibrary.open(arguments[0])
-        .lookupFunction<
-            Int32 Function(
-                Pointer<generated.mpv_handle>, Pointer<Pointer<Int8>>),
-            int Function(Pointer<generated.mpv_handle>,
-                Pointer<Pointer<Int8>>)>('mpv_command')
-        .call(
-          Pointer.fromAddress(arguments[1]),
-          arr.cast(),
-        );
-    calloc.free(arr);
-    pointers.forEach(calloc.free);
-  }
-
-  mpvCommand(
-    [
-      'playlist-play-index',
-      'none',
-    ],
-  );
-  mpvCommand(
-    [
-      'playlist-clear',
-    ],
-  );
-  for (final uri in arguments.skip(3)) {
-    mpvCommand(
-      [
-        'loadfile',
-        uri,
-        'append',
-      ],
-    );
-  }
-  (arguments[2] as SendPort).send(true);
 }
