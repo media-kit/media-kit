@@ -272,6 +272,8 @@ class Player {
     bool play = true,
   }) async {
     await _completer.future;
+    state.playlist.index = index;
+    _playlistController.add(state.playlist);
     var name = 'playlist-pos-1'.toNativeUtf8();
     final value = calloc<Int64>()..value = index + 1;
     mpv.mpv_set_property(
@@ -297,8 +299,6 @@ class Player {
     calloc.free(name);
     calloc.free(flag);
     calloc.free(value);
-    state.playlist.index = index;
-    _playlistController.add(state.playlist);
   }
 
   /// Moves the playlist [Media] at [from], so that it takes the place of the [Media] [to].
