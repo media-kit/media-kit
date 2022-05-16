@@ -312,6 +312,7 @@ class Tagger {
     const kExceptions = [
       r'AC/DC',
       r'Axwell /\ Ingrosso',
+      r'Au/Ra',
     ];
     final exempted = <String>[];
     for (final exception in kExceptions) {
