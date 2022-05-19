@@ -17,4 +17,7 @@ class Playlist {
     this.medias, {
     this.index = 0,
   });
+
+  @override
+  String toString() => 'Playlist(index: $index, medias: $medias)';
 }
