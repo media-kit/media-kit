@@ -166,8 +166,8 @@ class Player {
     // To wait for the index change [jump] call.
     if (!play) {
       pause();
-      _playlistController.add(state.playlist);
     }
+    _playlistController.add(state.playlist);
     await jump(playlist.index, play: play);
   }
 
@@ -255,6 +255,18 @@ class Player {
         'playlist-next',
       ],
     );
+    _isPlaybackEverStarted = true;
+    final name = 'pause'.toNativeUtf8();
+    final flag = calloc<Int8>();
+    flag.value = 0;
+    mpv.mpv_set_property(
+      _handle,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_FLAG,
+      flag.cast(),
+    );
+    calloc.free(name);
+    calloc.free(flag);
   }
 
   /// Jumps to previous [Media] in the [Player]'s playlist.
@@ -265,6 +277,18 @@ class Player {
         'playlist-prev',
       ],
     );
+    _isPlaybackEverStarted = true;
+    final name = 'pause'.toNativeUtf8();
+    final flag = calloc<Int8>();
+    flag.value = 0;
+    mpv.mpv_set_property(
+      _handle,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_FLAG,
+      flag.cast(),
+    );
+    calloc.free(name);
+    calloc.free(flag);
   }
 
   /// Jumps to specified [Media]'s index in the [Player]'s playlist.
