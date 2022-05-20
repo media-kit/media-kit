@@ -56,8 +56,8 @@ class Player {
   Player({
     this.video = true,
     this.osc = true,
+    this.maxVolume = 200.0,
     bool yt = true,
-    this.crossfade = Duration.zero,
     this.title,
     void Function()? onCreate,
   }) {
@@ -712,15 +712,26 @@ class Player {
       calloc.free(name);
       calloc.free(value);
     }
-    final cache = 'cache'.toNativeUtf8();
-    final no = 'no'.toNativeUtf8();
-    mpv.mpv_set_property_string(
+    // No longer explicitly setting demuxer cache size.
+    // Though, it may cause rise in memory usage but still it is certainly better
+    // than files randomly stuttering or seeking to a random position on their own.
+    // final cache = 'cache'.toNativeUtf8();
+    // final no = 'no'.toNativeUtf8();
+    // mpv.mpv_set_property_string(
+    //   _handle,
+    //   cache.cast(),
+    //   no.cast(),
+    // );
+    // calloc.free(cache);
+    // calloc.free(no);
+    final name = 'volume-max'.toNativeUtf8();
+    final value = calloc<Double>()..value = maxVolume.toDouble();
+    mpv.mpv_set_property(
       _handle,
-      cache.cast(),
-      no.cast(),
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_DOUBLE,
+      value.cast(),
     );
-    calloc.free(cache);
-    calloc.free(no);
     _completer.complete();
   }
 
@@ -765,8 +776,9 @@ class Player {
   /// User defined window title for the MPV instance.
   final String? title;
 
-  /// cross-fade [Duration].
-  Duration crossfade;
+  /// Maximum volume that can be assigned to this [Player].
+  /// Used for volume boost.
+  final double maxVolume;
 
   /// YouTube daemon to serve links.
   YouTube? youtube;
