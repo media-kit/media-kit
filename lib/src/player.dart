@@ -55,8 +55,8 @@ class Player {
   /// ```
   ///
   Player({
-    this.video = true,
-    this.osc = true,
+    this.video = false,
+    this.osc = false,
     this.maxVolume = 200.0,
     bool yt = true,
     this.title,
@@ -167,7 +167,9 @@ class Player {
     if (!play) {
       pause();
     }
-    _playlistController.add(state.playlist);
+    if (!_playlistController.isClosed) {
+      _playlistController.add(state.playlist);
+    }
     await jump(playlist.index, play: play);
   }
 
@@ -231,7 +233,9 @@ class Player {
       ],
     );
     state.playlist.medias.add(media);
-    _playlistController.add(state.playlist);
+    if (!_playlistController.isClosed) {
+      _playlistController.add(state.playlist);
+    }
   }
 
   /// Removes the [Media] at specified index from the [Player]'s playlist.
@@ -244,7 +248,9 @@ class Player {
       ],
     );
     state.playlist.medias.removeAt(index);
-    _playlistController.add(state.playlist);
+    if (!_playlistController.isClosed) {
+      _playlistController.add(state.playlist);
+    }
   }
 
   /// Jumps to next [Media] in the [Player]'s playlist.
@@ -298,7 +304,9 @@ class Player {
   }) async {
     await _completer.future;
     state.playlist.index = index;
-    _playlistController.add(state.playlist);
+    if (!_playlistController.isClosed) {
+      _playlistController.add(state.playlist);
+    }
     var name = 'playlist-pos-1'.toNativeUtf8();
     final value = calloc<Int64>()..value = index + 1;
     mpv.mpv_set_property(
@@ -439,20 +447,126 @@ class Player {
   }
 
   /// Sets the playback rate of the [Player]. Defaults to `1.0`.
+  /// Resets [pitch] to `1.0`.
   set rate(double rate) {
     () async {
       await _completer.future;
-      final name = 'speed'.toNativeUtf8();
-      final value = calloc<Double>();
-      value.value = rate;
+      state.rate = rate;
+      if (!_rateController.isClosed) {
+        _rateController.add(state.rate);
+      }
+      // No `rubberband` is available.
+      // Apparently, using `scaletempo:scale` actually controls the playback rate
+      // as intended after setting `audio-pitch-correction` as `FALSE`.
+      // `speed` on the other hand, changes the pitch when `audio-pitch-correction`
+      // is set to `FALSE`. Since, it also alters the actual [speed], the
+      // `scaletempo:scale` is divided by the same value of [pitch] to compensate the
+      // speed change.
+      var name = 'audio-pitch-correction'.toNativeUtf8();
+      final flag = calloc<Int8>()..value = 0;
       mpv.mpv_set_property(
         _handle,
         name.cast(),
-        generated.mpv_format.MPV_FORMAT_DOUBLE,
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        flag.cast(),
+      );
+      calloc.free(name);
+      calloc.free(flag);
+      name = 'af'.toNativeUtf8();
+      final value =
+          'scaletempo:scale=${(rate / state.pitch).toStringAsFixed(8)}'
+              .toNativeUtf8();
+      mpv.mpv_set_property_string(
+        _handle,
+        name.cast(),
         value.cast(),
       );
       calloc.free(name);
       calloc.free(value);
+    }();
+  }
+
+  /// Sets the relative pitch of the [Player]. Defaults to `1.0`.
+  set pitch(double pitch) {
+    () async {
+      await _completer.future;
+      state.pitch = pitch;
+      if (!_pitchController.isClosed) {
+        _pitchController.add(state.pitch);
+      }
+      // `rubberband` is not bundled in `libmpv` shared library at the moment.
+      // Using `scaletempo` instead. However, this comes with a drackback
+      // that speed & pitch cannot be changed simultaneously.
+      // final name = 'af'.toNativeUtf8();
+      // final keys = calloc<Pointer<Utf8>>(2);
+      // final paramKeys = calloc<Pointer<Utf8>>(2);
+      // final paramValues = calloc<Pointer<Utf8>>(2);
+      // paramKeys[0] = 'key'.toNativeUtf8();
+      // paramKeys[1] = 'value'.toNativeUtf8();
+      // paramValues[0] = 'pitch-scale'.toNativeUtf8();
+      // paramValues[1] = pitch.toStringAsFixed(8).toNativeUtf8();
+      // final values = calloc<Pointer<generated.mpv_node>>(2);
+      // keys[0] = 'name'.toNativeUtf8();
+      // keys[1] = 'params'.toNativeUtf8();
+      // values[0] = calloc<generated.mpv_node>();
+      // values[0].ref.format = generated.mpv_format.MPV_FORMAT_STRING;
+      // values[0].ref.u.string = 'rubberband'.toNativeUtf8().cast();
+      // values[1] = calloc<generated.mpv_node>();
+      // values[1].ref.format = generated.mpv_format.MPV_FORMAT_NODE_MAP;
+      // values[1].ref.u.list = calloc<generated.mpv_node_list>();
+      // values[1].ref.u.list.ref.num = 2;
+      // values[1].ref.u.list.ref.keys = paramKeys.cast();
+      // values[1].ref.u.list.ref.values = paramValues.cast();
+      // final data = calloc<generated.mpv_node>();
+      // data.ref.format = generated.mpv_format.MPV_FORMAT_NODE_ARRAY;
+      // data.ref.u.list = calloc<generated.mpv_node_list>();
+      // data.ref.u.list.ref.num = 1;
+      // data.ref.u.list.ref.values = calloc<generated.mpv_node>();
+      // data.ref.u.list.ref.values.ref.format =
+      //     generated.mpv_format.MPV_FORMAT_NODE_MAP;
+      // data.ref.u.list.ref.values.ref.u.list = calloc<generated.mpv_node_list>();
+      // data.ref.u.list.ref.values.ref.u.list.ref.num = 2;
+      // data.ref.u.list.ref.values.ref.u.list.ref.keys = keys.cast();
+      // data.ref.u.list.ref.values.ref.u.list.ref.values = values.cast();
+      // mpv.mpv_set_property(
+      //   _handle,
+      //   name.cast(),
+      //   generated.mpv_format.MPV_FORMAT_NODE,
+      //   data.cast(),
+      // );
+      // calloc.free(name);
+      // mpv.mpv_free_node_contents(data);
+      var name = 'audio-pitch-correction'.toNativeUtf8();
+      final flag = calloc<Int8>()..value = 0;
+      mpv.mpv_set_property(
+        _handle,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        flag.cast(),
+      );
+      calloc.free(name);
+      name = 'af'.toNativeUtf8();
+      // Divide by [pitch] to compensate the speed change.
+      final value =
+          'scaletempo:scale=${(state.rate / pitch).toStringAsFixed(8)}'
+              .toNativeUtf8();
+      mpv.mpv_set_property_string(
+        _handle,
+        name.cast(),
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+      name = 'speed'.toNativeUtf8();
+      final speed = calloc<Double>()..value = pitch;
+      mpv.mpv_set_property(
+        _handle,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_DOUBLE,
+        speed.cast(),
+      );
+      calloc.free(name);
+      calloc.free(speed);
     }();
   }
 
@@ -501,7 +615,9 @@ class Player {
             }
           }
           state.playlist.medias = playlist;
-          _playlistController.add(state.playlist);
+          if (!_playlistController.isClosed) {
+            _playlistController.add(state.playlist);
+          }
           calloc.free(name);
           calloc.free(data);
         }
@@ -528,6 +644,7 @@ class Player {
         _durationController,
         _volumeController,
         _rateController,
+        _pitchController,
         _isBufferingController,
         _errorController,
       ],
@@ -676,12 +793,12 @@ class Player {
       final vo = 'vo'.toNativeUtf8();
       final osd = 'osd'.toNativeUtf8();
       final value = 'null'.toNativeUtf8();
-      mpv.mpv_set_option_string(
+      mpv.mpv_set_property_string(
         _handle,
         vo.cast(),
         value.cast(),
       );
-      mpv.mpv_set_option_string(
+      mpv.mpv_set_property_string(
         _handle,
         osd.cast(),
         value.cast(),
@@ -821,6 +938,10 @@ class Player {
   final StreamController<double> _rateController = StreamController.broadcast();
 
   /// Internally used [StreamController].
+  final StreamController<double> _pitchController =
+      StreamController.broadcast();
+
+  /// Internally used [StreamController].
   final StreamController<bool> _isBufferingController =
       StreamController.broadcast();
 
@@ -860,6 +981,9 @@ class _PlayerState {
   /// Current playback rate of the [Player].
   double rate = 1.0;
 
+  /// Current pitch of the [Player].
+  double pitch = 1.0;
+
   /// Whether the [Player] has stopped for buffering.
   bool isBuffering = false;
 }
@@ -887,6 +1011,9 @@ class _PlayerStreams {
   /// Current playback rate of the [Player].
   late Stream<double> rate;
 
+  /// Current pitch of the [Player].
+  late Stream<double> pitch;
+
   /// Whether the [Player] has stopped for buffering.
   late Stream<bool> isBuffering;
 
@@ -901,7 +1028,8 @@ class _PlayerStreams {
     duration = controllers[4].stream.cast();
     volume = controllers[5].stream.cast();
     rate = controllers[6].stream.cast();
-    isBuffering = controllers[7].stream.cast();
-    error = controllers[8].stream.cast();
+    pitch = controllers[7].stream.cast();
+    isBuffering = controllers[8].stream.cast();
+    error = controllers[9].stream.cast();
   }
 }
