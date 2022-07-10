@@ -64,8 +64,8 @@ class Tagger {
     _uri = media.uri;
     _directory = coverDirectory?.path;
     _path = cover?.absolute.path;
-    await cover?.parent.create(recursive: true);
-    await coverDirectory?.create(recursive: true);
+    await cover?.parent.create_();
+    await coverDirectory?.create_();
     await _completer.future;
     _metadata = Completer();
     _duration = Completer();
@@ -351,4 +351,21 @@ class Tagger {
 
   /// Path to parent folder where cover will be saved.
   String? _directory;
+}
+
+/// Safely [create]s a [File] recursively.
+extension on Directory {
+  Future<void> create_() async {
+    try {
+      final prefix = Platform.isWindows &&
+              !path.startsWith('\\\\') &&
+              !path.startsWith(r'\\?\')
+          ? r'\\?\'
+          : '';
+      await Directory(prefix + path).create(recursive: true);
+    } catch (exception, stacktrace) {
+      print(exception.toString());
+      print(stacktrace.toString());
+    }
+  }
 }
