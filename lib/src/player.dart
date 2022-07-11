@@ -473,14 +473,16 @@ class Player {
       calloc.free(name);
       calloc.free(flag);
       name = 'af'.toNativeUtf8();
+      // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
       final value =
-          'scaletempo:scale=${(rate / state.pitch).toStringAsFixed(8)}'
+          'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
               .toNativeUtf8();
       mpv.mpv_set_property_string(
         _handle,
         name.cast(),
         value.cast(),
       );
+      print(value.toDartString());
       calloc.free(name);
       calloc.free(value);
     }();
@@ -545,18 +547,7 @@ class Player {
         flag.cast(),
       );
       calloc.free(name);
-      name = 'af'.toNativeUtf8();
-      // Divide by [pitch] to compensate the speed change.
-      final value =
-          'scaletempo:scale=${(state.rate / pitch).toStringAsFixed(8)}'
-              .toNativeUtf8();
-      mpv.mpv_set_property_string(
-        _handle,
-        name.cast(),
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
+      calloc.free(flag);
       name = 'speed'.toNativeUtf8();
       final speed = calloc<Double>()..value = pitch;
       mpv.mpv_set_property(
@@ -567,6 +558,19 @@ class Player {
       );
       calloc.free(name);
       calloc.free(speed);
+      name = 'af'.toNativeUtf8();
+      // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
+      final value =
+          'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
+              .toNativeUtf8();
+      mpv.mpv_set_property_string(
+        _handle,
+        name.cast(),
+        value.cast(),
+      );
+      print(value.toDartString());
+      calloc.free(name);
+      calloc.free(value);
     }();
   }
 
@@ -636,18 +640,16 @@ class Player {
   Future<void> _create() async {
     if (libmpv == null) return;
     streams = _PlayerStreams(
-      [
-        _playlistController,
-        _isPlayingController,
-        _isCompletedController,
-        _positionController,
-        _durationController,
-        _volumeController,
-        _rateController,
-        _pitchController,
-        _isBufferingController,
-        _errorController,
-      ],
+      _playlistController.stream,
+      _isPlayingController.stream,
+      _isCompletedController.stream,
+      _positionController.stream,
+      _durationController.stream,
+      _volumeController.stream,
+      _rateController.stream,
+      _pitchController.stream,
+      _isBufferingController.stream,
+      _errorController.stream,
     );
     _handle = await create(
       libmpv!,
@@ -740,14 +742,16 @@ class Player {
               _volumeController.add(volume);
             }
           }
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'speed' &&
-              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-            final rate = prop.ref.data.cast<Double>().value;
-            state.rate = rate;
-            if (!_rateController.isClosed) {
-              _rateController.add(rate);
-            }
-          }
+          // See [rate] & [pitch] setters.
+          // Handled manually using `scaletempo`.
+          // if (prop.ref.name.cast<Utf8>().toDartString() == 'speed' &&
+          //     prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+          //   final rate = prop.ref.data.cast<Double>().value;
+          //   state.rate = rate;
+          //   if (!_rateController.isClosed) {
+          //     _rateController.add(rate);
+          //   }
+          // }
         }
       },
     );
@@ -1020,16 +1024,16 @@ class _PlayerStreams {
   /// [Stream] raising [_PlayerError]s.
   late Stream<_PlayerError> error;
 
-  _PlayerStreams(List<StreamController> controllers) {
-    playlist = controllers[0].stream.cast();
-    isPlaying = controllers[1].stream.cast();
-    isCompleted = controllers[2].stream.cast();
-    position = controllers[3].stream.cast();
-    duration = controllers[4].stream.cast();
-    volume = controllers[5].stream.cast();
-    rate = controllers[6].stream.cast();
-    pitch = controllers[7].stream.cast();
-    isBuffering = controllers[8].stream.cast();
-    error = controllers[9].stream.cast();
-  }
+  _PlayerStreams(
+    this.playlist,
+    this.isPlaying,
+    this.isCompleted,
+    this.position,
+    this.duration,
+    this.volume,
+    this.rate,
+    this.pitch,
+    this.isBuffering,
+    this.error,
+  );
 }
