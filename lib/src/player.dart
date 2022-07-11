@@ -344,6 +344,8 @@ class Player {
         to.toString(),
       ],
     );
+    state.playlist.medias.insert(to, state.playlist.medias.removeAt(from));
+    _playlistController.add(state.playlist);
   }
 
   /// Seeks the currently playing [Media] in the [Player] by specified [Duration].
