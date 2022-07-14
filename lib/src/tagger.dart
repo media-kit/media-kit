@@ -208,7 +208,7 @@ class Tagger {
               join(
                 _directory!,
                 '$title${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}.PNG'
-                    .replaceAll(RegExp(r'[\\/:*?""<>| ]'), ''),
+                    .replaceAll(RegExp(kArtworkFileNameRegex), ''),
               ),
               null,
             ],
@@ -370,3 +370,9 @@ extension on Directory {
     }
   }
 }
+
+
+/// [String] used for regex-matching the invalid file-name characters & removing them when saving the artwork
+/// of a particular media file to a given [Directory].
+/// i.e. calling [Tagger.parse] with `coverDirectory` optional argument.
+const kArtworkFileNameRegex = r'[\\/:*?""<>| ]';
