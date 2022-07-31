@@ -121,11 +121,14 @@ class Tagger {
   /// Disposes the [Tagger] instance & releases the resources.
   Future<void> dispose({int code = 0}) async {
     await _completer.future;
-    _command(
-      [
-        'quit',
-        code.toString(),
-      ],
+    // Raw `mpv_command` calls cause crash on Windows.
+    final args = [
+      'quit',
+      '$code',
+    ].join(' ').toNativeUtf8();
+    mpv.mpv_command_string(
+      _handle,
+      args.cast(),
     );
   }
 
@@ -370,7 +373,6 @@ extension on Directory {
     }
   }
 }
-
 
 /// [String] used for regex-matching the invalid file-name characters & removing them when saving the artwork
 /// of a particular media file to a given [Directory].
