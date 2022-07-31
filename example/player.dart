@@ -35,4 +35,7 @@ Future<void> main() async {
   await player.play();
   player.volume = 50.0;
   player.rate = 1.0;
+  Future.delayed(const Duration(seconds: 10), () {
+    player.dispose();
+  });
 }
