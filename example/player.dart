@@ -32,9 +32,11 @@ Future<void> main() async {
     ),
     play: false,
   );
+  await player.setPlaylistMode(PlaylistMode.loop);
   await player.play();
   player.volume = 50.0;
   player.rate = 1.0;
+  player.shuffle = false;
   Future.delayed(const Duration(seconds: 10), () {
     player.dispose();
   });

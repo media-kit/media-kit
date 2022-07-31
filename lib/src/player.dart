@@ -112,6 +112,9 @@ class Player {
   /// Opens a [List] of [Media]s into the [Player] as a playlist.
   /// Previously opened, added or inserted [Media]s get removed.
   ///
+  /// Pass [play] as `true` to automatically start playback.
+  /// Otherwise, [Player.play] must be called manually afterwards.
+  ///
   /// ```dart
   /// player.open(
   ///   Playlist(
@@ -125,19 +128,15 @@ class Player {
   Future<void> open(
     Playlist playlist, {
     bool play = true,
+    bool clearCache = true,
   }) async {
-    // Clean-up existing cached [medias].
-    medias.clear();
-    // Restore current playlist.
-    for (final media in playlist.medias) {
-      medias[() {
-        // Match with format retrieved by `mpv_get_property`.
-        if (media.uri.startsWith('file')) {
-          return Uri.parse(media.uri).toFilePath().replaceAll('\\', '/');
-        } else {
-          return media.uri;
-        }
-      }()] = media;
+    if (clearCache) {
+      // Clean-up existing cached [medias].
+      medias.clear();
+      // Restore current playlist.
+      for (final media in playlist.medias) {
+        medias[media.uri] = media;
+      }
     }
     await _completer.future;
     _command(
