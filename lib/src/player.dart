@@ -91,11 +91,14 @@ class Player {
   /// Disposes the [Player] instance & releases the resources.
   Future<void> dispose({int code = 0}) async {
     await _completer.future;
-    _command(
-      [
-        'quit',
-        code.toString(),
-      ],
+    // Raw `mpv_command` calls cause crash on Windows.
+    final args = [
+      'quit',
+      '$code',
+    ].join(' ').toNativeUtf8();
+    mpv.mpv_command_string(
+      _handle,
+      args.cast(),
     );
     _playlistController.close();
     _isPlayingController.close();
@@ -350,6 +353,7 @@ class Player {
   /// Seeks the currently playing [Media] in the [Player] by specified [Duration].
   Future<void> seek(Duration duration) async {
     await _completer.future;
+    // Raw `mpv_command` calls cause crash on Windows.
     final args = [
       'seek',
       (duration.inMilliseconds / 1000).toStringAsFixed(4).toString(),
