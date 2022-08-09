@@ -18,7 +18,7 @@ Map<String, Media> medias = {};
 ///
 class Media {
   /// URI of the [Media].
-  late final String uri;
+  final String uri;
 
   /// Additional optional user data.
   final dynamic extras;
@@ -31,11 +31,12 @@ class Media {
   /// ```
   ///
   Media(
-    String uri, {
+    this.uri, {
     this.extras,
   }) {
-    this.uri = getCleanedURI(uri);
-    medias[this.uri] = this;
+    medias[uri] = this;
+    // Cleaned up [Media] [uri] to match the format returned by libmpv internally.
+    medias[getCleanedURI(uri)] = this;
   }
 
   static String getCleanedURI(String uri) {
