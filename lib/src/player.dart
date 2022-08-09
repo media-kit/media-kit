@@ -62,7 +62,7 @@ class Player {
     void Function()? onCreate,
   }) {
     if (yt) {
-      youtube = YouTube();
+      youtube = YouTube.instance;
     }
     _create().then(
       (_) => onCreate?.call(),
@@ -135,6 +135,7 @@ class Player {
       // Restore current playlist.
       for (final media in playlist.medias) {
         medias[media.uri] = media;
+        medias[Media.getCleanedURI(media.uri)] = media;
       }
     }
     await _completer.future;
@@ -486,7 +487,6 @@ class Player {
         name.cast(),
         value.cast(),
       );
-      print(value.toDartString());
       calloc.free(name);
       calloc.free(value);
     }();
@@ -572,7 +572,6 @@ class Player {
         name.cast(),
         value.cast(),
       );
-      print(value.toDartString());
       calloc.free(name);
       calloc.free(value);
     }();

@@ -11,4 +11,4 @@ export 'package:libmpv/src/models/playlist_mode.dart';
 export 'package:libmpv/src/dynamic_library.dart';
 export 'package:libmpv/src/core/initializer.dart';
 
-export 'package:libmpv/src/plugins/youtube.dart';
+export 'package:libmpv/src/plugins/utils.dart';
