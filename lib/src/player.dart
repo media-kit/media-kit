@@ -59,13 +59,13 @@ class Player {
     this.maxVolume = 200.0,
     bool yt = true,
     this.title,
-    void Function()? onCreate,
+    void Function(Player)? onCreate,
   }) {
     if (yt) {
       youtube = YouTube.instance;
     }
     _create().then(
-      (_) => onCreate?.call(),
+      (_) => onCreate?.call(this),
     );
   }
 
@@ -139,17 +139,18 @@ class Player {
       }
     }
     await _completer.future;
-    _command(
-      [
-        'playlist-play-index',
-        'none',
-      ],
-    );
-    _command(
-      [
-        'playlist-clear',
-      ],
-    );
+    final commands = [
+      'stop'.toNativeUtf8(),
+      'playlist-clear'.toNativeUtf8(),
+      'playlist-play-index none'.toNativeUtf8(),
+    ];
+    for (final command in commands) {
+      mpv.mpv_command_string(
+        _handle,
+        command.cast(),
+      );
+      calloc.free(command);
+    }
     for (final media in playlist.medias) {
       _command(
         [
@@ -165,51 +166,66 @@ class Player {
     // automatically.
     // Thanks to <github.com/DomingoMG> for the fix!
     state.playlist = playlist;
+    state.isPlaying = play;
     // To wait for the index change [jump] call.
-    if (!play) {
-      pause();
-    }
+
     if (!_playlistController.isClosed) {
       _playlistController.add(state.playlist);
     }
-    await jump(playlist.index, play: play);
+    if (play) {
+      await jump(
+        playlist.index,
+        open: true,
+      );
+    } else {
+      _isPlaybackEverStarted = false;
+    }
   }
 
   /// Starts playing the [Player].
   Future<void> play() async {
     await _completer.future;
-    var name = 'playlist-pos-1'.toNativeUtf8();
-    final pos = calloc<Int64>();
+    state.isPlaying = true;
+    var name = 'core-idle'.toNativeUtf8();
+    final idlePtr = calloc<Bool>();
+    final idle = idlePtr.value;
     mpv.mpv_get_property(
       _handle,
       name.cast(),
-      generated.mpv_format.MPV_FORMAT_INT64,
-      pos.cast(),
-    );
-    if ((pos.value <= 0 ||
-            (pos.value == 1 && state.position == Duration.zero) ||
-            state.isCompleted) &&
-        _isPlaybackEverStarted) {
-      jump(0);
-    }
-    calloc.free(name);
-    _isPlaybackEverStarted = true;
-    name = 'pause'.toNativeUtf8();
-    final flag = calloc<Int8>();
-    flag.value = 0;
-    mpv.mpv_set_property(
-      _handle,
-      name.cast(),
       generated.mpv_format.MPV_FORMAT_FLAG,
-      flag.cast(),
+      idlePtr.cast(),
     );
     calloc.free(name);
-    calloc.free(flag);
+    calloc.free(idlePtr);
+    if (idle || !_isPlaybackEverStarted) {
+      _isPlaybackEverStarted = true;
+      final bounds = state.playlist.index < state.playlist.medias.length &&
+          state.playlist.index >= 0;
+      jump(
+        bounds ? state.playlist.index : 0,
+        open: true,
+      );
+    } else {
+      if (state.isPlaying) return;
+      _isPlaybackEverStarted = true;
+      name = 'pause'.toNativeUtf8();
+      final flag = calloc<Int8>();
+      flag.value = 0;
+      mpv.mpv_set_property(
+        _handle,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        flag.cast(),
+      );
+      calloc.free(name);
+      calloc.free(flag);
+    }
   }
 
   /// Pauses the [Player].
   Future<void> pause() async {
     await _completer.future;
+    state.isPlaying = false;
     final name = 'pause'.toNativeUtf8();
     final flag = calloc<Int8>();
     flag.value = 1;
@@ -258,11 +274,15 @@ class Player {
   /// Jumps to next [Media] in the [Player]'s playlist.
   Future<void> next() async {
     await _completer.future;
-    _command(
-      [
-        'playlist-next',
-      ],
+    // Use `mpv_command_string` as `mpv_command` seems
+    // to randomly cause a crash on older libmpv versions.
+    final next = 'playlist-next'.toNativeUtf8();
+    mpv.mpv_command_string(
+      _handle,
+      next.cast(),
     );
+    calloc.free(next);
+    if (state.isPlaying) return;
     _isPlaybackEverStarted = true;
     final name = 'pause'.toNativeUtf8();
     final flag = calloc<Int8>();
@@ -278,13 +298,17 @@ class Player {
   }
 
   /// Jumps to previous [Media] in the [Player]'s playlist.
-  Future<void> back() async {
+  Future<void> previous() async {
     await _completer.future;
-    _command(
-      [
-        'playlist-prev',
-      ],
+    // Use `mpv_command_string` as `mpv_command` seems
+    // to randomly cause a crash on older libmpv versions.
+    final next = 'playlist-prev'.toNativeUtf8();
+    mpv.mpv_command_string(
+      _handle,
+      next.cast(),
     );
+    calloc.free(next);
+    if (state.isPlaying) return;
     _isPlaybackEverStarted = true;
     final name = 'pause'.toNativeUtf8();
     final flag = calloc<Int8>();
@@ -302,15 +326,15 @@ class Player {
   /// Jumps to specified [Media]'s index in the [Player]'s playlist.
   Future<void> jump(
     int index, {
-    bool play = true,
+    bool open = false,
   }) async {
     await _completer.future;
     state.playlist.index = index;
     if (!_playlistController.isClosed) {
       _playlistController.add(state.playlist);
     }
-    var name = 'playlist-pos-1'.toNativeUtf8();
-    final value = calloc<Int64>()..value = index + 1;
+    var name = 'playlist-pos'.toNativeUtf8();
+    final value = calloc<Int64>()..value = index;
     mpv.mpv_set_property(
       _handle,
       name.cast(),
@@ -318,7 +342,7 @@ class Player {
       value.cast(),
     );
     calloc.free(name);
-    if (!play) {
+    if (open) {
       return;
     }
     _isPlaybackEverStarted = true;
@@ -727,9 +751,9 @@ class Player {
               _durationController.add(duration);
             }
           }
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos-1' &&
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
-            final index = prop.ref.data.cast<Int64>().value - 1;
+            final index = prop.ref.data.cast<Int64>().value;
             if (_isPlaybackEverStarted) {
               state.playlist.index = index;
               if (!_playlistController.isClosed) {
@@ -762,7 +786,7 @@ class Player {
       'pause': generated.mpv_format.MPV_FORMAT_FLAG,
       'time-pos': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
-      'playlist-pos-1': generated.mpv_format.MPV_FORMAT_INT64,
+      'playlist-pos': generated.mpv_format.MPV_FORMAT_INT64,
       'seekable': generated.mpv_format.MPV_FORMAT_FLAG,
       'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
@@ -849,7 +873,7 @@ class Player {
     // );
     // calloc.free(cache);
     // calloc.free(no);
-    final name = 'volume-max'.toNativeUtf8();
+    var name = 'volume-max'.toNativeUtf8();
     final value = calloc<Double>()..value = maxVolume.toDouble();
     mpv.mpv_set_property(
       _handle,
@@ -857,6 +881,32 @@ class Player {
       generated.mpv_format.MPV_FORMAT_DOUBLE,
       value.cast(),
     );
+    calloc.free(name);
+    calloc.free(value);
+    try {
+      final name = 'mpv-version'.toNativeUtf8();
+      version = mpv
+          .mpv_get_property_string(
+            _handle,
+            name.cast(),
+          )
+          .cast<Utf8>()
+          .toDartString();
+      calloc.free(name);
+    } catch (exception, stacktrace) {
+      print(exception);
+      print(stacktrace);
+    }
+    name = 'idle'.toNativeUtf8();
+    final flag = calloc<Int32>()..value = 1;
+    mpv.mpv_set_property(
+      _handle,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_FLAG,
+      flag.cast(),
+    );
+    calloc.free(name);
+    calloc.free(flag);
     _completer.complete();
   }
 
@@ -907,6 +957,9 @@ class Player {
 
   /// YouTube daemon to serve links.
   YouTube? youtube;
+
+  /// mpv version which is powering this [Player] internally.
+  String? version;
 
   /// [Pointer] to [generated.mpv_handle] of this instance.
   late Pointer<generated.mpv_handle> _handle;
