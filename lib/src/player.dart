@@ -20,7 +20,16 @@ import 'package:libmpv/src/plugins/youtube.dart';
 
 /// ## Player
 ///
-/// [Player] class provides high-level interface for media playback.
+/// [Player] class provides high-level abstraction for media playback.
+/// Large number of features have been exposed as class methods & properties.
+///
+/// The [Player]'s instantaneous state may be read using the [state] attribute
+/// & subscription to the them may be made using the [streams] available.
+///
+/// The loaded libmpv version by this class may be queried using the [version] attribute
+/// & RAW C/C++ [mpv_handle] may be accessed using the [handle].
+/// Compatiblity has been tested with libmpv 0.28.0 or higher. The recommended version is 0.33.0 or higher.
+/// Call [dispose] to free the resources back to the system.
 ///
 /// ```dart
 /// final player = Player();
@@ -31,6 +40,7 @@ import 'package:libmpv/src/plugins/youtube.dart';
 ///       Media('file://C:/documents/video.mp4'),
 ///     ],
 ///   ),
+///   play: false,
 /// );
 /// player.play();
 /// ```
@@ -38,7 +48,16 @@ import 'package:libmpv/src/plugins/youtube.dart';
 class Player {
   /// ## Player
   ///
-  /// [Player] class provides high-level interface for media playback.
+  /// [Player] class provides high-level abstraction for media playback.
+  /// Large number of features have been exposed as class methods & properties.
+  ///
+  /// The [Player]'s instantaneous state may be read using the [state] attribute
+  /// & subscription to the them may be made using the [streams] available.
+  ///
+  /// The loaded libmpv version by this class may be queried using the [version] attribute
+  /// & RAW C/C++ [mpv_handle] may be accessed using the [handle].
+  /// Compatiblity has been tested with libmpv 0.28.0 or higher. The recommended version is 0.33.0 or higher.
+  /// Call [dispose] to free the resources back to the system.
   ///
   /// ```dart
   /// final player = Player();
@@ -49,6 +68,7 @@ class Player {
   ///       Media('file://C:/documents/video.mp4'),
   ///     ],
   ///   ),
+  ///   play: false,
   /// );
   /// player.play();
   /// ```
@@ -139,6 +159,8 @@ class Player {
       }
     }
     await _completer.future;
+    // Clean-up existing playlist & change currently playing libmpv index to `none`.
+    // This causes playback to stop & player to enter `idle` state.
     final commands = [
       'stop'.toNativeUtf8(),
       'playlist-clear'.toNativeUtf8(),
@@ -151,6 +173,7 @@ class Player {
       );
       calloc.free(command);
     }
+    _unpause();
     for (final media in playlist.medias) {
       _command(
         [
@@ -168,47 +191,36 @@ class Player {
     state.playlist = playlist;
     state.isPlaying = play;
     // To wait for the index change [jump] call.
-
     if (!_playlistController.isClosed) {
       _playlistController.add(state.playlist);
     }
+    if (!_isPlayingController.isClosed) {
+      _isPlayingController.add(state.isPlaying);
+    }
+    _isPlaybackEverStarted = false;
     if (play) {
       await jump(
         playlist.index,
         open: true,
       );
-    } else {
-      _isPlaybackEverStarted = false;
     }
   }
 
   /// Starts playing the [Player].
   Future<void> play() async {
     await _completer.future;
-    state.isPlaying = true;
-    var name = 'core-idle'.toNativeUtf8();
-    final idlePtr = calloc<Bool>();
-    final idle = idlePtr.value;
-    mpv.mpv_get_property(
-      _handle,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      idlePtr.cast(),
-    );
-    calloc.free(name);
-    calloc.free(idlePtr);
-    if (idle || !_isPlaybackEverStarted) {
+    if (!_isPlaybackEverStarted) {
       _isPlaybackEverStarted = true;
       final bounds = state.playlist.index < state.playlist.medias.length &&
           state.playlist.index >= 0;
-      jump(
+      await jump(
         bounds ? state.playlist.index : 0,
         open: true,
       );
     } else {
       if (state.isPlaying) return;
       _isPlaybackEverStarted = true;
-      name = 'pause'.toNativeUtf8();
+      final name = 'pause'.toNativeUtf8();
       final flag = calloc<Int8>();
       flag.value = 0;
       mpv.mpv_set_property(
@@ -225,6 +237,7 @@ class Player {
   /// Pauses the [Player].
   Future<void> pause() async {
     await _completer.future;
+    _isPlaybackEverStarted = true;
     state.isPlaying = false;
     final name = 'pause'.toNativeUtf8();
     final flag = calloc<Int8>();
@@ -237,6 +250,28 @@ class Player {
     );
     calloc.free(name);
     calloc.free(flag);
+  }
+
+  /// Cycles between [play] & [pause] states of the [Player].
+  Future<void> playOrPause() async {
+    await _completer.future;
+    if (!_isPlaybackEverStarted) {
+      await play();
+      return;
+    }
+    // This condition will occur when [PlaylistMode.none] is set & all playback of a [Playlist] is completed.
+    // Thus, when user presses the play/pause button, we must start playing the [Playlist] from the beginning.
+    // Otherwise the button just freezes.
+    else if (state.isCompleted) {
+      await jump(0, open: true);
+      return;
+    }
+    final command = 'cycle pause'.toNativeUtf8();
+    mpv.mpv_command_string(
+      _handle,
+      command.cast(),
+    );
+    calloc.free(command);
   }
 
   /// Appends a [Media] to the [Player]'s playlist.
@@ -276,25 +311,23 @@ class Player {
     await _completer.future;
     // Use `mpv_command_string` as `mpv_command` seems
     // to randomly cause a crash on older libmpv versions.
-    final next = 'playlist-next'.toNativeUtf8();
-    mpv.mpv_command_string(
-      _handle,
-      next.cast(),
-    );
-    calloc.free(next);
-    if (state.isPlaying) return;
-    _isPlaybackEverStarted = true;
-    final name = 'pause'.toNativeUtf8();
-    final flag = calloc<Int8>();
-    flag.value = 0;
-    mpv.mpv_set_property(
-      _handle,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      flag.cast(),
-    );
-    calloc.free(name);
-    calloc.free(flag);
+    if (_isPlaybackEverStarted) {
+      final next = 'playlist-next'.toNativeUtf8();
+      mpv.mpv_command_string(
+        _handle,
+        next.cast(),
+      );
+      calloc.free(next);
+    } else {
+      await jump(
+        (state.playlist.index + 1).clamp(
+          0,
+          state.playlist.medias.length,
+        ),
+        open: true,
+      );
+    }
+    _unpause();
   }
 
   /// Jumps to previous [Media] in the [Player]'s playlist.
@@ -302,25 +335,23 @@ class Player {
     await _completer.future;
     // Use `mpv_command_string` as `mpv_command` seems
     // to randomly cause a crash on older libmpv versions.
-    final next = 'playlist-prev'.toNativeUtf8();
-    mpv.mpv_command_string(
-      _handle,
-      next.cast(),
-    );
-    calloc.free(next);
-    if (state.isPlaying) return;
-    _isPlaybackEverStarted = true;
-    final name = 'pause'.toNativeUtf8();
-    final flag = calloc<Int8>();
-    flag.value = 0;
-    mpv.mpv_set_property(
-      _handle,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      flag.cast(),
-    );
-    calloc.free(name);
-    calloc.free(flag);
+    if (_isPlaybackEverStarted) {
+      final next = 'playlist-prev'.toNativeUtf8();
+      mpv.mpv_command_string(
+        _handle,
+        next.cast(),
+      );
+      calloc.free(next);
+    } else {
+      await jump(
+        (state.playlist.index - 1).clamp(
+          0,
+          state.playlist.medias.length,
+        ),
+        open: true,
+      );
+    }
+    _unpause();
   }
 
   /// Jumps to specified [Media]'s index in the [Player]'s playlist.
@@ -329,6 +360,7 @@ class Player {
     bool open = false,
   }) async {
     await _completer.future;
+    _isPlaybackEverStarted = true;
     state.playlist.index = index;
     if (!_playlistController.isClosed) {
       _playlistController.add(state.playlist);
@@ -345,7 +377,6 @@ class Player {
     if (open) {
       return;
     }
-    _isPlaybackEverStarted = true;
     name = 'pause'.toNativeUtf8();
     final flag = calloc<Int8>();
     flag.value = 0;
@@ -395,55 +426,47 @@ class Player {
     await _completer.future;
     final loopFile = 'loop-file'.toNativeUtf8();
     final loopPlaylist = 'loop-playlist'.toNativeUtf8();
-    final yes = calloc<Int8>();
-    yes.value = 1;
-    final no = calloc<Int8>();
-    no.value = 0;
+    final yes = 'yes'.toNativeUtf8();
+    final no = 'no'.toNativeUtf8();
     switch (playlistMode) {
       case PlaylistMode.none:
         {
-          mpv.mpv_set_property(
+          mpv.mpv_set_property_string(
             handle,
             loopFile.cast(),
-            generated.mpv_format.MPV_FORMAT_FLAG,
             no.cast(),
           );
-          mpv.mpv_set_property(
+          mpv.mpv_set_property_string(
             handle,
             loopPlaylist.cast(),
-            generated.mpv_format.MPV_FORMAT_FLAG,
             no.cast(),
           );
           break;
         }
       case PlaylistMode.single:
         {
-          mpv.mpv_set_property(
+          mpv.mpv_set_property_string(
             handle,
             loopFile.cast(),
-            generated.mpv_format.MPV_FORMAT_FLAG,
             yes.cast(),
           );
-          mpv.mpv_set_property(
+          mpv.mpv_set_property_string(
             handle,
             loopPlaylist.cast(),
-            generated.mpv_format.MPV_FORMAT_FLAG,
             no.cast(),
           );
           break;
         }
       case PlaylistMode.loop:
         {
-          mpv.mpv_set_property(
+          mpv.mpv_set_property_string(
             handle,
             loopFile.cast(),
-            generated.mpv_format.MPV_FORMAT_FLAG,
             no.cast(),
           );
-          mpv.mpv_set_property(
+          mpv.mpv_set_property_string(
             handle,
             loopPlaylist.cast(),
-            generated.mpv_format.MPV_FORMAT_FLAG,
             yes.cast(),
           );
           break;
@@ -492,15 +515,14 @@ class Player {
       // `scaletempo:scale` is divided by the same value of [pitch] to compensate the
       // speed change.
       var name = 'audio-pitch-correction'.toNativeUtf8();
-      final flag = calloc<Int8>()..value = 0;
-      mpv.mpv_set_property(
+      final no = 'no'.toNativeUtf8();
+      mpv.mpv_set_property_string(
         _handle,
         name.cast(),
-        generated.mpv_format.MPV_FORMAT_FLAG,
-        flag.cast(),
+        no.cast(),
       );
       calloc.free(name);
-      calloc.free(flag);
+      calloc.free(no);
       name = 'af'.toNativeUtf8();
       // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
       final value =
@@ -524,9 +546,8 @@ class Player {
       if (!_pitchController.isClosed) {
         _pitchController.add(state.pitch);
       }
-      // `rubberband` is not bundled in `libmpv` shared library at the moment.
-      // Using `scaletempo` instead. However, this comes with a drackback
-      // that speed & pitch cannot be changed simultaneously.
+      // `rubberband` is not bundled in `libmpv` shared library at the moment. GPL.
+      // Using `scaletempo` instead.
       // final name = 'af'.toNativeUtf8();
       // final keys = calloc<Pointer<Utf8>>(2);
       // final paramKeys = calloc<Pointer<Utf8>>(2);
@@ -567,15 +588,14 @@ class Player {
       // calloc.free(name);
       // mpv.mpv_free_node_contents(data);
       var name = 'audio-pitch-correction'.toNativeUtf8();
-      final flag = calloc<Int8>()..value = 0;
-      mpv.mpv_set_property(
+      final no = 'no'.toNativeUtf8();
+      mpv.mpv_set_property_string(
         _handle,
         name.cast(),
-        generated.mpv_format.MPV_FORMAT_FLAG,
-        flag.cast(),
+        no.cast(),
       );
       calloc.free(name);
-      calloc.free(flag);
+      calloc.free(no);
       name = 'speed'.toNativeUtf8();
       final speed = calloc<Double>()..value = pitch;
       mpv.mpv_set_property(
@@ -681,6 +701,9 @@ class Player {
     _handle = await create(
       libmpv!,
       (event) async {
+        // print(
+        //   mpv.mpv_event_name(event.ref.event_id).cast<Utf8>().toDartString(),
+        // );
         _error(event.ref.error);
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
           state.isCompleted = false;
@@ -769,7 +792,7 @@ class Player {
               _volumeController.add(volume);
             }
           }
-          // See [rate] & [pitch] setters.
+          // See [rate] & [pitch] setters/getters.
           // Handled manually using `scaletempo`.
           // if (prop.ref.name.cast<Utf8>().toDartString() == 'speed' &&
           //     prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
@@ -782,7 +805,7 @@ class Player {
         }
       },
     );
-    final properties = <String, int>{
+    <String, int>{
       'pause': generated.mpv_format.MPV_FORMAT_FLAG,
       'time-pos': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
@@ -791,8 +814,7 @@ class Player {
       'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
-    };
-    properties.forEach((property, format) {
+    }.forEach((property, format) {
       final ptr = property.toNativeUtf8();
       mpv.mpv_observe_property(
         _handle,
@@ -940,6 +962,30 @@ class Player {
     );
     calloc.free(arr);
     pointers.forEach(calloc.free);
+  }
+
+  void _unpause() {
+    // We do not want the player to be in `paused` state before opening a new playlist or jumping to new index.
+    // We are only changing the `pause` property to `false` if it wasn't already `false` because this can cause problems with older libmpv versions.
+    final name = 'pause'.toNativeUtf8();
+    final data = calloc<Bool>();
+    mpv.mpv_get_property(
+      _handle,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_FLAG,
+      data.cast(),
+    );
+    if (data.value) {
+      data.value = false;
+      mpv.mpv_set_property(
+        _handle,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        data.cast(),
+      );
+    }
+    calloc.free(name);
+    calloc.free(data);
   }
 
   /// Whether video is visible or not.
