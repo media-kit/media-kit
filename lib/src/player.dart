@@ -311,7 +311,7 @@ class Player {
     await _completer.future;
     // Use `mpv_command_string` as `mpv_command` seems
     // to randomly cause a crash on older libmpv versions.
-    if (_isPlaybackEverStarted) {
+    if (_isPlaybackEverStarted && !state.isCompleted) {
       final next = 'playlist-next'.toNativeUtf8();
       mpv.mpv_command_string(
         _handle,
@@ -335,7 +335,7 @@ class Player {
     await _completer.future;
     // Use `mpv_command_string` as `mpv_command` seems
     // to randomly cause a crash on older libmpv versions.
-    if (_isPlaybackEverStarted) {
+    if (_isPlaybackEverStarted && !state.isCompleted) {
       final next = 'playlist-prev'.toNativeUtf8();
       mpv.mpv_command_string(
         _handle,
