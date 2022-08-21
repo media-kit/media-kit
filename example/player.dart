@@ -18,6 +18,11 @@ Future<void> main() async {
     })
     ..streams.audioParams.listen((event) {
       print(event);
+    })
+    ..streams.audioBitrate.listen((event) {
+      if (event != null) {
+        print('${event ~/ 1000}kbps');
+      }
     });
   await player.open(
     Playlist(

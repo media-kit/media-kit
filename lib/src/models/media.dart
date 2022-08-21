@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 
 Map<String, Media> medias = {};
+Map<String, double> bitrates = {};
 
 /// ## Media
 /// A [Media] object to open inside a [Player] instance using [Player.open] method for playback.
