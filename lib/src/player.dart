@@ -10,6 +10,7 @@ import 'package:ffi/ffi.dart';
 
 import 'package:libmpv/src/dynamic_library.dart';
 import 'package:libmpv/src/core/initializer.dart';
+import 'package:libmpv/src/models/audio_params.dart';
 import 'package:libmpv/src/models/media.dart';
 import 'package:libmpv/src/models/playlist.dart';
 import 'package:libmpv/src/models/playlist_mode.dart';
@@ -697,6 +698,7 @@ class Player {
       _pitchController.stream,
       _isBufferingController.stream,
       _errorController.stream,
+      _audioParamsController.stream,
     );
     _handle = await create(
       libmpv!,
@@ -792,6 +794,63 @@ class Player {
               _volumeController.add(volume);
             }
           }
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-params' &&
+              prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+            final data = prop.ref.data.cast<generated.mpv_node>();
+            final params = <String, dynamic>{};
+            for (int i = 0; i < data.ref.u.list.ref.num; i++) {
+              final key =
+                  data.ref.u.list.ref.keys[i].cast<Utf8>().toDartString();
+
+              switch (key) {
+                case 'format':
+                  {
+                    params[key] = data.ref.u.list.ref.values[i].u.string
+                        .cast<Utf8>()
+                        .toDartString();
+                    break;
+                  }
+                case 'samplerate':
+                  {
+                    params[key] = data.ref.u.list.ref.values[i].u.int64;
+                    break;
+                  }
+                case 'channels':
+                  {
+                    params[key] = data.ref.u.list.ref.values[i].u.string
+                        .cast<Utf8>()
+                        .toDartString();
+                    break;
+                  }
+                case 'channel-count':
+                  {
+                    params[key] = data.ref.u.list.ref.values[i].u.int64;
+                    break;
+                  }
+                case 'hr-channels':
+                  {
+                    params[key] = data.ref.u.list.ref.values[i].u.string
+                        .cast<Utf8>()
+                        .toDartString();
+                    break;
+                  }
+                default:
+                  {
+                    break;
+                  }
+              }
+            }
+            state.audioParams = AudioParams(
+              params['format'],
+              params['samplerate'],
+              params['channels'],
+              params['channel-count'],
+              params['hr-channels'],
+            );
+            if (!_audioParamsController.isClosed) {
+              _audioParamsController.add(state.audioParams);
+            }
+          }
           // See [rate] & [pitch] setters/getters.
           // Handled manually using `scaletempo`.
           // if (prop.ref.name.cast<Utf8>().toDartString() == 'speed' &&
@@ -814,6 +873,7 @@ class Player {
       'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
+      'audio-params': generated.mpv_format.MPV_FORMAT_NODE,
     }.forEach((property, format) {
       final ptr = property.toNativeUtf8();
       mpv.mpv_observe_property(
@@ -1054,6 +1114,10 @@ class Player {
   /// Internally used [StreamController].
   final StreamController<_PlayerError> _errorController =
       StreamController.broadcast();
+
+  /// Internally used [StreamController].
+  final StreamController<AudioParams> _audioParamsController =
+      StreamController.broadcast();
 }
 
 /// Private class to raise errors by the [Player].
@@ -1092,39 +1156,50 @@ class _PlayerState {
 
   /// Whether the [Player] has stopped for buffering.
   bool isBuffering = false;
+
+  AudioParams audioParams = AudioParams(
+    null,
+    null,
+    null,
+    null,
+    null,
+  );
 }
 
 /// Private class for event handling of [Player].
 class _PlayerStreams {
   /// [List] of currently opened [Media]s.
-  late Stream<Playlist> playlist;
+  final Stream<Playlist> playlist;
 
   /// If the [Player] is playing.
-  late Stream<bool> isPlaying;
+  final Stream<bool> isPlaying;
 
   /// If the [Player]'s playback is completed.
-  late Stream<bool> isCompleted;
+  final Stream<bool> isCompleted;
 
   /// Current playback position of the [Player].
-  late Stream<Duration> position;
+  final Stream<Duration> position;
 
   /// Duration of the currently playing [Media] in the [Player].
-  late Stream<Duration> duration;
+  final Stream<Duration> duration;
 
   /// Current volume of the [Player].
-  late Stream<double> volume;
+  final Stream<double> volume;
 
   /// Current playback rate of the [Player].
-  late Stream<double> rate;
+  final Stream<double> rate;
 
   /// Current pitch of the [Player].
-  late Stream<double> pitch;
+  final Stream<double> pitch;
 
   /// Whether the [Player] has stopped for buffering.
-  late Stream<bool> isBuffering;
+  final Stream<bool> isBuffering;
 
   /// [Stream] raising [_PlayerError]s.
-  late Stream<_PlayerError> error;
+  final Stream<_PlayerError> error;
+
+  /// [Stream] used to get audio parameters like sample rate, format & channels etc.
+  final Stream<AudioParams> audioParams;
 
   _PlayerStreams(
     this.playlist,
@@ -1137,5 +1212,6 @@ class _PlayerStreams {
     this.pitch,
     this.isBuffering,
     this.error,
+    this.audioParams,
   );
 }

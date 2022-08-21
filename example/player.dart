@@ -15,6 +15,9 @@ Future<void> main() async {
     })
     ..streams.position.listen((event) {
       print(event);
+    })
+    ..streams.audioParams.listen((event) {
+      print(event);
     });
   await player.open(
     Playlist(
