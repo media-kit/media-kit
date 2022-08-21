@@ -737,6 +737,18 @@ class Player {
             if (!_isPlayingController.isClosed && _isPlaybackEverStarted) {
               _isPlayingController.add(false);
             }
+            if (!_audioParamsController.isClosed) {
+              _audioParamsController.add(
+                AudioParams(null, null, null, null, null),
+              );
+              state.audioParams = AudioParams(
+                null,
+                null,
+                null,
+                null,
+                null,
+              );
+            }
             if (!_audioBitrateController.isClosed) {
               _audioBitrateController.add(null);
               state.audioBitrate = null;
