@@ -153,6 +153,7 @@ class Player {
     if (clearCache) {
       // Clean-up existing cached [medias].
       medias.clear();
+      bitrates.clear();
       // Restore current playlist.
       for (final media in playlist.medias) {
         medias[media.uri] = media;
@@ -699,6 +700,7 @@ class Player {
       _isBufferingController.stream,
       _errorController.stream,
       _audioParamsController.stream,
+      _audioBitrateController.stream,
     );
     _handle = await create(
       libmpv!,
@@ -734,6 +736,10 @@ class Player {
             }
             if (!_isPlayingController.isClosed && _isPlaybackEverStarted) {
               _isPlayingController.add(false);
+            }
+            if (!_audioBitrateController.isClosed) {
+              _audioBitrateController.add(null);
+              state.audioBitrate = null;
             }
           }
         }
@@ -778,6 +784,7 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
+            bitrates.clear();
             final index = prop.ref.data.cast<Int64>().value;
             if (_isPlaybackEverStarted) {
               state.playlist.index = index;
@@ -851,6 +858,33 @@ class Player {
               _audioParamsController.add(state.audioParams);
             }
           }
+          if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-bitrate' &&
+              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+            if (state.playlist.index < state.playlist.medias.length &&
+                state.playlist.index >= 0) {
+              final data = prop.ref.data.cast<Double>().value;
+              final uri = state.playlist.medias[state.playlist.index].uri;
+              if (!bitrates.containsKey(uri) ||
+                  !bitrates.containsKey(Media.getCleanedURI(uri))) {
+                bitrates[uri] = data;
+                bitrates[Media.getCleanedURI(uri)] = data;
+              }
+              if (!_audioBitrateController.isClosed &&
+                  (bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)]) !=
+                      state.audioBitrate) {
+                _audioBitrateController.add(
+                  bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)],
+                );
+                state.audioBitrate =
+                    bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)];
+              }
+            } else {
+              if (!_audioBitrateController.isClosed) {
+                _audioBitrateController.add(null);
+                state.audioBitrate = null;
+              }
+            }
+          }
           // See [rate] & [pitch] setters/getters.
           // Handled manually using `scaletempo`.
           // if (prop.ref.name.cast<Utf8>().toDartString() == 'speed' &&
@@ -874,6 +908,7 @@ class Player {
       'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
       'audio-params': generated.mpv_format.MPV_FORMAT_NODE,
+      'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
     }.forEach((property, format) {
       final ptr = property.toNativeUtf8();
       mpv.mpv_observe_property(
@@ -1118,6 +1153,10 @@ class Player {
   /// Internally used [StreamController].
   final StreamController<AudioParams> _audioParamsController =
       StreamController.broadcast();
+
+  /// Internally used [StreamController].
+  final StreamController<double?> _audioBitrateController =
+      StreamController.broadcast();
 }
 
 /// Private class to raise errors by the [Player].
@@ -1157,6 +1196,8 @@ class _PlayerState {
   /// Whether the [Player] has stopped for buffering.
   bool isBuffering = false;
 
+  /// Audio parameters of the currently playing [Media].
+  /// e.g. sample rate, channels, etc.
   AudioParams audioParams = AudioParams(
     null,
     null,
@@ -1164,6 +1205,9 @@ class _PlayerState {
     null,
     null,
   );
+
+  /// Audio bitrate of the currently playing [Media].
+  double? audioBitrate;
 }
 
 /// Private class for event handling of [Player].
@@ -1201,6 +1245,9 @@ class _PlayerStreams {
   /// [Stream] used to get audio parameters like sample rate, format & channels etc.
   final Stream<AudioParams> audioParams;
 
+  /// Audio bitrate of the currently playing [Media] in the [Player].
+  final Stream<double?> audioBitrate;
+
   _PlayerStreams(
     this.playlist,
     this.isPlaying,
@@ -1213,5 +1260,6 @@ class _PlayerStreams {
     this.isBuffering,
     this.error,
     this.audioParams,
+    this.audioBitrate,
   );
 }
