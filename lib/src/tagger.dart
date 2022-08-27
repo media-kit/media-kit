@@ -29,6 +29,10 @@ import 'package:path/path.dart';
 /// );
 /// ```
 ///
+/// Pass [verbose] as `true` to receive additional info.
+/// This is made optional because having `false` can result in massive performance benefits.
+/// This parameter should be `true`, if you want to retrieve [duration] & [bitrate] in [parse] results.
+///
 class Tagger {
   /// ## Tagger
   ///
@@ -42,7 +46,13 @@ class Tagger {
   /// );
   /// ```
   ///
-  Tagger() {
+  /// Pass [verbose] as `true` to receive additional info.
+  /// This is made optional because having `false` can result in massive performance benefits.
+  /// This parameter should be `true`, if you want to retrieve [duration] & [bitrate] in [parse] results.
+  ///
+  Tagger({
+    this.verbose = true,
+  }) {
     _create();
   }
 
@@ -61,6 +71,10 @@ class Tagger {
     bool bitrate = false,
     Duration timeout = const Duration(seconds: 5),
   }) async {
+    assert(
+      (verbose && (duration || bitrate)) || !verbose,
+      '[bitrate] or [duration] cannot be requested in non-verbose mode.',
+    );
     _uri = media.uri;
     _directory = coverDirectory?.path;
     _path = cover?.absolute.path;
@@ -70,19 +84,6 @@ class Tagger {
     _metadata = Completer();
     _duration = Completer();
     _bitrate = Completer();
-    <String, int>{
-      'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
-      'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
-    }.forEach((property, format) {
-      final ptr = property.toNativeUtf8();
-      mpv.mpv_observe_property(
-        _handle,
-        0,
-        ptr.cast(),
-        format,
-      );
-      calloc.free(ptr);
-    });
     _command(
       [
         'loadfile',
@@ -90,16 +91,18 @@ class Tagger {
         'replace',
       ],
     );
-    final name = 'pause'.toNativeUtf8();
-    final flag = calloc<Int8>()..value = 0;
-    mpv.mpv_set_property(
-      _handle,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      flag.cast(),
-    );
-    calloc.free(name);
-    calloc.free(flag);
+    if (verbose) {
+      final name = 'pause'.toNativeUtf8();
+      final flag = calloc<Int8>()..value = 0;
+      mpv.mpv_set_property(
+        _handle,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        flag.cast(),
+      );
+      calloc.free(name);
+      calloc.free(flag);
+    }
     Map<String, String> metadata = await _metadata.future.timeout(timeout);
     if (duration) {
       metadata['duration'] = await _duration.future.timeout(timeout);
@@ -108,12 +111,6 @@ class Tagger {
       metadata['bitrate'] = await _bitrate.future.timeout(timeout);
     }
     metadata['uri'] = media.uri;
-    final stop = 'stop'.toNativeUtf8().cast();
-    mpv.mpv_command_string(
-      _handle,
-      stop.cast(),
-    );
-    calloc.free(stop);
     return metadata;
   }
 
@@ -229,66 +226,53 @@ class Tagger {
       libmpv!,
       _handler,
     );
-    final property = 'metadata'.toNativeUtf8();
-    mpv.mpv_observe_property(
-      _handle,
-      0,
-      property.cast(),
-      generated.mpv_format.MPV_FORMAT_NODE,
-    );
-    calloc.free(property);
-    final vo = 'vo'.toNativeUtf8();
-    final ao = 'ao'.toNativeUtf8();
-    final osd = 'osd'.toNativeUtf8();
-    final value = 'null'.toNativeUtf8();
-    mpv.mpv_set_option_string(
-      _handle,
-      vo.cast(),
-      value.cast(),
-    );
-    mpv.mpv_set_option_string(
-      _handle,
-      ao.cast(),
-      value.cast(),
-    );
-    mpv.mpv_set_option_string(
-      _handle,
-      osd.cast(),
-      value.cast(),
-    );
-    calloc.free(vo);
-    calloc.free(ao);
-    calloc.free(value);
     <String, int>{
-      'demuxer-max-bytes': 10,
-      'demuxer-max-back-bytes': 10,
-    }.forEach((key, value) {
-      final _key = key.toNativeUtf8();
-      final _value = calloc<Int64>()..value = value;
-      mpv.mpv_set_property(
-        _handle,
-        _key.cast(),
-        generated.mpv_format.MPV_FORMAT_INT64,
-        _value.cast(),
-      );
-      calloc.free(_key);
-      calloc.free(_value);
-    });
-    final cache = 'cache'.toNativeUtf8();
-    final hwdec = 'hwdec'.toNativeUtf8();
-    final no = 'no'.toNativeUtf8();
-    mpv.mpv_set_property_string(
-      _handle,
-      cache.cast(),
-      no.cast(),
+      'metadata': generated.mpv_format.MPV_FORMAT_NODE,
+      'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
+      'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
+    }.forEach(
+      (property, format) {
+        final ptr = property.toNativeUtf8();
+        mpv.mpv_observe_property(
+          _handle,
+          0,
+          ptr.cast(),
+          format,
+        );
+        calloc.free(ptr);
+      },
     );
-    mpv.mpv_set_property_string(
-      _handle,
-      hwdec.cast(),
-      no.cast(),
+    <String, String>{
+      if (verbose) ...{
+        'demuxer-max-bytes': '1024',
+        'demuxer-max-back-bytes': '1024',
+        'demuxer-readahead-secs': '1',
+        'ao': 'null',
+      } else ...{
+        'demuxer-max-bytes': '0',
+        'demuxer-max-back-bytes': '0',
+        'demuxer-readahead-secs': '0',
+        'audio': 'no',
+        'pause': 'yes',
+      },
+      'vo': 'null',
+      'autoload-files': 'no',
+      'hwdec': 'no',
+      'osc': 'no',
+      'cache-secs': '0',
+      'cache': 'no',
+    }.forEach(
+      (k, v) {
+        final property = k.toNativeUtf8(), value = v.toNativeUtf8();
+        mpv.mpv_set_property_string(
+          _handle,
+          property.cast(),
+          value.cast(),
+        );
+        calloc.free(property);
+        calloc.free(value);
+      },
     );
-    calloc.free(cache);
-    calloc.free(no);
     _completer.complete();
   }
 
@@ -354,6 +338,9 @@ class Tagger {
 
   /// Path to parent folder where cover will be saved.
   String? _directory;
+
+  /// Whether bitrate & duration compatiblity is required.
+  final bool verbose;
 }
 
 /// Safely [create]s a [File] recursively.
