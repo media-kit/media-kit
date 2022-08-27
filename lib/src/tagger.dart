@@ -118,24 +118,26 @@ class Tagger {
   Future<void> dispose({int code = 0}) async {
     await _completer.future;
     // Raw `mpv_command` calls cause crash on Windows.
-    final args = [
-      'quit',
-      '$code',
-    ].join(' ').toNativeUtf8();
+    final command = 'quit $code'.toNativeUtf8();
     mpv.mpv_command_string(
       _handle,
-      args.cast(),
+      command.cast(),
     );
+    calloc.free(command);
   }
 
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
       if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
-              generated.mpv_end_file_reason.MPV_END_FILE_REASON_ERROR ||
-          event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
-              generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
+          generated.mpv_end_file_reason.MPV_END_FILE_REASON_ERROR) {
         if (!_metadata.isCompleted) {
-          _metadata.complete({});
+          _metadata.completeError(FormatException('MPV_END_FILE_REASON_ERROR'));
+        }
+      }
+      if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
+          generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
+        if (!_metadata.isCompleted) {
+          _metadata.completeError(FormatException('MPV_END_FILE_REASON_EOF'));
         }
       }
     }
