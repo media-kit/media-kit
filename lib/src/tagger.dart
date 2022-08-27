@@ -29,7 +29,7 @@ import 'package:path/path.dart';
 /// );
 /// ```
 ///
-/// Pass [verbose] as `true` to receive additional info.
+/// Pass [verbose] as `true` to receive duration & bitrate of the [parse]d [Media].
 /// This is made optional because having `false` can result in massive performance benefits.
 /// This parameter should be `true`, if you want to retrieve [duration] & [bitrate] in [parse] results.
 ///
@@ -46,12 +46,12 @@ class Tagger {
   /// );
   /// ```
   ///
-  /// Pass [verbose] as `true` to receive additional info.
+  /// Pass [verbose] as `true` to receive duration & bitrate of the [parse]d [Media].
   /// This is made optional because having `false` can result in massive performance benefits.
   /// This parameter should be `true`, if you want to retrieve [duration] & [bitrate] in [parse] results.
   ///
   Tagger({
-    this.verbose = true,
+    this.verbose = false,
   }) {
     _create();
   }
@@ -67,14 +67,8 @@ class Tagger {
     Media media, {
     File? cover,
     Directory? coverDirectory,
-    bool duration = false,
-    bool bitrate = false,
     Duration timeout = const Duration(seconds: 5),
   }) async {
-    assert(
-      (verbose && (duration || bitrate)) || !verbose,
-      '[bitrate] or [duration] cannot be requested in non-verbose mode.',
-    );
     _uri = media.uri;
     _directory = coverDirectory?.path;
     _path = cover?.absolute.path;
@@ -104,11 +98,17 @@ class Tagger {
       calloc.free(flag);
     }
     Map<String, String> metadata = await _metadata.future.timeout(timeout);
-    if (duration) {
-      metadata['duration'] = await _duration.future.timeout(timeout);
-    }
-    if (bitrate) {
-      metadata['bitrate'] = await _bitrate.future.timeout(timeout);
+    if (verbose) {
+      try {
+        metadata['duration'] = await _duration.future.timeout(timeout);
+      } catch (e) {
+        //
+      }
+      try {
+        metadata['bitrate'] = await _bitrate.future.timeout(timeout);
+      } catch (e) {
+        //
+      }
     }
     metadata['uri'] = media.uri;
     return metadata;
@@ -295,6 +295,10 @@ class Tagger {
     calloc.free(arr);
     pointers.forEach(calloc.free);
   }
+
+  /// Loads the dynamic library & setups callbacks in advance.
+  ///
+  Future<void> open() => _create();
 
   static List<String>? splitArtists(String? tag) {
     if (tag == null) return null;
