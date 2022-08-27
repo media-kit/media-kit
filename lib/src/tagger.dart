@@ -51,9 +51,12 @@ class Tagger {
   /// This parameter should be `true`, if you want to retrieve [duration] & [bitrate] in [parse] results.
   ///
   Tagger({
+    bool create = true,
     this.verbose = false,
   }) {
-    _create();
+    if (create) {
+      _create();
+    }
   }
 
   /// Parses a [Media] & returns its metadata as [Map].
