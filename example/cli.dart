@@ -8,15 +8,27 @@ import 'dart:convert';
 import 'package:libmpv/libmpv.dart';
 
 Future<void> main(List<String> args) async {
-  try {
-    await MPV.initialize(
-      dynamicLibrary: args.length <= 1 ? null : args.last,
+  String? dynamicLibrary;
+  for (final arg in args) {
+    if (![
+      '--verbose',
+      '--version',
+    ].contains(arg)) {
+      dynamicLibrary = arg;
+    }
+  }
+  await MPV.initialize(
+    dynamicLibrary: dynamicLibrary,
+  );
+  if (args.contains('--version')) {
+    print(
+      'Tagger\n------\nA minimal tag-reader for Harmonoid on Linux.\nPowered by package:libmpv.',
     );
-  } catch (e) {
-    //
+    return;
   }
   final verbose = args.contains('--verbose');
   final tagger = Tagger(verbose: verbose);
+  await tagger.open();
   while (true) {
     final opt = stdin.readLineSync()?.trim();
     assert(['parse', 'dispose'].contains(opt));
@@ -33,8 +45,6 @@ Future<void> main(List<String> args) async {
             coverDirectory: [null, ''].contains(coverDirectory)
                 ? null
                 : Directory(coverDirectory!),
-            duration: verbose,
-            bitrate: verbose,
             timeout: Duration(milliseconds: timeout),
           );
           print(const JsonEncoder.withIndent('    ').convert(metadata));
