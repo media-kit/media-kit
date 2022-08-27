@@ -27,7 +27,10 @@ Future<void> main(List<String> args) async {
     return;
   }
   final verbose = args.contains('--verbose');
-  final tagger = Tagger(verbose: verbose);
+  final tagger = Tagger(
+    create: false,
+    verbose: verbose,
+  );
   await tagger.open();
   while (true) {
     final opt = stdin.readLineSync()?.trim();
