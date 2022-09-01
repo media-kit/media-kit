@@ -114,6 +114,12 @@ class Tagger {
       }
     }
     metadata['uri'] = media.uri;
+    final stop = 'stop'.toNativeUtf8().cast();
+    mpv.mpv_command_string(
+      _handle,
+      stop.cast(),
+    );
+    calloc.free(stop);
     return metadata;
   }
 
@@ -249,14 +255,8 @@ class Tagger {
     );
     <String, String>{
       if (verbose) ...{
-        'demuxer-max-bytes': '1024',
-        'demuxer-max-back-bytes': '1024',
-        'demuxer-readahead-secs': '1',
         'ao': 'null',
       } else ...{
-        'demuxer-max-bytes': '0',
-        'demuxer-max-back-bytes': '0',
-        'demuxer-readahead-secs': '0',
         'audio': 'no',
         'pause': 'yes',
       },
@@ -266,6 +266,9 @@ class Tagger {
       'osc': 'no',
       'cache-secs': '0',
       'cache': 'no',
+      'demuxer-max-bytes': '1024',
+      'demuxer-max-back-bytes': '1024',
+      'demuxer-readahead-secs': '10',
     }.forEach(
       (k, v) {
         final property = k.toNativeUtf8(), value = v.toNativeUtf8();
