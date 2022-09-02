@@ -3,6 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'package:media_kit/src/models/media.dart';
 
 /// A [Playlist] collectively representing currently playing [index]
 /// & a [List] of opened [Media]s inside the [Player].
