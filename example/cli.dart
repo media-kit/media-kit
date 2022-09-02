@@ -22,7 +22,13 @@ Future<void> main(List<String> args) async {
   );
   if (args.contains('--version')) {
     print(
-      'Tagger\n------\nA minimal tag-reader for Harmonoid on Linux.\nPowered by package:libmpv.',
+      [
+        'Tagger',
+        'Copyright © 2022, Hitesh Kumar Saini <alexmercerind@gmail.com>',
+        'This file is a part of Harmonoid.',
+        'Powered by package:libmpv.',
+        'Visit https://github.com/harmonoid/harmonoid for more information.',
+      ].join('\n'),
     );
     return;
   }
