@@ -7,7 +7,7 @@ import 'dart:ffi';
 import 'dart:async';
 import 'dart:isolate';
 
-import 'package:libmpv/generated/bindings.dart';
+import 'package:media_kit/generated/bindings.dart';
 
 /// Late initialized [MPV] object from ffigen.
 late MPV mpv;

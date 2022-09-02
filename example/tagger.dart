@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:libmpv/libmpv.dart';
+import 'package:media_kit/libmpv.dart';
 import 'package:path/path.dart';
 
 Future<void> main() async {

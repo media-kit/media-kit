@@ -1,9 +1,9 @@
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 
-import 'package:libmpv/src/core/initializer.dart';
-import 'package:libmpv/generated/bindings.dart';
-import 'package:libmpv/src/dynamic_library.dart' as dlib;
+import 'package:media_kit/src/core/initializer.dart';
+import 'package:media_kit/generated/bindings.dart';
+import 'package:media_kit/src/dynamic_library.dart' as dlib;
 
 Future<void> main(List<String> args) async {
   if (args.isEmpty) {

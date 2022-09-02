@@ -10,16 +10,16 @@ import 'dart:async';
 import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 
-import 'package:libmpv/src/dynamic_library.dart';
-import 'package:libmpv/src/core/initializer.dart';
-import 'package:libmpv/src/models/audio_params.dart';
-import 'package:libmpv/src/models/media.dart';
-import 'package:libmpv/src/models/playlist.dart';
-import 'package:libmpv/src/models/playlist_mode.dart';
+import 'package:media_kit/src/dynamic_library.dart';
+import 'package:media_kit/src/core/initializer.dart';
+import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/media.dart';
+import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/playlist_mode.dart';
 
-import 'package:libmpv/generated/bindings.dart' as generated;
+import 'package:media_kit/generated/bindings.dart' as generated;
 
-import 'package:libmpv/src/plugins/youtube.dart';
+import 'package:media_kit/src/plugins/youtube.dart';
 
 /// ## Player
 ///

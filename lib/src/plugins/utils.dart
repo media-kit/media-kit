@@ -3,7 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'package:libmpv/src/plugins/youtube.dart';
+import 'package:media_kit/src/plugins/youtube.dart';
 
 abstract class LibmpvPluginUtils {
   /// Redirects actual YouTube video URL to a locally running HTTP
@@ -34,7 +34,7 @@ abstract class LibmpvPluginUtils {
     return uri;
   }
 
-  /// Whether this [Uri] is supported by any of the plugins present in `package:libmpv`.
+  /// Whether this [Uri] is supported by any of the plugins present in `package:media_kit`.
   ///
   static bool isSupported(Uri uri) => <bool>[
         uri.authority.contains('youtu.be'),

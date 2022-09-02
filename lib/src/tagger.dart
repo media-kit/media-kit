@@ -10,11 +10,11 @@ import 'dart:async';
 import 'dart:io';
 import 'package:ffi/ffi.dart';
 
-import 'package:libmpv/src/models/media.dart';
-import 'package:libmpv/src/dynamic_library.dart';
-import 'package:libmpv/src/core/initializer.dart';
+import 'package:media_kit/src/models/media.dart';
+import 'package:media_kit/src/dynamic_library.dart';
+import 'package:media_kit/src/core/initializer.dart';
 
-import 'package:libmpv/generated/bindings.dart' as generated;
+import 'package:media_kit/generated/bindings.dart' as generated;
 import 'package:path/path.dart';
 
 /// ## Tagger
