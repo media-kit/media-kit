@@ -1,4 +1,4 @@
-import 'package:media_kit/libmpv.dart';
+import 'package:media_kit/media_kit.dart';
 
 Future<void> main() async {
   await MPV.initialize();

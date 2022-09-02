@@ -255,21 +255,18 @@ class Tagger {
       },
     );
     <String, String>{
-      if (verbose) ...{
-        'ao': 'null',
-      } else ...{
-        'audio': 'no',
-        'pause': 'yes',
-      },
+      'ao': 'null',
       'vo': 'null',
-      'autoload-files': 'no',
-      'hwdec': 'no',
+      'idle': 'yes',
+      'pause': 'yes',
       'osc': 'no',
-      'cache-secs': '0',
+      'hwdec': 'no',
+      'autoload-files': 'no',
       'cache': 'no',
+      'cache-secs': '0',
+      'demuxer-readahead-secs': '10',
       'demuxer-max-bytes': '1024',
       'demuxer-max-back-bytes': '1024',
-      'demuxer-readahead-secs': '10',
     }.forEach(
       (k, v) {
         final property = k.toNativeUtf8(), value = v.toNativeUtf8();

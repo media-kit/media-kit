@@ -6,7 +6,7 @@
 
 import 'dart:io';
 import 'dart:convert';
-import 'package:media_kit/libmpv.dart';
+import 'package:media_kit/media_kit.dart';
 
 Future<void> main(List<String> args) async {
   String? dynamicLibrary;
