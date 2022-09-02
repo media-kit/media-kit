@@ -3,6 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 /// Audio format as output by the audio decoder.
 class AudioParams {
   /// The sample format as string. This uses the same names as used in other places of mpv.
