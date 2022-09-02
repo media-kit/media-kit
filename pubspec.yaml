@@ -1,7 +1,7 @@
-name: libmpv
+name: media_kit
 description: A complete video & audio library for Flutter.
-homepage: https://github.com/alexmercerind/libmpv.dart
-repository: https://github.com/alexmercerind/libmpv.dart
+homepage: https://github.com/alexmercerind/media_kit
+repository: https://github.com/alexmercerind/media_kit
 version: 0.0.1
 
 environment:

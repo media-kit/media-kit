@@ -5,7 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:io';
 import 'dart:convert';
-import 'package:libmpv/libmpv.dart';
+import 'package:media_kit/libmpv.dart';
 
 Future<void> main(List<String> args) async {
   String? dynamicLibrary;
@@ -26,7 +26,7 @@ Future<void> main(List<String> args) async {
         'Tagger',
         'Copyright © 2022, Hitesh Kumar Saini <alexmercerind@gmail.com>',
         'This file is a part of Harmonoid.',
-        'Powered by package:libmpv.',
+        'Powered by package:media_kit.',
         'Visit https://github.com/harmonoid/harmonoid for more information.',
       ].join('\n'),
     );
