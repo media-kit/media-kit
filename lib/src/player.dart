@@ -630,6 +630,10 @@ class Player {
   set shuffle(bool shuffle) {
     () async {
       await _completer.future;
+      if (!_isPlaybackEverStarted) {
+        await play();
+        return;
+      }
       _command(
         [
           shuffle ? 'playlist-shuffle' : 'playlist-unshuffle',
