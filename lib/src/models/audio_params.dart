@@ -22,13 +22,13 @@ class AudioParams {
   /// Usually only audio-out-params/hr-channels makes sense.
   final String? hrChannels;
 
-  AudioParams(
+  AudioParams({
     this.format,
     this.sampleRate,
     this.channels,
     this.channelCount,
     this.hrChannels,
-  );
+  });
 
   @override
   String toString() =>
