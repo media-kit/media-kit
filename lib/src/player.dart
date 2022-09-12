@@ -746,15 +746,9 @@ class Player {
             }
             if (!_audioParamsController.isClosed) {
               _audioParamsController.add(
-                AudioParams(null, null, null, null, null),
+                AudioParams(),
               );
-              state.audioParams = AudioParams(
-                null,
-                null,
-                null,
-                null,
-                null,
-              );
+              state.audioParams = AudioParams();
             }
             if (!_audioBitrateController.isClosed) {
               _audioBitrateController.add(null);
@@ -803,7 +797,6 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
-            bitrates.clear();
             final index = prop.ref.data.cast<Int64>().value;
             if (_isPlaybackEverStarted) {
               state.playlist.index = index;
@@ -867,11 +860,11 @@ class Player {
               }
             }
             state.audioParams = AudioParams(
-              params['format'],
-              params['samplerate'],
-              params['channels'],
-              params['channel-count'],
-              params['hr-channels'],
+              format: params['format'],
+              sampleRate: params['samplerate'],
+              channels: params['channels'],
+              channelCount: params['channel-count'],
+              hrChannels: params['hr-channels'],
             );
             if (!_audioParamsController.isClosed) {
               _audioParamsController.add(state.audioParams);
@@ -1217,13 +1210,7 @@ class _PlayerState {
 
   /// Audio parameters of the currently playing [Media].
   /// e.g. sample rate, channels, etc.
-  AudioParams audioParams = AudioParams(
-    null,
-    null,
-    null,
-    null,
-    null,
-  );
+  AudioParams audioParams = AudioParams();
 
   /// Audio bitrate of the currently playing [Media].
   double? audioBitrate;
