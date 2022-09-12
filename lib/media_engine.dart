@@ -8,6 +8,7 @@ export 'package:media_kit/src/player.dart';
 export 'package:media_kit/src/tagger.dart';
 export 'package:media_kit/src/models/media.dart';
 export 'package:media_kit/src/models/playlist.dart';
+export 'package:media_kit/src/models/audio_params.dart';
 export 'package:media_kit/src/models/playlist_mode.dart';
 export 'package:media_kit/src/dynamic_library.dart';
 export 'package:media_kit/src/core/initializer.dart';
