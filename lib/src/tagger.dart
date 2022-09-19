@@ -171,17 +171,32 @@ class Tagger {
       if (prop.ref.name.cast<Utf8>().toDartString() == 'metadata' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
         final metadata = <String, String>{};
-        final data = prop.ref.data.cast<generated.mpv_node>().ref.u.list;
-        for (int i = 0; i < data.ref.num; i++) {
-          metadata[data.ref.keys[i].cast<Utf8>().toDartString()] =
-              data.ref.values[i].u.string.cast<Utf8>().toDartString();
+        // Adding this try/catch clause because why not.
+        // But in case of a native-sided memory corruption, this won't help anyway.
+        try {
+          final data = prop.ref.data.cast<generated.mpv_node>().ref.u.list;
+          for (int i = 0; i < data.ref.num; i++) {
+            // https://github.com/harmonoid/harmonoid/issues/331
+            // [Utf8Pointer.toDartString] throws [FormatException] when the native `char[]` present at the address is corrupt (or maybe non-null terminated).
+            // Never experienced this error personally.
+            // Likely this is a problem on libmpv's side.
+            try {
+              metadata[data.ref.keys[i].cast<Utf8>().toDartString()] =
+                  data.ref.values[i].u.string.cast<Utf8>().toDartString();
+            } catch (exception, stacktrace) {
+              print(exception);
+              print(stacktrace);
+            }
+          }
+          final _ = {...metadata}.forEach(
+            (key, value) {
+              metadata[key.toLowerCase()] = value;
+            },
+          );
+        } catch (exception, stacktrace) {
+          print(exception);
+          print(stacktrace);
         }
-        final _ = {...metadata}.forEach(
-          (key, value) {
-            metadata[key.toLowerCase()] = value;
-          },
-        );
-
         // libmpv doesn't seem to read ALBUMARTIST.
         if (_uri!.toUpperCase().endsWith('.FLAC') &&
             !metadata.containsKey('album_artist') &&
