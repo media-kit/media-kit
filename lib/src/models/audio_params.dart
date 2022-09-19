@@ -22,7 +22,7 @@ class AudioParams {
   /// Usually only audio-out-params/hr-channels makes sense.
   final String? hrChannels;
 
-  AudioParams({
+  const AudioParams({
     this.format,
     this.sampleRate,
     this.channels,
