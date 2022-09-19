@@ -6,17 +6,18 @@
 
 // ignore_for_file: non_constant_identifier_names
 
+import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
-import 'dart:io';
 import 'package:ffi/ffi.dart';
+import 'package:path/path.dart';
 
 import 'package:media_kit/src/models/media.dart';
+import 'package:media_kit/src/utf8_fallback.dart';
 import 'package:media_kit/src/dynamic_library.dart';
 import 'package:media_kit/src/core/initializer.dart';
 
 import 'package:media_kit/generated/bindings.dart' as generated;
-import 'package:path/path.dart';
 
 /// ## Tagger
 ///
@@ -182,7 +183,9 @@ class Tagger {
             // Likely this is a problem on libmpv's side.
             try {
               metadata[data.ref.keys[i].cast<Utf8>().toDartString()] =
-                  data.ref.values[i].u.string.cast<Utf8>().toDartString();
+                  // NOTE (@alexmercerind): See [Utf8Extension.toDartString_] for more info.
+                  // Above linked issue has more information.
+                  data.ref.values[i].u.string.cast<Utf8>().toDartString_();
             } catch (exception, stacktrace) {
               print(exception);
               print(stacktrace);
