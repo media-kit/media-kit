@@ -119,7 +119,10 @@ Future<Pointer<mpv_handle>> create(
     /// Receiving event callbacks.
     else {
       Pointer<mpv_event> event = Pointer.fromAddress(message);
-      callback(event).then((value) {
+      silencedCallback(
+        callback,
+        event,
+      ).then((value) {
         /// Sending the confirmation.
         port.send(null);
       });
@@ -129,4 +132,22 @@ Future<Pointer<mpv_handle>> create(
   /// Awaiting the retrieval of [Pointer] to [mpv_handle].
   await completer.future;
   return handle;
+}
+
+/// I cannot afford to crash the whole [Isolate].
+/// This will prevent event handling from being stopped due to some random unhandled exception in the passed [callback] by [Player] pr [Tagger].
+///
+Future<void> silencedCallback(
+  Future<void> Function(Pointer<mpv_event> event) callback,
+  Pointer<mpv_event> event,
+) async {
+  try {
+    await callback(event);
+  } catch (exception, stacktrace) {
+    print(
+      'package:media_kit/src/core/initializer.dart: received exception in passed [create] [callback].',
+    );
+    print(exception.toString());
+    print(stacktrace.toString());
+  }
 }
