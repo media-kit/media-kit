@@ -183,7 +183,7 @@ class Tagger {
             // Likely this is a problem on libmpv's side.
             try {
               metadata[data.ref.keys[i].cast<Utf8>().toDartString()] =
-                  // NOTE (@alexmercerind): See [Utf8Extension.toDartString_] for more info.
+                  // NOTE (@alexmercerind): See [PointerUtf8Extension.toDartString_] for more info.
                   // Above linked issue has more information.
                   data.ref.values[i].u.string.cast<Utf8>().toDartString_();
             } catch (exception, stacktrace) {
