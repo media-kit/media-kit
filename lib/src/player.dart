@@ -4,8 +4,6 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-// ignore_for_file: library_private_types_in_public_api
-
 import 'dart:ffi';
 import 'dart:async';
 import 'dart:isolate';

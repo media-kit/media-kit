@@ -78,7 +78,8 @@ abstract class MPV {
         }
       }
       throw Exception(
-          'Cannot find mpv-2.dll in your system %PATH%. One way to deal with this is to ship mpv-2.dll with your script or compiled executable in the same directory.');
+        'Cannot find mpv-2.dll in your system %PATH%. One way to deal with this is to ship mpv-2.dll with your script or compiled executable in the same directory.',
+      );
     }
     if (Platform.isLinux) {
       if (await File(join(Platform.script.path, kWindowsDynamicLibrary))
@@ -113,7 +114,8 @@ abstract class MPV {
         return;
       }
       throw Exception(
-          'Cannot find libmpv in the usual places. Depending on your distro, you may try installing mpv-devel or libmpv-dev package.');
+        'Cannot find libmpv in the usual places. Depending on your distro, you may try installing mpv-devel or libmpv-dev package.',
+      );
     }
   }
 }

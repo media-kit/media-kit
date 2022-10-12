@@ -4,8 +4,6 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-// ignore_for_file: non_constant_identifier_names
-
 import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
@@ -35,6 +33,9 @@ import 'package:media_kit/generated/bindings.dart' as generated;
 /// This is made optional because having `false` can result in massive performance benefits.
 /// This parameter should be `true`, if you want to retrieve [duration] & [bitrate] in [parse] results.
 ///
+/// Compatiblity has been tested with libmpv 0.28.0 or higher. The recommended version is 0.33.0 or higher.
+/// Call [dispose] to free the resources back to the system.
+///
 class Tagger {
   /// ## Tagger
   ///
@@ -51,6 +52,9 @@ class Tagger {
   /// Pass [verbose] as `true` to receive duration & bitrate of the [parse]d [Media].
   /// This is made optional because having `false` can result in massive performance benefits.
   /// This parameter should be `true`, if you want to retrieve [duration] & [bitrate] in [parse] results.
+  ///
+  /// Compatiblity has been tested with libmpv 0.28.0 or higher. The recommended version is 0.33.0 or higher.
+  /// Call [dispose] to free the resources back to the system.
   ///
   Tagger({
     bool create = true,
