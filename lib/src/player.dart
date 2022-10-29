@@ -9,11 +9,12 @@ import 'dart:async';
 import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 
-import 'package:media_kit/src/dynamic_library.dart';
 import 'package:media_kit/src/core/initializer.dart';
-import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/dynamic_library.dart';
+import 'package:media_kit/src/flac_bitrate_fallback.dart';
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 
 import 'package:media_kit/generated/bindings.dart' as generated;
@@ -792,6 +793,33 @@ class Player {
             if (!_durationController.isClosed) {
               _durationController.add(duration);
             }
+            // NOTE: Using manual bitrate calculation for FLAC.
+            // Too much going on here. Enclosing in a try-catch block.
+            try {
+              if (state.playlist.index >= 0 &&
+                  state.playlist.index < state.playlist.medias.length) {
+                final uri = state.playlist.medias[state.playlist.index].uri;
+                if (FLACBitrateFallback.isLocalFLACUri(uri)) {
+                  if (!bitrates.containsKey(uri) ||
+                      !bitrates.containsKey(Media.getCleanedURI(uri))) {
+                    bitrates[uri] = await FLACBitrateFallback.calculateBitrate(
+                      uri,
+                      duration,
+                    );
+                  }
+                  final bitrate = bitrates[uri];
+                  if (bitrate != null) {
+                    state.audioBitrate = bitrate;
+                    if (!_audioBitrateController.isClosed) {
+                      _audioBitrateController.add(bitrate);
+                    }
+                  }
+                }
+              }
+            } catch (exception, stacktrace) {
+              print(exception);
+              print(stacktrace);
+            }
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
@@ -870,29 +898,38 @@ class Player {
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-bitrate' &&
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-            if (state.playlist.index < state.playlist.medias.length &&
-                state.playlist.index >= 0) {
-              final data = prop.ref.data.cast<Double>().value;
-              final uri = state.playlist.medias[state.playlist.index].uri;
-              if (!bitrates.containsKey(uri) ||
-                  !bitrates.containsKey(Media.getCleanedURI(uri))) {
-                bitrates[uri] = data;
-                bitrates[Media.getCleanedURI(uri)] = data;
+            // Too much going on here. Enclosing in a try-catch block.
+            try {
+              if (state.playlist.index < state.playlist.medias.length &&
+                  state.playlist.index >= 0) {
+                final data = prop.ref.data.cast<Double>().value;
+                final uri = state.playlist.medias[state.playlist.index].uri;
+                // NOTE: Using manual bitrate calculation for FLAC.
+                if (!FLACBitrateFallback.isLocalFLACUri(uri)) {
+                  if (!bitrates.containsKey(uri) ||
+                      !bitrates.containsKey(Media.getCleanedURI(uri))) {
+                    bitrates[uri] = data;
+                    bitrates[Media.getCleanedURI(uri)] = data;
+                  }
+                  if (!_audioBitrateController.isClosed &&
+                      (bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)]) !=
+                          state.audioBitrate) {
+                    _audioBitrateController.add(
+                      bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)],
+                    );
+                    state.audioBitrate =
+                        bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)];
+                  }
+                }
+              } else {
+                if (!_audioBitrateController.isClosed) {
+                  _audioBitrateController.add(null);
+                  state.audioBitrate = null;
+                }
               }
-              if (!_audioBitrateController.isClosed &&
-                  (bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)]) !=
-                      state.audioBitrate) {
-                _audioBitrateController.add(
-                  bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)],
-                );
-                state.audioBitrate =
-                    bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)];
-              }
-            } else {
-              if (!_audioBitrateController.isClosed) {
-                _audioBitrateController.add(null);
-                state.audioBitrate = null;
-              }
+            } catch (exception, stacktrace) {
+              print(exception);
+              print(stacktrace);
             }
           }
           // See [rate] & [pitch] setters/getters.

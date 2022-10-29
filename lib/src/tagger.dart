@@ -8,7 +8,9 @@ import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
+import 'package:media_kit/src/flac_bitrate_fallback.dart';
 import 'package:path/path.dart';
+import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/utf8_fallback.dart';
@@ -161,16 +163,41 @@ class Tagger {
       final prop = event.ref.data.cast<generated.mpv_event_property>();
       if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+        final duration = prop.ref.data.cast<Double>().value;
         if (!_duration.isCompleted) {
-          _duration.complete(
-              (prop.ref.data.cast<Double>().value * 1e6 ~/ 1).toString());
+          _duration.complete((duration * 1e6 ~/ 1).toString());
+        }
+        try {
+          // Handling FLAC bitrate calculation manually.
+          if (FLACBitrateFallback.isLocalFLACUri(_uri!)) {
+            final value = await FLACBitrateFallback.calculateBitrate(
+                  _uri!,
+                  Duration(
+                    seconds: duration ~/ 1,
+                  ),
+                ) *
+                1e6 ~/
+                1;
+            _bitrate.complete(value.toString());
+          }
+        } catch (exception, stacktrace) {
+          print(exception);
+          print(stacktrace);
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-bitrate' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-        if (!_bitrate.isCompleted) {
-          _bitrate.complete(
-              (prop.ref.data.cast<Double>().value * 1e6 ~/ 1).toString());
+        try {
+          // Handling FLAC bitrate calculation manually.
+          if (!FLACBitrateFallback.isLocalFLACUri(_uri!)) {
+            if (!_bitrate.isCompleted) {
+              _bitrate.complete(
+                  (prop.ref.data.cast<Double>().value * 1e6 ~/ 1).toString());
+            }
+          }
+        } catch (exception, stacktrace) {
+          print(exception);
+          print(stacktrace);
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'metadata' &&
@@ -373,23 +400,6 @@ class Tagger {
 
   /// Whether bitrate & duration compatiblity is required.
   final bool verbose;
-}
-
-/// Safely [create]s a [File] recursively.
-extension on Directory {
-  Future<void> create_() async {
-    try {
-      final prefix = Platform.isWindows &&
-              !path.startsWith('\\\\') &&
-              !path.startsWith(r'\\?\')
-          ? r'\\?\'
-          : '';
-      await Directory(prefix + path).create(recursive: true);
-    } catch (exception, stacktrace) {
-      print(exception.toString());
-      print(stacktrace.toString());
-    }
-  }
 }
 
 /// [String] used for regex-matching the invalid file-name characters & removing them when saving the artwork
