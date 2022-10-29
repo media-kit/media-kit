@@ -3,6 +3,7 @@ description: A complete video & audio library for Flutter.
 homepage: https://github.com/alexmercerind/media_kit
 repository: https://github.com/alexmercerind/media_kit
 version: 0.0.1
+publish_to: "none"
 
 environment:
   sdk: ">=2.14.0 <3.0.0"
@@ -11,6 +12,10 @@ dependencies:
   ffi: 1.1.0
   path: ^1.8.0
   http: ^0.13.4
+  safe_local_storage:
+    git:
+      url: https://github.com/harmonoid/safe_local_storage.git
+      ref: master
 
 dev_dependencies:
   lints: ^1.0.0
