@@ -97,18 +97,18 @@ abstract class MPV {
         return;
       }
 
-      // For Debian based distros
+      // For Debian or Ubuntu based distros.
       if (await File('/usr/lib/x86_64-linux-gnu/$kLinuxDynamicLibrary')
           .exists()) {
         libmpv = '/usr/lib/x86_64-linux-gnu/$kLinuxDynamicLibrary';
         return;
       }
-      // For Arch and other Distros
+      // For Arch Linux based distros.
       else if (await File('/usr/lib/$kLinuxDynamicLibrary').exists()) {
         libmpv = '/usr/lib/$kLinuxDynamicLibrary';
         return;
       }
-      // For Fedora and other Distros
+      // For Fedora and other distros.
       else if (await File('/usr/lib64/$kLinuxDynamicLibrary').exists()) {
         libmpv = '/usr/lib64/$kLinuxDynamicLibrary';
         return;
