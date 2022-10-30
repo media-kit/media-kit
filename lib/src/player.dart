@@ -692,6 +692,28 @@ class Player {
     }();
   }
 
+  /// Sets property / option for the internal `libmpv` instance of this [Player].
+  /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
+  ///
+  /// See:
+  /// * https://mpv.io/manual/master/#options
+  /// * https://mpv.io/manual/master/#properties
+  ///
+  ///
+  ///
+  Future<void> setProperty(String property, String value) async {
+    await _completer.future;
+    final name = property.toNativeUtf8();
+    final data = value.toNativeUtf8();
+    mpv.mpv_set_property_string(
+      _handle,
+      name.cast(),
+      data.cast(),
+    );
+    calloc.free(name);
+    calloc.free(data);
+  }
+
   Future<void> _create() async {
     if (libmpv == null) return;
     streams = _PlayerStreams(
