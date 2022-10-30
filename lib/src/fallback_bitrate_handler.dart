@@ -10,19 +10,20 @@ import 'package:safe_local_storage/safe_local_storage.dart';
 /// libmpv doesn't seem to read the bitrate from the files which contain bitrate in their stream metadata (not file metadata).
 /// Typically, I've seen this happening with FLAC & OGG files, since they do not offer the bitrate as a metadata / attached-tags key.
 ///
-/// Adding this helper class to calculate the bitrate of the FLAC files manually.
+/// Adding this helper class to calculate the bitrate of the FLAC & OGG files manually.
 /// Considering FLAC is a lossless format, this approximation should be fine.
 /// At-least better than the one in libmpv, because it calculates the bitrate from the loaded stream currently in-memory & updates it dynamically as playback progresses.
-abstract class FLACBitrateFallback {
-  static bool isLocalFLACUri(String uri) =>
-      extractLocalFLACFilePath(uri) != null;
+abstract class FallbackBitrateHandler {
+  static bool isLocalFLACOrOGGFile(String uri) =>
+      extractLocalFLACorOGGFilePath(uri) != null;
 
-  static String? extractLocalFLACFilePath(String uri) {
+  static String? extractLocalFLACorOGGFilePath(String uri) {
     try {
       final resource = Uri.parse(uri);
       // Handle file:// URIs.
       if (resource.isScheme('FILE')) {
-        if (resource.toFilePath().toUpperCase().endsWith('.FLAC')) {
+        if (resource.toFilePath().toUpperCase().endsWith('.FLAC') ||
+            resource.toFilePath().toUpperCase().endsWith('.OGG')) {
           return resource.toFilePath();
         }
       }
@@ -31,7 +32,8 @@ abstract class FLACBitrateFallback {
           resource.isScheme('HTTPS') ||
           resource.isScheme('FTP') ||
           resource.isScheme('RSTP'))) {
-        if (resource.toString().toUpperCase().endsWith('.FLAC')) {
+        if (resource.toString().toUpperCase().endsWith('.FLAC') ||
+            resource.toString().toUpperCase().endsWith('.OGG')) {
           return uri;
         }
       }
@@ -46,11 +48,13 @@ abstract class FLACBitrateFallback {
 
   static Future<double> calculateBitrate(String uri, Duration duration) async {
     try {
-      final resource = extractLocalFLACFilePath(uri);
+      final resource = extractLocalFLACorOGGFilePath(uri);
       if (resource != null) {
         final file = File(resource);
         final size = await file.size_();
-        return size * 8 / duration.inSeconds;
+        final result = size * 8 / duration.inSeconds;
+        print('FLAC/OGG birate correction: ${result / 1e3} kb/s');
+        return result;
       }
       return 0;
     } catch (exception, stacktrace) {
