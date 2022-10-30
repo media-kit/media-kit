@@ -11,7 +11,7 @@ import 'package:ffi/ffi.dart';
 
 import 'package:media_kit/src/core/initializer.dart';
 import 'package:media_kit/src/dynamic_library.dart';
-import 'package:media_kit/src/flac_bitrate_fallback.dart';
+import 'package:media_kit/src/fallback_bitrate_handler.dart';
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_params.dart';
@@ -799,10 +799,11 @@ class Player {
               if (state.playlist.index >= 0 &&
                   state.playlist.index < state.playlist.medias.length) {
                 final uri = state.playlist.medias[state.playlist.index].uri;
-                if (FLACBitrateFallback.isLocalFLACUri(uri)) {
+                if (FallbackBitrateHandler.isLocalFLACOrOGGFile(uri)) {
                   if (!bitrates.containsKey(uri) ||
                       !bitrates.containsKey(Media.getCleanedURI(uri))) {
-                    bitrates[uri] = await FLACBitrateFallback.calculateBitrate(
+                    bitrates[uri] =
+                        await FallbackBitrateHandler.calculateBitrate(
                       uri,
                       duration,
                     );
@@ -905,7 +906,7 @@ class Player {
                 final data = prop.ref.data.cast<Double>().value;
                 final uri = state.playlist.medias[state.playlist.index].uri;
                 // NOTE: Using manual bitrate calculation for FLAC.
-                if (!FLACBitrateFallback.isLocalFLACUri(uri)) {
+                if (!FallbackBitrateHandler.isLocalFLACOrOGGFile(uri)) {
                   if (!bitrates.containsKey(uri) ||
                       !bitrates.containsKey(Media.getCleanedURI(uri))) {
                     bitrates[uri] = data;

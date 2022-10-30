@@ -8,7 +8,7 @@ import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
-import 'package:media_kit/src/flac_bitrate_fallback.dart';
+import 'package:media_kit/src/fallback_bitrate_handler.dart';
 import 'package:path/path.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
 
@@ -169,8 +169,8 @@ class Tagger {
         }
         try {
           // Handling FLAC bitrate calculation manually.
-          if (FLACBitrateFallback.isLocalFLACUri(_uri!)) {
-            final value = await FLACBitrateFallback.calculateBitrate(
+          if (FallbackBitrateHandler.isLocalFLACOrOGGFile(_uri!)) {
+            final value = await FallbackBitrateHandler.calculateBitrate(
                   _uri!,
                   Duration(
                     seconds: duration ~/ 1,
@@ -189,7 +189,7 @@ class Tagger {
           prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
         try {
           // Handling FLAC bitrate calculation manually.
-          if (!FLACBitrateFallback.isLocalFLACUri(_uri!)) {
+          if (!FallbackBitrateHandler.isLocalFLACOrOGGFile(_uri!)) {
             if (!_bitrate.isCompleted) {
               _bitrate.complete(
                   (prop.ref.data.cast<Double>().value * 1e6 ~/ 1).toString());
