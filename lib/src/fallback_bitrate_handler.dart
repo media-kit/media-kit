@@ -51,7 +51,6 @@ abstract class FallbackBitrateHandler {
         final file = File(resource);
         final size = await file.size_();
         final result = size * 8 / duration.inSeconds;
-        print('FLAC/OGG birate correction: ${result / 1e3} kb/s');
         return result;
       }
       return 0;
