@@ -39,9 +39,7 @@ abstract class FallbackBitrateHandler {
       }
       // No support for other URIs.
       return null;
-    } catch (exception, stacktrace) {
-      print(exception);
-      print(stacktrace);
+    } catch (exception) {
       return null;
     }
   }
@@ -57,9 +55,7 @@ abstract class FallbackBitrateHandler {
         return result;
       }
       return 0;
-    } catch (exception, stacktrace) {
-      print(exception);
-      print(stacktrace);
+    } catch (exception) {
       return 0;
     }
   }
