@@ -8,7 +8,6 @@ import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
-import 'package:media_kit/src/fallback_bitrate_handler.dart';
 import 'package:path/path.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
 
@@ -16,6 +15,7 @@ import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/utf8_fallback.dart';
 import 'package:media_kit/src/dynamic_library.dart';
 import 'package:media_kit/src/core/initializer.dart';
+import 'package:media_kit/src/fallback_bitrate_handler.dart';
 
 import 'package:media_kit/generated/bindings.dart' as generated;
 
@@ -180,9 +180,8 @@ class Tagger {
                 1;
             _bitrate.complete(value.toString());
           }
-        } catch (exception, stacktrace) {
-          print(exception);
-          print(stacktrace);
+        } catch (exception) {
+          // Do nothing.
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-bitrate' &&
@@ -195,9 +194,8 @@ class Tagger {
                   (prop.ref.data.cast<Double>().value * 1e6 ~/ 1).toString());
             }
           }
-        } catch (exception, stacktrace) {
-          print(exception);
-          print(stacktrace);
+        } catch (exception) {
+          // Do nothing.
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'metadata' &&
@@ -217,9 +215,8 @@ class Tagger {
                   // NOTE (@alexmercerind): See [PointerUtf8Extension.toDartString_] for more info.
                   // Above linked issue has more information.
                   data.ref.values[i].u.string.cast<Utf8>().toDartString_();
-            } catch (exception, stacktrace) {
-              print(exception);
-              print(stacktrace);
+            } catch (exception) {
+              // Do nothing.
             }
           }
           final _ = {...metadata}.forEach(
@@ -227,9 +224,8 @@ class Tagger {
               metadata[key.toLowerCase()] = value;
             },
           );
-        } catch (exception, stacktrace) {
-          print(exception);
-          print(stacktrace);
+        } catch (exception) {
+          // Do nothing.
         }
         // libmpv doesn't seem to read ALBUMARTIST.
         if (_uri!.toUpperCase().endsWith('.FLAC') &&
