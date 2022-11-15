@@ -21,7 +21,7 @@ abstract class FallbackBitrateHandler {
   static String? extractLocalFLACorOGGFilePath(String uri) {
     try {
       // Handle local [File] paths.
-      final parser = URIParser(uri, verbose: false);
+      final parser = URIParser(uri);
       switch (parser.type) {
         case URIType.file:
           {

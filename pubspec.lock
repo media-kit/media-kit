@@ -118,8 +118,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: master
-      resolved-ref: bdc05f6a18ee26f72f34c8ebc596d3bac16537ca
+      ref: b7bf58e856cdd787718883cd7ee2d60e0cf58080
+      resolved-ref: b7bf58e856cdd787718883cd7ee2d60e0cf58080
       url: "https://github.com/harmonoid/uri_parser.git"
     source: git
     version: "1.0.0"
