@@ -77,7 +77,7 @@ class Media {
       );
     }
     // [File] or network URIs.
-    final parser = URIParser(uri, verbose: false);
+    final parser = URIParser(uri);
     switch (parser.type) {
       case URIType.file:
         {
