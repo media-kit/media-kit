@@ -12,7 +12,7 @@ Future<void> main(List<String> args) async {
     return;
   }
 
-  await dlib.MPV.initialize();
+  await dlib.MPV.ensureInitialized();
 
   var handle = await create(
     dlib.libmpv!,

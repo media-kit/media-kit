@@ -5,7 +5,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:path/path.dart';
 
 Future<void> main() async {
-  await MPV.initialize();
+  await MPV.ensureInitialized();
   final tagger = Tagger();
   final cover = File(
     join(
