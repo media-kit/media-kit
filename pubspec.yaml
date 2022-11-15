@@ -12,6 +12,10 @@ dependencies:
   ffi: 1.1.0
   path: ^1.8.0
   http: ^0.13.4
+  uri_parser:
+    git:
+      url: https://github.com/harmonoid/uri_parser.git
+      ref: 9fbc421755047ccb0886da7c460c33f383579009
   safe_local_storage:
     git:
       url: https://github.com/harmonoid/safe_local_storage.git
