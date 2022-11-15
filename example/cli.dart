@@ -25,7 +25,7 @@ Future<void> main(List<String> args) async {
     print(
       [
         'Tagger',
-        'Copyright © 2022, Hitesh Kumar Saini <alexmercerind@gmail.com>',
+        'Copyright © 2022 & onwards, Hitesh Kumar Saini <alexmercerind@gmail.com>',
         'This file is a part of Harmonoid.',
         'Powered by package:media_kit.',
         'Visit https://github.com/harmonoid/harmonoid for more information.',
