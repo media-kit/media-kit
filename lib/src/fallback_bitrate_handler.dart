@@ -5,6 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'dart:io';
+import 'package:uri_parser/uri_parser.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
 
 /// libmpv doesn't seem to read the bitrate from the files which contain bitrate in their stream metadata (not file metadata).
@@ -19,26 +20,22 @@ abstract class FallbackBitrateHandler {
 
   static String? extractLocalFLACorOGGFilePath(String uri) {
     try {
-      final resource = Uri.parse(uri);
-      // Handle file:// URIs.
-      if (resource.isScheme('FILE')) {
-        if (resource.toFilePath().toUpperCase().endsWith('.FLAC') ||
-            resource.toFilePath().toUpperCase().endsWith('.OGG')) {
-          return resource.toFilePath();
-        }
+      // Handle local [File] paths.
+      final parser = URIParser(uri, verbose: false);
+      switch (parser.type) {
+        case URIType.file:
+          {
+            if (['OGG', 'FLAC'].contains(parser.file!.extension)) {
+              return parser.file!.path;
+            }
+            return null;
+          }
+        // No support for other URI types.
+        default:
+          {
+            return null;
+          }
       }
-      // Handle local file paths.
-      if (!(resource.isScheme('HTTP') ||
-          resource.isScheme('HTTPS') ||
-          resource.isScheme('FTP') ||
-          resource.isScheme('RSTP'))) {
-        if (resource.toString().toUpperCase().endsWith('.FLAC') ||
-            resource.toString().toUpperCase().endsWith('.OGG')) {
-          return uri;
-        }
-      }
-      // No support for other URIs.
-      return null;
     } catch (exception) {
       return null;
     }

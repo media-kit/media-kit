@@ -39,7 +39,16 @@ abstract class MPV {
   /// If not found, then:
   /// On Windows, checks for `mpv-2.dll` at `MPV_PATH` & `PATH`.
   /// On Linux, checks for `libmpv.so` at usual places.
-  static Future<void> initialize({String? dynamicLibrary}) async {
+  static Future<void> initialize({String? dynamicLibrary}) =>
+      ensureInitialized(dynamicLibrary: dynamicLibrary);
+
+  /// Loads the shared library & initializes the library.
+  ///
+  /// Checks for `mpv-2.dll` or `libmpv.so` in the same directory as the script or the compiled executable.
+  /// If not found, then:
+  /// On Windows, checks for `mpv-2.dll` at `MPV_PATH` & `PATH`.
+  /// On Linux, checks for `libmpv.so` at usual places.
+  static Future<void> ensureInitialized({String? dynamicLibrary}) async {
     if (dynamicLibrary != null) {
       libmpv = dynamicLibrary;
       return;

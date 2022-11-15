@@ -5,8 +5,8 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'dart:io';
-
 import 'package:path/path.dart' as path;
+import 'package:uri_parser/uri_parser.dart';
 
 Map<String, Media> medias = {};
 Map<String, double> bitrates = {};
@@ -15,7 +15,7 @@ Map<String, double> bitrates = {};
 /// A [Media] object to open inside a [Player] instance using [Player.open] method for playback.
 ///
 /// ```dart
-/// var media = Media('https://www.example.com/music.mp3');
+/// final playable = Media('https://www.example.com/music.mp3');
 /// ```
 ///
 class Media {
@@ -29,7 +29,7 @@ class Media {
   /// A [Media] object to open inside a [Player] instance using [Player.open] method for playback.
   ///
   /// ```dart
-  /// var media = Media('https://www.example.com/music.mp3');
+  /// final playable = Media('https://www.example.com/music.mp3');
   /// ```
   ///
   Media(
@@ -42,23 +42,16 @@ class Media {
   }
 
   static String getCleanedURI(String uri) {
-    // Match with format retrieved by `mpv_get_property`.
-    // Only applicable on Windows.
-    if (uri.startsWith('file://')) {
-      return Uri.parse(uri).toFilePath().replaceAll('\\', '/');
-    }
-    // Only applicable on Windows.
-    else if (uri.contains('\\') && Platform.isWindows) {
-      return uri.replaceAll('\\', '/');
-    }
-    // Handle `asset://` separately.
-    else if (uri.startsWith('asset://')) {
+    // Match the URI style with internal libmpv URI style.
+
+    // Handle asset:// scheme.
+    if (uri.startsWith(_kAssetScheme)) {
       if (Platform.isWindows || Platform.isLinux) {
         return path.join(
           path.dirname(Platform.resolvedExecutable),
           'data',
           'flutter_assets',
-          uri.split('asset://').last,
+          uri.split(_kAssetScheme).last,
         );
       } else if (Platform.isMacOS) {
         return path.join(
@@ -68,7 +61,7 @@ class Media {
           'App.framework',
           'Resources',
           'flutter_assets',
-          uri.split('asset://').last,
+          uri.split(_kAssetScheme).last,
         );
       } else if (Platform.isIOS) {
         return path.join(
@@ -76,23 +69,33 @@ class Media {
           'Frameworks',
           'App.framework',
           'flutter_assets',
-          uri.split('asset://').last,
+          uri.split(_kAssetScheme).last,
         );
       }
       throw UnimplementedError(
-        'asset:// is not supported on ${Platform.operatingSystem}',
+        '$_kAssetScheme is not supported on ${Platform.operatingSystem}',
       );
     }
-    // Other kinds of URIs e.g. HTTP, FTP, etc. are directly fed into libmpv.
-    else {
-      return uri;
+    // [File] or network URIs.
+    final parser = URIParser(uri, verbose: false);
+    switch (parser.type) {
+      case URIType.file:
+        {
+          return parser.file!.path;
+        }
+      case URIType.network:
+        {
+          return parser.uri!.toString();
+        }
+      default:
+        return uri;
     }
   }
 
   @override
   bool operator ==(Object other) {
     if (other is Media) {
-      return other.uri == uri;
+      return other.uri == uri || getCleanedURI(other.uri) == getCleanedURI(uri);
     }
     return false;
   }
@@ -102,4 +105,6 @@ class Media {
 
   @override
   String toString() => 'Media($uri, extras: $extras)';
+
+  static const _kAssetScheme = 'asset://';
 }
