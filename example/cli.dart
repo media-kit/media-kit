@@ -22,15 +22,7 @@ Future<void> main(List<String> args) async {
     dynamicLibrary: dynamicLibrary,
   );
   if (args.contains('--version')) {
-    print(
-      [
-        'Tagger',
-        'Copyright © 2022 & onwards, Hitesh Kumar Saini <alexmercerind@gmail.com>',
-        'This file is a part of Harmonoid.',
-        'Powered by package:media_kit.',
-        'Visit https://github.com/harmonoid/harmonoid for more information.',
-      ].join('\n'),
-    );
+    print('Tagger');
     return;
   }
   final verbose = args.contains('--verbose');

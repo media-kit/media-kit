@@ -17,7 +17,7 @@ import 'package:media_kit/src/dynamic_library.dart';
 import 'package:media_kit/src/core/initializer.dart';
 import 'package:media_kit/src/fallback_bitrate_handler.dart';
 
-import 'package:media_kit/generated/bindings.dart' as generated;
+import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 
 /// ## Tagger
 ///
