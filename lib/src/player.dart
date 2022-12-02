@@ -17,7 +17,7 @@ import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 
-import 'package:media_kit/generated/bindings.dart' as generated;
+import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 
 import 'package:media_kit/src/plugins/youtube.dart';
 

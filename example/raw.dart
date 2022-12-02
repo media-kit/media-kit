@@ -2,20 +2,21 @@ import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 
 import 'package:media_kit/src/core/initializer.dart';
-import 'package:media_kit/generated/bindings.dart';
-import 'package:media_kit/src/dynamic_library.dart' as dlib;
+import 'package:media_kit/generated/libmpv/bindings.dart';
+import 'package:media_kit/src/dynamic_library.dart' as dynamic_library;
 
 Future<void> main(List<String> args) async {
   if (args.isEmpty) {
     print(
-        'Invalid usage.\nExample:\ndart raw.dart /home/path/to/a/media/file.mp4');
+      'Invalid usage.\nExample:\ndart raw.dart /home/path/to/a/media/file.mp4',
+    );
     return;
   }
-
-  await dlib.MPV.ensureInitialized();
+  // Use existing method for native library discovery.
+  await dynamic_library.MPV.ensureInitialized();
 
   var handle = await create(
-    dlib.libmpv!,
+    dynamic_library.libmpv!,
     (event) async {
       if (event.ref.event_id == mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
         var prop = event.ref.data.cast<mpv_event_property>();

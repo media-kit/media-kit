@@ -21,7 +21,7 @@ Future<void> main() async {
     })
     ..streams.audioBitrate.listen((event) {
       if (event != null) {
-        print('${event ~/ 1000}kbps');
+        print('${event ~/ 1000} kb/s');
       }
     });
   await player.open(
@@ -41,7 +41,6 @@ Future<void> main() async {
     play: false,
   );
   await player.setPlaylistMode(PlaylistMode.loop);
-  await player.play();
   await player.play();
   player.volume = 50.0;
   player.rate = 1.0;

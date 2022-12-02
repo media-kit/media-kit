@@ -26,8 +26,7 @@ dev_dependencies:
 
 ffigen:
   name: MPV
-  description: A complete video & audio library for Flutter.
-  output: bin/generated/bindings.dart
+  output: bin/generated/libmpv/bindings.dart
   headers:
     entry-points:
       - headers/client.h
