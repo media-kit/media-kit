@@ -21,10 +21,10 @@ packages:
     dependency: "direct main"
     description:
       name: ffi
-      sha256: "4842f817e11428513b7e88537318e48caac7d1bbf6035cdfca64b5017a6d5d8c"
+      sha256: a38574032c5f1dd06c4aee541789906c12ccaab8ba01446e800d9c5b79c4a978
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.0"
+    version: "2.0.1"
   http:
     dependency: "direct main"
     description:
@@ -50,7 +50,7 @@ packages:
     source: hosted
     version: "1.0.1"
   meta:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: meta
       sha256: "6c268b42ed578a53088d834796959e4a1814b5e9e164f147f580a386e5decf42"
