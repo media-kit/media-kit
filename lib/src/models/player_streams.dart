@@ -1,0 +1,58 @@
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit/src/models/player_error.dart';
+
+/// Private class for event handling of [Player].
+class PlayerStreams {
+  /// [List] of currently opened [Media]s.
+  final Stream<Playlist> playlist;
+
+  /// Whether [Player] is playing or not.
+  final Stream<bool> isPlaying;
+
+  /// Whether currently playing [Media] in [Player] has ended or not.
+  final Stream<bool> isCompleted;
+
+  /// Current playback position of the [Player].
+  final Stream<Duration> position;
+
+  /// Duration of the currently playing [Media] in the [Player].
+  final Stream<Duration> duration;
+
+  /// Current volume of the [Player].
+  final Stream<double> volume;
+
+  /// Current playback rate of the [Player].
+  final Stream<double> rate;
+
+  /// Current pitch of the [Player].
+  final Stream<double> pitch;
+
+  /// Whether the [Player] has stopped for buffering.
+  final Stream<bool> isBuffering;
+
+  /// Audio parameters of the currently playing [Media].
+  /// e.g. sample rate, channels, etc.
+  final Stream<AudioParams> audioParams;
+
+  /// Audio bitrate of the currently playing [Media] in the [Player].
+  final Stream<double?> audioBitrate;
+
+  /// [Stream] raising [PlayerError]s.
+  /// This may be used to catch errors raised by [Player].
+  final Stream<PlayerError> error;
+
+  PlayerStreams(
+    this.playlist,
+    this.isPlaying,
+    this.isCompleted,
+    this.position,
+    this.duration,
+    this.volume,
+    this.rate,
+    this.pitch,
+    this.isBuffering,
+    this.error,
+    this.audioParams,
+    this.audioBitrate,
+  );
+}
