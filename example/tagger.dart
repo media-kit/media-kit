@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
-
-import 'package:media_kit/media_kit.dart';
+import 'dart:convert';
 import 'package:path/path.dart';
+import 'package:media_kit/media_kit.dart';
 
 Future<void> main() async {
-  await MPV.ensureInitialized();
   final tagger = Tagger();
   final cover = File(
     join(

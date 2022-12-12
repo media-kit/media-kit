@@ -1,10 +1,8 @@
 import 'dart:io';
-
 import 'package:media_kit/media_kit.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
 
 Future<void> main(List<String> args) async {
-  await MPV.ensureInitialized();
   final player = Player();
   final contents = await Directory(args.first).list_();
   contents.removeWhere((file) => !kSupportedFileTypes.contains(file.extension));

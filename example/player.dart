@@ -1,12 +1,7 @@
 import 'package:media_kit/media_kit.dart';
 
 Future<void> main() async {
-  await MPV.ensureInitialized();
-  final player = Player(
-    onCreate: (player) {
-      print(player.version);
-    },
-  )
+  final player = Player()
     ..streams.playlist.listen((event) {
       print(event);
     })

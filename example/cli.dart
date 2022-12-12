@@ -9,18 +9,15 @@ import 'dart:convert';
 import 'package:media_kit/media_kit.dart';
 
 Future<void> main(List<String> args) async {
-  String? dynamicLibrary;
+  String? libmpv;
   for (final arg in args) {
     if (![
       '--verbose',
       '--version',
     ].contains(arg)) {
-      dynamicLibrary = arg;
+      libmpv = arg;
     }
   }
-  await MPV.initialize(
-    dynamicLibrary: dynamicLibrary,
-  );
   if (args.contains('--version')) {
     print('Tagger');
     return;
