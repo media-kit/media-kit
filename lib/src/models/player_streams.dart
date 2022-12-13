@@ -1,4 +1,11 @@
-import 'package:media_kit/media_kit.dart';
+/// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+///
+/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+/// All rights reserved.
+/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
+import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/player_error.dart';
 
 /// Private class for event handling of [Player].
