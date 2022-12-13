@@ -13,7 +13,7 @@ import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/libmpv/core/utf8_fallback.dart';
-import 'package:media_kit/src/libmpv/core/dynamic_library.dart';
+import 'package:media_kit/src/libmpv/core/native_library.dart';
 import 'package:media_kit/src/libmpv/core/initializer.dart';
 import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
 

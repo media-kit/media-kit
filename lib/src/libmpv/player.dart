@@ -10,129 +10,49 @@ import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 
 import 'package:media_kit/src/libmpv/core/initializer.dart';
-import 'package:media_kit/src/libmpv/core/dynamic_library.dart';
+import 'package:media_kit/src/libmpv/core/native_library.dart';
 import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
+
 import 'package:media_kit/src/models/media.dart';
-import 'package:media_kit/src/models/player_error.dart';
-import 'package:media_kit/src/models/player_state.dart';
-import 'package:media_kit/src/models/player_streams.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
+import 'package:media_kit/src/models/player_error.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
+import 'package:media_kit/src/platform_player.dart';
 
-import 'package:media_kit/src/plugins/youtube.dart';
-
-/// ## Player
+/// {@template libmpv_player}
+/// Player
+/// ------
 ///
-/// [Player] class provides high-level abstraction for media playback.
-/// Large number of features have been exposed as class methods & properties.
-///
-/// The [Player]'s instantaneous state may be read using the [state] attribute
-/// & subscription to the them may be made using the [streams] available.
-///
-/// The loaded libmpv version by this class may be queried using the [version] attribute
-/// & RAW C/C++ [mpv_handle] may be accessed using the [handle].
+/// The RAW C/C++ [generated.mpv_handle] may be accessed using the [handle].
 /// Compatiblity has been tested with libmpv 0.28.0 or higher. The recommended version is 0.33.0 or higher.
-/// Call [dispose] to free the resources back to the system.
 ///
-/// ```dart
-/// final player = Player();
-/// player.open(
-///   Playlist(
-///     [
-///       Media('https://alexmercerind.github.io/music.mp3'),
-///       Media('file://C:/documents/video.mp4'),
-///     ],
-///   ),
-///   play: false,
-/// );
-/// player.play();
-/// ```
-///
-class Player {
-  /// ## Player
-  ///
-  /// [Player] class provides high-level abstraction for media playback.
-  /// Large number of features have been exposed as class methods & properties.
-  ///
-  /// The [Player]'s instantaneous state may be read using the [state] attribute
-  /// & subscription to the them may be made using the [streams] available.
-  ///
-  /// The loaded libmpv version by this class may be queried using the [version] attribute
-  /// & RAW C/C++ [mpv_handle] may be accessed using the [handle].
-  /// Compatiblity has been tested with libmpv 0.28.0 or higher. The recommended version is 0.33.0 or higher.
-  /// Call [dispose] to free the resources back to the system.
-  ///
-  /// ```dart
-  /// final player = Player();
-  /// player.open(
-  ///   Playlist(
-  ///     [
-  ///       Media('https://alexmercerind.github.io/music.mp3'),
-  ///       Media('file://C:/documents/video.mp4'),
-  ///     ],
-  ///   ),
-  ///   play: false,
-  /// );
-  /// player.play();
-  /// ```
-  ///
-  Player({
-    this.video = false,
-    this.osc = false,
-    this.maxVolume = 200.0,
-    bool yt = true,
-    this.title,
-    void Function(Player)? onCreate,
-  }) {
-    if (yt) {
-      youtube = YouTube.instance;
-    }
-    _create().then(
-      (_) => onCreate?.call(this),
-    );
+/// {@endtemplate}
+class Player extends PlatformPlayer {
+  /// {@macro libmpv_player}
+  Player({required super.configuration}) {
+    _create().then((_) {
+      configuration.ready?.call();
+    });
   }
 
-  /// Current state of the [Player].
-  /// For listening or subscribing to these events, use [Player.streams] instead.
-  PlayerState state = PlayerState();
-
-  /// Various event streams to listen to events of a [Player].
-  ///
-  /// ```dart
-  /// final player = Player();
-  /// player.position.listen((position) {
-  ///   print(position.inMilliseconds);
-  /// });
-  /// ```
-  ///
-  /// There are a lot of events like [isPlaying], [medias], [index] etc. to listen to & cause UI re-build.
-  ///
-  late PlayerStreams streams;
-
-  /// MPV handle of the internal instance.
+  /// libmpv [handle] of the internal instance.
   Pointer<generated.mpv_handle> get handle => _handle;
 
   /// Disposes the [Player] instance & releases the resources.
+  @override
   Future<void> dispose({int code = 0}) async {
     await _completer.future;
     // Raw `mpv_command` calls cause crash on Windows.
-    final args = [
-      'quit',
-      '$code',
-    ].join(' ').toNativeUtf8();
-    mpv.mpv_command_string(
+    final command = 'quit $code'.toNativeUtf8();
+    _libmpv?.mpv_command_string(
       _handle,
-      args.cast(),
+      command.cast(),
     );
-    _playlistController.close();
-    _isPlayingController.close();
-    _isCompletedController.close();
-    _positionController.close();
-    _durationController.close();
-    youtube?.close();
+    calloc.free(command);
+    super.dispose();
   }
 
   /// Opens a [List] of [Media]s into the [Player] as a playlist.
@@ -151,12 +71,13 @@ class Player {
   ///   ),
   /// );
   /// ```
+  @override
   Future<void> open(
     Playlist playlist, {
     bool play = true,
-    bool clearCache = true,
+    bool evictCache = true,
   }) async {
-    if (clearCache) {
+    if (evictCache) {
       // Clean-up existing cached [medias].
       medias.clear();
       bitrates.clear();
@@ -175,7 +96,7 @@ class Player {
       'playlist-play-index none'.toNativeUtf8(),
     ];
     for (final command in commands) {
-      mpv.mpv_command_string(
+      _libmpv?.mpv_command_string(
         _handle,
         command.cast(),
       );
@@ -199,11 +120,11 @@ class Player {
     state.playlist = playlist;
     state.isPlaying = play;
     // To wait for the index change [jump] call.
-    if (!_playlistController.isClosed) {
-      _playlistController.add(state.playlist);
+    if (!playlistController.isClosed) {
+      playlistController.add(state.playlist);
     }
-    if (!_isPlayingController.isClosed) {
-      _isPlayingController.add(state.isPlaying);
+    if (!isPlayingController.isClosed) {
+      isPlayingController.add(state.isPlaying);
     }
     _isPlaybackEverStarted = false;
     if (play) {
@@ -215,6 +136,7 @@ class Player {
   }
 
   /// Starts playing the [Player].
+  @override
   Future<void> play() async {
     await _completer.future;
     if (!_isPlaybackEverStarted) {
@@ -231,7 +153,7 @@ class Player {
       final name = 'pause'.toNativeUtf8();
       final flag = calloc<Int8>();
       flag.value = 0;
-      mpv.mpv_set_property(
+      _libmpv?.mpv_set_property(
         _handle,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_FLAG,
@@ -243,6 +165,7 @@ class Player {
   }
 
   /// Pauses the [Player].
+  @override
   Future<void> pause() async {
     await _completer.future;
     _isPlaybackEverStarted = true;
@@ -250,7 +173,7 @@ class Player {
     final name = 'pause'.toNativeUtf8();
     final flag = calloc<Int8>();
     flag.value = 1;
-    mpv.mpv_set_property(
+    _libmpv?.mpv_set_property(
       _handle,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_FLAG,
@@ -261,6 +184,7 @@ class Player {
   }
 
   /// Cycles between [play] & [pause] states of the [Player].
+  @override
   Future<void> playOrPause() async {
     await _completer.future;
     if (!_isPlaybackEverStarted) {
@@ -275,7 +199,7 @@ class Player {
       return;
     }
     final command = 'cycle pause'.toNativeUtf8();
-    mpv.mpv_command_string(
+    _libmpv?.mpv_command_string(
       _handle,
       command.cast(),
     );
@@ -283,6 +207,7 @@ class Player {
   }
 
   /// Appends a [Media] to the [Player]'s playlist.
+  @override
   Future<void> add(Media media) async {
     await _completer.future;
     _command(
@@ -294,12 +219,13 @@ class Player {
       ],
     );
     state.playlist.medias.add(media);
-    if (!_playlistController.isClosed) {
-      _playlistController.add(state.playlist);
+    if (!playlistController.isClosed) {
+      playlistController.add(state.playlist);
     }
   }
 
   /// Removes the [Media] at specified index from the [Player]'s playlist.
+  @override
   Future<void> remove(int index) async {
     await _completer.future;
     _command(
@@ -309,19 +235,20 @@ class Player {
       ],
     );
     state.playlist.medias.removeAt(index);
-    if (!_playlistController.isClosed) {
-      _playlistController.add(state.playlist);
+    if (!playlistController.isClosed) {
+      playlistController.add(state.playlist);
     }
   }
 
   /// Jumps to next [Media] in the [Player]'s playlist.
+  @override
   Future<void> next() async {
     await _completer.future;
     // Use `mpv_command_string` as `mpv_command` seems
     // to randomly cause a crash on older libmpv versions.
     if (_isPlaybackEverStarted && !state.isCompleted) {
       final next = 'playlist-next'.toNativeUtf8();
-      mpv.mpv_command_string(
+      _libmpv?.mpv_command_string(
         _handle,
         next.cast(),
       );
@@ -339,13 +266,14 @@ class Player {
   }
 
   /// Jumps to previous [Media] in the [Player]'s playlist.
+  @override
   Future<void> previous() async {
     await _completer.future;
     // Use `mpv_command_string` as `mpv_command` seems
     // to randomly cause a crash on older libmpv versions.
     if (_isPlaybackEverStarted && !state.isCompleted) {
       final next = 'playlist-prev'.toNativeUtf8();
-      mpv.mpv_command_string(
+      _libmpv?.mpv_command_string(
         _handle,
         next.cast(),
       );
@@ -363,6 +291,7 @@ class Player {
   }
 
   /// Jumps to specified [Media]'s index in the [Player]'s playlist.
+  @override
   Future<void> jump(
     int index, {
     bool open = false,
@@ -370,12 +299,12 @@ class Player {
     await _completer.future;
     _isPlaybackEverStarted = true;
     state.playlist.index = index;
-    if (!_playlistController.isClosed) {
-      _playlistController.add(state.playlist);
+    if (!playlistController.isClosed) {
+      playlistController.add(state.playlist);
     }
     var name = 'playlist-pos'.toNativeUtf8();
     final value = calloc<Int64>()..value = index;
-    mpv.mpv_set_property(
+    _libmpv?.mpv_set_property(
       _handle,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_INT64,
@@ -388,7 +317,7 @@ class Player {
     name = 'pause'.toNativeUtf8();
     final flag = calloc<Int8>();
     flag.value = 0;
-    mpv.mpv_set_property(
+    _libmpv?.mpv_set_property(
       _handle,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_FLAG,
@@ -400,6 +329,7 @@ class Player {
   }
 
   /// Moves the playlist [Media] at [from], so that it takes the place of the [Media] [to].
+  @override
   Future<void> move(int from, int to) async {
     await _completer.future;
     _command(
@@ -410,10 +340,11 @@ class Player {
       ],
     );
     state.playlist.medias.insert(to, state.playlist.medias.removeAt(from));
-    _playlistController.add(state.playlist);
+    playlistController.add(state.playlist);
   }
 
   /// Seeks the currently playing [Media] in the [Player] by specified [Duration].
+  @override
   Future<void> seek(Duration duration) async {
     await _completer.future;
     // Raw `mpv_command` calls cause crash on Windows.
@@ -422,7 +353,7 @@ class Player {
       (duration.inMilliseconds / 1000).toStringAsFixed(4).toString(),
       'absolute',
     ].join(' ').toNativeUtf8();
-    mpv.mpv_command_string(
+    _libmpv?.mpv_command_string(
       _handle,
       args.cast(),
     );
@@ -430,6 +361,7 @@ class Player {
   }
 
   /// Sets playlist mode.
+  @override
   Future<void> setPlaylistMode(PlaylistMode playlistMode) async {
     await _completer.future;
     final loopFile = 'loop-file'.toNativeUtf8();
@@ -439,12 +371,12 @@ class Player {
     switch (playlistMode) {
       case PlaylistMode.none:
         {
-          mpv.mpv_set_property_string(
+          _libmpv?.mpv_set_property_string(
             handle,
             loopFile.cast(),
             no.cast(),
           );
-          mpv.mpv_set_property_string(
+          _libmpv?.mpv_set_property_string(
             handle,
             loopPlaylist.cast(),
             no.cast(),
@@ -453,12 +385,12 @@ class Player {
         }
       case PlaylistMode.single:
         {
-          mpv.mpv_set_property_string(
+          _libmpv?.mpv_set_property_string(
             handle,
             loopFile.cast(),
             yes.cast(),
           );
-          mpv.mpv_set_property_string(
+          _libmpv?.mpv_set_property_string(
             handle,
             loopPlaylist.cast(),
             no.cast(),
@@ -467,12 +399,12 @@ class Player {
         }
       case PlaylistMode.loop:
         {
-          mpv.mpv_set_property_string(
+          _libmpv?.mpv_set_property_string(
             handle,
             loopFile.cast(),
             no.cast(),
           );
-          mpv.mpv_set_property_string(
+          _libmpv?.mpv_set_property_string(
             handle,
             loopPlaylist.cast(),
             yes.cast(),
@@ -489,13 +421,14 @@ class Player {
   }
 
   /// Sets the playback volume of the [Player]. Defaults to `100.0`.
+  @override
   set volume(double volume) {
     () async {
       await _completer.future;
       final name = 'volume'.toNativeUtf8();
       final value = calloc<Double>();
       value.value = volume;
-      mpv.mpv_set_property(
+      _libmpv?.mpv_set_property(
         _handle,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_DOUBLE,
@@ -507,13 +440,13 @@ class Player {
   }
 
   /// Sets the playback rate of the [Player]. Defaults to `1.0`.
-  /// Resets [pitch] to `1.0`.
+  @override
   set rate(double rate) {
     () async {
       await _completer.future;
       state.rate = rate;
-      if (!_rateController.isClosed) {
-        _rateController.add(state.rate);
+      if (!rateController.isClosed) {
+        rateController.add(state.rate);
       }
       // No `rubberband` is available.
       // Apparently, using `scaletempo:scale` actually controls the playback rate
@@ -524,7 +457,7 @@ class Player {
       // speed change.
       var name = 'audio-pitch-correction'.toNativeUtf8();
       final no = 'no'.toNativeUtf8();
-      mpv.mpv_set_property_string(
+      _libmpv?.mpv_set_property_string(
         _handle,
         name.cast(),
         no.cast(),
@@ -536,7 +469,7 @@ class Player {
       final value =
           'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
               .toNativeUtf8();
-      mpv.mpv_set_property_string(
+      _libmpv?.mpv_set_property_string(
         _handle,
         name.cast(),
         value.cast(),
@@ -547,12 +480,13 @@ class Player {
   }
 
   /// Sets the relative pitch of the [Player]. Defaults to `1.0`.
+  @override
   set pitch(double pitch) {
     () async {
       await _completer.future;
       state.pitch = pitch;
-      if (!_pitchController.isClosed) {
-        _pitchController.add(state.pitch);
+      if (!pitchController.isClosed) {
+        pitchController.add(state.pitch);
       }
       // `rubberband` is not bundled in `libmpv` shared library at the moment. GPL.
       // Using `scaletempo` instead.
@@ -587,17 +521,17 @@ class Player {
       // data.ref.u.list.ref.values.ref.u.list.ref.num = 2;
       // data.ref.u.list.ref.values.ref.u.list.ref.keys = keys.cast();
       // data.ref.u.list.ref.values.ref.u.list.ref.values = values.cast();
-      // mpv.mpv_set_property(
+      // _libmpv?.mpv_set_property(
       //   _handle,
       //   name.cast(),
       //   generated.mpv_format.MPV_FORMAT_NODE,
       //   data.cast(),
       // );
       // calloc.free(name);
-      // mpv.mpv_free_node_contents(data);
+      // _libmpv?.mpv_free_node_contents(data);
       var name = 'audio-pitch-correction'.toNativeUtf8();
       final no = 'no'.toNativeUtf8();
-      mpv.mpv_set_property_string(
+      _libmpv?.mpv_set_property_string(
         _handle,
         name.cast(),
         no.cast(),
@@ -606,7 +540,7 @@ class Player {
       calloc.free(no);
       name = 'speed'.toNativeUtf8();
       final speed = calloc<Double>()..value = pitch;
-      mpv.mpv_set_property(
+      _libmpv?.mpv_set_property(
         _handle,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_DOUBLE,
@@ -619,7 +553,7 @@ class Player {
       final value =
           'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
               .toNativeUtf8();
-      mpv.mpv_set_property_string(
+      _libmpv?.mpv_set_property_string(
         _handle,
         name.cast(),
         value.cast(),
@@ -630,6 +564,7 @@ class Player {
   }
 
   /// Enables or disables shuffle for [Player]. Default is `false`.
+  @override
   set shuffle(bool shuffle) {
     () async {
       await _completer.future;
@@ -644,14 +579,14 @@ class Player {
       );
       final name = 'playlist'.toNativeUtf8();
       final data = calloc<generated.mpv_node>();
-      mpv.mpv_get_property(
+      _libmpv?.mpv_get_property(
         handle,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_NODE,
         data.cast(),
       );
       try {
-        // Shuffling updates the order of [state.playlist]. Fetching latest playlist from MPV & updating Dart stream.
+        // Shuffling updates the order of [state.playlist]. Fetching latest playlist from mpv & updating Dart stream.
         if (data.ref.format == generated.mpv_format.MPV_FORMAT_NODE_ARRAY) {
           final playlist = <Media>[];
           for (int i = 0; i < data.ref.u.list.ref.num; i++) {
@@ -678,8 +613,8 @@ class Player {
             }
           }
           state.playlist.medias = playlist;
-          if (!_playlistController.isClosed) {
-            _playlistController.add(state.playlist);
+          if (!playlistController.isClosed) {
+            playlistController.add(state.playlist);
           }
           calloc.free(name);
           calloc.free(data);
@@ -709,7 +644,7 @@ class Player {
     await _completer.future;
     final name = property.toNativeUtf8();
     final data = value.toNativeUtf8();
-    mpv.mpv_set_property_string(
+    _libmpv?.mpv_set_property_string(
       _handle,
       name.cast(),
       data.cast(),
@@ -719,26 +654,13 @@ class Player {
   }
 
   Future<void> _create() async {
-    if (libmpv == null) return;
-    streams = _PlayerStreams(
-      _playlistController.stream,
-      _isPlayingController.stream,
-      _isCompletedController.stream,
-      _positionController.stream,
-      _durationController.stream,
-      _volumeController.stream,
-      _rateController.stream,
-      _pitchController.stream,
-      _isBufferingController.stream,
-      _errorController.stream,
-      _audioParamsController.stream,
-      _audioBitrateController.stream,
-    );
+    final libmpv = await NativeLibrary.find(path: configuration.libmpv);
+    _libmpv = generated.MPV(DynamicLibrary.open(libmpv));
     _handle = await create(
-      libmpv!,
+      libmpv,
       (event) async {
         // print(
-        //   mpv.mpv_event_name(event.ref.event_id).cast<Utf8>().toDartString(),
+        //   _libmpv?.mpv_event_name(event.ref.event_id).cast<Utf8>().toDartString(),
         // );
         _error(event.ref.error);
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
@@ -746,11 +668,11 @@ class Player {
           if (_isPlaybackEverStarted) {
             state.isPlaying = true;
           }
-          if (!_isCompletedController.isClosed) {
-            _isCompletedController.add(false);
+          if (!isCompletedController.isClosed) {
+            isCompletedController.add(false);
           }
-          if (!_isPlayingController.isClosed && _isPlaybackEverStarted) {
-            _isPlayingController.add(true);
+          if (!isPlayingController.isClosed && _isPlaybackEverStarted) {
+            isPlayingController.add(true);
           }
         }
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
@@ -763,20 +685,20 @@ class Player {
             if (_isPlaybackEverStarted) {
               state.isPlaying = false;
             }
-            if (!_isCompletedController.isClosed) {
-              _isCompletedController.add(true);
+            if (!isCompletedController.isClosed) {
+              isCompletedController.add(true);
             }
-            if (!_isPlayingController.isClosed && _isPlaybackEverStarted) {
-              _isPlayingController.add(false);
+            if (!isPlayingController.isClosed && _isPlaybackEverStarted) {
+              isPlayingController.add(false);
             }
-            if (!_audioParamsController.isClosed) {
-              _audioParamsController.add(
+            if (!audioParamsController.isClosed) {
+              audioParamsController.add(
                 AudioParams(),
               );
               state.audioParams = AudioParams();
             }
-            if (!_audioBitrateController.isClosed) {
-              _audioBitrateController.add(null);
+            if (!audioBitrateController.isClosed) {
+              audioBitrateController.add(null);
               state.audioBitrate = null;
             }
           }
@@ -789,8 +711,8 @@ class Player {
             if (_isPlaybackEverStarted) {
               final isPlaying = prop.ref.data.cast<Int8>().value != 1;
               state.isPlaying = isPlaying;
-              if (!_isPlayingController.isClosed) {
-                _isPlayingController.add(isPlaying);
+              if (!isPlayingController.isClosed) {
+                isPlayingController.add(isPlaying);
               }
             }
           }
@@ -798,8 +720,8 @@ class Player {
               prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
             final isBuffering = prop.ref.data.cast<Int8>().value != 0;
             state.isBuffering = isBuffering;
-            if (!_isBufferingController.isClosed) {
-              _isBufferingController.add(isBuffering);
+            if (!isBufferingController.isClosed) {
+              isBufferingController.add(isBuffering);
             }
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
@@ -807,8 +729,8 @@ class Player {
             final position = Duration(
                 microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
             state.position = position;
-            if (!_positionController.isClosed) {
-              _positionController.add(position);
+            if (!positionController.isClosed) {
+              positionController.add(position);
             }
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
@@ -816,8 +738,8 @@ class Player {
             final duration = Duration(
                 microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
             state.duration = duration;
-            if (!_durationController.isClosed) {
-              _durationController.add(duration);
+            if (!durationController.isClosed) {
+              durationController.add(duration);
             }
             // NOTE: Using manual bitrate calculation for FLAC.
             // Too much going on here. Enclosing in a try-catch block.
@@ -837,8 +759,8 @@ class Player {
                   final bitrate = bitrates[uri];
                   if (bitrate != null) {
                     state.audioBitrate = bitrate;
-                    if (!_audioBitrateController.isClosed) {
-                      _audioBitrateController.add(bitrate);
+                    if (!audioBitrateController.isClosed) {
+                      audioBitrateController.add(bitrate);
                     }
                   }
                 }
@@ -853,8 +775,8 @@ class Player {
             final index = prop.ref.data.cast<Int64>().value;
             if (_isPlaybackEverStarted) {
               state.playlist.index = index;
-              if (!_playlistController.isClosed) {
-                _playlistController.add(state.playlist);
+              if (!playlistController.isClosed) {
+                playlistController.add(state.playlist);
               }
             }
           }
@@ -862,8 +784,8 @@ class Player {
               prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
             final volume = prop.ref.data.cast<Double>().value;
             state.volume = volume;
-            if (!_volumeController.isClosed) {
-              _volumeController.add(volume);
+            if (!volumeController.isClosed) {
+              volumeController.add(volume);
             }
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-params' &&
@@ -919,8 +841,8 @@ class Player {
               channelCount: params['channel-count'],
               hrChannels: params['hr-channels'],
             );
-            if (!_audioParamsController.isClosed) {
-              _audioParamsController.add(state.audioParams);
+            if (!audioParamsController.isClosed) {
+              audioParamsController.add(state.audioParams);
             }
           }
           if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-bitrate' &&
@@ -938,10 +860,10 @@ class Player {
                     bitrates[uri] = data;
                     bitrates[Media.getCleanedURI(uri)] = data;
                   }
-                  if (!_audioBitrateController.isClosed &&
+                  if (!audioBitrateController.isClosed &&
                       (bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)]) !=
                           state.audioBitrate) {
-                    _audioBitrateController.add(
+                    audioBitrateController.add(
                       bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)],
                     );
                     state.audioBitrate =
@@ -949,8 +871,8 @@ class Player {
                   }
                 }
               } else {
-                if (!_audioBitrateController.isClosed) {
-                  _audioBitrateController.add(null);
+                if (!audioBitrateController.isClosed) {
+                  audioBitrateController.add(null);
                   state.audioBitrate = null;
                 }
               }
@@ -965,8 +887,8 @@ class Player {
           //     prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
           //   final rate = prop.ref.data.cast<Double>().value;
           //   state.rate = rate;
-          //   if (!_rateController.isClosed) {
-          //     _rateController.add(rate);
+          //   if (!rateController.isClosed) {
+          //     rateController.add(rate);
           //   }
           // }
         }
@@ -985,7 +907,7 @@ class Player {
       'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
     }.forEach((property, format) {
       final ptr = property.toNativeUtf8();
-      mpv.mpv_observe_property(
+      _libmpv?.mpv_observe_property(
         _handle,
         0,
         ptr.cast(),
@@ -1002,7 +924,7 @@ class Player {
     // }.forEach((key, value) {
     //   final _key = key.toNativeUtf8();
     //   final _value = calloc<Int64>()..value = value;
-    //   mpv.mpv_set_property(
+    //   _libmpv?.mpv_set_property(
     //     _handle,
     //     _key.cast(),
     //     generated.mpv_format.MPV_FORMAT_INT64,
@@ -1011,40 +933,32 @@ class Player {
     //   calloc.free(_key);
     //   calloc.free(_value);
     // });
-    if (!video) {
-      final vo = 'vo'.toNativeUtf8();
-      final osd = 'osd'.toNativeUtf8();
-      final value = 'null'.toNativeUtf8();
-      mpv.mpv_set_property_string(
-        _handle,
-        vo.cast(),
-        value.cast(),
-      );
-      mpv.mpv_set_property_string(
-        _handle,
-        osd.cast(),
-        value.cast(),
-      );
-      calloc.free(vo);
-      calloc.free(osd);
-      calloc.free(value);
-    }
-    if (osc) {
-      final name = 'osc'.toNativeUtf8();
-      Pointer<Int8> flag = calloc<Int8>()..value = 1;
-      mpv.mpv_set_option(
+    var name = 'osc'.toNativeUtf8();
+    var flag = calloc<Int32>();
+    flag.value = configuration.osc ? 1 : 0;
+    _libmpv?.mpv_set_property(
+      _handle,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_FLAG,
+      flag.cast(),
+    );
+    calloc.free(name);
+    calloc.free(flag);
+    if (configuration.vo != null) {
+      final name = 'vo'.toNativeUtf8();
+      final value = configuration.vo!.toNativeUtf8();
+      _libmpv?.mpv_set_property_string(
         _handle,
         name.cast(),
-        generated.mpv_format.MPV_FORMAT_FLAG,
-        flag.cast(),
+        value.cast(),
       );
       calloc.free(name);
-      calloc.free(flag);
+      calloc.free(value);
     }
-    if (title != null) {
+    if (configuration.title != null) {
       final name = 'title'.toNativeUtf8();
-      final value = title!.toNativeUtf8();
-      mpv.mpv_set_property_string(
+      final value = configuration.title!.toNativeUtf8();
+      _libmpv?.mpv_set_property_string(
         _handle,
         name.cast(),
         value.cast(),
@@ -1053,44 +967,20 @@ class Player {
       calloc.free(value);
     }
     // No longer explicitly setting demuxer cache size.
-    // Though, it may cause rise in memory usage but still it is certainly better
-    // than files randomly stuttering or seeking to a random position on their own.
+    // Though, it may cause rise in memory usage but still it is certainly better than files randomly stuttering or seeking to a random position on their own.
     // final cache = 'cache'.toNativeUtf8();
     // final no = 'no'.toNativeUtf8();
-    // mpv.mpv_set_property_string(
+    // _libmpv?.mpv_set_property_string(
     //   _handle,
     //   cache.cast(),
     //   no.cast(),
     // );
     // calloc.free(cache);
     // calloc.free(no);
-    var name = 'volume-max'.toNativeUtf8();
-    final value = calloc<Double>()..value = maxVolume.toDouble();
-    mpv.mpv_set_property(
-      _handle,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_DOUBLE,
-      value.cast(),
-    );
-    calloc.free(name);
-    calloc.free(value);
-    try {
-      final name = 'mpv-version'.toNativeUtf8();
-      version = mpv
-          .mpv_get_property_string(
-            _handle,
-            name.cast(),
-          )
-          .cast<Utf8>()
-          .toDartString();
-      calloc.free(name);
-    } catch (exception, stacktrace) {
-      print(exception);
-      print(stacktrace);
-    }
     name = 'idle'.toNativeUtf8();
-    final flag = calloc<Int32>()..value = 1;
-    mpv.mpv_set_property(
+    flag = calloc<Int32>();
+    flag.value = 1;
+    _libmpv?.mpv_set_property(
       _handle,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_FLAG,
@@ -1103,17 +993,21 @@ class Player {
 
   /// Adds an error to the [Player.stream.error].
   void _error(int code) {
-    if (code < 0 && !_errorController.isClosed) {
-      _errorController.add(
-        _PlayerError(
-          code,
-          mpv.mpv_error_string(code).cast<Utf8>().toDartString(),
-        ),
-      );
+    if (code < 0 && !errorController.isClosed) {
+      final message =
+          _libmpv?.mpv_error_string(code).cast<Utf8>().toDartString();
+      if (message != null) {
+        errorController.add(
+          PlayerError(
+            code,
+            message,
+          ),
+        );
+      }
     }
   }
 
-  /// Calls MPV command passed as [args]. Automatically freeds memory after command sending.
+  /// Calls mpv command passed as [args]. Automatically freeds memory after command sending.
   ///
   /// An [Isolate] is used to prevent blocking of the main thread during native-type marshalling.
   void _command(List<String?> args) {
@@ -1125,7 +1019,7 @@ class Player {
     for (int i = 0; i < args.length; i++) {
       arr[i] = pointers[i];
     }
-    mpv.mpv_command(
+    _libmpv?.mpv_command(
       _handle,
       arr.cast(),
     );
@@ -1138,7 +1032,7 @@ class Player {
     // We are only changing the `pause` property to `false` if it wasn't already `false` because this can cause problems with older libmpv versions.
     final name = 'pause'.toNativeUtf8();
     final data = calloc<Bool>();
-    mpv.mpv_get_property(
+    _libmpv?.mpv_get_property(
       _handle,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_FLAG,
@@ -1146,7 +1040,7 @@ class Player {
     );
     if (data.value) {
       data.value = false;
-      mpv.mpv_set_property(
+      _libmpv?.mpv_set_property(
         _handle,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_FLAG,
@@ -1157,24 +1051,8 @@ class Player {
     calloc.free(data);
   }
 
-  /// Whether video is visible or not.
-  final bool video;
-
-  /// Whether on screen controls are visible or not.
-  final bool osc;
-
-  /// User defined window title for the MPV instance.
-  final String? title;
-
-  /// Maximum volume that can be assigned to this [Player].
-  /// Used for volume boost.
-  final double maxVolume;
-
-  /// YouTube daemon to serve links.
-  YouTube? youtube;
-
-  /// mpv version which is powering this [Player] internally.
-  String? version;
+  /// Internal generated libmpv C API bindings.
+  generated.MPV? _libmpv;
 
   /// [Pointer] to [generated.mpv_handle] of this instance.
   late Pointer<generated.mpv_handle> _handle;
@@ -1184,51 +1062,4 @@ class Player {
 
   /// [Completer] used to ensure initialization of [generated.mpv_handle] & synchronization on another isolate.
   final Completer<void> _completer = Completer();
-
-  /// Internally used [StreamController].
-  final StreamController<Playlist> _playlistController =
-      StreamController.broadcast();
-
-  /// Internally used [StreamController].
-  final StreamController<bool> _isPlayingController =
-      StreamController.broadcast();
-
-  /// Internally used [StreamController].
-  final StreamController<bool> _isCompletedController =
-      StreamController.broadcast();
-
-  /// Internally used [StreamController].
-  final StreamController<Duration> _positionController =
-      StreamController.broadcast();
-
-  /// Internally used [StreamController].
-  final StreamController<Duration> _durationController =
-      StreamController.broadcast();
-
-  /// Internally used [StreamController].
-  final StreamController<double> _volumeController =
-      StreamController.broadcast();
-
-  /// Internally used [StreamController].
-  final StreamController<double> _rateController = StreamController.broadcast();
-
-  /// Internally used [StreamController].
-  final StreamController<double> _pitchController =
-      StreamController.broadcast();
-
-  /// Internally used [StreamController].
-  final StreamController<bool> _isBufferingController =
-      StreamController.broadcast();
-
-  /// Internally used [StreamController].
-  final StreamController<PlayerError> _errorController =
-      StreamController.broadcast();
-
-  /// Internally used [StreamController].
-  final StreamController<AudioParams> _audioParamsController =
-      StreamController.broadcast();
-
-  /// Internally used [StreamController].
-  final StreamController<double?> _audioBitrateController =
-      StreamController.broadcast();
 }
