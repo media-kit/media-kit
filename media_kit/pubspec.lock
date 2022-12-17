@@ -69,8 +69,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: master
-      resolved-ref: "1a383fb0d4cd100dbeaa554f187b80bb98ed02cb"
+      ref: e7195677256d4c896ff8ee2088b681889915aab1
+      resolved-ref: e7195677256d4c896ff8ee2088b681889915aab1
       url: "https://github.com/harmonoid/safe_local_storage.git"
     source: git
     version: "0.0.1"
