@@ -14,8 +14,9 @@ export 'package:media_kit/src/platform_tagger.dart';
 export 'package:media_kit/src/models/media.dart';
 export 'package:media_kit/src/models/playlist.dart';
 export 'package:media_kit/src/models/playlist_mode.dart';
+export 'package:media_kit/src/models/tagger_metadata.dart';
 
-// Public `typedef` declarations for making private APIs accessible.
+// Public `typedef` declarations for making private platform specific APIs accessible.
 
 import 'package:media_kit/src/libmpv/player.dart' as libmpv;
 import 'package:media_kit/src/libmpv/tagger.dart' as libmpv;
