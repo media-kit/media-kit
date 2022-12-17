@@ -26,29 +26,42 @@ class PlayerConfiguration {
   /// For showing video output inside the Flutter Widget tree.
   /// Setting this as `false` will cause video output to be displayed in a separate window.
   /// For this to work, [vo] must be non-`null`.
+  ///
   /// Default: `true`.
+  /// Platforms: Windows, Linux.
   final bool texture;
 
   /// Enables on-screen libmpv controls.
   /// For this to work, [vo] must be non-`null` & [texture] must be `null`.
+  ///
   /// Default: `false`.
+  /// Platforms: Windows, Linux.
   final bool osc;
 
   /// For enabling video rendering.
   /// If you intend to play only audio, set this to a `'null'` [String] to improve performance.
+  ///
   /// Default: `true`.
+  /// Platforms: Windows, Linux.
   final String? vo;
 
   /// Sets manually specified location to the libmpv shared library & overrides the default look-up behavior.
+  ///
   /// Default: `null`.
+  /// Platforms: Windows, Linux.
   final String? libmpv;
 
   /// Sets the `HWND` title of the process.
   /// This is visible inside the Windows' volume mixer.
+  ///
   /// Default: `null`.
+  /// Platforms: Windows.
   final String? title;
 
   /// Optional callback invoked when the internals of the [Player] are configured & ready for playback.
+  ///
+  /// Default: `null`.
+  /// Platforms: Windows, Linux.
   final void Function()? ready;
 
   /// {@macro player_configuration}
@@ -99,7 +112,7 @@ abstract class PlatformPlayer {
   );
 
   @mustCallSuper
-  Future<void> dispose({int code = 0}) async {
+  FutureOr<void> dispose({int code = 0}) async {
     await playlistController.close();
     await isPlayingController.close();
     await isCompletedController.close();
@@ -114,33 +127,33 @@ abstract class PlatformPlayer {
     await audioBitrateController.close();
   }
 
-  Future<void> open(
+  FutureOr<void> open(
     Playlist playlist, {
     bool play = true,
     bool evictCache = true,
-  }) async {}
+  }) {}
 
-  Future<void> play() async {}
+  FutureOr<void> play() {}
 
-  Future<void> pause() async {}
+  FutureOr<void> pause() {}
 
-  Future<void> playOrPause() async {}
+  FutureOr<void> playOrPause() {}
 
-  Future<void> add(Media media) async {}
+  FutureOr<void> add(Media media) {}
 
-  Future<void> remove(int index) async {}
+  FutureOr<void> remove(int index) {}
 
-  Future<void> next() async {}
+  FutureOr<void> next() {}
 
-  Future<void> previous() async {}
+  FutureOr<void> previous() {}
 
-  Future<void> jump(int index, {bool open = false}) async {}
+  FutureOr<void> jump(int index, {bool open = false}) {}
 
-  Future<void> move(int from, int to) async {}
+  FutureOr<void> move(int from, int to) {}
 
-  Future<void> seek(Duration duration) async {}
+  FutureOr<void> seek(Duration duration) {}
 
-  Future<void> setPlaylistMode(PlaylistMode playlistMode) async {}
+  FutureOr<void> setPlaylistMode(PlaylistMode playlistMode) {}
 
   set volume(double value) {}
 
