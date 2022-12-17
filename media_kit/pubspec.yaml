@@ -20,7 +20,13 @@ dependencies:
   safe_local_storage:
     git:
       url: https://github.com/harmonoid/safe_local_storage.git
-      ref: master
+      ref: e7195677256d4c896ff8ee2088b681889915aab1
+
+dependency_overrides:
+  safe_local_storage:
+    git:
+      url: https://github.com/harmonoid/safe_local_storage.git
+      ref: e7195677256d4c896ff8ee2088b681889915aab1
 
 dev_dependencies:
   lints: ^1.0.0
