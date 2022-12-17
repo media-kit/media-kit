@@ -4,14 +4,16 @@ import 'package:path/path.dart';
 import 'package:media_kit/media_kit.dart';
 
 Future<void> main() async {
-  final tagger = Tagger();
+  final tagger = Tagger(
+    configuration: const TaggerConfiguration(verbose: true),
+  );
   final cover = File(
     join(
       File(Platform.resolvedExecutable).parent.path,
       'cover.JPG',
     ),
   );
-  Map<String, String> metadata;
+  TaggerMetadata metadata;
   metadata = await tagger.parse(
     Media(
         'https://alexmercerind.github.io/harmonoid-website/random/Lost Sky - Lost.m4a'),
