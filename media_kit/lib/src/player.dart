@@ -26,6 +26,8 @@ import 'package:media_kit/src/models/player_streams.dart';
 ///
 /// The instantaneous state may be accessed using the [state] getter & subscription to the them may be made using the [streams] available.
 ///
+/// Call [dispose] to free the allocated resources back to the system.
+///
 /// ```dart
 /// final player = Player();
 /// player.open(
@@ -56,7 +58,7 @@ import 'package:media_kit/src/models/player_streams.dart';
 class Player {
   /// {@macro player}
   Player({
-    this.configuration = const PlayerConfiguration(),
+    PlayerConfiguration configuration = const PlayerConfiguration(),
   }) {
     if (Platform.isWindows) {
       platform = libmpv.Player(configuration: configuration);
@@ -64,11 +66,13 @@ class Player {
     if (Platform.isLinux) {
       platform = libmpv.Player(configuration: configuration);
     }
-    // TODO: Implement other platforms.
+    if (platform == null) {
+      // TODO: Implement other platforms.
+      throw UnimplementedError(
+        'No [Player] implementation found for ${Platform.operatingSystem}.',
+      );
+    }
   }
-
-  /// User defined configuration for [Player].
-  final PlayerConfiguration configuration;
 
   /// Platform specific internal implementation initialized depending upon the current platform.
   PlatformPlayer? platform;

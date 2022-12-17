@@ -6,9 +6,9 @@
 
 import 'dart:ffi';
 import 'dart:async';
-import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 
+import 'package:media_kit/src/platform_player.dart';
 import 'package:media_kit/src/libmpv/core/initializer.dart';
 import 'package:media_kit/src/libmpv/core/native_library.dart';
 import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
@@ -20,13 +20,11 @@ import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_error.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
-import 'package:media_kit/src/platform_player.dart';
 
 /// {@template libmpv_player}
 /// Player
 /// ------
 ///
-/// The RAW C/C++ [generated.mpv_handle] may be accessed using the [handle].
 /// Compatiblity has been tested with libmpv 0.28.0 or higher. The recommended version is 0.33.0 or higher.
 ///
 /// {@endtemplate}
@@ -1008,8 +1006,6 @@ class Player extends PlatformPlayer {
   }
 
   /// Calls mpv command passed as [args]. Automatically freeds memory after command sending.
-  ///
-  /// An [Isolate] is used to prevent blocking of the main thread during native-type marshalling.
   void _command(List<String?> args) {
     final List<Pointer<Utf8>> pointers = args.map<Pointer<Utf8>>((e) {
       if (e == null) return nullptr.cast();
