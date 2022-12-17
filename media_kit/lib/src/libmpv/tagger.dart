@@ -9,75 +9,66 @@ import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart';
+import 'package:uri_parser/uri_parser.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
 
-import 'package:media_kit/src/models/media.dart';
+import 'package:media_kit/src/platform_tagger.dart';
+import 'package:media_kit/src/libmpv/core/initializer.dart';
 import 'package:media_kit/src/libmpv/core/utf8_fallback.dart';
 import 'package:media_kit/src/libmpv/core/native_library.dart';
-import 'package:media_kit/src/libmpv/core/initializer.dart';
 import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
+
+import 'package:media_kit/src/models/media.dart';
+import 'package:media_kit/src/models/tagger_metadata.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 
-/// ## Tagger
+/// {@template libmpv_tagger}
 ///
-/// [Tagger] class provides high-level interface for retrieving metadata tags from a [Media].
-///
-/// ```dart
-/// final tagger = Tagger();
-/// final metadata = await tagger.parse(
-///   Media('https://alexmercerind.github.io/music.m4a'),
-///   cover: File('cover.jpg'),
-/// );
-/// ```
-///
-/// Pass [verbose] as `true` to receive duration & bitrate of the [parse]d [Media].
-/// This is made optional because having `false` can result in massive performance benefits.
-/// This parameter should be `true`, if you want to retrieve [duration] & [bitrate] in [parse] results.
+/// Tagger
+/// ------
 ///
 /// Compatiblity has been tested with libmpv 0.28.0 or higher. The recommended version is 0.33.0 or higher.
-/// Call [dispose] to free the resources back to the system.
 ///
-class Tagger {
-  /// ## Tagger
-  ///
-  /// [Tagger] class provides high-level interface for retrieving metadata tags from a [Media].
-  ///
-  /// ```dart
-  /// final tagger = Tagger();
-  /// final metadata = await tagger.parse(
-  ///   Media('https://alexmercerind.github.io/music.m4a'),
-  ///   cover: File('cover.jpg'),
-  /// );
-  /// ```
-  ///
-  /// Pass [verbose] as `true` to receive duration & bitrate of the [parse]d [Media].
-  /// This is made optional because having `false` can result in massive performance benefits.
-  /// This parameter should be `true`, if you want to retrieve [duration] & [bitrate] in [parse] results.
-  ///
-  /// Compatiblity has been tested with libmpv 0.28.0 or higher. The recommended version is 0.33.0 or higher.
-  /// Call [dispose] to free the resources back to the system.
-  ///
-  Tagger({
-    bool create = true,
-    this.verbose = false,
-  }) {
-    if (create) {
-      _create();
-    }
+/// {@endtemplate}
+class Tagger extends PlatformTagger {
+  /// {@macro libmpv_tagger}
+  Tagger({required super.configuration}) {
+    _create().then((_) {
+      configuration.ready?.call();
+    });
   }
 
-  /// Parses a [Media] & returns its metadata as [Map].
-  /// Pass [File] as [cover] where the [Media]'s album art will be extracted. No album art is extracted if [cover] is `null`.
+  /// Disposes the [Tagger] instance & releases the resources.
+  @override
+  Future<void> dispose({int code = 0}) async {
+    await _completer.future;
+    // Raw `mpv_command` calls cause crash on Windows.
+    final command = 'quit $code'.toNativeUtf8();
+    _libmpv?.mpv_command_string(
+      _handle,
+      command.cast(),
+    );
+    calloc.free(command);
+  }
+
+  /// Parses a [Media] & returns its metadata.
   ///
-  /// NOTE: Extracting [cover] can really degrade the performance. Do not pass [cover] when only metadata keys are needed.
+  /// Optionally, following argument may be passed:
   ///
-  /// Throws exception if an invalid, corrupt or inexistent [Media] is passed.
+  /// * [cover] may be passed to save the cover art of the [Media] to the location.
+  /// * [coverDirectory] may be passed to save the cover art of the [Media] to the directory.
+  /// * [waitUntilCoverIsSaved] may be passed to wait until the cover art is saved.
+  /// * [timeout] may be passed to set the timeout duration for the parsing operation.
   ///
-  Future<Map<String, String>> parse(
+  /// Throws [FormatException] if an invalid, corrupt or inexistent [Media] is passed.
+  ///
+  @override
+  FutureOr<TaggerMetadata> parse(
     Media media, {
     File? cover,
     Directory? coverDirectory,
+    bool waitUntilCoverIsSaved = false,
     Duration timeout = const Duration(seconds: 5),
   }) async {
     _uri = media.uri;
@@ -96,10 +87,10 @@ class Tagger {
         'replace',
       ],
     );
-    if (verbose) {
+    if (configuration.verbose) {
       final name = 'pause'.toNativeUtf8();
       final flag = calloc<Int8>()..value = 0;
-      mpv.mpv_set_property(
+      _libmpv?.mpv_set_property(
         _handle,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_FLAG,
@@ -109,7 +100,7 @@ class Tagger {
       calloc.free(flag);
     }
     Map<String, String> metadata = await _metadata.future.timeout(timeout);
-    if (verbose) {
+    if (configuration.verbose) {
       try {
         metadata['duration'] = await _duration.future.timeout(timeout);
       } catch (e) {
@@ -123,24 +114,93 @@ class Tagger {
     }
     metadata['uri'] = media.uri;
     final stop = 'stop'.toNativeUtf8().cast();
-    mpv.mpv_command_string(
+    _libmpv?.mpv_command_string(
       _handle,
       stop.cast(),
     );
     calloc.free(stop);
-    return metadata;
+    return serialize(metadata);
   }
 
-  /// Disposes the [Tagger] instance & releases the resources.
-  Future<void> dispose({int code = 0}) async {
-    await _completer.future;
-    // Raw `mpv_command` calls cause crash on Windows.
-    final command = 'quit $code'.toNativeUtf8();
-    mpv.mpv_command_string(
-      _handle,
-      command.cast(),
+  @override
+  TaggerMetadata serialize(dynamic json) {
+    assert(json['uri'] is String, 'Track URI cannot be null.');
+    final String uri = json['uri'];
+    final parser = URIParser(uri);
+    String? trackName;
+    int? albumLength;
+    DateTime? timeAdded;
+    List<String>? trackArtistNames;
+    // Present in JSON.
+    if (json['title'] is String) {
+      trackName = json['title'];
+    }
+    // Not present in JSON. Extract from [File] name or URI segment.
+    else {
+      switch (parser.type) {
+        case URIType.file:
+          trackName = basename(parser.file!.path);
+          break;
+        case URIType.network:
+          trackName = parser.uri!.pathSegments.last;
+          break;
+        default:
+          trackName = uri;
+          break;
+      }
+    }
+    // Present in JSON.
+    if (json['tracktotal'] is String) {
+      albumLength = parseInteger(json['tracktotal']);
+    } else if (json['track'] is String) {
+      if (json['track'].contains('/')) {
+        albumLength = parseInteger(json['track'].split('/').last);
+      }
+    }
+    // Not present in JSON. Access from file system.
+    switch (parser.type) {
+      case URIType.file:
+        timeAdded = parser.file!.lastModifiedSync_();
+        break;
+      default:
+        timeAdded = DateTime.now();
+        break;
+    }
+    trackArtistNames = splitArtistTag(json['artist']);
+
+    // Assign fallback values.
+    trackName ??= uri;
+    albumLength ??= 1;
+    timeAdded ??= DateTime.now();
+
+    // Should never be, just for safety.
+    if (trackArtistNames != null) {
+      if (trackArtistNames.isEmpty) {
+        trackArtistNames = null;
+      }
+    }
+
+    return TaggerMetadata(
+      uri: parser.result,
+      trackName: trackName,
+      albumName: json['album'],
+      trackNumber: parseInteger(json['track']),
+      discNumber: parseInteger(json['disc']),
+      albumLength: albumLength,
+      albumArtistName: json['album_artist'],
+      trackArtistNames: trackArtistNames,
+      year: json['year'] ?? splitDateTag(json['date']),
+      timeAdded: timeAdded,
+      duration: Duration(
+          milliseconds: parseInteger(json['duration'] ?? '0')! ~/ 1000),
+      bitrate: parseInteger(json['bitrate'] ?? '0')! ~/ 1000,
+      genre: json['genre'],
+      lyrics: json['lyrics'],
+      authorName: json['author'],
+      writerName: json['writer'],
+      // Non-serialized data. Why not?
+      data: json,
     );
-    calloc.free(command);
   }
 
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
@@ -227,11 +287,11 @@ class Tagger {
         } catch (exception) {
           // Do nothing.
         }
-        // libmpv doesn't seem to read ALBUMARTIST.
-        if (_uri!.toUpperCase().endsWith('.FLAC') &&
-            !metadata.containsKey('album_artist') &&
+        // libmpv doesn't seem to read ALBUMARTIST on FLAC/OGG.
+        // No longer checking for it. Use first `artist` as `album_artist` if `album_artist` is not present.
+        if (!metadata.containsKey('album_artist') &&
             metadata.containsKey('artist')) {
-          metadata['album_artist'] = splitArtists(metadata['artist']!)!.first;
+          metadata['album_artist'] = splitArtistTag(metadata['artist']!)!.first;
         }
         if (_path != null) {
           _command(
@@ -243,28 +303,35 @@ class Tagger {
           );
         }
         if (_directory != null) {
-          final title = [null, ''].contains(metadata['title'])
-              ? () {
-                  // If the title is empty, use the filename.
-                  if (Uri.parse(_uri!).isScheme('FILE')) {
-                    return basename(Uri.parse(_uri!).toFilePath());
-                  }
-                  // Otherwise, use the URI's last path component.
-                  else {
-                    if (_uri!.endsWith('/')) {
-                      _uri = _uri!.substring(0, _uri!.length - 1);
-                    }
-                    return _uri!.split('/').last;
-                  }
-                }()
-              : metadata['title'];
+          final parser = URIParser(_uri);
+          String? trackName;
+          // Present in JSON.
+          if (metadata['title'] is String) {
+            trackName = metadata['title'];
+          }
+          // Not present in JSON. Extract from [File] name or URI segment.
+          else {
+            switch (parser.type) {
+              case URIType.file:
+                trackName = basename(parser.file!.path);
+                break;
+              case URIType.network:
+                trackName = parser.uri!.pathSegments.last;
+                break;
+              default:
+                trackName = _uri;
+                break;
+            }
+          }
+          // NOTE: Following same contract as [Harmonoid](https://github.com/harmonoid/harmonoid).
+          final moniker =
+              '$trackName${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}.PNG';
           _command(
             [
               'screenshot-to-file',
               join(
                 _directory!,
-                '$title${metadata['album'] ?? 'Unknown Album'}${metadata['album_artist'] ?? 'Unknown Artist'}.PNG'
-                    .replaceAll(RegExp(kArtworkFileNameRegex), ''),
+                moniker.replaceAll(RegExp(r'[\\/:*?""<>| ]'), ''),
               ),
               null,
             ],
@@ -278,9 +345,10 @@ class Tagger {
   }
 
   Future<void> _create() async {
-    if (libmpv == null) return;
+    final libmpv = await NativeLibrary.find(path: configuration.libmpv);
+    _libmpv = generated.MPV(DynamicLibrary.open(libmpv));
     _handle = await create(
-      libmpv!,
+      libmpv,
       _handler,
     );
     <String, int>{
@@ -290,7 +358,7 @@ class Tagger {
     }.forEach(
       (property, format) {
         final ptr = property.toNativeUtf8();
-        mpv.mpv_observe_property(
+        _libmpv?.mpv_observe_property(
           _handle,
           0,
           ptr.cast(),
@@ -315,7 +383,7 @@ class Tagger {
     }.forEach(
       (k, v) {
         final property = k.toNativeUtf8(), value = v.toNativeUtf8();
-        mpv.mpv_set_property_string(
+        _libmpv?.mpv_set_property_string(
           _handle,
           property.cast(),
           value.cast(),
@@ -327,7 +395,7 @@ class Tagger {
     _completer.complete();
   }
 
-  /// Calls MPV command passed as [args]. Automatically freeds memory after command sending.
+  /// Calls mpv command passed as [args]. Automatically freeds memory after command sending.
   void _command(List<String?> args) {
     final List<Pointer<Utf8>> pointers = args.map<Pointer<Utf8>>((e) {
       if (e == null) return nullptr.cast();
@@ -337,7 +405,7 @@ class Tagger {
     for (int i = 0; i < args.length; i++) {
       arr[i] = pointers[i];
     }
-    mpv.mpv_command(
+    _libmpv?.mpv_command(
       _handle,
       arr.cast(),
     );
@@ -345,45 +413,14 @@ class Tagger {
     pointers.forEach(calloc.free);
   }
 
-  /// Loads the dynamic library & setups callbacks in advance.
-  ///
-  Future<void> open() => _create();
-
-  static List<String>? splitArtists(String? tag) {
-    if (tag == null) return null;
-    const kExceptions = [
-      r'AC/DC',
-      r'Axwell /\ Ingrosso',
-      r'Au/Ra',
-    ];
-    final exempted = <String>[];
-    for (final exception in kExceptions) {
-      if (tag.contains(exception)) {
-        exempted.add(exception);
-      }
-    }
-    for (final element in kExceptions) {
-      tag = tag!.replaceAll(element, '');
-    }
-    final artists = tag!
-        .split(RegExp(r';|//|/|\\|\|'))
-        .map((e) => e.trim())
-        .toList()
-        .toSet()
-        .toList()
-      ..removeWhere((element) => element.isEmpty);
-    return artists + exempted;
-  }
+  /// Internal generated libmpv C API bindings.
+  generated.MPV? _libmpv;
 
   /// [Pointer] to [generated.mpv_handle] of this instance.
   late Pointer<generated.mpv_handle> _handle;
 
   /// [Completer] used to ensure initialization of [generated.mpv_handle] & synchronization on another isolate.
   final Completer<void> _completer = Completer();
-
-  Completer<Map<String, String>> _metadata = Completer();
-  Completer<String> _duration = Completer();
-  Completer<String> _bitrate = Completer();
 
   /// Current URI
   String? _uri;
@@ -394,11 +431,9 @@ class Tagger {
   /// Path to parent folder where cover will be saved.
   String? _directory;
 
-  /// Whether bitrate & duration compatiblity is required.
-  final bool verbose;
-}
+  // For waiting on event callbacks.
 
-/// [String] used for regex-matching the invalid file-name characters & removing them when saving the artwork
-/// of a particular media file to a given [Directory].
-/// i.e. calling [Tagger.parse] with `coverDirectory` optional argument.
-const kArtworkFileNameRegex = r'[\\/:*?""<>| ]';
+  Completer<Map<String, String>> _metadata = Completer<Map<String, String>>();
+  Completer<String> _duration = Completer<String>();
+  Completer<String> _bitrate = Completer<String>();
+}
