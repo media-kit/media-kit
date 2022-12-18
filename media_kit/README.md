@@ -18,6 +18,13 @@ Since, targetting multiple features at once & bundling redundant native librarie
 - [ ] Android
 - [ ] iOS
 
+## Support
+
+If you find [package:media_kit](https://github.com/alexmercerind/media_kit) package(s) useful or want to support future development, please consider supporting me. It's a very tedious process to write code, document, maintain & provide support for free. Since this is first of a kind project, it takes a lot of time to experiment & develop.
+
+- [GitHub Sponsors](https://github.com/sponsors/alexmercerind)
+- [PayPal](https://paypal.me/alexmercerind)
+
 ## Docs
 
 ### Brief Start
@@ -323,20 +330,6 @@ classDiagram
     #serialize(data) TaggerMetadata
     +dispose()
   }
-```
-
-## Backends
-
-### Windows
-
-[libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) from [mpv Media Player](https://mpv.io/) is used for leveraging video playback. [package:media_kit_core_video](https://github.com/alexmercerind/media_kit) bundles pre-compiled [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) shared libraries _i.e._ `mpv-2.dll` for Windows x64.
-
-### Linux
-
-[libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) from [mpv Media Player](https://mpv.io/) is used for leveraging video playback. System shared libraries from distribution specific user-installed packages are used by-default. On Ubuntu / Debian based systems, you can install these using:
-
-```bash
-sudo apt install mpv libmpv-dev
 ```
 
 ## License
