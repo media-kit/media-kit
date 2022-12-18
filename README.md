@@ -89,9 +89,9 @@ player.streams.audioBitrate.listen((event) {
 
 ### Detailed Guide
 
-TODO:
+_TODO:_
 
-Improvements to the documentation are welcomed. This is very-hard for me alone. 💖
+_Improvements to the documentation are welcomed. This is very-hard for me alone. 💖_
 
 ## Goals
 
@@ -103,7 +103,7 @@ Since, targetting multiple features at once & bundling redundant native librarie
 
 ## Architecture
 
-Few attributes or details may me not present.
+_Click on the zoom button on top-right or pinch inside._
 
 ```mermaid
 %%{
@@ -182,6 +182,7 @@ classDiagram
     +«set» rate: double*
     +«set» pitch: double*
     +«set» shuffle: bool*
+    +«set» handle: int
 
     +open(playlist)
     +play()
@@ -221,6 +222,7 @@ classDiagram
     +«set» rate: double*
     +«set» pitch: double*
     +«set» shuffle: bool*
+    +«set» handle: int*
 
     #StreamController<Playlist> playlistController
     #StreamController<bool> isPlayingController
@@ -253,6 +255,7 @@ classDiagram
     +«set» rate: double
     +«set» pitch: double
     +«set» shuffle: bool
+    +«set» handle: int
     +dispose()
   }
 
@@ -277,6 +280,7 @@ classDiagram
     +«set» rate: double
     +«set» pitch: double
     +«set» shuffle: bool
+    +«set» handle: int
     +dispose()
   }
 
