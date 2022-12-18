@@ -36,9 +36,6 @@ class Player extends PlatformPlayer {
     });
   }
 
-  /// libmpv [handle] of the internal instance.
-  Pointer<generated.mpv_handle> get handle => _handle;
-
   /// Disposes the [Player] instance & releases the resources.
   @override
   Future<void> dispose({int code = 0}) async {
@@ -370,12 +367,12 @@ class Player extends PlatformPlayer {
       case PlaylistMode.none:
         {
           _libmpv?.mpv_set_property_string(
-            handle,
+            _handle,
             loopFile.cast(),
             no.cast(),
           );
           _libmpv?.mpv_set_property_string(
-            handle,
+            _handle,
             loopPlaylist.cast(),
             no.cast(),
           );
@@ -384,12 +381,12 @@ class Player extends PlatformPlayer {
       case PlaylistMode.single:
         {
           _libmpv?.mpv_set_property_string(
-            handle,
+            _handle,
             loopFile.cast(),
             yes.cast(),
           );
           _libmpv?.mpv_set_property_string(
-            handle,
+            _handle,
             loopPlaylist.cast(),
             no.cast(),
           );
@@ -398,12 +395,12 @@ class Player extends PlatformPlayer {
       case PlaylistMode.loop:
         {
           _libmpv?.mpv_set_property_string(
-            handle,
+            _handle,
             loopFile.cast(),
             no.cast(),
           );
           _libmpv?.mpv_set_property_string(
-            handle,
+            _handle,
             loopPlaylist.cast(),
             yes.cast(),
           );
@@ -578,7 +575,7 @@ class Player extends PlatformPlayer {
       final name = 'playlist'.toNativeUtf8();
       final data = calloc<generated.mpv_node>();
       _libmpv?.mpv_get_property(
-        handle,
+        _handle,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_NODE,
         data.cast(),
@@ -628,6 +625,10 @@ class Player extends PlatformPlayer {
       }
     }();
   }
+
+  /// [generated.mpv_handle] address of the internal libmpv player instance.
+  @override
+  int get handle => _handle.address;
 
   /// Sets property / option for the internal `libmpv` instance of this [Player].
   /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.

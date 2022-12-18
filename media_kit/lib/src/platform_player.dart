@@ -163,6 +163,10 @@ abstract class PlatformPlayer {
 
   set shuffle(bool value) {}
 
+  int get handle {
+    throw UnimplementedError('[PlatformPlayer.handle] is not implemented.');
+  }
+
   @protected
   final StreamController<Playlist> playlistController =
       StreamController.broadcast();

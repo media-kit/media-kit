@@ -196,4 +196,13 @@ class Player {
   set shuffle(bool value) {
     platform?.shuffle = value;
   }
+
+  /// Internal platform specific identifier for this [Player] instance.
+  ///
+  /// Since, [int] is a primitive type, it can be used to pass this [Player] instance to native code without directly depending upon this library.
+  ///
+  int get handle {
+    final result = platform?.handle;
+    return result!;
+  }
 }
