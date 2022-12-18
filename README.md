@@ -16,12 +16,15 @@ Few attributes or details may me not present.
 
 ```mermaid
 classDiagram
-
+   
+  Player *-- PlatformPlayer
   PlatformPlayer <|-- libmpv_Player
-  PlatformPlayer <|-- xyz_Player
+  PlatformPlayer <|-- xyz_Player  
   PlatformPlayer *-- PlayerState
   PlatformPlayer *-- PlayerStreams
   PlatformPlayer o-- PlayerConfiguration
+  
+  libmpv_Player <.. NativeLibrary
   
   class Media {
     +Uri uri
@@ -36,8 +39,8 @@ classDiagram
   class PlayerConfiguration {
     + bool texture
     + bool osc
-    + String? vo
-    + String? title
+    + String vo
+    + String title
     ... other platform-specific configurable values
   }
   
@@ -52,7 +55,7 @@ classDiagram
     +Stream<double> pitch
     +Stream<bool> isBuffering
     +Stream<AudioParams> audioParams
-    +Stream<double?> audioBitrate
+    +Stream<double> audioBitrate
     +Stream<PlayerError> error
   }
   
@@ -67,13 +70,40 @@ classDiagram
     +double pitch
     +bool isBuffering
     +AudioParams audioParams
-    +double? audioBitrate
+    +double audioBitrate
     +PlayerError error
+  }
+  
+  class Player {
+    +PlatformPlayer? platform
+    
+    +«get» PlayerState state
+    +«get» PlayerStreams streams
+    
+    +«set» volume: double*
+    +«set» rate: double*
+    +«set» pitch: double*
+    +«set» shuffle: bool*
+    
+    +open(playlist)*
+    +play()*
+    +pause()*
+    +playOrPause()*
+    +add(media)*
+    +remove(index)*
+    +next()*
+    +previous()*
+    +jump(index)*
+    +move(from, to)*
+    +seek(duration)*
+    +setPlaylistMode(playlistMode)*
+    +dispose()*
   }
   
   class PlatformPlayer {
     +PlayerState state
     +PlayerStreams streams
+    +PlayerConfiguration configuration
     
     +open(playlist)*
     +play()*
@@ -128,6 +158,10 @@ classDiagram
     +dispose()
   }
   
+  class NativeLibrary {
+    +find()$ String?
+  }
+  
   class xyz_Player {
     +open(playlist)
     +play()
@@ -145,6 +179,80 @@ classDiagram
     +«set» rate: double
     +«set» pitch: double
     +«set» shuffle: bool
+    +dispose()
+  }
+```
+
+```mermaid
+classDiagram
+
+  Tagger *-- PlatformTagger
+  PlatformTagger <|-- libmpv_Tagger
+  PlatformTagger <|-- xyz_Tagger
+  PlatformTagger o-- TaggerConfiguration
+  
+  libmpv_Tagger <.. NativeLibrary
+  
+  class Media {
+    +Uri uri
+  }
+  
+  class TaggerMetadata {
+    +Uri uri
+    +String trackName
+    +String albumName
+    +int trackNumber
+    +int discNumber
+    +int albumLength
+    +String albumArtistName
+    +List<String> trackArtistNames
+    +String authorName
+    +String writerName
+    +String year
+    +String genre
+    +String lyrics
+    +DateTime timeAdded
+    +Duration duration
+    +int bitrate
+    +dynamic data
+  }
+  
+  class Tagger {
+    +parse(media) Future<TaggerMetadata>
+    +dispose()
+  }
+  
+  class TaggerConfiguration {
+    +bool verbose
+    +String libmpv
+    ... other platform-specific configurable values
+  }
+  
+  class PlatformTagger {
+    +TaggerConfiguration configuration
+    
+    +parse(media)* Future<TaggerMetadata>
+    #serialize(data)* TaggerMetadata
+    +dispose()*
+    
+    #splitArtistTag(tag) List<String>
+    #splitDateTag(tag) String
+    #parseInteger(value) int
+  }
+  
+  class libmpv_Tagger {
+    +parse(media) Future<TaggerMetadata>
+    #serialize(data) TaggerMetadata
+    +dispose()
+  }
+  
+  class NativeLibrary {
+    +find()$ String?
+  }
+  
+  class xyz_Tagger {
+    +parse(media) Future<TaggerMetadata>
+    #serialize(data) TaggerMetadata
     +dispose()
   }
 ```
