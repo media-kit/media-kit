@@ -1,24 +1,24 @@
 import 'package:media_kit/media_kit.dart';
 
 Future<void> main() async {
-  final player = Player()
-    ..streams.playlist.listen((event) {
-      print(event);
-    })
-    ..streams.playlist.listen((event) {
-      print(event);
-    })
-    ..streams.position.listen((event) {
-      print(event);
-    })
-    ..streams.audioParams.listen((event) {
-      print(event);
-    })
-    ..streams.audioBitrate.listen((event) {
-      if (event != null) {
-        print('${event ~/ 1000} kb/s');
-      }
-    });
+  final player = Player();
+  player.streams.playlist.listen((event) {
+    print(event);
+  });
+  player.streams.playlist.listen((event) {
+    print(event);
+  });
+  player.streams.position.listen((event) {
+    print(event);
+  });
+  player.streams.duration.listen((event) {
+    print(event);
+  });
+  player.streams.audioBitrate.listen((event) {
+    if (event != null) {
+      print('${event ~/ 1000} KB/s');
+    }
+  });
   await player.open(
     Playlist(
       [
