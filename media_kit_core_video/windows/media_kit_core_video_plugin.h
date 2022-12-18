@@ -10,21 +10,23 @@ namespace media_kit_core_video {
 
 class MediaKitCoreVideoPlugin : public flutter::Plugin {
  public:
-  static void RegisterWithRegistrar(flutter::PluginRegistrarWindows *registrar);
+  static void RegisterWithRegistrar(flutter::PluginRegistrarWindows* registrar);
 
-  MediaKitCoreVideoPlugin();
+  MediaKitCoreVideoPlugin(flutter::PluginRegistrarWindows* registrar);
 
   virtual ~MediaKitCoreVideoPlugin();
 
-  // Disallow copy and assign.
   MediaKitCoreVideoPlugin(const MediaKitCoreVideoPlugin&) = delete;
   MediaKitCoreVideoPlugin& operator=(const MediaKitCoreVideoPlugin&) = delete;
 
  private:
-  // Called when a method is called on this plugin's channel from Dart.
   void HandleMethodCall(
-      const flutter::MethodCall<flutter::EncodableValue> &method_call,
+      const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+
+  flutter::PluginRegistrarWindows* registrar_ = nullptr;
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel_ =
+      nullptr;
 };
 
 }  // namespace media_kit_core_video
