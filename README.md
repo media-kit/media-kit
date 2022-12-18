@@ -95,6 +95,13 @@ Improvements to the documentation are welcomed. This is very-hard for me alone. 
 Few attributes or details may me not present.
 
 ```mermaid
+%%{
+  init: {
+    'themeVariables': {
+      'fontFamily': 'BlinkMacSystemFont, Segoe UI, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji'
+    }
+  }
+}%%
 classDiagram
 
   Player *-- PlatformPlayer
