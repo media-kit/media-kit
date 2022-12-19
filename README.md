@@ -101,6 +101,13 @@ The primary goal of [package:media_kit](https://github.com/alexmercerind/media_k
 
 Since, targetting multiple features at once & bundling redundant native libraries can result in increased bundle size of the application, you can manually select the native libraries you want to bundle, depending upon your use-case. Currently, the scope of work is limited to Windows & Linux. The code is architectured to support multiple platforms & features. Support for more platforms will be added in future.
 
+## Support
+
+If you find [package:media_kit](https://github.com/alexmercerind/media_kit) package(s) useful or want to support future development, please consider supporting me. It's a very tedious process to write code, document, maintain & provide support for free. Since this is first of a kind project, it takes a lot of time to experiment & develop.
+
+- [GitHub Sponsors](https://github.com/sponsors/alexmercerind)
+- [PayPal](https://paypal.me/alexmercerind)
+
 ## Architecture
 
 _Click on the zoom button on top-right or pinch inside._
