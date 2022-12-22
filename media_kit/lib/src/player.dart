@@ -201,7 +201,7 @@ class Player {
   ///
   /// Since, [int] is a primitive type, it can be used to pass this [Player] instance to native code without directly depending upon this library.
   ///
-  int get handle {
+  Future<int> get handle {
     final result = platform?.handle;
     return result!;
   }

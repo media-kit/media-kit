@@ -163,7 +163,7 @@ abstract class PlatformPlayer {
 
   set shuffle(bool value) {}
 
-  int get handle {
+  Future<int> get handle {
     throw UnimplementedError('[PlatformPlayer.handle] is not implemented.');
   }
 
