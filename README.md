@@ -520,7 +520,11 @@ On Flutter Linux, [both OpenGL (hardware accelerated) & Pixel Buffer (software) 
 
 ## Outcomes
 
-_4K video playback on entry-level AMD Ryzen 3 2200U processor with Raden Vega 3 Mobile Graphics._
+4K video playback on entry-level AMD Ryzen 3 2200U processor with Raden Vega 3 Mobile Graphics.
+
+**NOTES:**
+- See process specific CPU & GPU usage (media_kit_test.exe). Overall CPU usage is high due to screen recording.
+- Memory usage is higher because of higher resolution 4K video. General usage will be lower. 
 
 https://user-images.githubusercontent.com/28951144/208765832-416313c9-97d4-44d0-a902-e577f3c4f3f6.mp4
 
