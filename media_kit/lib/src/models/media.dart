@@ -5,11 +5,12 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'dart:io';
+import 'dart:collection';
 import 'package:path/path.dart' as path;
 import 'package:uri_parser/uri_parser.dart';
 
-Map<String, Media> medias = {};
-Map<String, double> bitrates = {};
+HashMap<String, Media> medias = HashMap<String, Media>();
+HashMap<String, double> bitrates = HashMap<String, double>();
 
 /// ## Media
 /// A [Media] object to open inside a [Player] instance using [Player.open] method for playback.
