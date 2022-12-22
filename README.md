@@ -189,7 +189,7 @@ classDiagram
     +«set» rate: double*
     +«set» pitch: double*
     +«set» shuffle: bool*
-    +«set» handle: int
+    +«get» handle: Future<int>
 
     +open(playlist)
     +play()
@@ -229,7 +229,7 @@ classDiagram
     +«set» rate: double*
     +«set» pitch: double*
     +«set» shuffle: bool*
-    +«set» handle: int*
+    +«get» handle: Future<int>*
 
     #StreamController<Playlist> playlistController
     #StreamController<bool> isPlayingController
@@ -262,7 +262,7 @@ classDiagram
     +«set» rate: double
     +«set» pitch: double
     +«set» shuffle: bool
-    +«set» handle: int
+    +«get» handle: Future<int>
     +dispose()
   }
 
@@ -287,7 +287,7 @@ classDiagram
     +«set» rate: double
     +«set» pitch: double
     +«set» shuffle: bool
-    +«set» handle: int
+    +«get» handle: Future<int>
     +dispose()
   }
 
