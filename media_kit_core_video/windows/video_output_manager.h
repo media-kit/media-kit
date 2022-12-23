@@ -1,0 +1,41 @@
+// This file is a part of media_kit
+// (https://github.com/alexmercerind/media_kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the
+// LICENSE file.
+
+#include <flutter/method_channel.h>
+#include <flutter/plugin_registrar_windows.h>
+#include <flutter/standard_method_codec.h>
+
+#include <memory>
+#include <unordered_map>
+
+#include "video_output.h"
+
+class VideoOutputManager {
+ public:
+  VideoOutputManager(flutter::PluginRegistrarWindows* registrar,
+                     flutter::MethodChannel<flutter::EncodableValue>* channel);
+
+  // Creates a new |VideoOutput| and returns reference to it.
+  // It's texture ID may be used to render the video.
+  VideoOutput* Create(int64_t handle,
+                      std::optional<int32_t> width,
+                      std::optional<int32_t> height);
+
+  // Destroys the |VideoOutput| with given handle.
+  bool Destroy(int64_t handle);
+
+  ~VideoOutputManager();
+
+ private:
+  // Current display adapter used by Flutter. Accessed from |registrar_|.
+  IDXGIAdapter* GetIDXGIAdapter();
+
+  flutter::PluginRegistrarWindows* registrar_ = nullptr;
+  flutter::MethodChannel<flutter::EncodableValue>* channel_ = nullptr;
+  std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_ = {};
+};
