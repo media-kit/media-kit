@@ -1,8 +1,6 @@
-
-import 'media_kit_core_video_platform_interface.dart';
-
-class MediaKitCoreVideo {
-  Future<String?> getPlatformVersion() {
-    return MediaKitCoreVideoPlatform.instance.getPlatformVersion();
-  }
-}
+/// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+///
+/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+/// All rights reserved.
+/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+export 'package:media_kit_core_video/video_controller.dart';
