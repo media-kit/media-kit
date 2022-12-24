@@ -30,7 +30,7 @@ class VideoOutputManager {
                       std::optional<int32_t> height);
 
   // Destroys the |VideoOutput| with given handle.
-  bool Destroy(int64_t handle);
+  bool Dispose(int64_t handle);
 
   ~VideoOutputManager();
 

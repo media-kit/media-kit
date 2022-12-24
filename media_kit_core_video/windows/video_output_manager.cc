@@ -16,12 +16,15 @@ VideoOutputManager::VideoOutputManager(
 VideoOutput* VideoOutputManager::Create(int64_t handle,
                                         std::optional<int32_t> width,
                                         std::optional<int32_t> height) {
-  auto video_output =
-      std::make_unique<VideoOutput>(handle, width, height, GetIDXGIAdapter());
-  video_outputs_.insert({handle, std::move(video_output)});
+  if (video_outputs_.find(handle) == video_outputs_.end()) {
+    auto video_output =
+        std::make_unique<VideoOutput>(handle, width, height, GetIDXGIAdapter());
+    video_outputs_.insert({handle, std::move(video_output)});
+  }
+  return video_outputs_[handle].get();
 }
 
-bool VideoOutputManager::Destroy(int64_t handle) {
+bool VideoOutputManager::Dispose(int64_t handle) {
   if (video_outputs_.find(handle) == video_outputs_.end()) {
     return false;
   }
