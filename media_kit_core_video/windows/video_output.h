@@ -6,6 +6,9 @@
 // Use of this source code is governed by MIT license that can be found in the
 // LICENSE file.
 
+#ifndef FLUTTER_PLUGIN_MEDIA_KIT_CORE_VIDEO_VIDEO_OUTPUT_H_
+#define FLUTTER_PLUGIN_MEDIA_KIT_CORE_VIDEO_VIDEO_OUTPUT_H_
+
 #include <optional>
 
 #include <client.h>
@@ -32,3 +35,5 @@ class VideoOutput {
   IDXGIAdapter* adapter_ = nullptr;
   ANGLESurfaceManager* surface_manager_ = nullptr;
 };
+
+#endif  // FLUTTER_PLUGIN_MEDIA_KIT_CORE_VIDEO_VIDEO_OUTPUT_H_

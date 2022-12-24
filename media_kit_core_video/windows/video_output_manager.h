@@ -6,6 +6,9 @@
 // Use of this source code is governed by MIT license that can be found in the
 // LICENSE file.
 
+#ifndef FLUTTER_PLUGIN_MEDIA_KIT_CORE_VIDEO_VIDEO_OUTPUT_MANAGER_H_
+#define FLUTTER_PLUGIN_MEDIA_KIT_CORE_VIDEO_VIDEO_OUTPUT_MANAGER_H_
+
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
@@ -39,3 +42,5 @@ class VideoOutputManager {
   flutter::MethodChannel<flutter::EncodableValue>* channel_ = nullptr;
   std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_ = {};
 };
+
+#endif  // FLUTTER_PLUGIN_MEDIA_KIT_CORE_VIDEO_VIDEO_OUTPUT_MANAGER_H_
