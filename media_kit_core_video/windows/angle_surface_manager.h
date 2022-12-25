@@ -26,7 +26,6 @@
 
 class ANGLESurfaceManager {
  public:
-  const HWND window() const { return window_; }
   const int32_t width() const { return width_; }
   const int32_t height() const { return height_; }
   const HANDLE shared_handle() const { return shared_handle_; }
@@ -36,8 +35,7 @@ class ANGLESurfaceManager {
 
   // Creates a new instance of |ANGLESurfaceManager|, automatically creates
   // internal D3D 11 & D3D 9 devices based on platform's capability.
-  ANGLESurfaceManager(HWND window,
-                      int32_t width,
+  ANGLESurfaceManager(int32_t width,
                       int32_t height,
                       IDXGIAdapter* adapter = nullptr);
 
@@ -60,8 +58,6 @@ class ANGLESurfaceManager {
 
   void ShowFailureMessage(wchar_t message[]);
 
-  // Parent window.
-  HWND window_;
   IDXGIAdapter* adapter_ = nullptr;
   int32_t width_;
   int32_t height_;

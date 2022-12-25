@@ -22,11 +22,10 @@
     FAIL(message);             \
   }
 
-ANGLESurfaceManager::ANGLESurfaceManager(HWND window,
-                                         int32_t width,
+ANGLESurfaceManager::ANGLESurfaceManager(int32_t width,
                                          int32_t height,
                                          IDXGIAdapter* adapter = nullptr)
-    : window_(window), width_(width), height_(height), adapter_(adapter) {
+    : width_(width), height_(height), adapter_(adapter) {
   // Presently, I believe it is a good idea to show these failure messages
   // directly to the user. It'll help fix the platform & hardware specific
   // issues.
@@ -99,7 +98,7 @@ void ANGLESurfaceManager::SwapBuffers() {
   //   d3d_11_device_context_->CopyResource(d3d11_texture_2D_.Get(),
   //                                        d3d11_texture_2D_.Get());
   // } else if (d3d_9_device_ex_) {
-  //   d3d_9_device_ex_->PresentEx(NULL, NULL, NULL, NULL, 0);
+  //   d3d_9_device_ex_->PresentEx(0, 0, 0, 0, 0);
   // }
   // eglSwapBuffers(display_, surface_);
 }
@@ -120,7 +119,7 @@ bool ANGLESurfaceManager::InitializeD3D11() {
     IDXGIFactory* dxgi = nullptr;
     CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgi);
     // Manually selecting adapter. As far as my experience goes, this is the
-    // safest approach. Passing `NULL` (so-called default) seems to cause issues
+    // safest approach. Passing `0` (so-called default) seems to cause issues
     // on Windows 7 or maybe some older graphics drivers.
     // First adapter is the default.
     // |D3D_DRIVER_TYPE_UNKNOWN| must be passed with manual adapter selection.
@@ -131,9 +130,9 @@ bool ANGLESurfaceManager::InitializeD3D11() {
     }
   }
   auto hr = ::D3D11CreateDevice(
-      adapter_, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, feature_levels.begin(),
+      adapter_, D3D_DRIVER_TYPE_UNKNOWN, 0, 0, feature_levels.begin(),
       static_cast<UINT>(feature_levels.size()), D3D11_SDK_VERSION,
-      &d3d_11_device_, NULL, &d3d_11_device_context_);
+      &d3d_11_device_, 0, &d3d_11_device_context_);
   auto selected_level = d3d_11_device_->GetFeatureLevel();
   std::cout << "Direct3D Feature Level: " << (((unsigned)selected_level) >> 12)
             << "_" << ((((unsigned)selected_level) >> 8) & 0xf) << std::endl;
@@ -166,17 +165,17 @@ bool ANGLESurfaceManager::InitializeD3D11() {
   // D3D11.
   display_ = eglGetPlatformDisplayEXT(
       EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, kD3D11DisplayAttributes);
-  if (eglInitialize(display_, NULL, NULL) == EGL_FALSE) {
+  if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
     // D3D 11 Feature Level 9_3.
     display_ =
         eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY,
                                  kD3D11_9_3DisplayAttributes);
-    if (eglInitialize(display_, NULL, NULL) == EGL_FALSE) {
+    if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
       // Whatever.
       display_ =
           eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
                                    EGL_DEFAULT_DISPLAY, kWrapDisplayAttributes);
-      if (eglInitialize(display_, NULL, NULL) == EGL_FALSE) {
+      if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
         FAIL("eglGetPlatformDisplayEXT");
       }
     }
@@ -193,16 +192,16 @@ bool ANGLESurfaceManager::InitializeD3D9() {
   present_params.BackBufferFormat = D3DFMT_UNKNOWN;
   present_params.BackBufferCount = 1;
   present_params.SwapEffect = D3DSWAPEFFECT_DISCARD;
-  present_params.hDeviceWindow = window_;
+  present_params.hDeviceWindow = 0;
   present_params.Windowed = TRUE;
   present_params.Flags = D3DPRESENTFLAG_VIDEO;
   present_params.FullScreen_RefreshRateInHz = 0;
   present_params.PresentationInterval = 0;
   hr = d3d_9_ex_->CreateDeviceEx(
-      D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL,
+      D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, 0,
       D3DCREATE_FPU_PRESERVE | D3DCREATE_HARDWARE_VERTEXPROCESSING |
           D3DCREATE_DISABLE_PSGP_THREADING | D3DCREATE_MULTITHREADED,
-      &present_params, NULL, &d3d_9_device_ex_);
+      &present_params, 0, &d3d_9_device_ex_);
   CHECK_HRESULT("IDirect3D9Ex::CreateDeviceEx");
   // IMPORTANT: Retrieve |shared_handle_| for interop.
   hr = d3d_9_device_ex_->CreateTexture(
@@ -215,7 +214,7 @@ bool ANGLESurfaceManager::InitializeD3D9() {
   // D3D 9.
   display_ = eglGetPlatformDisplayEXT(
       EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, kD3D9DisplayAttributes);
-  if (eglInitialize(display_, NULL, NULL) == EGL_FALSE) {
+  if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
     FAIL("eglGetPlatformDisplayEXT");
   }
   return true;
@@ -256,7 +255,7 @@ bool ANGLESurfaceManager::CreateAndBindEGLSurface() {
 }
 
 void ANGLESurfaceManager::ShowFailureMessage(wchar_t message[]) {
-  ::MessageBox(window_, message, L"ANGLESurfaceManager",
+  ::MessageBox(0, message, L"ANGLESurfaceManager",
                MB_ICONERROR | MB_OK | MB_DEFBUTTON1);
   // Quit process.
   ::exit(1);
