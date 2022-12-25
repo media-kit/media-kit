@@ -100,8 +100,11 @@ include_directories(
 
 add_library(
   ${PLUGIN_NAME} SHARED
+  "angle_surface_manager.cc"
   "media_kit_core_video_plugin_c_api.cc"
   "media_kit_core_video_plugin.cc"
+  "video_output_manager.cc"
+  "video_output.cc"
   ${PLUGIN_SOURCES}
 )
 
