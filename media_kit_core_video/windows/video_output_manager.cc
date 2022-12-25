@@ -14,8 +14,8 @@ VideoOutputManager::VideoOutputManager(
     : registrar_(registrar), channel_(channel) {}
 
 VideoOutput* VideoOutputManager::Create(int64_t handle,
-                                        std::optional<int32_t> width,
-                                        std::optional<int32_t> height) {
+                                        std::optional<int64_t> width,
+                                        std::optional<int64_t> height) {
   if (video_outputs_.find(handle) == video_outputs_.end()) {
     auto video_output =
         std::make_unique<VideoOutput>(handle, width, height, GetIDXGIAdapter());

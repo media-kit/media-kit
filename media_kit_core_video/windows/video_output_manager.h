@@ -26,8 +26,8 @@ class VideoOutputManager {
   // Creates a new |VideoOutput| and returns reference to it.
   // It's texture ID may be used to render the video.
   VideoOutput* Create(int64_t handle,
-                      std::optional<int32_t> width,
-                      std::optional<int32_t> height);
+                      std::optional<int64_t> width,
+                      std::optional<int64_t> height);
 
   // Destroys the |VideoOutput| with given handle.
   bool Dispose(int64_t handle);

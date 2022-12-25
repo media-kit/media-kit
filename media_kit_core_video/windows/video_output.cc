@@ -11,8 +11,8 @@
 #include <algorithm>
 
 VideoOutput::VideoOutput(int64_t handle,
-                         std::optional<int32_t> width,
-                         std::optional<int32_t> height,
+                         std::optional<int64_t> width,
+                         std::optional<int64_t> height,
                          IDXGIAdapter* adapter)
     : handle_(reinterpret_cast<mpv_handle*>(handle)),
       width_(width_),

@@ -18,8 +18,8 @@
 class VideoOutput {
  public:
   VideoOutput(int64_t handle,
-              std::optional<int32_t> width,
-              std::optional<int32_t> height,
+              std::optional<int64_t> width,
+              std::optional<int64_t> height,
               IDXGIAdapter* adapter);
 
   ~VideoOutput();
@@ -30,8 +30,8 @@ class VideoOutput {
   int64_t GetVideoHeight();
 
   mpv_handle* handle_ = nullptr;
-  std::optional<int32_t> height_ = std::nullopt;
-  std::optional<int32_t> width_ = std::nullopt;
+  std::optional<int64_t> height_ = std::nullopt;
+  std::optional<int64_t> width_ = std::nullopt;
   IDXGIAdapter* adapter_ = nullptr;
   ANGLESurfaceManager* surface_manager_ = nullptr;
 };
