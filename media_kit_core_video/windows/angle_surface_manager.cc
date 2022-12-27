@@ -13,8 +13,9 @@
 #pragma comment(lib, "d3d9.lib")
 #pragma comment(lib, "d3d11.lib")
 
-#define FAIL(message)                                                   \
-  std::cout << "ANGLESurfaceManager Failure: " << message << std::endl; \
+#define FAIL(message)                                                 \
+  std::cout << "media_kit: ANGLESurfaceManager: Failure: " << message \
+            << std::endl;                                             \
   return false
 
 #define CHECK_HRESULT(message) \
@@ -24,13 +25,52 @@
 
 ANGLESurfaceManager::ANGLESurfaceManager(int32_t width,
                                          int32_t height,
-                                         IDXGIAdapter* adapter = nullptr)
+                                         IDXGIAdapter* adapter)
     : width_(width), height_(height), adapter_(adapter) {
+  // Create new Direct3D texture & |surface_|, |display_| & |context_|.
+  Initialize();
+  eglMakeCurrent(display_, surface_, surface_, context_);
+}
+
+ANGLESurfaceManager::~ANGLESurfaceManager() {
+  CleanUp(true);
+}
+
+HANDLE ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
+  if (width == width_ && height == height_) {
+    // Same dimensions.
+    return handle_;
+  }
+  width_ = width;
+  height_ = height;
+  // Create new Direct3D texture & |surface_| preserving previously created
+  // |display_| & |context_| from the constructor.
+  Initialize();
+  return handle_;
+}
+
+void ANGLESurfaceManager::SwapBuffers() {
+  // No need to flush.
+}
+
+void ANGLESurfaceManager::MakeCurrent(bool value) {
+  if (value) {
+    eglMakeCurrent(display_, surface_, surface_, context_);
+  } else {
+    eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+  }
+}
+
+void ANGLESurfaceManager::Initialize() {
+  // Release previously allocated resources. Do not release existing |context_|,
+  // if any.
+  CleanUp(false);
+
   // Presently, I believe it is a good idea to show these failure messages
   // directly to the user. It'll help fix the platform & hardware specific
   // issues.
 
-  // Create D3D device & texture.
+  // Create new D3D device & texture.
   auto success = InitializeD3D11();
   // TODO: ANGLE's Direct X interop doesn't seem to work with anything below
   // DirectX 11 or even WDDM 1.0 + Direct9Ex. Flutter also seems to fallback to
@@ -48,59 +88,10 @@ ANGLESurfaceManager::ANGLESurfaceManager(int32_t width,
     return;
   }
   // Additional check.
-  if (shared_handle_ == nullptr) {
+  if (handle_ == nullptr) {
     ShowFailureMessage(L"Unable to retrieve Direct3D shared HANDLE.");
     return;
   }
-}
-
-ANGLESurfaceManager::~ANGLESurfaceManager() {
-  // Release ANGLE resources.
-  if (display_ != EGL_NO_DISPLAY) {
-    eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    eglReleaseTexImage(display_, surface_, EGL_BACK_BUFFER);
-    eglTerminate(display_);
-  }
-  if (surface_ != EGL_NO_SURFACE) {
-    eglDestroySurface(display_, surface_);
-  }
-  if (context_ != EGL_NO_CONTEXT) {
-    eglDestroyContext(display_, context_);
-  }
-  // Release D3D 11 resources.
-  if (d3d_11_device_context_) {
-    d3d_11_device_context_->Release();
-  }
-  if (d3d_11_device_) {
-    d3d_11_device_->Release();
-  }
-  // Release D3D 9 resources.
-  if (d3d_9_texture_) {
-    d3d_9_texture_->Release();
-  }
-  if (d3d_9_device_ex_) {
-    d3d_9_device_ex_->Release();
-  }
-  if (d3d_9_ex_) {
-    d3d_9_ex_->Release();
-  }
-}
-
-void ANGLESurfaceManager::SwapBuffers() {
-  // |glFlush| is required to ensure that all of the OpenGL ES content is drawn
-  // before accessing the same through Direct3D. Reference:
-  // https://github.com/Microsoft/angle/wiki/Interop-with-other-DirectX-code
-  glFlush();
-  // Remaining calls don't really make any difference.
-
-  // Any of D3D 11 or D3D 9 is enabled.
-  // if (d3d_11_device_context_) {
-  //   d3d_11_device_context_->CopyResource(d3d11_texture_2D_.Get(),
-  //                                        d3d11_texture_2D_.Get());
-  // } else if (d3d_9_device_ex_) {
-  //   d3d_9_device_ex_->PresentEx(0, 0, 0, 0, 0);
-  // }
-  // eglSwapBuffers(display_, surface_);
 }
 
 bool ANGLESurfaceManager::InitializeD3D11() {
@@ -134,8 +125,9 @@ bool ANGLESurfaceManager::InitializeD3D11() {
       static_cast<UINT>(feature_levels.size()), D3D11_SDK_VERSION,
       &d3d_11_device_, 0, &d3d_11_device_context_);
   auto selected_level = d3d_11_device_->GetFeatureLevel();
-  std::cout << "Direct3D Feature Level: " << (((unsigned)selected_level) >> 12)
-            << "_" << ((((unsigned)selected_level) >> 8) & 0xf) << std::endl;
+  std::cout << "media_kit: ANGLESurfaceManager: Direct3D Feature Level: "
+            << (((unsigned)selected_level) >> 12) << "_"
+            << ((((unsigned)selected_level) >> 8) & 0xf) << std::endl;
   CHECK_HRESULT("D3D11CreateDevice");
   auto d3d11_texture2D_desc = D3D11_TEXTURE2D_DESC{0};
   d3d11_texture2D_desc.Width = width_;
@@ -156,8 +148,8 @@ bool ANGLESurfaceManager::InitializeD3D11() {
   auto resource = Microsoft::WRL::ComPtr<IDXGIResource>{};
   hr = d3d11_texture_2D_.As(&resource);
   CHECK_HRESULT("ID3D11Texture2D::As");
-  // IMPORTANT: Retrieve |shared_handle_| for interop.
-  hr = resource->GetSharedHandle(&shared_handle_);
+  // IMPORTANT: Retrieve |handle_| for interop.
+  hr = resource->GetSharedHandle(&handle_);
   CHECK_HRESULT("IDXGIResource::GetSharedHandle");
   auto eglGetPlatformDisplayEXT =
       reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
@@ -203,10 +195,10 @@ bool ANGLESurfaceManager::InitializeD3D9() {
           D3DCREATE_DISABLE_PSGP_THREADING | D3DCREATE_MULTITHREADED,
       &present_params, 0, &d3d_9_device_ex_);
   CHECK_HRESULT("IDirect3D9Ex::CreateDeviceEx");
-  // IMPORTANT: Retrieve |shared_handle_| for interop.
+  // IMPORTANT: Retrieve |handle_| for interop.
   hr = d3d_9_device_ex_->CreateTexture(
       width_, height_, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8,
-      D3DPOOL_DEFAULT, &d3d_9_texture_, &shared_handle_);
+      D3DPOOL_DEFAULT, &d3d_9_texture_, &handle_);
   CHECK_HRESULT("IDirect3DDevice9Ex::CreateTexture");
   auto eglGetPlatformDisplayEXT =
       reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
@@ -218,6 +210,54 @@ bool ANGLESurfaceManager::InitializeD3D9() {
     FAIL("eglGetPlatformDisplayEXT");
   }
   return true;
+}
+
+void ANGLESurfaceManager::CleanUp(bool release_context) {
+  if (release_context) {
+    if (display_ != EGL_NO_DISPLAY) {
+      eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+      eglReleaseTexImage(display_, surface_, EGL_BACK_BUFFER);
+      eglTerminate(display_);
+    }
+    if (surface_ != EGL_NO_SURFACE) {
+      eglDestroySurface(display_, surface_);
+      display_ = EGL_NO_SURFACE;
+    }
+    if (context_ != EGL_NO_CONTEXT) {
+      eglDestroyContext(display_, context_);
+      context_ = EGL_NO_CONTEXT;
+    }
+    display_ = EGL_NO_DISPLAY;
+  } else {
+    // Clear context & destroy existing |surface_|.
+    eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, context_);
+    if (display_ != EGL_NO_DISPLAY && surface_ != EGL_NO_SURFACE) {
+      eglDestroySurface(display_, surface_);
+    }
+    surface_ = EGL_NO_SURFACE;
+  }
+  // Release D3D 11 resources.
+  if (d3d_11_device_context_) {
+    d3d_11_device_context_->Release();
+    d3d_11_device_context_ = nullptr;
+  }
+  if (d3d_11_device_) {
+    d3d_11_device_->Release();
+    d3d_11_device_ = nullptr;
+  }
+  // Release D3D 9 resources.
+  if (d3d_9_texture_) {
+    d3d_9_texture_->Release();
+    d3d_9_texture_ = nullptr;
+  }
+  if (d3d_9_device_ex_) {
+    d3d_9_device_ex_->Release();
+    d3d_9_device_ex_ = nullptr;
+  }
+  if (d3d_9_ex_) {
+    d3d_9_ex_->Release();
+    d3d_9_ex_ = nullptr;
+  }
 }
 
 bool ANGLESurfaceManager::CreateAndBindEGLSurface() {
@@ -238,7 +278,7 @@ bool ANGLESurfaceManager::CreateAndBindEGLSurface() {
       EGL_NONE,
   };
   surface_ = eglCreatePbufferFromClientBuffer(
-      display_, EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE, shared_handle_, config_,
+      display_, EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE, handle_, config_,
       buffer_attributes);
   if (surface_ == EGL_NO_SURFACE) {
     FAIL("eglCreatePbufferFromClientBuffer");

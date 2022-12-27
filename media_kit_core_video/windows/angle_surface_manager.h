@@ -6,6 +6,9 @@
 // Use of this source code is governed by MIT license that can be found in the
 // LICENSE file.
 
+#ifndef MEDIA_KIT_CORE_VIDEO_WINDOWS_ANGLE_SURFACE_MANAGER_H_
+#define MEDIA_KIT_CORE_VIDEO_WINDOWS_ANGLE_SURFACE_MANAGER_H_
+
 // Make declarations in |d3d9.h| visible.
 #define DIRECT3D_VERSION 0x0900
 
@@ -28,10 +31,7 @@ class ANGLESurfaceManager {
  public:
   const int32_t width() const { return width_; }
   const int32_t height() const { return height_; }
-  const HANDLE shared_handle() const { return shared_handle_; }
-  const EGLSurface surface() const { return surface_; }
-  const EGLDisplay display() const { return display_; }
-  const EGLContext context() const { return context_; }
+  const HANDLE handle() const { return handle_; }
 
   // Creates a new instance of |ANGLESurfaceManager|, automatically creates
   // internal D3D 11 & D3D 9 devices based on platform's capability.
@@ -41,19 +41,36 @@ class ANGLESurfaceManager {
 
   ~ANGLESurfaceManager();
 
+  // Resizes the internal |ID3D11Texture2D| & |EGLSurface| and returns updated
+  // |handle_|. This preserves the |context_| & |display_| associated
+  // with this |ANGLESurfaceManager| instance.
+  HANDLE HandleResize(int32_t width, int32_t height);
+
   void SwapBuffers();
 
+  void MakeCurrent(bool value);
+
  private:
+  // Creates new Direct3D device & texture, EGL |display_|, |context_| &
+  // |surface_| using |width_| & |height_|.
+  // If a |display_| & |context_| already exists, then it is preserved. Only new
+  // Direct3D device & texture & |surface_| will be created if |height_| &
+  // |width_| were changed e.g. by |HandleResize|.
+  void Initialize();
+
   // Attempts to create D3D 11 (and compatibility supported) device & texture.
   // Returns success as bool.
   bool InitializeD3D11();
 
   // Attempts to create D3D 9 (and compatibility supported) device & texture.
   // Returns success as bool.
+  // NOTE: Not working.
   bool InitializeD3D9();
 
+  void CleanUp(bool release_context);
+
   // Creates ANGLE specific |surface_| and |context_| after consuming D3D
-  // |shared_handle_| from either |InitializeD3D11| or |InitializeD3D9|.
+  // |handle_| from either |InitializeD3D11| or |InitializeD3D9|.
   bool CreateAndBindEGLSurface();
 
   void ShowFailureMessage(wchar_t message[]);
@@ -71,7 +88,7 @@ class ANGLESurfaceManager {
   IDirect3DDevice9Ex* d3d_9_device_ex_ = nullptr;
   IDirect3DTexture9* d3d_9_texture_ = nullptr;
   // ANGLE specific references.
-  HANDLE shared_handle_ = nullptr;
+  HANDLE handle_ = nullptr;
   EGLSurface surface_ = EGL_NO_SURFACE;
   EGLDisplay display_ = EGL_NO_DISPLAY;
   EGLContext context_ = nullptr;
@@ -120,3 +137,5 @@ class ANGLESurfaceManager {
       EGL_NONE,
   };
 };
+
+#endif  // MEDIA_KIT_CORE_VIDEO_WINDOWS_ANGLE_SURFACE_MANAGER_H_
