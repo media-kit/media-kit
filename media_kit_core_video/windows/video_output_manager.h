@@ -18,6 +18,10 @@
 
 #include "video_output.h"
 
+// Fuck that syntax.
+#define VALUE(x) flutter::EncodableValue(x)
+#define IS_METHOD(x) method_call.method_name().compare(x) == 0
+
 class VideoOutputManager {
  public:
   VideoOutputManager(flutter::PluginRegistrarWindows* registrar,

@@ -9,13 +9,6 @@
 
 #include <Windows.h>
 
-#include <flutter/method_channel.h>
-#include <flutter/plugin_registrar_windows.h>
-#include <flutter/standard_method_codec.h>
-
-#define VALUE(x) flutter::EncodableValue(x)
-#define IS_METHOD(x) method_call.method_name().compare(x) == 0
-
 namespace media_kit_core_video {
 
 void MediaKitCoreVideoPlugin::RegisterWithRegistrar(
@@ -52,9 +45,8 @@ void MediaKitCoreVideoPlugin::HandleMethodCall(
     if (auto h = std::get_if<int64_t>(&arguments[VALUE("height")])) {
       height = *h;
     }
-    auto video_output = video_output_manager_->Create(handle, width, height);
-    auto texture_id = -1;
-    result->Success(VALUE(texture_id));
+    video_output_manager_->Create(handle, width, height);
+    result->Success(VALUE(std::monostate{}));
   } else if (IS_METHOD("VideoOutputManager.Dispose")) {
     auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
     auto handle = std::get<int64_t>(arguments[VALUE("handle")]);
