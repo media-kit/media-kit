@@ -178,6 +178,15 @@ void VideoOutput::Resize(int64_t width, int64_t height) {
         std::make_unique<flutter::TextureVariant>(flutter::GpuSurfaceTexture(
             kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle,
             [&](auto, auto) { return texture_.get(); }));
+    // Register new texture.
+    if (texture_variant_ != nullptr) {
+      texture_id_ = texture_registrar_->RegisterTexture(texture_variant_.get());
+      std::cout << "media_kit: VideoOutput: Texture ID: " << texture_id_
+                << std::endl;
+      // Notify public texture update callback.
+      texture_update_callback_(texture_id_, surface_manager_->width(),
+                               surface_manager_->height());
+    }
   }
   // S/W
   if (pixel_buffer_ != nullptr) {
@@ -190,15 +199,15 @@ void VideoOutput::Resize(int64_t width, int64_t height) {
     texture_variant_ =
         std::make_unique<flutter::TextureVariant>(flutter::PixelBufferTexture(
             [&](auto, auto) { return pixel_buffer_texture_.get(); }));
-  }
-  // Register new texture.
-  if (texture_variant_ != nullptr) {
-    texture_id_ = texture_registrar_->RegisterTexture(texture_variant_.get());
-    std::cout << "media_kit: VideoOutput: Texture ID: " << texture_id_
-              << std::endl;
-    // Notify public texture update callback.
-    texture_update_callback_(texture_id_, pixel_buffer_texture_->width,
-                             pixel_buffer_texture_->height);
+    // Register new texture.
+    if (texture_variant_ != nullptr) {
+      texture_id_ = texture_registrar_->RegisterTexture(texture_variant_.get());
+      std::cout << "media_kit: VideoOutput: Texture ID: " << texture_id_
+                << std::endl;
+      // Notify public texture update callback.
+      texture_update_callback_(texture_id_, pixel_buffer_texture_->width,
+                               pixel_buffer_texture_->height);
+    }
   }
 }
 
