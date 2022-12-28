@@ -12,13 +12,18 @@ import 'package:uri_parser/uri_parser.dart';
 HashMap<String, Media> medias = HashMap<String, Media>();
 HashMap<String, double> bitrates = HashMap<String, double>();
 
-/// ## Media
+/// {@template media}
+///
+/// Media
+/// -----
+///
 /// A [Media] object to open inside a [Player] instance using [Player.open] method for playback.
 ///
 /// ```dart
 /// final playable = Media('https://www.example.com/music.mp3');
 /// ```
 ///
+/// {@endtemplate}
 class Media {
   /// URI of the [Media].
   final String uri;
@@ -26,52 +31,50 @@ class Media {
   /// Additional optional user data.
   final dynamic extras;
 
-  /// ## Media
-  /// A [Media] object to open inside a [Player] instance using [Player.open] method for playback.
-  ///
-  /// ```dart
-  /// final playable = Media('https://www.example.com/music.mp3');
-  /// ```
-  ///
+  /// {@macro media}
   Media(
-    this.uri, {
+    String resource, {
     this.extras,
-  }) {
+  }) : uri = getCleanedURI(resource) {
     medias[uri] = this;
-    // Cleaned up [Media] [uri] to match the format returned by libmpv internally.
-    medias[getCleanedURI(uri)] = this;
   }
 
+  /// Returns normalized & cleaned-up [uri].
   static String getCleanedURI(String uri) {
     // Match the URI style with internal libmpv URI style.
-
     // Handle asset:// scheme.
     if (uri.startsWith(_kAssetScheme)) {
       if (Platform.isWindows || Platform.isLinux) {
-        return path.join(
-          path.dirname(Platform.resolvedExecutable),
-          'data',
-          'flutter_assets',
-          uri.split(_kAssetScheme).last,
-        );
+        return Uri.file(
+          path.join(
+            path.dirname(Platform.resolvedExecutable),
+            'data',
+            'flutter_assets',
+            path.normalize(uri.split(_kAssetScheme).last),
+          ),
+        ).toString();
       } else if (Platform.isMacOS) {
-        return path.join(
-          path.dirname(Platform.resolvedExecutable),
-          '..',
-          'Frameworks',
-          'App.framework',
-          'Resources',
-          'flutter_assets',
-          uri.split(_kAssetScheme).last,
-        );
+        return Uri.file(
+          path.join(
+            path.dirname(Platform.resolvedExecutable),
+            '..',
+            'Frameworks',
+            'App.framework',
+            'Resources',
+            'flutter_assets',
+            path.normalize(uri.split(_kAssetScheme).last),
+          ),
+        ).toString();
       } else if (Platform.isIOS) {
-        return path.join(
-          path.dirname(Platform.resolvedExecutable),
-          'Frameworks',
-          'App.framework',
-          'flutter_assets',
-          uri.split(_kAssetScheme).last,
-        );
+        return Uri.file(
+          path.join(
+            path.dirname(Platform.resolvedExecutable),
+            'Frameworks',
+            'App.framework',
+            'flutter_assets',
+            path.normalize(uri.split(_kAssetScheme).last),
+          ),
+        ).toString();
       }
       throw UnimplementedError(
         '$_kAssetScheme is not supported on ${Platform.operatingSystem}',
@@ -93,19 +96,23 @@ class Media {
     }
   }
 
+  /// For comparing with other [Media] instances.
   @override
   bool operator ==(Object other) {
     if (other is Media) {
-      return other.uri == uri || getCleanedURI(other.uri) == getCleanedURI(uri);
+      return other.uri == uri;
     }
     return false;
   }
 
+  /// For comparing with other [Media] instances.
   @override
   int get hashCode => uri.hashCode;
 
+  /// Prettier [print] logging.
   @override
   String toString() => 'Media($uri, extras: $extras)';
 
+  /// URI scheme used to identify Flutter assets.
   static const _kAssetScheme = 'asset://';
 }
