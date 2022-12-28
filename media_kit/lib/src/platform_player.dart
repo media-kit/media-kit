@@ -32,11 +32,10 @@ class PlayerConfiguration {
   final bool texture;
 
   /// Enables on-screen libmpv controls.
-  /// For this to work, [vo] must be non-`null` & [texture] must be `null`.
   ///
   /// Default: `false`.
   /// Platforms: Windows, Linux.
-  final bool osc;
+  final int osd;
 
   /// For enabling video rendering.
   /// If you intend to play only audio, set this to a `'null'` [String] to improve performance.
@@ -67,7 +66,7 @@ class PlayerConfiguration {
   /// {@macro player_configuration}
   const PlayerConfiguration({
     this.texture = true,
-    this.osc = false,
+    this.osd = 0,
     this.vo,
     this.libmpv,
     this.title,
