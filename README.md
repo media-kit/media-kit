@@ -95,7 +95,7 @@ _Improvements to the documentation are welcomed. This is very-hard for me alone.
 
 ## Goals
 
-The primary goal of [package:media_kit](https://github.com/alexmercerind/media_kit) is to become a **strong, stable, feature-proof & modular** media playback library for Flutter. The idea is to support both **audio & video playback**. Besides media playback, a tag-reader is also implemented.
+The primary goal of [package:media_kit](https://github.com/alexmercerind/media_kit) is to become a **strong, stable, feature-proof & modular** media playback library for Flutter. The idea is to support both **audio & video playback**.
 
 [package:media_kit](https://github.com/alexmercerind/media_kit) makes rendering [**hardware accelerated video playback**](https://github.com/alexmercerind/dart_vlc/issues/345) possible in Flutter.
 
@@ -288,68 +288,6 @@ classDiagram
     +«set» pitch: double
     +«set» shuffle: bool
     +«get» handle: Future<int>
-    +dispose()
-  }
-
-  Tagger *-- PlatformTagger
-  PlatformTagger <|-- libmpv_Tagger
-  PlatformTagger <|-- xyz_Tagger
-  PlatformTagger o-- TaggerConfiguration
-
-  libmpv_Tagger <.. NativeLibrary
-
-  class TaggerMetadata {
-    +Uri uri
-    +String trackName
-    +String albumName
-    +int trackNumber
-    +int discNumber
-    +int albumLength
-    +String albumArtistName
-    +List<String> trackArtistNames
-    +String authorName
-    +String writerName
-    +String year
-    +String genre
-    +String lyrics
-    +DateTime timeAdded
-    +Duration duration
-    +int bitrate
-    +dynamic data
-  }
-
-  class Tagger {
-    +parse(media) Future<TaggerMetadata>
-    +dispose()
-  }
-
-  class TaggerConfiguration {
-    +bool verbose
-    +String libmpv
-    ... other platform-specific configurable values
-  }
-
-  class PlatformTagger {
-    +TaggerConfiguration configuration
-
-    +parse(media)* Future<TaggerMetadata>
-    #serialize(data)* TaggerMetadata
-    +dispose()*
-
-    #splitArtistTag(tag) List<String>
-    #splitDateTag(tag) String
-    #parseInteger(value) int
-  }
-
-  class libmpv_Tagger {
-    +parse(media) Future<TaggerMetadata>
-    #serialize(data) TaggerMetadata
-    +dispose()
-  }
-
-  class xyz_Tagger {
-    +parse(media) Future<TaggerMetadata>
-    #serialize(data) TaggerMetadata
     +dispose()
   }
 ```

@@ -89,13 +89,13 @@ player.streams.audioBitrate.listen((event) {
 
 ### Detailed Guide
 
-TODO:
+_TODO:_
 
-Improvements to the documentation are welcomed. This is very-hard for me alone. 💖
+_Improvements to the documentation are welcomed. This is very-hard for me alone. 💖_
 
 ## Goals
 
-The primary goal of [package:media_kit](https://github.com/alexmercerind/media_kit) is to become a **strong, stable, feature-proof & modular** media playback library for Flutter. The idea is to support both **audio & video playback**. Besides media playback, a tag-reader is also implemented.
+The primary goal of [package:media_kit](https://github.com/alexmercerind/media_kit) is to become a **strong, stable, feature-proof & modular** media playback library for Flutter. The idea is to support both **audio & video playback**.
 
 [package:media_kit](https://github.com/alexmercerind/media_kit) makes rendering [**hardware accelerated video playback**](https://github.com/alexmercerind/dart_vlc/issues/345) possible in Flutter.
 
