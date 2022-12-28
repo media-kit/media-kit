@@ -53,11 +53,17 @@ class VideoOutput {
   std::optional<int64_t> height_ = std::nullopt;
   std::optional<int64_t> width_ = std::nullopt;
   IDXGIAdapter* adapter_ = nullptr;
-  flutter::TextureRegistrar* texture_registrar_ = nullptr;
-  std::unique_ptr<ANGLESurfaceManager> surface_manager_ = nullptr;
   int64_t texture_id_ = 0;
-  std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor> texture_ = nullptr;
+  flutter::TextureRegistrar* texture_registrar_ = nullptr;
   std::unique_ptr<flutter::TextureVariant> texture_variant_ = nullptr;
+
+  // H/W
+  std::unique_ptr<ANGLESurfaceManager> surface_manager_ = nullptr;
+  std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor> texture_ = nullptr;
+  // S/W
+  std::unique_ptr<uint8_t[]> pixel_buffer_ = nullptr;
+  std::unique_ptr<FlutterDesktopPixelBuffer> pixel_buffer_texture_ = nullptr;
+
   std::mutex mutex_ = std::mutex();
   std::function<void(int64_t, int64_t, int64_t)> texture_update_callback_ =
       [](int64_t, int64_t, int64_t) {};
