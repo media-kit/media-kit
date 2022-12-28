@@ -17,6 +17,8 @@ dependencies:
   media_kit_core_video:
     path: ../media_kit_core_video
 
+  file_picker: ^5.2.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

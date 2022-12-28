@@ -3,8 +3,15 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
+import 'dart:collection';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
+
+/// Currently created [VideoController]s.
+/// This is used to notify about updated texture IDs through [_channel].
+HashMap<int, VideoController> _controllers = HashMap<int, VideoController>();
 
 /// {@template video_controller}
 ///
@@ -18,7 +25,7 @@ import 'package:flutter/services.dart';
 ///
 /// ```dart
 /// final player = Player();
-/// final controller = VideoController(player.handle);
+/// final controller = await VideoController.create(player.handle);
 /// ```
 ///
 /// It is important to [dispose] the [VideoController] when it is no longer needed.
@@ -36,7 +43,7 @@ import 'package:flutter/services.dart';
 /// {@endtemplate}
 class VideoController {
   /// Handle of the [Player] from `package:media_kit`.
-  final Future<int> handle;
+  final int handle;
 
   /// Fixed width of the video output.
   final int? width;
@@ -44,46 +51,87 @@ class VideoController {
   /// Fixed height of the video output.
   final int? height;
 
-  /// Texture ID of the video output, registered with the Flutter engine by native implementation.
-  final Completer<int> id = Completer<int>();
+  /// Texture ID of the video output, registered with Flutter engine by the native implementation.
+  final ValueNotifier<int?> id = ValueNotifier<int?>(null);
+
+  /// [Rect] of the video output, received from the native implementation.
+  final ValueNotifier<Rect?> rect = ValueNotifier<Rect?>(null);
 
   /// {@macro video_controller}
-  VideoController(
-    this.handle, {
+  VideoController._(
+    this.handle,
     this.width,
     this.height,
-  }) {
-    handle.then((handle) {
-      // Invoking native implementation for querying video adapter, registering OpenGL/Direct3D/ANGLE/pixel-buffer output callbacks & Flutter texture.
-      _channel.invokeMethod(
-        'VideoOutputManager.Create',
-        {
-          'handle': handle,
-          'width': width,
-          'height': height,
-        },
-      ).then(
-        (value) {
-          if (!id.isCompleted) {
-            id.complete(value);
-          }
-        },
-      );
-    });
+  ) {
+    // Save in [HashMap] for getting notified about updated texture IDs.
+    _controllers[handle] = this;
+  }
+
+  /// {@macro video_controller}
+  static Future<VideoController> create(
+    Future<int> handle, {
+    int? width,
+    int? height,
+  }) async {
+    final controller = VideoController._(
+      await handle,
+      width,
+      height,
+    );
+    // Invoking native implementation for querying video adapter, registering OpenGL/Direct3D/ANGLE/pixel-buffer output callbacks & Flutter texture.
+    await _channel.invokeMethod(
+      'VideoOutputManager.Create',
+      {
+        'handle': controller.handle,
+        'width': controller.width,
+        'height': controller.height,
+      },
+    );
+    return controller;
   }
 
   /// Disposes the [VideoController].
   /// Releases the allocated resources back to the system.
-  Future<void> dispose() async {
-    final ctx = await handle;
-    await _channel.invokeMethod(
+  Future<void> dispose() {
+    _controllers.remove(handle);
+    return _channel.invokeMethod(
       'VideoOutputManager.Dispose',
       {
-        'handle': ctx,
+        'handle': handle,
       },
     );
+  }
+
+  @override
+  String toString() {
+    return 'VideoController(handle: $handle, width: $width, height: $height, id: ${id.value}, rect: $rect)';
   }
 }
 
 /// [MethodChannel] for invoking platform specific native implementation.
-const _channel = MethodChannel('com.alexmercerind/media_kit_core_video');
+final _channel = const MethodChannel('com.alexmercerind/media_kit_core_video')
+  ..setMethodCallHandler(
+    (MethodCall call) async {
+      switch (call.method) {
+        case 'VideoOutput.Resize':
+          {
+            // Notify about updated texture ID & [Rect].
+            final int handle = call.arguments['handle'];
+            final int id = call.arguments['id'];
+            final Rect rect = Rect.fromLTRB(
+              call.arguments['rect']['left'] * 1.0,
+              call.arguments['rect']['top'] * 1.0,
+              call.arguments['rect']['right'] * 1.0,
+              call.arguments['rect']['bottom'] * 1.0,
+            );
+            _controllers[handle]?.id.value = id;
+            _controllers[handle]?.rect.value = rect;
+            break;
+          }
+        default:
+          {
+            break;
+          }
+      }
+    },
+  );
