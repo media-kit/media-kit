@@ -99,8 +99,6 @@ void VideoOutput::Render() {
       mpv_render_context_render(render_context_, params);
       surface_manager_->SwapBuffers();
       texture_registrar_->MarkTextureFrameAvailable(texture_id_);
-      // Release context.
-      surface_manager_->MakeCurrent(false);
     }
   }).detach();
 }

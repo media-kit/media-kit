@@ -29,7 +29,7 @@ ANGLESurfaceManager::ANGLESurfaceManager(int32_t width,
     : width_(width), height_(height), adapter_(adapter) {
   // Create new Direct3D texture & |surface_|, |display_| & |context_|.
   Initialize();
-  eglMakeCurrent(display_, surface_, surface_, context_);
+  MakeCurrent(true);
 }
 
 ANGLESurfaceManager::~ANGLESurfaceManager() {
@@ -261,16 +261,20 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
 }
 
 bool ANGLESurfaceManager::CreateAndBindEGLSurface() {
-  auto count = 0;
-  auto result = eglChooseConfig(display_, kEGLConfigurationAttributes, &config_,
-                                1, &count);
-  if (result == EGL_FALSE || count == 0) {
-    FAIL("eglChooseConfig");
-  }
-  context_ = eglCreateContext(display_, config_, EGL_NO_CONTEXT,
-                              kEGLContextAttributes);
+  // Do not create |context_| again, likely due to |Resize|.
   if (context_ == EGL_NO_CONTEXT) {
-    FAIL("eglCreateContext");
+    // First time from the constructor itself.
+    auto count = 0;
+    auto result = eglChooseConfig(display_, kEGLConfigurationAttributes,
+                                  &config_, 1, &count);
+    if (result == EGL_FALSE || count == 0) {
+      FAIL("eglChooseConfig");
+    }
+    context_ = eglCreateContext(display_, config_, EGL_NO_CONTEXT,
+                                kEGLContextAttributes);
+    if (context_ == EGL_NO_CONTEXT) {
+      FAIL("eglCreateContext");
+    }
   }
   EGLint buffer_attributes[] = {
       EGL_WIDTH,          width_,         EGL_HEIGHT,         height_,

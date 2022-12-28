@@ -52,10 +52,10 @@ class ANGLESurfaceManager {
 
  private:
   // Creates new Direct3D device & texture, EGL |display_|, |context_| &
-  // |surface_| using |width_| & |height_|.
-  // If a |display_| & |context_| already exists, then it is preserved. Only new
-  // Direct3D device & texture & |surface_| will be created if |height_| &
-  // |width_| were changed e.g. by |HandleResize|.
+  // |surface_| using |width_| & |height_|. If a |display_| & |context_| already
+  // exists, then it is preserved. Only new Direct3D device & texture &
+  // |surface_| will be created if |height_| & |width_| were changed e.g. by
+  // |HandleResize|.
   void Initialize();
 
   // Attempts to create D3D 11 (and compatibility supported) device & texture.
