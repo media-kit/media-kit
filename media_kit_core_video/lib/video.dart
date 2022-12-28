@@ -57,9 +57,26 @@ import 'package:media_kit_core_video/media_kit_core_video.dart';
 ///
 /// {@endtemplate}
 class Video extends StatefulWidget {
+  /// The [VideoController] reference to control this [Video] output & connect with [Player] from `package:media_kit`.
   final VideoController? controller;
+
+  /// Height of this viewport.
   final double? width;
+
+  /// Width of this viewport.
   final double? height;
+
+  /// Alignment of the viewport.
+  final Alignment alignment;
+
+  /// Fit of the viewport.
+  final BoxFit fit;
+
+  /// Background color to fill the video background.
+  final Color fill;
+
+  /// Filter quality of the [Texture] widget displaying the video output.
+  final FilterQuality filterQuality;
 
   /// {@macro video}
   const Video({
@@ -67,6 +84,10 @@ class Video extends StatefulWidget {
     required this.controller,
     this.width,
     this.height,
+    this.alignment = Alignment.center,
+    this.fit = BoxFit.contain,
+    this.fill = const Color(0xFF000000),
+    this.filterQuality = FilterQuality.low,
   }) : super(key: key);
 
   @override
@@ -76,23 +97,39 @@ class Video extends StatefulWidget {
 class _VideoState extends State<Video> {
   @override
   Widget build(BuildContext context) {
-    if (widget.controller != null) {
-      return ValueListenableBuilder<int?>(
-        valueListenable: widget.controller!.id,
-        builder: (context, id, _) {
-          if (id != null) {
-            return Texture(textureId: id);
-          }
-          return SizedBox(
-            width: widget.width,
-            height: widget.height,
-          );
-        },
-      );
-    }
-    return SizedBox(
-      width: widget.width,
-      height: widget.height,
+    return Container(
+      width: widget.width ?? double.infinity,
+      height: widget.height ?? double.infinity,
+      color: widget.fill,
+      child: ClipRect(
+        child: FittedBox(
+          alignment: widget.alignment,
+          fit: widget.fit,
+          child: widget.controller == null
+              ? const SizedBox.shrink()
+              : ValueListenableBuilder<int?>(
+                  valueListenable: widget.controller!.id,
+                  builder: (context, id, _) {
+                    return ValueListenableBuilder<Rect?>(
+                      valueListenable: widget.controller!.rect,
+                      builder: (context, rect, _) {
+                        if (id != null && rect != null) {
+                          return SizedBox(
+                            width: rect.width,
+                            height: rect.height,
+                            child: Texture(
+                              textureId: id,
+                              filterQuality: widget.filterQuality,
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    );
+                  },
+                ),
+        ),
+      ),
     );
   }
 }
