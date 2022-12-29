@@ -43,9 +43,8 @@ endif()
 if(NOT EXISTS "${LIBMPV_SRC}")
   message(STATUS "Extracting ${LIBMPV}...")
   make_directory("${LIBMPV_SRC}")
-  add_custom_target("${PROJECT_NAME}_LIBMPV_EXTRACT" ALL)
-  add_custom_command(
-    TARGET "${PROJECT_NAME}_LIBMPV_EXTRACT" PRE_BUILD
+  add_custom_target(
+    "${PROJECT_NAME}_LIBMPV_EXTRACT" ALL
     COMMAND "${CMAKE_COMMAND}" -E tar xzf "${LIBMPV_ARCHIVE}"
     WORKING_DIRECTORY "${LIBMPV_SRC}"
     DEPENDS "${LIBMPV_ARCHIVE}"
@@ -83,9 +82,8 @@ endif()
 if(NOT EXISTS "${ANGLE_SRC}")
   message(STATUS "Extracting ${ANGLE}...")
   make_directory("${ANGLE_SRC}")
-  add_custom_target("${PROJECT_NAME}_ANGLE_EXTRACT" ALL)
-  add_custom_command(
-    TARGET "${PROJECT_NAME}_ANGLE_EXTRACT" PRE_BUILD
+  add_custom_target(
+    "${PROJECT_NAME}_ANGLE_EXTRACT" ALL
     COMMAND "${CMAKE_COMMAND}" -E tar xzf "${ANGLE_ARCHIVE}"
     WORKING_DIRECTORY "${ANGLE_SRC}"
     DEPENDS "${ANGLE_ARCHIVE}"
