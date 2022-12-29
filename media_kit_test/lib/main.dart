@@ -506,10 +506,10 @@ class _MultiplePlayersMultipleVideosScreenState
           child: Text('Asset Videos:'),
         ),
         const Divider(height: 1.0, thickness: 1.0),
-        for (int i = 0; i < 5; i++)
+        for (int j = 0; j < 5; j++)
           ListTile(
             title: Text(
-              'video_$i.mp4',
+              'video_$j.mp4',
               style: const TextStyle(
                 fontSize: 14.0,
               ),
@@ -521,7 +521,7 @@ class _MultiplePlayersMultipleVideosScreenState
                 Playlist(
                   [
                     Media(
-                      'asset://assets/video_$i.mp4',
+                      'asset://assets/video_$j.mp4',
                     ),
                   ],
                 ),
