@@ -144,17 +144,9 @@ void VideoOutput::Render() {
         {MPV_RENDER_PARAM_INVALID, nullptr},
     };
     mpv_render_context_render(render_context_, params);
-    // Some GPUs/Hardware seem to cause black flickering when rendering with
-    // hardware acceleration. Calling |glFinish| eliminates this. This seems to
-    // be some sort of synchronization problem between Flutter / Monitor / mpv
-    // etc. This method is invoked directly on the Flutter's render thread, so I
-    // don't think there's anything better that can be done.
-    //
-    // Personally, my budget machine with AMD Ryzen 3 2200U with integrated
-    // Radeon Vega 3 Mobile Graphics never experienced this issue.
-    // At most, 4K 30FPS or 1080p 60FPS videos play flawlessly without any major
-    // load on the hardware. 4K 60FPS videos certainly experience frame drops.
+#ifdef ENABLE_GL_FINISH_SAFEGUARD
     glFinish();
+#endif
     surface_manager_->MakeCurrent(false);
   }
   // S/W

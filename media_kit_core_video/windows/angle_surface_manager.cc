@@ -56,9 +56,16 @@ void ANGLESurfaceManager::SwapBuffers() {
 
 void ANGLESurfaceManager::MakeCurrent(bool value) {
   if (value) {
+#ifdef ENABLE_GL_FINISH_SAFEGUARD
+    glFinish();
+#endif
     eglMakeCurrent(display_, surface_, surface_, context_);
   } else {
-    eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+#ifdef ENABLE_GL_FINISH_SAFEGUARD
+    glFinish();
+#endif
+    eglMakeCurrent(EGL_NO_DISPLAY, EGL_NO_SURFACE, EGL_NO_SURFACE,
+                   EGL_NO_CONTEXT);
   }
 }
 
@@ -268,6 +275,9 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
   } else {
     // Clear context & destroy existing |surface_|.
     eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, context_);
+#ifdef ENABLE_GL_FINISH_SAFEGUARD
+    glFinish();
+#endif
     if (display_ != EGL_NO_DISPLAY && surface_ != EGL_NO_SURFACE) {
       eglDestroySurface(display_, surface_);
     }
