@@ -13,6 +13,8 @@ import 'package:flutter/services.dart';
 /// This is used to notify about updated texture IDs through [_channel].
 HashMap<int, VideoController> _controllers = HashMap<int, VideoController>();
 
+// NOTE: As odd it may look or sound, `std::get<int64_t>` results in a direct crash on Windows 7. So, most [int] values have been cast converted [String] & then sent through platform channels.
+
 /// {@template video_controller}
 ///
 /// VideoController
@@ -82,9 +84,9 @@ class VideoController {
     await _channel.invokeMethod(
       'VideoOutputManager.Create',
       {
-        'handle': controller.handle,
-        'width': controller.width,
-        'height': controller.height,
+        'handle': controller.handle.toString(),
+        'width': controller.width.toString(),
+        'height': controller.height.toString(),
       },
     );
     return controller;
@@ -97,7 +99,7 @@ class VideoController {
     return _channel.invokeMethod(
       'VideoOutputManager.Dispose',
       {
-        'handle': handle,
+        'handle': handle.toString(),
       },
     );
   }
@@ -112,6 +114,8 @@ class VideoController {
 final _channel = const MethodChannel('com.alexmercerind/media_kit_core_video')
   ..setMethodCallHandler(
     (MethodCall call) async {
+      debugPrint(call.method.toString());
+      debugPrint(call.arguments.toString());
       switch (call.method) {
         case 'VideoOutput.Resize':
           {

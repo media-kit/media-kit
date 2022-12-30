@@ -37,20 +37,25 @@ void MediaKitCoreVideoPlugin::HandleMethodCall(
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
   if (IS_METHOD("VideoOutputManager.Create")) {
     auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
-    auto handle = std::get<int64_t>(arguments[VALUE("handle")]);
-    std::optional<int64_t> width = std::nullopt, height = std::nullopt;
-    if (auto w = std::get_if<int64_t>(&arguments[VALUE("width")])) {
-      width = *w;
+    auto handle = std::get<std::string>(arguments[VALUE("handle")]);
+    auto width = std::get<std::string>(arguments[VALUE("width")]);
+    auto height = std::get<std::string>(arguments[VALUE("height")]);
+    auto handle_value =
+        static_cast<int64_t>(strtoll(handle.c_str(), nullptr, 10));
+    auto width_value = std::optional<int64_t>{};
+    auto height_value = std::optional<int64_t>{};
+    if (height.compare("null") != 0 && width.compare("null") != 0) {
+      width_value = static_cast<int64_t>(strtoll(width.c_str(), nullptr, 10));
+      height_value = static_cast<int64_t>(strtoll(height.c_str(), nullptr, 10));
     }
-    if (auto h = std::get_if<int64_t>(&arguments[VALUE("height")])) {
-      height = *h;
-    }
-    video_output_manager_->Create(handle, width, height);
+    video_output_manager_->Create(handle_value, width_value, height_value);
     result->Success(VALUE(std::monostate{}));
   } else if (IS_METHOD("VideoOutputManager.Dispose")) {
     auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
-    auto handle = std::get<int64_t>(arguments[VALUE("handle")]);
-    video_output_manager_->Dispose(handle);
+    auto handle = std::get<std::string>(arguments[VALUE("handle")]);
+    auto handle_value =
+        static_cast<int64_t>(strtoll(handle.c_str(), nullptr, 10));
+    video_output_manager_->Dispose(handle_value);
     result->Success(VALUE(std::monostate{}));
   } else {
     result->NotImplemented();
