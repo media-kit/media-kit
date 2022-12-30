@@ -43,6 +43,7 @@ HANDLE ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
   }
   width_ = width;
   height_ = height;
+  glFinish();
   // Create new Direct3D texture & |surface_| preserving previously created
   // |display_| & |context_| from the constructor.
   Initialize();
@@ -56,9 +57,11 @@ void ANGLESurfaceManager::SwapBuffers() {
 
 void ANGLESurfaceManager::MakeCurrent(bool value) {
   if (value) {
+    glFinish();
     eglMakeCurrent(display_, surface_, surface_, context_);
   } else {
-    eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    glFinish();
+    eglMakeCurrent(display_, surface_, surface_, context_);
   }
 }
 
@@ -268,6 +271,7 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
   } else {
     // Clear context & destroy existing |surface_|.
     eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, context_);
+    glFinish();
     if (display_ != EGL_NO_DISPLAY && surface_ != EGL_NO_SURFACE) {
       eglDestroySurface(display_, surface_);
     }
