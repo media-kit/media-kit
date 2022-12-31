@@ -26,7 +26,7 @@ A complete video & audio library for Flutter & Dart.
 
 <hr>
 
-https://user-images.githubusercontent.com/28951144/208764805-ff649766-26cb-43a7-b4bc-319cb541760b.mp4
+https://user-images.githubusercontent.com/28951144/209100988-6f85f563-20e0-4e35-893a-ae099c7e03e4.mp4
 
 ## Installation
 
@@ -35,9 +35,13 @@ Add in your `pubspec.yaml`:
 ```yaml
 dependencies:
   media_kit: ^0.0.1
+  # For audio support.
+  media_kit_core_audio: ^0.0.1
   # For video support.
   media_kit_core_video: ^0.0.1
 ```
+
+**NOTE:** Only one of [`package:media_kit_core_video`](https://pub.dev/packages/media_kit_core_video) or [`package:media_kit_core_audio`](https://pub.dev/packages/media_kit_core_audio) is required.
 
 ## Platforms
 
@@ -120,6 +124,15 @@ player.streams.audioBitrate.listen((event) {
 Performant & H/W accelerated, automatically fallbacks to S/W rendering if system does not support it.
 
 ```dart
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_core_video/media_kit_core_video.dart';
+
+class MyScreen extends StatefulWidget {
+  const MyScreen({Key? key}) : super(key: key);
+  @override
+  State<MyScreen> createState() => _MyScreenState();
+}
+
 class MyScreenState extends State<MyScreen> {
   // Create a [Player] instance from `package:media_kit`.
   final Player player = Player();
@@ -163,12 +176,14 @@ Since, targetting multiple features at once & bundling redundant native librarie
 
 ## Support
 
-If you find [package:media_kit](https://github.com/alexmercerind/media_kit) package(s) useful or want to support future development, please consider supporting me. It's a very tedious process to write code, document, maintain & provide support for free. Since this is first of a kind project, it takes a lot of time to experiment & develop.
+If you find [package:media_kit](https://github.com/alexmercerind/media_kit) package(s) useful, please consider sponsoring me.
+
+Since this is first of a kind project, it takes a lot of time to experiment & develop. It's a very tedious process to write code, document, maintain & provide support for free. Your support can ensure the quality of the package your project depends upon. I will feel rewarded for my hard-work & research.
+
+- **[GitHub Sponsors](https://github.com/sponsors/alexmercerind)**
+- **[PayPal](https://paypal.me/alexmercerind)**
 
 <a href='https://github.com/sponsors/alexmercerind'><img src='https://github.githubassets.com/images/modules/site/sponsors/sponsors-mona.svg' width='240'></a>
-
-- [GitHub Sponsors](https://github.com/sponsors/alexmercerind)
-- [PayPal](https://paypal.me/alexmercerind)
 
 Thanks!
 
@@ -358,17 +373,123 @@ classDiagram
   }
 ```
 
+### package:media_kit_core_audio
+
+N/A
+
 ### package:media_kit_core_video
 
 _Click on the zoom button on top-right or pinch inside._
 
-_TODO: documentation_
+#### Windows
+
+```mermaid
+%%{
+  init: {
+    'themeVariables': {
+      'fontFamily': 'BlinkMacSystemFont, Segoe UI, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji'
+    }
+  }
+}%%
+classDiagram
+
+  MediaKitCoreVideoPlugin "1" *-- "1" VideoOutputManager: Create VideoOutput(s) with VideoOutputManager for handle passed through platform channel
+  VideoOutputManager "1" *-- "*" VideoOutput
+  VideoOutput "1" *-- "1" ANGLESurfaceManager: Only for H/W accelerated rendering. Decided by adapter_ queried from Flutter in VideoOutputManager
+
+  class MediaKitCoreVideoPlugin {
+    -flutter::PluginRegistrarWindows registrar_
+    -std::unique_ptr<MethodChannel> channel_
+    -std::unique_ptr<VideoOutputManager> video_output_manager_
+    -HandleMethodCall(method_call, result);
+  }
+
+  class VideoOutputManager {
+    +Create(handle: int, width: optional<int>, height: optional<int>)
+    +Dispose(handle: int)
+    -GetIDXGIAdapter(): IDXGIAdapter*
+
+    -flutter::PluginRegistrarWindows registrar_
+    -std::unique_ptr<MethodChannel> channel_
+    -std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_
+  }
+
+  class VideoOutput {
+    +«get» texture_id: int64_t
+    -mpv_handle* handle
+    -mpv_render_context* context
+    -std::optional<int64_t> width
+    -std::optional<int64_t> height
+    -IDXGIAdapter* adapter_
+    -int64_t texture_id_
+    -flutter::PluginRegistrarWindows registrar_
+    -std::unique_ptr<flutter::TextureVariant> texture_variant_
+    -std::unique_ptr<ANGLESurfaceManager> surface_manager_ HW
+    -std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor> texture_ HW
+    -std::unique_ptr<uint8_t[]> pixel_buffer_ SW
+    -std::unique_ptr<FlutterDesktopPixelBuffer> pixel_buffer_texture_ SW
+    -std::mutex mutex_
+    -std::function texture_update_callback_
+
+    +SetTextureUpdateCallback(callback: std::function<void(int64_t, int64_t, int64_t)>)
+    -Render()
+    -Resize(width: int64_t, height: int64_t)
+    -GetVideoWidth(): int64_t
+    -GetVideoHeight(): int64_t
+  }
+
+  class ANGLESurfaceManager {
+    +«get» width: int32_t
+    +«get» height: int32_t
+    +«get» handle: HANDLE
+
+    +HandleResize(width: int64_t, height: int64_t)
+    +SwapBuffers()
+    +MakeCurrent(value: bool)
+    -Initialize()
+    -InitializeD3D11()
+    -InitializeD3D9()
+    -CleanUp(release_context: bool)
+    -CreateAndBindEGLSurface()
+    -ShowFailureMessage(message: wchar_t[])
+
+    -IDXGIAdapter* adapter_
+    -int32_t width_
+    -int32_t height_
+    -ID3D11Device* d3d_11_device_
+    -ID3D11DeviceContext* d3d_11_device_context_
+    -Microsoft::WRL::ComPtr<ID3D11Texture2D>
+    -Microsoft::WRL::ComPtr<IDXGISwapChain>
+    -IDirect3D9Ex* d3d_9_ex_
+    -IDirect3DDevice9Ex* d3d_9_device_ex_
+    -IDirect3DTexture9* d3d_9_texture_
+    -HANDLE handle_
+    -EGLSurface surface_
+    -EGLDisplay display_
+    -EGLContext context_
+    -EGLConfig config_
+  }
+```
 
 ## Implementation
 
 ### package:media_kit
 
-_TODO: documentation_
+[package:media_kit](https://github.com/alexmercerind/media_kit) is entirely written in Dart. It uses dart:ffi to invoke native C API of libmpv through it's shared libraries. All the callback management, event-`Stream`s, other methods to control playback of audio/video are implemented in Dart with the help of FFI. Event management i.e. `position`, `duration`, `bitrate`, `audioParams` `Stream`s are important to render changes in the UI.
+
+A [big limitation with FFI in Dart SDK](https://github.com/dart-lang/sdk/issues/37022) has been that it does not support async callbacks from another thread. Learn more about this at: [dart/sdk#37022](https://github.com/dart-lang/sdk/issues/37022). Following situation will explain better:
+
+> If you pass a function pointer from Dart to C code, you can invoke it fine. But, as soon as you invoke it from some other thread on the native side, Dart VM will instantly crash. This feature is important because most events take place on a background thread.
+
+However, I could easily do this within Dart because [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) offers an "event polling"-like way to listen to events. I got awesome idea to spawn a background [`Isolate`](https://api.flutter.dev/flutter/dart-isolate/Isolate-class.html), where I run the event-loop. I get the memory address of each event and forward it outside the [`Isolate`](https://api.flutter.dev/flutter/dart-isolate/Isolate-class.html) with the help of [`ReceivePort`](https://api.dart.dev/stable/2.18.6/dart-isolate/ReceivePort-class.html), where I finally interpret it using more FFI code. I have explained this in detail within [in-code comments of initializer.dart, I had to do a lot more trickery to get this to work](https://github.com/alexmercerind/media_kit/blob/master/media_kit/lib/src/libmpv/core/initializer.dart).
+
+This solved the issue of events & audio playback within 100% Dart using FFI.
+
+However, no such "event-polling" like API is possible for video rendering. It won't be performant to constantly do polling of video frames off a thread & forward frames back to primary thread for rendering. [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) does not have any such API anyway. So, I created new package [`package:media_kit_core_video`](https://github.com/alexmercerind/media_kit) for specifically offering platform-specific video playback implementation which internally handles Flutter's Texture Registry API & libmpv's OpenGL rendering API. This package only consumes the `mpv_handle*` (which can be shared as primitive `int` value easily) of the instance (created with [package:media_kit](https://github.com/alexmercerind/media_kit) through FFI) to setup a new viewport. Detailed implementation is discussed below.
+
+### package:media_kit_core_audio
+
+[libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) from [mpv Media Player](https://mpv.io/) is used for leveraging audio playback. A minimal variant with stripped down features & only audio support is bundled for usage through dart:ffi.
 
 ### package:media_kit_core_video
 
