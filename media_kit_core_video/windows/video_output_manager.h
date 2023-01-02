@@ -39,9 +39,6 @@ class VideoOutputManager {
   ~VideoOutputManager();
 
  private:
-  // Current display adapter used by Flutter. Accessed from |registrar_|.
-  IDXGIAdapter* GetIDXGIAdapter();
-
   flutter::PluginRegistrarWindows* registrar_ = nullptr;
   flutter::MethodChannel<flutter::EncodableValue>* channel_ = nullptr;
   std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_ = {};

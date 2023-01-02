@@ -17,9 +17,8 @@ VideoOutput* VideoOutputManager::Create(int64_t handle,
                                         std::optional<int64_t> width,
                                         std::optional<int64_t> height) {
   if (video_outputs_.find(handle) == video_outputs_.end()) {
-    auto video_output =
-        std::make_unique<VideoOutput>(handle, width, height, GetIDXGIAdapter(),
-                                      registrar_->texture_registrar());
+    auto video_output = std::make_unique<VideoOutput>(
+        handle, width, height, registrar_->texture_registrar());
     video_output->SetTextureUpdateCallback(
         [=](int64_t id, int64_t width, int64_t height) -> void {
           channel_->InvokeMethod(
@@ -75,8 +74,4 @@ VideoOutputManager::~VideoOutputManager() {
   // Destroy all video outputs.
   // |VideoOutput| destructor will do the relevant cleanup.
   video_outputs_.clear();
-}
-
-IDXGIAdapter* VideoOutputManager::GetIDXGIAdapter() {
-  return registrar_->GetView()->GetGraphicsAdapter();
 }

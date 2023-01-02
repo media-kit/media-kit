@@ -22,18 +22,19 @@
 VideoOutput::VideoOutput(int64_t handle,
                          std::optional<int64_t> width,
                          std::optional<int64_t> height,
-                         IDXGIAdapter* adapter,
                          flutter::TextureRegistrar* texture_registrar)
     : handle_(reinterpret_cast<mpv_handle*>(handle)),
       width_(width),
       height_(height),
-      adapter_(adapter),
       texture_registrar_(texture_registrar) {
-  if (adapter_ != nullptr) {
-    std::cout << "media_kit: VideoOutput: Using H/W rendering." << std::endl;
+  // First try to initialize video playback with hardware acceleration &
+  // |ANGLESurfaceManager|, use S/W API as fallback.
+  auto is_hardware_acceleration_enabled = false;
+  // Attempt to use H/W rendering.
+  try {
     // OpenGL context needs to be set before
     // |mpv_render_context_create|.
-    surface_manager_ = std::make_unique<ANGLESurfaceManager>(1, 1, adapter_);
+    surface_manager_ = std::make_unique<ANGLESurfaceManager>(1, 1);
     mpv_opengl_init_params gl_init_params{
         [](auto, auto name) {
           return reinterpret_cast<void*>(eglGetProcAddress(name));
@@ -55,8 +56,16 @@ VideoOutput::VideoOutput(int64_t handle,
             reinterpret_cast<VideoOutput*>(ctx)->Render();
           },
           reinterpret_cast<void*>(this));
+      // Set flag to true, indicating that H/W rendering is supported.
+      is_hardware_acceleration_enabled = true;
+      std::cout << "media_kit: VideoOutput: Using H/W rendering." << std::endl;
     }
-  } else {
+  } catch (...) {
+    // Do nothing.
+    // Likely received an |std::runtime_error| from |ANGLESurfaceManager|, which
+    // indicates that H/W rendering is not supported.
+  }
+  if (!is_hardware_acceleration_enabled) {
     std::cout << "media_kit: VideoOutput: Using S/W rendering." << std::endl;
     // Allocate a "large enough" buffer ahead of time.
     pixel_buffer_ = std::make_unique<uint8_t[]>(SW_RENDERING_PIXEL_BUFFER_SIZE);

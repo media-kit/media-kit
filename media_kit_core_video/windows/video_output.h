@@ -31,7 +31,6 @@ class VideoOutput {
   VideoOutput(int64_t handle,
               std::optional<int64_t> width,
               std::optional<int64_t> height,
-              IDXGIAdapter* adapter,
               flutter::TextureRegistrar* texture_registrar);
 
   ~VideoOutput();
@@ -52,7 +51,6 @@ class VideoOutput {
   mpv_render_context* render_context_ = nullptr;
   std::optional<int64_t> height_ = std::nullopt;
   std::optional<int64_t> width_ = std::nullopt;
-  IDXGIAdapter* adapter_ = nullptr;
   int64_t texture_id_ = 0;
   flutter::TextureRegistrar* texture_registrar_ = nullptr;
   std::unique_ptr<flutter::TextureVariant> texture_variant_ = nullptr;
