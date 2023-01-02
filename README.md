@@ -395,7 +395,7 @@ classDiagram
 
   MediaKitCoreVideoPlugin "1" *-- "1" VideoOutputManager: Create VideoOutput(s) with VideoOutputManager for handle passed through platform channel
   VideoOutputManager "1" *-- "*" VideoOutput
-  VideoOutput "1" *-- "1" ANGLESurfaceManager: Only for H/W accelerated rendering. Decided by adapter_ queried from Flutter in VideoOutputManager
+  VideoOutput "1" *-- "1" ANGLESurfaceManager: Only for H/W accelerated rendering.
 
   class MediaKitCoreVideoPlugin {
     -flutter::PluginRegistrarWindows registrar_
@@ -407,7 +407,6 @@ classDiagram
   class VideoOutputManager {
     +Create(handle: int, width: optional<int>, height: optional<int>)
     +Dispose(handle: int)
-    -GetIDXGIAdapter(): IDXGIAdapter*
 
     -flutter::PluginRegistrarWindows registrar_
     -std::unique_ptr<MethodChannel> channel_
@@ -420,7 +419,6 @@ classDiagram
     -mpv_render_context* context
     -std::optional<int64_t> width
     -std::optional<int64_t> height
-    -IDXGIAdapter* adapter_
     -int64_t texture_id_
     -flutter::PluginRegistrarWindows registrar_
     -std::unique_ptr<flutter::TextureVariant> texture_variant_
@@ -523,8 +521,9 @@ On Flutter Linux, [both OpenGL (hardware accelerated) & Pixel Buffer (software) 
 4K video playback on entry-level AMD Ryzen 3 2200U processor with Raden Vega 3 Mobile Graphics.
 
 **NOTES:**
+
 - See process specific CPU & GPU usage (media_kit_test.exe). Overall CPU usage is high due to screen recording.
-- Memory usage is higher because of higher resolution 4K video. General usage will be lower. 
+- Memory usage is higher because of higher resolution 4K video. General usage will be lower.
 
 https://user-images.githubusercontent.com/28951144/208765832-416313c9-97d4-44d0-a902-e577f3c4f3f6.mp4
 
