@@ -81,7 +81,7 @@ class VideoController {
       height,
     );
     // Invoking native implementation for querying video adapter, registering OpenGL/Direct3D/ANGLE/pixel-buffer output callbacks & Flutter texture.
-    await _channel.invokeMethod(
+    final result = await _channel.invokeMethod(
       'VideoOutputManager.Create',
       {
         'handle': controller.handle.toString(),
@@ -89,6 +89,15 @@ class VideoController {
         'height': controller.height.toString(),
       },
     );
+    // Notify about updated texture ID & [Rect].
+    controller.id.value = result['id'];
+    controller.rect.value = Rect.fromLTRB(
+      result['rect']['left'] * 1.0,
+      result['rect']['top'] * 1.0,
+      result['rect']['right'] * 1.0,
+      result['rect']['bottom'] * 1.0,
+    );
+    // Return the [VideoController].
     return controller;
   }
 

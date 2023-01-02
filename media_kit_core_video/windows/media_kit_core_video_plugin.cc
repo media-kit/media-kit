@@ -48,8 +48,36 @@ void MediaKitCoreVideoPlugin::HandleMethodCall(
       width_value = static_cast<int64_t>(strtoll(width.c_str(), nullptr, 10));
       height_value = static_cast<int64_t>(strtoll(height.c_str(), nullptr, 10));
     }
-    video_output_manager_->Create(handle_value, width_value, height_value);
-    result->Success(VALUE(std::monostate{}));
+    auto video_output =
+        video_output_manager_->Create(handle_value, width_value, height_value);
+    result->Success(VALUE(flutter::EncodableMap({
+        {
+            VALUE("id"),
+            VALUE(video_output->texture_id()),
+        },
+        {
+            VALUE("rect"),
+            VALUE(flutter::EncodableMap({
+                {
+                    VALUE("left"),
+                    VALUE(0),
+                },
+                {
+                    VALUE("top"),
+                    VALUE(0),
+                },
+                {
+                    VALUE("right"),
+                    VALUE(video_output->width()),
+                },
+                {
+                    VALUE("bottom"),
+                    VALUE(video_output->height()),
+                },
+            })),
+        },
+
+    })));
   } else if (IS_METHOD("VideoOutputManager.Dispose")) {
     auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
     auto handle = std::get<std::string>(arguments[VALUE("handle")]);

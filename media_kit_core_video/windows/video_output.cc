@@ -34,7 +34,10 @@ VideoOutput::VideoOutput(int64_t handle,
   try {
     // OpenGL context needs to be set before
     // |mpv_render_context_create|.
-    surface_manager_ = std::make_unique<ANGLESurfaceManager>(1, 1);
+    surface_manager_ = std::make_unique<ANGLESurfaceManager>(
+        static_cast<int32_t>(width_.value_or(1)),
+        static_cast<int32_t>(height_.value_or(1)));
+    Resize(width_.value_or(1), height_.value_or(1));
     mpv_opengl_init_params gl_init_params{
         [](auto, auto name) {
           return reinterpret_cast<void*>(eglGetProcAddress(name));

@@ -27,6 +27,28 @@
 class VideoOutput {
  public:
   int64_t texture_id() const { return texture_id_; }
+  int64_t width() const {
+    // H/W
+    if (surface_manager_ != nullptr) {
+      return surface_manager_->width();
+    }
+    // S/W
+    if (pixel_buffer_ != nullptr) {
+      return pixel_buffer_texture_->width;
+    }
+    return width_.value_or(1);
+  }
+  int64_t height() const {
+    // H/W
+    if (surface_manager_ != nullptr) {
+      return surface_manager_->height();
+    }
+    // S/W
+    if (pixel_buffer_ != nullptr) {
+      return pixel_buffer_texture_->height;
+    }
+    return height_.value_or(1);
+  }
 
   VideoOutput(int64_t handle,
               std::optional<int64_t> width,
