@@ -35,9 +35,7 @@ class ANGLESurfaceManager {
 
   // Creates a new instance of |ANGLESurfaceManager|, automatically creates
   // internal D3D 11 & D3D 9 devices based on platform's capability.
-  ANGLESurfaceManager(int32_t width,
-                      int32_t height,
-                      IDXGIAdapter* adapter = nullptr);
+  ANGLESurfaceManager(int32_t width, int32_t height);
 
   ~ANGLESurfaceManager();
 
@@ -51,6 +49,8 @@ class ANGLESurfaceManager {
   void MakeCurrent(bool value);
 
  private:
+  bool CreateEGLDisplay();
+
   // Creates new Direct3D device & texture, EGL |display_|, |context_| &
   // |surface_| using |width_| & |height_|. If a |display_| & |context_| already
   // exists, then it is preserved. Only new Direct3D device & texture &
@@ -73,11 +73,9 @@ class ANGLESurfaceManager {
   // |handle_| from either |InitializeD3D11| or |InitializeD3D9|.
   bool CreateAndBindEGLSurface();
 
-  void ShowFailureMessage(wchar_t message[]);
-
   IDXGIAdapter* adapter_ = nullptr;
-  int32_t width_;
-  int32_t height_;
+  int32_t width_ = 1;
+  int32_t height_ = 1;
   // D3D 11 specific references.
   ID3D11Device* d3d_11_device_ = nullptr;
   ID3D11DeviceContext* d3d_11_device_context_ = nullptr;
