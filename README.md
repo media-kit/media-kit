@@ -528,7 +528,7 @@ On Flutter Linux, [both OpenGL (hardware accelerated) & Pixel Buffer (software) 
 
 ## Outcomes
 
-4K video playback on entry-level AMD Ryzen 3 2200U processor with Raden Vega 3 Mobile Graphics.
+4K video playback on entry-level AMD Ryzen 3 2200U processor with Radeon Vega 3 Mobile Graphics.
 
 **NOTES:**
 
