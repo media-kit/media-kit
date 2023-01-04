@@ -44,6 +44,15 @@ class _MyScreenState extends State<MyScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    Future.microtask(() async {
+      await controller?.dispose();
+      await player.dispose();
+    });
+    super.dispose();
+  }
+
   List<Widget> get assets => [
         for (int i = 0; i < 5; i++)
           ListTile(
