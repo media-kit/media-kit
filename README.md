@@ -444,6 +444,7 @@ classDiagram
     -Resize(width: int64_t, height: int64_t)
     -GetVideoWidth(): int64_t
     -GetVideoHeight(): int64_t
+    -GetCurrentMonitorRefreshRate(): int64_t
   }
 
   class ANGLESurfaceManager {
