@@ -10,6 +10,10 @@
 
 #include <algorithm>
 
+// This is subtracted from the refresh rate of the monitor to get a "refractory
+// period" in order to prevent screen tearing with higher FPS videos.
+#define HW_RENDERING_REFRESH_RATE_SUBTRAHEND 20
+
 // Only used for fallback software rendering, when hardware does not support
 // DirectX 11 i.e. enough to support ANGLE. There is no way I'm allowing
 // rendering anything higher 1080p with CPU on some retarded old computer. The
@@ -22,11 +26,11 @@
 VideoOutput::VideoOutput(int64_t handle,
                          std::optional<int64_t> width,
                          std::optional<int64_t> height,
-                         flutter::TextureRegistrar* texture_registrar)
+                         flutter::PluginRegistrarWindows* registrar)
     : handle_(reinterpret_cast<mpv_handle*>(handle)),
       width_(width),
       height_(height),
-      texture_registrar_(texture_registrar) {
+      registrar_(registrar) {
   // First try to initialize video playback with hardware acceleration &
   // |ANGLESurfaceManager|, use S/W API as fallback.
   auto is_hardware_acceleration_enabled = false;
@@ -49,14 +53,15 @@ VideoOutput::VideoOutput(int64_t handle,
         {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, &gl_init_params},
         {MPV_RENDER_PARAM_INVALID, nullptr},
     };
-    // Request H/W decoding.
-    mpv_set_option_string(handle_, "hwdec", "auto");
+    // Request H/W decoding. Forcing `dxva2-copy` for now.
+    mpv_set_option_string(handle_, "hwdec", "dxva2-copy");
     // Create render context.
     if (mpv_render_context_create(&render_context_, handle_, params) == 0) {
       mpv_render_context_set_update_callback(
           render_context_,
-          [](void* ctx) -> void {
-            reinterpret_cast<VideoOutput*>(ctx)->Render();
+          [](void* ctx) {
+            auto that = reinterpret_cast<VideoOutput*>(ctx);
+            that->Render();
           },
           reinterpret_cast<void*>(this));
       // Set flag to true, indicating that H/W rendering is supported.
@@ -65,8 +70,8 @@ VideoOutput::VideoOutput(int64_t handle,
     }
   } catch (...) {
     // Do nothing.
-    // Likely received an |std::runtime_error| from |ANGLESurfaceManager|, which
-    // indicates that H/W rendering is not supported.
+    // Likely received an |std::runtime_error| from |ANGLESurfaceManager|,
+    // which indicates that H/W rendering is not supported.
   }
   if (!is_hardware_acceleration_enabled) {
     std::cout << "media_kit: VideoOutput: Using S/W rendering." << std::endl;
@@ -95,7 +100,7 @@ VideoOutput::VideoOutput(int64_t handle,
 
 VideoOutput::~VideoOutput() {
   if (texture_id_) {
-    texture_registrar_->UnregisterTexture(texture_id_);
+    registrar_->texture_registrar()->UnregisterTexture(texture_id_);
     texture_id_ = 0;
   }
   if (render_context_) {
@@ -105,14 +110,51 @@ VideoOutput::~VideoOutput() {
 
 void VideoOutput::Render() {
   // libmpv APIs cannot be called directly from the
-  // |mpv_render_context_set_update_callback| callback, otherwise it results in
-  // a deadlock. Spawning a new detached thread to perform the rendering.
+  // |mpv_render_context_set_update_callback| callback, otherwise it
+  // results in a deadlock. Spawning a new detached thread to perform
+  // the rendering.
+  // Another reason for this is that we don't want to block the video
+  // playback even if some frames are dropped due to higher refresh
+  // rate of the video than the monitor etc. etc.
   std::thread([&]() {
+    auto current_frame_time = std::chrono::high_resolution_clock::now();
+
     std::lock_guard<std::mutex> lock(mutex_);
+
     auto width = GetVideoWidth();
     auto height = GetVideoHeight();
     // H/W
     if (surface_manager_ != nullptr && width > 0 && height > 0) {
+      // Videos with higher or "nearly equal" FPS to the monitor refresh rate
+      // cause black flickering (screen tearing?). The general idea is to limit
+      // the render callbacks i.e. |mpv_render_context_set_update_callback| from
+      // libmpv to some value below the monitor's FPS. This is more prominent
+      // with multiple monitor setup where two monitors have different refresh
+      // rates. This is also a documented issue with libmpv.
+
+      // A hacky frame dropping mechanism to avoid flickering & tearing.
+      auto render_period =
+          std::chrono::duration_cast<std::chrono::milliseconds>(
+              current_frame_time - previous_frame_time_);
+      auto refresh_rate = GetCurrentMonitorRefreshRate();
+      if (!(refresh_rate > 0)) {
+        // Use default 60 FPS refresh rate.
+        refresh_rate = 60;
+      }
+      auto monitor_period = std::chrono::milliseconds(1000 / refresh_rate);
+      if (render_period.count() > 0 && monitor_period.count() > 0) {
+        if (render_period < monitor_period) {
+          // Drop the frame & skip rendering.
+          auto skip = 1;
+          mpv_render_param params[]{
+              {MPV_RENDER_PARAM_SKIP_RENDERING, &skip},
+              {MPV_RENDER_PARAM_INVALID, nullptr},
+          };
+          mpv_render_context_render(render_context_, params);
+          return;
+        }
+      }
+
       if (width != surface_manager_->width() ||
           height != surface_manager_->height()) {
         // A new video has been started. A change in output resolution.
@@ -127,7 +169,6 @@ void VideoOutput::Render() {
           surface_manager_->height(),
           0,
       };
-      // No flipping needed.
       mpv_render_param params[]{
           {MPV_RENDER_PARAM_OPENGL_FBO, &fbo},
           {MPV_RENDER_PARAM_INVALID, nullptr},
@@ -154,8 +195,10 @@ void VideoOutput::Render() {
       mpv_render_context_render(render_context_, params);
     }
     if (texture_id_) {
-      texture_registrar_->MarkTextureFrameAvailable(texture_id_);
+      registrar_->texture_registrar()->MarkTextureFrameAvailable(texture_id_);
     }
+
+    previous_frame_time_ = current_frame_time;
   }).detach();
 }
 
@@ -169,7 +212,7 @@ void VideoOutput::Resize(int64_t width, int64_t height) {
             << std::endl;
   // Unregister previously registered texture.
   if (texture_id_) {
-    texture_registrar_->UnregisterTexture(texture_id_);
+    registrar_->texture_registrar()->UnregisterTexture(texture_id_);
     texture_id_ = 0;
   }
   // H/W
@@ -192,7 +235,8 @@ void VideoOutput::Resize(int64_t width, int64_t height) {
             [&](auto, auto) { return texture_.get(); }));
     // Register new texture.
     if (texture_variant_ != nullptr) {
-      texture_id_ = texture_registrar_->RegisterTexture(texture_variant_.get());
+      texture_id_ = registrar_->texture_registrar()->RegisterTexture(
+          texture_variant_.get());
       std::cout << "media_kit: VideoOutput: Texture ID: " << texture_id_
                 << std::endl;
       // Notify public texture update callback.
@@ -213,7 +257,8 @@ void VideoOutput::Resize(int64_t width, int64_t height) {
             [&](auto, auto) { return pixel_buffer_texture_.get(); }));
     // Register new texture.
     if (texture_variant_ != nullptr) {
-      texture_id_ = texture_registrar_->RegisterTexture(texture_variant_.get());
+      texture_id_ = registrar_->texture_registrar()->RegisterTexture(
+          texture_variant_.get());
       std::cout << "media_kit: VideoOutput: Texture ID: " << texture_id_
                 << std::endl;
       // Notify public texture update callback.
@@ -253,4 +298,22 @@ int64_t VideoOutput::GetVideoHeight() {
                       static_cast<int64_t>(SW_RENDERING_MAX_HEIGHT));
   }
   return height;
+}
+
+int64_t VideoOutput::GetCurrentMonitorRefreshRate() {
+  auto window =
+      ::GetAncestor(registrar_->GetView()->GetNativeWindow(), GA_ROOT);
+  auto monitor = ::MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
+  if (monitor_refresh_rates_.find(monitor) != monitor_refresh_rates_.end()) {
+    return monitor_refresh_rates_[monitor];
+  }
+  MONITORINFOEX monitor_info;
+  monitor_info.cbSize = sizeof(MONITORINFOEX);
+  DEVMODE dev_mode;
+  ::GetMonitorInfo(monitor, &monitor_info);
+  ::EnumDisplaySettings(monitor_info.szDevice, ENUM_CURRENT_SETTINGS,
+                        &dev_mode);
+  dev_mode.dmDisplayFrequency -= HW_RENDERING_REFRESH_RATE_SUBTRAHEND;
+  monitor_refresh_rates_.insert({monitor, dev_mode.dmDisplayFrequency});
+  return dev_mode.dmDisplayFrequency;
 }

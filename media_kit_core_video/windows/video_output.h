@@ -15,6 +15,7 @@
 #include <render.h>
 #include <render_gl.h>
 
+#include <chrono>
 #include <memory>
 #include <mutex>
 
@@ -53,7 +54,7 @@ class VideoOutput {
   VideoOutput(int64_t handle,
               std::optional<int64_t> width,
               std::optional<int64_t> height,
-              flutter::TextureRegistrar* texture_registrar);
+              flutter::PluginRegistrarWindows* registrar);
 
   ~VideoOutput();
 
@@ -69,24 +70,39 @@ class VideoOutput {
 
   int64_t GetVideoHeight();
 
+  // Returns the refresh rate of the monitor closest to the window.
+  int64_t GetCurrentMonitorRefreshRate();
+
   mpv_handle* handle_ = nullptr;
   mpv_render_context* render_context_ = nullptr;
   std::optional<int64_t> height_ = std::nullopt;
   std::optional<int64_t> width_ = std::nullopt;
   int64_t texture_id_ = 0;
-  flutter::TextureRegistrar* texture_registrar_ = nullptr;
+  flutter::PluginRegistrarWindows* registrar_ = nullptr;
   std::unique_ptr<flutter::TextureVariant> texture_variant_ = nullptr;
 
-  // H/W
+  // H/W rendering.
+
   std::unique_ptr<ANGLESurfaceManager> surface_manager_ = nullptr;
   std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor> texture_ = nullptr;
-  // S/W
+  std::chrono::steady_clock::time_point previous_frame_time_ =
+      std::chrono::high_resolution_clock::now();
+
+  // S/W rendering.
+
   std::unique_ptr<uint8_t[]> pixel_buffer_ = nullptr;
   std::unique_ptr<FlutterDesktopPixelBuffer> pixel_buffer_texture_ = nullptr;
 
+  // Mutual exclusion & memory corruption prevention.
   std::mutex mutex_ = std::mutex();
+
+  // Public notifier. This is called when a new texture is registered & texture
+  // ID is changed. Only happens when video output resolution changes.
   std::function<void(int64_t, int64_t, int64_t)> texture_update_callback_ =
       [](int64_t, int64_t, int64_t) {};
+
+  // Cached monitor refresh rates.
+  std::unordered_map<HMONITOR, int64_t> monitor_refresh_rates_ = {};
 };
 
 #endif  // FLUTTER_PLUGIN_MEDIA_KIT_CORE_VIDEO_VIDEO_OUTPUT_H_
