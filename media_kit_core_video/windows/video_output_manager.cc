@@ -17,8 +17,8 @@ VideoOutput* VideoOutputManager::Create(int64_t handle,
                                         std::optional<int64_t> width,
                                         std::optional<int64_t> height) {
   if (video_outputs_.find(handle) == video_outputs_.end()) {
-    auto video_output = std::make_unique<VideoOutput>(
-        handle, width, height, registrar_->texture_registrar());
+    auto video_output =
+        std::make_unique<VideoOutput>(handle, width, height, registrar_);
     video_output->SetTextureUpdateCallback(
         [=](int64_t id, int64_t width, int64_t height) -> void {
           channel_->InvokeMethod(
