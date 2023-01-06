@@ -139,10 +139,12 @@ void VideoOutput::Render() {
       auto refresh_rate = GetCurrentMonitorRefreshRate();
       if (!(refresh_rate > 0)) {
         // Use default 60 FPS refresh rate.
-        refresh_rate = 60;
+        refresh_rate = 60 - HW_RENDERING_REFRESH_RATE_SUBTRAHEND;
       }
       auto monitor_period = std::chrono::milliseconds(1000 / refresh_rate);
       if (render_period.count() > 0 && monitor_period.count() > 0) {
+        std::cout << "FPS: " << 1000 / render_period.count() << " "
+                  << refresh_rate << std::endl;
         if (render_period < monitor_period) {
           // Drop the frame & skip rendering.
           auto skip = 1;
@@ -151,6 +153,8 @@ void VideoOutput::Render() {
               {MPV_RENDER_PARAM_INVALID, nullptr},
           };
           mpv_render_context_render(render_context_, params);
+          dropped_frame_count_++;
+          std::cout << "Dropped Frames: " << dropped_frame_count_ << std::endl;
           return;
         }
       }

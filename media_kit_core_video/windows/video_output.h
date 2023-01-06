@@ -81,6 +81,10 @@ class VideoOutput {
   flutter::PluginRegistrarWindows* registrar_ = nullptr;
   std::unique_ptr<flutter::TextureVariant> texture_variant_ = nullptr;
 
+  // WIP:
+
+  uint64_t dropped_frame_count_ = 0;
+
   // H/W rendering.
 
   std::unique_ptr<ANGLESurfaceManager> surface_manager_ = nullptr;
