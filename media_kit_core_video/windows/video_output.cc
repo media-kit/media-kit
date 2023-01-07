@@ -115,13 +115,6 @@ void VideoOutput::NotifyRender() {
 }
 
 void VideoOutput::Render() {
-  // libmpv APIs cannot be called directly from the
-  // |mpv_render_context_set_update_callback| callback, otherwise it
-  // results in a deadlock. Spawning a new detached thread to perform
-  // the rendering.
-  // Another reason for this is that we don't want to block the video
-  // playback even if some frames are dropped due to higher refresh
-  // rate of the video than the monitor etc. etc.
   auto current_frame_time = std::chrono::high_resolution_clock::now();
 
   std::lock_guard<std::mutex> lock(mutex_);
@@ -180,7 +173,7 @@ void VideoOutput::Render() {
     mpv_render_context_render(render_context_, params);
     // surface_manager_->SwapBuffers();                                               // TRY ENABLING THIS.
     // glFlush();                                                                     // TRY ENABLING THIS.
-    // glFinish();                                                                    // TRY ENABLING THIS.
+    glFinish();                                                                       // TRY ENABLING THIS.
     surface_manager_->MakeCurrent(false);
   }
   // S/W
