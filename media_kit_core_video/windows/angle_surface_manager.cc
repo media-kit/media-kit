@@ -51,6 +51,7 @@ HANDLE ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
 
 void ANGLESurfaceManager::SwapBuffers() {
   // No need to flush.
+  eglSwapBuffers(display_, surface_);
 }
 
 void ANGLESurfaceManager::MakeCurrent(bool value) {
@@ -329,7 +330,5 @@ bool ANGLESurfaceManager::CreateAndBindEGLSurface() {
   eglBindTexImage(display_, surface_, EGL_BACK_BUFFER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   return true;
 }
