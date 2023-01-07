@@ -11,4 +11,11 @@ export 'package:media_kit/src/platform_player.dart';
 
 export 'package:media_kit/src/models/media.dart';
 export 'package:media_kit/src/models/playlist.dart';
+export 'package:media_kit/src/models/audio_params.dart';
 export 'package:media_kit/src/models/playlist_mode.dart';
+
+// For invoking platform-specific code.
+
+import 'package:media_kit/src/libmpv/player.dart' as libmpv;
+
+typedef libmpvPlayer = libmpv.Player;
