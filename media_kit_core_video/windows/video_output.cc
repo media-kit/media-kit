@@ -116,9 +116,7 @@ void VideoOutput::NotifyRender() {
 
 void VideoOutput::Render() {
   auto current_frame_time = std::chrono::high_resolution_clock::now();
-
   std::lock_guard<std::mutex> lock(mutex_);
-
   auto width = GetVideoWidth();
   auto height = GetVideoHeight();
   // H/W
@@ -152,7 +150,6 @@ void VideoOutput::Render() {
         return;
       }
     }
-
     if (width != surface_manager_->width() ||
         height != surface_manager_->height()) {
       // A new video has been started. A change in output resolution.
@@ -171,9 +168,7 @@ void VideoOutput::Render() {
         {MPV_RENDER_PARAM_INVALID, nullptr},
     };
     mpv_render_context_render(render_context_, params);
-    // surface_manager_->SwapBuffers();                                               // TRY ENABLING THIS.
-    // glFlush();                                                                     // TRY ENABLING THIS.
-    glFinish();                                                                       // TRY ENABLING THIS.
+    glFinish();
     surface_manager_->MakeCurrent(false);
   }
   // S/W
