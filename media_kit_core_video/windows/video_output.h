@@ -15,7 +15,6 @@
 #include <render.h>
 #include <render_gl.h>
 
-#include <chrono>
 #include <memory>
 #include <mutex>
 
@@ -66,14 +65,13 @@ class VideoOutput {
 
   void Render();
 
-  void Resize(int64_t width, int64_t height);
+  void CheckAndResize();
+
+  void Resize(int64_t required_width, int64_t required_height);
 
   int64_t GetVideoWidth();
 
   int64_t GetVideoHeight();
-
-  // Returns the refresh rate of the monitor closest to the window.
-  int64_t GetCurrentMonitorRefreshRate();
 
   mpv_handle* handle_ = nullptr;
   mpv_render_context* render_context_ = nullptr;
@@ -87,20 +85,18 @@ class VideoOutput {
 
   uint64_t dropped_frame_count_ = 0;
 
+  std::mutex notify_render_mutex_ = std::mutex();
+  std::mutex render_mutex_ = std::mutex();
+
   // H/W rendering.
 
   std::unique_ptr<ANGLESurfaceManager> surface_manager_ = nullptr;
   std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor> texture_ = nullptr;
-  std::chrono::steady_clock::time_point previous_frame_time_ =
-      std::chrono::high_resolution_clock::now();
 
   // S/W rendering.
 
   std::unique_ptr<uint8_t[]> pixel_buffer_ = nullptr;
   std::unique_ptr<FlutterDesktopPixelBuffer> pixel_buffer_texture_ = nullptr;
-
-  // Mutual exclusion & memory corruption prevention.
-  std::mutex mutex_ = std::mutex();
 
   // Public notifier. This is called when a new texture is registered & texture
   // ID is changed. Only happens when video output resolution changes.
