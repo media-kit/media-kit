@@ -10,10 +10,6 @@
 
 #include <algorithm>
 
-// This is subtracted from the refresh rate of the monitor to get a "refractory
-// period" in order to prevent screen tearing with higher FPS videos.
-#define HW_RENDERING_REFRESH_RATE_SUBTRAHEND 10
-
 // Only used for fallback software rendering, when hardware does not support
 // DirectX 11 i.e. enough to support ANGLE. There is no way I'm allowing
 // rendering anything higher 1080p with CPU on some retarded old computer. The
@@ -36,8 +32,7 @@ VideoOutput::VideoOutput(int64_t handle,
   auto is_hardware_acceleration_enabled = false;
   // Attempt to use H/W rendering.
   try {
-    // OpenGL context needs to be set before
-    // |mpv_render_context_create|.
+    // OpenGL context needs to be set before |mpv_render_context_create|.
     surface_manager_ = std::make_unique<ANGLESurfaceManager>(
         static_cast<int32_t>(width_.value_or(1)),
         static_cast<int32_t>(height_.value_or(1)));
@@ -48,7 +43,7 @@ VideoOutput::VideoOutput(int64_t handle,
         },
         nullptr,
     };
-    mpv_render_param params[]{
+    mpv_render_param params[] = {
         {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL},
         {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, &gl_init_params},
         {MPV_RENDER_PARAM_INVALID, nullptr},
@@ -111,50 +106,31 @@ VideoOutput::~VideoOutput() {
 }
 
 void VideoOutput::NotifyRender() {
-  registrar_->texture_registrar()->MarkTextureFrameAvailable(texture_id_);
+  // mpv_* APIs should not be called directly from the libmpv's render context
+  // update callback. However, we need to create new texture if the resolution /
+  // dimensions of the currently playing video change. Thus, checking for video
+  // output dimensions and then, creating / registering new texture &
+  // unregistering previous texture accordingly before rendering on Flutter's
+  // render thread. Creating new texture(s) instead of using a single one with
+  // hardcoded dimensions is good for two reasons:
+  // * This will not cause redundant load for videos with lower resolution /
+  // dimensions than those hard-coded texture dimensions.
+  // * This will not degrade video output quality for videos with higher
+  // resolution / dimensions than those hard-coded texture dimensions.
+  std::thread([&]() {
+    std::lock_guard<std::mutex> lock(notify_render_mutex_);
+    CheckAndResize();
+    // Ask Flutter to invoke the |Render|.
+    if (texture_id_) {
+      registrar_->texture_registrar()->MarkTextureFrameAvailable(texture_id_);
+    }
+  }).detach();
 }
 
 void VideoOutput::Render() {
-  auto current_frame_time = std::chrono::high_resolution_clock::now();
-  std::lock_guard<std::mutex> lock(mutex_);
-  auto width = GetVideoWidth();
-  auto height = GetVideoHeight();
+  std::lock_guard<std::mutex> lock(render_mutex_);
   // H/W
-  if (surface_manager_ != nullptr && width > 0 && height > 0) {
-    // A hacky frame dropping mechanism to avoid flickering & tearing.
-    // Videos with higher or "nearly equal" FPS to the monitor refresh rate
-    // cause black flickering (screen tearing?). The general idea is to limit
-    // the render callbacks i.e. |mpv_render_context_set_update_callback| from
-    // libmpv to some value below the monitor's FPS. This is more prominent
-    // with multiple monitor setup where two monitors have different refresh
-    // rates. This is also a documented issue with libmpv.
-    auto render_period = std::chrono::duration_cast<std::chrono::milliseconds>(
-        current_frame_time - previous_frame_time_);
-    auto refresh_rate = GetCurrentMonitorRefreshRate();
-    if (!(refresh_rate > 0)) {
-      // Use default 60 FPS refresh rate.
-      refresh_rate = 60 - HW_RENDERING_REFRESH_RATE_SUBTRAHEND;
-    }
-    auto monitor_period = std::chrono::milliseconds(1000 / refresh_rate);
-    if (render_period.count() > 0 && monitor_period.count() > 0) {
-      if (render_period < monitor_period) {
-        // Frame dropped.
-        auto skip = 1;
-        mpv_render_param params[]{
-            {MPV_RENDER_PARAM_SKIP_RENDERING, &skip},
-            {MPV_RENDER_PARAM_INVALID, nullptr},
-        };
-        mpv_render_context_render(render_context_, params);
-        dropped_frame_count_++;
-        std::cout << "Dropped Frames: " << dropped_frame_count_ << std::endl;
-        return;
-      }
-    }
-    if (width != surface_manager_->width() ||
-        height != surface_manager_->height()) {
-      // A new video has been started. A change in output resolution.
-      Resize(width, height);
-    }
+  if (surface_manager_ != nullptr) {
     surface_manager_->MakeCurrent(true);
     // Render frame.
     mpv_opengl_fbo fbo{
@@ -168,18 +144,24 @@ void VideoOutput::Render() {
         {MPV_RENDER_PARAM_INVALID, nullptr},
     };
     mpv_render_context_render(render_context_, params);
+    // Some GPUs/Hardware seem to cause black flickering when rendering with
+    // hardware acceleration. Calling |glFinish| eliminates this. This seems to
+    // be some sort of synchronization problem between Flutter / Monitor / mpv
+    // etc. This method is invoked directly on the Flutter's render thread, so I
+    // don't think there's anything better that can be done.
+    //
+    // Personally, my budget machine with AMD Ryzen 3 2200U with integrated
+    // Radeon Vega 3 Mobile Graphics never experienced this issue.
+    // At most, 4K 30FPS or 1080p 60FPS videos play flawlessly without any major
+    // load on the hardware. 4K 60FPS videos certainly experience frame drops.
     glFinish();
     surface_manager_->MakeCurrent(false);
   }
   // S/W
-  if (pixel_buffer_ != nullptr) {
-    if (width != static_cast<int64_t>(pixel_buffer_texture_->width) ||
-        height != static_cast<int64_t>(pixel_buffer_texture_->height)) {
-      // A new video has been started. A change in output resolution.
-      Resize(width, height);
-    }
-    int32_t size[]{static_cast<int32_t>(width), static_cast<int32_t>(height)};
-    auto pitch = static_cast<int32_t>(width) * 4;
+  if (pixel_buffer_texture_ != nullptr && pixel_buffer_ != nullptr) {
+    int32_t size[]{static_cast<int32_t>(pixel_buffer_texture_->width),
+                   static_cast<int32_t>(pixel_buffer_texture_->height)};
+    auto pitch = static_cast<int32_t>(pixel_buffer_texture_->width) * 4;
     mpv_render_param params[]{
         {MPV_RENDER_PARAM_SW_SIZE, size},
         {MPV_RENDER_PARAM_SW_FORMAT, "rgb0"},
@@ -189,8 +171,6 @@ void VideoOutput::Render() {
     };
     mpv_render_context_render(render_context_, params);
   }
-
-  previous_frame_time_ = current_frame_time;
 }
 
 void VideoOutput::SetTextureUpdateCallback(
@@ -198,9 +178,35 @@ void VideoOutput::SetTextureUpdateCallback(
   texture_update_callback_ = callback;
 }
 
-void VideoOutput::Resize(int64_t width, int64_t height) {
-  std::cout << "media_kit: VideoOutput: Resize: " << width << " " << height
-            << std::endl;
+void VideoOutput::CheckAndResize() {
+  // Check if a new texture with different dimensions is needed.
+  auto required_width = GetVideoWidth(), required_height = GetVideoHeight();
+  if (required_width < 1 || required_height < 1) {
+    // Invalid.
+    return;
+  }
+  int64_t current_width = -1, current_height = -1;
+  if (surface_manager_ != nullptr) {
+    current_width = surface_manager_->width();
+    current_height = surface_manager_->height();
+  }
+  if (pixel_buffer_texture_ != nullptr && pixel_buffer_ != nullptr) {
+    current_width = pixel_buffer_texture_->width;
+    current_height = pixel_buffer_texture_->height;
+  }
+  // Currently rendered video output dimensions.
+  // Either H/W or S/W rendered.
+  assert(current_width > 0);
+  assert(current_height > 0);
+  if (required_width == current_width && required_height == current_height) {
+    // No creation of new texture required.
+    return;
+  }
+  Resize(required_width, required_height);
+}
+
+void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
+  std::cout << required_width << " " << required_height << std::endl;
   // Unregister previously registered texture.
   if (texture_id_) {
     registrar_->texture_registrar()->UnregisterTexture(texture_id_);
@@ -210,8 +216,8 @@ void VideoOutput::Resize(int64_t width, int64_t height) {
   if (surface_manager_ != nullptr) {
     // Destroy internal ID3D11Texture2D & EGLSurface & create new with updated
     // dimensions while preserving previous EGLDisplay & EGLContext.
-    surface_manager_->HandleResize(static_cast<int32_t>(width),
-                                   static_cast<int32_t>(height));
+    surface_manager_->HandleResize(static_cast<int32_t>(required_width),
+                                   static_cast<int32_t>(required_height));
     texture_ = std::make_unique<FlutterDesktopGpuSurfaceDescriptor>();
     texture_->struct_size = sizeof(FlutterDesktopGpuSurfaceDescriptor);
     texture_->handle = surface_manager_->handle();
@@ -238,11 +244,11 @@ void VideoOutput::Resize(int64_t width, int64_t height) {
     }
   }
   // S/W
-  if (pixel_buffer_ != nullptr) {
+  if (pixel_buffer_texture_ != nullptr && pixel_buffer_ != nullptr) {
     pixel_buffer_texture_ = std::make_unique<FlutterDesktopPixelBuffer>();
     pixel_buffer_texture_->buffer = pixel_buffer_.get();
-    pixel_buffer_texture_->width = width;
-    pixel_buffer_texture_->height = height;
+    pixel_buffer_texture_->width = required_width;
+    pixel_buffer_texture_->height = required_height;
     pixel_buffer_texture_->release_context = nullptr;
     pixel_buffer_texture_->release_callback = [](void*) {};
     texture_variant_ = std::make_unique<flutter::TextureVariant>(
@@ -293,22 +299,4 @@ int64_t VideoOutput::GetVideoHeight() {
                       static_cast<int64_t>(SW_RENDERING_MAX_HEIGHT));
   }
   return height;
-}
-
-int64_t VideoOutput::GetCurrentMonitorRefreshRate() {
-  auto window =
-      ::GetAncestor(registrar_->GetView()->GetNativeWindow(), GA_ROOT);
-  auto monitor = ::MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
-  if (monitor_refresh_rates_.find(monitor) != monitor_refresh_rates_.end()) {
-    return monitor_refresh_rates_[monitor];
-  }
-  MONITORINFOEX monitor_info;
-  monitor_info.cbSize = sizeof(MONITORINFOEX);
-  DEVMODE dev_mode;
-  ::GetMonitorInfo(monitor, &monitor_info);
-  ::EnumDisplaySettings(monitor_info.szDevice, ENUM_CURRENT_SETTINGS,
-                        &dev_mode);
-  dev_mode.dmDisplayFrequency -= HW_RENDERING_REFRESH_RATE_SUBTRAHEND;
-  monitor_refresh_rates_.insert({monitor, dev_mode.dmDisplayFrequency});
-  return dev_mode.dmDisplayFrequency;
 }
