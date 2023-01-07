@@ -62,6 +62,8 @@ class VideoOutput {
       std::function<void(int64_t, int64_t, int64_t)> callback);
 
  private:
+  void NotifyRender();
+
   void Render();
 
   void Resize(int64_t width, int64_t height);
