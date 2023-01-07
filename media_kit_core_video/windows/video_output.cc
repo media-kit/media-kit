@@ -158,7 +158,7 @@ void VideoOutput::Render() {
     surface_manager_->MakeCurrent(false);
   }
   // S/W
-  if (pixel_buffer_texture_ != nullptr && pixel_buffer_ != nullptr) {
+  if (pixel_buffer_ != nullptr) {
     int32_t size[]{static_cast<int32_t>(pixel_buffer_texture_->width),
                    static_cast<int32_t>(pixel_buffer_texture_->height)};
     auto pitch = static_cast<int32_t>(pixel_buffer_texture_->width) * 4;
@@ -190,7 +190,7 @@ void VideoOutput::CheckAndResize() {
     current_width = surface_manager_->width();
     current_height = surface_manager_->height();
   }
-  if (pixel_buffer_texture_ != nullptr && pixel_buffer_ != nullptr) {
+  if (pixel_buffer_ != nullptr) {
     current_width = pixel_buffer_texture_->width;
     current_height = pixel_buffer_texture_->height;
   }
@@ -244,7 +244,7 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
     }
   }
   // S/W
-  if (pixel_buffer_texture_ != nullptr && pixel_buffer_ != nullptr) {
+  if (pixel_buffer_ != nullptr) {
     pixel_buffer_texture_ = std::make_unique<FlutterDesktopPixelBuffer>();
     pixel_buffer_texture_->buffer = pixel_buffer_.get();
     pixel_buffer_texture_->width = required_width;
