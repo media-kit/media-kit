@@ -16,7 +16,7 @@ jobs:
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
-      - run: cd media_kit_test
+      - run: cd .. && cd media_kit_test
       - run: flutter pub get
       - run: flutter build windows --verbose
       - uses: actions/upload-artifact@v1
