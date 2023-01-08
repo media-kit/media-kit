@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 defaults:
   run:
-    working-directory: example
+    working-directory: media_kit_test
 
 jobs:
   windows:
@@ -16,7 +16,6 @@ jobs:
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
-      - run: cd .. && cd media_kit_test
       - run: flutter pub get
       - run: flutter build windows --verbose
       - uses: actions/upload-artifact@v1
