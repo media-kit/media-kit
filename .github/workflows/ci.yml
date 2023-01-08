@@ -1,0 +1,25 @@
+name: Github Actions
+on: [push, pull_request]
+
+defaults:
+  run:
+    working-directory: example
+
+jobs:
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - run: cd media_kit_test
+      - run: flutter pub get
+      - run: flutter build windows --verbose
+      - uses: actions/upload-artifact@v1
+        with:
+          name: media_kit_test
+          path: media_kit_test/build/windows/runner/Release
