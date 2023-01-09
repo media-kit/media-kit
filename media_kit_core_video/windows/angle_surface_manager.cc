@@ -61,7 +61,7 @@ void ANGLESurfaceManager::MakeCurrent(bool value) {
     eglMakeCurrent(display_, surface_, surface_, context_);
   } else {
     glFinish();
-    eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglMakeCurrent(EGL_NO_DISPLAY, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
   }
 }
 
