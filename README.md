@@ -45,11 +45,13 @@ dependencies:
 
 ## Platforms
 
-- [x] Windows
-- [ ] Linux
-- [ ] macOS
-- [ ] Android
-- [ ] iOS
+| Platform | Audio | Video |
+|----------|-------|-------|
+| Windows  | Ready | Ready |
+| Linux    | Ready | WIP   |
+| macOS    | WIP   | WIP   |
+| Android  | WIP   | WIP   |
+| iOS      | WIP   | WIP   |
 
 ## Docs
 
