@@ -58,6 +58,21 @@ class HomeScreen extends StatelessWidget {
           ),
           ListTile(
             title: const Text(
+              'Single [Player] with Video [Path] and optional Audio [Path]',
+              style: TextStyle(fontSize: 14.0),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SimpleStream(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            title: const Text(
               'Single [Player] with multiple [Video]s',
               style: TextStyle(fontSize: 14.0),
               maxLines: 1,
@@ -242,6 +257,143 @@ class _SimpleScreenState extends State<SimpleScreen> {
                   ],
                 ),
         ));
+  }
+}
+
+// Single [Player] with Video [Path] and optional Audio [Path]
+
+class SimpleStream extends StatefulWidget {
+  const SimpleStream({Key? key}) : super(key: key);
+
+  @override
+  State<SimpleStream> createState() => _SimpleStreamState();
+}
+
+class _SimpleStreamState extends State<SimpleStream> {
+  // Create a [Player] instance from `package:media_kit`.
+  final Player player = Player();
+  // Reference to the [VideoController] instance.
+  VideoController? controller;
+  final _formKey = GlobalKey<FormState>();
+  TextEditingController streamurl = TextEditingController();
+  TextEditingController audiourl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Create a [VideoController] instance from `package:media_kit_core_video`.
+      // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
+      controller = await VideoController.create(player.handle);
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    Future.microtask(() async {
+      debugPrint('Disposing [Player] and [VideoController]...');
+      await controller?.dispose();
+      await player.dispose();
+    });
+    super.dispose();
+  }
+
+  Widget get video => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Expanded(
+            child: Card(
+              elevation: 8.0,
+              clipBehavior: Clip.antiAlias,
+              margin: const EdgeInsets.all(32.0),
+              child: Video(
+                controller: controller,
+              ),
+            ),
+          ),
+          SeekBar(player: player),
+          const SizedBox(height: 32.0),
+        ],
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final horizontal =
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('package:media_kit'),
+        ),
+        body: SizedBox.expand(
+          child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: video,
+                      ),
+                    ),
+                    const VerticalDivider(width: 1.0, thickness: 1.0),
+                    Expanded(
+                      flex: 1,
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextFormField(
+                              controller: streamurl,
+                              decoration: const InputDecoration(
+                                border: UnderlineInputBorder(),
+                                // Local files do not need a proper identifier
+                                // for example both file://C:\video.mkv 
+                                // and C:\video.mkv get recognized
+                                labelText: 'Video file path or URI',
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter a URI';
+                                }
+                                return null;
+                              },
+                            ),
+                            TextFormField(
+                              // Optional field for a seperate audiotrack
+                              controller: audiourl,
+                              decoration: const InputDecoration(
+                                border: UnderlineInputBorder(),
+                                labelText: 'Optional audio path or URI',
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16.0),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (_formKey.currentState!.validate()) {
+
+                                    //set mpv options directly
+                                    if (audiourl.text != null) {
+                                      if (player?.platform is libmpvPlayer) {
+                                        (player?.platform as libmpvPlayer?)?.setProperty("audio-files", audiourl.text);
+                                      }
+                                    }
+                                    player.open(Playlist([Media(streamurl.text)]));
+                                  }
+                                },
+                                child: const Text('Load Video'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),  
+                  ],
+          )
+        )
+      );
   }
 }
 
