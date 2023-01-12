@@ -43,7 +43,7 @@ class HomeScreen extends StatelessWidget {
           const Divider(height: 1.0, thickness: 1.0),
           ListTile(
             title: const Text(
-              'Single [Player] with single [Video]',
+              'Single [Player] with single [Video] • File & Asset',
               style: TextStyle(fontSize: 14.0),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -58,7 +58,7 @@ class HomeScreen extends StatelessWidget {
           ),
           ListTile(
             title: const Text(
-              'Single [Player] with Video [Path] and optional Audio [Path]',
+              'Single [Player] with single [Video] • URI',
               style: TextStyle(fontSize: 14.0),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -109,7 +109,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// Single [Player] with single [Video].
+// Single [Player] with single [Video] • File & Asset.
 
 class SimpleScreen extends StatefulWidget {
   const SimpleScreen({Key? key}) : super(key: key);
@@ -260,7 +260,7 @@ class _SimpleScreenState extends State<SimpleScreen> {
   }
 }
 
-// Single [Player] with Video [Path] and optional Audio [Path]
+// Single [Player] with single [Video] • File & Asset.
 
 class SimpleStream extends StatefulWidget {
   const SimpleStream({Key? key}) : super(key: key);
@@ -275,8 +275,8 @@ class _SimpleStreamState extends State<SimpleStream> {
   // Reference to the [VideoController] instance.
   VideoController? controller;
   final _formKey = GlobalKey<FormState>();
-  TextEditingController streamurl = TextEditingController();
-  TextEditingController audiourl = TextEditingController();
+  final TextEditingController _video = TextEditingController();
+  final TextEditingController _audio = TextEditingController();
 
   @override
   void initState() {
@@ -295,6 +295,9 @@ class _SimpleStreamState extends State<SimpleStream> {
       debugPrint('Disposing [Player] and [VideoController]...');
       await controller?.dispose();
       await player.dispose();
+      // [TextEditingController].
+      _video.dispose();
+      _audio.dispose();
     });
     super.dispose();
   }
@@ -317,87 +320,107 @@ class _SimpleStreamState extends State<SimpleStream> {
         ],
       );
 
+  Widget get form => Form(
+        key: _formKey,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _video,
+                style: const TextStyle(fontSize: 14.0),
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Video URI',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a URI';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _audio,
+                style: const TextStyle(fontSize: 14.0),
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Audio URI (Optional)',
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      // Set libmpv options directly.
+                      if (player.platform is libmpvPlayer) {
+                        (player.platform as libmpvPlayer)
+                            .setProperty("audio-files", _audio.text);
+                      }
+                      player.open(
+                        Playlist(
+                          [
+                            Media(_video.text),
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Play'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final horizontal =
         MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('package:media_kit'),
-        ),
-        body: SizedBox.expand(
-          child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: video,
-                      ),
+      appBar: AppBar(
+        title: const Text('package:media_kit'),
+      ),
+      body: SizedBox.expand(
+        child: horizontal
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: video,
                     ),
-                    const VerticalDivider(width: 1.0, thickness: 1.0),
-                    Expanded(
-                      flex: 1,
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            TextFormField(
-                              controller: streamurl,
-                              decoration: const InputDecoration(
-                                border: UnderlineInputBorder(),
-                                // Local files do not need a proper identifier
-                                // for example both file://C:\video.mkv 
-                                // and C:\video.mkv get recognized
-                                labelText: 'Video file path or URI',
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter a URI';
-                                }
-                                return null;
-                              },
-                            ),
-                            TextFormField(
-                              // Optional field for a seperate audiotrack
-                              controller: audiourl,
-                              decoration: const InputDecoration(
-                                border: UnderlineInputBorder(),
-                                labelText: 'Optional audio path or URI',
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 16.0),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-
-                                    //set mpv options directly
-                                    if (audiourl.text != null) {
-                                      if (player?.platform is libmpvPlayer) {
-                                        (player?.platform as libmpvPlayer?)?.setProperty("audio-files", audiourl.text);
-                                      }
-                                    }
-                                    player.open(Playlist([Media(streamurl.text)]));
-                                  }
-                                },
-                                child: const Text('Load Video'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),  
-                  ],
-          )
-        )
-      );
+                  ),
+                  const VerticalDivider(width: 1.0, thickness: 1.0),
+                  Expanded(
+                    flex: 1,
+                    child: form,
+                  ),
+                ],
+              )
+            : ListView(
+                children: [
+                  Container(
+                    alignment: Alignment.center,
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.width * 12.0 / 16.0,
+                    child: video,
+                  ),
+                  const Divider(height: 1.0, thickness: 1.0),
+                  form,
+                ],
+              ),
+      ),
+    );
   }
 }
 
-// Single [Player] with multiple [Video]s
+// Single [Player] with multiple [Video]s.
 
 class SinglePlayerMultipleVideosScreen extends StatefulWidget {
   const SinglePlayerMultipleVideosScreen({Key? key}) : super(key: key);
@@ -548,61 +571,62 @@ class _SinglePlayerMultipleVideosScreenState
     final horizontal =
         MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('package:media_kit'),
-        ),
-        floatingActionButton: FloatingActionButton(
-          tooltip: 'Open [File]',
-          onPressed: () async {
-            final result = await FilePicker.platform.pickFiles(
-              type: FileType.any,
+      appBar: AppBar(
+        title: const Text('package:media_kit'),
+      ),
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'Open [File]',
+        onPressed: () async {
+          final result = await FilePicker.platform.pickFiles(
+            type: FileType.any,
+          );
+          if (result?.files.isNotEmpty ?? false) {
+            player.open(
+              Playlist(
+                [
+                  Media(result!.files.first.path!),
+                ],
+              ),
             );
-            if (result?.files.isNotEmpty ?? false) {
-              player.open(
-                Playlist(
-                  [
-                    Media(result!.files.first.path!),
-                  ],
-                ),
-              );
-            }
-          },
-          child: const Icon(Icons.file_open),
-        ),
-        body: SizedBox.expand(
-          child: horizontal
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: video,
-                      ),
-                    ),
-                    const VerticalDivider(width: 1.0, thickness: 1.0),
-                    Expanded(
-                      flex: 1,
-                      child: ListView(
-                        children: [...assets],
-                      ),
-                    ),
-                  ],
-                )
-              : ListView(
-                  children: [
-                    Container(
+          }
+        },
+        child: const Icon(Icons.file_open),
+      ),
+      body: SizedBox.expand(
+        child: horizontal
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Container(
                       alignment: Alignment.center,
-                      width: MediaQuery.of(context).size.width,
-                      height: MediaQuery.of(context).size.width * 12.0 / 16.0,
                       child: video,
                     ),
-                    const Divider(height: 1.0, thickness: 1.0),
-                    ...assets,
-                  ],
-                ),
-        ));
+                  ),
+                  const VerticalDivider(width: 1.0, thickness: 1.0),
+                  Expanded(
+                    flex: 1,
+                    child: ListView(
+                      children: [...assets],
+                    ),
+                  ),
+                ],
+              )
+            : ListView(
+                children: [
+                  Container(
+                    alignment: Alignment.center,
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.width * 12.0 / 16.0,
+                    child: video,
+                  ),
+                  const Divider(height: 1.0, thickness: 1.0),
+                  ...assets,
+                ],
+              ),
+      ),
+    );
   }
 }
 
