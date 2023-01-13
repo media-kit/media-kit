@@ -32,10 +32,14 @@ VideoOutput::VideoOutput(int64_t handle,
   auto is_hardware_acceleration_enabled = false;
   // Attempt to use H/W rendering.
   try {
+    surface_manager_width_ = 1;
+    surface_manager_height_ = 1;
     // OpenGL context needs to be set before |mpv_render_context_create|.
-    surface_manager_ = std::make_unique<ANGLESurfaceManager>(
-        static_cast<int32_t>(width_.value_or(1)),
-        static_cast<int32_t>(height_.value_or(1)));
+    surface_managers_.emplace(
+        std::make_pair(surface_manager_width_ ^ surface_manager_height_,
+                       std::make_unique<ANGLESurfaceManager>(
+                           static_cast<int32_t>(width_.value_or(1)),
+                           static_cast<int32_t>(height_.value_or(1)))));
     Resize(width_.value_or(1), height_.value_or(1));
     mpv_opengl_init_params gl_init_params{
         [](auto, auto name) {
@@ -72,6 +76,8 @@ VideoOutput::VideoOutput(int64_t handle,
     // which indicates that H/W rendering is not supported.
   }
   if (!is_hardware_acceleration_enabled) {
+    surface_manager_width_ = 0;
+    surface_manager_height_ = 0;
     std::cout << "media_kit: VideoOutput: Using S/W rendering." << std::endl;
     // Allocate a "large enough" buffer ahead of time.
     pixel_buffer_ = std::make_unique<uint8_t[]>(SW_RENDERING_PIXEL_BUFFER_SIZE);
@@ -103,6 +109,7 @@ VideoOutput::~VideoOutput() {
   if (render_context_) {
     mpv_render_context_free(render_context_);
   }
+  surface_managers_.clear();
 }
 
 void VideoOutput::NotifyRender() {
@@ -130,13 +137,16 @@ void VideoOutput::NotifyRender() {
 void VideoOutput::Render() {
   std::lock_guard<std::mutex> lock(render_mutex_);
   // H/W
-  if (surface_manager_ != nullptr) {
-    surface_manager_->MakeCurrent(true);
+  if (surface_manager_width_ && surface_manager_height_) {
+    auto surface_manager =
+        surface_managers_.at(surface_manager_width_ ^ surface_manager_height_)
+            .get();
+    surface_manager->MakeCurrent(true);
     // Render frame.
     mpv_opengl_fbo fbo{
         0,
-        surface_manager_->width(),
-        surface_manager_->height(),
+        surface_manager->width(),
+        surface_manager->height(),
         0,
     };
     mpv_render_param params[]{
@@ -147,7 +157,7 @@ void VideoOutput::Render() {
 #ifdef ENABLE_GL_FINISH_SAFEGUARD
     glFinish();
 #endif
-    surface_manager_->MakeCurrent(false);
+    surface_manager->MakeCurrent(false);
   }
   // S/W
   if (pixel_buffer_ != nullptr) {
@@ -178,9 +188,12 @@ void VideoOutput::CheckAndResize() {
     return;
   }
   int64_t current_width = -1, current_height = -1;
-  if (surface_manager_ != nullptr) {
-    current_width = surface_manager_->width();
-    current_height = surface_manager_->height();
+  if (surface_manager_width_ && surface_manager_height_) {
+    auto surface_manager =
+        surface_managers_.at(surface_manager_width_ ^ surface_manager_height_)
+            .get();
+    current_width = surface_manager->width();
+    current_height = surface_manager->height();
   }
   if (pixel_buffer_ != nullptr) {
     current_width = pixel_buffer_texture_->width;
@@ -205,16 +218,20 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
     texture_id_ = 0;
   }
   // H/W
-  if (surface_manager_ != nullptr) {
+  if (surface_manager_width_ && surface_manager_height_) {
     // Destroy internal ID3D11Texture2D & EGLSurface & create new with updated
     // dimensions while preserving previous EGLDisplay & EGLContext.
-    surface_manager_->HandleResize(static_cast<int32_t>(required_width),
-                                   static_cast<int32_t>(required_height));
+    auto instance = std::make_unique<ANGLESurfaceManager>(
+        static_cast<int32_t>(required_width),
+        static_cast<int32_t>(required_height));
+    auto ref = instance.get();
+    surface_managers_.emplace(std::make_pair(
+        surface_manager_width_ ^ surface_manager_height_, std::move(instance)));
     texture_ = std::make_unique<FlutterDesktopGpuSurfaceDescriptor>();
     texture_->struct_size = sizeof(FlutterDesktopGpuSurfaceDescriptor);
-    texture_->handle = surface_manager_->handle();
-    texture_->width = texture_->visible_width = surface_manager_->width();
-    texture_->height = texture_->visible_height = surface_manager_->height();
+    texture_->handle = ref->handle();
+    texture_->width = texture_->visible_width = ref->width();
+    texture_->height = texture_->visible_height = ref->height();
     texture_->release_context = nullptr;
     texture_->release_callback = [](void*) {};
     texture_->format = kFlutterDesktopPixelFormatBGRA8888;
@@ -231,8 +248,7 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
       std::cout << "media_kit: VideoOutput: Texture ID: " << texture_id_
                 << std::endl;
       // Notify public texture update callback.
-      texture_update_callback_(texture_id_, surface_manager_->width(),
-                               surface_manager_->height());
+      texture_update_callback_(texture_id_, ref->width(), ref->height());
     }
   }
   // S/W

@@ -29,8 +29,10 @@ class VideoOutput {
   int64_t texture_id() const { return texture_id_; }
   int64_t width() const {
     // H/W
-    if (surface_manager_ != nullptr) {
-      return surface_manager_->width();
+    if (surface_manager_width_ && surface_manager_height_) {
+      return surface_managers_
+          .at(surface_manager_width_ ^ surface_manager_height_)
+          ->width();
     }
     // S/W
     if (pixel_buffer_ != nullptr) {
@@ -40,8 +42,10 @@ class VideoOutput {
   }
   int64_t height() const {
     // H/W
-    if (surface_manager_ != nullptr) {
-      return surface_manager_->height();
+    if (surface_manager_width_ && surface_manager_height_) {
+      return surface_managers_
+          .at(surface_manager_width_ ^ surface_manager_height_)
+          ->height();
     }
     // S/W
     if (pixel_buffer_ != nullptr) {
@@ -90,7 +94,10 @@ class VideoOutput {
 
   // H/W rendering.
 
-  std::unique_ptr<ANGLESurfaceManager> surface_manager_ = nullptr;
+  std::unordered_map<size_t, std::unique_ptr<ANGLESurfaceManager>>
+      surface_managers_ = {};
+  int64_t surface_manager_width_ = 0;
+  int64_t surface_manager_height_ = 0;
   std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor> texture_ = nullptr;
 
   // S/W rendering.
