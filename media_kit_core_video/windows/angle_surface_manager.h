@@ -39,11 +39,6 @@ class ANGLESurfaceManager {
 
   ~ANGLESurfaceManager();
 
-  // Resizes the internal |ID3D11Texture2D| & |EGLSurface| and returns updated
-  // |handle_|. This preserves the |context_| & |display_| associated
-  // with this |ANGLESurfaceManager| instance.
-  HANDLE HandleResize(int32_t width, int32_t height);
-
   void SwapBuffers();
 
   void MakeCurrent(bool value);

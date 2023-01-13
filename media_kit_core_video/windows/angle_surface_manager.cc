@@ -23,8 +23,6 @@
     FAIL(message);             \
   }
 
-#define USE_ID3D11DEVICE_FROM_ANGLE 1
-
 ANGLESurfaceManager::ANGLESurfaceManager(int32_t width, int32_t height)
     : width_(width), height_(height) {
   // Create new Direct3D texture & |surface_|, |display_| & |context_|.
@@ -34,19 +32,6 @@ ANGLESurfaceManager::ANGLESurfaceManager(int32_t width, int32_t height)
 
 ANGLESurfaceManager::~ANGLESurfaceManager() {
   CleanUp(true);
-}
-
-HANDLE ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
-  if (width == width_ && height == height_) {
-    // Same dimensions.
-    return handle_;
-  }
-  width_ = width;
-  height_ = height;
-  // Create new Direct3D texture & |surface_| preserving previously created
-  // |display_| & |context_| from the constructor.
-  Initialize();
-  return handle_;
 }
 
 void ANGLESurfaceManager::SwapBuffers() {
@@ -282,28 +267,6 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
       eglDestroySurface(display_, surface_);
     }
     surface_ = EGL_NO_SURFACE;
-  }
-  // Release D3D 11 resources.
-  if (d3d_11_device_context_) {
-    d3d_11_device_context_->Release();
-    d3d_11_device_context_ = nullptr;
-  }
-  if (d3d_11_device_) {
-    d3d_11_device_->Release();
-    d3d_11_device_ = nullptr;
-  }
-  // Release D3D 9 resources.
-  if (d3d_9_texture_) {
-    d3d_9_texture_->Release();
-    d3d_9_texture_ = nullptr;
-  }
-  if (d3d_9_device_ex_) {
-    d3d_9_device_ex_->Release();
-    d3d_9_device_ex_ = nullptr;
-  }
-  if (d3d_9_ex_) {
-    d3d_9_ex_->Release();
-    d3d_9_ex_ = nullptr;
   }
 }
 
