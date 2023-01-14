@@ -90,13 +90,15 @@ class VideoController {
       },
     );
     // Notify about updated texture ID & [Rect].
-    controller.id.value = result['id'];
-    controller.rect.value = Rect.fromLTRB(
+    final Rect rect = Rect.fromLTRB(
       result['rect']['left'] * 1.0,
       result['rect']['top'] * 1.0,
       result['rect']['right'] * 1.0,
       result['rect']['bottom'] * 1.0,
     );
+    final int id = result['id'];
+    controller.rect.value = rect;
+    controller.id.value = id;
     // Return the [VideoController].
     return controller;
   }
@@ -130,15 +132,15 @@ final _channel = const MethodChannel('com.alexmercerind/media_kit_core_video')
           {
             // Notify about updated texture ID & [Rect].
             final int handle = call.arguments['handle'];
-            final int id = call.arguments['id'];
             final Rect rect = Rect.fromLTRB(
               call.arguments['rect']['left'] * 1.0,
               call.arguments['rect']['top'] * 1.0,
               call.arguments['rect']['right'] * 1.0,
               call.arguments['rect']['bottom'] * 1.0,
             );
-            _controllers[handle]?.id.value = id;
+            final int id = call.arguments['id'];
             _controllers[handle]?.rect.value = rect;
+            _controllers[handle]?.id.value = id;
             break;
           }
         default:
