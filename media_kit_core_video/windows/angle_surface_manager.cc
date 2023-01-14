@@ -195,6 +195,14 @@ bool ANGLESurfaceManager::InitializeD3D11() {
     CHECK_HRESULT("D3D11CreateDevice");
 #endif
   }
+
+  Microsoft::WRL::ComPtr<IDXGIDevice> dxgi_device = nullptr;
+  auto dxgi_device_success = d3d_11_device_->QueryInterface(
+      __uuidof(IDXGIDevice), (void**)&dxgi_device);
+  if (SUCCEEDED(dxgi_device_success) && dxgi_device != nullptr) {
+    dxgi_device->SetGPUThreadPriority(5);  // Must be in interval [-7, 7].
+  }
+
   auto level = d3d_11_device_->GetFeatureLevel();
   std::cout << "media_kit: ANGLESurfaceManager: Direct3D Feature Level: "
             << (((unsigned)level) >> 12) << "_"
