@@ -15,6 +15,7 @@
 #include <render.h>
 #include <render_gl.h>
 
+#include <future>
 #include <memory>
 #include <mutex>
 
@@ -29,27 +30,23 @@ class VideoOutput {
   int64_t texture_id() const { return texture_id_; }
   int64_t width() const {
     // H/W
-    if (surface_manager_width_ && surface_manager_height_) {
-      return surface_managers_
-          .at(surface_manager_width_ ^ surface_manager_height_)
-          ->width();
+    if (surface_manager_ != nullptr && texture_id_) {
+      return surface_manager_->width();
     }
     // S/W
-    if (pixel_buffer_ != nullptr) {
-      return pixel_buffer_texture_->width;
+    if (pixel_buffer_ != nullptr && texture_id_) {
+      return pixel_buffer_textures_.at(texture_id_)->width;
     }
     return width_.value_or(1);
   }
   int64_t height() const {
     // H/W
-    if (surface_manager_width_ && surface_manager_height_) {
-      return surface_managers_
-          .at(surface_manager_width_ ^ surface_manager_height_)
-          ->height();
+    if (surface_manager_ != nullptr && texture_id_) {
+      return surface_manager_->height();
     }
     // S/W
-    if (pixel_buffer_ != nullptr) {
-      return pixel_buffer_texture_->height;
+    if (pixel_buffer_ != nullptr && texture_id_) {
+      return pixel_buffer_textures_.at(texture_id_)->height;
     }
     return height_.value_or(1);
   }
@@ -57,7 +54,8 @@ class VideoOutput {
   VideoOutput(int64_t handle,
               std::optional<int64_t> width,
               std::optional<int64_t> height,
-              flutter::PluginRegistrarWindows* registrar);
+              flutter::PluginRegistrarWindows* registrar,
+              std::mutex* render_mutex_ref);
 
   ~VideoOutput();
 
@@ -83,35 +81,30 @@ class VideoOutput {
   std::optional<int64_t> width_ = std::nullopt;
   int64_t texture_id_ = 0;
   flutter::PluginRegistrarWindows* registrar_ = nullptr;
-  std::unique_ptr<flutter::TextureVariant> texture_variant_ = nullptr;
 
-  // WIP:
+  std::unordered_map<int64_t, std::unique_ptr<flutter::TextureVariant>>
+      texture_variants_ = {};
 
-  uint64_t dropped_frame_count_ = 0;
-
-  std::mutex notify_render_mutex_ = std::mutex();
-  std::mutex render_mutex_ = std::mutex();
+  // For syncing |Render| across multiple instances of |VideoOutput|.
+  std::mutex* render_mutex_ref_ = nullptr;
 
   // H/W rendering.
 
-  std::unordered_map<size_t, std::unique_ptr<ANGLESurfaceManager>>
-      surface_managers_ = {};
-  int64_t surface_manager_width_ = 0;
-  int64_t surface_manager_height_ = 0;
-  std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor> texture_ = nullptr;
+  std::unique_ptr<ANGLESurfaceManager> surface_manager_ = nullptr;
+  std::unordered_map<int64_t,
+                     std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor>>
+      textures_ = {};
 
   // S/W rendering.
 
   std::unique_ptr<uint8_t[]> pixel_buffer_ = nullptr;
-  std::unique_ptr<FlutterDesktopPixelBuffer> pixel_buffer_texture_ = nullptr;
+  std::unordered_map<int64_t, std::unique_ptr<FlutterDesktopPixelBuffer>>
+      pixel_buffer_textures_ = {};
 
   // Public notifier. This is called when a new texture is registered & texture
   // ID is changed. Only happens when video output resolution changes.
   std::function<void(int64_t, int64_t, int64_t)> texture_update_callback_ =
       [](int64_t, int64_t, int64_t) {};
-
-  // Cached monitor refresh rates.
-  std::unordered_map<HMONITOR, int64_t> monitor_refresh_rates_ = {};
 };
 
 #endif  // FLUTTER_PLUGIN_MEDIA_KIT_CORE_VIDEO_VIDEO_OUTPUT_H_

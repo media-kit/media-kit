@@ -117,9 +117,29 @@ class _VideoState extends State<Video> {
                           return SizedBox(
                             width: rect.width,
                             height: rect.height,
-                            child: Texture(
-                              textureId: id,
-                              filterQuality: widget.filterQuality,
+                            child: Stack(
+                              children: [
+                                const SizedBox(),
+                                Positioned.fill(
+                                  child: Texture(
+                                    textureId: id,
+                                    filterQuality: widget.filterQuality,
+                                  ),
+                                ),
+                                // Keep the |Texture| hidden before the first frame renders. In native implementation, if
+                                // no default frame size is passed (through VideoController), a starting 1 pixel sized
+                                // texture/surface is created to initialize the render context & check for H/W support.
+                                // This is then resized based on the video dimensions & accordingly texture ID, texture,
+                                // EGLDisplay, EGLSurface etc. (depending upon platform) are also changed.
+                                // Just don't show that 1 pixel texture to the UI.
+                                // NOTE: Unmounting |Texture| causes the |MarkTextureFrameAvailable| to not do anything.
+                                if (rect.width == 1.0 && rect.height == 1.0)
+                                  Positioned.fill(
+                                    child: Container(
+                                      color: widget.fill,
+                                    ),
+                                  ),
+                              ],
                             ),
                           );
                         }
