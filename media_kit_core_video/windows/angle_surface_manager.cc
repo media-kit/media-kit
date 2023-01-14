@@ -34,19 +34,6 @@ ANGLESurfaceManager::~ANGLESurfaceManager() {
   CleanUp(true);
 }
 
-HANDLE ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
-  if (width == width_ && height == height_) {
-    // Same dimensions.
-    return handle_;
-  }
-  width_ = width;
-  height_ = height;
-  // Create new Direct3D texture & |surface_| preserving previously created
-  // |display_| & |context_| from the constructor.
-  Initialize();
-  return handle_;
-}
-
 void ANGLESurfaceManager::SwapBuffers() {
   // No need to flush.
   eglSwapBuffers(display_, surface_);
