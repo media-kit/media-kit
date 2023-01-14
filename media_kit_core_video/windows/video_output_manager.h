@@ -13,7 +13,6 @@
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
 
-#include <memory>
 #include <unordered_map>
 
 #include "video_output.h"
@@ -22,6 +21,8 @@
 #define VALUE(x) flutter::EncodableValue(x)
 #define IS_METHOD(x) method_call.method_name().compare(x) == 0
 
+// Creates & disposes |VideoOutput| instances for video embedding inside Flutter
+// Windows. |Create| & |Dispose| methods are thread-safe.
 class VideoOutputManager {
  public:
   VideoOutputManager(flutter::PluginRegistrarWindows* registrar,
@@ -39,6 +40,8 @@ class VideoOutputManager {
   ~VideoOutputManager();
 
  private:
+  std::mutex mutex_ = std::mutex();
+  std::mutex render_mutex_ = std::mutex();
   flutter::PluginRegistrarWindows* registrar_ = nullptr;
   flutter::MethodChannel<flutter::EncodableValue>* channel_ = nullptr;
   std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_ = {};

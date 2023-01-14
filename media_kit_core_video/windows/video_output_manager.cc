@@ -16,11 +16,13 @@ VideoOutputManager::VideoOutputManager(
 VideoOutput* VideoOutputManager::Create(int64_t handle,
                                         std::optional<int64_t> width,
                                         std::optional<int64_t> height) {
+  std::lock_guard<std::mutex> lock(mutex_);
   if (video_outputs_.find(handle) == video_outputs_.end()) {
-    auto video_output =
-        std::make_unique<VideoOutput>(handle, width, height, registrar_);
-    video_output->SetTextureUpdateCallback(
-        [=](int64_t id, int64_t width, int64_t height) -> void {
+    auto instance = std::make_unique<VideoOutput>(handle, width, height,
+                                                  registrar_, &render_mutex_);
+    auto ref = instance.get();
+    ref->SetTextureUpdateCallback(
+        [=](auto id, auto width, auto height) -> void {
           channel_->InvokeMethod(
               "VideoOutput.Resize",
               std::make_unique<flutter::EncodableValue>(flutter::EncodableMap({
@@ -57,12 +59,13 @@ VideoOutput* VideoOutputManager::Create(int64_t handle,
               })),
               nullptr);
         });
-    video_outputs_.insert({handle, std::move(video_output)});
+    video_outputs_.insert(std::make_pair(handle, std::move(instance)));
   }
   return video_outputs_[handle].get();
 }
 
 bool VideoOutputManager::Dispose(int64_t handle) {
+  std::lock_guard<std::mutex> lock(mutex_);
   if (video_outputs_.find(handle) == video_outputs_.end()) {
     return false;
   }
