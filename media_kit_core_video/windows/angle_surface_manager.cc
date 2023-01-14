@@ -23,8 +23,6 @@
     FAIL(message);             \
   }
 
-#define USE_ID3D11DEVICE_FROM_ANGLE 1
-
 ANGLESurfaceManager::ANGLESurfaceManager(int32_t width, int32_t height)
     : width_(width), height_(height) {
   // Create new Direct3D texture & |surface_|, |display_| & |context_|.
@@ -179,7 +177,7 @@ bool ANGLESurfaceManager::InitializeD3D11() {
     // D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1,
     // D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_9_3,
     IDXGIFactory* dxgi = nullptr;
-    CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgi);
+    ::CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgi);
     // Manually selecting adapter. As far as my experience goes, this is the
     // safest approach. Passing `0` (so-called default) seems to cause issues
     // on Windows 7 or maybe some older graphics drivers.
@@ -197,10 +195,10 @@ bool ANGLESurfaceManager::InitializeD3D11() {
     CHECK_HRESULT("D3D11CreateDevice");
 #endif
   }
-  auto selected_level = d3d_11_device_->GetFeatureLevel();
+  auto level = d3d_11_device_->GetFeatureLevel();
   std::cout << "media_kit: ANGLESurfaceManager: Direct3D Feature Level: "
-            << (((unsigned)selected_level) >> 12) << "_"
-            << ((((unsigned)selected_level) >> 8) & 0xf) << std::endl;
+            << (((unsigned)level) >> 12) << "_"
+            << ((((unsigned)level) >> 8) & 0xf) << std::endl;
   auto d3d11_texture2D_desc = D3D11_TEXTURE2D_DESC{0};
   d3d11_texture2D_desc.Width = width_;
   d3d11_texture2D_desc.Height = height_;
@@ -272,6 +270,28 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
       context_ = EGL_NO_CONTEXT;
     }
     display_ = EGL_NO_DISPLAY;
+    // Release D3D 11 resources.
+    if (d3d_11_device_context_) {
+      d3d_11_device_context_->Release();
+      d3d_11_device_context_ = nullptr;
+    }
+    if (d3d_11_device_) {
+      d3d_11_device_->Release();
+      d3d_11_device_ = nullptr;
+    }
+    // Release D3D 9 resources.
+    if (d3d_9_texture_) {
+      d3d_9_texture_->Release();
+      d3d_9_texture_ = nullptr;
+    }
+    if (d3d_9_device_ex_) {
+      d3d_9_device_ex_->Release();
+      d3d_9_device_ex_ = nullptr;
+    }
+    if (d3d_9_ex_) {
+      d3d_9_ex_->Release();
+      d3d_9_ex_ = nullptr;
+    }
   } else {
     // Clear context & destroy existing |surface_|.
     eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, context_);
@@ -282,28 +302,6 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
       eglDestroySurface(display_, surface_);
     }
     surface_ = EGL_NO_SURFACE;
-  }
-  // Release D3D 11 resources.
-  if (d3d_11_device_context_) {
-    d3d_11_device_context_->Release();
-    d3d_11_device_context_ = nullptr;
-  }
-  if (d3d_11_device_) {
-    d3d_11_device_->Release();
-    d3d_11_device_ = nullptr;
-  }
-  // Release D3D 9 resources.
-  if (d3d_9_texture_) {
-    d3d_9_texture_->Release();
-    d3d_9_texture_ = nullptr;
-  }
-  if (d3d_9_device_ex_) {
-    d3d_9_device_ex_->Release();
-    d3d_9_device_ex_ = nullptr;
-  }
-  if (d3d_9_ex_) {
-    d3d_9_ex_->Release();
-    d3d_9_ex_ = nullptr;
   }
 }
 
