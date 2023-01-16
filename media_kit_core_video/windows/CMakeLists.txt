@@ -13,11 +13,11 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 set(PLUGIN_NAME "media_kit_core_video_plugin")
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev.7z")
+set(LIBMPV "mpv-dev-x86_64-20230116-git-50169e0.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/alexmercerind/mpv-win32-build/releases/download/20221227/${LIBMPV}")
-set(LIBMPV_MD5 "f947282d5c5da0b5968635a46dc6c8e6")
+set(LIBMPV_URL "https://github.com/alexmercerind/mpv-win32-build/releases/download/2023-01-16/${LIBMPV}")
+set(LIBMPV_MD5 "b05146e43a9c47a30d551f0ad57788cc")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
