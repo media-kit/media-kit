@@ -35,6 +35,7 @@ VideoOutput::VideoOutput(int64_t handle,
       height_(height),
       registrar_(registrar),
       render_mutex_ref_(render_mutex_ref) {
+  std::lock_guard<std::mutex> lock(*render_mutex_ref_);
   // First try to initialize video playback with hardware acceleration &
   // |ANGLESurfaceManager|, use S/W API as fallback.
   auto is_hardware_acceleration_enabled = false;
