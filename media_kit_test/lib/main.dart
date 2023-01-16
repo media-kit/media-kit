@@ -103,6 +103,21 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
+          ListTile(
+            title: const Text(
+              'Stress Test',
+              style: TextStyle(fontSize: 14.0),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const StressTestScreen(),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -868,6 +883,80 @@ class _SeekBarState extends State<SeekBar> {
         Text(duration.toString().substring(2, 7)),
         const SizedBox(width: 48.0),
       ],
+    );
+  }
+}
+
+// Stress test.
+
+class StressTestScreen extends StatefulWidget {
+  const StressTestScreen({Key? key}) : super(key: key);
+
+  @override
+  State<StressTestScreen> createState() => _StressTestScreenState();
+}
+
+class _StressTestScreenState extends State<StressTestScreen> {
+  static const int count = 4;
+  List<Player> players = [];
+  List<VideoController> controllers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () async {
+        for (int i = 0; i < count; i++) {
+          final player = Player();
+          final controller = await VideoController.create(player.handle);
+          players.add(player);
+          controllers.add(controller);
+          setState(() {});
+        }
+        for (int i = 0; i < count; i++) {
+          await players[i].open(
+            Playlist([Media('asset://assets/video_${i % 5}.mp4')]),
+          );
+          await players[i].setPlaylistMode(PlaylistMode.loop);
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    Future.microtask(() async {
+      for (final e in controllers) {
+        await e.dispose();
+      }
+      for (final e in players) {
+        await e.dispose();
+      }
+    });
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('package:media_kit'),
+      ),
+      body: GridView.count(
+        crossAxisCount: 2,
+        padding: const EdgeInsets.all(16.0),
+        mainAxisSpacing: 16.0,
+        crossAxisSpacing: 16.0,
+        childAspectRatio: 16.0 / 9.0,
+        children: controllers
+            .map(
+              (e) => Card(
+                clipBehavior: Clip.antiAlias,
+                child: Video(controller: e),
+              ),
+            )
+            .toList(),
+      ),
     );
   }
 }
