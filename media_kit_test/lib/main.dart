@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
 import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_core_video/media_kit_core_video.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
 void main() {
   runApp(const MyApp());
@@ -142,8 +142,8 @@ class _SimpleScreenState extends State<SimpleScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Create a [VideoController] instance from `package:media_kit_core_video`.
+    Future.microtask(() async {
+      // Create a [VideoController] instance from `package:media_kit_video`.
       // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
       controller = await VideoController.create(player.handle);
       setState(() {});
@@ -296,8 +296,8 @@ class _SimpleStreamState extends State<SimpleStream> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Create a [VideoController] instance from `package:media_kit_core_video`.
+    Future.microtask(() async {
+      // Create a [VideoController] instance from `package:media_kit_video`.
       // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
       controller = await VideoController.create(player.handle);
       setState(() {});
@@ -455,8 +455,8 @@ class _SinglePlayerMultipleVideosScreenState
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Create a [VideoController] instance from `package:media_kit_core_video`.
+    Future.microtask(() async {
+      // Create a [VideoController] instance from `package:media_kit_video`.
       // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
       controller = await VideoController.create(player.handle);
       setState(() {});
@@ -665,8 +665,8 @@ class _MultiplePlayersMultipleVideosScreenState
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Create a [VideoController] instance from `package:media_kit_core_video`.
+    Future.microtask(() async {
+      // Create a [VideoController] instance from `package:media_kit_video`.
       // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
       for (int i = 0; i < players.length; i++) {
         controllers[i] = await VideoController.create(players[i].handle);
@@ -911,14 +911,16 @@ class _StressTestScreenState extends State<StressTestScreen> {
           final controller = await VideoController.create(player.handle);
           players.add(player);
           controllers.add(controller);
-          setState(() {});
         }
         for (int i = 0; i < count; i++) {
+          players[i].volume = 0.0;
           await players[i].open(
             Playlist([Media('asset://assets/video_${i % 5}.mp4')]),
+            play: true,
           );
           await players[i].setPlaylistMode(PlaylistMode.loop);
         }
+        setState(() {});
       },
     );
   }
@@ -951,6 +953,7 @@ class _StressTestScreenState extends State<StressTestScreen> {
         children: controllers
             .map(
               (e) => Card(
+                elevation: 4.0,
                 clipBehavior: Clip.antiAlias,
                 child: Video(controller: e),
               ),

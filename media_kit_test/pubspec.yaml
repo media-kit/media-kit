@@ -14,8 +14,10 @@ dependencies:
 
   media_kit:
     path: ../media_kit
-  media_kit_core_video:
-    path: ../media_kit_core_video
+  media_kit_video:
+    path: ../media_kit_video
+  media_kit_libs_windows_video:
+    path: ../media_kit_libs_windows_video
 
   file_picker: ^5.2.4
 
