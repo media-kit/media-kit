@@ -35,13 +35,12 @@ Add in your `pubspec.yaml`:
 ```yaml
 dependencies:
   media_kit: ^0.0.1
-  # For audio support.
-  media_kit_core_audio: ^0.0.1
   # For video support.
-  media_kit_core_video: ^0.0.1
+  media_kit_video: ^0.0.1
+  # Pick based on your requirements / platform:
+  media_kit_libs_windows_video: ^0.0.1    # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^0.0.1    # Windows package for audio (only) native libraries.
 ```
-
-**NOTE:** Only one of [`package:media_kit_core_video`](https://pub.dev/packages/media_kit_core_video) or [`package:media_kit_core_audio`](https://pub.dev/packages/media_kit_core_audio) is required.
 
 ## Platforms
 
@@ -127,7 +126,7 @@ Performant & H/W accelerated, automatically fallbacks to S/W rendering if system
 
 ```dart
 import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_core_video/media_kit_core_video.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
 class MyScreen extends StatefulWidget {
   const MyScreen({Key? key}) : super(key: key);
@@ -138,18 +137,27 @@ class MyScreen extends StatefulWidget {
 class MyScreenState extends State<MyScreen> {
   // Create a [Player] instance from `package:media_kit`.
   final Player player = Player();
-  // Reference to the [VideoController] instance from `package:media_kit_core_video`.
+  // Reference to the [VideoController] instance from `package:media_kit_video`.
   VideoController? controller;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Create a [VideoController] instance from `package:media_kit_core_video`.
+      // Create a [VideoController] instance from `package:media_kit_video`.
       // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
       controller = await VideoController.create(player.handle);
+      // Must be created before opening any media. Otherwise, a separate window will be created.
       setState(() {});
     });
+  }
+
+  @override
+  void dispose() {
+    // Release allocated resources back to the system.
+    controller?.dispose();
+    player.dispose();
+    super.dispose();
   }
 
   @override
@@ -176,7 +184,9 @@ controller = await VideoController.create(
 
 _TODO: documentation_
 
-Try out [the test application](https://github.com/harmonoid/media_kit/blob/master/media_kit_test/lib/main.dart) for more API usage examples.
+Try out [the test application](https://github.com/harmonoid/media_kit/blob/master/media_kit_test/lib/main.dart) for now.
+
+<br></br>
 
 ## Goals
 
@@ -385,11 +395,7 @@ classDiagram
   }
 ```
 
-### package:media_kit_core_audio
-
-N/A
-
-### package:media_kit_core_video
+### package:media_kit_video
 
 _Click on the zoom button on top-right or pinch inside._
 
@@ -405,11 +411,11 @@ _Click on the zoom button on top-right or pinch inside._
 }%%
 classDiagram
 
-  MediaKitCoreVideoPlugin "1" *-- "1" VideoOutputManager: Create VideoOutput(s) with VideoOutputManager for handle passed through platform channel
+  MediaKitVideoPlugin "1" *-- "1" VideoOutputManager: Create VideoOutput(s) with VideoOutputManager for handle passed through platform channel
   VideoOutputManager "1" *-- "*" VideoOutput
   VideoOutput "1" *-- "1" ANGLESurfaceManager: Only for H/W accelerated rendering.
 
-  class MediaKitCoreVideoPlugin {
+  class MediaKitVideoPlugin {
     -flutter::PluginRegistrarWindows registrar_
     -std::unique_ptr<MethodChannel> channel_
     -std::unique_ptr<VideoOutputManager> video_output_manager_
@@ -420,6 +426,8 @@ classDiagram
     +Create(handle: int, width: optional<int>, height: optional<int>)
     +Dispose(handle: int)
 
+    -std::mutex mutex_
+    -std::mutex render_mutex_
     -flutter::PluginRegistrarWindows registrar_
     -std::unique_ptr<MethodChannel> channel_
     -std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_
@@ -433,11 +441,12 @@ classDiagram
     -std::optional<int64_t> height
     -int64_t texture_id_
     -flutter::PluginRegistrarWindows registrar_
-    -std::unique_ptr<flutter::TextureVariant> texture_variant_
+    -std::mutex* render_mutex_ref_
+    -std::unordered_map<int64_t, std::unique_ptr<flutter::TextureVariant>> texture_variants_
     -std::unique_ptr<ANGLESurfaceManager> surface_manager_ HW
-    -std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor> texture_ HW
+    -std::unordered_map<int64_t, std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor>> textures_ HW
     -std::unique_ptr<uint8_t[]> pixel_buffer_ SW
-    -std::unique_ptr<FlutterDesktopPixelBuffer> pixel_buffer_texture_ SW
+    -std::unordered_map<int64_t, std::unique_ptr<FlutterDesktopPixelBuffer>> pixel_buffer_textures_ SW
     -std::mutex mutex_
     -std::function texture_update_callback_
 
@@ -454,7 +463,7 @@ classDiagram
     +«get» height: int32_t
     +«get» handle: HANDLE
 
-    +HandleResize(width: int64_t, height: int64_t)
+    +HandleResize(width: int32_t, height: int32_t)
     +SwapBuffers()
     +MakeCurrent(value: bool)
     -Initialize()
@@ -496,13 +505,9 @@ However, I could easily do this within Dart because [libmpv](https://github.com/
 
 This solved the issue of events & audio playback within 100% Dart using FFI.
 
-However, no such "event-polling" like API is possible for video rendering. It won't be performant to constantly do polling of video frames off a thread & forward frames back to primary thread for rendering. [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) does not have any such API anyway. So, I created new package [`package:media_kit_core_video`](https://github.com/alexmercerind/media_kit) for specifically offering platform-specific video playback implementation which internally handles Flutter's Texture Registry API & libmpv's OpenGL rendering API. This package only consumes the `mpv_handle*` (which can be shared as primitive `int` value easily) of the instance (created with [package:media_kit](https://github.com/alexmercerind/media_kit) through FFI) to setup a new viewport. Detailed implementation is discussed below.
+However, no such "event-polling" like API is possible for video rendering. It won't be performant to constantly do polling of video frames off a thread & forward frames back to primary thread for rendering. [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) does not have any such API anyway. So, I created new package [`package:media_kit_video`](https://github.com/alexmercerind/media_kit) for specifically offering platform-specific video playback implementation which internally handles Flutter's Texture Registry API & libmpv's OpenGL rendering API. This package only consumes the `mpv_handle*` (which can be shared as primitive `int` value easily) of the instance (created with [package:media_kit](https://github.com/alexmercerind/media_kit) through FFI) to setup a new viewport. Detailed implementation is discussed below.
 
-### package:media_kit_core_audio
-
-[libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) from [mpv Media Player](https://mpv.io/) is used for leveraging audio playback. A minimal variant with stripped down features & only audio support is bundled for usage through dart:ffi.
-
-### package:media_kit_core_video
+### package:media_kit_video
 
 #### Windows
 
@@ -511,9 +516,21 @@ However, no such "event-polling" like API is possible for video rendering. It wo
 - [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) gives access to C API for rendering hardware-accelerated video output using OpenGL. See: [render.h](https://github.com/mpv-player/mpv/blob/master/libmpv/render.h) & [render_gl.h](https://github.com/mpv-player/mpv/blob/master/libmpv/render_gl.h).
 - Flutter recently added ability for Windows to [render Direct3D `ID3D11Texture2D` textures](https://github.com/flutter/engine/pull/26840).
 
-The two APIs above are hardware accelerated i.e. GPU backed buffers are used. **This is performant approach, easily capable for rendering 4K 60 FPS videos**, rest depends on the hardware. Since [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) API is OpenGL based & the Texture API in Flutter is Direct3D based, [ANGLE (Almost Native Graphics Layer Engine)](https://github.com/google/angle) is used for interop, which automatically translates the OpenGL ES calls into Direct3D.
+The two APIs above are hardware accelerated i.e. GPU backed buffers are used. **This is performant approach, easily capable for rendering 4K 60 FPS videos**, rest depends on the hardware. Since [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) API is OpenGL based & the Texture API in Flutter is Direct3D based, [ANGLE (Almost Native Graphics Layer Engine)](https://github.com/google/angle) is used for interop, which translates the OpenGL ES 2.0 calls into Direct3D.
 
 This hardware accelerated video output requires DirectX 11 or higher. Most Windows systems with either integrated or discrete GPUs should support this already. On systems where Direct3D fails to load due to missing graphics drivers or unsupported feature-level or DirectX version etc. a fallback pixel-buffer based software renderer is used. This means that video is rendered by CPU & every frame is copied back to the RAM. This will cause some redundant load on the CPU, result in decreased battery life & may not play higher resolution videos properly. However, it works.
+
+<details>
+
+<summary> Windows 7 & 8.x also seem to be working correctly. </summary>
+
+<br></br>  
+
+![0](https://user-images.githubusercontent.com/28951144/212947036-4a2430d6-729e-47d7-a356-c8cc8534a1aa.jpg)
+![1](https://user-images.githubusercontent.com/28951144/212947046-cc8d441c-96f8-4437-9f59-b4613ca73f2a.jpg)
+
+</details>
+
 
 You can visit my [experimentation repository](https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-Direct3D-Interop) to see a minimal example showing OpenGL ES rendering inside Flutter Windows.
 
