@@ -140,7 +140,7 @@ void ANGLESurfaceManager::Initialize() {
 
 bool ANGLESurfaceManager::InitializeD3D11() {
   if (adapter_ == nullptr) {
-#ifdef USE_ID3D11DEVICE_FROM_ANGLE
+#ifdef ENABLE_ID3D11DEVICE_FROM_ANGLE
     // Query |adapter_| from ANGLE directly.
     PFNEGLQUERYDISPLAYATTRIBEXTPROC eglQueryDisplayAttribEXT =
         reinterpret_cast<PFNEGLQUERYDISPLAYATTRIBEXTPROC>(
@@ -283,10 +283,13 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
       d3d_11_device_context_->Release();
       d3d_11_device_context_ = nullptr;
     }
+    // Release ID3D11Device only if it was created by us (not by ANGLE).
+#ifndef ENABLE_ID3D11DEVICE_FROM_ANGLE
     if (d3d_11_device_) {
       d3d_11_device_->Release();
       d3d_11_device_ = nullptr;
     }
+#endif
     // Release D3D 9 resources.
     if (d3d_9_texture_) {
       d3d_9_texture_->Release();
