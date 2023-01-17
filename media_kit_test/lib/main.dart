@@ -680,8 +680,8 @@ class _MultiplePlayersMultipleVideosScreenState
     Future.microtask(() async {
       debugPrint('Disposing [Player]s and [VideoController]s...');
       for (int i = 0; i < players.length; i++) {
-        await players[i].dispose();
         await controllers[i]?.dispose();
+        await players[i].dispose();
       }
     });
     super.dispose();
