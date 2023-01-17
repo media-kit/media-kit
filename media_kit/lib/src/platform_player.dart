@@ -23,19 +23,11 @@ import 'package:media_kit/src/models/player_streams.dart';
 ///
 /// {@endtemplate}
 class PlayerConfiguration {
-  /// For showing video output inside the Flutter Widget tree.
-  /// Setting this as `false` will cause video output to be displayed in a separate window.
-  /// For this to work, [vo] must be non-`null`.
-  ///
-  /// Default: `true`.
-  /// Platforms: Windows, Linux.
-  final bool texture;
-
   /// Enables on-screen libmpv controls.
   ///
   /// Default: `false`.
   /// Platforms: Windows, Linux.
-  final int osd;
+  final bool osc;
 
   /// For enabling video rendering.
   /// If you intend to play only audio, set this to a `'null'` [String] to improve performance.
@@ -65,8 +57,7 @@ class PlayerConfiguration {
 
   /// {@macro player_configuration}
   const PlayerConfiguration({
-    this.texture = true,
-    this.osd = 0,
+    this.osc = false,
     this.vo,
     this.libmpv,
     this.title,

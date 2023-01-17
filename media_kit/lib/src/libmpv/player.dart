@@ -932,17 +932,22 @@ class Player extends PlatformPlayer {
     //   calloc.free(_key);
     //   calloc.free(_value);
     // });
-    var name = 'osd-level'.toNativeUtf8();
-    var value = calloc<Int32>();
-    value.value = configuration.osd;
-    _libmpv?.mpv_set_property(
-      result,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_INT64,
-      value.cast(),
-    );
-    calloc.free(name);
-    calloc.free(value);
+    if (!configuration.osc) {
+      <String, String>{
+        'osc': 'no',
+        'osd-level': '0',
+      }.forEach((property, value) {
+        final ptr = property.toNativeUtf8();
+        final val = value.toNativeUtf8();
+        _libmpv?.mpv_set_property_string(
+          result,
+          ptr.cast(),
+          val.cast(),
+        );
+        calloc.free(ptr);
+        calloc.free(val);
+      });
+    }
     if (configuration.vo != null) {
       final name = 'vo'.toNativeUtf8();
       final value = configuration.vo!.toNativeUtf8();
@@ -976,8 +981,8 @@ class Player extends PlatformPlayer {
     // );
     // calloc.free(cache);
     // calloc.free(no);
-    name = 'idle'.toNativeUtf8();
-    value = calloc<Int32>();
+    final name = 'idle'.toNativeUtf8();
+    final value = calloc<Int32>();
     value.value = 1;
     _libmpv?.mpv_set_property(
       result,
