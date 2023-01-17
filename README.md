@@ -143,7 +143,7 @@ class MyScreenState extends State<MyScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+    Future.microtask(() async {
       // Create a [VideoController] instance from `package:media_kit_video`.
       // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
       controller = await VideoController.create(player.handle);
@@ -154,9 +154,11 @@ class MyScreenState extends State<MyScreen> {
 
   @override
   void dispose() {
-    // Release allocated resources back to the system.
-    controller?.dispose();
-    player.dispose();
+    Future.microtask(() async {
+      // Release allocated resources back to the system.
+      await controller?.dispose();
+      await player.dispose();
+    });
     super.dispose();
   }
 
@@ -173,7 +175,7 @@ class MyScreenState extends State<MyScreen> {
 For performance reasons (especially in S/W rendering), if you wish to restrain the size of each video frame, you can pass width & height parameters to the `VideoController.create` method.
 
 ```dart
-controller = await VideoController.create(
+final controller = await VideoController.create(
   player.handle,
   width: 1920,
   height: 1080,
@@ -186,15 +188,13 @@ _TODO: documentation_
 
 Try out [the test application](https://github.com/harmonoid/media_kit/blob/master/media_kit_test/lib/main.dart) for now.
 
-<br></br>
-
 ## Goals
 
 The primary goal of [package:media_kit](https://github.com/alexmercerind/media_kit) is to become a **strong, stable, feature-proof & modular** media playback library for Flutter. The idea is to support both **audio & video playback**.
 
 [package:media_kit](https://github.com/alexmercerind/media_kit) makes rendering [**hardware accelerated video playback**](https://github.com/alexmercerind/dart_vlc/issues/345) possible in Flutter.
 
-Since, targetting multiple features at once & bundling redundant native libraries can result in increased bundle size of the application, you can manually select the native libraries you want to bundle, depending upon your use-case. Currently, the scope of work is limited to Windows & Linux. The code is architectured to support multiple platforms & features. Support for more platforms will be added in future.
+Since, targetting multiple features at once & bundling redundant native libraries can result in increased bundle size of the application, you can manually select the native libraries you want to bundle, depending upon your use-case. The code is architectured to support multiple platforms & features. Support for more platforms will be added in future.
 
 ## Support
 

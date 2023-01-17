@@ -2,6 +2,28 @@
 
 A complete video & audio library for Flutter & Dart.
 
+<hr>
+
+<strong>Sponsored with 💖 by</strong>
+<br>
+<a href="https://getstream.io/chat/sdk/flutter/?utm_source=alexmercerind_dart&utm_medium=Github_Repo_Content_Ad&utm_content=Developer&utm_campaign=alexmercerind_December2022_FlutterSDK_klmh22" target="_blank">
+<img alt="Stream Chat" width="350" height="auto" src="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
+</a>
+<br>
+
+  <h5>
+    Rapidly ship in-app messaging with Stream's highly reliable chat infrastructure and feature-rich SDKs, including Flutter!
+  </h5>
+<h4>
+  <a href="https://getstream.io/chat/sdk/flutter/?utm_source=alexmercerind_dart&utm_medium=Github_Repo_Content_Ad&utm_content=Developer&utm_campaign=alexmercerind_December2022_FlutterSDK_klmh22" target="_blank">
+  Try the Flutter Chat tutorial
+  </a>
+</h4>
+
+<hr>
+
+https://user-images.githubusercontent.com/28951144/209100988-6f85f563-20e0-4e35-893a-ae099c7e03e4.mp4
+
 ## Installation
 
 Add in your `pubspec.yaml`:
@@ -10,20 +32,27 @@ Add in your `pubspec.yaml`:
 dependencies:
   media_kit: ^0.0.1
   # For video support.
-  media_kit_core_video: ^0.0.1
+  media_kit_video: ^0.0.1
+  # Pick based on your requirements / platform:
+  media_kit_libs_windows_video: ^0.0.1 # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^0.0.1 # Windows package for audio (only) native libraries.
 ```
 
 ## Platforms
 
-- [x] Windows
-- [x] Linux
-- [ ] macOS
-- [ ] Android
-- [ ] iOS
+| Platform | Audio | Video |
+| -------- | ----- | ----- |
+| Windows  | Ready | Ready |
+| Linux    | Ready | WIP   |
+| macOS    | WIP   | WIP   |
+| Android  | WIP   | WIP   |
+| iOS      | WIP   | WIP   |
 
 ## Docs
 
 ### Brief Start
+
+Basic example.
 
 ```dart
 import 'package:media_kit/media_kit.dart';
@@ -87,11 +116,73 @@ player.streams.audioBitrate.listen((event) {
 });
 ```
 
+### Rendering Video
+
+Performant & H/W accelerated, automatically fallbacks to S/W rendering if system does not support it.
+
+```dart
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
+
+class MyScreen extends StatefulWidget {
+  const MyScreen({Key? key}) : super(key: key);
+  @override
+  State<MyScreen> createState() => _MyScreenState();
+}
+
+class MyScreenState extends State<MyScreen> {
+  // Create a [Player] instance from `package:media_kit`.
+  final Player player = Player();
+  // Reference to the [VideoController] instance from `package:media_kit_video`.
+  VideoController? controller;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      // Create a [VideoController] instance from `package:media_kit_video`.
+      // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
+      controller = await VideoController.create(player.handle);
+      // Must be created before opening any media. Otherwise, a separate window will be created.
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    Future.microtask(() async {
+      // Release allocated resources back to the system.
+      await controller?.dispose();
+      await player.dispose();
+    });
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Video(
+      /// Pass the [controller] to display the video output.
+      controller: controller,
+    );
+  }
+}
+```
+
+For performance reasons (especially in S/W rendering), if you wish to restrain the size of each video frame, you can pass width & height parameters to the `VideoController.create` method.
+
+```dart
+final controller = await VideoController.create(
+  player.handle,
+  width: 1920,
+  height: 1080,
+);
+```
+
 ### Detailed Guide
 
-_TODO:_
+_TODO: documentation_
 
-_Improvements to the documentation are welcomed. This is very-hard for me alone. 💖_
+Try out [the test application](https://github.com/harmonoid/media_kit/blob/master/media_kit_test/lib/main.dart) for now.
 
 ## Goals
 
@@ -99,14 +190,20 @@ The primary goal of [package:media_kit](https://github.com/alexmercerind/media_k
 
 [package:media_kit](https://github.com/alexmercerind/media_kit) makes rendering [**hardware accelerated video playback**](https://github.com/alexmercerind/dart_vlc/issues/345) possible in Flutter.
 
-Since, targetting multiple features at once & bundling redundant native libraries can result in increased bundle size of the application, you can manually select the native libraries you want to bundle, depending upon your use-case. Currently, the scope of work is limited to Windows & Linux. The code is architectured to support multiple platforms & features. Support for more platforms will be added in future.
+Since, targetting multiple features at once & bundling redundant native libraries can result in increased bundle size of the application, you can manually select the native libraries you want to bundle, depending upon your use-case. The code is architectured to support multiple platforms & features. Support for more platforms will be added in future.
 
 ## Support
 
-If you find [package:media_kit](https://github.com/alexmercerind/media_kit) package(s) useful or want to support future development, please consider supporting me. It's a very tedious process to write code, document, maintain & provide support for free. Since this is first of a kind project, it takes a lot of time to experiment & develop.
+If you find [package:media_kit](https://github.com/alexmercerind/media_kit) package(s) useful, please consider sponsoring me.
 
-- [GitHub Sponsors](https://github.com/sponsors/alexmercerind)
-- [PayPal](https://paypal.me/alexmercerind)
+Since this is first of a kind project, it takes a lot of time to experiment & develop. It's a very tedious process to write code, document, maintain & provide support for free. Your support can ensure the quality of the package your project depends upon. I will feel rewarded for my hard-work & research.
+
+- **[GitHub Sponsors](https://github.com/sponsors/alexmercerind)**
+- **[PayPal](https://paypal.me/alexmercerind)**
+
+<a href='https://github.com/sponsors/alexmercerind'><img src='https://github.githubassets.com/images/modules/site/sponsors/sponsors-mona.svg' width='240'></a>
+
+Thanks!
 
 ## License
 
