@@ -6,9 +6,9 @@
 
 #include "generated_plugin_registrant.h"
 
-#include <media_kit_core_video/media_kit_core_video_plugin_c_api.h>
+#include <media_kit_video/media_kit_video_plugin_c_api.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
-  MediaKitCoreVideoPluginCApiRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("MediaKitCoreVideoPluginCApi"));
+  MediaKitVideoPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("MediaKitVideoPluginCApi"));
 }
