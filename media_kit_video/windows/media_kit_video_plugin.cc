@@ -50,7 +50,7 @@ void MediaKitVideoPlugin::HandleMethodCall(
       width_value = static_cast<int64_t>(strtoll(width.c_str(), nullptr, 10));
       height_value = static_cast<int64_t>(strtoll(height.c_str(), nullptr, 10));
     }
-    auto video_output = video_output_manager_->Create(
+    video_output_manager_->Create(
         handle_value, width_value, height_value,
         [channel_ptr = channel_.get(), handle = handle_value](
             auto id, auto width, auto height) {
@@ -89,37 +89,7 @@ void MediaKitVideoPlugin::HandleMethodCall(
               }),
               nullptr);
         });
-    result->Success(flutter::EncodableValue(flutter::EncodableMap{
-        {
-            flutter::EncodableValue("handle"),
-            flutter::EncodableValue(handle),
-        },
-        {
-            flutter::EncodableValue("id"),
-            flutter::EncodableValue(video_output->texture_id()),
-        },
-        {
-            flutter::EncodableValue("rect"),
-            flutter::EncodableValue(flutter::EncodableMap{
-                {
-                    flutter::EncodableValue("left"),
-                    flutter::EncodableValue(0),
-                },
-                {
-                    flutter::EncodableValue("top"),
-                    flutter::EncodableValue(0),
-                },
-                {
-                    flutter::EncodableValue("width"),
-                    flutter::EncodableValue(video_output->width()),
-                },
-                {
-                    flutter::EncodableValue("height"),
-                    flutter::EncodableValue(video_output->height()),
-                },
-            }),
-        },
-    }));
+    result->Success(flutter::EncodableValue(std::monostate{}));
   } else if (method_call.method_name().compare("VideoOutputManager.Dispose") ==
              0) {
     auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());

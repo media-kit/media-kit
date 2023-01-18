@@ -12,31 +12,32 @@ VideoOutputManager::VideoOutputManager(
     flutter::PluginRegistrarWindows* registrar)
     : registrar_(registrar) {}
 
-VideoOutput* VideoOutputManager::Create(
+void VideoOutputManager::Create(
     int64_t handle,
     std::optional<int64_t> width,
     std::optional<int64_t> height,
     std::function<void(int64_t, int64_t, int64_t)> texture_update_callback) {
-  if (video_outputs_.find(handle) == video_outputs_.end()) {
-    auto instance = std::make_unique<VideoOutput>(handle, width, height,
-                                                  registrar_, &render_mutex_);
-    auto ref = instance.get();
-    ref->SetTextureUpdateCallback(texture_update_callback);
-    video_outputs_.insert(std::make_pair(handle, std::move(instance)));
-  }
-  return video_outputs_[handle].get();
+  std::thread([=]() {
+    if (video_outputs_.find(handle) == video_outputs_.end()) {
+      auto instance = std::make_unique<VideoOutput>(
+          handle, width, height, registrar_, thread_pool_.get());
+      instance->SetTextureUpdateCallback(texture_update_callback);
+      video_outputs_.insert(std::make_pair(handle, std::move(instance)));
+    }
+  }).detach();
 }
 
-bool VideoOutputManager::Dispose(int64_t handle) {
-  if (video_outputs_.find(handle) == video_outputs_.end()) {
-    return false;
-  }
-  video_outputs_.erase(handle);
-  return true;
+void VideoOutputManager::Dispose(int64_t handle) {
+  std::thread([=]() {
+    if (video_outputs_.find(handle) != video_outputs_.end()) {
+      video_outputs_.erase(handle);
+    }
+  }).detach();
 }
 
 VideoOutputManager::~VideoOutputManager() {
-  // Destroy all video outputs.
   // |VideoOutput| destructor will do the relevant cleanup.
   video_outputs_.clear();
+  // This destructor is only called when the plugin is being destroyed i.e. the
+  // application is being closed. So, doesn't really matter on the other hand.
 }
