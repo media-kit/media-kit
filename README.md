@@ -45,7 +45,7 @@ dependencies:
 ## Platforms
 
 | Platform | Audio | Video |
-|----------|-------|-------|
+| -------- | ----- | ----- |
 | Windows  | Ready | Ready |
 | Linux    | Ready | WIP   |
 | macOS    | WIP   | WIP   |
@@ -412,7 +412,7 @@ classDiagram
 
   MediaKitVideoPlugin "1" *-- "1" VideoOutputManager: Create VideoOutput(s) with VideoOutputManager for handle passed through platform channel
   VideoOutputManager "1" *-- "*" VideoOutput
-  VideoOutputManager "1" *-- "1" ThreadPool: 
+  VideoOutputManager "1" *-- "1" ThreadPool:
   VideoOutput "1" o-- "1" ThreadPool: Post creation, resize & render etc. tasks involving EGL to ensure synchronous EGL/ANGLE usage across multiple VideoOutput(s)
   VideoOutput "1" *-- "1" ANGLESurfaceManager: Only for H/W accelerated rendering
 
@@ -422,7 +422,7 @@ classDiagram
     -std::unique_ptr<VideoOutputManager> video_output_manager_
     -HandleMethodCall(method_call, result);
   }
-  
+
   class ThreadPool {
     +Post(function: std::function)
   }
@@ -430,8 +430,8 @@ classDiagram
   class VideoOutputManager {
     +Create(handle: int, width: optional<int>, height: optional<int>, texture_update_callback: std::function)
     +Dispose(handle: int)
-    
-    -std::mutex mutex
+
+    -std::mutex mutex_
     -std::unique_ptr<ThreadPool> thread_pool_
     -flutter::PluginRegistrarWindows registrar_
     -std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_
@@ -451,7 +451,6 @@ classDiagram
     -std::unordered_map<int64_t, std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor>> textures_ HW
     -std::unique_ptr<uint8_t[]> pixel_buffer_ SW
     -std::unordered_map<int64_t, std::unique_ptr<FlutterDesktopPixelBuffer>> pixel_buffer_textures_ SW
-    -std::mutex mutex_
     -std::function texture_update_callback_
 
     +SetTextureUpdateCallback(callback: std::function<void(int64_t, int64_t, int64_t)>)
@@ -528,13 +527,12 @@ This hardware accelerated video output requires DirectX 11 or higher. Most Windo
 
 <summary> Windows 7 & 8.x also seem to be working correctly. </summary>
 
-<br></br>  
+<br></br>
 
 ![0](https://user-images.githubusercontent.com/28951144/212947036-4a2430d6-729e-47d7-a356-c8cc8534a1aa.jpg)
 ![1](https://user-images.githubusercontent.com/28951144/212947046-cc8d441c-96f8-4437-9f59-b4613ca73f2a.jpg)
 
 </details>
-
 
 You can visit my [experimentation repository](https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-Direct3D-Interop) to see a minimal example showing OpenGL ES rendering inside Flutter Windows.
 
