@@ -9,63 +9,25 @@
 #include "video_output_manager.h"
 
 VideoOutputManager::VideoOutputManager(
-    flutter::PluginRegistrarWindows* registrar,
-    flutter::MethodChannel<flutter::EncodableValue>* channel)
-    : registrar_(registrar), channel_(channel) {}
+    flutter::PluginRegistrarWindows* registrar)
+    : registrar_(registrar) {}
 
-VideoOutput* VideoOutputManager::Create(int64_t handle,
-                                        std::optional<int64_t> width,
-                                        std::optional<int64_t> height) {
-  std::lock_guard<std::mutex> lock(mutex_);
+VideoOutput* VideoOutputManager::Create(
+    int64_t handle,
+    std::optional<int64_t> width,
+    std::optional<int64_t> height,
+    std::function<void(int64_t, int64_t, int64_t)> texture_update_callback) {
   if (video_outputs_.find(handle) == video_outputs_.end()) {
     auto instance = std::make_unique<VideoOutput>(handle, width, height,
                                                   registrar_, &render_mutex_);
     auto ref = instance.get();
-    ref->SetTextureUpdateCallback(
-        [=](auto id, auto width, auto height) -> void {
-          channel_->InvokeMethod(
-              "VideoOutput.Resize",
-              std::make_unique<flutter::EncodableValue>(flutter::EncodableMap({
-                  {
-                      VALUE("handle"),
-                      VALUE(handle),
-                  },
-                  {
-                      VALUE("id"),
-                      VALUE(id),
-                  },
-                  {
-                      VALUE("rect"),
-                      VALUE(flutter::EncodableMap({
-                          {
-                              VALUE("left"),
-                              VALUE(0),
-                          },
-                          {
-                              VALUE("top"),
-                              VALUE(0),
-                          },
-                          {
-                              VALUE("right"),
-                              VALUE(width),
-                          },
-                          {
-                              VALUE("bottom"),
-                              VALUE(height),
-                          },
-                      })),
-                  },
-
-              })),
-              nullptr);
-        });
+    ref->SetTextureUpdateCallback(texture_update_callback);
     video_outputs_.insert(std::make_pair(handle, std::move(instance)));
   }
   return video_outputs_[handle].get();
 }
 
 bool VideoOutputManager::Dispose(int64_t handle) {
-  std::lock_guard<std::mutex> lock(mutex_);
   if (video_outputs_.find(handle) == video_outputs_.end()) {
     return false;
   }

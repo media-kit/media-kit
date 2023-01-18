@@ -423,13 +423,11 @@ classDiagram
   }
 
   class VideoOutputManager {
-    +Create(handle: int, width: optional<int>, height: optional<int>)
+    +Create(handle: int, width: optional<int>, height: optional<int>, texture_update_callback: std::function)
     +Dispose(handle: int)
 
-    -std::mutex mutex_
     -std::mutex render_mutex_
     -flutter::PluginRegistrarWindows registrar_
-    -std::unique_ptr<MethodChannel> channel_
     -std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_
   }
 
