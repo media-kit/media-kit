@@ -142,7 +142,7 @@ class _VideoState extends State<Video> {
                                 // EGLDisplay, EGLSurface etc. (depending upon platform) are also changed.
                                 // Just don't show that 1 pixel texture to the UI.
                                 // NOTE: Unmounting |Texture| causes the |MarkTextureFrameAvailable| to not do anything.
-                                if (rect.width == 1.0 && rect.height == 1.0)
+                                if (rect.width <= 1.0 && rect.height <= 1.0)
                                   Positioned.fill(
                                     child: Container(
                                       color: widget.fill,
