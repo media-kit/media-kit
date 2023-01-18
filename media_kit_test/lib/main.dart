@@ -741,37 +741,18 @@ class _MultiplePlayersMultipleVideosScreenState
 
   @override
   Widget build(BuildContext context) {
-    final horizontal = MediaQuery.of(context).size.width / 2 >
-        MediaQuery.of(context).size.height;
+    final horizontal =
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
       ),
-      body: Row(
-        children: [
-          for (int i = 0; i < 2; i++)
-            Expanded(
-              child: horizontal
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: Container(
-                            alignment: Alignment.center,
-                            child: getVideoForIndex(i),
-                          ),
-                        ),
-                        const VerticalDivider(width: 1.0, thickness: 1.0),
-                        Expanded(
-                          flex: 1,
-                          child: ListView(
-                            children: [...getAssetsListForIndex(i)],
-                          ),
-                        ),
-                      ],
-                    )
-                  : ListView(
+      body: horizontal
+          ? Row(
+              children: [
+                for (int i = 0; i < 2; i++)
+                  Expanded(
+                    child: ListView(
                       children: [
                         Container(
                           alignment: Alignment.center,
@@ -786,9 +767,24 @@ class _MultiplePlayersMultipleVideosScreenState
                         ...getAssetsListForIndex(i),
                       ],
                     ),
+                  ),
+              ],
+            )
+          : ListView(
+              children: [
+                for (int i = 0; i < 2; i++) ...[
+                  Container(
+                    alignment: Alignment.center,
+                    width: (MediaQuery.of(context).size.width - 64.0),
+                    height:
+                        (MediaQuery.of(context).size.width - 64.0) * 9.0 / 16.0,
+                    child: getVideoForIndex(i),
+                  ),
+                  const Divider(height: 1.0, thickness: 1.0),
+                  ...getAssetsListForIndex(i),
+                ]
+              ],
             ),
-        ],
-      ),
     );
   }
 }
@@ -913,12 +909,12 @@ class _StressTestScreenState extends State<StressTestScreen> {
           controllers.add(controller);
         }
         for (int i = 0; i < count; i++) {
-          players[i].volume = 0.0;
           await players[i].open(
             Playlist([Media('asset://assets/video_${i % 5}.mp4')]),
             play: true,
           );
           await players[i].setPlaylistMode(PlaylistMode.loop);
+          players[i].volume = 0.0;
         }
         setState(() {});
       },
@@ -940,26 +936,44 @@ class _StressTestScreenState extends State<StressTestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final children = controllers
+        .map(
+          (e) => Card(
+            elevation: 4.0,
+            margin: EdgeInsets.zero,
+            clipBehavior: Clip.antiAlias,
+            child: Video(controller: e),
+          ),
+        )
+        .toList();
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
       ),
-      body: GridView.count(
-        crossAxisCount: 2,
-        padding: const EdgeInsets.all(16.0),
-        mainAxisSpacing: 16.0,
-        crossAxisSpacing: 16.0,
-        childAspectRatio: 16.0 / 9.0,
-        children: controllers
-            .map(
-              (e) => Card(
-                elevation: 4.0,
-                clipBehavior: Clip.antiAlias,
-                child: Video(controller: e),
-              ),
+      body: MediaQuery.of(context).size.width >
+              MediaQuery.of(context).size.height
+          ? GridView.count(
+              crossAxisCount: 2,
+              padding: const EdgeInsets.all(16.0),
+              mainAxisSpacing: 16.0,
+              crossAxisSpacing: 16.0,
+              childAspectRatio: 16.0 / 9.0,
+              children: children,
             )
-            .toList(),
-      ),
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
+              children: children
+                  .map(
+                    (e) => Container(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      width: MediaQuery.of(context).size.width - 32.0,
+                      height:
+                          9 / 16.0 * (MediaQuery.of(context).size.width - 32.0),
+                      child: e,
+                    ),
+                  )
+                  .toList(),
+            ),
     );
   }
 }
