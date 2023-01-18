@@ -47,33 +47,29 @@ class VideoOutputManager {
   // Technically, the correct place to do all the video rendering (& thus
   // resize) etc. is on Flutter's render thread itself (exposed as callback in
   // |flutter::GpuSurfaceTexture| & |flutter::PixelBufferTexture|). However,
-  // this slows down the UI too much. So, I decided to create our own
-  // |ThreadPool| & use it for all the video rendering purposes through one
-  // single thread.
+  // this slows down the UI too much. So, a good idea seemed to have a separate
+  // worker thread which queues all the rendering related jobs & performs them
+  // orderly. |ThreadPool| is exactly that.
   //
-  // Secondly, setting a |std::mutex| was not enough. It still resulted in
-  // access violations. Maybe it does not provide a fair mutex, which caused
-  // race between resize & render.
+  // All of the following tasks involve ANGLE or OpenGL context etc. etc.
+  // Following operations are performed through the |ThreadPool|:
   //
-  // The following operations are performed through the |ThreadPool|:
-  // All of these involve ANGLE or OpenGL context etc. etc.
-  //
-  // * Rendering of video frame i.e. |mpv_render_context_render| is called
-  //   through the |ThreadPool| after being notified by
+  // * Rendering of video frame i.e. |mpv_render_context_render| (also involves
+  //   |eglMakeCurrent| etc.) after being notified by
   //   |mpv_render_context_set_update_callback|.
-  // * Creation / Disposal of new |VideoOutput| i.e.
-  //   |VideoOutputManager::Create| & |VideoOutputManager::Dispose| are called
-  //   through the |ThreadPool|. Thus, |mpv_render_context_create| is called &
-  //   instantiation of a new |ANGLESurfaceManager| is done through |ThreadPool|
-  //   (in |VideoOutput| constructor).
+  // * Creation / Disposal of new |VideoOutput|.
+  //     * For creation, |mpv_render_context_create| & instantiation of a new
+  //       |ANGLESurfaceManager| is done through |ThreadPool| (in |VideoOutput|
+  //       constructor).
+  //     * For disposal, |ThreadPool| ensures that all the pending |Render| or
+  //       |Resize| tasks are completed before freeing the |ANGLESurfaceManager|
+  //       & |mpv_render_context| etc.
   // * Resizing of |ANGLESurfaceManager| & creation of newly sized Flutter
-  //   textures (|flutter::GpuSurfaceTexture| & |flutter::PixelBufferTexture|)
-  //   is also done through |ThreadPool|. See |VideoOutput::CheckAndResize|.
+  //   textures (|flutter::GpuSurfaceTexture| & |flutter::PixelBufferTexture|).
   //
-  // Thus, creating a new |ThreadPool| with maximum number of worker threads as
-  // 1, ensures that all the ANGLE, EGL & libmpv operations are performed on a
-  // single thread orderly. This also makes usage of any |std::mutex|
-  // unnecessary.
+  // Creating a |ThreadPool| with maximum number of worker threads as 1, ensures
+  // that all the posted tasks are performed on a single thread orderly. This
+  // also makes usage of any |std::mutex| unnecessary (for the good).
   std::unique_ptr<ThreadPool> thread_pool_ = std::make_unique<ThreadPool>(1);
   flutter::PluginRegistrarWindows* registrar_ = nullptr;
   std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_ = {};
