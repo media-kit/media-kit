@@ -79,6 +79,7 @@ class VideoController {
       height,
     );
     // Invoking native implementation for querying video adapter, registering OpenGL/Direct3D/ANGLE/pixel-buffer output callbacks & Flutter texture.
+    // NOTE: Sending `int64_t` is causing crash on Windows 7, so sending as string.
     final result = await _channel.invokeMethod(
       'VideoOutputManager.Create',
       {
@@ -88,11 +89,11 @@ class VideoController {
       },
     );
     // Notify about updated texture ID & [Rect].
-    final Rect rect = Rect.fromLTRB(
+    final Rect rect = Rect.fromLTWH(
       result['rect']['left'] * 1.0,
       result['rect']['top'] * 1.0,
-      result['rect']['right'] * 1.0,
-      result['rect']['bottom'] * 1.0,
+      result['rect']['width'] * 1.0,
+      result['rect']['height'] * 1.0,
     );
     final int id = result['id'];
     controller.rect.value = rect;
@@ -105,6 +106,7 @@ class VideoController {
   /// Releases the allocated resources back to the system.
   Future<void> dispose() {
     _controllers.remove(handle);
+    // NOTE: Sending `int64_t` is causing crash on Windows 7, so sending as string.
     return _channel.invokeMethod(
       'VideoOutputManager.Dispose',
       {
@@ -130,11 +132,11 @@ final _channel = const MethodChannel('com.alexmercerind/media_kit_video')
           {
             // Notify about updated texture ID & [Rect].
             final int handle = call.arguments['handle'];
-            final Rect rect = Rect.fromLTRB(
+            final Rect rect = Rect.fromLTWH(
               call.arguments['rect']['left'] * 1.0,
               call.arguments['rect']['top'] * 1.0,
-              call.arguments['rect']['right'] * 1.0,
-              call.arguments['rect']['bottom'] * 1.0,
+              call.arguments['rect']['width'] * 1.0,
+              call.arguments['rect']['height'] * 1.0,
             );
             final int id = call.arguments['id'];
             _controllers[handle]?.rect.value = rect;
