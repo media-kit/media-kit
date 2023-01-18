@@ -245,7 +245,6 @@ classDiagram
   }
 
   class PlayerConfiguration {
-    + bool texture
     + bool osc
     + String vo
     + String title
@@ -413,7 +412,9 @@ classDiagram
 
   MediaKitVideoPlugin "1" *-- "1" VideoOutputManager: Create VideoOutput(s) with VideoOutputManager for handle passed through platform channel
   VideoOutputManager "1" *-- "*" VideoOutput
-  VideoOutput "1" *-- "1" ANGLESurfaceManager: Only for H/W accelerated rendering.
+  VideoOutputManager "1" *-- "1" ThreadPool: 
+  VideoOutput "1" o-- "1" ThreadPool: Post creation, resize & render etc. tasks involving EGL to ensure synchronous EGL/ANGLE usage across multiple VideoOutput(s)
+  VideoOutput "1" *-- "1" ANGLESurfaceManager: Only for H/W accelerated rendering
 
   class MediaKitVideoPlugin {
     -flutter::PluginRegistrarWindows registrar_
@@ -421,12 +422,17 @@ classDiagram
     -std::unique_ptr<VideoOutputManager> video_output_manager_
     -HandleMethodCall(method_call, result);
   }
+  
+  class ThreadPool {
+    +Post(function: std::function)
+  }
 
   class VideoOutputManager {
     +Create(handle: int, width: optional<int>, height: optional<int>, texture_update_callback: std::function)
     +Dispose(handle: int)
-
-    -std::mutex render_mutex_
+    
+    -std::mutex mutex
+    -std::unique_ptr<ThreadPool> thread_pool_
     -flutter::PluginRegistrarWindows registrar_
     -std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_
   }
@@ -439,7 +445,7 @@ classDiagram
     -std::optional<int64_t> height
     -int64_t texture_id_
     -flutter::PluginRegistrarWindows registrar_
-    -std::mutex* render_mutex_ref_
+    -ThreadPool* thread_pool_ref_
     -std::unordered_map<int64_t, std::unique_ptr<flutter::TextureVariant>> texture_variants_
     -std::unique_ptr<ANGLESurfaceManager> surface_manager_ HW
     -std::unordered_map<int64_t, std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor>> textures_ HW
