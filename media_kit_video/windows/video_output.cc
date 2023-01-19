@@ -151,28 +151,27 @@ VideoOutput::~VideoOutput() {
 }
 
 void VideoOutput::NotifyRender() {
-  thread_pool_ref_->Post([&]() { CheckAndResize(); });
-  registrar_->texture_registrar()->MarkTextureFrameAvailable(texture_id_);
+  thread_pool_ref_->Post(std::bind(&VideoOutput::CheckAndResize, this));
+  thread_pool_ref_->Post(std::bind(&VideoOutput::Render, this));
 }
 
 void VideoOutput::Render() {
   if (texture_id_) {
     // H/W
     if (surface_manager_ != nullptr) {
-      surface_manager_->MakeCurrent(true);
-      mpv_opengl_fbo fbo{
-          0,
-          surface_manager_->width(),
-          surface_manager_->height(),
-          0,
-      };
-      mpv_render_param params[]{
-          {MPV_RENDER_PARAM_OPENGL_FBO, &fbo},
-          {MPV_RENDER_PARAM_INVALID, nullptr},
-      };
-      mpv_render_context_render(render_context_, params);
-      surface_manager_->SwapBuffers();
-      surface_manager_->MakeCurrent(false);
+      surface_manager_->Draw([&]() {
+        mpv_opengl_fbo fbo{
+            0,
+            surface_manager_->width(),
+            surface_manager_->height(),
+            0,
+        };
+        mpv_render_param params[]{
+            {MPV_RENDER_PARAM_OPENGL_FBO, &fbo},
+            {MPV_RENDER_PARAM_INVALID, nullptr},
+        };
+        mpv_render_context_render(render_context_, params);
+      });
     }
     // S/W
     if (pixel_buffer_ != nullptr) {
@@ -189,6 +188,12 @@ void VideoOutput::Render() {
           {MPV_RENDER_PARAM_INVALID, nullptr},
       };
       mpv_render_context_render(render_context_, params);
+    }
+    try {
+      // Notify Flutter that a new frame is available.
+      registrar_->texture_registrar()->MarkTextureFrameAvailable(texture_id_);
+    } catch (...) {
+      // Prevent any redundant exceptions if the texture is unregistered etc.
     }
   }
 }
@@ -267,8 +272,7 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
             kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle,
             [&](auto, auto) -> FlutterDesktopGpuSurfaceDescriptor* {
               if (texture_id_) {
-                auto future = thread_pool_ref_->Post([&]() { Render(); });
-                future.wait();
+                surface_manager_->RequestFrame();
                 return textures_.at(texture_id_).get();
               }
               return nullptr;
@@ -296,8 +300,6 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
         std::make_unique<flutter::TextureVariant>(flutter::PixelBufferTexture(
             [&](auto, auto) -> FlutterDesktopPixelBuffer* {
               if (texture_id_) {
-                auto future = thread_pool_ref_->Post([&]() { Render(); });
-                future.wait();
                 return pixel_buffer_textures_.at(texture_id_).get();
               }
               return nullptr;
