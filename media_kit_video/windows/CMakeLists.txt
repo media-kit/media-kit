@@ -17,26 +17,6 @@ set(PLUGIN_NAME "media_kit_video_plugin")
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
 set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
 
-add_definitions(
-
-  # Some GPUs/Hardware seem to experience black flickering when rendering with hardware acceleration.
-  # Calling |glFinish| eliminates this. This seems to be some sort of synchronization problem between Flutter / Monitor / mpv etc.
-  # Now there are bunch of |glFinish| calls inside |ANGLESurfaceManager| & |VideoOutput| classes which fix any flickering issues.
-  # There doesn't seem to be any better alternative for OpenGL ES 2.0. See:
-  #
-  # * https://github.com/alexmercerind/media_kit/issues/10
-  # * https://github.com/alexmercerind/media_kit/pull/11
-  # * https://stackoverflow.com/a/12157120/12825435
-  #
-  # Though |glFinish| is not optimal, it is still way-way better in terms of performance as compared to software rendering.
-  # Personally, my budget machine with AMD Ryzen 3 2200U with integrated Radeon Vega 3 Mobile Graphics never experienced this issue.
-  # At most, 4K 30FPS or 1080p 60FPS videos play flawlessly without any major load on the hardware. 4K 60FPS videos certainly experience some frame drops. But nothing that can be referred as flicker.
-  -DENABLE_GL_FINISH_SAFEGUARD
-
-  # Query ID3D11Device from ANGLE itself instead of enumerating / creating a new one.
-  -DENABLE_ID3D11DEVICE_FROM_ANGLE
-)
-
 # Add libmpv & ANGLE headers to the include path.
 include_directories(
   "${LIBMPV_SRC}/include"
