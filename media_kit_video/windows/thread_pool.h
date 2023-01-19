@@ -12,6 +12,10 @@
 #include <future>
 #include <queue>
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 class ThreadPool {
  public:
   explicit ThreadPool(size_t);
@@ -30,7 +34,7 @@ class ThreadPool {
 };
 
 inline ThreadPool::ThreadPool(size_t threads) : stop_(false) {
-  for (size_t i = 0; i < threads; i++)
+  for (size_t i = 0; i < threads; i++) {
     workers_.emplace_back([&] {
       for (;;) {
         std::packaged_task<void()> task;
@@ -48,6 +52,11 @@ inline ThreadPool::ThreadPool(size_t threads) : stop_(false) {
         task();
       }
     });
+#ifdef _WIN32
+    ::SetThreadPriority(workers_.back().native_handle(),
+                        THREAD_PRIORITY_HIGHEST);
+#endif
+  }
 }
 
 template <class F, class... Args>
