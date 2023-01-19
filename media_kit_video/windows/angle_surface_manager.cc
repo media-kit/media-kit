@@ -34,37 +34,45 @@ ANGLESurfaceManager::~ANGLESurfaceManager() {
   CleanUp(true);
 }
 
-HANDLE ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
+void ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
   if (width == width_ && height == height_) {
-    // Same dimensions.
-    return handle_;
+    return;
   }
   width_ = width;
   height_ = height;
   // Create new Direct3D texture & |surface_| preserving previously created
   // |display_| & |context_| from the constructor.
   Initialize();
-  return handle_;
+}
+
+void ANGLESurfaceManager::Draw(std::function<void()> draw_callback) {
+  std::lock_guard<std::mutex> lock(draw_mutex_);
+  MakeCurrent(true);
+  draw_callback();
+  SwapBuffers();
+  MakeCurrent(false);
+}
+
+void ANGLESurfaceManager::RequestFrame() {
+  std::lock_guard<std::mutex> lock(draw_mutex_);
+  // Only supported on D3D 11 code path.
+  if (d3d_11_device_context_ != nullptr) {
+    d3d_11_device_context_->CopyResource(d3d_11_texture_2D_.Get(),
+                                         internal_d3d_11_texture_2D_.Get());
+    d3d_11_device_context_->Flush();
+  }
+  // Internal HANDLE is same as public HANDLE on D3D 9 code path.
 }
 
 void ANGLESurfaceManager::SwapBuffers() {
-#ifdef ENABLE_GL_FINISH_SAFEGUARD
   glFinish();
-#endif
 }
 
 void ANGLESurfaceManager::MakeCurrent(bool value) {
   if (value) {
-#ifdef ENABLE_GL_FINISH_SAFEGUARD
-    glFinish();
-#endif
     eglMakeCurrent(display_, surface_, surface_, context_);
   } else {
-#ifdef ENABLE_GL_FINISH_SAFEGUARD
-    glFinish();
-#endif
-    eglMakeCurrent(EGL_NO_DISPLAY, EGL_NO_SURFACE, EGL_NO_SURFACE,
-                   EGL_NO_CONTEXT);
+    eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
   }
 }
 
@@ -133,7 +141,7 @@ void ANGLESurfaceManager::Initialize() {
     return;
   }
   // Additional check.
-  if (handle_ == nullptr) {
+  if (internal_handle_ == nullptr || handle_ == nullptr) {
     throw std::runtime_error("Unable to retrieve Direct3D shared HANDLE.");
     return;
   }
@@ -141,31 +149,6 @@ void ANGLESurfaceManager::Initialize() {
 
 bool ANGLESurfaceManager::InitializeD3D11() {
   if (adapter_ == nullptr) {
-#ifdef ENABLE_ID3D11DEVICE_FROM_ANGLE
-    // Query |adapter_| from ANGLE directly.
-    PFNEGLQUERYDISPLAYATTRIBEXTPROC eglQueryDisplayAttribEXT =
-        reinterpret_cast<PFNEGLQUERYDISPLAYATTRIBEXTPROC>(
-            eglGetProcAddress("eglQueryDisplayAttribEXT"));
-    PFNEGLQUERYDEVICEATTRIBEXTPROC eglQueryDeviceAttribEXT =
-        reinterpret_cast<PFNEGLQUERYDEVICEATTRIBEXTPROC>(
-            eglGetProcAddress("eglQueryDeviceAttribEXT"));
-    if (!eglQueryDisplayAttribEXT || !eglQueryDeviceAttribEXT) {
-      FAIL("eglGetProcAddress");
-    }
-    CreateEGLDisplay();
-    EGLAttrib egl_device = 0, angle_device = 0;
-    if (eglQueryDisplayAttribEXT(display_, EGL_DEVICE_EXT, &egl_device) ==
-        EGL_TRUE) {
-      if (eglQueryDeviceAttribEXT(reinterpret_cast<EGLDeviceEXT>(egl_device),
-                                  EGL_D3D11_DEVICE_ANGLE,
-                                  &angle_device) == EGL_TRUE) {
-        d3d_11_device_ = reinterpret_cast<ID3D11Device*>(angle_device);
-      }
-    }
-    if (!d3d_11_device_) {
-      FAIL("Unable to query ID3D11Device from ANGLE.");
-    }
-#else
     auto feature_levels = {
         D3D_FEATURE_LEVEL_11_0,
         D3D_FEATURE_LEVEL_10_1,
@@ -188,13 +171,17 @@ bool ANGLESurfaceManager::InitializeD3D11() {
     dxgi->Release();
     if (!adapter_) {
       FAIL("No IDXGIAdapter found.");
+    } else {
+      // Just for debugging.
+      DXGI_ADAPTER_DESC adapter_desc_;
+      adapter_->GetDesc(&adapter_desc_);
+      std::wcout << adapter_desc_.Description << std::endl;
     }
     auto hr = ::D3D11CreateDevice(
         adapter_, D3D_DRIVER_TYPE_UNKNOWN, 0, 0, feature_levels.begin(),
         static_cast<UINT>(feature_levels.size()), D3D11_SDK_VERSION,
         &d3d_11_device_, 0, &d3d_11_device_context_);
     CHECK_HRESULT("D3D11CreateDevice");
-#endif
   }
 
   Microsoft::WRL::ComPtr<IDXGIDevice> dxgi_device = nullptr;
@@ -221,15 +208,38 @@ bool ANGLESurfaceManager::InitializeD3D11() {
       D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
   d3d11_texture2D_desc.CPUAccessFlags = 0;
   d3d11_texture2D_desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
+
+  // The general idea is to create two textures, one that is used for rendering
+  // using ANGLE/EGL and another one that is used for accessing the rendered
+  // content using Direct3D 11.
+  // The internal texture is copied to the public texture once a frame is
+  // requested using |ID3D11DeviceContext::CopyResource|. This prevents any kind
+  // of synchronization issues.
+
+  // Internal D3D11 texture used to render to (using ANGLE).
   auto hr = d3d_11_device_->CreateTexture2D(&d3d11_texture2D_desc, nullptr,
-                                            &d3d11_texture_2D_);
+                                            &internal_d3d_11_texture_2D_);
   CHECK_HRESULT("ID3D11Device::CreateTexture2D");
   auto resource = Microsoft::WRL::ComPtr<IDXGIResource>{};
-  hr = d3d11_texture_2D_.As(&resource);
+  hr = internal_d3d_11_texture_2D_.As(&resource);
+  CHECK_HRESULT("ID3D11Texture2D::As");
+  // IMPORTANT: Retrieve |internal_handle_| for interop.
+  hr = resource->GetSharedHandle(&internal_handle_);
+  CHECK_HRESULT("IDXGIResource::GetSharedHandle");
+  internal_d3d_11_texture_2D_->AddRef();
+
+  // Public D3D11 texture used to read from (using Direct3D 11).
+  hr = d3d_11_device_->CreateTexture2D(&d3d11_texture2D_desc, nullptr,
+                                       &d3d_11_texture_2D_);
+  CHECK_HRESULT("ID3D11Device::CreateTexture2D");
+  hr = d3d_11_texture_2D_.As(&resource);
   CHECK_HRESULT("ID3D11Texture2D::As");
   // IMPORTANT: Retrieve |handle_| for interop.
   hr = resource->GetSharedHandle(&handle_);
   CHECK_HRESULT("IDXGIResource::GetSharedHandle");
+  d3d_11_texture_2D_->AddRef();
+
+  // Create EGL surface.
   CreateEGLDisplay();
   return true;
 }
@@ -254,10 +264,14 @@ bool ANGLESurfaceManager::InitializeD3D9() {
           D3DCREATE_DISABLE_PSGP_THREADING | D3DCREATE_MULTITHREADED,
       &present_params, 0, &d3d_9_device_ex_);
   CHECK_HRESULT("IDirect3D9Ex::CreateDeviceEx");
-  // IMPORTANT: Retrieve |handle_| for interop.
+  // IMPORTANT: Retrieve |internal_handle_| for interop.
   hr = d3d_9_device_ex_->CreateTexture(
       width_, height_, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8,
-      D3DPOOL_DEFAULT, &d3d_9_texture_, &handle_);
+      D3DPOOL_DEFAULT, &d3d_9_texture_, &internal_handle_);
+
+  // Not using separate textures for public and private surfaces in D3D9.
+
+  handle_ = internal_handle_;
   CHECK_HRESULT("IDirect3DDevice9Ex::CreateTexture");
   CreateEGLDisplay();
   return true;
@@ -279,41 +293,44 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
       context_ = EGL_NO_CONTEXT;
     }
     display_ = EGL_NO_DISPLAY;
-    // Release D3D 11 resources.
+    // Release D3D device & context if the instance is being destroyed.
     if (d3d_11_device_context_) {
       d3d_11_device_context_->Release();
       d3d_11_device_context_ = nullptr;
     }
-    // Release ID3D11Device only if it was created by us (not by ANGLE).
-#ifndef ENABLE_ID3D11DEVICE_FROM_ANGLE
     if (d3d_11_device_) {
       d3d_11_device_->Release();
       d3d_11_device_ = nullptr;
-    }
-#endif
-    // Release D3D 9 resources.
-    if (d3d_9_texture_) {
-      d3d_9_texture_->Release();
-      d3d_9_texture_ = nullptr;
-    }
-    if (d3d_9_device_ex_) {
-      d3d_9_device_ex_->Release();
-      d3d_9_device_ex_ = nullptr;
     }
     if (d3d_9_ex_) {
       d3d_9_ex_->Release();
       d3d_9_ex_ = nullptr;
     }
+    if (d3d_9_device_ex_) {
+      d3d_9_device_ex_->Release();
+      d3d_9_device_ex_ = nullptr;
+    }
   } else {
     // Clear context & destroy existing |surface_|.
     eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, context_);
-#ifdef ENABLE_GL_FINISH_SAFEGUARD
-    glFinish();
-#endif
     if (display_ != EGL_NO_DISPLAY && surface_ != EGL_NO_SURFACE) {
       eglDestroySurface(display_, surface_);
     }
     surface_ = EGL_NO_SURFACE;
+  }
+  // Release D3D 11 texture(s).
+  if (internal_d3d_11_texture_2D_) {
+    internal_d3d_11_texture_2D_->Release();
+    internal_d3d_11_texture_2D_ = nullptr;
+  }
+  if (d3d_11_texture_2D_) {
+    d3d_11_texture_2D_->Release();
+    d3d_11_texture_2D_ = nullptr;
+  }
+  // Release D3D 9 texture(s).
+  if (d3d_9_texture_) {
+    d3d_9_texture_->Release();
+    d3d_9_texture_ = nullptr;
   }
 }
 
@@ -339,8 +356,8 @@ bool ANGLESurfaceManager::CreateAndBindEGLSurface() {
       EGL_NONE,
   };
   surface_ = eglCreatePbufferFromClientBuffer(
-      display_, EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE, handle_, config_,
-      buffer_attributes);
+      display_, EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE, internal_handle_,
+      config_, buffer_attributes);
   if (surface_ == EGL_NO_SURFACE) {
     FAIL("eglCreatePbufferFromClientBuffer");
   }
