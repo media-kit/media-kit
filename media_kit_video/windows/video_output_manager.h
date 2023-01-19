@@ -9,41 +9,69 @@
 #ifndef FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_VIDEO_OUTPUT_MANAGER_H_
 #define FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_VIDEO_OUTPUT_MANAGER_H_
 
-#include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
-#include <flutter/standard_method_codec.h>
 
 #include <unordered_map>
 
+#include "thread_pool.h"
 #include "video_output.h"
 
-// Fuck that syntax.
-#define VALUE(x) flutter::EncodableValue(x)
-#define IS_METHOD(x) method_call.method_name().compare(x) == 0
-
-// Creates & disposes |VideoOutput| instances for video embedding inside Flutter
-// Windows. |Create| & |Dispose| methods are thread-safe.
+// Creates & disposes |VideoOutput| instances for video embedding.
+//
+// The methods in this class are thread-safe & run on separate worker thread so
+// that they don't block Flutter's UI thread while platform channels are being
+// invoked.
 class VideoOutputManager {
  public:
-  VideoOutputManager(flutter::PluginRegistrarWindows* registrar,
-                     flutter::MethodChannel<flutter::EncodableValue>* channel);
+  VideoOutputManager(flutter::PluginRegistrarWindows* registrar);
 
-  // Creates a new |VideoOutput| and returns reference to it.
-  // It's texture ID may be used to render the video.
-  VideoOutput* Create(int64_t handle,
-                      std::optional<int64_t> width,
-                      std::optional<int64_t> height);
+  // Creates a new |VideoOutput| instance. It's texture ID may be used to render
+  // the video. The changes in it's texture ID & video dimensions will be
+  // notified via the |texture_update_callback|.
+  void Create(
+      int64_t handle,
+      std::optional<int64_t> width,
+      std::optional<int64_t> height,
+      std::function<void(int64_t, int64_t, int64_t)> texture_update_callback);
 
   // Destroys the |VideoOutput| with given handle.
-  bool Dispose(int64_t handle);
+  void Dispose(int64_t handle);
 
   ~VideoOutputManager();
 
  private:
-  std::mutex mutex_ = std::mutex();
-  std::mutex render_mutex_ = std::mutex();
+  // All the operations involving ANGLE or EGL or libmpv must be performed on
+  // same single thread to prevent any race conditions or invalid ANGLE usage.
+  // Not doing so results in access violations & crashes.
+  //
+  // Technically, the correct place to do all the video rendering (& thus
+  // resize) etc. is on Flutter's render thread itself (exposed as callback in
+  // |flutter::GpuSurfaceTexture| & |flutter::PixelBufferTexture|). However,
+  // this slows down the UI too much. So, a good idea seemed to have a separate
+  // worker thread which queues all the rendering related jobs & performs them
+  // orderly. |ThreadPool| is exactly that.
+  //
+  // All of the following tasks involve ANGLE or OpenGL context etc. etc.
+  // Following operations are performed through the |ThreadPool|:
+  //
+  // * Rendering of video frame i.e. |mpv_render_context_render| (also involves
+  //   |eglMakeCurrent| etc.) after being notified by
+  //   |mpv_render_context_set_update_callback|.
+  // * Creation / Disposal of new |VideoOutput|.
+  //     * For creation, |mpv_render_context_create| & instantiation of a new
+  //       |ANGLESurfaceManager| is done through |ThreadPool| (in |VideoOutput|
+  //       constructor).
+  //     * For disposal, |ThreadPool| ensures that all the pending |Render| or
+  //       |Resize| tasks are completed before freeing the |ANGLESurfaceManager|
+  //       & |mpv_render_context| etc.
+  // * Resizing of |ANGLESurfaceManager| & creation of newly sized Flutter
+  //   textures (|flutter::GpuSurfaceTexture| & |flutter::PixelBufferTexture|).
+  //
+  // Creating a |ThreadPool| with maximum number of worker threads as 1, ensures
+  // that all the posted tasks are performed on a single thread orderly. This
+  // also makes usage of any |std::mutex| unnecessary (for the good).
+  std::unique_ptr<ThreadPool> thread_pool_ = std::make_unique<ThreadPool>(1);
   flutter::PluginRegistrarWindows* registrar_ = nullptr;
-  flutter::MethodChannel<flutter::EncodableValue>* channel_ = nullptr;
   std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_ = {};
 };
 

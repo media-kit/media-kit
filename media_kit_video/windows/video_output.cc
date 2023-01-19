@@ -29,126 +29,137 @@ VideoOutput::VideoOutput(int64_t handle,
                          std::optional<int64_t> width,
                          std::optional<int64_t> height,
                          flutter::PluginRegistrarWindows* registrar,
-                         std::mutex* render_mutex_ref)
+                         ThreadPool* thread_pool_ref)
     : handle_(reinterpret_cast<mpv_handle*>(handle)),
       width_(width),
       height_(height),
       registrar_(registrar),
-      render_mutex_ref_(render_mutex_ref) {
-  std::lock_guard<std::mutex> lock(*render_mutex_ref_);
-  // First try to initialize video playback with hardware acceleration &
-  // |ANGLESurfaceManager|, use S/W API as fallback.
-  auto is_hardware_acceleration_enabled = false;
-  // Attempt to use H/W rendering.
-  try {
-    // OpenGL context needs to be set before |mpv_render_context_create|.
-    surface_manager_ = std::make_unique<ANGLESurfaceManager>(
-        static_cast<int32_t>(width_.value_or(1)),
-        static_cast<int32_t>(height_.value_or(1)));
-    Resize(width_.value_or(1), height_.value_or(1));
-    mpv_opengl_init_params gl_init_params{
-        [](auto, auto name) {
-          return reinterpret_cast<void*>(eglGetProcAddress(name));
-        },
-        nullptr,
-    };
-    mpv_render_param params[] = {
-        {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL},
-        {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, &gl_init_params},
-        {MPV_RENDER_PARAM_INVALID, nullptr},
-    };
-    // Request H/W decoding.
-    mpv_set_option_string(handle_, "hwdec", "auto");
-    // Create render context.
-    if (mpv_render_context_create(&render_context_, handle_, params) == 0) {
-      mpv_render_context_set_update_callback(
-          render_context_,
-          [](void* context) {
-            // Notify Flutter that a new frame is available. The actual
-            // rendering will take place in the |Render| method, which will be
-            // called by Flutter on the render thread.
-            auto that = reinterpret_cast<VideoOutput*>(context);
-            that->NotifyRender();
+      thread_pool_ref_(thread_pool_ref) {
+  // The constructor must be invoked through the thread pool, because
+  // |ANGLESurfaceManager| & libmpv render context creation can conflict with
+  // the existing |Render| or |Resize| calls from another |VideoOutput|
+  // instances (which will result in access violation).
+  auto future = thread_pool_ref_->Post([&]() {
+    // First try to initialize video playback with hardware acceleration &
+    // |ANGLESurfaceManager|, use S/W API as fallback.
+    auto is_hardware_acceleration_enabled = false;
+    // Attempt to use H/W rendering.
+    try {
+      // OpenGL context needs to be set before |mpv_render_context_create|.
+      surface_manager_ = std::make_unique<ANGLESurfaceManager>(
+          static_cast<int32_t>(width_.value_or(1)),
+          static_cast<int32_t>(height_.value_or(1)));
+      Resize(width_.value_or(1), height_.value_or(1));
+      mpv_opengl_init_params gl_init_params{
+          [](auto, auto name) {
+            return reinterpret_cast<void*>(eglGetProcAddress(name));
           },
-          reinterpret_cast<void*>(this));
-      // Set flag to true, indicating that H/W rendering is supported.
-      is_hardware_acceleration_enabled = true;
-      std::cout << "media_kit: VideoOutput: Using H/W rendering." << std::endl;
+          nullptr,
+      };
+      mpv_render_param params[] = {
+          {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL},
+          {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, &gl_init_params},
+          {MPV_RENDER_PARAM_INVALID, nullptr},
+      };
+      // Request H/W decoding.
+      mpv_set_option_string(handle_, "hwdec", "auto");
+      // Create render context.
+      if (mpv_render_context_create(&render_context_, handle_, params) == 0) {
+        mpv_render_context_set_update_callback(
+            render_context_,
+            [](void* context) {
+              // Notify Flutter that a new frame is available. The actual
+              // rendering will take place in the |Render| method, which will be
+              // called by Flutter on the render thread.
+              auto that = reinterpret_cast<VideoOutput*>(context);
+              that->NotifyRender();
+            },
+            reinterpret_cast<void*>(this));
+        // Set flag to true, indicating that H/W rendering is supported.
+        is_hardware_acceleration_enabled = true;
+        std::cout << "media_kit: VideoOutput: Using H/W rendering."
+                  << std::endl;
+      }
+    } catch (...) {
+      // Do nothing.
+      // Likely received an |std::runtime_error| from |ANGLESurfaceManager|,
+      // which indicates that H/W rendering is not supported.
     }
-  } catch (...) {
-    // Do nothing.
-    // Likely received an |std::runtime_error| from |ANGLESurfaceManager|,
-    // which indicates that H/W rendering is not supported.
-  }
-  if (!is_hardware_acceleration_enabled) {
-    std::cout << "media_kit: VideoOutput: Using S/W rendering." << std::endl;
-    // Allocate a "large enough" buffer ahead of time.
-    pixel_buffer_ = std::make_unique<uint8_t[]>(SW_RENDERING_PIXEL_BUFFER_SIZE);
-    Resize(width_.value_or(1), height_.value_or(1));
-    mpv_render_param params[] = {
-        {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_SW},
-        {MPV_RENDER_PARAM_INVALID, nullptr},
-    };
-    if (mpv_render_context_create(&render_context_, handle_, params) == 0) {
-      mpv_render_context_set_update_callback(
-          render_context_,
-          [](void* context) {
-            // Notify Flutter that a new frame is available. The actual
-            // rendering will take place in the |Render| method, which will be
-            // called by Flutter on the render thread.
-            auto that = reinterpret_cast<VideoOutput*>(context);
-            that->NotifyRender();
-          },
-          reinterpret_cast<void*>(this));
+    if (!is_hardware_acceleration_enabled) {
+      std::cout << "media_kit: VideoOutput: Using S/W rendering." << std::endl;
+      // Allocate a "large enough" buffer ahead of time.
+      pixel_buffer_ =
+          std::make_unique<uint8_t[]>(SW_RENDERING_PIXEL_BUFFER_SIZE);
+      Resize(width_.value_or(1), height_.value_or(1));
+      mpv_render_param params[] = {
+          {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_SW},
+          {MPV_RENDER_PARAM_INVALID, nullptr},
+      };
+      if (mpv_render_context_create(&render_context_, handle_, params) == 0) {
+        mpv_render_context_set_update_callback(
+            render_context_,
+            [](void* context) {
+              // Notify Flutter that a new frame is available. The actual
+              // rendering will take place in the |Render| method, which will be
+              // called by Flutter on the render thread.
+              auto that = reinterpret_cast<VideoOutput*>(context);
+              that->NotifyRender();
+            },
+            reinterpret_cast<void*>(this));
+      }
     }
-  };
+  });
+  future.wait();
 }
 
 VideoOutput::~VideoOutput() {
-  std::promise<void> alive;
   if (texture_id_) {
-    registrar_->texture_registrar()->UnregisterTexture(
-        texture_id_, [alive_ptr = &alive, id = texture_id_, that = this]() {
-          std::cout << "media_kit: VideoOutput: Free Texture: " << id
-                    << std::endl;
-          if (that->texture_variants_.find(id) !=
-              that->texture_variants_.end()) {
-            that->texture_variants_.erase(id);
-          }
-          // H/W
-          if (that->textures_.find(id) != that->textures_.end()) {
-            that->textures_.erase(id);
-          }
-          // S/W
-          if (that->pixel_buffer_textures_.find(id) !=
-              that->pixel_buffer_textures_.end()) {
-            that->pixel_buffer_textures_.erase(id);
-          }
-          alive_ptr->set_value();
-        });
+    auto promise = std::make_unique<std::promise<void>>();
+    registrar_->texture_registrar()->UnregisterTexture(texture_id_, [&]() {
+      auto id = texture_id_;
+      std::cout << "media_kit: VideoOutput: Free Texture: " << id << std::endl;
+      if (texture_variants_.find(id) != texture_variants_.end()) {
+        texture_variants_.erase(id);
+      }
+      // H/W
+      if (textures_.find(id) != textures_.end()) {
+        textures_.erase(id);
+      }
+      // S/W
+      if (pixel_buffer_textures_.find(id) != pixel_buffer_textures_.end()) {
+        pixel_buffer_textures_.erase(id);
+      }
+      promise->set_value();
+    });
+    promise->get_future().wait();
     texture_id_ = 0;
   }
   if (render_context_) {
     mpv_render_context_free(render_context_);
   }
-  alive.get_future().wait();
+  // Add one more lambda into the thread pool queue & exit the destructor only
+  // when it gets executed. This will ensure that all the tasks posted to the
+  // thread pool are executed (and won't reference the dead object anymore),
+  // most notably |CheckAndResize| & |Render|.
+  auto promise = std::make_unique<std::promise<void>>();
+  thread_pool_ref_->Post([&]() {
+    std::cout << "VideoOutput::~VideoOutput: "
+              << reinterpret_cast<int64_t>(handle_) << std::endl;
+    promise->set_value();
+  });
+  promise->get_future().wait();
 }
 
 void VideoOutput::NotifyRender() {
-  // Ask Flutter to invoke the |Render|.
-  if (texture_id_) {
-    registrar_->texture_registrar()->MarkTextureFrameAvailable(texture_id_);
-  }
+  thread_pool_ref_->Post([&]() { CheckAndResize(); });
+  registrar_->texture_registrar()->MarkTextureFrameAvailable(texture_id_);
 }
 
 void VideoOutput::Render() {
-  std::lock_guard<std::mutex> lock(*render_mutex_ref_);
   if (texture_id_) {
-    CheckAndResize();
     // H/W
     if (surface_manager_ != nullptr) {
       surface_manager_->MakeCurrent(true);
-      // Render frame.
       mpv_opengl_fbo fbo{
           0,
           surface_manager_->width(),
@@ -160,9 +171,7 @@ void VideoOutput::Render() {
           {MPV_RENDER_PARAM_INVALID, nullptr},
       };
       mpv_render_context_render(render_context_, params);
-#ifdef ENABLE_GL_FINISH_SAFEGUARD
-      glFinish();
-#endif
+      surface_manager_->SwapBuffers();
       surface_manager_->MakeCurrent(false);
     }
     // S/W
@@ -187,6 +196,7 @@ void VideoOutput::Render() {
 void VideoOutput::SetTextureUpdateCallback(
     std::function<void(int64_t, int64_t, int64_t)> callback) {
   texture_update_callback_ = callback;
+  texture_update_callback_(texture_id_, GetVideoWidth(), GetVideoHeight());
 }
 
 void VideoOutput::CheckAndResize() {
@@ -221,21 +231,19 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
   // Unregister previously registered texture.
   if (texture_id_) {
     registrar_->texture_registrar()->UnregisterTexture(
-        texture_id_, [id = texture_id_, that = this]() {
+        texture_id_, [id = texture_id_, this]() {
           std::cout << "media_kit: VideoOutput: Free Texture: " << id
                     << std::endl;
-          if (that->texture_variants_.find(id) !=
-              that->texture_variants_.end()) {
-            that->texture_variants_.erase(id);
+          if (texture_variants_.find(id) != texture_variants_.end()) {
+            texture_variants_.erase(id);
           }
           // H/W
-          if (that->textures_.find(id) != that->textures_.end()) {
-            that->textures_.erase(id);
+          if (textures_.find(id) != textures_.end()) {
+            textures_.erase(id);
           }
           // S/W
-          if (that->pixel_buffer_textures_.find(id) !=
-              that->pixel_buffer_textures_.end()) {
-            that->pixel_buffer_textures_.erase(id);
+          if (pixel_buffer_textures_.find(id) != pixel_buffer_textures_.end()) {
+            pixel_buffer_textures_.erase(id);
           }
         });
     texture_id_ = 0;
@@ -259,7 +267,8 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
             kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle,
             [&](auto, auto) -> FlutterDesktopGpuSurfaceDescriptor* {
               if (texture_id_) {
-                Render();
+                auto future = thread_pool_ref_->Post([&]() { Render(); });
+                future.wait();
                 return textures_.at(texture_id_).get();
               }
               return nullptr;
@@ -287,7 +296,8 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
         std::make_unique<flutter::TextureVariant>(flutter::PixelBufferTexture(
             [&](auto, auto) -> FlutterDesktopPixelBuffer* {
               if (texture_id_) {
-                Render();
+                auto future = thread_pool_ref_->Post([&]() { Render(); });
+                future.wait();
                 return pixel_buffer_textures_.at(texture_id_).get();
               }
               return nullptr;

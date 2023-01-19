@@ -17,13 +17,13 @@
 
 #include <future>
 #include <memory>
-#include <mutex>
 
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
 
 #include "angle_surface_manager.h"
+#include "thread_pool.h"
 
 class VideoOutput {
  public:
@@ -55,7 +55,7 @@ class VideoOutput {
               std::optional<int64_t> width,
               std::optional<int64_t> height,
               flutter::PluginRegistrarWindows* registrar,
-              std::mutex* render_mutex_ref);
+              ThreadPool* thread_pool_ref);
 
   ~VideoOutput();
 
@@ -81,12 +81,10 @@ class VideoOutput {
   std::optional<int64_t> width_ = std::nullopt;
   int64_t texture_id_ = 0;
   flutter::PluginRegistrarWindows* registrar_ = nullptr;
+  ThreadPool* thread_pool_ref_ = nullptr;
 
   std::unordered_map<int64_t, std::unique_ptr<flutter::TextureVariant>>
       texture_variants_ = {};
-
-  // For syncing |Render| across multiple instances of |VideoOutput|.
-  std::mutex* render_mutex_ref_ = nullptr;
 
   // H/W rendering.
 

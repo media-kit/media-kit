@@ -78,8 +78,23 @@ class VideoController {
       width,
       height,
     );
+
+    // Wait until first texture ID is received i.e. render context & EGL/D3D surface is created.
+    // We are not waiting on the native-side itself because it will block the UI thread.
+    // Background platform channels are not a thing yet.
+    final completer = Completer<void>();
+    void listener() {
+      if (controller.id.value != null) {
+        debugPrint('VideoController: Texture ID: ${controller.id.value}');
+        completer.complete();
+      }
+    }
+
+    controller.id.addListener(listener);
+
     // Invoking native implementation for querying video adapter, registering OpenGL/Direct3D/ANGLE/pixel-buffer output callbacks & Flutter texture.
-    final result = await _channel.invokeMethod(
+    // NOTE: Sending `int64_t` is causing crash on Windows 7, so sending as string.
+    await _channel.invokeMethod(
       'VideoOutputManager.Create',
       {
         'handle': controller.handle.toString(),
@@ -87,16 +102,10 @@ class VideoController {
         'height': controller.height.toString(),
       },
     );
-    // Notify about updated texture ID & [Rect].
-    final Rect rect = Rect.fromLTRB(
-      result['rect']['left'] * 1.0,
-      result['rect']['top'] * 1.0,
-      result['rect']['right'] * 1.0,
-      result['rect']['bottom'] * 1.0,
-    );
-    final int id = result['id'];
-    controller.rect.value = rect;
-    controller.id.value = id;
+
+    await completer.future;
+    controller.id.removeListener(listener);
+
     // Return the [VideoController].
     return controller;
   }
@@ -105,6 +114,7 @@ class VideoController {
   /// Releases the allocated resources back to the system.
   Future<void> dispose() {
     _controllers.remove(handle);
+    // NOTE: Sending `int64_t` is causing crash on Windows 7, so sending as string.
     return _channel.invokeMethod(
       'VideoOutputManager.Dispose',
       {
@@ -123,28 +133,33 @@ class VideoController {
 final _channel = const MethodChannel('com.alexmercerind/media_kit_video')
   ..setMethodCallHandler(
     (MethodCall call) async {
-      debugPrint(call.method.toString());
-      debugPrint(call.arguments.toString());
-      switch (call.method) {
-        case 'VideoOutput.Resize':
-          {
-            // Notify about updated texture ID & [Rect].
-            final int handle = call.arguments['handle'];
-            final Rect rect = Rect.fromLTRB(
-              call.arguments['rect']['left'] * 1.0,
-              call.arguments['rect']['top'] * 1.0,
-              call.arguments['rect']['right'] * 1.0,
-              call.arguments['rect']['bottom'] * 1.0,
-            );
-            final int id = call.arguments['id'];
-            _controllers[handle]?.rect.value = rect;
-            _controllers[handle]?.id.value = id;
-            break;
-          }
-        default:
-          {
-            break;
-          }
+      try {
+        debugPrint(call.method.toString());
+        debugPrint(call.arguments.toString());
+        switch (call.method) {
+          case 'VideoOutput.Resize':
+            {
+              // Notify about updated texture ID & [Rect].
+              final int handle = call.arguments['handle'];
+              final Rect rect = Rect.fromLTWH(
+                call.arguments['rect']['left'] * 1.0,
+                call.arguments['rect']['top'] * 1.0,
+                call.arguments['rect']['width'] * 1.0,
+                call.arguments['rect']['height'] * 1.0,
+              );
+              final int id = call.arguments['id'];
+              _controllers[handle]?.rect.value = rect;
+              _controllers[handle]?.id.value = id;
+              break;
+            }
+          default:
+            {
+              break;
+            }
+        }
+      } catch (exception, stacktrace) {
+        debugPrint(exception.toString());
+        debugPrint(stacktrace.toString());
       }
     },
   );

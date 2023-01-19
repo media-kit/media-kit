@@ -48,8 +48,9 @@ HANDLE ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
 }
 
 void ANGLESurfaceManager::SwapBuffers() {
-  // No need to flush.
-  eglSwapBuffers(display_, surface_);
+#ifdef ENABLE_GL_FINISH_SAFEGUARD
+  glFinish();
+#endif
 }
 
 void ANGLESurfaceManager::MakeCurrent(bool value) {

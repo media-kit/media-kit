@@ -19,15 +19,14 @@ void MediaKitVideoPlugin::RegisterWithRegistrar(
 
 MediaKitVideoPlugin::MediaKitVideoPlugin(
     flutter::PluginRegistrarWindows* registrar)
-    : registrar_(registrar) {
+    : registrar_(registrar),
+      video_output_manager_(std::make_unique<VideoOutputManager>(registrar)) {
   channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
       registrar->messenger(), "com.alexmercerind/media_kit_video",
       &flutter::StandardMethodCodec::GetInstance());
   channel_->SetMethodCallHandler([&](const auto& call, auto result) {
     HandleMethodCall(call, std::move(result));
   });
-  video_output_manager_ =
-      std::make_unique<VideoOutputManager>(registrar, channel_.get());
 }
 
 MediaKitVideoPlugin::~MediaKitVideoPlugin() {}
@@ -35,11 +34,14 @@ MediaKitVideoPlugin::~MediaKitVideoPlugin() {}
 void MediaKitVideoPlugin::HandleMethodCall(
     const flutter::MethodCall<flutter::EncodableValue>& method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
-  if (IS_METHOD("VideoOutputManager.Create")) {
+  if (method_call.method_name().compare("VideoOutputManager.Create") == 0) {
     auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
-    auto handle = std::get<std::string>(arguments[VALUE("handle")]);
-    auto width = std::get<std::string>(arguments[VALUE("width")]);
-    auto height = std::get<std::string>(arguments[VALUE("height")]);
+    auto handle =
+        std::get<std::string>(arguments[flutter::EncodableValue("handle")]);
+    auto width =
+        std::get<std::string>(arguments[flutter::EncodableValue("width")]);
+    auto height =
+        std::get<std::string>(arguments[flutter::EncodableValue("height")]);
     auto handle_value =
         static_cast<int64_t>(strtoll(handle.c_str(), nullptr, 10));
     auto width_value = std::optional<int64_t>{};
@@ -48,43 +50,55 @@ void MediaKitVideoPlugin::HandleMethodCall(
       width_value = static_cast<int64_t>(strtoll(width.c_str(), nullptr, 10));
       height_value = static_cast<int64_t>(strtoll(height.c_str(), nullptr, 10));
     }
-    auto video_output =
-        video_output_manager_->Create(handle_value, width_value, height_value);
-    result->Success(VALUE(flutter::EncodableMap({
-        {
-            VALUE("id"),
-            VALUE(video_output->texture_id()),
-        },
-        {
-            VALUE("rect"),
-            VALUE(flutter::EncodableMap({
-                {
-                    VALUE("left"),
-                    VALUE(0),
-                },
-                {
-                    VALUE("top"),
-                    VALUE(0),
-                },
-                {
-                    VALUE("right"),
-                    VALUE(video_output->width()),
-                },
-                {
-                    VALUE("bottom"),
-                    VALUE(video_output->height()),
-                },
-            })),
-        },
-
-    })));
-  } else if (IS_METHOD("VideoOutputManager.Dispose")) {
+    video_output_manager_->Create(
+        handle_value, width_value, height_value,
+        [channel_ptr = channel_.get(), handle = handle_value](
+            auto id, auto width, auto height) {
+          channel_ptr->InvokeMethod(
+              "VideoOutput.Resize",
+              std::make_unique<flutter::EncodableValue>(flutter::EncodableMap{
+                  {
+                      flutter::EncodableValue("handle"),
+                      flutter::EncodableValue(handle),
+                  },
+                  {
+                      flutter::EncodableValue("id"),
+                      flutter::EncodableValue(id),
+                  },
+                  {
+                      flutter::EncodableValue("rect"),
+                      flutter::EncodableValue(flutter::EncodableMap{
+                          {
+                              flutter::EncodableValue("left"),
+                              flutter::EncodableValue(0),
+                          },
+                          {
+                              flutter::EncodableValue("top"),
+                              flutter::EncodableValue(0),
+                          },
+                          {
+                              flutter::EncodableValue("width"),
+                              flutter::EncodableValue(width),
+                          },
+                          {
+                              flutter::EncodableValue("height"),
+                              flutter::EncodableValue(height),
+                          },
+                      }),
+                  },
+              }),
+              nullptr);
+        });
+    result->Success(flutter::EncodableValue(std::monostate{}));
+  } else if (method_call.method_name().compare("VideoOutputManager.Dispose") ==
+             0) {
     auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
-    auto handle = std::get<std::string>(arguments[VALUE("handle")]);
+    auto handle =
+        std::get<std::string>(arguments[flutter::EncodableValue("handle")]);
     auto handle_value =
         static_cast<int64_t>(strtoll(handle.c_str(), nullptr, 10));
     video_output_manager_->Dispose(handle_value);
-    result->Success(VALUE(std::monostate{}));
+    result->Success(flutter::EncodableValue(std::monostate{}));
   } else {
     result->NotImplemented();
   }
