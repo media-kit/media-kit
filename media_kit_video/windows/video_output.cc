@@ -151,8 +151,8 @@ VideoOutput::~VideoOutput() {
 }
 
 void VideoOutput::NotifyRender() {
-  thread_pool_ref_->Post(std::bind(&VideoOutput::CheckAndResize, this));
-  thread_pool_ref_->Post(std::bind(&VideoOutput::Render, this));
+  thread_pool_ref_->Post([&]() { CheckAndResize(); });
+  registrar_->texture_registrar()->MarkTextureFrameAvailable(texture_id_);
 }
 
 void VideoOutput::Render() {
@@ -160,7 +160,6 @@ void VideoOutput::Render() {
     // H/W
     if (surface_manager_ != nullptr) {
       surface_manager_->MakeCurrent(true);
-      // Render frame.
       mpv_opengl_fbo fbo{
           0,
           surface_manager_->width(),
@@ -172,9 +171,7 @@ void VideoOutput::Render() {
           {MPV_RENDER_PARAM_INVALID, nullptr},
       };
       mpv_render_context_render(render_context_, params);
-#ifdef ENABLE_GL_FINISH_SAFEGUARD
-      glFinish();
-#endif
+      surface_manager_->SwapBuffers();
       surface_manager_->MakeCurrent(false);
     }
     // S/W
@@ -192,12 +189,6 @@ void VideoOutput::Render() {
           {MPV_RENDER_PARAM_INVALID, nullptr},
       };
       mpv_render_context_render(render_context_, params);
-    }
-    // Notify Flutter that a new frame is available.
-    try {
-      registrar_->texture_registrar()->MarkTextureFrameAvailable(texture_id_);
-    } catch (...) {
-      // Do not crash if the texture is already unregistered.
     }
   }
 }
@@ -276,6 +267,8 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
             kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle,
             [&](auto, auto) -> FlutterDesktopGpuSurfaceDescriptor* {
               if (texture_id_) {
+                auto future = thread_pool_ref_->Post([&]() { Render(); });
+                future.wait();
                 return textures_.at(texture_id_).get();
               }
               return nullptr;
@@ -303,6 +296,8 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
         std::make_unique<flutter::TextureVariant>(flutter::PixelBufferTexture(
             [&](auto, auto) -> FlutterDesktopPixelBuffer* {
               if (texture_id_) {
+                auto future = thread_pool_ref_->Post([&]() { Render(); });
+                future.wait();
                 return pixel_buffer_textures_.at(texture_id_).get();
               }
               return nullptr;
