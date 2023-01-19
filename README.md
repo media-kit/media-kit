@@ -412,7 +412,7 @@ classDiagram
 
   MediaKitVideoPlugin "1" *-- "1" VideoOutputManager: Create VideoOutput(s) with VideoOutputManager for handle passed through platform channel
   VideoOutputManager "1" *-- "*" VideoOutput
-  VideoOutputManager "1" *-- "1" ThreadPool:
+  VideoOutputManager "1" *-- "1" ThreadPool
   VideoOutput "1" o-- "1" ThreadPool: Post creation, resize & render etc. tasks involving EGL to ensure synchronous EGL/ANGLE usage across multiple VideoOutput(s)
   VideoOutput "1" *-- "1" ANGLESurfaceManager: Only for H/W accelerated rendering
 
