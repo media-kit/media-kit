@@ -113,10 +113,16 @@ VideoOutput::VideoOutput(int64_t handle,
 }
 
 VideoOutput::~VideoOutput() {
+  destroyed_ = true;
   if (texture_id_) {
-    auto promise = std::make_unique<std::promise<void>>();
-    registrar_->texture_registrar()->UnregisterTexture(texture_id_, [&]() {
-      auto id = texture_id_;
+    registrar_->texture_registrar()->UnregisterTexture(texture_id_);
+  }
+  // Add one more task into the thread pool queue & exit the destructor only
+  // when it gets executed. This will ensure that all the tasks posted to the
+  // thread pool before this are executed (and won't reference the dead object
+  // anymore), most notably |CheckAndResize| & |Render|.
+  auto future = thread_pool_ref_->Post([&, id = texture_id_]() {
+    if (id) {
       std::cout << "media_kit: VideoOutput: Free Texture: " << id << std::endl;
       if (texture_variants_.find(id) != texture_variants_.end()) {
         texture_variants_.erase(id);
@@ -129,28 +135,20 @@ VideoOutput::~VideoOutput() {
       if (pixel_buffer_textures_.find(id) != pixel_buffer_textures_.end()) {
         pixel_buffer_textures_.erase(id);
       }
-      promise->set_value();
-    });
-    promise->get_future().wait();
-    texture_id_ = 0;
-  }
+    }
+    std::cout << "VideoOutput::~VideoOutput: "
+              << reinterpret_cast<int64_t>(handle_) << std::endl;
+  });
+  future.wait();
   if (render_context_) {
     mpv_render_context_free(render_context_);
   }
-  // Add one more lambda into the thread pool queue & exit the destructor only
-  // when it gets executed. This will ensure that all the tasks posted to the
-  // thread pool are executed (and won't reference the dead object anymore),
-  // most notably |CheckAndResize| & |Render|.
-  auto promise = std::make_unique<std::promise<void>>();
-  thread_pool_ref_->Post([&]() {
-    std::cout << "VideoOutput::~VideoOutput: "
-              << reinterpret_cast<int64_t>(handle_) << std::endl;
-    promise->set_value();
-  });
-  promise->get_future().wait();
 }
 
 void VideoOutput::NotifyRender() {
+  if (destroyed_) {
+    return;
+  }
   thread_pool_ref_->Post(std::bind(&VideoOutput::CheckAndResize, this));
   thread_pool_ref_->Post(std::bind(&VideoOutput::Render, this));
 }
@@ -235,23 +233,29 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
   std::cout << required_width << " " << required_height << std::endl;
   // Unregister previously registered texture.
   if (texture_id_) {
-    registrar_->texture_registrar()->UnregisterTexture(
-        texture_id_, [id = texture_id_, this]() {
-          std::cout << "media_kit: VideoOutput: Free Texture: " << id
-                    << std::endl;
-          if (texture_variants_.find(id) != texture_variants_.end()) {
-            texture_variants_.erase(id);
-          }
-          // H/W
-          if (textures_.find(id) != textures_.end()) {
-            textures_.erase(id);
-          }
-          // S/W
-          if (pixel_buffer_textures_.find(id) != pixel_buffer_textures_.end()) {
-            pixel_buffer_textures_.erase(id);
-          }
-        });
+    registrar_->texture_registrar()->UnregisterTexture(texture_id_);
     texture_id_ = 0;
+    // Add one more task into the thread pool queue for clearing the previous
+    // texture objects. This will ensure that all the tasks posted to the thread
+    // pool before this are executed (and won't reference the dead object
+    // anymore), most notably |CheckAndResize| & |Render|.
+    thread_pool_ref_->Post([&, id = texture_id_]() {
+      if (id) {
+        std::cout << "media_kit: VideoOutput: Free Texture: " << id
+                  << std::endl;
+        if (texture_variants_.find(id) != texture_variants_.end()) {
+          texture_variants_.erase(id);
+        }
+        // H/W
+        if (textures_.find(id) != textures_.end()) {
+          textures_.erase(id);
+        }
+        // S/W
+        if (pixel_buffer_textures_.find(id) != pixel_buffer_textures_.end()) {
+          pixel_buffer_textures_.erase(id);
+        }
+      }
+    });
   }
   // H/W
   if (surface_manager_ != nullptr) {
