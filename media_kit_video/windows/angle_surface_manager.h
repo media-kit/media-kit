@@ -27,7 +27,6 @@
 
 #include <cstdint>
 #include <functional>
-#include <mutex>
 
 class ANGLESurfaceManager {
  public:
@@ -91,7 +90,7 @@ class ANGLESurfaceManager {
   HANDLE handle_ = nullptr;
 
   // Sync |Draw| & |Read| calls.
-  std::mutex mutex_ = std::mutex();
+  HANDLE mutex_ = nullptr;
   // D3D 11 specific references.
   ID3D11Device* d3d_11_device_ = nullptr;
   ID3D11DeviceContext* d3d_11_device_context_ = nullptr;

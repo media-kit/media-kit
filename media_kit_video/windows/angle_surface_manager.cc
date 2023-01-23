@@ -25,6 +25,7 @@
 
 ANGLESurfaceManager::ANGLESurfaceManager(int32_t width, int32_t height)
     : width_(width), height_(height) {
+  mutex_ = ::CreateMutex(NULL, FALSE, NULL);
   // Create new Direct3D texture & |surface_|, |display_| & |context_|.
   Initialize();
   MakeCurrent(true);
@@ -32,6 +33,7 @@ ANGLESurfaceManager::ANGLESurfaceManager(int32_t width, int32_t height)
 
 ANGLESurfaceManager::~ANGLESurfaceManager() {
   CleanUp(true);
+  ::ReleaseMutex(mutex_);
 }
 
 void ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
@@ -46,15 +48,16 @@ void ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
 }
 
 void ANGLESurfaceManager::Draw(std::function<void()> callback) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  ::WaitForSingleObject(mutex_, INFINITE);
   MakeCurrent(true);
   callback();
   SwapBuffers();
   MakeCurrent(false);
+  ::ReleaseMutex(mutex_);
 }
 
 void ANGLESurfaceManager::Read() {
-  std::lock_guard<std::mutex> lock(mutex_);
+  ::WaitForSingleObject(mutex_, INFINITE);
   // Only supported on D3D 11 code path.
   if (d3d_11_device_context_ != nullptr) {
     d3d_11_device_context_->CopyResource(d3d_11_texture_2D_.Get(),
@@ -62,6 +65,7 @@ void ANGLESurfaceManager::Read() {
     d3d_11_device_context_->Flush();
   }
   // Internal HANDLE is same as public HANDLE on D3D 9 code path.
+  ::ReleaseMutex(mutex_);
 }
 
 void ANGLESurfaceManager::SwapBuffers() {
