@@ -45,16 +45,16 @@ void ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
   Initialize();
 }
 
-void ANGLESurfaceManager::Draw(std::function<void()> draw_callback) {
-  std::lock_guard<std::mutex> lock(draw_mutex_);
+void ANGLESurfaceManager::Draw(std::function<void()> callback) {
+  std::lock_guard<std::mutex> lock(mutex_);
   MakeCurrent(true);
-  draw_callback();
+  callback();
   SwapBuffers();
   MakeCurrent(false);
 }
 
-void ANGLESurfaceManager::RequestFrame() {
-  std::lock_guard<std::mutex> lock(draw_mutex_);
+void ANGLESurfaceManager::Read() {
+  std::lock_guard<std::mutex> lock(mutex_);
   // Only supported on D3D 11 code path.
   if (d3d_11_device_context_ != nullptr) {
     d3d_11_device_context_->CopyResource(d3d_11_texture_2D_.Get(),

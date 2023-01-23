@@ -272,7 +272,7 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
             kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle,
             [&](auto, auto) -> FlutterDesktopGpuSurfaceDescriptor* {
               if (texture_id_) {
-                surface_manager_->RequestFrame();
+                surface_manager_->Read();
                 return textures_.at(texture_id_).get();
               }
               return nullptr;

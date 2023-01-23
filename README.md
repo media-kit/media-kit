@@ -468,7 +468,7 @@ classDiagram
 
     +HandleResize(width: int32_t, height: int32_t)
     +Draw(draw_callback: std::function<void()>)
-    +RequestFrame()
+    +Read()
     +SwapBuffers()
     +MakeCurrent(value: bool)
     -CreateEGLDisplay()

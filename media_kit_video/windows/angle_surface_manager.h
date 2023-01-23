@@ -49,11 +49,11 @@ class ANGLESurfaceManager {
   //
   // Automatically acquires & releases |context_| before & after |draw_callback|
   // is completed. Ensures synchronization with |RequestFrame| aswell.
-  void Draw(std::function<void()> draw_callback);
+  void Draw(std::function<void()> callback);
 
   // Copies the rendered content from internal |ID3D11Texture2D| to public
   // |ID3D11Texture2D|. The |handle| may be used to access the rendered content.
-  void RequestFrame();
+  void Read();
 
   void SwapBuffers();
 
@@ -90,8 +90,8 @@ class ANGLESurfaceManager {
   HANDLE internal_handle_ = nullptr;
   HANDLE handle_ = nullptr;
 
-  // Sync |Draw| & |RequestFrame| calls.
-  std::mutex draw_mutex_ = std::mutex();
+  // Sync |Draw| & |Read| calls.
+  std::mutex mutex_ = std::mutex();
   // D3D 11 specific references.
   ID3D11Device* d3d_11_device_ = nullptr;
   ID3D11DeviceContext* d3d_11_device_context_ = nullptr;
