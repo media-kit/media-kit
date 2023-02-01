@@ -18,6 +18,7 @@ void VideoOutputManager::Create(
     std::optional<int64_t> height,
     std::function<void(int64_t, int64_t, int64_t)> texture_update_callback) {
   std::thread([=]() {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (video_outputs_.find(handle) == video_outputs_.end()) {
       auto instance = std::make_unique<VideoOutput>(
           handle, width, height, registrar_, thread_pool_.get());
@@ -29,6 +30,7 @@ void VideoOutputManager::Create(
 
 void VideoOutputManager::Dispose(int64_t handle) {
   std::thread([=]() {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (video_outputs_.find(handle) != video_outputs_.end()) {
       video_outputs_.erase(handle);
     }
@@ -36,6 +38,7 @@ void VideoOutputManager::Dispose(int64_t handle) {
 }
 
 VideoOutputManager::~VideoOutputManager() {
+  std::lock_guard<std::mutex> lock(mutex_);
   // |VideoOutput| destructor will do the relevant cleanup.
   video_outputs_.clear();
   // This destructor is only called when the plugin is being destroyed i.e. the

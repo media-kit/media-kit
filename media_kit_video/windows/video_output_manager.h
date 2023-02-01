@@ -40,6 +40,7 @@ class VideoOutputManager {
   ~VideoOutputManager();
 
  private:
+  std::mutex mutex_ = std::mutex();
   // All the operations involving ANGLE or EGL or libmpv must be performed on
   // same single thread to prevent any race conditions or invalid ANGLE usage.
   // Not doing so results in access violations & crashes.
