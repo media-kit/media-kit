@@ -23,17 +23,22 @@
     FAIL(message);             \
   }
 
+int ANGLESurfaceManager::instance_count_ = 0;
+
 ANGLESurfaceManager::ANGLESurfaceManager(int32_t width, int32_t height)
     : width_(width), height_(height) {
   mutex_ = ::CreateMutex(NULL, FALSE, NULL);
   // Create new Direct3D texture & |surface_|, |display_| & |context_|.
   Initialize();
   MakeCurrent(true);
+  instance_count_++;
 }
 
 ANGLESurfaceManager::~ANGLESurfaceManager() {
   CleanUp(true);
   ::ReleaseMutex(mutex_);
+  ::CloseHandle(mutex_);
+  instance_count_--;
 }
 
 void ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
@@ -283,18 +288,19 @@ bool ANGLESurfaceManager::InitializeD3D9() {
 
 void ANGLESurfaceManager::CleanUp(bool release_context) {
   if (release_context) {
-    if (display_ != EGL_NO_DISPLAY) {
-      eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    if (display_ != EGL_NO_DISPLAY && surface_ != EGL_NO_SURFACE) {
       eglReleaseTexImage(display_, surface_, EGL_BACK_BUFFER);
-      eglTerminate(display_);
+    }
+    if (display_ != EGL_NO_DISPLAY && context_ != EGL_NO_CONTEXT) {
+      eglDestroyContext(display_, context_);
+      context_ = EGL_NO_CONTEXT;
     }
     if (surface_ != EGL_NO_SURFACE) {
       eglDestroySurface(display_, surface_);
-      display_ = EGL_NO_SURFACE;
+      surface_ = EGL_NO_SURFACE;
     }
-    if (context_ != EGL_NO_CONTEXT) {
-      eglDestroyContext(display_, context_);
-      context_ = EGL_NO_CONTEXT;
+    if (instance_count_ == 1) {
+      eglTerminate(display_);
     }
     display_ = EGL_NO_DISPLAY;
     // Release D3D device & context if the instance is being destroyed.

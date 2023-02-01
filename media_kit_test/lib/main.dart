@@ -105,6 +105,22 @@ class HomeScreen extends StatelessWidget {
           ),
           ListTile(
             title: const Text(
+              'Multiple [Player]s with multiple [Video]s • Tabs',
+              style: TextStyle(fontSize: 14.0),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const MultiplePlayersMultipleVideosTabsScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            title: const Text(
               'Stress Test',
               style: TextStyle(fontSize: 14.0),
               maxLines: 1,
@@ -975,5 +991,82 @@ class _StressTestScreenState extends State<StressTestScreen> {
                   .toList(),
             ),
     );
+  }
+}
+
+class MultiplePlayersMultipleVideosTabsScreen extends StatelessWidget {
+  const MultiplePlayersMultipleVideosTabsScreen({Key? key}) : super(key: key);
+
+  static const int count = 5;
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: count,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('package:media_kit'),
+          bottom: TabBar(
+            tabs: [
+              for (int i = 0; i < count; i++)
+                const Tab(
+                  icon: Icon(Icons.video_collection),
+                ),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            for (int i = 0; i < count; i++) TabScreen(i),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class TabScreen extends StatefulWidget {
+  final int i;
+  const TabScreen(this.i, {Key? key}) : super(key: key);
+  @override
+  State<TabScreen> createState() => _TabScreenState();
+}
+
+class _TabScreenState extends State<TabScreen> {
+  Player player = Player();
+  VideoController? controller;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      controller = await VideoController.create(
+        player.handle,
+      );
+      player.volume = 0.0;
+      await player.open(
+        Playlist(
+          [
+            Media('asset://assets/video_${widget.i}.mp4'),
+          ],
+        ),
+      );
+      await player.setPlaylistMode(PlaylistMode.loop);
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    Future.microtask(() async {
+      await controller?.dispose();
+      await player.dispose();
+    });
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Video(controller: controller);
   }
 }

@@ -28,6 +28,11 @@
 #include <cstdint>
 #include <functional>
 
+// A large part of implementation is inspired (not derived) from Flutter.
+// Primarily because it is well tested & stable reference implementation for
+// hosting ANGLE. See:
+// https://github.com/flutter/engine/blob/master/shell/platform/windows/angle_surface_manager.h
+
 class ANGLESurfaceManager {
  public:
   const int32_t width() const { return width_; }
@@ -148,6 +153,9 @@ class ANGLESurfaceManager {
       EGL_TRUE,
       EGL_NONE,
   };
+
+  // Number of active instances of ANGLESurfaceManager.
+  static int32_t instance_count_;
 };
 
 #endif  // MEDIA_KIT_VIDEO_WINDOWS_ANGLE_SURFACE_MANAGER_H_

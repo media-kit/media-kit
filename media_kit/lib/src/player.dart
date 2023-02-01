@@ -33,8 +33,8 @@ import 'package:media_kit/src/models/player_streams.dart';
 /// player.open(
 ///   Playlist(
 ///     [
-///       Media('file:///C:/Users/Alex/Music/Sample.MP3'),
-///       Media('file:///C:/Users/Alex/Video/Sample.MKV'),
+///       Media('file:///C:/Users/Hitesh/Music/Sample.MP3'),
+///       Media('file:///C:/Users/Hitesh/Video/Sample.MKV'),
 ///       Media('https://www.example.com/sample.mp4'),
 ///       Media('rtsp://www.example.com/live'),
 ///     ],
