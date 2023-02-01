@@ -5,8 +5,8 @@
 // All rights reserved.
 // Use of this source code is governed by MIT license that can be found in the
 // LICENSE file.
-#ifndef FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_THREAD_POOL_H_
-#define FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_THREAD_POOL_H_
+#ifndef THREAD_POOL_H_
+#define THREAD_POOL_H_
 
 #include <functional>
 #include <future>

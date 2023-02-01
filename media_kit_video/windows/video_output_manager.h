@@ -6,8 +6,8 @@
 // Use of this source code is governed by MIT license that can be found in the
 // LICENSE file.
 
-#ifndef FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_VIDEO_OUTPUT_MANAGER_H_
-#define FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_VIDEO_OUTPUT_MANAGER_H_
+#ifndef VIDEO_OUTPUT_MANAGER_H_
+#define VIDEO_OUTPUT_MANAGER_H_
 
 #include <flutter/plugin_registrar_windows.h>
 

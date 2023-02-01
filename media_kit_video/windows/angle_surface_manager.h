@@ -6,8 +6,8 @@
 // Use of this source code is governed by MIT license that can be found in the
 // LICENSE file.
 
-#ifndef MEDIA_KIT_VIDEO_WINDOWS_ANGLE_SURFACE_MANAGER_H_
-#define MEDIA_KIT_VIDEO_WINDOWS_ANGLE_SURFACE_MANAGER_H_
+#ifndef ANGLE_SURFACE_MANAGER_H_
+#define ANGLE_SURFACE_MANAGER_H_
 
 // Make declarations in |d3d9.h| visible.
 #define DIRECT3D_VERSION 0x0900
@@ -158,4 +158,4 @@ class ANGLESurfaceManager {
   static int32_t instance_count_;
 };
 
-#endif  // MEDIA_KIT_VIDEO_WINDOWS_ANGLE_SURFACE_MANAGER_H_
+#endif  // ANGLE_SURFACE_MANAGER_H_
