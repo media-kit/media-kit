@@ -1007,10 +1007,13 @@ class MultiplePlayersMultipleVideosTabsScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('package:media_kit'),
           bottom: TabBar(
+            isScrollable: true,
+            labelStyle: const TextStyle(fontSize: 14.0),
+            unselectedLabelStyle: const TextStyle(fontSize: 14.0),
             tabs: [
               for (int i = 0; i < count; i++)
-                const Tab(
-                  icon: Icon(Icons.video_collection),
+                Tab(
+                  text: i.toString(),
                 ),
             ],
           ),

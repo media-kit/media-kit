@@ -117,9 +117,6 @@ VideoOutput::~VideoOutput() {
   if (texture_id_) {
     registrar_->texture_registrar()->UnregisterTexture(texture_id_);
   }
-  // Since this destructor is invoked from a detached thread, this won't block.
-  using namespace std::chrono_literals;
-  std::this_thread::sleep_for(1s);
   // Add one more task into the thread pool queue & exit the destructor only
   // when it gets executed. This will ensure that all the tasks posted to
   // the thread pool before this are executed (and won't reference the dead
