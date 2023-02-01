@@ -31,7 +31,6 @@ abstract class NativeLibrary {
 
   /// Searches the native shared library.
   static Future<String> _search() async {
-    print('🎊🎊🎊');
     final scriptDir = File(Platform.script.toFilePath()).parent.path;
     final executableDir = File(Platform.resolvedExecutable).parent.path;
     if (Platform.isWindows) {
