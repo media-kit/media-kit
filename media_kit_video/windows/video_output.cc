@@ -119,8 +119,9 @@ VideoOutput::~VideoOutput() {
   }
   // Add one more task into the thread pool queue & exit the destructor only
   // when it gets executed. This will ensure that all the tasks posted to
-  // the thread pool before this are executed (and won't reference the dead
-  // object anymore), most notably |CheckAndResize| & |Render|.
+  // the thread pool i.e. render or resize before this are executed (and won't
+  // reference the dead object anymore), most notably |CheckAndResize| &
+  // |Render|.
   auto future = thread_pool_ref_->Post([&, id = texture_id_]() {
     if (id) {
       std::cout << "media_kit: VideoOutput: Free Texture: " << id << std::endl;
@@ -138,6 +139,10 @@ VideoOutput::~VideoOutput() {
     }
     std::cout << "VideoOutput::~VideoOutput: "
               << reinterpret_cast<int64_t>(handle_) << std::endl;
+    // Free (call destructor) |ANGLESurfaceManager| through the thread pool.
+    // This will ensure synchronized EGL or ANGLE usage & won't conflict with
+    // |Render| or |CheckAndResize| of other |VideoOutput|s.
+    surface_manager_.reset(nullptr);
   });
   future.wait();
   if (render_context_) {
