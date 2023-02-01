@@ -4,11 +4,11 @@ set(PROJECT_NAME "media_kit_libs_windows_video")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20230116-git-50169e0.7z")
+set(LIBMPV "mpv-dev-x86_64-20230201-git-7990dd8.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/alexmercerind/mpv-win32-build/releases/download/2023-01-16/${LIBMPV}")
-set(LIBMPV_MD5 "b05146e43a9c47a30d551f0ad57788cc")
+set(LIBMPV_URL "https://github.com/alexmercerind/mpv-win32-build/releases/download/2023-02-01/${LIBMPV}")
+set(LIBMPV_MD5 "f74bc12679a6ab2b800500ee6567bc6f")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
@@ -37,7 +37,10 @@ if(NOT EXISTS "${LIBMPV_SRC}")
   add_custom_target("${PROJECT_NAME}_LIBMPV_EXTRACT" ALL)
   add_custom_command(
     TARGET "${PROJECT_NAME}_LIBMPV_EXTRACT"
-    COMMAND "${CMAKE_COMMAND}" -E tar xzf "${LIBMPV_ARCHIVE}"
+    COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${LIBMPV_ARCHIVE}\""
+    COMMAND xcopy "\"${LIBMPV_SRC}/include/mpv\"" "\"${LIBMPV_SRC}/mpv\"" /E /H /C /I
+    COMMAND rmdir "\"${LIBMPV_SRC}/include\"" /S /Q
+    COMMAND ren "\"${LIBMPV_SRC}/mpv\"" "\"include\""
     WORKING_DIRECTORY "${LIBMPV_SRC}"
   )
 endif()
@@ -76,14 +79,14 @@ if(NOT EXISTS "${ANGLE_SRC}")
   add_custom_target("${PROJECT_NAME}_ANGLE_EXTRACT" ALL)
   add_custom_command(
     TARGET "${PROJECT_NAME}_ANGLE_EXTRACT"
-    COMMAND "${CMAKE_COMMAND}" -E tar xzf "${ANGLE_ARCHIVE}"
+    COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${ANGLE_ARCHIVE}\""
     WORKING_DIRECTORY "${ANGLE_SRC}"
   )
 endif()
 
 set(
   media_kit_libs_windows_video_bundled_libraries
-  "${LIBMPV_SRC}/mpv-2.dll"
+  "${LIBMPV_SRC}/libmpv-2.dll"
   "${ANGLE_SRC}/api-ms-win-core-console-l1-1-0.dll"
   "${ANGLE_SRC}/api-ms-win-core-console-l1-2-0.dll"
   "${ANGLE_SRC}/api-ms-win-core-datetime-l1-1-0.dll"
