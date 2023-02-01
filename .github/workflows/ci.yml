@@ -22,12 +22,12 @@ jobs:
       - uses: actions/upload-artifact@v1
         with:
           name: media_kit_test_win32_x64
-          path: media_kit_test_win32_x64.7z
+          path: media_kit_test/media_kit_test_win32_x64.7z
       - uses: softprops/action-gh-release@v1
         with:
           draft: true
           prerelease: false
           tag_name: "vnext"
           files: |
-            media_kit_test_win32_x64.7z
+            media_kit_test/media_kit_test_win32_x64.7z
           token: ${{ secrets.ACCESS_TOKEN }}
