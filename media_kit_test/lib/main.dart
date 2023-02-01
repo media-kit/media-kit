@@ -1006,16 +1006,22 @@ class MultiplePlayersMultipleVideosTabsScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('package:media_kit'),
-          bottom: TabBar(
-            isScrollable: true,
-            labelStyle: const TextStyle(fontSize: 14.0),
-            unselectedLabelStyle: const TextStyle(fontSize: 14.0),
-            tabs: [
-              for (int i = 0; i < count; i++)
-                Tab(
-                  text: i.toString(),
-                ),
-            ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TabBar(
+                isScrollable: true,
+                labelStyle: const TextStyle(fontSize: 14.0),
+                unselectedLabelStyle: const TextStyle(fontSize: 14.0),
+                tabs: [
+                  for (int i = 0; i < count; i++)
+                    Tab(
+                      text: i.toString(),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
         body: TabBarView(
