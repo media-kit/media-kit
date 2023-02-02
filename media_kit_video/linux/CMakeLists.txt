@@ -15,13 +15,16 @@ set(PLUGIN_NAME "media_kit_video_plugin")
 add_library(
   ${PLUGIN_NAME} SHARED
   "media_kit_video_plugin.cc"
+  "texture_gl.cc"
+  "video_output_manager.cc"
+  "video_output.cc"
 )
 
 apply_standard_settings(${PLUGIN_NAME})
 
 # Check for libmpv headers & libraries.
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(mpv REQUIRED mpv)
+pkg_check_modules(mpv IMPORTED_TARGET mpv)
 
 
 set_target_properties(
