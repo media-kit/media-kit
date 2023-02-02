@@ -1,7 +1,8 @@
 name: media_kit_libs_windows_video
 description: Windows package providing video (& audio) native libraries for package:media_kit.
 version: 1.0.0
-homepage:
+homepage: https://github.com/alexmercerind/media_kit.git
+repository: https://github.com/alexmercerind/media_kit.git
 
 environment:
   sdk: ">=2.17.0 <3.0.0"
