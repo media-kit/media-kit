@@ -5,11 +5,10 @@
 // All rights reserved.
 // Use of this source code is governed by MIT license that can be found in the
 // LICENSE file.
+
 #include "include/media_kit_video/media_kit_video_plugin.h"
 
 #include <gtk/gtk.h>
-
-#include <flutter_linux/flutter_linux.h>
 
 #define MEDIA_KIT_VIDEO_PLUGIN(obj)                                     \
   (G_TYPE_CHECK_INSTANCE_CAST((obj), media_kit_video_plugin_get_type(), \
@@ -24,14 +23,8 @@ G_DEFINE_TYPE(MediaKitVideoPlugin, media_kit_video_plugin, g_object_get_type())
 static void media_kit_video_plugin_handle_method_call(
     MediaKitVideoPlugin* self,
     FlMethodCall* method_call) {
-  g_autoptr(FlMethodResponse) response = nullptr;
-  const gchar* method = fl_method_call_get_name(method_call);
-  if (strcmp(method, "getPlatformVersion") == 0) {
-    g_autoptr(FlValue) result = fl_value_new_null();
-    response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
-  } else {
-    response = FL_METHOD_RESPONSE(fl_method_not_implemented_response_new());
-  }
+  g_autoptr(FlMethodResponse) response =
+      FL_METHOD_RESPONSE(fl_method_not_implemented_response_new());
   fl_method_call_respond(method_call, response, nullptr);
 }
 
