@@ -796,8 +796,7 @@ class _MultiplePlayersMultipleVideosScreenState
                   Container(
                     alignment: Alignment.center,
                     width: (MediaQuery.of(context).size.width - 64.0),
-                    height:
-                        (MediaQuery.of(context).size.width - 64.0) * 9.0 / 16.0,
+                    height: (MediaQuery.of(context).size.width - 64.0),
                     child: getVideoForIndex(i),
                   ),
                   const Divider(height: 1.0, thickness: 1.0),
