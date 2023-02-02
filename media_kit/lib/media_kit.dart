@@ -9,6 +9,7 @@
 export 'package:media_kit/src/player.dart';
 export 'package:media_kit/src/platform_player.dart';
 
+export 'package:media_kit/src/models/output_device.dart';
 export 'package:media_kit/src/models/media.dart';
 export 'package:media_kit/src/models/playlist.dart';
 export 'package:media_kit/src/models/audio_params.dart';
