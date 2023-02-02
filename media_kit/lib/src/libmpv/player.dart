@@ -3,10 +3,11 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
+import 'package:media_kit/src/models/output_device.dart';
 
 import 'package:media_kit/src/platform_player.dart';
 import 'package:media_kit/src/libmpv/core/initializer.dart';
@@ -200,6 +201,46 @@ class Player extends PlatformPlayer {
       command.cast(),
     );
     calloc.free(command);
+  }
+
+  /// Assign output device to the [Player]
+  Future<void> setOutputDevice(OutputDevice device) async {
+    final ctx = await _handle.future;
+    final name = 'audio-device'.toNativeUtf8();
+    final value = device.name.toNativeUtf8();
+    _libmpv?.mpv_set_property_string(
+      ctx, 
+      name.cast(), 
+      value.cast()
+    );
+    calloc.free(name);
+    calloc.free(value);
+  }
+
+  /// Get all output devices of the [Player]
+  Future<List<OutputDevice>> getListOutputDevices() async {
+    final ctx = await _handle.future;
+    final name = 'audio-device'.toNativeUtf8();
+    final devices = _libmpv?.mpv_get_property_string(
+      ctx, 
+      name.cast()
+    ).cast<Utf8>().toDartString();
+    final dataJson = jsonDecode(devices ?? '{}');
+    calloc.free(name);
+    return (dataJson as List).map(( deviceJson ) => OutputDevice.fromMap(deviceJson)).toList();
+  }
+
+  /// Get current output device of the [Player]
+  Future<OutputDevice> get getCurrentOutputDevice async {
+    final ctx = await _handle.future;
+    final name = 'audio-device'.toNativeUtf8();
+    final currentOutputDeviceName = _libmpv?.mpv_get_property_string(
+      ctx, 
+      name.cast()
+    ).cast<Utf8>().toDartString();
+    final devices = await getListOutputDevices();
+    calloc.free(name);
+    return devices.firstWhere(( device ) => device.name == currentOutputDeviceName, orElse: () => devices.first);
   }
 
   /// Appends a [Media] to the [Player]'s playlist.
