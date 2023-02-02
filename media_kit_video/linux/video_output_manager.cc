@@ -11,7 +11,7 @@
 struct _VideoOutputManager {
   GObject parent_instance;
   GHashTable* video_outputs;
-  GMutex* mutex;
+  GMutex mutex;
   FlTextureRegistrar* texture_registrar;
 };
 
@@ -20,13 +20,13 @@ G_DEFINE_TYPE(VideoOutputManager, video_output_manager, G_TYPE_OBJECT)
 static void video_output_manager_init(VideoOutputManager* self) {
   self->video_outputs = g_hash_table_new_full(g_int64_hash, g_int64_equal,
                                               nullptr, g_object_unref);
-  self->mutex = g_mutex_new();
+  g_mutex_init(&self->mutex);
 }
 
 static void video_output_manager_dispose(GObject* object) {
   VideoOutputManager* self = VIDEO_OUTPUT_MANAGER(object);
   g_hash_table_unref(self->video_outputs);
-  g_mutex_free(self->mutex);
+  g_mutex_clear(&self->mutex);
   G_OBJECT_CLASS(video_output_manager_parent_class)->dispose(object);
 }
 
@@ -34,7 +34,7 @@ static void video_output_manager_class_init(VideoOutputManagerClass* klass) {
   G_OBJECT_CLASS(klass)->dispose = video_output_manager_dispose;
 }
 
-static VideoOutputManager* video_output_manager_new(
+VideoOutputManager* video_output_manager_new(
     FlTextureRegistrar* texture_registrar) {
   auto video_output_manager = VIDEO_OUTPUT_MANAGER(
       g_object_new(video_output_manager_get_type(), nullptr));
@@ -42,13 +42,13 @@ static VideoOutputManager* video_output_manager_new(
   return video_output_manager;
 }
 
-static void video_output_manager_create(
-    VideoOutputManager* self,
-    gint64 handle,
-    gint64 width,
-    gint64 height,
-    TextureUpdateCallback texture_update_callback,
-    gpointer texture_update_callback_context) {
+void video_output_manager_create(VideoOutputManager* self,
+                                 gint64 handle,
+                                 gint64 width,
+                                 gint64 height,
+                                 TextureUpdateCallback texture_update_callback,
+                                 gpointer texture_update_callback_context) {
+  // Pack the arguments into a struct to pass to the thread.
   typedef struct _ThreadData {
     VideoOutputManager* self;
     gint64 handle;
@@ -57,20 +57,30 @@ static void video_output_manager_create(
     TextureUpdateCallback texture_update_callback;
     gpointer texture_update_callback_context;
   } ThreadData;
-  ThreadData* data = g_new(ThreadData, 1);
-  g_thread_create(
-      [](gpointer data) -> gpointer {
-        VideoOutputManager* self = ((ThreadData*)data)->self;
-        gint64 handle = ((ThreadData*)data)->handle;
-        gint64 width = ((ThreadData*)data)->width;
-        gint64 height = ((ThreadData*)data)->height;
+  ThreadData* data = g_new0(ThreadData, 1);
+  data->self = self;
+  data->handle = handle;
+  data->width = width;
+  data->height = height;
+  data->texture_update_callback = texture_update_callback;
+  data->texture_update_callback_context = texture_update_callback_context;
+  g_thread_new(
+      "video_output_manager_create",
+      [](gpointer context) -> gpointer {
+        ThreadData* data = (ThreadData*)context;
+        VideoOutputManager* self = data->self;
+        gint64 handle = data->handle;
+        gint64 width = data->width;
+        gint64 height = data->height;
         TextureUpdateCallback texture_update_callback =
-            ((ThreadData*)data)->texture_update_callback;
+            data->texture_update_callback;
         gpointer texture_update_callback_context =
-            ((ThreadData*)data)->texture_update_callback_context;
-        g_mutex_lock(self->mutex);
+            data->texture_update_callback_context;
+        g_mutex_lock(&self->mutex);
         if (!g_hash_table_contains(self->video_outputs, (gpointer)handle)) {
-          g_autoptr(VideoOutput) video_output =
+          // Create new |VideoOutput| instance, set texture update callback.
+          // Store in |GHashTable|.
+          VideoOutput* video_output =
               video_output_new(self->texture_registrar, handle, width, height);
           video_output_set_texture_update_callback(
               video_output, texture_update_callback,
@@ -78,31 +88,37 @@ static void video_output_manager_create(
           g_hash_table_insert(self->video_outputs, (gpointer)handle,
                               video_output);
         }
-        g_mutex_unlock(self->mutex);
+        g_mutex_unlock(&self->mutex);
         g_free(data);
         return NULL;
       },
-      data, FALSE, nullptr);
+      data);
 }
 
-static void video_output_manager_dispose(VideoOutputManager* self,
-                                         gint64 handle) {
+void video_output_manager_dispose(VideoOutputManager* self, gint64 handle) {
+  // Pack the arguments into a struct to pass to the thread.
   typedef struct _ThreadData {
     VideoOutputManager* self;
     gint64 handle;
   } ThreadData;
-  ThreadData* data = g_new(ThreadData, 1);
-  g_thread_create(
-      [](gpointer data) -> gpointer {
-        VideoOutputManager* self = ((ThreadData*)data)->self;
-        gint64 handle = ((ThreadData*)data)->handle;
-        g_mutex_lock(self->mutex);
+  ThreadData* data = g_new0(ThreadData, 1);
+  data->self = self;
+  data->handle = handle;
+  g_thread_new(
+      "video_output_manager_dispose",
+      [](gpointer context) -> gpointer {
+        ThreadData* data = (ThreadData*)context;
+        VideoOutputManager* self = data->self;
+        gint64 handle = data->handle;
+        g_mutex_lock(&self->mutex);
+        // Remove |VideoOutput| instance from |GHashTable|.
+        // |g_object_unref| will be called automatically.
         if (g_hash_table_contains(self->video_outputs, (gpointer)handle)) {
           g_hash_table_remove(self->video_outputs, (gpointer)handle);
         }
-        g_mutex_unlock(self->mutex);
+        g_mutex_unlock(&self->mutex);
         g_free(data);
         return NULL;
       },
-      data, FALSE, nullptr);
+      data);
 }

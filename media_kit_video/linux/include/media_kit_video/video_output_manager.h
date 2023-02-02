@@ -9,9 +9,7 @@
 #ifndef VIDEO_OUTPUT_MANAGER_H_
 #define VIDEO_OUTPUT_MANAGER_H_
 
-#include <flutter_linux/fl_texture_registrar.h>
-
-#include "include/media_kit_video/video_output.h"
+#include "video_output.h"
 
 #define VIDEO_OUTPUT_MANAGER_TYPE (video_output_manager_get_type())
 
@@ -30,22 +28,20 @@ G_DECLARE_FINAL_TYPE(VideoOutputManager,
   (G_TYPE_CHECK_INSTANCE_CAST((obj), video_output_manager_get_type(), \
                               VideoOutputManager))
 
-static VideoOutputManager* video_output_manager_new(
+VideoOutputManager* video_output_manager_new(
     FlTextureRegistrar* texture_registrar);
 
 // Creates a new |VideoOutput| instance. It's texture ID may be used to render
 // the video. The changes in it's texture ID & video dimensions will be
 // notified via the |texture_update_callback|.
-static void video_output_manager_create(
-    VideoOutputManager* self,
-    gint64 handle,
-    gint64 width,
-    gint64 height,
-    TextureUpdateCallback texture_update_callback,
-    gpointer texture_update_callback_context);
+void video_output_manager_create(VideoOutputManager* self,
+                                 gint64 handle,
+                                 gint64 width,
+                                 gint64 height,
+                                 TextureUpdateCallback texture_update_callback,
+                                 gpointer texture_update_callback_context);
 
 // Destroys the |VideoOutput| with given handle.
-static void video_output_manager_dispose(VideoOutputManager* self,
-                                         gint64 handle);
+void video_output_manager_dispose(VideoOutputManager* self, gint64 handle);
 
 #endif
