@@ -34,8 +34,8 @@ dependencies:
   # For video support.
   media_kit_video: ^0.0.1
   # Pick based on your requirements / platform:
-  media_kit_libs_windows_video: ^0.0.1 # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^0.0.1 # Windows package for audio (only) native libraries.
+  media_kit_libs_windows_video: ^0.0.1    # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^0.0.1    # Windows package for audio (only) native libraries.
 ```
 
 ## Platforms
