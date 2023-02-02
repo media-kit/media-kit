@@ -9,13 +9,9 @@
 #ifndef VIDEO_OUTPUT_MANAGER_H_
 #define VIDEO_OUTPUT_MANAGER_H_
 
-#include <glib-object.h>
-#include <glib.h>
+#include <flutter_linux/fl_texture_registrar.h>
 
-// I'm going to use standard C++. Fuck you GObject!
-#include <functional>
-#include <optional>
-#include <thread>
+#include "include/media_kit_video/video_output.h"
 
 #define VIDEO_OUTPUT_MANAGER_TYPE (video_output_manager_get_type())
 
@@ -34,7 +30,8 @@ G_DECLARE_FINAL_TYPE(VideoOutputManager,
   (G_TYPE_CHECK_INSTANCE_CAST((obj), video_output_manager_get_type(), \
                               VideoOutputManager))
 
-static VideoOutputManager* video_output_manager_new();
+static VideoOutputManager* video_output_manager_new(
+    FlTextureRegistrar* texture_registrar);
 
 // Creates a new |VideoOutput| instance. It's texture ID may be used to render
 // the video. The changes in it's texture ID & video dimensions will be
@@ -42,9 +39,10 @@ static VideoOutputManager* video_output_manager_new();
 static void video_output_manager_create(
     VideoOutputManager* self,
     gint64 handle,
-    std::optional<gint64> width,
-    std::optional<gint64> height,
-    std::function<void(gint64, gint64, gint64)> texture_update_callback);
+    gint64 width,
+    gint64 height,
+    TextureUpdateCallback texture_update_callback,
+    gpointer texture_update_callback_context);
 
 // Destroys the |VideoOutput| with given handle.
 static void video_output_manager_dispose(VideoOutputManager* self,
