@@ -7,6 +7,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 set(PROJECT_NAME "media_kit_video")
+set(CMAKE_CXX_STANDARD 17)
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 set(PLUGIN_NAME "media_kit_video_plugin")
