@@ -26,42 +26,53 @@ abstract class NativeLibrary {
     if (path != null) {
       return path;
     }
+    return (_resolved ??= await _search());
+  }
+
+  /// Searches the native shared library.
+  static Future<String> _search() async {
     final scriptDir = File(Platform.script.toFilePath()).parent.path;
     final executableDir = File(Platform.resolvedExecutable).parent.path;
     if (Platform.isWindows) {
-      if (await File(join(scriptDir, kWindowsNativeLibrary)).exists()) {
-        return join(scriptDir, kWindowsNativeLibrary);
-      }
-      if (await File(join(executableDir, kWindowsNativeLibrary)).exists()) {
-        return join(executableDir, kWindowsNativeLibrary);
+      for (final library in _kWindowsNativeLibraries) {
+        if (await File(join(scriptDir, library)).exists()) {
+          return join(scriptDir, library);
+        }
+        if (await File(join(executableDir, library)).exists()) {
+          return join(executableDir, library);
+        }
       }
       // Check for `MPV_PATH` environment variable & system `PATH`.
       final mpvPath = Platform.environment['MPV_PATH'];
       final envPath = Platform.environment['PATH'];
       if (mpvPath != null) {
-        if (await File(join(mpvPath, kWindowsNativeLibrary)).exists()) {
-          return join(mpvPath, kWindowsNativeLibrary);
+        for (final library in _kWindowsNativeLibraries) {
+          if (await File(join(mpvPath, library)).exists()) {
+            return join(mpvPath, library);
+          }
         }
       }
       if (envPath != null) {
         final paths = envPath.split(';');
         for (var path in paths) {
-          if (await File(join(path, kWindowsNativeLibrary)).exists()) {
-            return join(path, kWindowsNativeLibrary);
+          for (final library in _kWindowsNativeLibraries) {
+            if (await File(join(path, library)).exists()) {
+              return join(path, library);
+            }
           }
         }
       }
-      throw Exception(kWindowsNativeLibraryNotFoundMessage);
+      throw Exception(_kWindowsNativeLibraryNotFoundMessage);
     }
     if (Platform.isLinux) {
-      if (await File(join(scriptDir, kLinuxNativeLibrary)).exists()) {
-        return join(scriptDir, kLinuxNativeLibrary);
+      if (await File(join(scriptDir, _kLinuxNativeLibrary)).exists()) {
+        return join(scriptDir, _kLinuxNativeLibrary);
       }
-      if (await File(join(executableDir, kLinuxNativeLibrary)).exists()) {
-        return join(executableDir, kLinuxNativeLibrary);
+      if (await File(join(executableDir, _kLinuxNativeLibrary)).exists()) {
+        return join(executableDir, _kLinuxNativeLibrary);
       }
       // Check for globally accessible shared libraries.
-      final systemPaths = [
+      final system = [
         // For Debian or Ubuntu based distributions.
         '/usr/lib/x86_64-linux-gnu',
         // For Arch Linux based distributions.
@@ -69,29 +80,36 @@ abstract class NativeLibrary {
         // For Fedora based distributions.
         '/usr/lib64',
       ];
-      for (final path in systemPaths) {
-        if (await File(join(path, kLinuxNativeLibrary)).exists()) {
-          return join(path, kLinuxNativeLibrary);
+      for (final path in system) {
+        if (await File(join(path, _kLinuxNativeLibrary)).exists()) {
+          return join(path, _kLinuxNativeLibrary);
         }
       }
-      throw Exception(kLinuxNativeLibraryNotFoundMessage);
+      throw Exception(_kLinuxNativeLibraryNotFoundMessage);
     }
     throw Exception(
       'NativeLibrary.find is not supported on ${Platform.operatingSystem}.',
     );
   }
 
-  /// Default `libmpv` shared library name on Windows.
-  static const String kWindowsNativeLibrary = 'mpv-2.dll';
+  /// Resolved path of the native shared library.
+  static String? _resolved;
 
-  /// Default `libmpv` shared library name on Linux.
-  static const String kLinuxNativeLibrary = 'libmpv.so';
+  /// Default libmpv shared library names on Windows.
+  static const List<String> _kWindowsNativeLibraries = [
+    'libmpv-2.dll',
+    'mpv-2.dll',
+    'mpv-1.dll',
+  ];
+
+  /// Default libmpv shared library name on Linux.
+  static const String _kLinuxNativeLibrary = 'libmpv.so';
 
   /// [Exception] message thrown when the native library is not found on Windows.
-  static const String kWindowsNativeLibraryNotFoundMessage =
+  static const String _kWindowsNativeLibraryNotFoundMessage =
       'Cannot find mpv-2.dll in your system %PATH%. One way to deal with this is to ship mpv-2.dll with your script or compiled executable in the same directory.';
 
   /// [Exception] message thrown when the native library is not found on Linux.
-  static const String kLinuxNativeLibraryNotFoundMessage =
+  static const String _kLinuxNativeLibraryNotFoundMessage =
       'Cannot find libmpv in the usual places. Depending on your distro, you may try installing mpv-devel or libmpv-dev package.';
 }

@@ -1030,7 +1030,7 @@ class MultiplePlayersMultipleVideosTabsScreen extends StatelessWidget {
                 tabs: [
                   for (int i = 0; i < count; i++)
                     Tab(
-                      text: i.toString(),
+                      text: 'video_$i.mp4',
                     ),
                 ],
               ),
