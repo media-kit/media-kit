@@ -1,8 +1,10 @@
-// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+// This file is a part of media_kit
+// (https://github.com/alexmercerind/media_kit).
 //
 // Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 // All rights reserved.
-// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// Use of this source code is governed by MIT license that can be found in the
+// LICENSE file.
 
 #include "include/media_kit_video/texture_gl.h"
 
@@ -67,9 +69,11 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
   gint32 required_height = (guint32)video_output_get_height(video_output);
   if (required_width > 0 && required_height > 0) {
     gboolean first_frame = self->name == 0 || self->fbo == 0;
-    gboolean resize = self->current_width != required_width || self->current_height != required_height;
+    gboolean resize = self->current_width != required_width ||
+                      self->current_height != required_height;
     if (first_frame || resize) {
-      g_print("media_kit: TextureGL: Resize: (%d, %d)\n", required_width, required_height);
+      g_print("media_kit: TextureGL: Resize: (%d, %d)\n", required_width,
+              required_height);
       // Free previous texture & FBO.
       if (!first_frame) {
         glDeleteTextures(1, &self->name);
@@ -82,9 +86,11 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       glBindTexture(GL_TEXTURE_2D, self->name);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, required_width, required_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, required_width, required_height,
+                   0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
       // Attach the texture to the FBO.
-      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, self->name, 0);
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             GL_TEXTURE_2D, self->name, 0);
       glBindFramebuffer(GL_FRAMEBUFFER, self->fbo);
       self->current_width = required_width;
       self->current_height = required_height;
@@ -94,7 +100,8 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       glBindTexture(GL_TEXTURE_2D, self->name);
       glBindFramebuffer(GL_FRAMEBUFFER, self->fbo);
     }
-    mpv_render_context* render_context = video_output_get_render_context(video_output);
+    mpv_render_context* render_context =
+        video_output_get_render_context(video_output);
     // Render the frame.
     mpv_opengl_fbo fbo{(gint32)self->fbo, required_width, required_height, 0};
     mpv_render_param params[] = {
