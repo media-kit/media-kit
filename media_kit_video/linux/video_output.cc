@@ -23,13 +23,15 @@ struct _VideoOutput {
   TextureUpdateCallback texture_update_callback;
   gpointer texture_update_callback_context;
   FlTextureRegistrar* texture_registrar;
+  gboolean destroyed;
 };
 
 G_DEFINE_TYPE(VideoOutput, video_output, G_TYPE_OBJECT)
 
 static void video_output_dispose(GObject* object) {
   VideoOutput* self = VIDEO_OUTPUT(object);
-  g_print("media_kit: VideoOutput: video_output_dispose: %ld\n", (gint64)self->handle);
+  self->destroyed = TRUE;
+  fl_texture_registrar_mark_texture_frame_available(self->texture_registrar, FL_TEXTURE(self->texture_gl));
   // H/W
   if (self->texture_gl) {
     fl_texture_registrar_unregister_texture(self->texture_registrar, FL_TEXTURE(self->texture_gl));
@@ -38,6 +40,7 @@ static void video_output_dispose(GObject* object) {
   }
   // TODO(@alexmercerind): Missing S/W rendering.
   mpv_render_context_free(self->render_context);
+  g_print("media_kit: VideoOutput: video_output_dispose: %ld\n", (gint64)self->handle);
   G_OBJECT_CLASS(video_output_parent_class)->dispose(object);
 }
 
@@ -55,6 +58,7 @@ static void video_output_init(VideoOutput* self) {
   self->texture_update_callback = NULL;
   self->texture_update_callback_context = NULL;
   self->texture_registrar = NULL;
+  self->destroyed = FALSE;
 }
 
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar, gint64 handle, gint64 width, gint64 height) {
@@ -89,12 +93,10 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar, gint64 hand
             },
             NULL,
         };
-        gint advanced_control = 1;
         mpv_render_param params[] = {
-            {MPV_RENDER_PARAM_API_TYPE, (gpointer)MPV_RENDER_API_TYPE_OPENGL},
-            {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, (gpointer)&gl_init_params},
-            {MPV_RENDER_PARAM_ADVANCED_CONTROL, (gpointer)&advanced_control},
-            {MPV_RENDER_PARAM_INVALID, NULL},
+            {MPV_RENDER_PARAM_API_TYPE, (void*)MPV_RENDER_API_TYPE_OPENGL},
+            {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, (void*)&gl_init_params},
+            {MPV_RENDER_PARAM_INVALID, (void*)0},
         };
         gint success = mpv_render_context_create(&self->render_context, self->handle, params);
         if (success == 0) {
@@ -102,8 +104,12 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar, gint64 hand
               self->render_context,
               [](void* data) {
                 VideoOutput* self = (VideoOutput*)data;
-                fl_texture_registrar_mark_texture_frame_available(self->texture_registrar,
-                                                                  FL_TEXTURE(self->texture_gl));
+                if (self->destroyed) {
+                  return;
+                }
+                FlTextureRegistrar* texture_registrar = self->texture_registrar;
+                FlTexture* texture = FL_TEXTURE(self->texture_gl);
+                fl_texture_registrar_mark_texture_frame_available(texture_registrar, texture);
               },
               self);
           g_print("media_kit: VideoOutput: Using H/W rendering.\n");
