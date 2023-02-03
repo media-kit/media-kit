@@ -18,7 +18,16 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        fontFamily: Platform.isLinux ? 'Inter' : null,
+        fontFamily: '*',
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: OpenUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: OpenUpwardsPageTransitionsBuilder(),
+            TargetPlatform.linux: OpenUpwardsPageTransitionsBuilder(),
+            TargetPlatform.macOS: OpenUpwardsPageTransitionsBuilder(),
+            TargetPlatform.windows: OpenUpwardsPageTransitionsBuilder(),
+          },
+        ),
       ),
       home: const HomeScreen(),
     );
