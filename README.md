@@ -557,6 +557,11 @@ classDiagram
     -VideoOutput* video_output
     texture_gl_populate_texture(texture: FlTextureGL*, target: guint32*, name: guint32*, width: guint32*, height: guint32*, error: GError**): gboolean
   }
+  
+  class TextureSW {
+    -VideoOutput* video_output
+    texture_sw_copy_pixels(texture: FlPixelBufferTexture*, buffer: const uint8_t**, width: uint32_t*, height: uint32_t*, error: GError**): gboolean
+  }
 ```
 
 ## Implementation
