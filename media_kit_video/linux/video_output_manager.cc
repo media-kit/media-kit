@@ -40,17 +40,15 @@ void video_output_manager_create(VideoOutputManager* self,
                                  gint64 height,
                                  TextureUpdateCallback texture_update_callback,
                                  gpointer texture_update_callback_context) {
-  if (!g_hash_table_contains(self->video_outputs, (gpointer)handle)) {
-    // Create new |VideoOutput| instance, set texture update callback. Store in |GHashTable|.
+  if (!g_hash_table_contains(self->video_outputs, &handle)) {
     g_autoptr(VideoOutput) video_output = video_output_new(self->texture_registrar, handle, width, height);
     video_output_set_texture_update_callback(video_output, texture_update_callback, texture_update_callback_context);
-    g_hash_table_insert(self->video_outputs, (gpointer)handle, g_object_ref(video_output));
+    g_hash_table_insert(self->video_outputs, &handle, g_object_ref(video_output));
   }
 }
 
 void video_output_manager_dispose(VideoOutputManager* self, gint64 handle) {
-  // Remove |VideoOutput| instance from |GHashTable|. |g_object_unref| will be called automatically.
-  if (g_hash_table_contains(self->video_outputs, (gpointer)handle)) {
-    g_hash_table_remove(self->video_outputs, (gpointer)handle);
+  if (g_hash_table_contains(self->video_outputs, &handle)) {
+    g_hash_table_remove(self->video_outputs, &handle);
   }
 }
