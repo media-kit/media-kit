@@ -166,11 +166,7 @@ class _SimpleScreenState extends State<SimpleScreen> {
     Future.microtask(() async {
       // Create a [VideoController] instance from `package:media_kit_video`.
       // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
-      controller = await VideoController.create(
-        player.handle,
-        width: 1920,
-        height: 1080,
-      );
+      controller = await VideoController.create(player.handle);
       setState(() {});
     });
   }
