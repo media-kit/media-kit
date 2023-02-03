@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        fontFamily: '*',
+        fontFamily: Platform.isLinux ? 'Inter' : null,
       ),
       home: const HomeScreen(),
     );
@@ -165,7 +166,11 @@ class _SimpleScreenState extends State<SimpleScreen> {
     Future.microtask(() async {
       // Create a [VideoController] instance from `package:media_kit_video`.
       // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
-      controller = await VideoController.create(player.handle);
+      controller = await VideoController.create(
+        player.handle,
+        width: 1920,
+        height: 1080,
+      );
       setState(() {});
     });
   }
