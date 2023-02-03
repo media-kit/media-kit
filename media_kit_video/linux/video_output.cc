@@ -6,6 +6,7 @@
 
 #include "include/media_kit_video/video_output.h"
 #include "include/media_kit_video/texture_gl.h"
+#include "include/media_kit_video/texture_sw.h"
 
 #include <epoxy/egl.h>
 #include <epoxy/glx.h>
@@ -15,7 +16,9 @@
 struct _VideoOutput {
   GObject parent_instance;
   TextureGL* texture_gl;
-  GdkGLContext* context_gl;
+  GdkGLContext* gdk_gl_context;
+  guint8* pixel_buffer;
+  TextureSW* texture_sw;
   mpv_handle* handle;
   mpv_render_context* render_context;
   gint64 width;
@@ -35,10 +38,15 @@ static void video_output_dispose(GObject* object) {
   // H/W
   if (self->texture_gl) {
     fl_texture_registrar_unregister_texture(self->texture_registrar, FL_TEXTURE(self->texture_gl));
-    g_object_unref(self->context_gl);
+    g_object_unref(self->gdk_gl_context);
     g_object_unref(self->texture_gl);
   }
-  // TODO(@alexmercerind): Missing S/W rendering.
+  // S/W
+  if (self->texture_sw) {
+    fl_texture_registrar_unregister_texture(self->texture_registrar, FL_TEXTURE(self->texture_sw));
+    g_free(self->pixel_buffer);
+    g_object_unref(self->texture_sw);
+  }
   mpv_render_context_free(self->render_context);
   g_print("media_kit: VideoOutput: video_output_dispose: %ld\n", (gint64)self->handle);
   G_OBJECT_CLASS(video_output_parent_class)->dispose(object);
@@ -50,7 +58,9 @@ static void video_output_class_init(VideoOutputClass* klass) {
 
 static void video_output_init(VideoOutput* self) {
   self->texture_gl = NULL;
-  self->context_gl = NULL;
+  self->gdk_gl_context = NULL;
+  self->texture_sw = NULL;
+  self->pixel_buffer = NULL;
   self->handle = NULL;
   self->render_context = NULL;
   self->width = 0;
@@ -69,10 +79,11 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar, gint64 hand
   self->width = width;
   self->height = height;
   GError* error = NULL;
-  self->context_gl = gdk_window_create_gl_context(gdk_get_default_root_window(), &error);
+  self->gdk_gl_context = gdk_window_create_gl_context(gdk_get_default_root_window(), &error);
+  gboolean is_hardware_acceleration_enabled = FALSE;
   if (error == NULL) {
-    // GL context must be made current before creating mpv render context.
-    gdk_gl_context_realize(self->context_gl, &error);
+    // OpenGL context must be made current before creating mpv render context.
+    gdk_gl_context_realize(self->gdk_gl_context, &error);
     if (error == NULL) {
       // Create |FlTextureGL| and register it.
       self->texture_gl = texture_gl_new(self);
@@ -98,8 +109,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar, gint64 hand
             {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, (void*)&gl_init_params},
             {MPV_RENDER_PARAM_INVALID, (void*)0},
         };
-        gint success = mpv_render_context_create(&self->render_context, self->handle, params);
-        if (success == 0) {
+        if (mpv_render_context_create(&self->render_context, self->handle, params) == 0) {
           mpv_render_context_set_update_callback(
               self->render_context,
               [](void* data) {
@@ -112,6 +122,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar, gint64 hand
                 fl_texture_registrar_mark_texture_frame_available(texture_registrar, texture);
               },
               self);
+          is_hardware_acceleration_enabled = TRUE;
           g_print("media_kit: VideoOutput: Using H/W rendering.\n");
         }
       }
@@ -122,7 +133,53 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar, gint64 hand
     g_print("media_kit: VideoOutput: GError: %d\n", error->code);
     g_print("media_kit: VideoOutput: GError: %s\n", error->message);
   }
-  // TODO(@alexmercerind): Fallback S/W rendering.
+#ifdef MPV_RENDER_API_TYPE_SW
+  if (!is_hardware_acceleration_enabled) {
+    // H/W rendering failed somewhere down the line. Fallback to S/W rendering.
+    self->pixel_buffer = g_new0(guint8, SW_RENDERING_PIXEL_BUFFER_SIZE);
+    self->texture_sw = texture_sw_new(self);
+    mpv_render_param params[] = {
+        {MPV_RENDER_PARAM_API_TYPE, (void*)MPV_RENDER_API_TYPE_SW},
+        {MPV_RENDER_PARAM_INVALID, (void*)0},
+    };
+    if (mpv_render_context_create(&self->render_context, self->handle, params) == 0) {
+      mpv_render_context_set_update_callback(
+          self->render_context,
+          [](void* data) {
+            // Usage on single-thread is not a concern with pixel buffers unlike OpenGL.
+            // Let's perform rendering on a separate thread, pixel buffers are already "heavy".
+            g_thread_new(
+                "mpv_render_context_set_update_callback",
+                [](gpointer data) -> gpointer {
+                  VideoOutput* self = (VideoOutput*)data;
+                  if (self->destroyed) {
+                    return NULL;
+                  }
+                  gint64 width = video_output_get_width(self);
+                  gint64 height = video_output_get_height(self);
+                  if (width > 0 && height > 0) {
+                    gint32 size[]{(gint32)width, (gint32)height};
+                    gint32 pitch = 4 * size[0];
+                    guint8* pointer = self->pixel_buffer;
+                    mpv_render_param params[]{
+                        {MPV_RENDER_PARAM_SW_SIZE, size},     {MPV_RENDER_PARAM_SW_FORMAT, (void*)"rgb0"},
+                        {MPV_RENDER_PARAM_SW_STRIDE, &pitch}, {MPV_RENDER_PARAM_SW_POINTER, pointer},
+                        {MPV_RENDER_PARAM_INVALID, (void*)0},
+                    };
+                    mpv_render_context_render(self->render_context, params);
+                    FlTextureRegistrar* texture_registrar = self->texture_registrar;
+                    FlTexture* texture = FL_TEXTURE(self->texture_gl);
+                    fl_texture_registrar_mark_texture_frame_available(texture_registrar, texture);
+                  }
+                  return NULL;
+                },
+                data);
+          },
+          self);
+      g_print("media_kit: VideoOutput: Using S/W rendering.\n");
+    }
+  }
+#endif
   return self;
 }
 
@@ -147,6 +204,14 @@ mpv_render_context* video_output_get_render_context(VideoOutput* self) {
   return self->render_context;
 }
 
+GdkGLContext* video_output_get_gdk_gl_context(VideoOutput* self) {
+  return self->gdk_gl_context;
+}
+
+guint8* video_output_get_pixel_buffer(VideoOutput* self) {
+  return self->pixel_buffer;
+}
+
 gint64 video_output_get_width(VideoOutput* self) {
   // Fixed width.
   if (self->width) {
@@ -155,6 +220,10 @@ gint64 video_output_get_width(VideoOutput* self) {
   // Video resolution dependent width.
   gint64 width = 0;
   mpv_get_property(self->handle, "width", MPV_FORMAT_INT64, &width);
+  if (self->texture_sw) {
+    // Limit width if software rendering is being used.
+    return CLAMP(width, 0, SW_RENDERING_MAX_WIDTH);
+  }
   return width;
 }
 
@@ -166,15 +235,22 @@ gint64 video_output_get_height(VideoOutput* self) {
   // Video resolution dependent height.
   gint64 height = 0;
   mpv_get_property(self->handle, "height", MPV_FORMAT_INT64, &height);
+  if (self->texture_sw) {
+    // Limit width if software rendering is being used.
+    return CLAMP(height, 0, SW_RENDERING_MAX_HEIGHT);
+  }
   return height;
 }
 
 gint64 video_output_get_texture_id(VideoOutput* self) {
-  // H/W.
+  // H/W
   if (self->texture_gl) {
     return (gint64)self->texture_gl;
   }
-  // TODO(@alexmercerind): Missing S/W rendering.
+  // S/W
+  if (self->texture_sw) {
+    return (gint64)self->texture_sw;
+  }
   g_assert_not_reached();
   return -1;
 }

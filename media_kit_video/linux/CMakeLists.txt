@@ -16,6 +16,7 @@ add_library(
   ${PLUGIN_NAME} SHARED
   "media_kit_video_plugin.cc"
   "texture_gl.cc"
+  "texture_sw.cc"
   "video_output_manager.cc"
   "video_output.cc"
 )

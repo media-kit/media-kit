@@ -46,6 +46,10 @@ void video_output_set_texture_update_callback(VideoOutput* self,
 
 mpv_render_context* video_output_get_render_context(VideoOutput* self);
 
+GdkGLContext* video_output_get_gdk_gl_context(VideoOutput* self);
+
+guint8* video_output_get_pixel_buffer(VideoOutput* self);
+
 gint64 video_output_get_width(VideoOutput* self);
 
 gint64 video_output_get_height(VideoOutput* self);
