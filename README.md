@@ -40,8 +40,9 @@ dependencies:
   # For video support.
   media_kit_video: ^0.0.1
   # Pick based on your requirements / platform:
-  media_kit_libs_windows_video: ^0.0.1    # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^0.0.1    # Windows package for audio (only) native libraries.
+  media_kit_libs_windows_video: ^1.0.0 # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^1.0.0 # Windows package for audio (only) native libraries.
+  media_kit_libs_linux: ^1.0.0 # Linux dependency package.
 ```
 
 ## Platforms
@@ -49,12 +50,12 @@ dependencies:
 | Platform | Audio | Video |
 | -------- | ----- | ----- |
 | Windows  | Ready | Ready |
-| Linux    | Ready | WIP   |
+| Linux    | Ready | Ready |
 | macOS    | WIP   | WIP   |
 | Android  | WIP   | WIP   |
 | iOS      | WIP   | WIP   |
 
-## Docs
+## Guide
 
 ### Brief Start
 
@@ -179,8 +180,8 @@ For performance reasons (especially in S/W rendering), if you wish to restrain t
 ```dart
 final controller = await VideoController.create(
   player.handle,
-  width: 1920,
-  height: 1080,
+  width: 640,
+  height: 360,
 );
 ```
 
@@ -198,7 +199,7 @@ The primary goal of [package:media_kit](https://github.com/alexmercerind/media_k
 
 Since, targetting multiple features at once & bundling redundant native libraries can result in increased bundle size of the application, you can manually select the native libraries you want to bundle, depending upon your use-case. The code is architectured to support multiple platforms & features. Support for more platforms will be added in future.
 
-## Support
+## Fund Development
 
 If you find [package:media_kit](https://github.com/alexmercerind/media_kit) package(s) useful, please consider sponsoring me.
 
@@ -400,7 +401,7 @@ classDiagram
 
 _Click on the zoom button on top-right or pinch inside._
 
-#### Windows
+### Windows
 
 ```mermaid
 %%{
@@ -413,7 +414,7 @@ _Click on the zoom button on top-right or pinch inside._
 classDiagram
 
   MediaKitVideoPlugin "1" *-- "1" VideoOutputManager: Create VideoOutput(s) with VideoOutputManager for handle passed through platform channel
-  VideoOutputManager "1" *-- "*" VideoOutput
+  VideoOutputManager "1" *-- "*" VideoOutput: Takes PluginRegistrarWindows as reference
   VideoOutputManager "1" *-- "1" ThreadPool
   VideoOutput "*" o-- "1" ThreadPool: Post creation, resize & render etc. tasks involving EGL to ensure synchronous EGL/ANGLE usage across multiple VideoOutput(s)
   VideoOutput "1" *-- "1" ANGLESurfaceManager: Only for H/W accelerated rendering
@@ -499,7 +500,68 @@ classDiagram
   }
 ```
 
+### Linux
+
+```mermaid
+%%{
+  init: {
+    'themeVariables': {
+      'fontFamily': 'BlinkMacSystemFont, Segoe UI, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji'
+    }
+  }
+}%%
+classDiagram
+  
+  MediaKitVideoPlugin "1" *-- "1" VideoOutputManager: Create VideoOutput(s) with VideoOutputManager for handle passed through platform channel
+  VideoOutputManager "1" *-- "*" VideoOutput: Takes FlTextureRegistrar as reference
+  VideoOutput "1" *-- "1" TextureGL: For H/W rendering.
+  TextureGL "1" o-- "1" VideoOutput: Take VideoOutput as reference
+  VideoOutput "1" *-- "1" TextureSW: For S/W rendering.
+  TextureSW "1" o-- "1" VideoOutput: Take VideoOutput as reference
+  
+  class MediaKitVideoPlugin {
+    -FlMethodChannel* channel
+    -VideoOutputManager* video_output_manager
+  }
+  
+  class VideoOutputManager {
+    -GHashTable* video_outputs
+    -FlTextureRegistrar* texture_registrar
+    +video_output_manager_create(self: VideoOutputManager*, handle: gint64, width: gint64, height: gint64, texture_update_callback: TextureUpdateCallback, texture_update_callback_context: gpointer)
+    +video_output_manager_dispose(self: VideoOutputManager*, handle: gint64)
+  }
+  
+  class VideoOutput {
+    -TextureGL* texture_gl
+    -GdkGLContext* context_gl
+    -mpv_handle* handle
+    -mpv_render_context* render_context
+    -gint64 width
+    -gint64 height
+    -TextureUpdateCallback texture_update_callback
+    -gpointer texture_update_callback_context
+    -FlTextureRegistrar* texture_registrar
+    +video_output_set_texture_update_callback(self: VideoOutput*, texture_update_callback: TextureUpdateCallback, texture_update_callback_context: gpointer)
+    +video_output_get_render_context(self: VideoOutput*): mpv_render_context*
+    +video_output_get_width(self: VideoOutput*): gint64
+    +video_output_get_height(self: VideoOutput*): gint64
+    +video_output_get_texture_id(self: VideoOutput*): gint64
+    +video_output_notify_texture_update(VideoOutput* self);
+  }
+  
+  class TextureGL {
+    -guint32 name
+    -guint32 fbo
+    -guint32 current_width
+    -guint32 current_height
+    -VideoOutput* video_output
+    texture_gl_populate_texture(texture: FlTextureGL*, target: guint32*, name: guint32*, width: guint32*, height: guint32*, error: GError**): gboolean
+  }
+```
+
 ## Implementation
+
+[libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) from [mpv Media Player](https://mpv.io/) is used for leveraging audio & video playback.
 
 ### package:media_kit
 
@@ -519,7 +581,6 @@ However, no such "event-polling" like API is possible for video rendering. It wo
 
 #### Windows
 
-[libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) from [mpv Media Player](https://mpv.io/) is used for leveraging video playback.
 
 - [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) gives access to C API for rendering hardware-accelerated video output using OpenGL. See: [render.h](https://github.com/mpv-player/mpv/blob/master/libmpv/render.h) & [render_gl.h](https://github.com/mpv-player/mpv/blob/master/libmpv/render_gl.h).
 - Flutter recently added ability for Windows to [render Direct3D `ID3D11Texture2D` textures](https://github.com/flutter/engine/pull/26840).
@@ -531,8 +592,6 @@ This hardware accelerated video output requires DirectX 11 or higher. Most Windo
 <details>
 
 <summary> Windows 7 & 8.x also seem to be working correctly. </summary>
-
-<br></br>
 
 ![0](https://user-images.githubusercontent.com/28951144/212947036-4a2430d6-729e-47d7-a356-c8cc8534a1aa.jpg)
 ![1](https://user-images.githubusercontent.com/28951144/212947046-cc8d441c-96f8-4437-9f59-b4613ca73f2a.jpg)
