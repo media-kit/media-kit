@@ -28,6 +28,19 @@ static void texture_gl_init(TextureGL* self) {
 }
 
 static void texture_gl_dispose(GObject* object) {
+  TextureGL* self = TEXTURE_GL(object);
+  // Free texture & FBO.
+  if (self->name != 0) {
+    glDeleteTextures(1, &self->name);
+    self->name = 0;
+  }
+  if (self->fbo != 0) {
+    glDeleteFramebuffers(1, &self->fbo);
+    self->fbo = 0;
+  }
+  self->current_width = 1;
+  self->current_height = 1;
+  self->video_output = NULL;
   G_OBJECT_CLASS(texture_gl_parent_class)->dispose(object);
 }
 
@@ -82,13 +95,15 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       glBindTexture(GL_TEXTURE_2D, self->name);
       glBindFramebuffer(GL_FRAMEBUFFER, self->fbo);
     }
-    // Render the frame.
-    mpv_opengl_fbo fbo{(gint32)self->fbo, required_width, required_height, 0};
-    mpv_render_param params[] = {
-        {MPV_RENDER_PARAM_OPENGL_FBO, &fbo},
-        {MPV_RENDER_PARAM_INVALID, NULL},
-    };
-    mpv_render_context_render(render_context, params);
+    if (mpv_render_context_update(render_context) & MPV_RENDER_UPDATE_FRAME) {
+      // Render the frame.
+      mpv_opengl_fbo fbo{(gint32)self->fbo, required_width, required_height, 0};
+      mpv_render_param params[] = {
+          {MPV_RENDER_PARAM_OPENGL_FBO, &fbo},
+          {MPV_RENDER_PARAM_INVALID, NULL},
+      };
+      mpv_render_context_render(render_context, params);
+    }
     *target = GL_TEXTURE_2D;
     *name = TEXTURE_GL(texture)->name;
     *width = TEXTURE_GL(texture)->current_width;
@@ -97,5 +112,9 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
   }
   g_print("media_kit: TextureGL: No texture to render.\n");
   g_print("media_kit: TextureGL: THIS IS NOT AN ERROR. DO NOT REPORT.\n");
+  *target = GL_TEXTURE_2D;
+  *name = 0;
+  *width = 1;
+  *height = 1;
   return TRUE;
 }
