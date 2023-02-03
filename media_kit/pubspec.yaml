@@ -12,7 +12,7 @@ dependencies:
   meta: ^1.8.0
   path: ^1.8.0
   http: ^0.13.4
-  uri_parser: ^1.0.0
+  uri_parser: ^2.0.0
   safe_local_storage: ^1.0.0
 
 dev_dependencies:
