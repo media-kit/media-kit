@@ -1,10 +1,8 @@
-// This file is a part of media_kit
-// (https://github.com/alexmercerind/media_kit).
+// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
 //
 // Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 // All rights reserved.
-// Use of this source code is governed by MIT license that can be found in the
-// LICENSE file.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 #ifndef MEDIA_KIT_VIDEO_PLUGIN_H_
 #define MEDIA_KIT_VIDEO_PLUGIN_H_
@@ -26,8 +24,7 @@ typedef struct {
 
 FLUTTER_PLUGIN_EXPORT GType media_kit_video_plugin_get_type();
 
-FLUTTER_PLUGIN_EXPORT void media_kit_video_plugin_register_with_registrar(
-    FlPluginRegistrar* registrar);
+FLUTTER_PLUGIN_EXPORT void media_kit_video_plugin_register_with_registrar(FlPluginRegistrar* registrar);
 
 G_END_DECLS
 
