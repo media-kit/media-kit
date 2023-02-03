@@ -89,16 +89,18 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar, gint64 hand
             },
             NULL,
         };
+        gint advanced_control = 1;
         mpv_render_param params[] = {
-            {MPV_RENDER_PARAM_API_TYPE, (void*)MPV_RENDER_API_TYPE_OPENGL},
-            {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, (void*)&gl_init_params},
+            {MPV_RENDER_PARAM_API_TYPE, (gpointer)MPV_RENDER_API_TYPE_OPENGL},
+            {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, (gpointer)&gl_init_params},
+            {MPV_RENDER_PARAM_ADVANCED_CONTROL, (gpointer)&advanced_control},
             {MPV_RENDER_PARAM_INVALID, NULL},
         };
         gint success = mpv_render_context_create(&self->render_context, self->handle, params);
         if (success == 0) {
           mpv_render_context_set_update_callback(
               self->render_context,
-              [](void* data) -> void {
+              [](void* data) {
                 VideoOutput* self = (VideoOutput*)data;
                 fl_texture_registrar_mark_texture_frame_available(self->texture_registrar,
                                                                   FL_TEXTURE(self->texture_gl));
