@@ -22,10 +22,10 @@ add_library(
 
 apply_standard_settings(${PLUGIN_NAME})
 
-# Check for libmpv headers & libraries.
+# Check for libmpv & epoxy headers & libraries.
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(mpv IMPORTED_TARGET mpv)
-
+pkg_check_modules(epoxy IMPORTED_TARGET epoxy)
 
 set_target_properties(
   ${PLUGIN_NAME} PROPERTIES
@@ -36,12 +36,14 @@ target_compile_definitions(
   ${PLUGIN_NAME} PRIVATE
   FLUTTER_PLUGIN_IMPL
   "${mpv_CFLAGS_OTHER}"
+  "${epoxy_CFLAGS_OTHER}"
 )
 
 target_include_directories(
   ${PLUGIN_NAME} INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
   "${mpv_INCLUDE_DIRS}"
+  "${epoxy_INCLUDE_DIRS}"
 )
 
 target_link_libraries(
@@ -49,6 +51,7 @@ target_link_libraries(
   flutter
   PkgConfig::GTK
   PkgConfig::mpv
+  PkgConfig::epoxy
 )
 
 set(
