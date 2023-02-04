@@ -19,6 +19,11 @@ Future<void> main() async {
       print('${event ~/ 1000} KB/s');
     }
   });
+  print(await player.audioDevice);
+  for (final device in await player.availableAudioDevices) {
+    print(device.name);
+    print(device.description);
+  }
   await player.open(
     Playlist(
       [
