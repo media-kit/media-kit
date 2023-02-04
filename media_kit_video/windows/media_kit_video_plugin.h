@@ -39,4 +39,4 @@ class MediaKitVideoPlugin : public flutter::Plugin {
 
 }  // namespace media_kit_video
 
-#endif  // FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_PLUGIN_H_
+#endif  // MEDIA_KIT_VIDEO_PLUGIN_H_

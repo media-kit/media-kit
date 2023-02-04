@@ -88,4 +88,4 @@ inline ThreadPool::~ThreadPool() {
   }
 }
 
-#endif
+#endif  // THREAD_POOL_H_

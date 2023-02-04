@@ -76,4 +76,4 @@ class VideoOutputManager {
   std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_ = {};
 };
 
-#endif  // FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_VIDEO_OUTPUT_MANAGER_H_
+#endif  // VIDEO_OUTPUT_MANAGER_H_

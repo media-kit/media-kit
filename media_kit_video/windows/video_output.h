@@ -106,4 +106,4 @@ class VideoOutput {
       [](int64_t, int64_t, int64_t) {};
 };
 
-#endif  // FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_VIDEO_OUTPUT_H_
+#endif  // VIDEO_OUTPUT_H_
