@@ -36,6 +36,7 @@ VideoOutputManager* video_output_manager_new(
  * dimensions based on video's resolution.
  * @param height Preferred height of the video. Pass `NULL` for using texture
  * dimensions based on video's resolution.
+ * @param enable_hardware_acceleration Whether to enable hardware acceleration.
  * @param texture_update_callback Callback invoked when the texture ID updates
  * i.e. video dimensions changes.
  * @param texture_update_callback_context Context passed to
@@ -45,6 +46,7 @@ void video_output_manager_create(VideoOutputManager* self,
                                  gint64 handle,
                                  gint64 width,
                                  gint64 height,
+                                 gboolean enable_hardware_acceleration,
                                  TextureUpdateCallback texture_update_callback,
                                  gpointer texture_update_callback_context);
 

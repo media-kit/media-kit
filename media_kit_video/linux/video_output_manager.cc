@@ -43,11 +43,13 @@ void video_output_manager_create(VideoOutputManager* self,
                                  gint64 handle,
                                  gint64 width,
                                  gint64 height,
+                                 gboolean enable_hardware_acceleration,
                                  TextureUpdateCallback texture_update_callback,
                                  gpointer texture_update_callback_context) {
   if (!g_hash_table_contains(self->video_outputs, &handle)) {
     g_autoptr(VideoOutput) video_output =
-        video_output_new(self->texture_registrar, handle, width, height);
+        video_output_new(self->texture_registrar, handle, width, height,
+                         enable_hardware_acceleration);
     video_output_set_texture_update_callback(
         video_output, texture_update_callback, texture_update_callback_context);
     g_hash_table_insert(self->video_outputs, &handle,

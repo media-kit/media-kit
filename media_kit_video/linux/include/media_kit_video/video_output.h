@@ -41,12 +41,14 @@ G_DECLARE_FINAL_TYPE(VideoOutput,
  * dimensions based on video's resolution.
  * @param height Preferred height of the video. Pass `NULL` for using texture
  * dimensions based on video's resolution.
+ * @param enable_hardware_acceleration Whether to enable hardware acceleration.
  * @return VideoOutput*
  */
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                               gint64 handle,
                               gint64 width,
-                              gint64 height);
+                              gint64 height,
+                              gboolean enable_hardware_acceleration);
 
 /**
  * @brief Sets the callback invoked when the texture ID updates i.e. video

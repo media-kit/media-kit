@@ -33,10 +33,14 @@ static void media_kit_video_plugin_handle_method_call(
     FlValue* handle = fl_value_lookup_string(arguments, "handle");
     FlValue* width = fl_value_lookup_string(arguments, "width");
     FlValue* height = fl_value_lookup_string(arguments, "height");
+    FlValue* enable_hardware_acceleration =
+        fl_value_lookup_string(arguments, "enableHardwareAcceleration");
     gint64 handle_value =
         g_ascii_strtoll(fl_value_get_string(handle), NULL, 10);
     gint64 width_value = 0;
     gint64 height_value = 0;
+    gboolean enable_hardware_acceleration_value =
+        fl_value_get_bool(enable_hardware_acceleration);
     if (g_strcmp0(fl_value_get_string(width), "null") != 0 &&
         g_strcmp0(fl_value_get_string(height), "null") != 0) {
       width_value = g_ascii_strtoll(fl_value_get_string(width), NULL, 10);
@@ -53,6 +57,7 @@ static void media_kit_video_plugin_handle_method_call(
     data->handle = handle_value;
     video_output_manager_create(
         self->video_output_manager, handle_value, width_value, height_value,
+        enable_hardware_acceleration_value,
         [](gint64 id, gint64 width, gint64 height, gpointer context) {
           auto data = (VideoOutputTextureUpdateCallbackData*)context;
           FlMethodChannel* channel = data->channel;
