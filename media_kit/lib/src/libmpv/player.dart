@@ -3,7 +3,6 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
@@ -15,9 +14,10 @@ import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/player_error.dart';
+import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
-import 'package:media_kit/src/models/player_error.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 
@@ -609,6 +609,8 @@ class Player extends PlatformPlayer {
           if (!playlistController.isClosed) {
             playlistController.add(state.playlist);
           }
+          // Free the memory allocated by `mpv_get_property`.
+          _libmpv?.mpv_free_node_contents(data);
           calloc.free(name);
           calloc.free(data);
         }
@@ -624,6 +626,97 @@ class Player extends PlatformPlayer {
     }();
   }
 
+  /// Sets current [AudioDevice].
+  @override
+  set audioDevice(FutureOr<AudioDevice> device) {
+    () async {
+      final result = await device;
+      final ctx = await _handle.future;
+      final name = 'audio-device'.toNativeUtf8();
+      final value = result.name.toNativeUtf8();
+      final ptr = calloc<Pointer<Utf8>>();
+      ptr.value = value;
+      _libmpv?.mpv_set_property(
+        ctx,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_STRING,
+        ptr.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+      calloc.free(ptr);
+    }();
+  }
+
+  /// Gets current [AudioDevice].
+  @override
+  FutureOr<AudioDevice> get audioDevice async {
+    final ctx = await _handle.future;
+    final name = 'audio-device'.toNativeUtf8();
+    final value = calloc<Pointer<Utf8>>();
+    _libmpv?.mpv_get_property(
+      ctx,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_STRING,
+      value.cast(),
+    );
+    final devices = await availableAudioDevices;
+    final result = devices.firstWhere(
+      (element) => element.name == value.value.cast<Utf8>().toDartString(),
+    );
+    calloc.free(name);
+    // Free the memory allocated by `mpv_get_property`.
+    _libmpv?.mpv_free(value.value.cast());
+    calloc.free(value);
+    return result;
+  }
+
+  /// Get the list of all the available [AudioDevice]s.
+  @override
+  Future<List<AudioDevice>> get availableAudioDevices async {
+    final ctx = await _handle.future;
+    final name = 'audio-device-list'.toNativeUtf8();
+    final value = calloc<generated.mpv_node>();
+    _libmpv?.mpv_get_property(
+      ctx,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_NODE,
+      value.cast(),
+    );
+    final result = <AudioDevice>[];
+    if (value.ref.format == generated.mpv_format.MPV_FORMAT_NODE_ARRAY) {
+      final list = value.ref.u.list.ref;
+      for (int i = 0; i < list.num; i++) {
+        if (list.values[i].format == generated.mpv_format.MPV_FORMAT_NODE_MAP) {
+          String name = '', description = '';
+          final device = list.values[i].u.list.ref;
+          for (int j = 0; j < device.num; j++) {
+            if (device.values[j].format ==
+                generated.mpv_format.MPV_FORMAT_STRING) {
+              final property = device.keys[j].cast<Utf8>().toDartString();
+              final value =
+                  device.values[j].u.string.cast<Utf8>().toDartString();
+              switch (property) {
+                case 'name':
+                  name = value;
+                  break;
+                case 'description':
+                  description = value;
+                  break;
+              }
+            }
+          }
+          result.add(AudioDevice(name, description));
+        }
+      }
+    }
+    // Free the memory allocated by `mpv_get_property`.
+    _libmpv?.mpv_free_node_contents(value);
+    calloc.free(name);
+    calloc.free(value);
+    return result;
+  }
+
   /// [generated.mpv_handle] address of the internal libmpv player instance.
   @override
   Future<int> get handle async {
@@ -637,8 +730,6 @@ class Player extends PlatformPlayer {
   /// See:
   /// * https://mpv.io/manual/master/#options
   /// * https://mpv.io/manual/master/#properties
-  ///
-  ///
   ///
   Future<void> setProperty(String property, String value) async {
     final ctx = await _handle.future;
