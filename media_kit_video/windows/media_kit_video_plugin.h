@@ -5,8 +5,8 @@
 // All rights reserved.
 // Use of this source code is governed by MIT license that can be found in the
 // LICENSE file.
-#ifndef FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_PLUGIN_H_
-#define FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_PLUGIN_H_
+#ifndef MEDIA_KIT_VIDEO_PLUGIN_H_
+#define MEDIA_KIT_VIDEO_PLUGIN_H_
 
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
@@ -39,4 +39,4 @@ class MediaKitVideoPlugin : public flutter::Plugin {
 
 }  // namespace media_kit_video
 
-#endif  // FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_PLUGIN_H_
+#endif  // MEDIA_KIT_VIDEO_PLUGIN_H_

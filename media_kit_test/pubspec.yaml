@@ -18,6 +18,8 @@ dependencies:
     path: ../media_kit_video
   media_kit_libs_windows_video:
     path: ../media_kit_libs_windows_video
+  media_kit_libs_linux:
+    path: ../media_kit_libs_linux
 
   file_picker: ^5.2.4
 

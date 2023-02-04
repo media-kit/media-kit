@@ -6,8 +6,8 @@
 // Use of this source code is governed by MIT license that can be found in the
 // LICENSE file.
 
-#ifndef FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_VIDEO_OUTPUT_H_
-#define FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_VIDEO_OUTPUT_H_
+#ifndef VIDEO_OUTPUT_H_
+#define VIDEO_OUTPUT_H_
 
 #include <optional>
 
@@ -106,4 +106,4 @@ class VideoOutput {
       [](int64_t, int64_t, int64_t) {};
 };
 
-#endif  // FLUTTER_PLUGIN_MEDIA_KIT_VIDEO_VIDEO_OUTPUT_H_
+#endif  // VIDEO_OUTPUT_H_

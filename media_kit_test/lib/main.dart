@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -14,8 +15,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: HomeScreen(),
+    return MaterialApp(
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        fontFamily: _fontFamily,
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: OpenUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: OpenUpwardsPageTransitionsBuilder(),
+            TargetPlatform.linux: OpenUpwardsPageTransitionsBuilder(),
+            TargetPlatform.macOS: OpenUpwardsPageTransitionsBuilder(),
+            TargetPlatform.windows: OpenUpwardsPageTransitionsBuilder(),
+          },
+        ),
+      ),
+      home: const HomeScreen(),
     );
   }
 }
@@ -792,8 +806,7 @@ class _MultiplePlayersMultipleVideosScreenState
                   Container(
                     alignment: Alignment.center,
                     width: (MediaQuery.of(context).size.width - 64.0),
-                    height:
-                        (MediaQuery.of(context).size.width - 64.0) * 9.0 / 16.0,
+                    height: (MediaQuery.of(context).size.width - 64.0),
                     child: getVideoForIndex(i),
                   ),
                   const Divider(height: 1.0, thickness: 1.0),
@@ -1012,8 +1025,14 @@ class MultiplePlayersMultipleVideosTabsScreen extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: TabBar(
                 isScrollable: true,
-                labelStyle: const TextStyle(fontSize: 14.0),
-                unselectedLabelStyle: const TextStyle(fontSize: 14.0),
+                labelStyle: TextStyle(
+                  fontSize: 14.0,
+                  fontFamily: _fontFamily,
+                ),
+                unselectedLabelStyle: TextStyle(
+                  fontSize: 14.0,
+                  fontFamily: _fontFamily,
+                ),
                 tabs: [
                   for (int i = 0; i < count; i++)
                     Tab(
@@ -1079,3 +1098,11 @@ class _TabScreenState extends State<TabScreen> {
     return Video(controller: controller);
   }
 }
+
+String? _fontFamily = {
+  'windows': 'Segoe UI',
+  'linux': 'Inter',
+  'macOS': 'SF Pro Text',
+  'android': 'Roboto',
+  'ios': 'SF Pro Text',
+}[Platform.operatingSystem];

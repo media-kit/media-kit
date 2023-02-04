@@ -1,5 +1,5 @@
-name: media_kit_libs_windows_audio
-description: Windows package providing audio (only) native libraries for package:media_kit.
+name: media_kit_libs_linux
+description: Linux dependency package for package:media_kit.
 version: 1.0.0
 homepage: https://github.com/alexmercerind/media_kit.git
 repository: https://github.com/alexmercerind/media_kit.git
@@ -20,5 +20,5 @@ dev_dependencies:
 flutter:
   plugin:
     platforms:
-      windows:
-        ffiPlugin: true
+      linux:
+        pluginClass: MediaKitLibsLinuxPlugin

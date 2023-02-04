@@ -48,20 +48,11 @@ import 'package:media_kit_video/src/video_controller.dart';
 ///       /// Use [Video] widget to display video output.
 ///       child: Video(
 ///         controller: controller,
-///         /// Optionally, height & width may be passed.
-///         height: 1920.0,
-///         width: 1080.0,
 ///       ),
 ///     ),
 ///   );
 /// }
 ///
-/// @override
-/// void dispose() {
-///   player.dispose();
-///   controller?.dispose();
-///   super.dispose();
-/// }
 /// ```
 ///
 /// {@endtemplate}
