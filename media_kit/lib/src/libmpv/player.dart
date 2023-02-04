@@ -948,6 +948,19 @@ class Player extends PlatformPlayer {
         calloc.free(val);
       });
     }
+    if (configuration.vid != null) {
+      final name = 'vid'.toNativeUtf8();
+      final flag = calloc<Int8>();
+      flag.value = configuration.vid! ? 1 : 0;
+      _libmpv?.mpv_set_property(
+        result,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        flag.cast(),
+      );
+      calloc.free(name);
+      calloc.free(flag);
+    }
     if (configuration.vo != null) {
       final name = 'vo'.toNativeUtf8();
       final value = configuration.vo!.toNativeUtf8();

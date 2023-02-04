@@ -26,38 +26,35 @@ class PlayerConfiguration {
   /// Enables on-screen libmpv controls.
   ///
   /// Default: `false`.
-  /// Platforms: Windows, Linux.
   final bool osc;
 
-  /// For enabling video rendering.
-  /// If you intend to play only audio, set this to a `'null'` [String] to improve performance.
-  ///
-  /// Default: `true`.
-  /// Platforms: Windows, Linux.
+  /// Enables or disables video output.
+  /// Default: `null`.
+  final bool? vid;
+
+  /// Sets the video output driver.
+  /// Default: `null`.
   final String? vo;
 
   /// Sets manually specified location to the libmpv shared library & overrides the default look-up behavior.
   ///
   /// Default: `null`.
-  /// Platforms: Windows, Linux.
   final String? libmpv;
 
-  /// Sets the `HWND` title of the process.
-  /// This is visible inside the Windows' volume mixer.
+  /// Sets the name of the underlying window & process. This is visible inside the Windows' volume mixer.
   ///
   /// Default: `null`.
-  /// Platforms: Windows.
   final String? title;
 
   /// Optional callback invoked when the internals of the [Player] are configured & ready for playback.
   ///
   /// Default: `null`.
-  /// Platforms: Windows, Linux.
   final void Function()? ready;
 
   /// {@macro player_configuration}
   const PlayerConfiguration({
     this.osc = false,
+    this.vid,
     this.vo,
     this.libmpv,
     this.title,
