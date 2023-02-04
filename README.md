@@ -205,6 +205,43 @@ _TODO: documentation_
 
 Try out [the test application](https://github.com/harmonoid/media_kit/blob/master/media_kit_test/lib/main.dart) for now.
 
+## Setup
+
+### Windows
+
+Everything ready. Just add one of the following packages to your `pubspec.yaml`.
+
+```yaml
+dependencies:
+  ...
+  media_kit_libs_windows_video: ^1.0.0       # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^1.0.0       # Windows package for audio (only) native libraries.
+```
+
+### Linux
+
+System shared libraries from distribution specific user-installed packages are used by-default. You can install these as follows.
+
+#### Ubuntu / Debian
+
+**On user machine you need:**
+
+```bash
+sudo apt install libmpv2
+```
+
+**On development machine you need:**
+
+```bash
+sudo apt install libmpv-dev libmpv2
+```
+
+#### Packaging
+
+There are other ways to bundle these within your app package e.g. within Snap or Flatpak. Few examples:
+- [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
+- [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/_packaging)
+
 ## Goals
 
 The primary goal of [package:media_kit](https://github.com/alexmercerind/media_kit) is to become a **strong, stable, feature-proof & modular** media playback library for Flutter. The idea is to support both **audio & video playback**.
@@ -582,7 +619,7 @@ classDiagram
 
 ## Implementation
 
-[libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) from [mpv Media Player](https://mpv.io/) is used for leveraging audio & video playback.
+[libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) is used for leveraging audio & video playback.
 
 ### package:media_kit
 
@@ -600,8 +637,7 @@ However, no such "event-polling" like API is possible for video rendering. It wo
 
 ### package:media_kit_video
 
-#### Windows
-
+### Windows
 
 - [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) gives access to C API for rendering hardware-accelerated video output using OpenGL. See: [render.h](https://github.com/mpv-player/mpv/blob/master/libmpv/render.h) & [render_gl.h](https://github.com/mpv-player/mpv/blob/master/libmpv/render_gl.h).
 - Flutter recently added ability for Windows to [render Direct3D `ID3D11Texture2D` textures](https://github.com/flutter/engine/pull/26840).
@@ -621,17 +657,9 @@ This hardware accelerated video output requires DirectX 11 or higher. Most Windo
 
 You can visit my [experimentation repository](https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-Direct3D-Interop) to see a minimal example showing OpenGL ES rendering inside Flutter Windows.
 
-#### Linux
+### Linux
 
-[libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) from [mpv Media Player](https://mpv.io/) is used for leveraging video playback. System shared libraries from distribution specific user-installed packages are used by-default. On Ubuntu / Debian based systems, you can install these using:
-
-**NOTE:** This package also bundles specific shared libraries & dependencies.
-
-```bash
-sudo apt install mpv libmpv-dev
-```
-
-On Flutter Linux, [both OpenGL (hardware accelerated) & Pixel Buffer (software) APIs](https://github.com/flutter/engine/pull/24916) are available for rendering on Texture widget.
+On Flutter Linux, [both OpenGL (H/W) & pixel Buffer (S/W) APIs](https://github.com/flutter/engine/pull/24916) are available for rendering on Texture widget.
 
 ## Outcomes
 
