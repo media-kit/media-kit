@@ -31,14 +31,12 @@ HashMap<int, VideoController> _controllers = HashMap<int, VideoController>();
 /// It is important to [dispose] the [VideoController] when it is no longer needed.
 /// It will release the allocated resources back to the system.
 ///
-/// Optionally, fixed [width] & [height] can be passed.
-/// Setting smaller [width] & [height] values can result in better performance especially on low-end devices & software rendering.
-/// This will cause the video output to use the specified dimensions, instead of the original dimensions of the video.
-/// Default is `null`, which means the original dimensions of the video will be used.
+/// **Notes**
 ///
-/// Internally, the [VideoController] invokes platform specific native implementation for video rendering.
-/// Hardware acceleration is enabled by default.
-/// The implementation will fallback to software rendering if system does not have proper support for it.
+/// 1. You can limit size of the video output by specifying `width` & `height`.
+///    By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
+/// 2. You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
+///    By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 ///
 /// {@endtemplate}
 class VideoController {
@@ -51,6 +49,9 @@ class VideoController {
   /// Fixed height of the video output.
   final int? height;
 
+  /// Whether hardware acceleration should be enabled or not.
+  final bool enableHardwareAcceleration;
+
   /// Texture ID of the video output, registered with Flutter engine by the native implementation.
   final ValueNotifier<int?> id = ValueNotifier<int?>(null);
 
@@ -61,8 +62,9 @@ class VideoController {
   VideoController._(
     this.handle,
     this.width,
-    this.height,
-  ) {
+    this.height, {
+    this.enableHardwareAcceleration = true,
+  }) {
     // Save in [HashMap] for getting notified about updated texture IDs.
     _controllers[handle] = this;
   }
@@ -72,11 +74,13 @@ class VideoController {
     Future<int> handle, {
     int? width,
     int? height,
+    bool enableHardwareAcceleration = true,
   }) async {
     final controller = VideoController._(
       await handle,
       width,
       height,
+      enableHardwareAcceleration: enableHardwareAcceleration,
     );
 
     // Wait until first texture ID is received i.e. render context & EGL/D3D surface is created.
@@ -100,6 +104,7 @@ class VideoController {
         'handle': controller.handle.toString(),
         'width': controller.width.toString(),
         'height': controller.height.toString(),
+        'enableHardwareAcceleration': controller.enableHardwareAcceleration,
       },
     );
 
