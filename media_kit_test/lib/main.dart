@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        fontFamily: '*',
+        fontFamily: _fontFamily,
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
             TargetPlatform.android: OpenUpwardsPageTransitionsBuilder(),
@@ -1025,8 +1025,14 @@ class MultiplePlayersMultipleVideosTabsScreen extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: TabBar(
                 isScrollable: true,
-                labelStyle: const TextStyle(fontSize: 14.0),
-                unselectedLabelStyle: const TextStyle(fontSize: 14.0),
+                labelStyle: TextStyle(
+                  fontSize: 14.0,
+                  fontFamily: _fontFamily,
+                ),
+                unselectedLabelStyle: TextStyle(
+                  fontSize: 14.0,
+                  fontFamily: _fontFamily,
+                ),
                 tabs: [
                   for (int i = 0; i < count; i++)
                     Tab(
@@ -1092,3 +1098,11 @@ class _TabScreenState extends State<TabScreen> {
     return Video(controller: controller);
   }
 }
+
+String? _fontFamily = {
+  'windows': 'Segoe UI',
+  'linux': 'Inter',
+  'macOS': 'SF Pro Text',
+  'android': 'Roboto',
+  'ios': 'SF Pro Text',
+}[Platform.operatingSystem];
