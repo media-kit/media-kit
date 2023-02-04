@@ -114,5 +114,8 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
   *name = TEXTURE_GL(texture)->name;
   *width = TEXTURE_GL(texture)->current_width;
   *height = TEXTURE_GL(texture)->current_height;
+  if (self->name == 0 || self->fbo == 0) {
+    g_print("media_kit: TextureGL: THIS IS NOT AN ERROR. DO NOT REPORT!\n");
+  }
   return TRUE;
 }
