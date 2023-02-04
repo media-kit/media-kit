@@ -12,6 +12,7 @@ import 'package:media_kit/src/libmpv/player.dart' as libmpv;
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_streams.dart';
@@ -195,6 +196,23 @@ class Player {
   /// Enables or disables shuffle for [Player]. Default is `false`.
   set shuffle(bool value) {
     platform?.shuffle = value;
+  }
+
+  /// Sets current [AudioDevice].
+  set audioDevice(FutureOr<AudioDevice> device) {
+    platform?.audioDevice = device;
+  }
+
+  /// Gets current [AudioDevice].
+  FutureOr<AudioDevice> get audioDevice {
+    final result = platform?.audioDevice;
+    return result!;
+  }
+
+  /// Get the list of all the available [AudioDevice]s.
+  Future<List<AudioDevice>> get availableAudioDevices async {
+    final result = await platform?.availableAudioDevices;
+    return result!;
   }
 
   /// Internal platform specific identifier for this [Player] instance.

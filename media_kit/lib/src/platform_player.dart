@@ -9,6 +9,7 @@ import 'package:meta/meta.dart';
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/player_error.dart';
 import 'package:media_kit/src/models/player_state.dart';
@@ -153,8 +154,24 @@ abstract class PlatformPlayer {
 
   set shuffle(bool value) {}
 
+  set audioDevice(FutureOr<AudioDevice> device) {}
+
+  FutureOr<AudioDevice> get audioDevice {
+    throw UnimplementedError(
+      '[PlatformPlayer.audioDevice] is not implemented.',
+    );
+  }
+
+  Future<List<AudioDevice>> get availableAudioDevices async {
+    throw UnimplementedError(
+      '[PlatformPlayer.availableAudioDevices] is not implemented.',
+    );
+  }
+
   Future<int> get handle {
-    throw UnimplementedError('[PlatformPlayer.handle] is not implemented.');
+    throw UnimplementedError(
+      '[PlatformPlayer.handle] is not implemented.',
+    );
   }
 
   @protected
