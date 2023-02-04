@@ -559,6 +559,8 @@ classDiagram
   }
   
   class TextureSW {
+    -guint32 current_width
+    -guint32 current_height
     -VideoOutput* video_output
     texture_sw_copy_pixels(texture: FlPixelBufferTexture*, buffer: const uint8_t**, width: uint32_t*, height: uint32_t*, error: GError**): gboolean
   }
