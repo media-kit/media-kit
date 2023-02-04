@@ -27,9 +27,9 @@ G_DECLARE_FINAL_TYPE(TextureSW,
 TextureSW* texture_sw_new(VideoOutput* video_output);
 
 gboolean texture_sw_copy_pixels(FlPixelBufferTexture* texture,
-                                const uint8_t** buffer,
-                                uint32_t* width,
-                                uint32_t* height,
+                                const guint8** buffer,
+                                guint32* width,
+                                guint32* height,
                                 GError** error);
 
 // Limit the frame size to 1080p in software rendering.
