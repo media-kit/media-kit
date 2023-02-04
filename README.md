@@ -182,8 +182,8 @@ class MyScreenState extends State<MyScreen> {
 ```dart
 final controller = await VideoController.create(
   player.handle,
-  width: 640,
-  height: 360,
+  width: 640,                                   // default: null
+  height: 360,                                  // default: null
 );
 ```
 
@@ -195,7 +195,7 @@ final controller = await VideoController.create(
 ```dart
 final controller = await VideoController.create(
   player.handle,
-  enableHardwareAcceleration: false,
+  enableHardwareAcceleration: false,            // default: true
 );
 ```
 
