@@ -177,8 +177,7 @@ class MyScreenState extends State<MyScreen> {
 
 > **Note**
 > * You can limit size of the video output by specifying `width` & `height`.
-> * This can yield performance improvements (especially in S/W rendering or when playing multiple videos).
-> * **By default**, both `height` & `width` are `null` i.e. size of video output is based on video's resolution.
+> * By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
 
 ```dart
 final controller = await VideoController.create(
@@ -190,9 +189,8 @@ final controller = await VideoController.create(
 
 
 > **Note**
-> * You can switch to pixel buffer based software rendering by specifying `enableHardwareAcceleration` as `false`.
-> * This will cause video output to render using CPU instead of GPU.
-> * **By default**, `enableHardwareAcceleration` is true i.e. GPU (D3D/OpenGL/METAL) is utilized.
+> * You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
+> * By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 
 ```dart
 final controller = await VideoController.create(
