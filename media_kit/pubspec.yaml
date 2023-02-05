@@ -3,6 +3,8 @@ description: A complete video & audio library for Flutter & Dart.
 homepage: https://github.com/alexmercerind/media_kit
 repository: https://github.com/alexmercerind/media_kit
 version: 0.0.1
+funding:
+  - https://www.github.com/sponsors/alexmercerind
 
 environment:
   sdk: ">=2.17.0 <3.0.0"
