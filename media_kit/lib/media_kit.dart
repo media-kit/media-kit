@@ -15,8 +15,10 @@ export 'package:media_kit/src/models/audio_device.dart';
 export 'package:media_kit/src/models/audio_params.dart';
 export 'package:media_kit/src/models/playlist_mode.dart';
 
-// For invoking platform-specific code.
+// For invoking platform specific API.
 
 import 'package:media_kit/src/libmpv/player.dart' as libmpv;
+import 'package:media_kit/src/libmpv/core/native_library.dart' as libmpv;
 
 typedef libmpvPlayer = libmpv.Player;
+typedef libmpvNativeLibrary = libmpv.NativeLibrary;
