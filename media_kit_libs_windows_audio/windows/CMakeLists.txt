@@ -1,14 +1,16 @@
+# Thanks to Mitchel Stewart (https://github.com/Quackdoc) for providing patches to generate minimal libmpv & FFmpeg audio specific builds.
+
 cmake_minimum_required(VERSION 3.14)
 
 set(PROJECT_NAME "media_kit_libs_windows_audio")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20230117-git-f52cfda.7z")
+set(LIBMPV "mpv-dev-x86_64-20230125-git-5510d9f.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/harmonoid/mpv-win32-build/releases/download/2023-01-17/${LIBMPV}")
-set(LIBMPV_MD5 "9c7bbdf2c52fd6599df7336a0b61dc06")
+set(LIBMPV_URL "https://github.com/harmonoid/mpv-win32-build/releases/download/2023-01-25/${LIBMPV}")
+set(LIBMPV_MD5 "218daf8210a080f84493f7ff89406043")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
@@ -44,6 +46,6 @@ endif()
 
 set(
   media_kit_libs_windows_audio_bundled_libraries
-  "${LIBMPV_SRC}/mpv-2.dll"
+  "${LIBMPV_SRC}/libmpv-2.dll"
   PARENT_SCOPE
 )
