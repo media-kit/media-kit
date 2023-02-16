@@ -233,7 +233,7 @@ sudo apt install libmpv2
 **On development machine you need:**
 
 ```bash
-sudo apt install libmpv-dev libmpv2
+sudo apt install libmpv-dev mpv
 ```
 
 #### Packaging
