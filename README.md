@@ -175,9 +175,9 @@ class MyScreenState extends State<MyScreen> {
 }
 ```
 
-> **Note**
-> * You can limit size of the video output by specifying `width` & `height`.
-> * By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
+**Note**
+* You can limit size of the video output by specifying `width` & `height`.
+* By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
 
 ```dart
 final controller = await VideoController.create(
@@ -188,9 +188,9 @@ final controller = await VideoController.create(
 ```
 
 
-> **Note**
-> * You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
-> * By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
+**Note**
+* You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
+* By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 
 ```dart
 final controller = await VideoController.create(
@@ -233,7 +233,7 @@ sudo apt install libmpv2
 **On development machine you need:**
 
 ```bash
-sudo apt install libmpv-dev libmpv2
+sudo apt install libmpv-dev mpv
 ```
 
 #### Packaging
@@ -452,7 +452,7 @@ classDiagram
 
 _Click on the zoom button on top-right or pinch inside._
 
-### Windows
+#### Windows
 
 ```mermaid
 %%{
@@ -551,7 +551,7 @@ classDiagram
   }
 ```
 
-### Linux
+#### Linux
 
 ```mermaid
 %%{
@@ -637,14 +637,14 @@ However, no such "event-polling" like API is possible for video rendering. It wo
 
 ### package:media_kit_video
 
-### Windows
+#### Windows
 
 - [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) gives access to C API for rendering hardware-accelerated video output using OpenGL. See: [render.h](https://github.com/mpv-player/mpv/blob/master/libmpv/render.h) & [render_gl.h](https://github.com/mpv-player/mpv/blob/master/libmpv/render_gl.h).
 - Flutter recently added ability for Windows to [render Direct3D `ID3D11Texture2D` textures](https://github.com/flutter/engine/pull/26840).
 
 The two APIs above are hardware accelerated i.e. GPU backed buffers are used. **This is performant approach, easily capable for rendering 4K 60 FPS videos**, rest depends on the hardware. Since [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) API is OpenGL based & the Texture API in Flutter is Direct3D based, [ANGLE (Almost Native Graphics Layer Engine)](https://github.com/google/angle) is used for interop, which translates the OpenGL ES 2.0 calls into Direct3D.
 
-This hardware accelerated video output requires DirectX 11 or higher. Most Windows systems with either integrated or discrete GPUs should support this already. On systems where Direct3D fails to load due to missing graphics drivers or unsupported feature-level or DirectX version etc. a fallback pixel-buffer based software renderer is used. This means that video is rendered by CPU & every frame is copied back to the RAM. This will cause some redundant load on the CPU, result in decreased battery life & may not play higher resolution videos properly. However, it works.
+This hardware accelerated video output requires DirectX 11 or higher. Most Windows systems with either integrated or discrete GPUs should support this already. On systems where Direct3D fails to load due to missing graphics drivers or unsupported feature-level or DirectX version etc. a fallback pixel-buffer based software renderer is used. This means that video is rendered by CPU & every frame is copied back to the RAM. This will cause some redundant load on the CPU, result in decreased battery life & may not play higher resolution videos properly. However, it works well.
 
 <details>
 
@@ -657,9 +657,9 @@ This hardware accelerated video output requires DirectX 11 or higher. Most Windo
 
 You can visit my [experimentation repository](https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-Direct3D-Interop) to see a minimal example showing OpenGL ES rendering inside Flutter Windows.
 
-### Linux
+#### Linux
 
-On Flutter Linux, [both OpenGL (H/W) & pixel Buffer (S/W) APIs](https://github.com/flutter/engine/pull/24916) are available for rendering on Texture widget.
+On Flutter Linux, [both OpenGL (H/W) & pixel buffer (S/W) APIs](https://github.com/flutter/engine/pull/24916) are available for rendering on Texture widget.
 
 ## Outcomes
 

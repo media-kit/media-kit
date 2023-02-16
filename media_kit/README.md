@@ -12,7 +12,7 @@ A complete video & audio library for Flutter & Dart.
 <br>
 
   <h5>
-    Rapidly ship in-app messaging with Stream's highly reliable chat infrastructure and feature-rich SDKs, including Flutter!
+    Rapidly ship in-app messaging with Stream's highly reliable chat infrastructure & feature-rich SDKs, including Flutter!
   </h5>
 <h4>
   <a href="https://getstream.io/chat/sdk/flutter/?utm_source=alexmercerind_dart&utm_medium=Github_Repo_Content_Ad&utm_content=Developer&utm_campaign=alexmercerind_December2022_FlutterSDK_klmh22" target="_blank">
@@ -179,11 +179,73 @@ final controller = await VideoController.create(
 );
 ```
 
+
+**Note**
+* You can limit size of the video output by specifying `width` & `height`.
+* By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
+
+```dart
+final controller = await VideoController.create(
+  player.handle,
+  width: 640,                                   // default: null
+  height: 360,                                  // default: null
+);
+```
+
+
+**Note**
+* You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
+* By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
+
+```dart
+final controller = await VideoController.create(
+  player.handle,
+  enableHardwareAcceleration: false,            // default: true
+);
+```
+
 ### Detailed Guide
 
 _TODO: documentation_
 
 Try out [the test application](https://github.com/harmonoid/media_kit/blob/master/media_kit_test/lib/main.dart) for now.
+
+## Setup
+
+### Windows
+
+Everything ready. Just add one of the following packages to your `pubspec.yaml`.
+
+```yaml
+dependencies:
+  ...
+  media_kit_libs_windows_video: ^1.0.0       # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^1.0.0       # Windows package for audio (only) native libraries.
+```
+
+### Linux
+
+System shared libraries from distribution specific user-installed packages are used by-default. You can install these as follows.
+
+#### Ubuntu / Debian
+
+**On user machine you need:**
+
+```bash
+sudo apt install libmpv2
+```
+
+**On development machine you need:**
+
+```bash
+sudo apt install libmpv-dev libmpv2
+```
+
+#### Packaging
+
+There are other ways to bundle these within your app package e.g. within Snap or Flatpak. Few examples:
+- [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
+- [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/_packaging)
 
 ## Goals
 
@@ -193,7 +255,7 @@ The primary goal of [package:media_kit](https://github.com/alexmercerind/media_k
 
 Since, targetting multiple features at once & bundling redundant native libraries can result in increased bundle size of the application, you can manually select the native libraries you want to bundle, depending upon your use-case. The code is architectured to support multiple platforms & features. Support for more platforms will be added in future.
 
-## Support
+## Fund Development
 
 If you find [package:media_kit](https://github.com/alexmercerind/media_kit) package(s) useful, please consider sponsoring me.
 
