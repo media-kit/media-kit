@@ -87,6 +87,24 @@ abstract class NativeLibrary {
       }
       throw Exception(_kLinuxNativeLibraryNotFoundMessage);
     }
+    if (Platform.isMacOS) {
+      final appDir = join(executableDir, "..");
+      final libPath = join(
+        appDir,
+        "Frameworks",
+        "media_kit_libs_macos.framework",
+        "Resources",
+        "Resources.bundle",
+        "Contents",
+        "Resources",
+        _kMacOSNativeLibrary,
+      );
+
+      if (await File(libPath).exists()) {
+        return libPath;
+      }
+      throw Exception(_kMacOSNativeLibraryNotFoundMessage);
+    }
     throw Exception(
       'NativeLibrary.find is not supported on ${Platform.operatingSystem}.',
     );
@@ -105,6 +123,9 @@ abstract class NativeLibrary {
   /// Default libmpv shared library name on Linux.
   static const String _kLinuxNativeLibrary = 'libmpv.so';
 
+  /// Default libmpv shared library name on macOS.
+  static const String _kMacOSNativeLibrary = 'libmpv.dylib';
+
   /// [Exception] message thrown when the native library is not found on Windows.
   static const String _kWindowsNativeLibraryNotFoundMessage =
       'Cannot find mpv-2.dll in your system %PATH%. One way to deal with this is to ship mpv-2.dll with your script or compiled executable in the same directory.';
@@ -112,4 +133,8 @@ abstract class NativeLibrary {
   /// [Exception] message thrown when the native library is not found on Linux.
   static const String _kLinuxNativeLibraryNotFoundMessage =
       'Cannot find libmpv in the usual places. Depending on your distro, you may try installing mpv-devel or libmpv-dev package.';
+
+  /// [Exception] message thrown when the native macOS is not found on macOS.
+  static const String _kMacOSNativeLibraryNotFoundMessage =
+      'Cannot find libmpv.dylib.';
 }

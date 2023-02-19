@@ -25,3 +25,5 @@ flutter:
         pluginClass: MediaKitVideoPluginCApi
       linux:
         pluginClass: MediaKitVideoPlugin
+      macos:
+        pluginClass: MediaKitVideoPlugin
