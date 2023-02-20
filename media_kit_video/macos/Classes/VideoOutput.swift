@@ -1,6 +1,7 @@
 import Cocoa
 import FlutterMacOS
-import GLKit
+import OpenGL.GL
+import OpenGL.GL3
 
 public class VideoOutput: NSObject, FlutterTexture {
   public typealias TextureUpdateCallback = (Int64, CGSize) -> Void
@@ -10,7 +11,8 @@ public class VideoOutput: NSObject, FlutterTexture {
   private let height: Int64?
   private let registry: FlutterTextureRegistry
   private let textureUpdateCallback: TextureUpdateCallback
-  private let context: NSOpenGLContext
+  private let pixelFormat: CGLPixelFormatObj
+  private let context: CGLContextObj
   private let textureCache: CVOpenGLTextureCache
   private var textureId: Int64 = -1
   private var renderContext: OpaquePointer?
@@ -37,8 +39,9 @@ public class VideoOutput: NSObject, FlutterTexture {
     self.height = height
     self.registry = registry
     self.textureUpdateCallback = textureUpdateCallback
-    self.context = OpenGLHelpers.createContext()
-    self.textureCache = OpenGLHelpers.createTextureCache(context)
+    self.pixelFormat = OpenGLHelpers.createPixelFormat()
+    self.context = OpenGLHelpers.createContext(pixelFormat)
+    self.textureCache = OpenGLHelpers.createTextureCache(context, pixelFormat)
 
     super.init()
 
@@ -66,6 +69,7 @@ public class VideoOutput: NSObject, FlutterTexture {
     disposePixelBuffer()
     disposeMPV()
     OpenGLHelpers.deleteTextureCache(textureCache)
+    OpenGLHelpers.deletePixelFormat(pixelFormat)
     OpenGLHelpers.deleteContext(context)
   }
 
@@ -75,10 +79,10 @@ public class VideoOutput: NSObject, FlutterTexture {
   }
 
   private func initMPV() {
-    context.makeCurrentContext()
+    CGLSetCurrentContext(context)
     defer {
       OpenGLHelpers.checkGLError("initMPV")
-      NSOpenGLContext.clearCurrentContext()
+      CGLSetCurrentContext(nil)
     }
 
     checkMPVError(mpv_set_option_string(handle, "hwdec", "auto"))
@@ -234,10 +238,10 @@ public class VideoOutput: NSObject, FlutterTexture {
       return
     }
 
-    context.makeCurrentContext()
+    CGLSetCurrentContext(context)
     defer {
       OpenGLHelpers.checkGLError("render")
-      NSOpenGLContext.clearCurrentContext()
+      CGLSetCurrentContext(nil)
     }
 
     glBindFramebuffer(GLenum(GL_FRAMEBUFFER), frameBuffer!)

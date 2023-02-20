@@ -1,38 +1,55 @@
-import GLKit
+import Cocoa
+import OpenGL.GL
+import OpenGL.GL3
 
 public class OpenGLHelpers {
-  static public func createContext() -> NSOpenGLContext {
-    let attributes = [
-      NSOpenGLPixelFormatAttribute(NSOpenGLPFAAllowOfflineRenderers),
-      NSOpenGLPixelFormatAttribute(NSOpenGLPFAAccelerated),
-      NSOpenGLPixelFormatAttribute(NSOpenGLPFADoubleBuffer),
-      NSOpenGLPixelFormatAttribute(NSOpenGLPFAMultisample),
-      NSOpenGLPixelFormatAttribute(NSOpenGLPFASampleBuffers), 1,
-      NSOpenGLPixelFormatAttribute(NSOpenGLPFASamples), 4,
-      NSOpenGLPixelFormatAttribute(NSOpenGLPFAMinimumPolicy),
-      NSOpenGLPixelFormatAttribute(NSOpenGLPFAOpenGLProfile),
-      NSOpenGLPixelFormatAttribute(NSOpenGLProfileVersion4_1Core),
-      0,
+  static public func createPixelFormat() -> CGLPixelFormatObj {
+    // from mpv
+    let attributes: [CGLPixelFormatAttribute] = [
+      kCGLPFAOpenGLProfile,
+      CGLPixelFormatAttribute(kCGLOGLPVersion_3_2_Core.rawValue),
+      kCGLPFAAccelerated,
+      kCGLPFADoubleBuffer,
+      kCGLPFAColorSize, _CGLPixelFormatAttribute(rawValue: 64),
+      kCGLPFAColorFloat,
+      kCGLPFABackingStore,
+      kCGLPFAAllowOfflineRenderers,
+      kCGLPFASupportsAutomaticGraphicsSwitching,
+      _CGLPixelFormatAttribute(rawValue: 0),
     ]
 
-    let pixelFormat = NSOpenGLPixelFormat(attributes: attributes)
-    assert(pixelFormat != nil, "NSOpenGLPixelFormat")
+    var npix: GLint = 0
+    var pixelFormat: CGLPixelFormatObj?
+    CGLChoosePixelFormat(attributes, &pixelFormat, &npix)
 
-    let context = NSOpenGLContext(format: pixelFormat!, share: nil)
+    return pixelFormat!
+  }
+
+  static public func createContext(
+    _ pixelFormat: CGLPixelFormatObj
+  ) -> CGLContextObj {
+    var context: CGLContextObj?
+    let error = CGLCreateContext(pixelFormat, nil, &context)
+    if error != kCGLNoError {
+      let errS = String(cString: CGLErrorString(error))
+      NSLog(errS)
+      exit(1)
+    }
 
     return context!
   }
 
   static public func createTextureCache(
-    _ context: NSOpenGLContext
+    _ context: CGLContextObj,
+    _ pixelFormat: CGLPixelFormatObj
   ) -> CVOpenGLTextureCache {
     var textureCache: CVOpenGLTextureCache?
 
     let cvret: CVReturn = CVOpenGLTextureCacheCreate(
       kCFAllocatorDefault,
       nil,
-      context.cglContextObj!,
-      context.pixelFormat.cglPixelFormatObj!,
+      context,
+      pixelFormat,
       nil,
       &textureCache
     )
@@ -85,13 +102,13 @@ public class OpenGLHelpers {
   }
 
   static public func createRenderBuffer(
-    _ context: NSOpenGLContext,
+    _ context: CGLContextObj,
     _ size: CGSize
   ) -> GLuint {
-    context.makeCurrentContext()
+    CGLSetCurrentContext(context)
     defer {
       OpenGLHelpers.checkGLError("createRenderBuffer")
-      NSOpenGLContext.clearCurrentContext()
+      CGLSetCurrentContext(nil)
     }
 
     var renderBuffer: GLuint = GLuint()
@@ -112,15 +129,15 @@ public class OpenGLHelpers {
   }
 
   static public func createFrameBuffer(
-    context: NSOpenGLContext,
+    context: CGLContextObj,
     renderBuffer: GLuint,
     texture: CVOpenGLTexture,
     size: CGSize
   ) -> GLuint {
-    context.makeCurrentContext()
+    CGLSetCurrentContext(context)
     defer {
       OpenGLHelpers.checkGLError("createFrameBuffer")
-      NSOpenGLContext.clearCurrentContext()
+      CGLSetCurrentContext(nil)
     }
 
     let textureName: GLuint = CVOpenGLTextureGetName(texture)
@@ -167,9 +184,13 @@ public class OpenGLHelpers {
     return frameBuffer
   }
 
-  static public func deleteContext(_ context: NSOpenGLContext) {
-    NSOpenGLContext.clearCurrentContext()
-    context.clearDrawable()
+  static public func deletePixelFormat(_ pixelFormat: CGLPixelFormatObj) {
+    CGLReleasePixelFormat(pixelFormat)
+  }
+
+  static public func deleteContext(_ context: CGLContextObj) {
+    CGLSetCurrentContext(nil)
+    CGLReleaseContext(context)
   }
 
   static public func deleteTextureCache(_ textureCache: CVOpenGLTextureCache) {
@@ -180,7 +201,7 @@ public class OpenGLHelpers {
   }
 
   static public func deletePixeBuffer(
-    _ context: NSOpenGLContext,
+    _ context: CGLContextObj,
     _ pixelBuffer: CVPixelBuffer
   ) {
     // 'CVPixelBufferRelease' is unavailable: Core Foundation objects are
@@ -188,13 +209,13 @@ public class OpenGLHelpers {
   }
 
   static public func deleteTexture(
-    _ context: NSOpenGLContext,
+    _ context: CGLContextObj,
     _ texture: CVOpenGLTexture
   ) {
-    context.makeCurrentContext()
+    CGLSetCurrentContext(context)
     defer {
       OpenGLHelpers.checkGLError("deleteTexture")
-      NSOpenGLContext.clearCurrentContext()
+      CGLSetCurrentContext(nil)
     }
 
     var textureName: GLuint = CVOpenGLTextureGetName(texture)
@@ -202,13 +223,13 @@ public class OpenGLHelpers {
   }
 
   static public func deleteRenderBuffer(
-    _ context: NSOpenGLContext,
+    _ context: CGLContextObj,
     _ renderBuffer: GLuint
   ) {
-    context.makeCurrentContext()
+    CGLSetCurrentContext(context)
     defer {
       OpenGLHelpers.checkGLError("deleteRenderBuffer")
-      NSOpenGLContext.clearCurrentContext()
+      CGLSetCurrentContext(nil)
     }
 
     var renderBuffer = renderBuffer
@@ -216,13 +237,13 @@ public class OpenGLHelpers {
   }
 
   static public func deleteFrameBuffer(
-    _ context: NSOpenGLContext,
+    _ context: CGLContextObj,
     _ frameBuffer: GLuint
   ) {
-    context.makeCurrentContext()
+    CGLSetCurrentContext(context)
     defer {
       OpenGLHelpers.checkGLError("deleteFrameBuffer")
-      NSOpenGLContext.clearCurrentContext()
+      CGLSetCurrentContext(nil)
     }
 
     var frameBuffer = frameBuffer
@@ -230,14 +251,14 @@ public class OpenGLHelpers {
   }
 
   static public func clearScene(
-    _ context: NSOpenGLContext,
+    _ context: CGLContextObj,
     _ frameBuffer: GLuint,
     _ color: NSColor
   ) {
-    context.makeCurrentContext()
+    CGLSetCurrentContext(context)
     defer {
       OpenGLHelpers.checkGLError("clearScene")
-      NSOpenGLContext.clearCurrentContext()
+      CGLSetCurrentContext(nil)
     }
 
     glBindFramebuffer(GLenum(GL_FRAMEBUFFER), frameBuffer)
