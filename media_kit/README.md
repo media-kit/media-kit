@@ -34,9 +34,9 @@ dependencies:
   # For video support.
   media_kit_video: ^0.0.1
   # Pick based on your requirements / platform:
-  media_kit_libs_windows_video: ^1.0.0       # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.0       # Windows package for audio (only) native libraries.
-  media_kit_libs_linux: ^1.0.0               # Linux dependency package.
+  media_kit_libs_windows_video: ^1.0.0 # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^1.0.0 # Windows package for audio (only) native libraries.
+  media_kit_libs_linux: ^1.0.0 # Linux dependency package.
 ```
 
 ## Platforms
@@ -179,10 +179,10 @@ final controller = await VideoController.create(
 );
 ```
 
-
 **Note**
-* You can limit size of the video output by specifying `width` & `height`.
-* By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
+
+- You can limit size of the video output by specifying `width` & `height`.
+- By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
 
 ```dart
 final controller = await VideoController.create(
@@ -192,10 +192,10 @@ final controller = await VideoController.create(
 );
 ```
 
-
 **Note**
-* You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
-* By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
+
+- You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
+- By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 
 ```dart
 final controller = await VideoController.create(
@@ -244,6 +244,7 @@ sudo apt install libmpv-dev libmpv2
 #### Packaging
 
 There are other ways to bundle these within your app package e.g. within Snap or Flatpak. Few examples:
+
 - [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
 - [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/_packaging)
 
@@ -270,6 +271,6 @@ Thanks!
 
 ## License
 
-Copyright © 2022, Hitesh Kumar Saini <<saini123hitesh@gmail.com>>
+Copyright © 2021 & onwards, Hitesh Kumar Saini <<saini123hitesh@gmail.com>>
 
 This project & the work under this repository is governed by MIT license that can be found in the [LICENSE](./LICENSE) file.

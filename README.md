@@ -40,9 +40,9 @@ dependencies:
   # For video support.
   media_kit_video: ^0.0.1
   # Pick based on your requirements / platform:
-  media_kit_libs_windows_video: ^1.0.0       # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.0       # Windows package for audio (only) native libraries.
-  media_kit_libs_linux: ^1.0.0               # Linux dependency package.
+  media_kit_libs_windows_video: ^1.0.0 # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^1.0.0 # Windows package for audio (only) native libraries.
+  media_kit_libs_linux: ^1.0.0 # Linux dependency package.
 ```
 
 ## Platforms
@@ -176,8 +176,9 @@ class MyScreenState extends State<MyScreen> {
 ```
 
 **Note**
-* You can limit size of the video output by specifying `width` & `height`.
-* By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
+
+- You can limit size of the video output by specifying `width` & `height`.
+- By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
 
 ```dart
 final controller = await VideoController.create(
@@ -187,10 +188,10 @@ final controller = await VideoController.create(
 );
 ```
 
-
 **Note**
-* You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
-* By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
+
+- You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
+- By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 
 ```dart
 final controller = await VideoController.create(
@@ -239,8 +240,9 @@ sudo apt install libmpv-dev mpv
 #### Packaging
 
 There are other ways to bundle these within your app package e.g. within Snap or Flatpak. Few examples:
+
 - [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
-- [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/_packaging)
+- [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/\_packaging)
 
 ## Goals
 
@@ -562,26 +564,26 @@ classDiagram
   }
 }%%
 classDiagram
-  
+
   MediaKitVideoPlugin "1" *-- "1" VideoOutputManager: Create VideoOutput(s) with VideoOutputManager for handle passed through platform channel
   VideoOutputManager "1" *-- "*" VideoOutput: Takes FlTextureRegistrar as reference
   VideoOutput "1" *-- "1" TextureGL: For H/W rendering.
   TextureGL "1" o-- "1" VideoOutput: Take VideoOutput as reference
   VideoOutput "1" *-- "1" TextureSW: For S/W rendering.
   TextureSW "1" o-- "1" VideoOutput: Take VideoOutput as reference
-  
+
   class MediaKitVideoPlugin {
     -FlMethodChannel* channel
     -VideoOutputManager* video_output_manager
   }
-  
+
   class VideoOutputManager {
     -GHashTable* video_outputs
     -FlTextureRegistrar* texture_registrar
     +video_output_manager_create(self: VideoOutputManager*, handle: gint64, width: gint64, height: gint64, texture_update_callback: TextureUpdateCallback, texture_update_callback_context: gpointer)
     +video_output_manager_dispose(self: VideoOutputManager*, handle: gint64)
   }
-  
+
   class VideoOutput {
     -TextureGL* texture_gl
     -GdkGLContext* context_gl
@@ -599,7 +601,7 @@ classDiagram
     +video_output_get_texture_id(self: VideoOutput*): gint64
     +video_output_notify_texture_update(VideoOutput* self);
   }
-  
+
   class TextureGL {
     -guint32 name
     -guint32 fbo
@@ -608,7 +610,7 @@ classDiagram
     -VideoOutput* video_output
     texture_gl_populate_texture(texture: FlTextureGL*, target: guint32*, name: guint32*, width: guint32*, height: guint32*, error: GError**): gboolean
   }
-  
+
   class TextureSW {
     -guint32 current_width
     -guint32 current_height
@@ -674,6 +676,6 @@ https://user-images.githubusercontent.com/28951144/208765832-416313c9-97d4-44d0-
 
 ## License
 
-Copyright © 2022, Hitesh Kumar Saini <<saini123hitesh@gmail.com>>
+Copyright © 2021 & onwards, Hitesh Kumar Saini <<saini123hitesh@gmail.com>>
 
 This project & the work under this repository is governed by MIT license that can be found in the [LICENSE](./LICENSE) file.
