@@ -7,3 +7,10 @@
 // LICENSE file.
 
 #include "media_kit_native_event_loop.h"
+
+MediaKitEventLoopHandler& MediaKitEventLoopHandler::GetInstance() {
+  static MediaKitEventLoopHandler instance;
+  return instance;
+}
+
+MediaKitEventLoopHandler::MediaKitEventLoopHandler() {}
