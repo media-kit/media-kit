@@ -16,6 +16,8 @@ dependencies:
     path: ../media_kit
   media_kit_video:
     path: ../media_kit_video
+  media_kit_native_event_loop:
+    path: ../media_kit_native_event_loop
   media_kit_libs_windows_video:
     path: ../media_kit_libs_windows_video
   media_kit_libs_linux:
