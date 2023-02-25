@@ -1,0 +1,3 @@
+[submodule "media_kit_native_event_loop/src/dart_api"]
+	path = media_kit_native_event_loop/src/dart_api
+	url = https://github.com/alexmercerind/dart_api.git
