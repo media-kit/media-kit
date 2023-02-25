@@ -15,6 +15,9 @@ migration:
     - platform: root
       create_revision: 7048ed95a5ad3e43d697e0c397464193991fc230
       base_revision: 7048ed95a5ad3e43d697e0c397464193991fc230
+    - platform: windows
+      create_revision: 7048ed95a5ad3e43d697e0c397464193991fc230
+      base_revision: 7048ed95a5ad3e43d697e0c397464193991fc230
 
   # User provided section
 
