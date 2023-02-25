@@ -436,39 +436,60 @@ class Player extends PlatformPlayer {
   @override
   set rate(double rate) {
     () async {
-      final ctx = await _handle.future;
-      state.rate = rate;
-      if (!rateController.isClosed) {
-        rateController.add(state.rate);
+      if (configuration.pitch) {
+        // Pitch shift control is enabled.
+        final ctx = await _handle.future;
+        state.rate = rate;
+        if (!rateController.isClosed) {
+          rateController.add(state.rate);
+        }
+        // No `rubberband` is available.
+        // Apparently, using `scaletempo:scale` actually controls the playback rate
+        // as intended after setting `audio-pitch-correction` as `FALSE`.
+        // `speed` on the other hand, changes the pitch when `audio-pitch-correction`
+        // is set to `FALSE`. Since, it also alters the actual [speed], the
+        // `scaletempo:scale` is divided by the same value of [pitch] to compensate the
+        // speed change.
+        var name = 'audio-pitch-correction'.toNativeUtf8();
+        final no = 'no'.toNativeUtf8();
+        _libmpv?.mpv_set_property_string(
+          ctx,
+          name.cast(),
+          no.cast(),
+        );
+        calloc.free(name);
+        calloc.free(no);
+        name = 'af'.toNativeUtf8();
+        // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
+        final value =
+            'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
+                .toNativeUtf8();
+        _libmpv?.mpv_set_property_string(
+          ctx,
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      } else {
+        // Pitch shift control is disabled.
+        final ctx = await _handle.future;
+        state.rate = rate;
+        if (!rateController.isClosed) {
+          rateController.add(state.rate);
+        }
+        final name = 'speed'.toNativeUtf8();
+        final value = calloc<Double>();
+        value.value = rate;
+        _libmpv?.mpv_set_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_DOUBLE,
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
       }
-      // No `rubberband` is available.
-      // Apparently, using `scaletempo:scale` actually controls the playback rate
-      // as intended after setting `audio-pitch-correction` as `FALSE`.
-      // `speed` on the other hand, changes the pitch when `audio-pitch-correction`
-      // is set to `FALSE`. Since, it also alters the actual [speed], the
-      // `scaletempo:scale` is divided by the same value of [pitch] to compensate the
-      // speed change.
-      var name = 'audio-pitch-correction'.toNativeUtf8();
-      final no = 'no'.toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        no.cast(),
-      );
-      calloc.free(name);
-      calloc.free(no);
-      name = 'af'.toNativeUtf8();
-      // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
-      final value =
-          'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
-              .toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
     }();
   }
 
@@ -476,83 +497,89 @@ class Player extends PlatformPlayer {
   @override
   set pitch(double pitch) {
     () async {
-      final ctx = await _handle.future;
-      state.pitch = pitch;
-      if (!pitchController.isClosed) {
-        pitchController.add(state.pitch);
+      if (configuration.pitch) {
+        // Pitch shift control is enabled.
+        final ctx = await _handle.future;
+        state.pitch = pitch;
+        if (!pitchController.isClosed) {
+          pitchController.add(state.pitch);
+        }
+        // `rubberband` is not bundled in `libmpv` shared library at the moment. GPL.
+        // Using `scaletempo` instead.
+        // final name = 'af'.toNativeUtf8();
+        // final keys = calloc<Pointer<Utf8>>(2);
+        // final paramKeys = calloc<Pointer<Utf8>>(2);
+        // final paramValues = calloc<Pointer<Utf8>>(2);
+        // paramKeys[0] = 'key'.toNativeUtf8();
+        // paramKeys[1] = 'value'.toNativeUtf8();
+        // paramValues[0] = 'pitch-scale'.toNativeUtf8();
+        // paramValues[1] = pitch.toStringAsFixed(8).toNativeUtf8();
+        // final values = calloc<Pointer<generated.mpv_node>>(2);
+        // keys[0] = 'name'.toNativeUtf8();
+        // keys[1] = 'params'.toNativeUtf8();
+        // values[0] = calloc<generated.mpv_node>();
+        // values[0].ref.format = generated.mpv_format.MPV_FORMAT_STRING;
+        // values[0].ref.u.string = 'rubberband'.toNativeUtf8().cast();
+        // values[1] = calloc<generated.mpv_node>();
+        // values[1].ref.format = generated.mpv_format.MPV_FORMAT_NODE_MAP;
+        // values[1].ref.u.list = calloc<generated.mpv_node_list>();
+        // values[1].ref.u.list.ref.num = 2;
+        // values[1].ref.u.list.ref.keys = paramKeys.cast();
+        // values[1].ref.u.list.ref.values = paramValues.cast();
+        // final data = calloc<generated.mpv_node>();
+        // data.ref.format = generated.mpv_format.MPV_FORMAT_NODE_ARRAY;
+        // data.ref.u.list = calloc<generated.mpv_node_list>();
+        // data.ref.u.list.ref.num = 1;
+        // data.ref.u.list.ref.values = calloc<generated.mpv_node>();
+        // data.ref.u.list.ref.values.ref.format =
+        //     generated.mpv_format.MPV_FORMAT_NODE_MAP;
+        // data.ref.u.list.ref.values.ref.u.list = calloc<generated.mpv_node_list>();
+        // data.ref.u.list.ref.values.ref.u.list.ref.num = 2;
+        // data.ref.u.list.ref.values.ref.u.list.ref.keys = keys.cast();
+        // data.ref.u.list.ref.values.ref.u.list.ref.values = values.cast();
+        // _libmpv?.mpv_set_property(
+        //   ctx,
+        //   name.cast(),
+        //   generated.mpv_format.MPV_FORMAT_NODE,
+        //   data.cast(),
+        // );
+        // calloc.free(name);
+        // _libmpv?.mpv_free_node_contents(data);
+        var name = 'audio-pitch-correction'.toNativeUtf8();
+        final no = 'no'.toNativeUtf8();
+        _libmpv?.mpv_set_property_string(
+          ctx,
+          name.cast(),
+          no.cast(),
+        );
+        calloc.free(name);
+        calloc.free(no);
+        name = 'speed'.toNativeUtf8();
+        final speed = calloc<Double>()..value = pitch;
+        _libmpv?.mpv_set_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_DOUBLE,
+          speed.cast(),
+        );
+        calloc.free(name);
+        calloc.free(speed);
+        name = 'af'.toNativeUtf8();
+        // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
+        final value =
+            'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
+                .toNativeUtf8();
+        _libmpv?.mpv_set_property_string(
+          ctx,
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      } else {
+        // Pitch shift control is disabled.
+        throw Exception('[PlayerConfiguration.pitch] is false.');
       }
-      // `rubberband` is not bundled in `libmpv` shared library at the moment. GPL.
-      // Using `scaletempo` instead.
-      // final name = 'af'.toNativeUtf8();
-      // final keys = calloc<Pointer<Utf8>>(2);
-      // final paramKeys = calloc<Pointer<Utf8>>(2);
-      // final paramValues = calloc<Pointer<Utf8>>(2);
-      // paramKeys[0] = 'key'.toNativeUtf8();
-      // paramKeys[1] = 'value'.toNativeUtf8();
-      // paramValues[0] = 'pitch-scale'.toNativeUtf8();
-      // paramValues[1] = pitch.toStringAsFixed(8).toNativeUtf8();
-      // final values = calloc<Pointer<generated.mpv_node>>(2);
-      // keys[0] = 'name'.toNativeUtf8();
-      // keys[1] = 'params'.toNativeUtf8();
-      // values[0] = calloc<generated.mpv_node>();
-      // values[0].ref.format = generated.mpv_format.MPV_FORMAT_STRING;
-      // values[0].ref.u.string = 'rubberband'.toNativeUtf8().cast();
-      // values[1] = calloc<generated.mpv_node>();
-      // values[1].ref.format = generated.mpv_format.MPV_FORMAT_NODE_MAP;
-      // values[1].ref.u.list = calloc<generated.mpv_node_list>();
-      // values[1].ref.u.list.ref.num = 2;
-      // values[1].ref.u.list.ref.keys = paramKeys.cast();
-      // values[1].ref.u.list.ref.values = paramValues.cast();
-      // final data = calloc<generated.mpv_node>();
-      // data.ref.format = generated.mpv_format.MPV_FORMAT_NODE_ARRAY;
-      // data.ref.u.list = calloc<generated.mpv_node_list>();
-      // data.ref.u.list.ref.num = 1;
-      // data.ref.u.list.ref.values = calloc<generated.mpv_node>();
-      // data.ref.u.list.ref.values.ref.format =
-      //     generated.mpv_format.MPV_FORMAT_NODE_MAP;
-      // data.ref.u.list.ref.values.ref.u.list = calloc<generated.mpv_node_list>();
-      // data.ref.u.list.ref.values.ref.u.list.ref.num = 2;
-      // data.ref.u.list.ref.values.ref.u.list.ref.keys = keys.cast();
-      // data.ref.u.list.ref.values.ref.u.list.ref.values = values.cast();
-      // _libmpv?.mpv_set_property(
-      //   ctx,
-      //   name.cast(),
-      //   generated.mpv_format.MPV_FORMAT_NODE,
-      //   data.cast(),
-      // );
-      // calloc.free(name);
-      // _libmpv?.mpv_free_node_contents(data);
-      var name = 'audio-pitch-correction'.toNativeUtf8();
-      final no = 'no'.toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        no.cast(),
-      );
-      calloc.free(name);
-      calloc.free(no);
-      name = 'speed'.toNativeUtf8();
-      final speed = calloc<Double>()..value = pitch;
-      _libmpv?.mpv_set_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_DOUBLE,
-        speed.cast(),
-      );
-      calloc.free(name);
-      calloc.free(speed);
-      name = 'af'.toNativeUtf8();
-      // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
-      final value =
-          'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
-              .toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
     }();
   }
 
@@ -1074,17 +1101,6 @@ class Player extends PlatformPlayer {
       calloc.free(name);
       calloc.free(value);
     }
-    // No longer explicitly setting demuxer cache size.
-    // Though, it may cause rise in memory usage but still it is certainly better than files randomly stuttering or seeking to a random position on their own.
-    // final cache = 'cache'.toNativeUtf8();
-    // final no = 'no'.toNativeUtf8();
-    // _libmpv?.mpv_set_property_string(
-    //   result,
-    //   cache.cast(),
-    //   no.cast(),
-    // );
-    // calloc.free(cache);
-    // calloc.free(no);
     final name = 'idle'.toNativeUtf8();
     final value = calloc<Int32>();
     value.value = 1;
