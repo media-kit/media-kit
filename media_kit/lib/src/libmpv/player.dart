@@ -112,7 +112,7 @@ class Player extends PlatformPlayer {
     // [Media] to play but in certain cases like, where a [Media] is paused & then
     // new [Media] is [Player.open]ed it causes [Media] to not starting playing
     // automatically.
-    // Thanks to <github.com/DomingoMG> for the fix!
+    // Thanks to @DomingoMG for the fix!
     state.playlist = playlist;
     state.isPlaying = play;
     // To wait for the index change [jump] call.
@@ -654,7 +654,6 @@ class Player extends PlatformPlayer {
   }
 
   /// Sets current [AudioDevice].
-  @override
   set audioDevice(FutureOr<AudioDevice> device) {
     () async {
       final result = await device;
@@ -676,7 +675,6 @@ class Player extends PlatformPlayer {
   }
 
   /// Gets current [AudioDevice].
-  @override
   FutureOr<AudioDevice> get audioDevice async {
     final ctx = await _handle.future;
     final name = 'audio-device'.toNativeUtf8();
@@ -699,7 +697,6 @@ class Player extends PlatformPlayer {
   }
 
   /// Get the list of all the available [AudioDevice]s.
-  @override
   Future<List<AudioDevice>> get availableAudioDevices async {
     final ctx = await _handle.future;
     final name = 'audio-device-list'.toNativeUtf8();
@@ -771,243 +768,242 @@ class Player extends PlatformPlayer {
     calloc.free(data);
   }
 
-  Future<void> _create() async {
-    final libmpv = await NativeLibrary.find(path: configuration.libmpv);
-    _libmpv = generated.MPV(DynamicLibrary.open(libmpv));
-    final result = await create(
-      libmpv,
-      (event) async {
-        _error(event.ref.error);
-        if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
-          state.isCompleted = false;
-          if (_isPlaybackEverStarted) {
-            state.isPlaying = true;
-          }
-          if (!isCompletedController.isClosed) {
-            isCompletedController.add(false);
-          }
-          if (!isPlayingController.isClosed && _isPlaybackEverStarted) {
-            isPlayingController.add(true);
+  Future<void> _handler(Pointer<generated.mpv_event> event) async {
+    _error(event.ref.error);
+    if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
+      state.isCompleted = false;
+      if (_isPlaybackEverStarted) {
+        state.isPlaying = true;
+      }
+      if (!isCompletedController.isClosed) {
+        isCompletedController.add(false);
+      }
+      if (!isPlayingController.isClosed && _isPlaybackEverStarted) {
+        isPlayingController.add(true);
+      }
+    }
+    if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
+      // Check for `mpv_end_file_reason.MPV_END_FILE_REASON_EOF` before modifying `state.isCompleted`.
+      // Thanks to @DomingoMG for noticing the bug.
+      if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
+          generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
+        state.isCompleted = true;
+        if (_isPlaybackEverStarted) {
+          state.isPlaying = false;
+        }
+        if (!isCompletedController.isClosed) {
+          isCompletedController.add(true);
+        }
+        if (!isPlayingController.isClosed && _isPlaybackEverStarted) {
+          isPlayingController.add(false);
+        }
+        if (!audioParamsController.isClosed) {
+          audioParamsController.add(
+            AudioParams(),
+          );
+          state.audioParams = AudioParams();
+        }
+        if (!audioBitrateController.isClosed) {
+          audioBitrateController.add(null);
+          state.audioBitrate = null;
+        }
+      }
+    }
+    if (event.ref.event_id ==
+        generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
+      final prop = event.ref.data.cast<generated.mpv_event_property>();
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+        if (_isPlaybackEverStarted) {
+          final isPlaying = prop.ref.data.cast<Int8>().value != 1;
+          state.isPlaying = isPlaying;
+          if (!isPlayingController.isClosed) {
+            isPlayingController.add(isPlaying);
           }
         }
-        if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
-          // Check for `mpv_end_file_reason.MPV_END_FILE_REASON_EOF` before
-          // modifying `state.isCompleted`.
-          // Thanks to <github.com/DomingoMG> for noticing the bug.
-          if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
-              generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
-            state.isCompleted = true;
-            if (_isPlaybackEverStarted) {
-              state.isPlaying = false;
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+        final isBuffering = prop.ref.data.cast<Int8>().value != 0;
+        state.isBuffering = isBuffering;
+        if (!isBufferingController.isClosed) {
+          isBufferingController.add(isBuffering);
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+        final position = Duration(
+            microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
+        state.position = position;
+        if (!positionController.isClosed) {
+          positionController.add(position);
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+        final duration = Duration(
+            microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
+        state.duration = duration;
+        if (!durationController.isClosed) {
+          durationController.add(duration);
+        }
+        // NOTE: Using manual bitrate calculation for FLAC.
+        // Too much going on here. Enclosing in a try-catch block.
+        try {
+          if (state.playlist.index >= 0 &&
+              state.playlist.index < state.playlist.medias.length) {
+            final uri = state.playlist.medias[state.playlist.index].uri;
+            if (FallbackBitrateHandler.isLocalFLACOrOGGFile(uri)) {
+              if (!bitrates.containsKey(uri) ||
+                  !bitrates.containsKey(Media.getCleanedURI(uri))) {
+                bitrates[uri] = await FallbackBitrateHandler.calculateBitrate(
+                  uri,
+                  duration,
+                );
+              }
+              final bitrate = bitrates[uri];
+              if (bitrate != null) {
+                state.audioBitrate = bitrate;
+                if (!audioBitrateController.isClosed) {
+                  audioBitrateController.add(bitrate);
+                }
+              }
             }
-            if (!isCompletedController.isClosed) {
-              isCompletedController.add(true);
+          }
+        } catch (exception, stacktrace) {
+          print(exception);
+          print(stacktrace);
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
+        final index = prop.ref.data.cast<Int64>().value;
+        if (_isPlaybackEverStarted) {
+          state.playlist.index = index;
+          if (!playlistController.isClosed) {
+            playlistController.add(state.playlist);
+          }
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'volume' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+        final volume = prop.ref.data.cast<Double>().value;
+        state.volume = volume;
+        if (!volumeController.isClosed) {
+          volumeController.add(volume);
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-params' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+        final data = prop.ref.data.cast<generated.mpv_node>();
+        final params = <String, dynamic>{};
+        for (int i = 0; i < data.ref.u.list.ref.num; i++) {
+          final key = data.ref.u.list.ref.keys[i].cast<Utf8>().toDartString();
+
+          switch (key) {
+            case 'format':
+              {
+                params[key] = data.ref.u.list.ref.values[i].u.string
+                    .cast<Utf8>()
+                    .toDartString();
+                break;
+              }
+            case 'samplerate':
+              {
+                params[key] = data.ref.u.list.ref.values[i].u.int64;
+                break;
+              }
+            case 'channels':
+              {
+                params[key] = data.ref.u.list.ref.values[i].u.string
+                    .cast<Utf8>()
+                    .toDartString();
+                break;
+              }
+            case 'channel-count':
+              {
+                params[key] = data.ref.u.list.ref.values[i].u.int64;
+                break;
+              }
+            case 'hr-channels':
+              {
+                params[key] = data.ref.u.list.ref.values[i].u.string
+                    .cast<Utf8>()
+                    .toDartString();
+                break;
+              }
+            default:
+              {
+                break;
+              }
+          }
+        }
+        state.audioParams = AudioParams(
+          format: params['format'],
+          sampleRate: params['samplerate'],
+          channels: params['channels'],
+          channelCount: params['channel-count'],
+          hrChannels: params['hr-channels'],
+        );
+        if (!audioParamsController.isClosed) {
+          audioParamsController.add(state.audioParams);
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-bitrate' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+        // Too much going on here. Enclosing in a try-catch block.
+        try {
+          if (state.playlist.index < state.playlist.medias.length &&
+              state.playlist.index >= 0) {
+            final data = prop.ref.data.cast<Double>().value;
+            final uri = state.playlist.medias[state.playlist.index].uri;
+            // NOTE: Using manual bitrate calculation for FLAC.
+            if (!FallbackBitrateHandler.isLocalFLACOrOGGFile(uri)) {
+              if (!bitrates.containsKey(uri) ||
+                  !bitrates.containsKey(Media.getCleanedURI(uri))) {
+                bitrates[uri] = data;
+                bitrates[Media.getCleanedURI(uri)] = data;
+              }
+              if (!audioBitrateController.isClosed &&
+                  (bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)]) !=
+                      state.audioBitrate) {
+                audioBitrateController.add(
+                  bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)],
+                );
+                state.audioBitrate =
+                    bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)];
+              }
             }
-            if (!isPlayingController.isClosed && _isPlaybackEverStarted) {
-              isPlayingController.add(false);
-            }
-            if (!audioParamsController.isClosed) {
-              audioParamsController.add(
-                AudioParams(),
-              );
-              state.audioParams = AudioParams();
-            }
+          } else {
             if (!audioBitrateController.isClosed) {
               audioBitrateController.add(null);
               state.audioBitrate = null;
             }
           }
+        } catch (exception, stacktrace) {
+          print(exception);
+          print(stacktrace);
         }
-        if (event.ref.event_id ==
-            generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
-          final prop = event.ref.data.cast<generated.mpv_event_property>();
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
-              prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-            if (_isPlaybackEverStarted) {
-              final isPlaying = prop.ref.data.cast<Int8>().value != 1;
-              state.isPlaying = isPlaying;
-              if (!isPlayingController.isClosed) {
-                isPlayingController.add(isPlaying);
-              }
-            }
-          }
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
-              prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-            final isBuffering = prop.ref.data.cast<Int8>().value != 0;
-            state.isBuffering = isBuffering;
-            if (!isBufferingController.isClosed) {
-              isBufferingController.add(isBuffering);
-            }
-          }
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
-              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-            final position = Duration(
-                microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
-            state.position = position;
-            if (!positionController.isClosed) {
-              positionController.add(position);
-            }
-          }
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
-              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-            final duration = Duration(
-                microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
-            state.duration = duration;
-            if (!durationController.isClosed) {
-              durationController.add(duration);
-            }
-            // NOTE: Using manual bitrate calculation for FLAC.
-            // Too much going on here. Enclosing in a try-catch block.
-            try {
-              if (state.playlist.index >= 0 &&
-                  state.playlist.index < state.playlist.medias.length) {
-                final uri = state.playlist.medias[state.playlist.index].uri;
-                if (FallbackBitrateHandler.isLocalFLACOrOGGFile(uri)) {
-                  if (!bitrates.containsKey(uri) ||
-                      !bitrates.containsKey(Media.getCleanedURI(uri))) {
-                    bitrates[uri] =
-                        await FallbackBitrateHandler.calculateBitrate(
-                      uri,
-                      duration,
-                    );
-                  }
-                  final bitrate = bitrates[uri];
-                  if (bitrate != null) {
-                    state.audioBitrate = bitrate;
-                    if (!audioBitrateController.isClosed) {
-                      audioBitrateController.add(bitrate);
-                    }
-                  }
-                }
-              }
-            } catch (exception, stacktrace) {
-              print(exception);
-              print(stacktrace);
-            }
-          }
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos' &&
-              prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
-            final index = prop.ref.data.cast<Int64>().value;
-            if (_isPlaybackEverStarted) {
-              state.playlist.index = index;
-              if (!playlistController.isClosed) {
-                playlistController.add(state.playlist);
-              }
-            }
-          }
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'volume' &&
-              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-            final volume = prop.ref.data.cast<Double>().value;
-            state.volume = volume;
-            if (!volumeController.isClosed) {
-              volumeController.add(volume);
-            }
-          }
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-params' &&
-              prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
-            final data = prop.ref.data.cast<generated.mpv_node>();
-            final params = <String, dynamic>{};
-            for (int i = 0; i < data.ref.u.list.ref.num; i++) {
-              final key =
-                  data.ref.u.list.ref.keys[i].cast<Utf8>().toDartString();
+      }
+      // See [rate] & [pitch] setters/getters.
+      // Handled manually using `scaletempo`.
+      // if (prop.ref.name.cast<Utf8>().toDartString() == 'speed' &&
+      //     prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+      //   final rate = prop.ref.data.cast<Double>().value;
+      //   state.rate = rate;
+      //   if (!rateController.isClosed) {
+      //     rateController.add(rate);
+      //   }
+      // }
+    }
+  }
 
-              switch (key) {
-                case 'format':
-                  {
-                    params[key] = data.ref.u.list.ref.values[i].u.string
-                        .cast<Utf8>()
-                        .toDartString();
-                    break;
-                  }
-                case 'samplerate':
-                  {
-                    params[key] = data.ref.u.list.ref.values[i].u.int64;
-                    break;
-                  }
-                case 'channels':
-                  {
-                    params[key] = data.ref.u.list.ref.values[i].u.string
-                        .cast<Utf8>()
-                        .toDartString();
-                    break;
-                  }
-                case 'channel-count':
-                  {
-                    params[key] = data.ref.u.list.ref.values[i].u.int64;
-                    break;
-                  }
-                case 'hr-channels':
-                  {
-                    params[key] = data.ref.u.list.ref.values[i].u.string
-                        .cast<Utf8>()
-                        .toDartString();
-                    break;
-                  }
-                default:
-                  {
-                    break;
-                  }
-              }
-            }
-            state.audioParams = AudioParams(
-              format: params['format'],
-              sampleRate: params['samplerate'],
-              channels: params['channels'],
-              channelCount: params['channel-count'],
-              hrChannels: params['hr-channels'],
-            );
-            if (!audioParamsController.isClosed) {
-              audioParamsController.add(state.audioParams);
-            }
-          }
-          if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-bitrate' &&
-              prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-            // Too much going on here. Enclosing in a try-catch block.
-            try {
-              if (state.playlist.index < state.playlist.medias.length &&
-                  state.playlist.index >= 0) {
-                final data = prop.ref.data.cast<Double>().value;
-                final uri = state.playlist.medias[state.playlist.index].uri;
-                // NOTE: Using manual bitrate calculation for FLAC.
-                if (!FallbackBitrateHandler.isLocalFLACOrOGGFile(uri)) {
-                  if (!bitrates.containsKey(uri) ||
-                      !bitrates.containsKey(Media.getCleanedURI(uri))) {
-                    bitrates[uri] = data;
-                    bitrates[Media.getCleanedURI(uri)] = data;
-                  }
-                  if (!audioBitrateController.isClosed &&
-                      (bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)]) !=
-                          state.audioBitrate) {
-                    audioBitrateController.add(
-                      bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)],
-                    );
-                    state.audioBitrate =
-                        bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)];
-                  }
-                }
-              } else {
-                if (!audioBitrateController.isClosed) {
-                  audioBitrateController.add(null);
-                  state.audioBitrate = null;
-                }
-              }
-            } catch (exception, stacktrace) {
-              print(exception);
-              print(stacktrace);
-            }
-          }
-          // See [rate] & [pitch] setters/getters.
-          // Handled manually using `scaletempo`.
-          // if (prop.ref.name.cast<Utf8>().toDartString() == 'speed' &&
-          //     prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-          //   final rate = prop.ref.data.cast<Double>().value;
-          //   state.rate = rate;
-          //   if (!rateController.isClosed) {
-          //     rateController.add(rate);
-          //   }
-          // }
-        }
-      },
+  Future<void> _create() async {
+    final libmpv = await NativeLibrary.find(path: configuration.libmpv);
+    _libmpv = generated.MPV(DynamicLibrary.open(libmpv));
+    final result = await create(
+      libmpv,
+      configuration.events ? _handler : null,
     );
     <String, int>{
       'pause': generated.mpv_format.MPV_FORMAT_FLAG,
