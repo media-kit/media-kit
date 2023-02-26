@@ -179,7 +179,7 @@ class MyScreenState extends State<MyScreen> {
 
 ### Performance
 
-Although [package:media_kit](https://github.com/alexmercerind/media_kit) is already fairly performant, by following ways:
+Although [package:media_kit](https://github.com/alexmercerind/media_kit) is already fairly performant, you can further optimize things as follows:
 
 **Note**
 

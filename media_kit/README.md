@@ -171,19 +171,9 @@ class MyScreenState extends State<MyScreen> {
 }
 ```
 
-For performance reasons (especially in S/W rendering), if you wish to restrain the size of each video frame, you can pass width & height parameters to the `VideoController.create` method.
-
-```dart
-final controller = await VideoController.create(
-  player.handle,
-  width: 1920,
-  height: 1080,
-);
-```
-
 ### Performance
 
-Although [package:media_kit](https://github.com/alexmercerind/media_kit) is already fairly performant, by following ways:
+Although [package:media_kit](https://github.com/alexmercerind/media_kit) is already fairly performant, you can further optimize things as follows:
 
 **Note**
 
