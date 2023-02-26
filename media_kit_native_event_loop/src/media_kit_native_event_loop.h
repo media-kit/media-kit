@@ -18,15 +18,33 @@
 #endif
 #include "dart_api/dart_api_dl.h"
 
+#include <future>
+#include <functional>
+#include <unordered_map>
+
 class MediaKitEventLoopHandler {
  public:
   static MediaKitEventLoopHandler& GetInstance();
+
+  void Register(int64_t handle, void* post_c_object, int64_t send_port);
+
+  void Notify(int64_t handle);
+
   MediaKitEventLoopHandler(const MediaKitEventLoopHandler&) = delete;
+
   void operator=(const MediaKitEventLoopHandler&) = delete;
 
  private:
   MediaKitEventLoopHandler();
-  ~MediaKitEventLoopHandler() = default;
+
+  ~MediaKitEventLoopHandler();
+  std::unordered_map<mpv_handle*, std::mutex> mutexes_;
+  // std::promise(s) are working very well & look more readable. I'm tired of
+  // dealing with std::condition_variable(s) which would eventually lead to
+  // deadlocks or stop working after a while.
+  std::unordered_map<mpv_handle*, std::promise<void>> promises_;
+  std::function<bool(Dart_Port port_id, Dart_CObject* message)> post_c_object_;
+  Dart_Port send_port_;
 };
 
 // ---------------------------------------------------------------------------
@@ -42,6 +60,12 @@ class MediaKitEventLoopHandler {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+DLLEXPORT void MediaKitEventLoopHandlerRegister(int64_t handle,
+                                                void* post_c_object,
+                                                int64_t send_port);
+
+DLLEXPORT void MediaKitEventLoopHandlerNotify(int64_t handle);
 
 #ifdef __cplusplus
 }
