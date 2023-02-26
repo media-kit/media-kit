@@ -37,12 +37,14 @@ Add in your `pubspec.yaml`:
 ```yaml
 dependencies:
   media_kit: ^0.0.1
-  # For video support.
+  # For video rendering.
   media_kit_video: ^0.0.1
+  # For enabling support for more than 8 simultaneous players (only Flutter).
+  media_kit_native_event_loop: ^1.0.0
   # Pick based on your requirements / platform:
-  media_kit_libs_windows_video: ^1.0.0 # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.0 # Windows package for audio (only) native libraries.
-  media_kit_libs_linux: ^1.0.0 # Linux dependency package.
+  media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^1.0.0          # Windows package for audio (only) native libraries.
+  media_kit_libs_linux: ^1.0.0                  # Linux dependency package.
 ```
 
 ## Platforms
@@ -175,6 +177,10 @@ class MyScreenState extends State<MyScreen> {
 }
 ```
 
+### Performance
+
+Although [package:media_kit](https://github.com/alexmercerind/media_kit) is already fairly performant, you can further optimize things as follows:
+
 **Note**
 
 - You can limit size of the video output by specifying `width` & `height`.
@@ -197,6 +203,19 @@ final controller = await VideoController.create(
 final controller = await VideoController.create(
   player.handle,
   enableHardwareAcceleration: false,            // default: true
+);
+```
+
+**Note**
+
+- You can disable event callbacks for a `Player` & save yourself few CPU cycles.
+- By default, `events` is `true` i.e. event streams & states are updated.
+
+```dart
+final player = Player(
+  configuration: PlayerConfiguration(
+    events: false,                              // default: true
+  ),
 );
 ```
 
@@ -224,14 +243,6 @@ dependencies:
 System shared libraries from distribution specific user-installed packages are used by-default. You can install these as follows.
 
 #### Ubuntu / Debian
-
-**On user machine you need:**
-
-```bash
-sudo apt install libmpv2
-```
-
-**On development machine you need:**
 
 ```bash
 sudo apt install libmpv-dev mpv

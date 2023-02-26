@@ -31,12 +31,14 @@ Add in your `pubspec.yaml`:
 ```yaml
 dependencies:
   media_kit: ^0.0.1
-  # For video support.
+  # For video rendering.
   media_kit_video: ^0.0.1
+  # For enabling support for more than 8 simultaneous players (only Flutter).
+  media_kit_native_event_loop: ^1.0.0
   # Pick based on your requirements / platform:
-  media_kit_libs_windows_video: ^1.0.0 # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.0 # Windows package for audio (only) native libraries.
-  media_kit_libs_linux: ^1.0.0 # Linux dependency package.
+  media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^1.0.0          # Windows package for audio (only) native libraries.
+  media_kit_libs_linux: ^1.0.0                  # Linux dependency package.
 ```
 
 ## Platforms
@@ -44,7 +46,7 @@ dependencies:
 | Platform | Audio | Video |
 | -------- | ----- | ----- |
 | Windows  | Ready | Ready |
-| Linux    | Ready | WIP   |
+| Linux    | Ready | Ready |
 | macOS    | WIP   | WIP   |
 | Android  | WIP   | WIP   |
 | iOS      | WIP   | WIP   |
@@ -169,15 +171,9 @@ class MyScreenState extends State<MyScreen> {
 }
 ```
 
-For performance reasons (especially in S/W rendering), if you wish to restrain the size of each video frame, you can pass width & height parameters to the `VideoController.create` method.
+### Performance
 
-```dart
-final controller = await VideoController.create(
-  player.handle,
-  width: 1920,
-  height: 1080,
-);
-```
+Although [package:media_kit](https://github.com/alexmercerind/media_kit) is already fairly performant, you can further optimize things as follows:
 
 **Note**
 
@@ -201,6 +197,19 @@ final controller = await VideoController.create(
 final controller = await VideoController.create(
   player.handle,
   enableHardwareAcceleration: false,            // default: true
+);
+```
+
+**Note**
+
+- You can disable event callbacks for a `Player` & save yourself few CPU cycles.
+- By default, `events` is `true` i.e. event streams & states are updated.
+
+```dart
+final player = Player(
+  configuration: PlayerConfiguration(
+    events: false,                              // default: true
+  ),
 );
 ```
 
@@ -229,16 +238,8 @@ System shared libraries from distribution specific user-installed packages are u
 
 #### Ubuntu / Debian
 
-**On user machine you need:**
-
 ```bash
-sudo apt install libmpv2
-```
-
-**On development machine you need:**
-
-```bash
-sudo apt install libmpv-dev libmpv2
+sudo apt install libmpv-dev mpv
 ```
 
 #### Packaging
