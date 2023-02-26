@@ -27,17 +27,15 @@ const kNativeEventLoopDynamicLibrary = 'media_kit_native_event_loop';
 
 // C/C++:
 
-typedef Dart_InitializeApiDLCXX = Void Function(Pointer<Void> data);
 typedef MediaKitEventLoopHandlerRegisterCXX = Void Function(
   Int64 handle,
   Pointer<Void> callback,
   Int64 port,
 );
+typedef MediaKitEventLoopHandlerNotifyCXX = Void Function(Int64 handle);
 
 // Dart:
 
-typedef MediaKitEventLoopHandlerNotifyCXX = Void Function(Int64 handle);
-typedef Dart_InitializeApiDLDart = void Function(Pointer<Void> data);
 typedef MediaKitEventLoopHandlerRegisterDart = void Function(
   int handle,
   Pointer<Void> callback,
@@ -46,7 +44,6 @@ typedef MediaKitEventLoopHandlerRegisterDart = void Function(
 typedef MediaKitEventLoopHandlerNotifyDart = void Function(int handle);
 
 // Resolved native functions from the shared library.
-Dart_InitializeApiDLDart? Dart_InitializeApiDL;
 MediaKitEventLoopHandlerRegisterDart? MediaKitEventLoopHandlerRegister;
 MediaKitEventLoopHandlerNotifyDart? MediaKitEventLoopHandlerNotify;
 
@@ -84,8 +81,7 @@ Future<Pointer<mpv_handle>> create(
   Future<void> Function(Pointer<mpv_event> event)? callback,
 ) async {
   // Load native functions from the shared library on first call.
-  if (Dart_InitializeApiDL == null &&
-      MediaKitEventLoopHandlerRegister == null &&
+  if (MediaKitEventLoopHandlerRegister == null &&
       MediaKitEventLoopHandlerNotify == null) {
     final dylib = () {
       if (Platform.isMacOS || Platform.isIOS) {
@@ -102,8 +98,6 @@ Future<Pointer<mpv_handle>> create(
     }();
     if (dylib != null) {
       // Load native functions from the dynamic library.
-      Dart_InitializeApiDL = dylib.lookupFunction<Dart_InitializeApiDLCXX,
-          Dart_InitializeApiDLDart>('Dart_InitializeApiDL');
       MediaKitEventLoopHandlerRegister = dylib.lookupFunction<
           MediaKitEventLoopHandlerRegisterCXX,
           MediaKitEventLoopHandlerRegisterDart>(
@@ -114,16 +108,12 @@ Future<Pointer<mpv_handle>> create(
           MediaKitEventLoopHandlerNotifyDart>(
         'MediaKitEventLoopHandlerNotify',
       );
-
-      // Initialize dart_api_dl.h.
-      Dart_InitializeApiDL?.call(NativeApi.initializeApiDLData);
     }
   }
   // Native functions from the shared library should be resolved by now.
   // If not, throw an exception.
   // Primarily, this will happen when the shared library is not found i.e. package:media_kit_native_event_loop is not installed.
-  if (Dart_InitializeApiDL == null ||
-      MediaKitEventLoopHandlerRegister == null ||
+  if (MediaKitEventLoopHandlerRegister == null ||
       MediaKitEventLoopHandlerNotify == null) {
     throw Exception(
       'package:media_kit/src/core/initializer_event_loop.dart: Unable to find native event loop shared library.',
