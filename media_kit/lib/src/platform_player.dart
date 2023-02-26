@@ -9,7 +9,6 @@ import 'package:meta/meta.dart';
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
-import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/player_error.dart';
 import 'package:media_kit/src/models/player_state.dart';
@@ -134,49 +133,99 @@ abstract class PlatformPlayer {
     Playlist playlist, {
     bool play = true,
     bool evictCache = true,
-  }) {}
-
-  FutureOr<void> play() {}
-
-  FutureOr<void> pause() {}
-
-  FutureOr<void> playOrPause() {}
-
-  FutureOr<void> add(Media media) {}
-
-  FutureOr<void> remove(int index) {}
-
-  FutureOr<void> next() {}
-
-  FutureOr<void> previous() {}
-
-  FutureOr<void> jump(int index, {bool open = false}) {}
-
-  FutureOr<void> move(int from, int to) {}
-
-  FutureOr<void> seek(Duration duration) {}
-
-  FutureOr<void> setPlaylistMode(PlaylistMode playlistMode) {}
-
-  set volume(double value) {}
-
-  set rate(double value) {}
-
-  set pitch(double value) {}
-
-  set shuffle(bool value) {}
-
-  set audioDevice(FutureOr<AudioDevice> device) {}
-
-  FutureOr<AudioDevice> get audioDevice {
+  }) {
     throw UnimplementedError(
-      '[PlatformPlayer.audioDevice] is not implemented.',
+      '[PlatformPlayer.open] is not implemented.',
     );
   }
 
-  Future<List<AudioDevice>> get availableAudioDevices async {
+  FutureOr<void> play() {
     throw UnimplementedError(
-      '[PlatformPlayer.availableAudioDevices] is not implemented.',
+      '[PlatformPlayer.play] is not implemented.',
+    );
+  }
+
+  FutureOr<void> pause() {
+    throw UnimplementedError(
+      '[PlatformPlayer.pause] is not implemented.',
+    );
+  }
+
+  FutureOr<void> playOrPause() {
+    throw UnimplementedError(
+      '[PlatformPlayer.playOrPause] is not implemented.',
+    );
+  }
+
+  FutureOr<void> add(Media media) {
+    throw UnimplementedError(
+      '[PlatformPlayer.add] is not implemented.',
+    );
+  }
+
+  FutureOr<void> remove(int index) {
+    throw UnimplementedError(
+      '[PlatformPlayer.remove] is not implemented.',
+    );
+  }
+
+  FutureOr<void> next() {
+    throw UnimplementedError(
+      '[PlatformPlayer.next] is not implemented.',
+    );
+  }
+
+  FutureOr<void> previous() {
+    throw UnimplementedError(
+      '[PlatformPlayer.previous] is not implemented.',
+    );
+  }
+
+  FutureOr<void> jump(int index, {bool open = false}) {
+    throw UnimplementedError(
+      '[PlatformPlayer.jump] is not implemented.',
+    );
+  }
+
+  FutureOr<void> move(int from, int to) {
+    throw UnimplementedError(
+      '[PlatformPlayer.move] is not implemented.',
+    );
+  }
+
+  FutureOr<void> seek(Duration duration) {
+    throw UnimplementedError(
+      '[PlatformPlayer.seek] is not implemented.',
+    );
+  }
+
+  FutureOr<void> setPlaylistMode(PlaylistMode playlistMode) {
+    throw UnimplementedError(
+      '[PlatformPlayer.setPlaylistMode] is not implemented.',
+    );
+  }
+
+  set volume(double value) {
+    throw UnimplementedError(
+      '[PlatformPlayer.volume] is not implemented.',
+    );
+  }
+
+  set rate(double value) {
+    throw UnimplementedError(
+      '[PlatformPlayer.rate] is not implemented.',
+    );
+  }
+
+  set pitch(double value) {
+    throw UnimplementedError(
+      '[PlatformPlayer.pitch] is not implemented.',
+    );
+  }
+
+  set shuffle(bool value) {
+    throw UnimplementedError(
+      '[PlatformPlayer.shuffle] is not implemented.',
     );
   }
 
