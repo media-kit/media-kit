@@ -28,30 +28,39 @@ class PlayerConfiguration {
   /// Default: `true`.
   final bool events;
 
-  /// Enables on-screen libmpv controls.
-  ///
+  /// Enables on-screen controls on libmpv backend.
   /// Default: `false`.
   final bool osc;
 
-  /// Enables or disables video output.
+  /// Enables or disables video output on libmpv backend.
   /// Default: `null`.
   final bool? vid;
 
-  /// Sets the video output driver.
+  /// Sets the video output driver on libmpv backend.
   /// Default: `null`.
   final String? vo;
+
+  /// Enables or disables pitch shift control on libmpv backend.
+  ///
+  /// Enabling this option may result in de-syncing of audio & video. Thus, usage in audio only applications is recommended.
+  /// This uses `scaletempo` under the hood & disables `audio-pitch-correction`.
+  ///
+  /// See: https://github.com/alexmercerind/media_kit/issues/45
+  ///
+  /// Default: `false`.
+  final bool pitch;
 
   /// Sets manually specified location to the libmpv shared library & overrides the default look-up behavior.
   ///
   /// Default: `null`.
   final String? libmpv;
 
-  /// Sets the name of the underlying window & process. This is visible inside the Windows' volume mixer.
+  /// Sets the name of the underlying window & process on libmpv backend. This is visible inside the Windows' volume mixer.
   ///
   /// Default: `null`.
   final String? title;
 
-  /// Optional callback invoked when the internals of the [Player] are configured & ready for playback.
+  /// Optional callback invoked when the internals of the [Player] are initialized & ready for playback.
   ///
   /// Default: `null`.
   final void Function()? ready;
@@ -62,6 +71,7 @@ class PlayerConfiguration {
     this.osc = false,
     this.vid,
     this.vo,
+    this.pitch = false,
     this.libmpv,
     this.title,
     this.ready,
