@@ -67,44 +67,52 @@ void mainloop(SendPort port) async {
 /// Pass [path] to libmpv dynamic library & [callback] to receive event callbacks as [Pointer] to [mpv_event].
 Future<Pointer<mpv_handle>> create(
   String path,
-  Future<void> Function(Pointer<mpv_event> event) callback,
+  Future<void> Function(Pointer<mpv_event> event)? callback,
 ) async {
-  // Used to wait for retrieval of [Pointer] to [mpv_handle] from the running isolate.
-  final completer = Completer();
-  // Used to receive events from the separate isolate.
-  final receiver = ReceivePort();
-  // Late initialized [mpv_handle] & [SendPort] of the [ReceievePort] inside the separate isolate.
-  late Pointer<mpv_handle> handle;
-  late SendPort port;
-  // Run mainloop in the separate isolate.
-  await Isolate.spawn(
-    mainloop,
-    receiver.sendPort,
-  );
-  receiver.listen((message) async {
-    // Receiving [SendPort] of the [ReceivePort] inside the separate isolate to send the path to [DynamicLibrary].
-    if (!completer.isCompleted && message is SendPort) {
-      port = message;
-      port.send(path);
-    }
-    // Receiving [Pointer] to [mpv_handle] created by separate isolate.
-    else if (!completer.isCompleted && message is int) {
-      handle = Pointer.fromAddress(message);
-      completer.complete();
-    }
-    // Receiving event callbacks.
-    else {
-      Pointer<mpv_event> event = Pointer.fromAddress(message);
-      try {
-        await callback(event);
-      } catch (exception, stacktrace) {
-        print(exception.toString());
-        print(stacktrace.toString());
+  if (callback == null) {
+    // No requirement for separate isolate.
+    final mpv = MPV(DynamicLibrary.open(path));
+    final handle = mpv.mpv_create();
+    mpv.mpv_initialize(handle);
+    return handle;
+  } else {
+    // Used to wait for retrieval of [Pointer] to [mpv_handle] from the running isolate.
+    final completer = Completer();
+    // Used to receive events from the separate isolate.
+    final receiver = ReceivePort();
+    // Late initialized [mpv_handle] & [SendPort] of the [ReceievePort] inside the separate isolate.
+    late Pointer<mpv_handle> handle;
+    late SendPort port;
+    // Run mainloop in the separate isolate.
+    await Isolate.spawn(
+      mainloop,
+      receiver.sendPort,
+    );
+    receiver.listen((message) async {
+      // Receiving [SendPort] of the [ReceivePort] inside the separate isolate to send the path to [DynamicLibrary].
+      if (!completer.isCompleted && message is SendPort) {
+        port = message;
+        port.send(path);
       }
-      port.send(null);
-    }
-  });
-  // Awaiting the retrieval of [Pointer] to [mpv_handle].
-  await completer.future;
-  return handle;
+      // Receiving [Pointer] to [mpv_handle] created by separate isolate.
+      else if (!completer.isCompleted && message is int) {
+        handle = Pointer.fromAddress(message);
+        completer.complete();
+      }
+      // Receiving event callbacks.
+      else {
+        Pointer<mpv_event> event = Pointer.fromAddress(message);
+        try {
+          await callback(event);
+        } catch (exception, stacktrace) {
+          print(exception.toString());
+          print(stacktrace.toString());
+        }
+        port.send(null);
+      }
+    });
+    // Awaiting the retrieval of [Pointer] to [mpv_handle].
+    await completer.future;
+    return handle;
+  }
 }

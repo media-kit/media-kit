@@ -24,6 +24,10 @@ import 'package:media_kit/src/models/player_streams.dart';
 ///
 /// {@endtemplate}
 class PlayerConfiguration {
+  /// Enables or disables event handling. This may improve performance if there is no need to listen to events.
+  /// Default: `true`.
+  final bool events;
+
   /// Enables on-screen libmpv controls.
   ///
   /// Default: `false`.
@@ -54,6 +58,7 @@ class PlayerConfiguration {
 
   /// {@macro player_configuration}
   const PlayerConfiguration({
+    this.events = true,
     this.osc = false,
     this.vid,
     this.vo,

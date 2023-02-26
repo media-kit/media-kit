@@ -13,7 +13,7 @@ import 'initializer_native_event_loop.dart' as initializer_native_event_loop;
 ///
 Future<Pointer<mpv_handle>> create(
   String path,
-  Future<void> Function(Pointer<mpv_event> event) callback,
+  Future<void> Function(Pointer<mpv_event> event)? callback,
 ) async {
   try {
     return await initializer_native_event_loop.create(path, callback);

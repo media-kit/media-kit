@@ -81,7 +81,7 @@ final receiver = ReceivePort()
 /// Pass [path] to libmpv dynamic library & [callback] to receive event callbacks as [Pointer] to [mpv_event].
 Future<Pointer<mpv_handle>> create(
   String path,
-  Future<void> Function(Pointer<mpv_event> event) callback,
+  Future<void> Function(Pointer<mpv_event> event)? callback,
 ) async {
   // Load native functions from the shared library on first call.
   if (Dart_InitializeApiDL == null &&
@@ -135,15 +135,18 @@ Future<Pointer<mpv_handle>> create(
   final handle = mpv.mpv_create();
   mpv.mpv_initialize(handle);
 
-  // Save [callback] to invoke it inside [ReceivePort] listener.
-  callbacks[handle.address] = callback;
+  // Only register for event callbacks if [callback] is not null.
+  if (callback != null) {
+    // Save [callback] to invoke it inside [ReceivePort] listener.
+    callbacks[handle.address] = callback;
 
-  // Register event callback.
-  MediaKitEventLoopHandlerRegister?.call(
-    handle.address,
-    NativeApi.postCObject.cast(),
-    receiver.sendPort.nativePort,
-  );
+    // Register event callback.
+    MediaKitEventLoopHandlerRegister?.call(
+      handle.address,
+      NativeApi.postCObject.cast(),
+      receiver.sendPort.nativePort,
+    );
+  }
 
   return handle;
 }
