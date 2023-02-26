@@ -42,20 +42,14 @@ public class VideoOutput: NSObject {
       texture = SafeResizableTexture(
         TextureGL(
           handle: handle!,
-          updateCallback: {
-            () -> Void in
-            self.updateCallback()
-          }
+          updateCallback: updateCallback
         )
       )
     } else {
       texture = SafeResizableTexture(
         TextureSW(
           handle: handle!,
-          updateCallback: {
-            () -> Void in
-            self.updateCallback()
-          }
+          updateCallback: updateCallback
         )
       )
     }
