@@ -51,7 +51,8 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
     let handleStr = args?["handle"] as! String
     let widthStr = args?["width"] as! String
     let heightStr = args?["height"] as! String
-    // TODO: maybe support `enableHardwareAcceleration`
+    let enableHardwareAcceleration =
+      args?["enableHardwareAcceleration"] as! Bool
 
     let handle: Int64? = Int64(handleStr)
     let width: Int64? = Int64(widthStr)
@@ -63,6 +64,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
       handle: handle!,
       width: width,
       height: height,
+      enableHardwareAcceleration: enableHardwareAcceleration,
       textureUpdateCallback: { (_ textureId: Int64, _ size: CGSize) -> Void in
         self.channel.invokeMethod(
           "VideoOutput.Resize",

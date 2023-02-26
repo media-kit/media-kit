@@ -107,7 +107,7 @@ public class OpenGLHelpers {
   ) -> GLuint {
     CGLSetCurrentContext(context)
     defer {
-      OpenGLHelpers.checkGLError("createRenderBuffer")
+      OpenGLHelpers.checkError("createRenderBuffer")
       CGLSetCurrentContext(nil)
     }
 
@@ -136,7 +136,7 @@ public class OpenGLHelpers {
   ) -> GLuint {
     CGLSetCurrentContext(context)
     defer {
-      OpenGLHelpers.checkGLError("createFrameBuffer")
+      OpenGLHelpers.checkError("createFrameBuffer")
       CGLSetCurrentContext(nil)
     }
 
@@ -214,7 +214,7 @@ public class OpenGLHelpers {
   ) {
     CGLSetCurrentContext(context)
     defer {
-      OpenGLHelpers.checkGLError("deleteTexture")
+      OpenGLHelpers.checkError("deleteTexture")
       CGLSetCurrentContext(nil)
     }
 
@@ -228,7 +228,7 @@ public class OpenGLHelpers {
   ) {
     CGLSetCurrentContext(context)
     defer {
-      OpenGLHelpers.checkGLError("deleteRenderBuffer")
+      OpenGLHelpers.checkError("deleteRenderBuffer")
       CGLSetCurrentContext(nil)
     }
 
@@ -242,7 +242,7 @@ public class OpenGLHelpers {
   ) {
     CGLSetCurrentContext(context)
     defer {
-      OpenGLHelpers.checkGLError("deleteFrameBuffer")
+      OpenGLHelpers.checkError("deleteFrameBuffer")
       CGLSetCurrentContext(nil)
     }
 
@@ -257,7 +257,7 @@ public class OpenGLHelpers {
   ) {
     CGLSetCurrentContext(context)
     defer {
-      OpenGLHelpers.checkGLError("clearScene")
+      OpenGLHelpers.checkError("clearScene")
       CGLSetCurrentContext(nil)
     }
 
@@ -277,12 +277,12 @@ public class OpenGLHelpers {
     glFlush()
   }
 
-  static public func checkGLError(_ message: String) {
+  static public func checkError(_ message: String) {
     let error = glGetError()
     if error == GL_NO_ERROR {
       return
     }
 
-    NSLog("GL_ERROR: \(message): \(error)")
+    NSLog("OpenGLHelpers: error: \(message): \(error)")
   }
 }

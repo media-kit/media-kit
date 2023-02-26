@@ -1,9 +1,7 @@
 import Cocoa
 import FlutterMacOS
-import OpenGL.GL
-import OpenGL.GL3
 
-public class VideoOutput: NSObject, FlutterTexture {
+public class VideoOutput: NSObject {
   public typealias TextureUpdateCallback = (Int64, CGSize) -> Void
 
   private let handle: OpaquePointer
@@ -11,23 +9,18 @@ public class VideoOutput: NSObject, FlutterTexture {
   private let height: Int64?
   private let registry: FlutterTextureRegistry
   private let textureUpdateCallback: TextureUpdateCallback
-  private let pixelFormat: CGLPixelFormatObj
-  private let context: CGLContextObj
-  private let textureCache: CVOpenGLTextureCache
+  private let worker: Worker = Worker()
+  private var texture: ResizableTextureProtocol!
   private var textureId: Int64 = -1
-  private var renderContext: OpaquePointer?
   private var currentWidth: Int64 = 0
   private var currentHeight: Int64 = 0
-  private var pixelBuffer: CVPixelBuffer?
-  private var texture: CVOpenGLTexture?
-  private var frameBuffer: GLuint?
-  private var renderBuffer: GLuint?
   private var disposed: Bool = false
 
   init(
     handle: Int64,
     width: Int64?,
     height: Int64?,
+    enableHardwareAcceleration: Bool,
     registry: FlutterTextureRegistry,
     textureUpdateCallback: @escaping TextureUpdateCallback
   ) {
@@ -39,125 +32,64 @@ public class VideoOutput: NSObject, FlutterTexture {
     self.height = height
     self.registry = registry
     self.textureUpdateCallback = textureUpdateCallback
-    self.pixelFormat = OpenGLHelpers.createPixelFormat()
-    self.context = OpenGLHelpers.createContext(pixelFormat)
-    self.textureCache = OpenGLHelpers.createTextureCache(context, pixelFormat)
 
     super.init()
 
-    self.textureId = self.registry.register(self)
+    NSLog(
+      "VideoOutput: enableHardwareAcceleration: \(enableHardwareAcceleration)"
+    )
+    if enableHardwareAcceleration {
+      texture = SafeResizableTexture(
+        TextureGL(
+          handle: handle!,
+          updateCallback: {
+            () -> Void in
+            self.updateCallback()
+          }
+        )
+      )
+    } else {
+      texture = SafeResizableTexture(
+        TextureSW(
+          handle: handle!,
+          updateCallback: {
+            () -> Void in
+            self.updateCallback()
+          }
+        )
+      )
+    }
+
+    textureId = registry.register(texture)
     textureUpdateCallback(textureId, CGSize(width: 0, height: 0))
-
-    DispatchQueue.main.async {
-      self.initMPV()
-    }
-  }
-
-  public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
-    if pixelBuffer == nil {
-      return nil
-    }
-
-    let result = Unmanaged.passRetained(pixelBuffer!)
-    return result
   }
 
   public func dispose() {
     disposed = true
 
     disposeTextureId()
-    disposePixelBuffer()
-    disposeMPV()
-    OpenGLHelpers.deleteTextureCache(textureCache)
-    OpenGLHelpers.deletePixelFormat(pixelFormat)
-    OpenGLHelpers.deleteContext(context)
+    texture.dispose()
   }
 
   private func disposeTextureId() {
     registry.unregisterTexture(textureId)
-    self.textureId = -1
+    textureId = -1
   }
 
-  private func initMPV() {
-    CGLSetCurrentContext(context)
-    defer {
-      OpenGLHelpers.checkGLError("initMPV")
-      CGLSetCurrentContext(nil)
-    }
-
-    checkMPVError(mpv_set_option_string(handle, "hwdec", "auto"))
-
-    let api = UnsafeMutableRawPointer(
-      mutating: (MPV_RENDER_API_TYPE_OPENGL as NSString).utf8String
-    )
-    var procAddress = mpv_opengl_init_params(
-      get_proc_address: {
-        (ctx, name) in
-        return VideoOutput.getProcAddress(ctx, name)
-      },
-      get_proc_address_ctx: nil
-    )
-
-    var params: [mpv_render_param] = withUnsafeMutableBytes(of: &procAddress) {
-      procAddress in
-      return [
-        mpv_render_param(type: MPV_RENDER_PARAM_API_TYPE, data: api),
-        mpv_render_param(
-          type: MPV_RENDER_PARAM_OPENGL_INIT_PARAMS,
-          data: procAddress.baseAddress.map {
-            UnsafeMutableRawPointer($0)
-          }
-        ),
-        mpv_render_param(),
-      ]
-    }
-
-    checkMPVError(mpv_render_context_create(&renderContext, handle, &params))
-
-    mpv_render_context_set_update_callback(
-      renderContext,
-      { (ctx) in
-        let that = unsafeBitCast(ctx, to: VideoOutput.self)
-        DispatchQueue.main.async {
-          if that.disposed {
-            return
-          }
-
-          that.updateCallback()
-        }
-      },
-      UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
-    )
-  }
-
-  private func disposeMPV() {
-    mpv_render_context_free(renderContext)
-    self.renderContext = nil
-  }
-
-  private func updateCallback() {
-    defer {
-      registry.textureFrameAvailable(self.textureId)
-    }
-
-    let width = self.videoWidth
-    let height = self.videoHeight
+  public func updateCallback() {
+    let width = videoWidth
+    let height = videoHeight
 
     let size = CGSize(
       width: Double(width),
       height: Double(height)
     )
 
-    if self.currentWidth != width || self.currentHeight != height {
-      self.currentWidth = width
-      self.currentHeight = height
+    if currentWidth != width || currentHeight != height {
+      currentWidth = width
+      currentHeight = height
 
-      if width == 0 || height == 0 {
-        disposePixelBuffer()
-      } else {
-        createPixelBuffer(size)
-      }
-
+      texture.resize(size)
       textureUpdateCallback(textureId, size)
     }
 
@@ -165,7 +97,14 @@ public class VideoOutput: NSObject, FlutterTexture {
       return
     }
 
-    render(size)
+    worker.enqueue {
+      if self.disposed {
+        return
+      }
+
+      self.texture.render(size)
+      self.registry.textureFrameAvailable(self.textureId)
+    }
   }
 
   private var videoWidth: Int64 {
@@ -190,116 +129,5 @@ public class VideoOutput: NSObject, FlutterTexture {
     mpv_get_property(handle, "height", MPV_FORMAT_INT64, &height)
 
     return height
-  }
-
-  private func disposePixelBuffer() {
-    if pixelBuffer == nil {
-      return
-    }
-
-    OpenGLHelpers.deletePixeBuffer(context, self.pixelBuffer!)
-    OpenGLHelpers.deleteTexture(context, self.texture!)
-    OpenGLHelpers.deleteRenderBuffer(context, self.renderBuffer!)
-    OpenGLHelpers.deleteFrameBuffer(context, self.frameBuffer!)
-
-    self.pixelBuffer = nil
-    self.texture = nil
-    self.renderBuffer = nil
-    self.frameBuffer = nil
-  }
-
-  private func createPixelBuffer(_ size: CGSize) {
-    disposePixelBuffer()
-
-    NSLog("createPixelBuffer: \(size.width)x\(size.height)")
-
-    self.pixelBuffer = OpenGLHelpers.createPixelBuffer(size)
-
-    self.texture = OpenGLHelpers.createTexture(
-      textureCache,
-      pixelBuffer!
-    )
-
-    self.renderBuffer = OpenGLHelpers.createRenderBuffer(
-      context,
-      size
-    )
-
-    self.frameBuffer = OpenGLHelpers.createFrameBuffer(
-      context: context,
-      renderBuffer: renderBuffer!,
-      texture: texture!,
-      size: size
-    )
-  }
-
-  private func render(_ size: CGSize) {
-    if frameBuffer == nil {
-      return
-    }
-
-    CGLSetCurrentContext(context)
-    defer {
-      OpenGLHelpers.checkGLError("render")
-      CGLSetCurrentContext(nil)
-    }
-
-    glBindFramebuffer(GLenum(GL_FRAMEBUFFER), frameBuffer!)
-    defer {
-      glBindFramebuffer(GLenum(GL_FRAMEBUFFER), 0)
-    }
-
-    var fbo = mpv_opengl_fbo(
-      fbo: Int32(self.frameBuffer!),
-      w: Int32(size.width),
-      h: Int32(size.height),
-      internal_format: 0
-    )
-    var params: [mpv_render_param] =
-      withUnsafeMutableBytes(of: &fbo) {
-        fbo in
-        return [
-          mpv_render_param(
-            type: MPV_RENDER_PARAM_OPENGL_FBO,
-            data: fbo.baseAddress.map {
-              UnsafeMutableRawPointer($0)
-            }
-          ),
-          mpv_render_param(
-            type: MPV_RENDER_PARAM_INVALID,
-            data: nil
-          ),
-        ]
-      }
-    mpv_render_context_render(renderContext, &params)
-
-    glFlush()
-  }
-
-  private func checkMPVError(_ status: CInt) {
-    if status < 0 {
-      NSLog("mpv API error: \(mpv_error_string(status) as Any)")
-      exit(1)
-    }
-  }
-
-  static private func getProcAddress(
-    _ ctx: UnsafeMutableRawPointer?,
-    _ name: UnsafePointer<Int8>?
-  ) -> UnsafeMutableRawPointer? {
-    let symbol: CFString = CFStringCreateWithCString(
-      kCFAllocatorDefault,
-      name,
-      kCFStringEncodingASCII
-    )
-    let indentifier = CFBundleGetBundleWithIdentifier(
-      "com.apple.opengl" as CFString
-    )
-    let addr = CFBundleGetFunctionPointerForName(indentifier, symbol)
-
-    if addr == nil {
-      NSLog("Cannot get OpenGL function pointer!")
-    }
-    return addr
   }
 }
