@@ -922,7 +922,7 @@ class StressTestScreen extends StatefulWidget {
 }
 
 class _StressTestScreenState extends State<StressTestScreen> {
-  static const int count = 4;
+  static const int count = 20;
   List<Player> players = [];
   List<VideoController> controllers = [];
 
