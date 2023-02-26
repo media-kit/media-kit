@@ -37,12 +37,14 @@ Add in your `pubspec.yaml`:
 ```yaml
 dependencies:
   media_kit: ^0.0.1
-  # For video support.
+  # For video rendering.
   media_kit_video: ^0.0.1
+  # For enabling support for more than 8 simultaneous players (only Flutter).
+  media_kit_native_event_loop: ^1.0.0
   # Pick based on your requirements / platform:
-  media_kit_libs_windows_video: ^1.0.0 # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.0 # Windows package for audio (only) native libraries.
-  media_kit_libs_linux: ^1.0.0 # Linux dependency package.
+  media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^1.0.0          # Windows package for audio (only) native libraries.
+  media_kit_libs_linux: ^1.0.0                  # Linux dependency package.
 ```
 
 ## Platforms
