@@ -17,7 +17,6 @@ project(
 add_library(
   ${TARGET_NAME} SHARED
   "${TARGET_NAME}.cc"
-  "dart_api/dart_api_dl.cc"
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -34,7 +33,23 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     "${LIBMPV_SRC}/libmpv.dll.a"
   )
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  # TODO: Add support for Linux.
+  # Check for libmpv & epoxy headers & libraries.
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(mpv IMPORTED_TARGET mpv)
+
+  # Include libmpv headers & link to the library.
+  target_compile_definitions(
+    ${TARGET_NAME} PRIVATE
+    "${mpv_CFLAGS_OTHER}"
+  )
+  target_include_directories(
+    ${TARGET_NAME} INTERFACE
+    "${mpv_INCLUDE_DIRS}"
+  )
+  target_link_libraries(
+    ${TARGET_NAME} PRIVATE
+    PkgConfig::mpv
+  )
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   # TODO: Add support for macOS.
 endif()

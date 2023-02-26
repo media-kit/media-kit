@@ -4,8 +4,8 @@
 # This file should be version controlled.
 
 version:
-  revision: 7048ed95a5ad3e43d697e0c397464193991fc230
-  channel: stable
+  revision: 0be7c3f30d647423e3bec24ebbb5f89e03e79b96
+  channel: master
 
 project_type: plugin_ffi
 
@@ -13,11 +13,14 @@ project_type: plugin_ffi
 migration:
   platforms:
     - platform: root
-      create_revision: 7048ed95a5ad3e43d697e0c397464193991fc230
-      base_revision: 7048ed95a5ad3e43d697e0c397464193991fc230
+      create_revision: 0be7c3f30d647423e3bec24ebbb5f89e03e79b96
+      base_revision: 0be7c3f30d647423e3bec24ebbb5f89e03e79b96
+    - platform: linux
+      create_revision: 0be7c3f30d647423e3bec24ebbb5f89e03e79b96
+      base_revision: 0be7c3f30d647423e3bec24ebbb5f89e03e79b96
     - platform: windows
-      create_revision: 7048ed95a5ad3e43d697e0c397464193991fc230
-      base_revision: 7048ed95a5ad3e43d697e0c397464193991fc230
+      create_revision: 0be7c3f30d647423e3bec24ebbb5f89e03e79b96
+      base_revision: 0be7c3f30d647423e3bec24ebbb5f89e03e79b96
 
   # User provided section
 

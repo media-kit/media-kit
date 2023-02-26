@@ -12,11 +12,12 @@
 #ifdef _WIN32
 #include <client.h>
 #elif __linux__
-// TODO(@alexmercerind): GNU/Linux libmpv headers.
+#include <mpv/client.h>
 #elif __APPLE__
 // TODO(@alexmercerind): macOS libmpv headers.
 #endif
-#include "dart_api/dart_api_dl.h"
+
+#include "dart_api_types.h"
 
 #include <future>
 #include <functional>
