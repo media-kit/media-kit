@@ -12,10 +12,10 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
   private let context: CGLContextObj
   private let textureCache: CVOpenGLTextureCache
   private var renderContext: OpaquePointer?
-  private var pixelBuffer: CVPixelBuffer?
-  private var texture: CVOpenGLTexture?
-  private var frameBuffer: GLuint?
-  private var renderBuffer: GLuint?
+  private var textureContexts = SwappableObjectManager<TextureGLContext>(
+    objects: [],
+    skipCheckArgs: true
+  )
 
   init(
     handle: OpaquePointer,
@@ -35,11 +35,12 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
-    if pixelBuffer == nil {
+    let textureContext = textureContexts.current
+    if textureContext == nil {
       return nil
     }
 
-    return Unmanaged.passRetained(pixelBuffer!)
+    return Unmanaged.passRetained(textureContext!.pixelBuffer)
   }
 
   public func dispose() {
@@ -47,6 +48,11 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
     disposeMPV()
     OpenGLHelpers.deleteTextureCache(textureCache)
     OpenGLHelpers.deletePixelFormat(pixelFormat)
+
+    // Deleting the context may cause potential RAM or VRAM memory leaks, as it
+    // is used in the `deinit` method of the `TextureGLContext`.
+    // Potential fix: use a counter, and delete it only when the counter reaches
+    // zero
     OpenGLHelpers.deleteContext(context)
   }
 
@@ -116,39 +122,35 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
   private func createPixelBuffer(_ size: CGSize) {
     disposePixelBuffer()
 
-    self.pixelBuffer = OpenGLHelpers.createPixelBuffer(size)
-
-    self.texture = OpenGLHelpers.createTexture(
-      textureCache,
-      pixelBuffer!
-    )
-
-    self.renderBuffer = OpenGLHelpers.createRenderBuffer(
-      context,
-      size
-    )
-
-    self.frameBuffer = OpenGLHelpers.createFrameBuffer(
-      context: context,
-      renderBuffer: renderBuffer!,
-      texture: texture!,
-      size: size
+    textureContexts.reinit(
+      objects: [
+        TextureGLContext(
+          context: context,
+          textureCache: textureCache,
+          size: size
+        ),
+        TextureGLContext(
+          context: context,
+          textureCache: textureCache,
+          size: size
+        ),
+        TextureGLContext(
+          context: context,
+          textureCache: textureCache,
+          size: size
+        ),
+      ],
+      skipCheckArgs: true
     )
   }
 
   private func disposePixelBuffer() {
-    if pixelBuffer == nil {
-      return
-    }
-
-    OpenGLHelpers.deletePixeBuffer(context, self.pixelBuffer!)
-    OpenGLHelpers.deleteTexture(context, self.texture!)
-    OpenGLHelpers.deleteRenderBuffer(context, self.renderBuffer!)
-    OpenGLHelpers.deleteFrameBuffer(context, self.frameBuffer!)
+    textureContexts.reinit(objects: [], skipCheckArgs: true)
   }
 
   public func render(_ size: CGSize) {
-    if frameBuffer == nil {
+    let textureContext = textureContexts.nextAvailable()
+    if textureContext == nil {
       return
     }
 
@@ -158,13 +160,13 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
       CGLSetCurrentContext(nil)
     }
 
-    glBindFramebuffer(GLenum(GL_FRAMEBUFFER), frameBuffer!)
+    glBindFramebuffer(GLenum(GL_FRAMEBUFFER), textureContext!.frameBuffer)
     defer {
       glBindFramebuffer(GLenum(GL_FRAMEBUFFER), 0)
     }
 
     var fbo = mpv_opengl_fbo(
-      fbo: Int32(self.frameBuffer!),
+      fbo: Int32(textureContext!.frameBuffer),
       w: Int32(size.width),
       h: Int32(size.height),
       internal_format: 0
@@ -178,6 +180,8 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
     mpv_render_context_render(renderContext, &params)
 
     glFlush()
+
+    textureContexts.pushAsReady(textureContext!)
   }
 
   static private func getProcAddress(
