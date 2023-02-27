@@ -7,6 +7,7 @@ public class VideoOutput: NSObject {
   private let handle: OpaquePointer
   private let width: Int64?
   private let height: Int64?
+  private let enableHardwareAcceleration: Bool
   private let registry: FlutterTextureRegistry
   private let textureUpdateCallback: TextureUpdateCallback
   private let worker: Worker = Worker()
@@ -30,25 +31,45 @@ public class VideoOutput: NSObject {
     self.handle = handle!
     self.width = width
     self.height = height
+    self.enableHardwareAcceleration = enableHardwareAcceleration
     self.registry = registry
     self.textureUpdateCallback = textureUpdateCallback
 
     super.init()
 
+    worker.enqueue {
+      self._init()
+    }
+  }
+
+  public func dispose() {
+    worker.enqueue {
+      self._dispose()
+    }
+  }
+
+  private func _dispose() {
+    disposed = true
+
+    disposeTextureId()
+    texture.dispose()
+  }
+
+  private func _init() {
     NSLog(
       "VideoOutput: enableHardwareAcceleration: \(enableHardwareAcceleration)"
     )
     if enableHardwareAcceleration {
       texture = SafeResizableTexture(
         TextureGL(
-          handle: handle!,
+          handle: handle,
           updateCallback: updateCallback
         )
       )
     } else {
       texture = SafeResizableTexture(
         TextureSW(
-          handle: handle!,
+          handle: handle,
           updateCallback: updateCallback
         )
       )
@@ -58,19 +79,18 @@ public class VideoOutput: NSObject {
     textureUpdateCallback(textureId, CGSize(width: 0, height: 0))
   }
 
-  public func dispose() {
-    disposed = true
-
-    disposeTextureId()
-    texture.dispose()
-  }
-
   private func disposeTextureId() {
     registry.unregisterTexture(textureId)
     textureId = -1
   }
 
   public func updateCallback() {
+    worker.enqueue {
+      self._updateCallback()
+    }
+  }
+
+  private func _updateCallback() {
     let width = videoWidth
     let height = videoHeight
 
@@ -91,14 +111,12 @@ public class VideoOutput: NSObject {
       return
     }
 
-    worker.enqueue {
-      if self.disposed {
-        return
-      }
-
-      self.texture.render(size)
-      self.registry.textureFrameAvailable(self.textureId)
+    if self.disposed {
+      return
     }
+
+    self.texture.render(size)
+    self.registry.textureFrameAvailable(self.textureId)
   }
 
   private var videoWidth: Int64 {
