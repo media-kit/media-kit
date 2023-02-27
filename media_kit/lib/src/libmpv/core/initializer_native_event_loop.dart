@@ -13,6 +13,7 @@ import 'dart:isolate';
 import 'dart:collection';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
+import 'package:media_kit/src/libmpv/core/native_library.dart';
 
 /// Name of the shared library used for platform specific threaded event handling.
 ///
@@ -74,10 +75,8 @@ final receiver = ReceivePort()
   );
 
 /// Creates & returns initialized [Pointer] to [mpv_handle] whose event loop is running on native thread.
-///
-/// Pass [path] to libmpv dynamic library & [callback] to receive event callbacks as [Pointer] to [mpv_event].
 Future<Pointer<mpv_handle>> create(
-  String path,
+  String? path,
   Future<void> Function(Pointer<mpv_event> event)? callback,
 ) async {
   // Load native functions from the shared library on first call.
@@ -115,13 +114,13 @@ Future<Pointer<mpv_handle>> create(
   // Primarily, this will happen when the shared library is not found i.e. package:media_kit_native_event_loop is not installed.
   if (MediaKitEventLoopHandlerRegister == null ||
       MediaKitEventLoopHandlerNotify == null) {
-    throw Exception(
-      'package:media_kit/src/core/initializer_event_loop.dart: Unable to find native event loop shared library.',
-    );
+    throw Exception('Unable to find native event loop shared library.');
   }
 
   // Create [mpv_handle] & initialize it.
-  final mpv = MPV(DynamicLibrary.open(path));
+  final mpv = MPV(
+    path == null ? NativeLibrary.find() : DynamicLibrary.open(path),
+  );
   final handle = mpv.mpv_create();
   mpv.mpv_initialize(handle);
 
