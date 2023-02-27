@@ -1,5 +1,7 @@
 # [package:media_kit_libs_windows_video](https://github.com/alexmercerind/media_kit)
 
+[![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml)
+
 Windows package providing video (& audio) native libraries for [`package:media_kit`](https://github.com/alexmercerind/media_kit).
 
 Visit [alexmercerind/mpv-win32-cmake@`master`](https://github.com/alexmercerind/mpv-win32-cmake/tree/master) for descriptive details.

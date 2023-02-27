@@ -1,5 +1,7 @@
 # [package:media_kit_libs_linux](https://github.com/alexmercerind/media_kit)
 
+[![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml)
+
 Linux dependency package for [`package:media_kit`](https://github.com/alexmercerind/media_kit).
 
 ## Support
