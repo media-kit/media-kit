@@ -63,8 +63,7 @@ public class OpenGLHelpers {
 
     let attrs =
       [
-        kCVPixelBufferOpenGLCompatibilityKey: true,
-        kCVPixelBufferMetalCompatibilityKey: true,
+        kCVPixelBufferMetalCompatibilityKey: true
       ] as CFDictionary
 
     let cvret: CVReturn = CVPixelBufferCreate(
