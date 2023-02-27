@@ -999,10 +999,9 @@ class Player extends PlatformPlayer {
   }
 
   Future<void> _create() async {
-    final libmpv = await NativeLibrary.find(path: configuration.libmpv);
-    _libmpv = generated.MPV(DynamicLibrary.open(libmpv));
+    _libmpv = generated.MPV(NativeLibrary.find(path: configuration.libmpv));
     final result = await create(
-      libmpv,
+      configuration.libmpv,
       configuration.events ? _handler : null,
     );
     <String, int>{

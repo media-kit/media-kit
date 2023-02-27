@@ -5,111 +5,48 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'dart:io';
-import 'package:path/path.dart';
+import 'dart:ffi';
 
 /// NativeLibrary
 /// -------------
 ///
-/// This class is used to discover the native shared library of `libmpv`.
-/// It is generally present with the name `mpv-2.dll` on Windows & `libmpv.so` on Linux.
-///
-/// The [find] method looks for `mpv-2.dll` or `libmpv.so` in the same
-/// directory as the script or the compiled executable. If it is not found, then:
-/// On Windows, `mpv-2.dll` is searched at `MPV_PATH` & `PATH`.
-/// On Linux, `libmpv.so` is searched at usual places.
+/// This class is used to discover & load the libmpv shared library.
+/// It is generally present with the name `libmpv-2.dll` on Windows & `libmpv.so` on Linux.
 ///
 abstract class NativeLibrary {
-  /// Returns the discovered path of the native shared library.
-  /// Optionally, manual [path] can be provided.
-  ///
-  static Future<String> find({String? path}) async {
+  /// Returns the resolved libmpv [DynamicLibrary].
+  static DynamicLibrary find({String? path}) {
     if (path != null) {
-      return path;
+      return DynamicLibrary.open(path);
     }
-    return (_resolved ??= await _search());
-  }
 
-  /// Searches the native shared library.
-  static Future<String> _search() async {
-    final scriptDir = File(Platform.script.toFilePath()).parent.path;
-    final executableDir = File(Platform.resolvedExecutable).parent.path;
-    if (Platform.isWindows) {
-      for (final library in _kWindowsNativeLibraries) {
-        if (await File(join(scriptDir, library)).exists()) {
-          return join(scriptDir, library);
-        }
-        if (await File(join(executableDir, library)).exists()) {
-          return join(executableDir, library);
-        }
+    final names = {
+      'windows': [
+        'libmpv-2.dll',
+        'mpv-2.dll',
+        'mpv-1.dll',
+      ],
+      'linux': [
+        'libmpv.so',
+      ],
+    }[Platform.operatingSystem];
+    if (names != null) {
+      for (final name in names) {
+        try {
+          return DynamicLibrary.open(name);
+        } catch (_) {}
       }
-      // Check for `MPV_PATH` environment variable & system `PATH`.
-      final mpvPath = Platform.environment['MPV_PATH'];
-      final envPath = Platform.environment['PATH'];
-      if (mpvPath != null) {
-        for (final library in _kWindowsNativeLibraries) {
-          if (await File(join(mpvPath, library)).exists()) {
-            return join(mpvPath, library);
-          }
-        }
-      }
-      if (envPath != null) {
-        final paths = envPath.split(';');
-        for (var path in paths) {
-          for (final library in _kWindowsNativeLibraries) {
-            if (await File(join(path, library)).exists()) {
-              return join(path, library);
-            }
-          }
-        }
-      }
-      throw Exception(_kWindowsNativeLibraryNotFoundMessage);
-    }
-    if (Platform.isLinux) {
-      if (await File(join(scriptDir, _kLinuxNativeLibrary)).exists()) {
-        return join(scriptDir, _kLinuxNativeLibrary);
-      }
-      if (await File(join(executableDir, _kLinuxNativeLibrary)).exists()) {
-        return join(executableDir, _kLinuxNativeLibrary);
-      }
-      // Check for globally accessible shared libraries.
-      final system = [
-        // For Debian or Ubuntu based distributions.
-        '/usr/lib/x86_64-linux-gnu',
-        // For Arch Linux based distributions.
-        '/usr/lib',
-        // For Fedora based distributions.
-        '/usr/lib64',
-      ];
-      for (final path in system) {
-        if (await File(join(path, _kLinuxNativeLibrary)).exists()) {
-          return join(path, _kLinuxNativeLibrary);
-        }
-      }
-      throw Exception(_kLinuxNativeLibraryNotFoundMessage);
+      throw Exception(
+        {
+          'windows':
+              'Cannot find libmpv-2.dll in your system %PATH%. One way to deal with this is to ship libmpv-2.dll with your compiled executable or script in the same directory.',
+          'linux':
+              'Cannot find libmpv at the usual places. Depending upon your distribution, you can install the libmpv package to make shared library available globally. On Debian or Ubuntu based systems, you can install it with: apt install libmpv-dev.',
+        }[Platform.operatingSystem]!,
+      );
     }
     throw Exception(
-      'NativeLibrary.find is not supported on ${Platform.operatingSystem}.',
+      'Unsupported operating system: ${Platform.operatingSystem}.',
     );
   }
-
-  /// Resolved path of the native shared library.
-  static String? _resolved;
-
-  /// Default libmpv shared library names on Windows.
-  static const List<String> _kWindowsNativeLibraries = [
-    'libmpv-2.dll',
-    'mpv-2.dll',
-    'mpv-1.dll',
-  ];
-
-  /// Default libmpv shared library name on Linux.
-  static const String _kLinuxNativeLibrary = 'libmpv.so';
-
-  /// [Exception] message thrown when the native library is not found on Windows.
-  static const String _kWindowsNativeLibraryNotFoundMessage =
-      'Cannot find mpv-2.dll in your system %PATH%. One way to deal with this is to ship mpv-2.dll with your script or compiled executable in the same directory.';
-
-  /// [Exception] message thrown when the native library is not found on Linux.
-  static const String _kLinuxNativeLibraryNotFoundMessage =
-      'Cannot find libmpv in the usual places. Depending on your distro, you may try installing mpv-devel or libmpv-dev package.';
 }

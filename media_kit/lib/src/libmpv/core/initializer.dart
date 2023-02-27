@@ -12,14 +12,12 @@ import 'initializer_native_event_loop.dart' as initializer_native_event_loop;
 /// See package:media_kit_native_event_loop for more details.
 ///
 Future<Pointer<mpv_handle>> create(
-  String path,
+  String? path,
   Future<void> Function(Pointer<mpv_event> event)? callback,
 ) async {
   try {
     return await initializer_native_event_loop.create(path, callback);
-  } catch (exception, stacktrace) {
-    print(exception);
-    print(stacktrace);
+  } catch (exception) {
     return await initializer_isolate.create(path, callback);
   }
 }
