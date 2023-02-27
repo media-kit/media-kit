@@ -2,6 +2,8 @@
 
 A complete video & audio library for Flutter & Dart.
 
+[![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml)
+
 <hr>
 
 <strong>Sponsored with 💖 by</strong>
@@ -17,14 +19,15 @@ A complete video & audio library for Flutter & Dart.
 </a>
 <br>
 
-  <h5>
-    Rapidly ship in-app messaging with Stream's highly reliable chat infrastructure and feature-rich SDKs, including Flutter!
-  </h5>
-<h4>
+<h6>
+  Rapidly ship in-app messaging with Stream's highly reliable chat infrastructure & feature-rich SDKs, including Flutter!
+</h6>
+
+<strong>
   <a href="https://getstream.io/chat/sdk/flutter/?utm_source=alexmercerind_dart&utm_medium=Github_Repo_Content_Ad&utm_content=Developer&utm_campaign=alexmercerind_December2022_FlutterSDK_klmh22" target="_blank">
   Try the Flutter Chat tutorial
   </a>
-</h4>
+</strong>
 
 <hr>
 
@@ -54,8 +57,8 @@ dependencies:
 | Windows  | Ready | Ready |
 | Linux    | Ready | Ready |
 | macOS    | WIP   | WIP   |
-| Android  | WIP   | WIP   |
-| iOS      | WIP   | WIP   |
+| Android  | Soon  | Soon  |
+| iOS      | Soon  | Soon  |
 
 ## Guide
 
