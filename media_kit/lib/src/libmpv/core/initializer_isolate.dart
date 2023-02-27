@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
+import 'package:media_kit/src/libmpv/core/native_library.dart';
 
 /// Detect if app running in release mode.
 const isReleaseMode = bool.fromEnvironment('dart.vm.product');
@@ -32,8 +33,10 @@ void mainloop(SendPort port) async {
   // Separately creating [MPV] object since isolates don't share finaliables.
   late MPV mpv;
   receiver.listen((message) {
-    if (message is String) {
-      // Initializing the local [MPV] object.
+    // Initializing the local [MPV] object.
+    if (message == null) {
+      mpv = MPV(NativeLibrary.find());
+    } else if (message is String) {
       mpv = MPV(DynamicLibrary.open(message));
     }
     // Notifying about the successful sending of the event & move onto next [MPV.mpv_wait_event] after completing the [Completer].
@@ -63,15 +66,15 @@ void mainloop(SendPort port) async {
 }
 
 /// Creates & returns initialized [Pointer] to [mpv_handle] whose event loop is running on separate isolate.
-///
-/// Pass [path] to libmpv dynamic library & [callback] to receive event callbacks as [Pointer] to [mpv_event].
 Future<Pointer<mpv_handle>> create(
-  String path,
+  String? path,
   Future<void> Function(Pointer<mpv_event> event)? callback,
 ) async {
   if (callback == null) {
     // No requirement for separate isolate.
-    final mpv = MPV(DynamicLibrary.open(path));
+    final mpv = MPV(
+      path == null ? NativeLibrary.find() : DynamicLibrary.open(path),
+    );
     final handle = mpv.mpv_create();
     mpv.mpv_initialize(handle);
     return handle;
@@ -108,7 +111,7 @@ Future<Pointer<mpv_handle>> create(
           print(exception.toString());
           print(stacktrace.toString());
         }
-        port.send(null);
+        port.send(true);
       }
     });
     // Awaiting the retrieval of [Pointer] to [mpv_handle].
