@@ -25,8 +25,7 @@ A complete video & audio library for Flutter & Dart.
 
 <hr>
 
-
-![](https://user-images.githubusercontent.com/28951144/221548095-3bbe6dc2-1d26-41eb-8837-b4bb5212bb24.jpg)
+![](https://user-images.githubusercontent.com/28951144/221628306-e240b292-52be-478c-9661-fffe6c3b445a.jpg)
 
 
 ## Installation
