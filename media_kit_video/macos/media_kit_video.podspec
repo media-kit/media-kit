@@ -19,7 +19,7 @@ Pod::Spec.new do |s|
   s.source_files     =  "Classes/**/*.swift", "Headers/**/*.h"
   s.dependency 'FlutterMacOS'
 
-  s.platform = :osx, '10.11'
+  s.platform = :osx, '10.13'
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) GL_SILENCE_DEPRECATION COREVIDEO_SILENCE_GL_DEPRECATION',
