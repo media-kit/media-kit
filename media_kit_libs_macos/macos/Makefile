@@ -35,4 +35,9 @@ Resources/*.dylib: .cache/IINA.dmg
 		2> /dev/null
 
 	./Scripts/relink_dylibs.sh ./Resources
-	codesign --force -s - ./Resources/*.dylib
+	codesign --remove ./Resources/*.dylib
+
+.PHONY: clean
+clean:
+	rm -rf .cache
+	rm -f ./Resources/*.dylib
