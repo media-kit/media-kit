@@ -34,7 +34,7 @@ Resources/*.dylib: .cache/IINA.dmg
 		Resources/libmpv.dylib \
 		2> /dev/null
 
-	codesign --remove ./Resources/*.dylib
+	codesign --force -s - ./Resources/*.dylib
 
 .PHONY: clean
 clean:
