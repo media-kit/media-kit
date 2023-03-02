@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/track_type.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 void main() {
@@ -391,9 +393,9 @@ class _SimpleStreamState extends State<SimpleStream> {
                   labelText: 'Video URI',
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a URI';
-                  }
+                  // if (value == null || value.isEmpty) {
+                  //   return 'Please enter a URI';
+                  // }
                   return null;
                 },
               ),
@@ -418,13 +420,64 @@ class _SimpleStreamState extends State<SimpleStream> {
                       player.open(
                         Playlist(
                           [
-                            Media(_video.text),
+                            //Media(_video.text),
+                            Media("https://github.com/ietf-wg-cellar/matroska-test-files/raw/master/test_files/test5.mkv"),
                           ],
                         ),
                       );
                     }
                   },
                   child: const Text('Play'),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: ElevatedButton(
+                  onPressed: () async {
+                      final availableTracks = await player.availableTracks;
+                      print("availableTracks:$availableTracks");
+                  },
+                  child: const Text('Load tracks'),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final availableTracks = (await player.availableTracks).where((track) => track.type == TrackType.audio).toList();
+                    if (availableTracks.isNotEmpty) {
+                      availableTracks.shuffle();
+                      player.setAudioTrack(availableTracks[0].id);
+                    }
+                  },
+                  child: const Text('Set random audio'),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final availableTracks = (await player.availableTracks).where((track) => track.type == TrackType.sub).toList();
+                    print("subs:$availableTracks");
+                    if (availableTracks.isNotEmpty) {
+                      availableTracks.shuffle();
+                      player.setSubTrack(availableTracks[0].id);
+                    }
+                  },
+                  child: const Text('Set random sub'),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final availableTracks = (await player.availableTracks).where((track) => track.type == TrackType.video).toList();
+                    if (availableTracks.isNotEmpty) {
+                      availableTracks.shuffle();
+                      player.setVideoTrack(availableTracks[0].id);
+                    }
+                  },
+                  child: const Text('Set random video'),
                 ),
               ),
             ],

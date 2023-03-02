@@ -7,6 +7,7 @@
 import 'dart:async';
 import 'package:meta/meta.dart';
 
+import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_params.dart';
@@ -267,6 +268,12 @@ abstract class PlatformPlayer {
   set shuffle(bool value) {
     throw UnimplementedError(
       '[PlatformPlayer.shuffle] is not implemented.',
+    );
+  }
+
+  Future<List<Track>> get availableTracks async {
+    throw UnimplementedError(
+      '[PlatformPlayer.availableTracks] is not implemented.',
     );
   }
 

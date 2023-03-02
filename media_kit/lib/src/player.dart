@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:media_kit/src/platform_player.dart';
 import 'package:media_kit/src/libmpv/player.dart' as libmpv;
 
+import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_state.dart';

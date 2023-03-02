@@ -6,12 +6,14 @@
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
+import 'package:media_kit/src/models/track_type.dart';
 
 import 'package:media_kit/src/platform_player.dart';
 import 'package:media_kit/src/libmpv/core/initializer.dart';
 import 'package:media_kit/src/libmpv/core/native_library.dart';
 import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
 
+import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_error.dart';
@@ -352,6 +354,24 @@ class Player extends PlatformPlayer {
       args.cast(),
     );
     calloc.free(args);
+  }
+
+  // Sets audio track
+  @override
+  FutureOr<void> setAudioTrack(String value) {
+    return setProperty("audio", value);
+  }
+
+  // Sets sub track
+  @override
+  FutureOr<void> setSubTrack(String value) {
+    return setProperty("sub", value);
+  }
+
+  // Sets sub track
+  @override
+  FutureOr<void> setVideoTrack(String value) {
+    return setProperty("video", value);
   }
 
   /// Sets playlist mode.
@@ -742,12 +762,90 @@ class Player extends PlatformPlayer {
     return result;
   }
 
+  /// Get the list of all the available [Track]s.
+  @override
+  Future<List<Track>> get availableTracks async {
+    final ctx = await _handle.future;
+    final name = 'track-list/count'.toNativeUtf8();
+    final data = calloc<Int64>();
+    _libmpv?.mpv_get_property(
+      ctx,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_INT64,
+      data.cast(),
+    );
+    final nbTracks = data.cast<Int64>().value;
+    final result = <Track>[];
+    for (var i= 0; i<nbTracks; i++) {
+      final track = await getTrack(i);
+      if (track != null) {
+        result.add(track);
+      }
+    }
+
+    calloc.free(name);
+    calloc.free(data);
+    return result;
+  }
+
+  Future<Track?> getTrack(int trackIndex) async {
+    final typeStr = await getProperty('track-list/$trackIndex/type');
+    final id = await getProperty('track-list/$trackIndex/id');
+    final title = await getProperty('track-list/$trackIndex/title');
+    final lang = await getProperty('track-list/$trackIndex/lang');
+
+    print("trackIndex:$trackIndex | type:$typeStr - id:$id - title:$title - lang:$lang");
+
+    if (typeStr != null && id != null)
+    {
+      final type = TrackType.values.byName(typeStr);
+      return Track(type, id, title, lang);
+    }
+    return null;
+  }
+
   /// [generated.mpv_handle] address of the internal libmpv player instance.
   @override
   Future<int> get handle async {
     final pointer = await _handle.future;
     return pointer.address;
   }
+
+  /// Gets property / option for the internal `libmpv` instance of this [Player].
+  /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
+  ///
+  /// See:
+  /// * https://mpv.io/manual/master/#options
+  /// * https://mpv.io/manual/master/#properties
+  ///
+  Future<String?> getProperty(String property) async {
+    final ctx = await _handle.future;
+    final name = property.toNativeUtf8();
+    // final data = _libmpv?.mpv_get_property_string(
+    //   ctx,
+    //   name.cast()
+    // );
+
+    final data = calloc<Pointer<Utf8>>();
+    _libmpv?.mpv_get_property(
+      ctx,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_STRING,
+      data.cast(),
+    );
+
+    String? value;
+    if (data.value.cast<Utf8>() != nullptr) {
+      value = data.value.cast<Utf8>().toDartString();
+    }
+
+    calloc.free(name);
+    if (data != null) {
+      calloc.free(data);
+    }
+    return value;
+  }
+
 
   /// Sets property / option for the internal `libmpv` instance of this [Player].
   /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
@@ -1034,6 +1132,7 @@ class Player extends PlatformPlayer {
       'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
       'audio-params': generated.mpv_format.MPV_FORMAT_NODE,
       'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
+      'track-list': generated.mpv_format.MPV_FORMAT_NONE,
     }.forEach(
       (property, format) {
         final ptr = property.toNativeUtf8();
