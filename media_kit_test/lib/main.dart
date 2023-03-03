@@ -244,6 +244,7 @@ class _SimpleScreenState extends State<SimpleScreen> {
               ),
             ),
           ),
+          TracksSelector(player: player),
           SeekBar(player: player),
           const SizedBox(height: 32.0),
         ],
@@ -419,9 +420,7 @@ class _SimpleStreamState extends State<SimpleStream> {
                       player.open(
                         Playlist(
                           [
-                            //Media(_video.text),
-                            Media(
-                                "https://github.com/ietf-wg-cellar/matroska-test-files/raw/master/test_files/test5.mkv"),
+                            Media(_video.text)
                           ],
                         ),
                       );
@@ -618,6 +617,7 @@ class _SinglePlayerMultipleVideosScreenState extends State<SinglePlayerMultipleV
               ],
             ),
           ),
+          TracksSelector(player: player),
           SeekBar(player: player),
           const SizedBox(height: 32.0),
         ],
