@@ -250,6 +250,24 @@ abstract class PlatformPlayer {
     );
   }
 
+  FutureOr<void> setAudioTrack(String id) {
+    throw UnimplementedError(
+      '[PlatformPlayer.setAudioTrack] is not implemented.',
+    );
+  }
+
+  FutureOr<void> setSubTrack(String id) {
+    throw UnimplementedError(
+      '[PlatformPlayer.setSubTrack] is not implemented.',
+    );
+  }
+
+  FutureOr<void> setVideoTrack(String id) {
+    throw UnimplementedError(
+      '[PlatformPlayer.setVideoTrack] is not implemented.',
+    );
+  }
+
   set volume(double value) {
     throw UnimplementedError(
       '[PlatformPlayer.volume] is not implemented.',

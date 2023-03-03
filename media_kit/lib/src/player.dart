@@ -203,23 +203,6 @@ class Player {
     platform?.shuffle = value;
   }
 
-  /// Sets current [AudioDevice].
-  set audioDevice(FutureOr<AudioDevice> device) {
-    platform?.audioDevice = device;
-  }
-
-  /// Gets current [AudioDevice].
-  FutureOr<AudioDevice> get audioDevice {
-    final result = platform?.audioDevice;
-    return result!;
-  }
-
-  /// Get the list of all the available [AudioDevice]s.
-  Future<List<AudioDevice>> get availableAudioDevices async {
-    final result = await platform?.availableAudioDevices;
-    return result!;
-  }
-
   /// Get the list of all the available [Track]s.
   Future<List<Track>> get availableTracks async {
     final result = await platform?.availableTracks;
