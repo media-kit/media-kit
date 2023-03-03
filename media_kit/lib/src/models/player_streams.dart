@@ -48,6 +48,9 @@ class PlayerStreams {
   /// [Stream] emitting [PlayerLog]s.
   final Stream<PlayerLog> log;
 
+  /// Tracks updated of the currently playing [Media] in the [Player].
+  final Stream tracksUpdated;
+
   /// [Stream] raising [PlayerError]s.
   /// This may be used to catch errors raised by [Player].
   final Stream<PlayerError> error;
@@ -66,5 +69,6 @@ class PlayerStreams {
     this.error,
     this.audioParams,
     this.audioBitrate,
+    this.tracksUpdated,
   );
 }

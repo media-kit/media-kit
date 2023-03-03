@@ -5,6 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:ffi';
 import 'package:meta/meta.dart';
 
 import 'package:media_kit/src/models/track.dart';
@@ -152,6 +153,7 @@ abstract class PlatformPlayer {
     errorController.stream,
     audioParamsController.stream,
     audioBitrateController.stream,
+    tracksUpdatedController.stream,
   );
 
   @mustCallSuper
@@ -169,6 +171,7 @@ abstract class PlatformPlayer {
     await errorController.close();
     await audioParamsController.close();
     await audioBitrateController.close();
+    await tracksUpdatedController.close();
   }
 
   FutureOr<void> open(
@@ -331,5 +334,9 @@ abstract class PlatformPlayer {
 
   @protected
   final StreamController<double?> audioBitrateController =
+      StreamController.broadcast();
+
+  @protected
+  final StreamController tracksUpdatedController =
       StreamController.broadcast();
 }

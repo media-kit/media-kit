@@ -8,6 +8,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/track_type.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:collection/collection.dart';
 
 void main() {
   runApp(const MyApp());
@@ -98,8 +99,7 @@ class HomeScreen extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) =>
-                      const SinglePlayerMultipleVideosScreen(),
+                  builder: (context) => const SinglePlayerMultipleVideosScreen(),
                 ),
               );
             },
@@ -114,8 +114,7 @@ class HomeScreen extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) =>
-                      const MultiplePlayersMultipleVideosScreen(),
+                  builder: (context) => const MultiplePlayersMultipleVideosScreen(),
                 ),
               );
             },
@@ -130,8 +129,7 @@ class HomeScreen extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) =>
-                      const MultiplePlayersMultipleVideosTabsScreen(),
+                  builder: (context) => const MultiplePlayersMultipleVideosTabsScreen(),
                 ),
               );
             },
@@ -173,6 +171,7 @@ class _SimpleScreenState extends State<SimpleScreen> {
       logLevel: MPVLogLevel.warn,
     ),
   );
+
   // Reference to the [VideoController] instance.
   VideoController? controller;
 
@@ -252,8 +251,7 @@ class _SimpleScreenState extends State<SimpleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final horizontal =
-        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
         appBar: AppBar(
           title: const Text('package:media_kit'),
@@ -329,6 +327,7 @@ class _SimpleStreamState extends State<SimpleStream> {
       logLevel: MPVLogLevel.warn,
     ),
   );
+
   // Reference to the [VideoController] instance.
   VideoController? controller;
   final _formKey = GlobalKey<FormState>();
@@ -373,6 +372,7 @@ class _SimpleStreamState extends State<SimpleStream> {
               ),
             ),
           ),
+          TracksSelector(player: player),
           SeekBar(player: player),
           const SizedBox(height: 32.0),
         ],
@@ -414,70 +414,20 @@ class _SimpleStreamState extends State<SimpleStream> {
                     if (_formKey.currentState!.validate()) {
                       // Set libmpv options directly.
                       if (player.platform is libmpvPlayer) {
-                        (player.platform as libmpvPlayer)
-                            .setProperty("audio-files", _audio.text);
+                        (player.platform as libmpvPlayer).setProperty("audio-files", _audio.text);
                       }
                       player.open(
                         Playlist(
                           [
                             //Media(_video.text),
-                            Media("https://github.com/ietf-wg-cellar/matroska-test-files/raw/master/test_files/test5.mkv"),
+                            Media(
+                                "https://github.com/ietf-wg-cellar/matroska-test-files/raw/master/test_files/test5.mkv"),
                           ],
                         ),
                       );
                     }
                   },
                   child: const Text('Play'),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: ElevatedButton(
-                  onPressed: () async {
-                      final availableTracks = await player.availableTracks;
-                      print("availableTracks:$availableTracks");
-                  },
-                  child: const Text('Load tracks'),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final availableTracks = (await player.availableTracks).where((track) => track.type == TrackType.audio).toList();
-                    if (availableTracks.isNotEmpty) {
-                      availableTracks.shuffle();
-                      player.setAudioTrack(availableTracks[0].id);
-                    }
-                  },
-                  child: const Text('Set random audio'),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final availableTracks = (await player.availableTracks).where((track) => track.type == TrackType.sub).toList();
-                    print("subs:$availableTracks");
-                    if (availableTracks.isNotEmpty) {
-                      availableTracks.shuffle();
-                      player.setSubTrack(availableTracks[0].id);
-                    }
-                  },
-                  child: const Text('Set random sub'),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final availableTracks = (await player.availableTracks).where((track) => track.type == TrackType.video).toList();
-                    if (availableTracks.isNotEmpty) {
-                      availableTracks.shuffle();
-                      player.setVideoTrack(availableTracks[0].id);
-                    }
-                  },
-                  child: const Text('Set random video'),
                 ),
               ),
             ],
@@ -487,8 +437,7 @@ class _SimpleStreamState extends State<SimpleStream> {
 
   @override
   Widget build(BuildContext context) {
-    final horizontal =
-        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
@@ -535,14 +484,13 @@ class SinglePlayerMultipleVideosScreen extends StatefulWidget {
   const SinglePlayerMultipleVideosScreen({Key? key}) : super(key: key);
 
   @override
-  State<SinglePlayerMultipleVideosScreen> createState() =>
-      _SinglePlayerMultipleVideosScreenState();
+  State<SinglePlayerMultipleVideosScreen> createState() => _SinglePlayerMultipleVideosScreenState();
 }
 
-class _SinglePlayerMultipleVideosScreenState
-    extends State<SinglePlayerMultipleVideosScreen> {
+class _SinglePlayerMultipleVideosScreenState extends State<SinglePlayerMultipleVideosScreen> {
   // Create a [Player] instance from `package:media_kit`.
   final Player player = Player();
+
   // Reference to the [VideoController] instance.
   VideoController? controller;
 
@@ -677,8 +625,7 @@ class _SinglePlayerMultipleVideosScreenState
 
   @override
   Widget build(BuildContext context) {
-    final horizontal =
-        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
@@ -745,14 +692,13 @@ class MultiplePlayersMultipleVideosScreen extends StatefulWidget {
   const MultiplePlayersMultipleVideosScreen({Key? key}) : super(key: key);
 
   @override
-  State<MultiplePlayersMultipleVideosScreen> createState() =>
-      _MultiplePlayersMultipleVideosScreenState();
+  State<MultiplePlayersMultipleVideosScreen> createState() => _MultiplePlayersMultipleVideosScreenState();
 }
 
-class _MultiplePlayersMultipleVideosScreenState
-    extends State<MultiplePlayersMultipleVideosScreen> {
+class _MultiplePlayersMultipleVideosScreenState extends State<MultiplePlayersMultipleVideosScreen> {
   // Create a [Player] instance from `package:media_kit`.
   final List<Player> players = [Player(), Player()];
+
   // Reference to the [VideoController] instance.
   List<VideoController?> controllers = [null, null];
 
@@ -835,8 +781,7 @@ class _MultiplePlayersMultipleVideosScreenState
 
   @override
   Widget build(BuildContext context) {
-    final horizontal =
-        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
@@ -851,10 +796,7 @@ class _MultiplePlayersMultipleVideosScreenState
                         Container(
                           alignment: Alignment.center,
                           width: MediaQuery.of(context).size.width / 2,
-                          height: MediaQuery.of(context).size.width /
-                              2 *
-                              12.0 /
-                              16.0,
+                          height: MediaQuery.of(context).size.width / 2 * 12.0 / 16.0,
                           child: getVideoForIndex(i),
                         ),
                         const Divider(height: 1.0, thickness: 1.0),
@@ -882,8 +824,116 @@ class _MultiplePlayersMultipleVideosScreenState
   }
 }
 
+class TracksSelector extends StatefulWidget {
+  final Player player;
+
+  const TracksSelector({
+    Key? key,
+    required this.player,
+  }) : super(key: key);
+
+  @override
+  State<TracksSelector> createState() => _TracksSelectorState();
+}
+
+class _TracksSelectorState extends State<TracksSelector> {
+  final List<StreamSubscription> _subscriptions = [];
+  List<Track> _videoTracks = [];
+  List<Track> _audioTracks = [];
+  List<Track> _subTracks = [];
+  String _selectedVideoId = trackIdAuto;
+  String _selectedAudioId = trackIdAuto;
+  String _selectedSubId = trackIdAuto;
+
+  @override
+  void initState() {
+    super.initState();
+    _subscriptions.addAll(
+      [
+        widget.player.streams.tracksUpdated.listen((event) async {
+          _videoTracks = await widget.player.availableVideoTracks;
+          _audioTracks = await widget.player.availableAudioTracks;
+          _subTracks = await widget.player.availableSubTracks;
+          setState(() {});
+        }),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    for (final s in _subscriptions) {
+      s.cancel();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const SizedBox(width: 48.0),
+        _buildTrackSelector(_videoTracks, _selectedVideoId, TrackType.video, (trackId) {
+          setState(() {
+            _selectedVideoId = trackId;
+          });
+          widget.player.setVideoTrack(trackId);
+        }),
+        const SizedBox(width: 16.0),
+        _buildTrackSelector(_audioTracks, _selectedAudioId, TrackType.audio, (trackId) {
+          setState(() {
+            _selectedAudioId = trackId;
+          });
+          widget.player.setAudioTrack(trackId);
+        }),
+        const SizedBox(width: 16.0),
+        _buildTrackSelector(_subTracks, _selectedSubId, TrackType.sub, (trackId) {
+          setState(() {
+            _selectedSubId = trackId;
+          });
+          widget.player.setSubTrack(trackId);
+        }),
+      ],
+    );
+  }
+
+  Widget _buildTrackSelector(
+    List<Track> tracks,
+    String selectedTrackId,
+    TrackType trackType,
+    Function(String) onTrackSelected,
+  ) {
+    final allTracks = [];
+    allTracks.add(Track(trackType, "auto", "auto", ""));
+    allTracks.add(Track(trackType, "no", "no", ""));
+    allTracks.addAll(tracks);
+    final items = allTracks.map((track) {
+      final text = "${track.title}-${track.lang}";
+      return DropdownMenuItem(value: track.id, child: Text(text));
+    }).toList();
+    final value = allTracks.firstWhereOrNull((track) {
+      return selectedTrackId == track.id;
+    })?.id ?? trackIdAuto;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(trackType.name),
+        DropdownButton(
+          value: value,
+          icon: const Icon(Icons.keyboard_arrow_down),
+          items: items,
+          onChanged: (trackId) {
+            onTrackSelected(trackId as String);
+          },
+        ),
+      ],
+    );
+  }
+}
+
 class SeekBar extends StatefulWidget {
   final Player player;
+
   const SeekBar({
     Key? key,
     required this.player,
@@ -1045,8 +1095,7 @@ class _StressTestScreenState extends State<StressTestScreen> {
       appBar: AppBar(
         title: const Text('package:media_kit'),
       ),
-      body: MediaQuery.of(context).size.width >
-              MediaQuery.of(context).size.height
+      body: MediaQuery.of(context).size.width > MediaQuery.of(context).size.height
           ? GridView.count(
               crossAxisCount: 2,
               padding: const EdgeInsets.all(16.0),
@@ -1062,8 +1111,7 @@ class _StressTestScreenState extends State<StressTestScreen> {
                     (e) => Container(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       width: MediaQuery.of(context).size.width - 32.0,
-                      height:
-                          9 / 16.0 * (MediaQuery.of(context).size.width - 32.0),
+                      height: 9 / 16.0 * (MediaQuery.of(context).size.width - 32.0),
                       child: e,
                     ),
                   )
@@ -1121,7 +1169,9 @@ class MultiplePlayersMultipleVideosTabsScreen extends StatelessWidget {
 
 class TabScreen extends StatefulWidget {
   final int i;
+
   const TabScreen(this.i, {Key? key}) : super(key: key);
+
   @override
   State<TabScreen> createState() => _TabScreenState();
 }
