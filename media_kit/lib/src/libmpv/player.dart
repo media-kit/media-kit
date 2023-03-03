@@ -358,20 +358,20 @@ class Player extends PlatformPlayer {
 
   // Sets audio track
   @override
-  FutureOr<void> setAudioTrack(String value) {
-    return setProperty("audio", value);
+  FutureOr<void> setAudioTrack(String id) {
+    return setProperty(TrackType.audio.name, id);
   }
 
   // Sets sub track
   @override
-  FutureOr<void> setSubTrack(String value) {
-    return setProperty("sub", value);
+  FutureOr<void> setSubTrack(String id) {
+    return setProperty(TrackType.sub.name, id);
   }
 
   // Sets sub track
   @override
-  FutureOr<void> setVideoTrack(String value) {
-    return setProperty("video", value);
+  FutureOr<void> setVideoTrack(String id) {
+    return setProperty(TrackType.video.name, id);
   }
 
   /// Sets playlist mode.
@@ -821,10 +821,6 @@ class Player extends PlatformPlayer {
   Future<String?> getProperty(String property) async {
     final ctx = await _handle.future;
     final name = property.toNativeUtf8();
-    // final data = _libmpv?.mpv_get_property_string(
-    //   ctx,
-    //   name.cast()
-    // );
 
     final data = calloc<Pointer<Utf8>>();
     _libmpv?.mpv_get_property(
@@ -840,9 +836,7 @@ class Player extends PlatformPlayer {
     }
 
     calloc.free(name);
-    if (data != null) {
-      calloc.free(data);
-    }
+    calloc.free(data);
     return value;
   }
 

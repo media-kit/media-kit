@@ -31,3 +31,6 @@ class Track {
   Track(this.type, this.id, this.title, this.lang);
 
 }
+
+const String trackIdNo = "no";
+const String trackIdAuto = "auto";

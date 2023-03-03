@@ -201,6 +201,44 @@ class Player {
     platform?.shuffle = value;
   }
 
+  /// Sets current [AudioDevice].
+  set audioDevice(FutureOr<AudioDevice> device) {
+    platform?.audioDevice = device;
+  }
+
+  /// Gets current [AudioDevice].
+  FutureOr<AudioDevice> get audioDevice {
+    final result = platform?.audioDevice;
+    return result!;
+  }
+
+  /// Get the list of all the available [AudioDevice]s.
+  Future<List<AudioDevice>> get availableAudioDevices async {
+    final result = await platform?.availableAudioDevices;
+    return result!;
+  }
+
+  /// Get the list of all the available [Track]s.
+  Future<List<Track>> get availableTracks async {
+    final result = await platform?.availableTracks;
+    return result!;
+  }
+
+  /// Sets audio track.
+  FutureOr<void> setAudioTrack(String id) {
+    return platform?.setAudioTrack(id);
+  }
+
+  /// Sets sub track.
+  FutureOr<void> setSubTrack(String id) {
+    return platform?.setSubTrack(id);
+  }
+
+  /// Sets video track.
+  FutureOr<void> setVideoTrack(String id) {
+    return platform?.setVideoTrack(id);
+  }
+
   /// Internal platform specific identifier for this [Player] instance.
   ///
   /// Since, [int] is a primitive type, it can be used to pass this [Player] instance to native code without directly depending upon this library.
