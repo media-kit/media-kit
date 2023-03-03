@@ -99,7 +99,8 @@ class HomeScreen extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => const SinglePlayerMultipleVideosScreen(),
+                  builder: (context) =>
+                      const SinglePlayerMultipleVideosScreen(),
                 ),
               );
             },
@@ -114,7 +115,8 @@ class HomeScreen extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => const MultiplePlayersMultipleVideosScreen(),
+                  builder: (context) =>
+                      const MultiplePlayersMultipleVideosScreen(),
                 ),
               );
             },
@@ -129,7 +131,8 @@ class HomeScreen extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => const MultiplePlayersMultipleVideosTabsScreen(),
+                  builder: (context) =>
+                      const MultiplePlayersMultipleVideosTabsScreen(),
                 ),
               );
             },
@@ -252,7 +255,8 @@ class _SimpleScreenState extends State<SimpleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal =
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
         appBar: AppBar(
           title: const Text('package:media_kit'),
@@ -394,9 +398,9 @@ class _SimpleStreamState extends State<SimpleStream> {
                   labelText: 'Video URI',
                 ),
                 validator: (value) {
-                  // if (value == null || value.isEmpty) {
-                  //   return 'Please enter a URI';
-                  // }
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a URI';
+                  }
                   return null;
                 },
               ),
@@ -415,12 +419,13 @@ class _SimpleStreamState extends State<SimpleStream> {
                     if (_formKey.currentState!.validate()) {
                       // Set libmpv options directly.
                       if (player.platform is libmpvPlayer) {
-                        (player.platform as libmpvPlayer).setProperty("audio-files", _audio.text);
+                        (player.platform as libmpvPlayer)
+                            .setProperty("audio-files", _audio.text);
                       }
                       player.open(
                         Playlist(
                           [
-                            Media(_video.text)
+                            Media(_video.text),
                           ],
                         ),
                       );
@@ -436,7 +441,8 @@ class _SimpleStreamState extends State<SimpleStream> {
 
   @override
   Widget build(BuildContext context) {
-    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal =
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
@@ -483,13 +489,14 @@ class SinglePlayerMultipleVideosScreen extends StatefulWidget {
   const SinglePlayerMultipleVideosScreen({Key? key}) : super(key: key);
 
   @override
-  State<SinglePlayerMultipleVideosScreen> createState() => _SinglePlayerMultipleVideosScreenState();
+  State<SinglePlayerMultipleVideosScreen> createState() =>
+      _SinglePlayerMultipleVideosScreenState();
 }
 
-class _SinglePlayerMultipleVideosScreenState extends State<SinglePlayerMultipleVideosScreen> {
+class _SinglePlayerMultipleVideosScreenState
+    extends State<SinglePlayerMultipleVideosScreen> {
   // Create a [Player] instance from `package:media_kit`.
   final Player player = Player();
-
   // Reference to the [VideoController] instance.
   VideoController? controller;
 
@@ -625,7 +632,8 @@ class _SinglePlayerMultipleVideosScreenState extends State<SinglePlayerMultipleV
 
   @override
   Widget build(BuildContext context) {
-    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal =
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
@@ -692,13 +700,14 @@ class MultiplePlayersMultipleVideosScreen extends StatefulWidget {
   const MultiplePlayersMultipleVideosScreen({Key? key}) : super(key: key);
 
   @override
-  State<MultiplePlayersMultipleVideosScreen> createState() => _MultiplePlayersMultipleVideosScreenState();
+  State<MultiplePlayersMultipleVideosScreen> createState() =>
+      _MultiplePlayersMultipleVideosScreenState();
 }
 
-class _MultiplePlayersMultipleVideosScreenState extends State<MultiplePlayersMultipleVideosScreen> {
+class _MultiplePlayersMultipleVideosScreenState
+    extends State<MultiplePlayersMultipleVideosScreen> {
   // Create a [Player] instance from `package:media_kit`.
   final List<Player> players = [Player(), Player()];
-
   // Reference to the [VideoController] instance.
   List<VideoController?> controllers = [null, null];
 
@@ -781,7 +790,8 @@ class _MultiplePlayersMultipleVideosScreenState extends State<MultiplePlayersMul
 
   @override
   Widget build(BuildContext context) {
-    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal =
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
@@ -796,7 +806,10 @@ class _MultiplePlayersMultipleVideosScreenState extends State<MultiplePlayersMul
                         Container(
                           alignment: Alignment.center,
                           width: MediaQuery.of(context).size.width / 2,
-                          height: MediaQuery.of(context).size.width / 2 * 12.0 / 16.0,
+                          height: MediaQuery.of(context).size.width /
+                              2 *
+                              12.0 /
+                              16.0,
                           child: getVideoForIndex(i),
                         ),
                         const Divider(height: 1.0, thickness: 1.0),
@@ -933,7 +946,6 @@ class _TracksSelectorState extends State<TracksSelector> {
 
 class SeekBar extends StatefulWidget {
   final Player player;
-
   const SeekBar({
     Key? key,
     required this.player,
@@ -1095,7 +1107,8 @@ class _StressTestScreenState extends State<StressTestScreen> {
       appBar: AppBar(
         title: const Text('package:media_kit'),
       ),
-      body: MediaQuery.of(context).size.width > MediaQuery.of(context).size.height
+      body: MediaQuery.of(context).size.width >
+              MediaQuery.of(context).size.height
           ? GridView.count(
               crossAxisCount: 2,
               padding: const EdgeInsets.all(16.0),
@@ -1111,7 +1124,8 @@ class _StressTestScreenState extends State<StressTestScreen> {
                     (e) => Container(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       width: MediaQuery.of(context).size.width - 32.0,
-                      height: 9 / 16.0 * (MediaQuery.of(context).size.width - 32.0),
+                      height:
+                          9 / 16.0 * (MediaQuery.of(context).size.width - 32.0),
                       child: e,
                     ),
                   )
@@ -1169,9 +1183,7 @@ class MultiplePlayersMultipleVideosTabsScreen extends StatelessWidget {
 
 class TabScreen extends StatefulWidget {
   final int i;
-
   const TabScreen(this.i, {Key? key}) : super(key: key);
-
   @override
   State<TabScreen> createState() => _TabScreenState();
 }

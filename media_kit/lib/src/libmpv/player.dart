@@ -6,7 +6,6 @@
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
-import 'package:media_kit/src/models/track_type.dart';
 
 import 'package:media_kit/src/platform_player.dart';
 import 'package:media_kit/src/libmpv/core/initializer.dart';
@@ -14,6 +13,7 @@ import 'package:media_kit/src/libmpv/core/native_library.dart';
 import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
 
 import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/track_type.dart';
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_error.dart';
@@ -793,7 +793,7 @@ class Player extends PlatformPlayer {
     final id = await getProperty('track-list/$trackIndex/id');
     final title = await getProperty('track-list/$trackIndex/title');
     final lang = await getProperty('track-list/$trackIndex/lang');
-    
+
     if (typeStr != null && id != null)
     {
       final type = TrackType.values.byName(typeStr);

@@ -11,13 +11,12 @@ import 'package:media_kit/src/platform_player.dart';
 import 'package:media_kit/src/libmpv/player.dart' as libmpv;
 
 import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/track_type.dart';
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_streams.dart';
-
-import 'models/track_type.dart';
 
 /// {@template player}
 ///
