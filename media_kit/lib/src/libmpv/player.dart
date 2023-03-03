@@ -793,9 +793,7 @@ class Player extends PlatformPlayer {
     final id = await getProperty('track-list/$trackIndex/id');
     final title = await getProperty('track-list/$trackIndex/title');
     final lang = await getProperty('track-list/$trackIndex/lang');
-
-    print("trackIndex:$trackIndex | type:$typeStr - id:$id - title:$title - lang:$lang");
-
+    
     if (typeStr != null && id != null)
     {
       final type = TrackType.values.byName(typeStr);
