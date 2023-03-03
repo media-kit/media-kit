@@ -932,6 +932,11 @@ class Player extends PlatformPlayer {
           positionController.add(position);
         }
       }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'track-list' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NONE) {
+        tracksUpdatedController.add(null);
+        print("tracks updated");
+      }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
         final duration = Duration(
