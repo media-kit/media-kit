@@ -20,9 +20,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
-  media_kit_libs_macos: a590dadfe1cac4ebb2b6a85b4d23c1a66982ab70
-  media_kit_video: 11531883e47e53db1bc28e1d8e3f9fc93c13627f
+  media_kit_libs_macos: de372b7fde12c0f5a05eddeb1e332fbcc45039b7
+  media_kit_video: cb2ffee9b6ffe0702eef9b26fc660d3116a34bfa
 
 PODFILE CHECKSUM: 353c8bcc5d5b0994e508d035b5431cfe18c1dea7
 
-COCOAPODS: 1.11.3
+COCOAPODS: 1.12.0

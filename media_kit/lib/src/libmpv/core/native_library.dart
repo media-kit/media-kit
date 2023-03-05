@@ -89,16 +89,7 @@ abstract class NativeLibrary {
     }
     if (Platform.isMacOS) {
       final appDir = join(executableDir, "..");
-      final libPath = join(
-        appDir,
-        "Frameworks",
-        "media_kit_libs_macos.framework",
-        "Resources",
-        "Resources.bundle",
-        "Contents",
-        "Resources",
-        _kMacOSNativeLibrary,
-      );
+      final libPath = join(appDir, "Frameworks", _kMacOSNativeLibrary);
 
       if (await File(libPath).exists()) {
         return libPath;

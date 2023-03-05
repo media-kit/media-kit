@@ -23,9 +23,8 @@ Pod::Spec.new do |s|
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) GL_SILENCE_DEPRECATION COREVIDEO_SILENCE_GL_DEPRECATION',
-    'LD_RUNPATH_SEARCH_PATHS' => '$(inherited) @executable_path/../Frameworks/media_kit_libs_macos.framework/Resources/Resources.bundle/Contents/Resources',
     'OTHER_LDFLAGS' => '$(inherited) -lmpv',
-    'LIBRARY_SEARCH_PATHS' => '$(inherited) $(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos/macos/Resources'
+    'LIBRARY_SEARCH_PATHS' => '$(inherited) $(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos/macos/Libs'
   }
   s.swift_version = '5.0'
 end
