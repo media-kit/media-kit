@@ -229,6 +229,18 @@ class Player {
     return result ?? [];
   }
 
+  Future<Track?> get currentVideoTrack async {
+    return platform?.currentVideoTrack;
+  }
+
+  Future<Track?> get currentAudioTrack async {
+    return platform?.currentAudioTrack;
+  }
+
+  Future<Track?> get currentSubTrack async {
+     return platform?.currentSubTrack;
+  }
+
   /// Sets audio track.
   FutureOr<void> setAudioTrack(String id) {
     return platform?.setAudioTrack(id);

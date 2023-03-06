@@ -867,6 +867,9 @@ class _TracksSelectorState extends State<TracksSelector> {
           _videoTracks = await widget.player.availableVideoTracks;
           _audioTracks = await widget.player.availableAudioTracks;
           _subTracks = await widget.player.availableSubTracks;
+          _selectedVideoId = (await widget.player.currentVideoTrack)?.id ?? trackIdAuto;
+          _selectedAudioId = (await widget.player.currentAudioTrack)?.id ?? trackIdAuto;
+          _selectedSubId = (await widget.player.currentSubTrack)?.id ?? trackIdAuto;
           setState(() {});
         }),
       ],
@@ -887,9 +890,6 @@ class _TracksSelectorState extends State<TracksSelector> {
       children: [
         const SizedBox(width: 48.0),
         _buildTrackSelector(_videoTracks, _selectedVideoId, TrackType.video, (trackId) {
-          setState(() {
-            _selectedVideoId = trackId;
-          });
           widget.player.setVideoTrack(trackId);
         }),
         const SizedBox(width: 16.0),

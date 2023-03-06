@@ -762,6 +762,39 @@ class Player extends PlatformPlayer {
     return result;
   }
 
+  @override
+  Future<Track?> get currentVideoTrack async {
+    return _getCurrentTrack(TrackType.video);
+  }
+
+  @override
+  Future<Track?> get currentAudioTrack async {
+    return _getCurrentTrack(TrackType.audio);
+  }
+
+  @override
+  Future<Track?> get currentSubTrack async {
+    return _getCurrentTrack(TrackType.sub);
+  }
+
+  Future<Track?> _getCurrentTrack(TrackType type) async {
+    final ctx = await _handle.future;
+    final name = 'current-tracks/${type.name}/id'.toNativeUtf8();
+    final data = calloc<Int64>();
+    _libmpv?.mpv_get_property(
+      ctx,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_INT64,
+      data.cast(),
+    );
+    final trackId = data.cast<Int64>().value;
+    final result = await _getTrack(trackId);
+
+    calloc.free(name);
+    calloc.free(data);
+    return result;
+  }
+
   /// Get the list of all the available [Track]s.
   @override
   Future<List<Track>> get availableTracks async {
@@ -777,7 +810,7 @@ class Player extends PlatformPlayer {
     final nbTracks = data.cast<Int64>().value;
     final result = <Track>[];
     for (var i= 0; i<nbTracks; i++) {
-      final track = await getTrack(i);
+      final track = await _getTrack(i);
       if (track != null) {
         result.add(track);
       }
@@ -788,7 +821,7 @@ class Player extends PlatformPlayer {
     return result;
   }
 
-  Future<Track?> getTrack(int trackIndex) async {
+  Future<Track?> _getTrack(int trackIndex) async {
     final typeStr = await getProperty('track-list/$trackIndex/type');
     final id = await getProperty('track-list/$trackIndex/id');
     final title = await getProperty('track-list/$trackIndex/title');
@@ -933,7 +966,6 @@ class Player extends PlatformPlayer {
       if (prop.ref.name.cast<Utf8>().toDartString() == 'track-list' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_NONE) {
         tracksUpdatedController.add(null);
-        print("tracks updated");
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {

@@ -298,6 +298,24 @@ abstract class PlatformPlayer {
     );
   }
 
+  Future<Track?> get currentVideoTrack async {
+    throw UnimplementedError(
+      '[PlatformPlayer.currentVideoTrack] is not implemented.',
+    );
+  }
+
+  Future<Track?> get currentAudioTrack async {
+    throw UnimplementedError(
+      '[PlatformPlayer.currentAudioTrack] is not implemented.',
+    );
+  }
+
+  Future<Track?> get currentSubTrack async {
+    throw UnimplementedError(
+      '[PlatformPlayer.currentSubTrack] is not implemented.',
+    );
+  }
+
   Future<int> get handle {
     throw UnimplementedError(
       '[PlatformPlayer.handle] is not implemented.',
