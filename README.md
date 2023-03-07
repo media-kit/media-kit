@@ -31,7 +31,12 @@ A complete video & audio library for Flutter & Dart.
 
 <hr>
 
-https://user-images.githubusercontent.com/28951144/209100988-6f85f563-20e0-4e35-893a-ae099c7e03e4.mp4
+
+https://user-images.githubusercontent.com/28951144/223529386-c4039cf1-3ead-49c2-bcc7-5c5f8541958a.mp4
+
+<br></br>
+
+Performance on entry-level AMD Ryzen 3 2200U processor with integrated Radeon Vega 3 Mobile Graphics.
 
 ## Installation
 
@@ -676,17 +681,6 @@ You can visit my [experimentation repository](https://github.com/alexmercerind/f
 #### Linux
 
 On Flutter Linux, [both OpenGL (H/W) & pixel buffer (S/W) APIs](https://github.com/flutter/engine/pull/24916) are available for rendering on Texture widget.
-
-## Outcomes
-
-4K video playback on entry-level AMD Ryzen 3 2200U processor with Radeon Vega 3 Mobile Graphics.
-
-**NOTES:**
-
-- See process specific CPU & GPU usage (media_kit_test.exe). Overall CPU usage is high due to screen recording.
-- Memory usage is higher because of higher resolution 4K video. General usage will be lower.
-
-https://user-images.githubusercontent.com/28951144/208765832-416313c9-97d4-44d0-a902-e577f3c4f3f6.mp4
 
 ## License
 
