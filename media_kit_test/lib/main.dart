@@ -867,12 +867,15 @@ class _TracksSelectorState extends State<TracksSelector> {
           _videoTracks = await widget.player.availableVideoTracks;
           _audioTracks = await widget.player.availableAudioTracks;
           _subTracks = await widget.player.availableSubTracks;
+          setState(() {});
+        }),
+        widget.player.streams.currentTracksUpdated.listen((event) async {
           _selectedVideoId = (await widget.player.currentVideoTrack)?.id ?? trackIdAuto;
           _selectedAudioId = (await widget.player.currentAudioTrack)?.id ?? trackIdAuto;
           _selectedSubId = (await widget.player.currentSubTrack)?.id ?? trackIdAuto;
           setState(() {});
-        }),
-      ],
+        })
+    ],
     );
   }
 
@@ -894,16 +897,10 @@ class _TracksSelectorState extends State<TracksSelector> {
         }),
         const SizedBox(width: 16.0),
         _buildTrackSelector(_audioTracks, _selectedAudioId, TrackType.audio, (trackId) {
-          setState(() {
-            _selectedAudioId = trackId;
-          });
           widget.player.setAudioTrack(trackId);
         }),
         const SizedBox(width: 16.0),
         _buildTrackSelector(_subTracks, _selectedSubId, TrackType.sub, (trackId) {
-          setState(() {
-            _selectedSubId = trackId;
-          });
           widget.player.setSubTrack(trackId);
         }),
       ],
@@ -917,16 +914,17 @@ class _TracksSelectorState extends State<TracksSelector> {
     Function(String) onTrackSelected,
   ) {
     final allTracks = [];
-    allTracks.add(Track(trackType, "auto", "auto", ""));
-    allTracks.add(Track(trackType, "no", "no", ""));
+    allTracks.add(Track(trackType, trackIdAuto, "auto", ""));
+    allTracks.add(Track(trackType, trackIdNo, "no", ""));
     allTracks.addAll(tracks);
     final items = allTracks.map((track) {
-      final text = "${track.title}-${track.lang}";
+      final text = "${track.id}|${track.title}-${track.lang}";
       return DropdownMenuItem(value: track.id, child: Text(text));
     }).toList();
     final value = allTracks.firstWhereOrNull((track) {
       return selectedTrackId == track.id;
-    })?.id ?? trackIdAuto;
+    }).id ?? trackIdAuto;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

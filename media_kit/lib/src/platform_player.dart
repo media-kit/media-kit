@@ -154,6 +154,7 @@ abstract class PlatformPlayer {
     audioParamsController.stream,
     audioBitrateController.stream,
     tracksUpdatedController.stream,
+    currentTracksUpdatedController.stream,
   );
 
   @mustCallSuper
@@ -375,4 +376,8 @@ abstract class PlatformPlayer {
   @protected
   final StreamController tracksUpdatedController =
       StreamController.broadcast();
+
+  @protected
+  final StreamController currentTracksUpdatedController =
+  StreamController.broadcast();
 }

@@ -51,6 +51,9 @@ class PlayerStreams {
   /// Tracks updated of the currently playing [Media] in the [Player].
   final Stream tracksUpdated;
 
+  /// Current tracks updated of the currently playing [Media] in the [Player].
+  final Stream currentTracksUpdated;
+
   /// [Stream] raising [PlayerError]s.
   /// This may be used to catch errors raised by [Player].
   final Stream<PlayerError> error;
@@ -70,5 +73,6 @@ class PlayerStreams {
     this.audioParams,
     this.audioBitrate,
     this.tracksUpdated,
+    this.currentTracksUpdated,
   );
 }

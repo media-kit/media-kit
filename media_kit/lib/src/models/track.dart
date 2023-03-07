@@ -30,6 +30,23 @@ class Track {
   /// {@macro track}
   Track(this.type, this.id, this.title, this.lang);
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Track &&
+          runtimeType == other.runtimeType &&
+          type == other.type &&
+          id == other.id &&
+          title == other.title &&
+          lang == other.lang;
+
+  @override
+  int get hashCode => type.hashCode ^ id.hashCode ^ title.hashCode ^ lang.hashCode;
+
+  @override
+  String toString() {
+    return 'Track{type: $type, id: $id, title: $title, lang: $lang}';
+  }
 }
 
 const String trackIdNo = "no";

@@ -778,21 +778,17 @@ class Player extends PlatformPlayer {
   }
 
   Future<Track?> _getCurrentTrack(TrackType type) async {
-    final ctx = await _handle.future;
-    final name = 'current-tracks/${type.name}/id'.toNativeUtf8();
-    final data = calloc<Int64>();
-    _libmpv?.mpv_get_property(
-      ctx,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_INT64,
-      data.cast(),
-    );
-    final trackId = data.cast<Int64>().value;
-    final result = await _getTrack(trackId);
+    final typeStr = await getProperty('current-tracks/${type.name}/type');
+    final id = await getProperty('current-tracks/${type.name}/id');
+    final title = await getProperty('current-tracks/${type.name}/title');
+    final lang = await getProperty('current-tracks/${type.name}/lang');
 
-    calloc.free(name);
-    calloc.free(data);
-    return result;
+    if (typeStr != null && id != null)
+    {
+      final type = TrackType.values.byName(typeStr);
+      return Track(type, id, title, lang);
+    }
+    return null;
   }
 
   /// Get the list of all the available [Track]s.
@@ -966,6 +962,10 @@ class Player extends PlatformPlayer {
       if (prop.ref.name.cast<Utf8>().toDartString() == 'track-list' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_NONE) {
         tracksUpdatedController.add(null);
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'current-tracks' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NONE) {
+        currentTracksUpdatedController.add(null);
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
@@ -1162,6 +1162,7 @@ class Player extends PlatformPlayer {
       'audio-params': generated.mpv_format.MPV_FORMAT_NODE,
       'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'track-list': generated.mpv_format.MPV_FORMAT_NONE,
+      'current-tracks': generated.mpv_format.MPV_FORMAT_NONE,
     }.forEach(
       (property, format) {
         final ptr = property.toNativeUtf8();
