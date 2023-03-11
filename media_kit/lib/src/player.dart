@@ -172,6 +172,22 @@ class Player {
     return platform?.seek(duration);
   }
 
+  /// Sets the aspect ratio override for the current video track
+  FutureOr<void> setVideoAspectRatioOverride(String aspectRatio) {
+    return platform?.setVideoAspectRatioOverride(aspectRatio);
+  }
+
+  /// clears the aspect ratio override for the current video track
+  FutureOr<void> clearVideoAspectRatioOverride() {
+    // https://mpv.io/manual/master/#options-video-aspect-override
+    return platform?.setVideoAspectRatioOverride('no');
+  }
+
+  /// gets the aspect ratio override for the video track
+  Future<String?> get videoAspectRatioOverride async {
+    return platform?.videoAspectRatioOverride;
+  }
+
   /// Sets playlist mode.
   FutureOr<void> setPlaylistMode(PlaylistMode playlistMode) {
     return platform?.setPlaylistMode(playlistMode);

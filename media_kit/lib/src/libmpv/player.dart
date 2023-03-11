@@ -353,6 +353,38 @@ class Player extends PlatformPlayer {
     calloc.free(args);
   }
 
+  // overrides the current video tracks aspect ratio
+  // https://mpv.io/manual/master/#options-video-aspect-override
+  @override
+  FutureOr<void> setVideoAspectRatioOverride(String aspectRatio) {
+    return setProperty("video-aspect-override", aspectRatio);
+  }
+
+  // gets the current video tracks aspect ratio override
+  // https://mpv.io/manual/master/#options-video-aspect-override
+  @override
+  Future<String?> get videoAspectRatioOverride async {
+    final ctx = await _handle.future;
+    final name = 'video-aspect-override'.toNativeUtf8();
+    final data = calloc<Pointer<Utf8>>();
+
+    _libmpv?.mpv_get_property(
+      ctx,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_STRING,
+      data.cast(),
+    );
+
+    String? value;
+    if (data.value.cast<Utf8>() != nullptr) {
+      value = data.value.cast<Utf8>().toDartString();
+    }
+
+    calloc.free(name);
+    calloc.free(data);
+    return value;
+  }
+
   /// Sets playlist mode.
   @override
   Future<void> setPlaylistMode(PlaylistMode playlistMode) async {

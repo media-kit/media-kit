@@ -199,6 +199,24 @@ abstract class PlatformPlayer {
     );
   }
 
+  FutureOr<void> setVideoAspectRatioOverride(String aspectRatio) {
+    throw UnimplementedError(
+      '[PlatformPlayer.setVideoAspectRatio] is not implemented.',
+    );
+  }
+
+  FutureOr<void> clearVideoAspectRatioOverride() {
+    throw UnimplementedError(
+      '[PlatformPlayer.clearVideoAspectRatioOverride] is not implemented.',
+    );
+  }
+
+  Future<String?> get videoAspectRatioOverride async {
+    throw UnimplementedError(
+      '[PlatformPlayer.videoAspectRatioOverride] is not implemented.',
+    );
+  }
+
   FutureOr<void> setPlaylistMode(PlaylistMode playlistMode) {
     throw UnimplementedError(
       '[PlatformPlayer.setPlaylistMode] is not implemented.',

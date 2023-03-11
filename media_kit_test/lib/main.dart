@@ -166,6 +166,7 @@ class SimpleScreen extends StatefulWidget {
 class _SimpleScreenState extends State<SimpleScreen> {
   // Create a [Player] instance from `package:media_kit`.
   final Player player = Player();
+
   // Reference to the [VideoController] instance.
   VideoController? controller;
 
@@ -238,6 +239,7 @@ class _SimpleScreenState extends State<SimpleScreen> {
             ),
           ),
           SeekBar(player: player),
+          AspectRationSelector(player: player),
           const SizedBox(height: 32.0),
         ],
       );
@@ -317,6 +319,7 @@ class SimpleStream extends StatefulWidget {
 class _SimpleStreamState extends State<SimpleStream> {
   // Create a [Player] instance from `package:media_kit`.
   final Player player = Player();
+
   // Reference to the [VideoController] instance.
   VideoController? controller;
   final _formKey = GlobalKey<FormState>();
@@ -361,6 +364,7 @@ class _SimpleStreamState extends State<SimpleStream> {
             ),
           ),
           SeekBar(player: player),
+          AspectRationSelector(player: player),
           const SizedBox(height: 32.0),
         ],
       );
@@ -479,6 +483,7 @@ class _SinglePlayerMultipleVideosScreenState
     extends State<SinglePlayerMultipleVideosScreen> {
   // Create a [Player] instance from `package:media_kit`.
   final Player player = Player();
+
   // Reference to the [VideoController] instance.
   VideoController? controller;
 
@@ -551,9 +556,7 @@ class _SinglePlayerMultipleVideosScreenState
                     margin: const EdgeInsets.fromLTRB(32.0, 32.0, 16.0, 8.0),
                     child: AspectRatio(
                       aspectRatio: 16 / 9,
-                      child: Video(
-                        controller: controller,
-                      ),
+                      child: Video(controller: controller),
                     ),
                   ),
                 ),
@@ -607,6 +610,7 @@ class _SinglePlayerMultipleVideosScreenState
             ),
           ),
           SeekBar(player: player),
+          AspectRationSelector(player: player),
           const SizedBox(height: 32.0),
         ],
       );
@@ -689,6 +693,7 @@ class _MultiplePlayersMultipleVideosScreenState
     extends State<MultiplePlayersMultipleVideosScreen> {
   // Create a [Player] instance from `package:media_kit`.
   final List<Player> players = [Player(), Player()];
+
   // Reference to the [VideoController] instance.
   List<VideoController?> controllers = [null, null];
 
@@ -765,6 +770,7 @@ class _MultiplePlayersMultipleVideosScreenState
             ),
           ),
           SeekBar(player: players[i]),
+          AspectRationSelector(player: players[i]),
           const SizedBox(height: 32.0),
         ],
       );
@@ -820,6 +826,7 @@ class _MultiplePlayersMultipleVideosScreenState
 
 class SeekBar extends StatefulWidget {
   final Player player;
+
   const SeekBar({
     Key? key,
     required this.player,
@@ -1057,7 +1064,9 @@ class MultiplePlayersMultipleVideosTabsScreen extends StatelessWidget {
 
 class TabScreen extends StatefulWidget {
   final int i;
+
   const TabScreen(this.i, {Key? key}) : super(key: key);
+
   @override
   State<TabScreen> createState() => _TabScreenState();
 }
@@ -1098,6 +1107,57 @@ class _TabScreenState extends State<TabScreen> {
   @override
   Widget build(BuildContext context) {
     return Video(controller: controller);
+  }
+}
+
+class AspectRationSelector extends StatefulWidget {
+  final Player player;
+
+  const AspectRationSelector({super.key, required this.player});
+
+  @override
+  State<AspectRationSelector> createState() => _AspectRationSelectorState();
+}
+
+class _AspectRationSelectorState extends State<AspectRationSelector> {
+  String currentAspectRatio = '16:9';
+
+  Future<void> setAspectRatio(String aspectRatio) async {
+    if (aspectRatio.isEmpty) {
+      return;
+    }
+    await widget.player.setVideoAspectRatioOverride(aspectRatio);
+    String? tempAspectRatio = await widget.player.videoAspectRatioOverride;
+    debugPrint('Aspect Ratio from API: $tempAspectRatio');
+    setState(() {
+      currentAspectRatio = aspectRatio;
+    });
+  }
+
+  Future<void> clearAspectRatioOverride() async {
+    await widget.player.clearVideoAspectRatioOverride();
+    String? tempAspectRatio = await widget.player.videoAspectRatioOverride;
+    debugPrint('Aspect Ratio from API: $tempAspectRatio');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        DropdownButton(
+          items: const [
+            DropdownMenuItem(value: '16:9', child: Text("16:9")),
+            DropdownMenuItem(value: '4:3', child: Text("4:3")),
+          ],
+          value: currentAspectRatio,
+          onChanged: (e) => setAspectRatio(e.toString()),
+        ),
+        ElevatedButton(
+            onPressed: clearAspectRatioOverride,
+            child: const Text("Clear aspect ratio override")),
+        const SizedBox(height: 16.0),
+      ],
+    );
   }
 }
 
