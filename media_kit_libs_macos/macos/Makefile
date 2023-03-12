@@ -1,40 +1,27 @@
 all: Libs/*.dylib
 
-IINA_VERSION=v1.3.1
-IINA_SHA256SUM=c646642a2884cb0516922170e0f6d4990b12b41d6244b08d53f318dbb9518c2f
+LIBS_VERSION=v0.0.1
+LIBS_SHA256SUM=cf8fcfdc3188fe756447d7c41eb660fb637664a4222a730b065615c95f10b121
 
 .cache:
 	mkdir .cache
 
-.cache/IINA.${IINA_VERSION}.dmg: .cache
-	rm -f .cache/*.tmp .cache/*.dmg
+.cache/libmpv-${LIBS_VERSION}.tar.gz: .cache
+	rm -f .cache/*.tmp .cache/*.tar.gz
 	curl -L \
-		https://github.com/iina/iina/releases/download/${IINA_VERSION}/IINA.${IINA_VERSION}.dmg \
-		-o .cache/IINA.dmg.tmp
-	shasum -a 256 -c <<< '${IINA_SHA256SUM}  .cache/IINA.dmg.tmp'
-	mv .cache/IINA.dmg.tmp .cache/IINA.${IINA_VERSION}.dmg
-	touch .cache/IINA.${IINA_VERSION}.dmg
+		https://github.com/birros/libmpv-build/releases/download/${LIBS_VERSION}/libmpv-${LIBS_VERSION}-darwin-universal.tar.gz \
+		-o .cache/libmpv.tar.gz.tmp
+	shasum -a 256 -c <<< '${LIBS_SHA256SUM}  .cache/libmpv.tar.gz.tmp'
+	mv .cache/libmpv.tar.gz.tmp .cache/libmpv-${LIBS_VERSION}.tar.gz
+	touch .cache/libmpv-${LIBS_VERSION}.tar.gz
 
-.cache/IINA.dmg: .cache/IINA.${IINA_VERSION}.dmg
-	rm -f .cache/IINA.dmg
-	ln -s IINA.${IINA_VERSION}.dmg .cache/IINA.dmg
+.cache/libmpv.tar.gz: .cache/libmpv-${LIBS_VERSION}.tar.gz
+	rm -f .cache/libmpv.tar.gz
+	ln -s libmpv-${LIBS_VERSION}.tar.gz .cache/libmpv.tar.gz
 
-Libs/*.dylib: .cache/IINA.dmg
+Libs/*.dylib: .cache/libmpv.tar.gz
 	rm -f ./Libs/*.dylib
-
-	hdiutil attach .cache/IINA.dmg
-	find /Volumes/IINA/IINA.app/Contents/Frameworks \
-		-name '*.dylib' ! -name 'libswift*' \
-		-exec cp {} ./Libs/ \;
-	hdiutil detach /Volumes/IINA
-
-	mv Libs/libmpv.*.dylib Libs/libmpv.dylib
-	install_name_tool \
-		-id @rpath/libmpv.dylib \
-		Libs/libmpv.dylib \
-		2> /dev/null
-
-	codesign --remove ./Libs/*.dylib
+	tar -xvf .cache/libmpv.tar.gz --strip-components 1 -C Libs
 
 .PHONY: clean
 clean:
