@@ -50,15 +50,6 @@ abstract class NativeLibrary {
         }[Platform.operatingSystem]!,
       );
     }
-    if (Platform.isMacOS) {
-      final appDir = join(executableDir, "..");
-      final libPath = join(appDir, "Frameworks", _kMacOSNativeLibrary);
-
-      if (await File(libPath).exists()) {
-        return libPath;
-      }
-      throw Exception(_kMacOSNativeLibraryNotFoundMessage);
-    }
     throw Exception(
       'Unsupported operating system: ${Platform.operatingSystem}.',
     );
