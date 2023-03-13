@@ -22,6 +22,7 @@ LIBS_SHA256SUM=cf8fcfdc3188fe756447d7c41eb660fb637664a4222a730b065615c95f10b121
 Libs/*.dylib: .cache/libmpv.tar.gz
 	rm -f ./Libs/*.dylib
 	tar -xvf .cache/libmpv.tar.gz --strip-components 1 -C Libs
+	touch Libs/*.dylib
 
 .PHONY: clean
 clean:
