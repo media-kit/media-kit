@@ -29,9 +29,7 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
 
     super.init()
 
-    // DispatchQueue.main.async {
     self.initMPV()
-    // }
   }
 
   public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {

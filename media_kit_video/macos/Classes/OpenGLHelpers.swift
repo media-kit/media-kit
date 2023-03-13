@@ -249,33 +249,6 @@ public class OpenGLHelpers {
     glDeleteFramebuffers(1, &frameBuffer)
   }
 
-  static public func clearScene(
-    _ context: CGLContextObj,
-    _ frameBuffer: GLuint,
-    _ color: NSColor
-  ) {
-    CGLSetCurrentContext(context)
-    defer {
-      OpenGLHelpers.checkError("clearScene")
-      CGLSetCurrentContext(nil)
-    }
-
-    glBindFramebuffer(GLenum(GL_FRAMEBUFFER), frameBuffer)
-    defer {
-      glBindFramebuffer(GLenum(GL_FRAMEBUFFER), 0)
-    }
-
-    glClearColor(
-      GLclampf(color.redComponent),
-      GLclampf(color.greenComponent),
-      GLclampf(color.blueComponent),
-      GLclampf(color.alphaComponent)
-    )
-    glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
-
-    glFlush()
-  }
-
   static public func checkError(_ message: String) {
     let error = glGetError()
     if error == GL_NO_ERROR {

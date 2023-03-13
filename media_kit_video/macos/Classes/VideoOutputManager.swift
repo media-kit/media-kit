@@ -3,11 +3,10 @@ import FlutterMacOS
 
 public class VideoOutputManager: NSObject {
   private let registry: FlutterTextureRegistry
-  private var videoOutputs: [Int64: VideoOutput]
+  private var videoOutputs = [Int64: VideoOutput]()
 
   init(registry: FlutterTextureRegistry) {
     self.registry = registry
-    self.videoOutputs = [Int64: VideoOutput]()
   }
 
   public func create(

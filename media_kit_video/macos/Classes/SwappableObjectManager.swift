@@ -27,12 +27,6 @@ public class SwappableObjectManager<T> {
     _current = nil
   }
 
-  static private func checkArgs(_ objects: [T]) {
-    if objects.count < 2 {
-      NSLog("SwappableObjectManager: require at least two objects to work")
-    }
-  }
-
   public func nextAvailable() -> T? {
     lock.lock()
     defer {
@@ -89,5 +83,11 @@ public class SwappableObjectManager<T> {
     }
 
     available.append(old!)
+  }
+
+  static private func checkArgs(_ objects: [T]) {
+    if objects.count < 2 {
+      NSLog("SwappableObjectManager: require at least two objects to work")
+    }
   }
 }
