@@ -1,6 +1,7 @@
 import Cocoa
 import FlutterMacOS
 
+// This class avoids data race when called from a thread
 public class SafeResizableTexture:
   NSObject,
   FlutterTexture,

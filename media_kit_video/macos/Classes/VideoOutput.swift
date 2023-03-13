@@ -1,6 +1,12 @@
 import Cocoa
 import FlutterMacOS
 
+// This class creates and manipulates the different types of FlutterTexture,
+// handles resizing, rendering calls, and notify Flutter when a new frame is
+// available to render.
+//
+// To improve the user experience, a worker is used to execute heavy tasks on a
+// dedicated thread.
 public class VideoOutput: NSObject {
   public typealias TextureUpdateCallback = (Int64, CGSize) -> Void
 

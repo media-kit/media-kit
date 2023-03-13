@@ -1,3 +1,16 @@
+// This class was created to prevent a frameBuffer read by Flutter from being
+// concurrently modified by a write method (mpv's renderer).
+//
+// To do this, two pools are set up, one for frameBuffers available for writing,
+// the other for frameBuffers ready to be read by Flutter.
+//
+// When a frameBuffer has finished being modified and is "pushed", the oldest
+// ready frameBuffer is marked as the current frameBuffer, and the oldest
+// current frameBuffer is placed in the pool of frameBuffers available for
+// writing.
+//
+// The use of at least three frameBuffers ensures that the read and write phases
+// do not overlap, thus eliminating flicker.
 public class SwappableObjectManager<T> {
   private let lock: NSRecursiveLock = NSRecursiveLock()
   private var available: [T]
