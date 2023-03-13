@@ -30,7 +30,6 @@ jobs:
           tag_name: "vnext"
           files: |
             media_kit_test/media_kit_test_win32_x64.7z
-          token: ${{ secrets.ACCESS_TOKEN }}
 
   linux:
     name: Linux
@@ -58,4 +57,3 @@ jobs:
           tag_name: "vnext"
           files: |
             media_kit_test/media_kit_test_linux_x64.7z
-          token: ${{ secrets.ACCESS_TOKEN }}

@@ -2,6 +2,8 @@
 
 A complete video & audio library for Flutter & Dart.
 
+[![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml)
+
 <hr>
 
 <strong>Sponsored with 💖 by</strong>
@@ -17,18 +19,24 @@ A complete video & audio library for Flutter & Dart.
 </a>
 <br>
 
-  <h5>
-    Rapidly ship in-app messaging with Stream's highly reliable chat infrastructure and feature-rich SDKs, including Flutter!
-  </h5>
-<h4>
+<h6>
+  Rapidly ship in-app messaging with Stream's highly reliable chat infrastructure & feature-rich SDKs, including Flutter!
+</h6>
+
+<strong>
   <a href="https://getstream.io/chat/sdk/flutter/?utm_source=alexmercerind_dart&utm_medium=Github_Repo_Content_Ad&utm_content=Developer&utm_campaign=alexmercerind_December2022_FlutterSDK_klmh22" target="_blank">
   Try the Flutter Chat tutorial
   </a>
-</h4>
+</strong>
 
 <hr>
 
-https://user-images.githubusercontent.com/28951144/209100988-6f85f563-20e0-4e35-893a-ae099c7e03e4.mp4
+
+https://user-images.githubusercontent.com/28951144/223529386-c4039cf1-3ead-49c2-bcc7-5c5f8541958a.mp4
+
+<br></br>
+
+Performance on entry-level AMD Ryzen 3 2200U processor with integrated Radeon Vega 3 Mobile Graphics.
 
 ## Installation
 
@@ -37,13 +45,15 @@ Add in your `pubspec.yaml`:
 ```yaml
 dependencies:
   media_kit: ^0.0.1
-  # For video support.
+  # For video rendering.
   media_kit_video: ^0.0.1
+  # For enabling support for more than 8 simultaneous players (only Flutter).
+  media_kit_native_event_loop: ^1.0.0
   # Pick based on your requirements / platform:
-  media_kit_libs_windows_video: ^1.0.0       # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.0       # Windows package for audio (only) native libraries.
-  media_kit_libs_linux: ^1.0.0               # Linux dependency package.
-  media_kit_libs_macos: ^1.0.0               # macOS dependency package.
+  media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^1.0.0          # Windows package for audio (only) native libraries.
+  media_kit_libs_linux: ^1.0.0                  # Linux dependency package.
+  media_kit_libs_macos: ^1.0.0                  # macOS dependency package.
 ```
 
 ## Platforms
@@ -53,8 +63,8 @@ dependencies:
 | Windows  | Ready | Ready |
 | Linux    | Ready | Ready |
 | macOS    | Ready | Ready |
-| Android  | WIP   | WIP   |
-| iOS      | WIP   | WIP   |
+| Android  | Soon  | Soon  |
+| iOS      | Soon  | Soon  |
 
 ## Guide
 
@@ -176,9 +186,14 @@ class MyScreenState extends State<MyScreen> {
 }
 ```
 
+### Performance
+
+Although [package:media_kit](https://github.com/alexmercerind/media_kit) is already fairly performant, you can further optimize things as follows:
+
 **Note**
-* You can limit size of the video output by specifying `width` & `height`.
-* By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
+
+- You can limit size of the video output by specifying `width` & `height`.
+- By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
 
 ```dart
 final controller = await VideoController.create(
@@ -188,15 +203,28 @@ final controller = await VideoController.create(
 );
 ```
 
-
 **Note**
-* You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
-* By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
+
+- You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
+- By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 
 ```dart
 final controller = await VideoController.create(
   player.handle,
   enableHardwareAcceleration: false,            // default: true
+);
+```
+
+**Note**
+
+- You can disable event callbacks for a `Player` & save yourself few CPU cycles.
+- By default, `events` is `true` i.e. event streams & states are updated.
+
+```dart
+final player = Player(
+  configuration: PlayerConfiguration(
+    events: false,                              // default: true
+  ),
 );
 ```
 
@@ -225,14 +253,6 @@ System shared libraries from distribution specific user-installed packages are u
 
 #### Ubuntu / Debian
 
-**On user machine you need:**
-
-```bash
-sudo apt install libmpv2
-```
-
-**On development machine you need:**
-
 ```bash
 sudo apt install libmpv-dev mpv
 ```
@@ -240,8 +260,9 @@ sudo apt install libmpv-dev mpv
 #### Packaging
 
 There are other ways to bundle these within your app package e.g. within Snap or Flatpak. Few examples:
+
 - [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
-- [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/_packaging)
+- [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/\_packaging)
 
 ## Goals
 
@@ -563,26 +584,26 @@ classDiagram
   }
 }%%
 classDiagram
-  
+
   MediaKitVideoPlugin "1" *-- "1" VideoOutputManager: Create VideoOutput(s) with VideoOutputManager for handle passed through platform channel
   VideoOutputManager "1" *-- "*" VideoOutput: Takes FlTextureRegistrar as reference
   VideoOutput "1" *-- "1" TextureGL: For H/W rendering.
   TextureGL "1" o-- "1" VideoOutput: Take VideoOutput as reference
   VideoOutput "1" *-- "1" TextureSW: For S/W rendering.
   TextureSW "1" o-- "1" VideoOutput: Take VideoOutput as reference
-  
+
   class MediaKitVideoPlugin {
     -FlMethodChannel* channel
     -VideoOutputManager* video_output_manager
   }
-  
+
   class VideoOutputManager {
     -GHashTable* video_outputs
     -FlTextureRegistrar* texture_registrar
     +video_output_manager_create(self: VideoOutputManager*, handle: gint64, width: gint64, height: gint64, texture_update_callback: TextureUpdateCallback, texture_update_callback_context: gpointer)
     +video_output_manager_dispose(self: VideoOutputManager*, handle: gint64)
   }
-  
+
   class VideoOutput {
     -TextureGL* texture_gl
     -GdkGLContext* context_gl
@@ -600,7 +621,7 @@ classDiagram
     +video_output_get_texture_id(self: VideoOutput*): gint64
     +video_output_notify_texture_update(VideoOutput* self);
   }
-  
+
   class TextureGL {
     -guint32 name
     -guint32 fbo
@@ -609,7 +630,7 @@ classDiagram
     -VideoOutput* video_output
     texture_gl_populate_texture(texture: FlTextureGL*, target: guint32*, name: guint32*, width: guint32*, height: guint32*, error: GError**): gboolean
   }
-  
+
   class TextureSW {
     -guint32 current_width
     -guint32 current_height
@@ -662,19 +683,8 @@ You can visit my [experimentation repository](https://github.com/alexmercerind/f
 
 On Flutter Linux, [both OpenGL (H/W) & pixel buffer (S/W) APIs](https://github.com/flutter/engine/pull/24916) are available for rendering on Texture widget.
 
-## Outcomes
-
-4K video playback on entry-level AMD Ryzen 3 2200U processor with Radeon Vega 3 Mobile Graphics.
-
-**NOTES:**
-
-- See process specific CPU & GPU usage (media_kit_test.exe). Overall CPU usage is high due to screen recording.
-- Memory usage is higher because of higher resolution 4K video. General usage will be lower.
-
-https://user-images.githubusercontent.com/28951144/208765832-416313c9-97d4-44d0-a902-e577f3c4f3f6.mp4
-
 ## License
 
-Copyright © 2022, Hitesh Kumar Saini <<saini123hitesh@gmail.com>>
+Copyright © 2021 & onwards, Hitesh Kumar Saini <<saini123hitesh@gmail.com>>
 
 This project & the work under this repository is governed by MIT license that can be found in the [LICENSE](./LICENSE) file.

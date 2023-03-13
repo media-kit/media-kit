@@ -2,6 +2,8 @@
 
 A complete video & audio library for Flutter & Dart.
 
+[![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml)
+
 <hr>
 
 <strong>Sponsored with 💖 by</strong>
@@ -11,18 +13,20 @@ A complete video & audio library for Flutter & Dart.
 </a>
 <br>
 
-  <h5>
-    Rapidly ship in-app messaging with Stream's highly reliable chat infrastructure & feature-rich SDKs, including Flutter!
-  </h5>
-<h4>
+<h6>
+  Rapidly ship in-app messaging with Stream's highly reliable chat infrastructure & feature-rich SDKs, including Flutter!
+</h6>
+
+<strong>
   <a href="https://getstream.io/chat/sdk/flutter/?utm_source=alexmercerind_dart&utm_medium=Github_Repo_Content_Ad&utm_content=Developer&utm_campaign=alexmercerind_December2022_FlutterSDK_klmh22" target="_blank">
   Try the Flutter Chat tutorial
   </a>
-</h4>
+</strong>
 
 <hr>
 
-https://user-images.githubusercontent.com/28951144/209100988-6f85f563-20e0-4e35-893a-ae099c7e03e4.mp4
+![](https://user-images.githubusercontent.com/28951144/221628306-e240b292-52be-478c-9661-fffe6c3b445a.jpg)
+
 
 ## Installation
 
@@ -31,12 +35,14 @@ Add in your `pubspec.yaml`:
 ```yaml
 dependencies:
   media_kit: ^0.0.1
-  # For video support.
+  # For video rendering.
   media_kit_video: ^0.0.1
+  # For enabling support for more than 8 simultaneous players (only Flutter).
+  media_kit_native_event_loop: ^1.0.0
   # Pick based on your requirements / platform:
-  media_kit_libs_windows_video: ^1.0.0       # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.0       # Windows package for audio (only) native libraries.
-  media_kit_libs_linux: ^1.0.0               # Linux dependency package.
+  media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_audio: ^1.0.0          # Windows package for audio (only) native libraries.
+  media_kit_libs_linux: ^1.0.0                  # Linux dependency package.
 ```
 
 ## Platforms
@@ -44,10 +50,10 @@ dependencies:
 | Platform | Audio | Video |
 | -------- | ----- | ----- |
 | Windows  | Ready | Ready |
-| Linux    | Ready | WIP   |
+| Linux    | Ready | Ready |
 | macOS    | WIP   | WIP   |
-| Android  | WIP   | WIP   |
-| iOS      | WIP   | WIP   |
+| Android  | Soon  | Soon  |
+| iOS      | Soon  | Soon  |
 
 ## Docs
 
@@ -169,20 +175,14 @@ class MyScreenState extends State<MyScreen> {
 }
 ```
 
-For performance reasons (especially in S/W rendering), if you wish to restrain the size of each video frame, you can pass width & height parameters to the `VideoController.create` method.
+### Performance
 
-```dart
-final controller = await VideoController.create(
-  player.handle,
-  width: 1920,
-  height: 1080,
-);
-```
-
+Although [package:media_kit](https://github.com/alexmercerind/media_kit) is already fairly performant, you can further optimize things as follows:
 
 **Note**
-* You can limit size of the video output by specifying `width` & `height`.
-* By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
+
+- You can limit size of the video output by specifying `width` & `height`.
+- By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
 
 ```dart
 final controller = await VideoController.create(
@@ -192,15 +192,28 @@ final controller = await VideoController.create(
 );
 ```
 
-
 **Note**
-* You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
-* By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
+
+- You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
+- By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 
 ```dart
 final controller = await VideoController.create(
   player.handle,
   enableHardwareAcceleration: false,            // default: true
+);
+```
+
+**Note**
+
+- You can disable event callbacks for a `Player` & save yourself few CPU cycles.
+- By default, `events` is `true` i.e. event streams & states are updated.
+
+```dart
+final player = Player(
+  configuration: PlayerConfiguration(
+    events: false,                              // default: true
+  ),
 );
 ```
 
@@ -229,21 +242,14 @@ System shared libraries from distribution specific user-installed packages are u
 
 #### Ubuntu / Debian
 
-**On user machine you need:**
-
 ```bash
-sudo apt install libmpv2
-```
-
-**On development machine you need:**
-
-```bash
-sudo apt install libmpv-dev libmpv2
+sudo apt install libmpv-dev mpv
 ```
 
 #### Packaging
 
 There are other ways to bundle these within your app package e.g. within Snap or Flatpak. Few examples:
+
 - [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
 - [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/_packaging)
 
@@ -270,6 +276,6 @@ Thanks!
 
 ## License
 
-Copyright © 2022, Hitesh Kumar Saini <<saini123hitesh@gmail.com>>
+Copyright © 2021 & onwards, Hitesh Kumar Saini <<saini123hitesh@gmail.com>>
 
 This project & the work under this repository is governed by MIT license that can be found in the [LICENSE](./LICENSE) file.

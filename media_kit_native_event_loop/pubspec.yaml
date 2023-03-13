@@ -1,0 +1,26 @@
+name: media_kit_native_event_loop
+description: Platform specific threaded event handling for media_kit.
+homepage: https://github.com/alexmercerind/media_kit
+repository: https://github.com/alexmercerind/media_kit
+version: 1.0.0
+funding:
+  - https://www.github.com/sponsors/alexmercerind
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+  flutter: ">=2.5.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^2.0.0
+
+flutter:
+  plugin:
+    platforms:
+      windows:
+        ffiPlugin: true
+      linux:
+        ffiPlugin: true

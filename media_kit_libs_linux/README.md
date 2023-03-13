@@ -1,5 +1,7 @@
 # [package:media_kit_libs_linux](https://github.com/alexmercerind/media_kit)
 
+[![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml)
+
 Linux dependency package for [`package:media_kit`](https://github.com/alexmercerind/media_kit).
 
 ## Support
@@ -11,6 +13,6 @@ If you find [package:media_kit](https://github.com/alexmercerind/media_kit) pack
 
 ## License
 
-Copyright © 2022, Hitesh Kumar Saini <<saini123hitesh@gmail.com>>
+Copyright © 2021 & onwards, Hitesh Kumar Saini <<saini123hitesh@gmail.com>>
 
 This project & the work under this repository is governed by MIT license that can be found in the [LICENSE](./LICENSE) file.
