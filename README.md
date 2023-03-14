@@ -53,6 +53,7 @@ dependencies:
   media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
   media_kit_libs_windows_audio: ^1.0.0          # Windows package for audio (only) native libraries.
   media_kit_libs_linux: ^1.0.0                  # Linux dependency package.
+  media_kit_libs_macos: ^1.0.0                  # macOS dependency package.
 ```
 
 ## Platforms
@@ -61,7 +62,7 @@ dependencies:
 | -------- | ----- | ----- |
 | Windows  | Ready | Ready |
 | Linux    | Ready | Ready |
-| macOS    | WIP   | WIP   |
+| macOS    | Ready | Ready |
 | Android  | Soon  | Soon  |
 | iOS      | Soon  | Soon  |
 

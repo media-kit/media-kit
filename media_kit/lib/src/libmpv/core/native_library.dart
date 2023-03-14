@@ -29,6 +29,9 @@ abstract class NativeLibrary {
       'linux': [
         'libmpv.so',
       ],
+      'macos': [
+        'libmpv.dylib',
+      ],
     }[Platform.operatingSystem];
     if (names != null) {
       for (final name in names) {
@@ -42,6 +45,8 @@ abstract class NativeLibrary {
               'Cannot find libmpv-2.dll in your system %PATH%. One way to deal with this is to ship libmpv-2.dll with your compiled executable or script in the same directory.',
           'linux':
               'Cannot find libmpv at the usual places. Depending upon your distribution, you can install the libmpv package to make shared library available globally. On Debian or Ubuntu based systems, you can install it with: apt install libmpv-dev.',
+          'macos':
+              'Cannot find libmpv.dylib. Check that it is present in the Frameworks folder of your application.',
         }[Platform.operatingSystem]!,
       );
     }

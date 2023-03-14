@@ -66,6 +66,9 @@ class Player {
     if (Platform.isLinux) {
       platform = libmpv.Player(configuration: configuration);
     }
+    if (Platform.isMacOS) {
+      platform = libmpv.Player(configuration: configuration);
+    }
     if (platform == null) {
       // TODO: Implement other platforms.
       throw UnimplementedError(
