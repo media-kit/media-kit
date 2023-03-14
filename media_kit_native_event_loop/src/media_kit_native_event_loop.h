@@ -14,7 +14,7 @@
 #elif __linux__
 #include <mpv/client.h>
 #elif __APPLE__
-// TODO(@alexmercerind): macOS libmpv headers.
+#include <mpv/client.h>
 #endif
 
 #include "dart_api_types.h"

@@ -50,8 +50,6 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     ${TARGET_NAME} PRIVATE
     PkgConfig::mpv
   )
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  # TODO: Add support for macOS.
 endif()
 
 set_target_properties(
