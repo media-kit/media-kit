@@ -22,9 +22,10 @@ Pod::Spec.new do |s|
   s.platform = :osx, '10.13'
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
-    'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) GL_SILENCE_DEPRECATION COREVIDEO_SILENCE_GL_DEPRECATION',
-    'OTHER_LDFLAGS' => '$(inherited) -lmpv',
-    'LIBRARY_SEARCH_PATHS' => '$(inherited) $(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos/macos/Libs'
+    'GCC_WARN_INHIBIT_ALL_WARNINGS' => 'YES',
+    'GCC_PREPROCESSOR_DEFINITIONS' => '"$(inherited)" GL_SILENCE_DEPRECATION COREVIDEO_SILENCE_GL_DEPRECATION',
+    'LIBRARY_SEARCH_PATHS' => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos/macos/Libs"',
+    'OTHER_LDFLAGS' => '"$(inherited)" -lmpv',
   }
   s.swift_version = '5.0'
 end
