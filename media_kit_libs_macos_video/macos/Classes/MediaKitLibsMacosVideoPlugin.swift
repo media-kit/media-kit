@@ -1,7 +1,7 @@
 import Cocoa
 import FlutterMacOS
 
-public class MediaKitLibsMacosPlugin: NSObject, FlutterPlugin {
+public class MediaKitLibsMacosVideoPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
   }
 }

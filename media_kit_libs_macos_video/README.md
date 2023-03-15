@@ -1,4 +1,4 @@
-# [package:media_kit_libs_macos](https://github.com/alexmercerind/media_kit)
+# [package:media_kit_libs_macos_video](https://github.com/alexmercerind/media_kit)
 
 macOS dependency package for [`package:media_kit`](https://github.com/alexmercerind/media_kit).
 

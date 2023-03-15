@@ -1,4 +1,4 @@
-name: media_kit_libs_macos
+name: media_kit_libs_macos_video
 description: macOS dependency package for package:media_kit.
 version: 1.0.0
 homepage: https://github.com/alexmercerind/media_kit.git
@@ -24,4 +24,4 @@ flutter:
   plugin:
     platforms:
       macos:
-        pluginClass: MediaKitLibsMacosPlugin
+        pluginClass: MediaKitLibsMacosVideoPlugin

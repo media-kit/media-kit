@@ -1,11 +1,11 @@
 #
 # To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
-# Run `pod lib lint media_kit_libs_macos.podspec` to validate before publishing.
+# Run `pod lib lint media_kit_libs_macos_video.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
   system("make")
 
-  s.name             = 'media_kit_libs_macos'
+  s.name             = 'media_kit_libs_macos_video'
   s.version          = '1.0.0'
   s.summary          = 'macOS dependency package for package:media_kit'
   s.description      = <<-DESC
