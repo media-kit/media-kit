@@ -58,6 +58,21 @@ class HomeScreen extends StatelessWidget {
           const Divider(height: 1.0, thickness: 1.0),
           ListTile(
             title: const Text(
+              'Single [Player] with audio only',
+              style: TextStyle(fontSize: 14.0),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AudioScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            title: const Text(
               'Single [Player] with single [Video] • File & Asset',
               style: TextStyle(fontSize: 14.0),
               maxLines: 1,
@@ -150,6 +165,148 @@ class HomeScreen extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Single [Player] with audio only.
+
+class AudioScreen extends StatefulWidget {
+  const AudioScreen({Key? key}) : super(key: key);
+
+  @override
+  State<AudioScreen> createState() => _AudioScreenState();
+}
+
+class _AudioScreenState extends State<AudioScreen> {
+  // Create a [Player] instance from `package:media_kit`.
+  final Player player = Player(
+    configuration: const PlayerConfiguration(
+      logLevel: MPVLogLevel.warn,
+      vid: false,
+    ),
+  );
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _audio = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    pipeLogsToConsole(player);
+  }
+
+  @override
+  void dispose() {
+    Future.microtask(() async {
+      debugPrint('Disposing [Player]...');
+      await player.dispose();
+    });
+    super.dispose();
+  }
+
+  List<Widget> get assets => [
+        for (int i = 0; i < 5; i++)
+          ListTile(
+            title: Text(
+              'video_$i.mp4',
+              style: const TextStyle(
+                fontSize: 14.0,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () {
+              player.open(
+                Playlist(
+                  [
+                    Media(
+                      'asset://assets/video_$i.mp4',
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+      ];
+
+  Widget get form => Form(
+        key: _formKey,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _audio,
+                style: const TextStyle(fontSize: 14.0),
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Audio URI',
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      player.open(
+                        Playlist(
+                          [
+                            Media(_audio.text),
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Play'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('package:media_kit'),
+      ),
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'Open [File]',
+        onPressed: () async {
+          final result = await FilePicker.platform.pickFiles(
+            type: FileType.any,
+          );
+          if (result?.files.isNotEmpty ?? false) {
+            player.open(
+              Playlist(
+                [
+                  Media(result!.files.first.path!),
+                ],
+              ),
+            );
+          }
+        },
+        child: const Icon(Icons.file_open),
+      ),
+      body: ListView(
+        children: [
+          ExpansionTile(
+            title: const Text('Asset Videos'),
+            initiallyExpanded: true,
+            children: assets,
+          ),
+          ExpansionTile(
+            title: const Text('URI'),
+            children: [form],
+          ),
+        ],
+      ),
+      bottomNavigationBar: SizedBox(
+        height: 72,
+        child: SeekBar(player: player),
       ),
     );
   }
