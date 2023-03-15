@@ -53,7 +53,7 @@ dependencies:
   media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
   media_kit_libs_windows_audio: ^1.0.0          # Windows package for audio (only) native libraries.
   media_kit_libs_linux: ^1.0.0                  # Linux dependency package.
-  media_kit_libs_macos: ^1.0.0                  # macOS dependency package.
+  media_kit_libs_macos_video: ^1.0.0            # macOS dependency package.
 ```
 
 ## Platforms
