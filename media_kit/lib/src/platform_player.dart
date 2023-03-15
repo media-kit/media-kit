@@ -11,9 +11,43 @@ import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/player_error.dart';
+import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_streams.dart';
+
+/// {@template mpv_log_level}
+///
+/// MPVLogLevel
+/// --------------------
+/// Options to customise the [Player] libmpv backend log level.
+///
+/// {@endtemplate}
+enum MPVLogLevel {
+  /// Disable absolutely all messages.
+  none,
+
+  /// Critical/aborting errors.
+  fatal,
+
+  /// Simple errors.
+  error,
+
+  /// Possible problems.
+  warn,
+
+  /// Informational message.
+  info,
+
+  /// Noisy informational message.
+  v,
+
+  /// Very noisy technical information.
+  debug,
+
+  /// Extremely noisy.
+  trace,
+}
 
 /// {@template player_configuration}
 ///
@@ -26,6 +60,10 @@ class PlayerConfiguration {
   /// Enables or disables event handling. This may improve performance if there is no need to listen to events.
   /// Default: `true`.
   final bool events;
+
+  /// Sets the log level on libmpv backend.
+  /// Default: `none`.
+  final MPVLogLevel logLevel;
 
   /// Enables on-screen controls on libmpv backend.
   /// Default: `false`.
@@ -67,6 +105,7 @@ class PlayerConfiguration {
   /// {@macro player_configuration}
   const PlayerConfiguration({
     this.events = true,
+    this.logLevel = MPVLogLevel.none,
     this.osc = false,
     this.vid,
     this.vo,
@@ -108,6 +147,7 @@ abstract class PlatformPlayer {
     rateController.stream,
     pitchController.stream,
     isBufferingController.stream,
+    logController.stream,
     errorController.stream,
     audioParamsController.stream,
     audioBitrateController.stream,
@@ -124,6 +164,7 @@ abstract class PlatformPlayer {
     await rateController.close();
     await pitchController.close();
     await isBufferingController.close();
+    await logController.close();
     await errorController.close();
     await audioParamsController.close();
     await audioBitrateController.close();
@@ -267,6 +308,10 @@ abstract class PlatformPlayer {
 
   @protected
   final StreamController<bool> isBufferingController =
+      StreamController.broadcast();
+
+  @protected
+  final StreamController<PlayerLog> logController =
       StreamController.broadcast();
 
   @protected

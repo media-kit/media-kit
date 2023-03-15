@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -165,13 +166,18 @@ class SimpleScreen extends StatefulWidget {
 
 class _SimpleScreenState extends State<SimpleScreen> {
   // Create a [Player] instance from `package:media_kit`.
-  final Player player = Player();
+  final Player player = Player(
+    configuration: const PlayerConfiguration(
+      logLevel: MPVLogLevel.warn,
+    ),
+  );
   // Reference to the [VideoController] instance.
   VideoController? controller;
 
   @override
   void initState() {
     super.initState();
+    pipeLogsToConsole(player);
     Future.microtask(() async {
       // Create a [VideoController] instance from `package:media_kit_video`.
       // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
@@ -316,7 +322,11 @@ class SimpleStream extends StatefulWidget {
 
 class _SimpleStreamState extends State<SimpleStream> {
   // Create a [Player] instance from `package:media_kit`.
-  final Player player = Player();
+  final Player player = Player(
+    configuration: const PlayerConfiguration(
+      logLevel: MPVLogLevel.warn,
+    ),
+  );
   // Reference to the [VideoController] instance.
   VideoController? controller;
   final _formKey = GlobalKey<FormState>();
@@ -326,6 +336,7 @@ class _SimpleStreamState extends State<SimpleStream> {
   @override
   void initState() {
     super.initState();
+    pipeLogsToConsole(player);
     Future.microtask(() async {
       // Create a [VideoController] instance from `package:media_kit_video`.
       // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
@@ -1108,3 +1119,11 @@ String? _fontFamily = {
   'android': 'Roboto',
   'ios': 'SF Pro Text',
 }[Platform.operatingSystem];
+
+void pipeLogsToConsole(Player player) {
+  player.streams.log.listen((event) {
+    if (kDebugMode) {
+      print("mpv: ${event.prefix}: ${event.level}: ${event.text}");
+    }
+  });
+}
