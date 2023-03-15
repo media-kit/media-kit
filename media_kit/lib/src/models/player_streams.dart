@@ -7,6 +7,7 @@
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/player_error.dart';
+import 'package:media_kit/src/models/player_log.dart';
 
 /// Private class for event handling of [Player].
 class PlayerStreams {
@@ -44,6 +45,9 @@ class PlayerStreams {
   /// Audio bitrate of the currently playing [Media] in the [Player].
   final Stream<double?> audioBitrate;
 
+  /// [Stream] emitting [PlayerLog]s.
+  final Stream<PlayerLog> log;
+
   /// [Stream] raising [PlayerError]s.
   /// This may be used to catch errors raised by [Player].
   final Stream<PlayerError> error;
@@ -58,6 +62,7 @@ class PlayerStreams {
     this.rate,
     this.pitch,
     this.isBuffering,
+    this.log,
     this.error,
     this.audioParams,
     this.audioBitrate,

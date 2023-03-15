@@ -15,6 +15,7 @@ import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_error.dart';
+import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
@@ -996,6 +997,24 @@ class Player extends PlatformPlayer {
       //   }
       // }
     }
+    if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_LOG_MESSAGE) {
+      final eventLogMessage =
+          event.ref.data.cast<generated.mpv_event_log_message>().ref;
+
+      final prefix = eventLogMessage.prefix.cast<Utf8>().toDartString().trim();
+      final level = eventLogMessage.level.cast<Utf8>().toDartString().trim();
+      final text = eventLogMessage.text.cast<Utf8>().toDartString().trim();
+
+      if (!logController.isClosed) {
+        logController.add(
+          PlayerLog(
+            prefix: prefix,
+            level: level,
+            text: text,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _create() async {
@@ -1095,6 +1114,29 @@ class Player extends PlatformPlayer {
       );
       calloc.free(name);
       calloc.free(value);
+    }
+    if (configuration.events && configuration.logLevel != MPVLogLevel.none) {
+      // https://github.com/mpv-player/mpv/blob/e1727553f164181265f71a20106fbd5e34fa08b0/libmpv/client.h#L1410-L1419
+      final levels = {
+        MPVLogLevel.none: "no",
+        MPVLogLevel.fatal: "fatal",
+        MPVLogLevel.error: "error",
+        MPVLogLevel.warn: "warn",
+        MPVLogLevel.info: "info",
+        MPVLogLevel.v: "v",
+        MPVLogLevel.debug: "debug",
+        MPVLogLevel.trace: "trace",
+      };
+
+      final level = levels[configuration.logLevel];
+      if (level != null) {
+        final minLevel = level.toNativeUtf8();
+        _libmpv?.mpv_request_log_messages(
+          result,
+          minLevel.cast(),
+        );
+        calloc.free(minLevel);
+      }
     }
     final name = 'idle'.toNativeUtf8();
     final value = calloc<Int32>();
