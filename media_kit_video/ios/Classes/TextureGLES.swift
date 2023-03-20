@@ -72,8 +72,7 @@ public class TextureGLES: NSObject, FlutterTexture, ResizableTextureProtocol {
       EAGLContext.setCurrent(nil)
     }
 
-    // HDR playback does not work on iOS with `hwdec` on `auto`
-    MPVHelpers.checkError(mpv_set_option_string(handle, "hwdec", "auto-copy"))
+    MPVHelpers.checkError(mpv_set_option_string(handle, "hwdec", "auto"))
 
     let api = UnsafeMutableRawPointer(
       mutating: (MPV_RENDER_API_TYPE_OPENGL as NSString).utf8String
