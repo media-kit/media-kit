@@ -57,3 +57,29 @@ jobs:
           tag_name: "vnext"
           files: |
             media_kit_test/media_kit_test_linux_x64.7z
+
+  ios:
+    name: iOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - run: flutter pub get
+      - run: flutter build ios --verbose --no-codesign
+      - run: 7z a media_kit_test_ios_arm64.7z build/ios/iphoneos/Runner.app
+      - uses: actions/upload-artifact@v1
+        with:
+          name: media_kit_test_ios_arm64
+          path: media_kit_test/media_kit_test_ios_arm64.7z
+      - uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          draft: true
+          prerelease: false
+          tag_name: "vnext"
+          files: |
+            media_kit_test/media_kit_test_ios_arm64.7z
