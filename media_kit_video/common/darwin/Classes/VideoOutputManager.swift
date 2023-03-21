@@ -1,9 +1,3 @@
-#if canImport(UIKit)
-  import UIKit
-#elseif canImport(Cocoa)
-  import Cocoa
-#endif
-
 #if canImport(Flutter)
   import Flutter
 #elseif canImport(FlutterMacOS)

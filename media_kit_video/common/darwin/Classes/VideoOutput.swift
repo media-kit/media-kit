@@ -1,9 +1,3 @@
-#if canImport(UIKit)
-  import UIKit
-#elseif canImport(Cocoa)
-  import Cocoa
-#endif
-
 #if canImport(Flutter)
   import Flutter
 #elseif canImport(FlutterMacOS)
@@ -76,7 +70,7 @@ public class VideoOutput: NSObject {
     )
     if enableHardwareAcceleration {
       texture = SafeResizableTexture(
-        TextureGLES(
+        TextureHW(
           handle: handle,
           updateCallback: updateCallback
         )

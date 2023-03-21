@@ -1,5 +1,8 @@
-import Cocoa
-import FlutterMacOS
+#if canImport(Flutter)
+  import Flutter
+#elseif canImport(FlutterMacOS)
+  import FlutterMacOS
+#endif
 
 public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   public typealias UpdateCallback = () -> Void
