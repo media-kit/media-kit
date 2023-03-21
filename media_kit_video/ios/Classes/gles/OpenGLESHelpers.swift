@@ -74,39 +74,15 @@ public class OpenGLESHelpers {
     return texture!
   }
 
-  static public func createRenderBuffer(
-    _ context: EAGLContext,
-    _ size: CGSize
-  ) -> GLuint {
-    EAGLContext.setCurrent(context)
-    defer {
-      OpenGLESHelpers.checkError("createRenderBuffer")
-      EAGLContext.setCurrent(nil)
-    }
-
-    var renderBuffer: GLuint = GLuint()
-    glGenRenderbuffers(1, &renderBuffer)
-    glBindRenderbuffer(GLenum(GL_RENDERBUFFER), renderBuffer)
-    defer {
-      glBindRenderbuffer(GLenum(GL_RENDERBUFFER), 0)
-    }
-
-    glRenderbufferStorage(
-      GLenum(GL_RENDERBUFFER),
-      GLenum(GL_DEPTH24_STENCIL8),
-      GLsizei(size.width),
-      GLsizei(size.height)
-    )
-
-    return renderBuffer
+  public enum FrameBufferError: Error {
+    case status(status: GLuint)
   }
 
   static public func createFrameBuffer(
     context: EAGLContext,
-    renderBuffer: GLuint,
     texture: CVOpenGLESTexture,
     size: CGSize
-  ) -> GLuint {
+  ) throws -> GLuint {
     EAGLContext.setCurrent(context)
     defer {
       OpenGLESHelpers.checkError("createFrameBuffer")
@@ -118,19 +94,6 @@ public class OpenGLESHelpers {
     defer {
       glBindTexture(GLenum(GL_TEXTURE_2D), 0)
     }
-
-    glTexParameteri(
-      GLenum(GL_TEXTURE_2D),
-      GLenum(GL_TEXTURE_MAG_FILTER),
-      GL_LINEAR
-    )
-    glTexParameteri(
-      GLenum(GL_TEXTURE_2D),
-      GLenum(GL_TEXTURE_MIN_FILTER),
-      GL_LINEAR
-    )
-
-    glViewport(0, 0, GLsizei(size.width), GLsizei(size.height))
 
     var frameBuffer: GLuint = 0
     glGenFramebuffers(1, &frameBuffer)
@@ -147,12 +110,11 @@ public class OpenGLESHelpers {
       0
     )
 
-    glFramebufferRenderbuffer(
-      GLenum(GL_FRAMEBUFFER),
-      GLenum(GL_DEPTH_ATTACHMENT),
-      GLenum(GL_RENDERBUFFER),
-      renderBuffer
-    )
+    let status = glCheckFramebufferStatus(GLenum(GL_FRAMEBUFFER))
+    if status != GLenum(GL_FRAMEBUFFER_COMPLETE) {
+      glDeleteFramebuffers(1, &frameBuffer)
+      throw OpenGLESHelpers.FrameBufferError.status(status: status)
+    }
 
     return frameBuffer
   }
@@ -188,20 +150,6 @@ public class OpenGLESHelpers {
 
     var textureName: GLuint = CVOpenGLESTextureGetName(texture)
     glDeleteTextures(1, &textureName)
-  }
-
-  static public func deleteRenderBuffer(
-    _ context: EAGLContext,
-    _ renderBuffer: GLuint
-  ) {
-    EAGLContext.setCurrent(context)
-    defer {
-      OpenGLESHelpers.checkError("deleteRenderBuffer")
-      EAGLContext.setCurrent(nil)
-    }
-
-    var renderBuffer = renderBuffer
-    glDeleteRenderbuffers(1, &renderBuffer)
   }
 
   static public func deleteFrameBuffer(

@@ -172,11 +172,6 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
     ]
 
     mpv_render_context_render(renderContext, &params)
-    let error = glGetError()
-    if error != GL_NO_ERROR {
-      NSLog("render: mpv_render_context_render error: \(error)")
-      return
-    }
 
     glFlush()
 
