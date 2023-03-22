@@ -14,6 +14,8 @@ export 'package:media_kit/src/models/playlist.dart';
 export 'package:media_kit/src/models/audio_device.dart';
 export 'package:media_kit/src/models/audio_params.dart';
 export 'package:media_kit/src/models/playlist_mode.dart';
+export 'package:media_kit/src/models/track.dart';
+export 'package:media_kit/src/models/track_type.dart';
 
 // For invoking platform specific API.
 

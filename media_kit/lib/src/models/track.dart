@@ -41,7 +41,8 @@ class Track {
           lang == other.lang;
 
   @override
-  int get hashCode => type.hashCode ^ id.hashCode ^ title.hashCode ^ lang.hashCode;
+  int get hashCode =>
+      type.hashCode ^ id.hashCode ^ title.hashCode ^ lang.hashCode;
 
   @override
   String toString() {

@@ -5,10 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
 import 'package:media_kit/media_kit.dart';
-import 'package:media_kit/src/models/track.dart';
-import 'package:media_kit/src/models/track_type.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:collection/collection.dart';
 
 void main() {
   runApp(const MyApp());
@@ -870,12 +867,15 @@ class _TracksSelectorState extends State<TracksSelector> {
           setState(() {});
         }),
         widget.player.streams.currentTracksUpdated.listen((event) async {
-          _selectedVideoId = (await widget.player.currentVideoTrack)?.id ?? trackIdAuto;
-          _selectedAudioId = (await widget.player.currentAudioTrack)?.id ?? trackIdAuto;
-          _selectedSubId = (await widget.player.currentSubTrack)?.id ?? trackIdAuto;
+          _selectedVideoId =
+              (await widget.player.currentVideoTrack)?.id ?? trackIdAuto;
+          _selectedAudioId =
+              (await widget.player.currentAudioTrack)?.id ?? trackIdAuto;
+          _selectedSubId =
+              (await widget.player.currentSubTrack)?.id ?? trackIdAuto;
           setState(() {});
         })
-    ],
+      ],
     );
   }
 
@@ -892,15 +892,18 @@ class _TracksSelectorState extends State<TracksSelector> {
     return Row(
       children: [
         const SizedBox(width: 48.0),
-        _buildTrackSelector(_videoTracks, _selectedVideoId, TrackType.video, (trackId) {
+        _buildTrackSelector(_videoTracks, _selectedVideoId, TrackType.video,
+            (trackId) {
           widget.player.setVideoTrack(trackId);
         }),
         const SizedBox(width: 16.0),
-        _buildTrackSelector(_audioTracks, _selectedAudioId, TrackType.audio, (trackId) {
+        _buildTrackSelector(_audioTracks, _selectedAudioId, TrackType.audio,
+            (trackId) {
           widget.player.setAudioTrack(trackId);
         }),
         const SizedBox(width: 16.0),
-        _buildTrackSelector(_subTracks, _selectedSubId, TrackType.sub, (trackId) {
+        _buildTrackSelector(_subTracks, _selectedSubId, TrackType.sub,
+            (trackId) {
           widget.player.setSubTrack(trackId);
         }),
       ],
@@ -913,17 +916,24 @@ class _TracksSelectorState extends State<TracksSelector> {
     TrackType trackType,
     Function(String) onTrackSelected,
   ) {
-    final allTracks = [];
+    final allTracks = <Track>[];
     allTracks.add(Track(trackType, trackIdAuto, "auto", ""));
     allTracks.add(Track(trackType, trackIdNo, "no", ""));
     allTracks.addAll(tracks);
+
     final items = allTracks.map((track) {
       final text = "${track.id}|${track.title}-${track.lang}";
       return DropdownMenuItem(value: track.id, child: Text(text));
     }).toList();
-    final value = allTracks.firstWhereOrNull((track) {
-      return selectedTrackId == track.id;
-    }).id ?? trackIdAuto;
+
+    final value = allTracks
+            .cast<Track?>()
+            .firstWhere(
+              (track) => selectedTrackId == track?.id,
+              orElse: () => null,
+            )
+            ?.id ??
+        trackIdAuto;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

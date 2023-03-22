@@ -211,21 +211,24 @@ class Player {
   /// Get the list of all the available video [Track]s.
   Future<List<Track>> get availableVideoTracks async {
     final tracks = await platform?.availableTracks;
-    final result = tracks?.where((track) => track.type == TrackType.video).toList();
+    final result =
+        tracks?.where((track) => track.type == TrackType.video).toList();
     return result ?? [];
   }
 
   /// Get the list of all the available audio [Track]s.
   Future<List<Track>> get availableAudioTracks async {
     final tracks = await platform?.availableTracks;
-    final result = tracks?.where((track) => track.type == TrackType.audio).toList();
+    final result =
+        tracks?.where((track) => track.type == TrackType.audio).toList();
     return result ?? [];
   }
 
   /// Get the list of all the available sub [Track]s.
   Future<List<Track>> get availableSubTracks async {
     final tracks = await platform?.availableTracks;
-    final result = tracks?.where((track) => track.type == TrackType.sub).toList();
+    final result =
+        tracks?.where((track) => track.type == TrackType.sub).toList();
     return result ?? [];
   }
 
@@ -238,7 +241,7 @@ class Player {
   }
 
   Future<Track?> get currentSubTrack async {
-     return platform?.currentSubTrack;
+    return platform?.currentSubTrack;
   }
 
   /// Sets audio track.

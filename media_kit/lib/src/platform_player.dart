@@ -5,7 +5,6 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:ffi';
 import 'package:meta/meta.dart';
 
 import 'package:media_kit/src/models/track.dart';
@@ -374,10 +373,9 @@ abstract class PlatformPlayer {
       StreamController.broadcast();
 
   @protected
-  final StreamController tracksUpdatedController =
-      StreamController.broadcast();
+  final StreamController tracksUpdatedController = StreamController.broadcast();
 
   @protected
   final StreamController currentTracksUpdatedController =
-  StreamController.broadcast();
+      StreamController.broadcast();
 }

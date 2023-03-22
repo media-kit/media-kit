@@ -1,3 +1,1 @@
-enum TrackType {
-  video, audio, sub
-}
+enum TrackType { video, audio, sub }
