@@ -172,6 +172,7 @@ abstract class PlatformPlayer {
     await audioParamsController.close();
     await audioBitrateController.close();
     await tracksUpdatedController.close();
+    await currentTracksUpdatedController.close();
   }
 
   FutureOr<void> open(

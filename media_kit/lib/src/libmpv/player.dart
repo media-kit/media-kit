@@ -13,7 +13,6 @@ import 'package:media_kit/src/libmpv/core/native_library.dart';
 import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
 
 import 'package:media_kit/src/models/track.dart';
-import 'package:media_kit/src/models/track_type.dart';
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_error.dart';
@@ -368,7 +367,7 @@ class Player extends PlatformPlayer {
     return setProperty(TrackType.sub.name, id);
   }
 
-  // Sets sub track
+  // Sets video track
   @override
   FutureOr<void> setVideoTrack(String id) {
     return setProperty(TrackType.video.name, id);
@@ -783,8 +782,7 @@ class Player extends PlatformPlayer {
     final title = await getProperty('current-tracks/${type.name}/title');
     final lang = await getProperty('current-tracks/${type.name}/lang');
 
-    if (typeStr != null && id != null)
-    {
+    if (typeStr != null && id != null) {
       final type = TrackType.values.byName(typeStr);
       return Track(type, id, title, lang);
     }
@@ -805,7 +803,7 @@ class Player extends PlatformPlayer {
     );
     final nbTracks = data.cast<Int64>().value;
     final result = <Track>[];
-    for (var i= 0; i<nbTracks; i++) {
+    for (var i = 0; i < nbTracks; i++) {
       final track = await _getTrack(i);
       if (track != null) {
         result.add(track);
@@ -823,8 +821,7 @@ class Player extends PlatformPlayer {
     final title = await getProperty('track-list/$trackIndex/title');
     final lang = await getProperty('track-list/$trackIndex/lang');
 
-    if (typeStr != null && id != null)
-    {
+    if (typeStr != null && id != null) {
       final type = TrackType.values.byName(typeStr);
       return Track(type, id, title, lang);
     }
@@ -866,7 +863,6 @@ class Player extends PlatformPlayer {
     calloc.free(data);
     return value;
   }
-
 
   /// Sets property / option for the internal `libmpv` instance of this [Player].
   /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
