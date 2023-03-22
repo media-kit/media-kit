@@ -24,6 +24,7 @@ jobs:
           name: media_kit_test_win32_x64
           path: media_kit_test/media_kit_test_win32_x64.7z
       - uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/main'
         with:
           draft: true
           prerelease: false
@@ -51,12 +52,39 @@ jobs:
           name: media_kit_test_linux_x64
           path: media_kit_test/media_kit_test_linux_x64.7z
       - uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/main'
         with:
           draft: true
           prerelease: false
           tag_name: "vnext"
           files: |
             media_kit_test/media_kit_test_linux_x64.7z
+
+  macos:
+    name: macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - run: flutter pub get
+      - run: flutter build macos --verbose
+      - run: 7z a media_kit_test_macos_universal.7z build/macos/Build/Products/Release/media_kit_test.app
+      - uses: actions/upload-artifact@v1
+        with:
+          name: media_kit_test_macos_universal
+          path: media_kit_test/media_kit_test_macos_universal.7z
+      - uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          draft: true
+          prerelease: false
+          tag_name: "vnext"
+          files: |
+            media_kit_test/media_kit_test_macos_universal.7z
 
   ios:
     name: iOS
