@@ -1,16 +1,27 @@
-import Cocoa
-import FlutterMacOS
+#if canImport(Flutter)
+  import Flutter
+#elseif canImport(FlutterMacOS)
+  import FlutterMacOS
+#endif
 
 public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
   private static let CHANNEL_NAME = "com.alexmercerind/media_kit_video"
 
   public static func register(with registrar: FlutterPluginRegistrar) {
+    #if canImport(Flutter)
+      let binaryMessenger = registrar.messenger()
+      let registry = registrar.textures()
+    #elseif canImport(FlutterMacOS)
+      let binaryMessenger = registrar.messenger
+      let registry = registrar.textures
+    #endif
+
     let channel = FlutterMethodChannel(
       name: CHANNEL_NAME,
-      binaryMessenger: registrar.messenger
+      binaryMessenger: binaryMessenger
     )
     let instance = MediaKitVideoPlugin.init(
-      registry: registrar.textures,
+      registry: registry,
       channel: channel
     )
     registrar.addMethodCallDelegate(instance, channel: channel)

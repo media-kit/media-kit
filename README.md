@@ -63,8 +63,8 @@ dependencies:
 | Windows  | Ready | Ready |
 | Linux    | Ready | Ready |
 | macOS    | Ready | Ready |
+| iOS      | Ready | Ready |
 | Android  | Soon  | Soon  |
-| iOS      | Soon  | Soon  |
 
 ## Guide
 

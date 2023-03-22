@@ -1,18 +1,15 @@
-import Cocoa
-import FlutterMacOS
-import OpenGL.GL
-import OpenGL.GL3
+import Flutter
+import OpenGLES
 
-public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
+public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   public typealias UpdateCallback = () -> Void
 
   private let handle: OpaquePointer
   private let updateCallback: UpdateCallback
-  private let pixelFormat: CGLPixelFormatObj
-  private let context: CGLContextObj
-  private let textureCache: CVOpenGLTextureCache
+  private let context: EAGLContext
+  private let textureCache: CVOpenGLESTextureCache
   private var renderContext: OpaquePointer?
-  private var textureContexts = SwappableObjectManager<TextureGLContext>(
+  private var textureContexts = SwappableObjectManager<TextureGLESContext>(
     objects: [],
     skipCheckArgs: true
   )
@@ -23,9 +20,8 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
   ) {
     self.handle = handle
     self.updateCallback = updateCallback
-    self.pixelFormat = OpenGLHelpers.createPixelFormat()
-    self.context = OpenGLHelpers.createContext(pixelFormat)
-    self.textureCache = OpenGLHelpers.createTextureCache(context, pixelFormat)
+    self.context = OpenGLESHelpers.createContext()
+    self.textureCache = OpenGLESHelpers.createTextureCache(context)
 
     super.init()
 
@@ -44,21 +40,20 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
   public func dispose() {
     disposePixelBuffer()
     disposeMPV()
-    OpenGLHelpers.deleteTextureCache(textureCache)
-    OpenGLHelpers.deletePixelFormat(pixelFormat)
+    OpenGLESHelpers.deleteTextureCache(textureCache)
 
     // Deleting the context may cause potential RAM or VRAM memory leaks, as it
-    // is used in the `deinit` method of the `TextureGLContext`.
+    // is used in the `deinit` method of the `TextureGLESContext`.
     // Potential fix: use a counter, and delete it only when the counter reaches
     // zero
-    OpenGLHelpers.deleteContext(context)
+    OpenGLESHelpers.deleteContext(context)
   }
 
   private func initMPV() {
-    CGLSetCurrentContext(context)
+    EAGLContext.setCurrent(context)
     defer {
-      OpenGLHelpers.checkError("initMPV")
-      CGLSetCurrentContext(nil)
+      OpenGLESHelpers.checkError("initMPV")
+      EAGLContext.setCurrent(nil)
     }
 
     MPVHelpers.checkError(mpv_set_option_string(handle, "hwdec", "auto"))
@@ -69,7 +64,7 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
     var procAddress = mpv_opengl_init_params(
       get_proc_address: {
         (ctx, name) in
-        return TextureGL.getProcAddress(ctx, name)
+        return TextureHW.getProcAddress(ctx, name)
       },
       get_proc_address_ctx: nil
     )
@@ -95,7 +90,7 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
     mpv_render_context_set_update_callback(
       renderContext,
       { (ctx) in
-        let that = unsafeBitCast(ctx, to: TextureGL.self)
+        let that = unsafeBitCast(ctx, to: TextureHW.self)
         DispatchQueue.main.async {
           that.updateCallback()
         }
@@ -122,17 +117,17 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
 
     textureContexts.reinit(
       objects: [
-        TextureGLContext(
+        TextureGLESContext(
           context: context,
           textureCache: textureCache,
           size: size
         ),
-        TextureGLContext(
+        TextureGLESContext(
           context: context,
           textureCache: textureCache,
           size: size
         ),
-        TextureGLContext(
+        TextureGLESContext(
           context: context,
           textureCache: textureCache,
           size: size
@@ -152,10 +147,10 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
       return
     }
 
-    CGLSetCurrentContext(context)
+    EAGLContext.setCurrent(context)
     defer {
-      OpenGLHelpers.checkError("render")
-      CGLSetCurrentContext(nil)
+      OpenGLESHelpers.checkError("render")
+      EAGLContext.setCurrent(nil)
     }
 
     glBindFramebuffer(GLenum(GL_FRAMEBUFFER), textureContext!.frameBuffer)
@@ -175,6 +170,7 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
       mpv_render_param(type: MPV_RENDER_PARAM_OPENGL_FBO, data: fboPtr),
       mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
     ]
+
     mpv_render_context_render(renderContext, &params)
 
     glFlush()
@@ -192,12 +188,12 @@ public class TextureGL: NSObject, FlutterTexture, ResizableTextureProtocol {
       kCFStringEncodingASCII
     )
     let indentifier = CFBundleGetBundleWithIdentifier(
-      "com.apple.opengl" as CFString
+      "com.apple.opengles" as CFString
     )
     let addr = CFBundleGetFunctionPointerForName(indentifier, symbol)
 
     if addr == nil {
-      NSLog("Cannot get OpenGL function pointer!")
+      NSLog("Cannot get OpenGLES function pointer!")
     }
     return addr
   }

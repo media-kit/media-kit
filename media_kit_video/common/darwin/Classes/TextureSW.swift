@@ -1,5 +1,8 @@
-import Cocoa
-import FlutterMacOS
+#if canImport(Flutter)
+  import Flutter
+#elseif canImport(FlutterMacOS)
+  import FlutterMacOS
+#endif
 
 public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   public typealias UpdateCallback = () -> Void
@@ -7,7 +10,10 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   private let handle: OpaquePointer
   private let updateCallback: UpdateCallback
   private var renderContext: OpaquePointer?
-  private var pixelBuffer: CVPixelBuffer?
+  private var textureContexts = SwappableObjectManager<TextureSWContext>(
+    objects: [],
+    skipCheckArgs: true
+  )
 
   init(
     handle: OpaquePointer,
@@ -24,11 +30,12 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
-    if pixelBuffer == nil {
+    let textureContext = textureContexts.current
+    if textureContext == nil {
       return nil
     }
 
-    return Unmanaged.passRetained(pixelBuffer!)
+    return Unmanaged.passRetained(textureContext!.pixelBuffer)
   }
 
   public func dispose() {
@@ -79,50 +86,41 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   private func createPixelBuffer(_ size: CGSize) {
     disposePixelBuffer()
 
-    let attrs =
-      [
-        kCVPixelBufferMetalCompatibilityKey: true
-      ] as CFDictionary
-
-    var pixelBuffer: CVPixelBuffer?
-    let cvret = CVPixelBufferCreate(
-      kCFAllocatorDefault,
-      Int(size.width),
-      Int(size.height),
-      kCVPixelFormatType_32BGRA,
-      attrs,
-      &pixelBuffer
+    textureContexts.reinit(
+      objects: [
+        TextureSWContext(size: size),
+        TextureSWContext(size: size),
+        TextureSWContext(size: size),
+      ],
+      skipCheckArgs: true
     )
-    assert(cvret == kCVReturnSuccess, "CVPixelBufferCreate")
-
-    self.pixelBuffer = pixelBuffer
   }
 
   private func disposePixelBuffer() {
-    // 'CVPixelBufferRelease' is unavailable: Core Foundation objects are
-    // automatically memory managed
+    textureContexts.reinit(objects: [], skipCheckArgs: true)
   }
 
   public func render(_ size: CGSize) {
-    if pixelBuffer == nil {
+    let textureContext = textureContexts.nextAvailable()
+    if textureContext == nil {
       return
     }
 
     CVPixelBufferLockBaseAddress(
-      pixelBuffer!,
+      textureContext!.pixelBuffer,
       CVPixelBufferLockFlags(rawValue: 0)
     )
     defer {
       CVPixelBufferUnlockBaseAddress(
-        pixelBuffer!,
+        textureContext!.pixelBuffer,
         CVPixelBufferLockFlags(rawValue: 0)
       )
     }
 
     var ssize: [Int32] = [Int32(size.width), Int32(size.height)]
     let format: String = "bgr0"
-    var pitch: Int = CVPixelBufferGetBytesPerRow(pixelBuffer!)
-    let buffer = CVPixelBufferGetBaseAddress(pixelBuffer!)
+    var pitch: Int = CVPixelBufferGetBytesPerRow(textureContext!.pixelBuffer)
+    let buffer = CVPixelBufferGetBaseAddress(textureContext!.pixelBuffer)
 
     // pointers
     let ssizePtr = ssize.withUnsafeMutableBytes {
@@ -143,5 +141,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
     ]
 
     mpv_render_context_render(renderContext, &params)
+
+    textureContexts.pushAsReady(textureContext!)
   }
 }

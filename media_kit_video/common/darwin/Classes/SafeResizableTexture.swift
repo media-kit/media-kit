@@ -1,5 +1,8 @@
-import Cocoa
-import FlutterMacOS
+#if canImport(Flutter)
+  import Flutter
+#elseif canImport(FlutterMacOS)
+  import FlutterMacOS
+#endif
 
 // This class avoids data race when called from a thread
 public class SafeResizableTexture:

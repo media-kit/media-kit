@@ -1,5 +1,8 @@
-import Cocoa
-import FlutterMacOS
+#if canImport(Flutter)
+  import Flutter
+#elseif canImport(FlutterMacOS)
+  import FlutterMacOS
+#endif
 
 // This class creates and manipulates the different types of FlutterTexture,
 // handles resizing, rendering calls, and notify Flutter when a new frame is
@@ -67,7 +70,7 @@ public class VideoOutput: NSObject {
     )
     if enableHardwareAcceleration {
       texture = SafeResizableTexture(
-        TextureGL(
+        TextureHW(
           handle: handle,
           updateCallback: updateCallback
         )

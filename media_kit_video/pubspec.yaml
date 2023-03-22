@@ -27,3 +27,5 @@ flutter:
         pluginClass: MediaKitVideoPlugin
       macos:
         pluginClass: MediaKitVideoPlugin
+      ios:
+        pluginClass: MediaKitVideoPlugin
