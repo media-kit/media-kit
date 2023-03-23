@@ -47,13 +47,14 @@ dependencies:
   media_kit: ^0.0.1
   # For video rendering.
   media_kit_video: ^0.0.1
-  # For enabling support for more than 8 simultaneous players (only Flutter).
+  # For enabling support for more than 8 simultaneous players.
   media_kit_native_event_loop: ^1.0.0
   # Pick based on your requirements / platform:
   media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
   media_kit_libs_windows_audio: ^1.0.0          # Windows package for audio (only) native libraries.
+  media_kit_libs_ios_video: ^1.0.0              # iOS package for video (& audio) native libraries.
+  media_kit_libs_macos_video: ^1.0.0            # macOS package for video (& audio) native libraries.
   media_kit_libs_linux: ^1.0.0                  # Linux dependency package.
-  media_kit_libs_macos_video: ^1.0.0            # macOS dependency package.
 ```
 
 ## Platforms
@@ -639,6 +640,14 @@ classDiagram
   }
 ```
 
+## macOS
+
+_TODO: documentation_
+
+## iOS
+
+_TODO: documentation_
+
 ## Implementation
 
 [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) is used for leveraging audio & video playback.
@@ -682,6 +691,14 @@ You can visit my [experimentation repository](https://github.com/alexmercerind/f
 #### Linux
 
 On Flutter Linux, [both OpenGL (H/W) & pixel buffer (S/W) APIs](https://github.com/flutter/engine/pull/24916) are available for rendering on Texture widget.
+
+## macOS
+
+_TODO: documentation_
+
+## iOS
+
+_TODO: documentation_
 
 ## License
 

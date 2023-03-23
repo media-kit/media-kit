@@ -37,11 +37,13 @@ dependencies:
   media_kit: ^0.0.1
   # For video rendering.
   media_kit_video: ^0.0.1
-  # For enabling support for more than 8 simultaneous players (only Flutter).
+  # For enabling support for more than 8 simultaneous players.
   media_kit_native_event_loop: ^1.0.0
   # Pick based on your requirements / platform:
   media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
   media_kit_libs_windows_audio: ^1.0.0          # Windows package for audio (only) native libraries.
+  media_kit_libs_ios_video: ^1.0.0              # iOS package for video (& audio) native libraries.
+  media_kit_libs_macos_video: ^1.0.0            # macOS package for video (& audio) native libraries.
   media_kit_libs_linux: ^1.0.0                  # Linux dependency package.
 ```
 
@@ -51,9 +53,9 @@ dependencies:
 | -------- | ----- | ----- |
 | Windows  | Ready | Ready |
 | Linux    | Ready | Ready |
-| macOS    | WIP   | WIP   |
+| macOS    | Ready | Ready |
+| iOS      | Ready | Ready |
 | Android  | Soon  | Soon  |
-| iOS      | Soon  | Soon  |
 
 ## Docs
 
