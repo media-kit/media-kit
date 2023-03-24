@@ -956,7 +956,7 @@ class _StressTestScreenState extends State<StressTestScreen> {
             play: true,
           );
           await players[i].setPlaylistMode(PlaylistMode.loop);
-          players[i].volume = 0.0;
+          await players[i].setVolume(0.0);
         }
         setState(() {});
       },
@@ -1084,7 +1084,6 @@ class _TabScreenState extends State<TabScreen> {
       controller = await VideoController.create(
         player.handle,
       );
-      player.volume = 0.0;
       await player.open(
         Playlist(
           [
@@ -1093,6 +1092,7 @@ class _TabScreenState extends State<TabScreen> {
         ),
       );
       await player.setPlaylistMode(PlaylistMode.loop);
+      await player.setVolume(0.0);
       setState(() {});
     });
   }
