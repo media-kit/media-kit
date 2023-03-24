@@ -114,8 +114,10 @@ class Player extends PlatformPlayer {
     // new [Media] is [Player.open]ed it causes [Media] to not starting playing
     // automatically.
     // Thanks to @DomingoMG for the fix!
-    state.playlist = playlist;
-    state.isPlaying = play;
+    state = state.copyWith(
+      playlist: playlist,
+      isPlaying: play,
+    );
     // To wait for the index change [jump] call.
     if (!playlistController.isClosed) {
       playlistController.add(state.playlist);
@@ -166,7 +168,7 @@ class Player extends PlatformPlayer {
   Future<void> pause() async {
     final ctx = await _handle.future;
     _isPlaybackEverStarted = true;
-    state.isPlaying = false;
+    state = state.copyWith(isPlaying: false);
     final name = 'pause'.toNativeUtf8();
     final flag = calloc<Int8>();
     flag.value = 1;
@@ -293,7 +295,11 @@ class Player extends PlatformPlayer {
   }) async {
     final ctx = await _handle.future;
     _isPlaybackEverStarted = true;
-    state.playlist.index = index;
+    state = state.copyWith(
+      playlist: state.playlist.copyWith(
+        index: index,
+      ),
+    );
     if (!playlistController.isClosed) {
       playlistController.add(state.playlist);
     }
@@ -440,7 +446,9 @@ class Player extends PlatformPlayer {
       if (configuration.pitch) {
         // Pitch shift control is enabled.
         final ctx = await _handle.future;
-        state.rate = rate;
+        state = state.copyWith(
+          rate: rate,
+        );
         if (!rateController.isClosed) {
           rateController.add(state.rate);
         }
@@ -475,7 +483,9 @@ class Player extends PlatformPlayer {
       } else {
         // Pitch shift control is disabled.
         final ctx = await _handle.future;
-        state.rate = rate;
+        state = state.copyWith(
+          rate: rate,
+        );
         if (!rateController.isClosed) {
           rateController.add(state.rate);
         }
@@ -501,11 +511,13 @@ class Player extends PlatformPlayer {
       if (configuration.pitch) {
         // Pitch shift control is enabled.
         final ctx = await _handle.future;
-        state.pitch = pitch;
+        state = state.copyWith(
+          pitch: pitch,
+        );
         if (!pitchController.isClosed) {
           pitchController.add(state.pitch);
         }
-        // `rubberband` is not bundled in `libmpv` shared library at the moment. GPL.
+        // Rubberband Library is expensive.
         // Using `scaletempo` instead.
         // final name = 'af'.toNativeUtf8();
         // final keys = calloc<Pointer<Utf8>>(2);
@@ -633,7 +645,11 @@ class Player extends PlatformPlayer {
               }
             }
           }
-          state.playlist.medias = playlist;
+          state = state.copyWith(
+            playlist: state.playlist.copyWith(
+              medias: playlist,
+            ),
+          );
           if (!playlistController.isClosed) {
             playlistController.add(state.playlist);
           }
@@ -772,9 +788,13 @@ class Player extends PlatformPlayer {
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
     _error(event.ref.error);
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
-      state.isCompleted = false;
+      state = state.copyWith(
+        isCompleted: false,
+      );
       if (_isPlaybackEverStarted) {
-        state.isPlaying = true;
+        state = state.copyWith(
+          isPlaying: true,
+        );
       }
       if (!isCompletedController.isClosed) {
         isCompletedController.add(false);
@@ -788,9 +808,13 @@ class Player extends PlatformPlayer {
       // Thanks to @DomingoMG for noticing the bug.
       if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
           generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
-        state.isCompleted = true;
+        state = state.copyWith(
+          isCompleted: true,
+        );
         if (_isPlaybackEverStarted) {
-          state.isPlaying = false;
+          state = state.copyWith(
+            isPlaying: false,
+          );
         }
         if (!isCompletedController.isClosed) {
           isCompletedController.add(true);
@@ -799,14 +823,12 @@ class Player extends PlatformPlayer {
           isPlayingController.add(false);
         }
         if (!audioParamsController.isClosed) {
-          audioParamsController.add(
-            AudioParams(),
-          );
-          state.audioParams = AudioParams();
+          audioParamsController.add(const AudioParams());
+          state = state.copyWith(audioParams: const AudioParams());
         }
         if (!audioBitrateController.isClosed) {
           audioBitrateController.add(null);
-          state.audioBitrate = null;
+          state = state.copyWith(audioBitrate: null);
         }
       }
     }
@@ -817,7 +839,7 @@ class Player extends PlatformPlayer {
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
         if (_isPlaybackEverStarted) {
           final isPlaying = prop.ref.data.cast<Int8>().value != 1;
-          state.isPlaying = isPlaying;
+          state = state.copyWith(isPlaying: isPlaying);
           if (!isPlayingController.isClosed) {
             isPlayingController.add(isPlaying);
           }
@@ -826,7 +848,7 @@ class Player extends PlatformPlayer {
       if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
         final isBuffering = prop.ref.data.cast<Int8>().value != 0;
-        state.isBuffering = isBuffering;
+        state = state.copyWith(isBuffering: isBuffering);
         if (!isBufferingController.isClosed) {
           isBufferingController.add(isBuffering);
         }
@@ -835,7 +857,7 @@ class Player extends PlatformPlayer {
           prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
         final position = Duration(
             microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
-        state.position = position;
+        state = state.copyWith(position: position);
         if (!positionController.isClosed) {
           positionController.add(position);
         }
@@ -844,7 +866,7 @@ class Player extends PlatformPlayer {
           prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
         final duration = Duration(
             microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
-        state.duration = duration;
+        state = state.copyWith(duration: duration);
         if (!durationController.isClosed) {
           durationController.add(duration);
         }
@@ -864,7 +886,7 @@ class Player extends PlatformPlayer {
               }
               final bitrate = bitrates[uri];
               if (bitrate != null) {
-                state.audioBitrate = bitrate;
+                state = state.copyWith(audioBitrate: bitrate);
                 if (!audioBitrateController.isClosed) {
                   audioBitrateController.add(bitrate);
                 }
@@ -880,7 +902,11 @@ class Player extends PlatformPlayer {
           prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
         final index = prop.ref.data.cast<Int64>().value;
         if (_isPlaybackEverStarted) {
-          state.playlist.index = index;
+          state = state.copyWith(
+            playlist: state.playlist.copyWith(
+              index: index,
+            ),
+          );
           if (!playlistController.isClosed) {
             playlistController.add(state.playlist);
           }
@@ -889,7 +915,7 @@ class Player extends PlatformPlayer {
       if (prop.ref.name.cast<Utf8>().toDartString() == 'volume' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
         final volume = prop.ref.data.cast<Double>().value;
-        state.volume = volume;
+        state = state.copyWith(volume: volume);
         if (!volumeController.isClosed) {
           volumeController.add(volume);
         }
@@ -939,12 +965,14 @@ class Player extends PlatformPlayer {
               }
           }
         }
-        state.audioParams = AudioParams(
-          format: params['format'],
-          sampleRate: params['samplerate'],
-          channels: params['channels'],
-          channelCount: params['channel-count'],
-          hrChannels: params['hr-channels'],
+        state = state.copyWith(
+          audioParams: AudioParams(
+            format: params['format'],
+            sampleRate: params['samplerate'],
+            channels: params['channels'],
+            channelCount: params['channel-count'],
+            hrChannels: params['hr-channels'],
+          ),
         );
         if (!audioParamsController.isClosed) {
           audioParamsController.add(state.audioParams);
@@ -965,20 +993,18 @@ class Player extends PlatformPlayer {
                 bitrates[uri] = data;
                 bitrates[Media.getCleanedURI(uri)] = data;
               }
+              final bitrate =
+                  bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)];
               if (!audioBitrateController.isClosed &&
-                  (bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)]) !=
-                      state.audioBitrate) {
-                audioBitrateController.add(
-                  bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)],
-                );
-                state.audioBitrate =
-                    bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)];
+                  bitrate != state.audioBitrate) {
+                audioBitrateController.add(bitrate);
+                state = state.copyWith(audioBitrate: bitrate);
               }
             }
           } else {
             if (!audioBitrateController.isClosed) {
               audioBitrateController.add(null);
-              state.audioBitrate = null;
+              state = state.copyWith(audioBitrate: null);
             }
           }
         } catch (exception, stacktrace) {

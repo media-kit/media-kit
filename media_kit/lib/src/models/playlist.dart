@@ -6,20 +6,29 @@
 
 import 'package:media_kit/src/models/media.dart';
 
-/// A [Playlist] collectively representing currently playing [index]
-/// & a [List] of opened [Media]s inside the [Player].
+/// A [Playlist] represents a list of [Media]s & currently playing [index].
 class Playlist {
-  /// Currently playing [index].
-  int index;
-
   /// Currently opened [List] of [Media]s.
-  List<Media> medias;
+  final List<Media> medias;
 
-  Playlist(
+  /// Currently playing [index].
+  final int index;
+
+  const Playlist(
     this.medias, {
     this.index = 0,
   });
 
   @override
   String toString() => 'Playlist(index: $index, medias: $medias)';
+
+  Playlist copyWith({
+    List<Media>? medias,
+    int? index,
+  }) {
+    return Playlist(
+      medias ?? this.medias,
+      index: index ?? this.index,
+    );
+  }
 }

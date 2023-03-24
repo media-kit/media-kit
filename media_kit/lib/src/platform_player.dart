@@ -134,10 +134,10 @@ abstract class PlatformPlayer {
   final PlayerConfiguration configuration;
 
   /// Current state of the player.
-  late final PlayerState state = PlayerState();
+  late PlayerState state = PlayerState();
 
   /// Current state of the player available as listenable [Stream]s.
-  late final PlayerStreams streams = PlayerStreams(
+  late PlayerStreams streams = PlayerStreams(
     playlistController.stream,
     isPlayingController.stream,
     isCompletedController.stream,
