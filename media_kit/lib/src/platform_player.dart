@@ -246,25 +246,25 @@ abstract class PlatformPlayer {
     );
   }
 
-  set volume(double value) {
+  FutureOr<void> setVolume(double volume) {
     throw UnimplementedError(
       '[PlatformPlayer.volume] is not implemented.',
     );
   }
 
-  set rate(double value) {
+  FutureOr<void> setRate(double rate) {
     throw UnimplementedError(
       '[PlatformPlayer.rate] is not implemented.',
     );
   }
 
-  set pitch(double value) {
+  FutureOr<void> setPitch(double pitch) {
     throw UnimplementedError(
       '[PlatformPlayer.pitch] is not implemented.',
     );
   }
 
-  set shuffle(bool value) {
+  FutureOr<void> setShuffle(bool shuffle) {
     throw UnimplementedError(
       '[PlatformPlayer.shuffle] is not implemented.',
     );

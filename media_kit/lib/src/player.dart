@@ -183,24 +183,28 @@ class Player {
     return platform?.setPlaylistMode(playlistMode);
   }
 
-  /// Sets the playback volume of the [Player]. Defaults to `100.0`.
-  set volume(double value) {
-    platform?.volume = value;
+  /// Sets the playback volume of the [Player].
+  /// Defaults to `100.0`.
+  FutureOr<void> setVolume(double volume) {
+    return platform?.setVolume(volume);
   }
 
-  /// Sets the playback rate of the [Player]. Defaults to `1.0`.
-  set rate(double value) {
-    platform?.rate = value;
+  /// Sets the playback rate of the [Player].
+  /// Defaults to `1.0`.
+  FutureOr<void> setRate(double rate) {
+    return platform?.setRate(rate);
   }
 
-  /// Sets the relative pitch of the [Player]. Defaults to `1.0`.
-  set pitch(double value) {
-    platform?.pitch = value;
+  /// Sets the relative pitch of the [Player].
+  /// Defaults to `1.0`.
+  FutureOr<void> setPitch(double pitch) {
+    return platform?.setPitch(pitch);
   }
 
-  /// Enables or disables shuffle for [Player]. Default is `false`.
-  set shuffle(bool value) {
-    platform?.shuffle = value;
+  /// Enables or disables shuffle for [Player].
+  /// Default is `false`.
+  FutureOr<void> setShuffle(bool shuffle) {
+    return platform?.setShuffle(shuffle);
   }
 
   /// Internal platform specific identifier for this [Player] instance.
