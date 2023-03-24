@@ -16,15 +16,11 @@ MediaKitEventLoopHandler& MediaKitEventLoopHandler::GetInstance() {
 void MediaKitEventLoopHandler::Register(int64_t handle,
                                         void* post_c_object,
                                         int64_t send_port) {
-  // Only during the first call.
-  // Save references to NativeApi.postCObject & ReceivePort.sendPort.nativePort.
-  if (post_c_object_ == nullptr) {
-    post_c_object_ =
-        reinterpret_cast<bool (*)(Dart_Port, Dart_CObject*)>(post_c_object);
-  }
+  auto post_c_object_ =
+    reinterpret_cast<bool (*)(Dart_Port, Dart_CObject*)>(post_c_object);
 
   auto context = reinterpret_cast<mpv_handle*>(handle);
-  std::thread([this, context, send_port]() {
+  std::thread([=]() {
     for(;;) {
       {
         std::lock_guard<std::mutex> lock(mutexes_[context]);
@@ -66,8 +62,7 @@ void MediaKitEventLoopHandler::Notify(int64_t handle) {
   promises_[context].set_value();
 }
 
-MediaKitEventLoopHandler::MediaKitEventLoopHandler()
-    : post_c_object_(nullptr) {}
+MediaKitEventLoopHandler::MediaKitEventLoopHandler() {}
 
 MediaKitEventLoopHandler::~MediaKitEventLoopHandler() {}
 
