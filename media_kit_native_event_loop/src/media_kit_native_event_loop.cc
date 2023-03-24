@@ -22,12 +22,9 @@ void MediaKitEventLoopHandler::Register(int64_t handle,
     post_c_object_ =
         reinterpret_cast<bool (*)(Dart_Port, Dart_CObject*)>(post_c_object);
   }
-  if (send_port_ == -1) {
-    send_port_ = send_port;
-  }
 
   auto context = reinterpret_cast<mpv_handle*>(handle);
-  std::thread([this, context]() {
+  std::thread([this, context, send_port]() {
     for(;;) {
       {
         std::lock_guard<std::mutex> lock(mutexes_[context]);
@@ -49,7 +46,7 @@ void MediaKitEventLoopHandler::Register(int64_t handle,
       event_object.value.as_array.length = 2;
       event_object.value.as_array.values = value_objects;
       // Post to Dart.
-      post_c_object_(send_port_, &event_object);
+      post_c_object_(send_port, &event_object);
 
       if (event->event_id == MPV_EVENT_SHUTDOWN) {
         break;
@@ -70,7 +67,7 @@ void MediaKitEventLoopHandler::Notify(int64_t handle) {
 }
 
 MediaKitEventLoopHandler::MediaKitEventLoopHandler()
-    : post_c_object_(nullptr), send_port_(-1) {}
+    : post_c_object_(nullptr) {}
 
 MediaKitEventLoopHandler::~MediaKitEventLoopHandler() {}
 
