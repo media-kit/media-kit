@@ -12,7 +12,7 @@ class PlayerError {
   /// Error message.
   final String message;
 
-  PlayerError(
+  const PlayerError(
     this.code,
     this.message,
   );

@@ -5,9 +5,10 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/player_log.dart';
+import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/player_error.dart';
-import 'package:media_kit/src/models/player_log.dart';
 
 /// Private class for event handling of [Player].
 class PlayerStreams {
@@ -15,10 +16,10 @@ class PlayerStreams {
   final Stream<Playlist> playlist;
 
   /// Whether [Player] is playing or not.
-  final Stream<bool> isPlaying;
+  final Stream<bool> playing;
 
   /// Whether currently playing [Media] in [Player] has ended or not.
-  final Stream<bool> isCompleted;
+  final Stream<bool> completed;
 
   /// Current playback position of the [Player].
   final Stream<Duration> position;
@@ -36,14 +37,7 @@ class PlayerStreams {
   final Stream<double> pitch;
 
   /// Whether the [Player] has stopped for buffering.
-  final Stream<bool> isBuffering;
-
-  /// Audio parameters of the currently playing [Media].
-  /// e.g. sample rate, channels, etc.
-  final Stream<AudioParams> audioParams;
-
-  /// Audio bitrate of the currently playing [Media] in the [Player].
-  final Stream<double?> audioBitrate;
+  final Stream<bool> buffering;
 
   /// [Stream] emitting [PlayerLog]s.
   final Stream<PlayerLog> log;
@@ -52,19 +46,34 @@ class PlayerStreams {
   /// This may be used to catch errors raised by [Player].
   final Stream<PlayerError> error;
 
-  PlayerStreams(
+  /// Audio parameters of the currently playing [Media].
+  /// e.g. sample rate, channels, etc.
+  final Stream<AudioParams> audioParams;
+
+  /// Audio bitrate of the currently playing [Media] in the [Player].
+  final Stream<double?> audioBitrate;
+
+  /// Currently selected [AudioDevice].
+  final Stream<AudioDevice> audioDevice;
+
+  /// Currently available [AudioDevice]s.
+  final Stream<List<AudioDevice>> audioDevices;
+
+  const PlayerStreams(
     this.playlist,
-    this.isPlaying,
-    this.isCompleted,
+    this.playing,
+    this.completed,
     this.position,
     this.duration,
     this.volume,
     this.rate,
     this.pitch,
-    this.isBuffering,
+    this.buffering,
     this.log,
     this.error,
     this.audioParams,
     this.audioBitrate,
+    this.audioDevice,
+    this.audioDevices,
   );
 }
