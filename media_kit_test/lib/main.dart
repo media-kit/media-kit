@@ -47,15 +47,6 @@ class HomeScreen extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(
-              left: 16.0,
-              top: 16.0,
-              bottom: 16.0,
-            ),
-            child: Text('Situations:'),
-          ),
-          const Divider(height: 1.0, thickness: 1.0),
           ListTile(
             title: const Text(
               'Single [Player] with single [Video] • File & Asset',
@@ -841,7 +832,7 @@ class SeekBar extends StatefulWidget {
 }
 
 class _SeekBarState extends State<SeekBar> {
-  bool isPlaying = false;
+  bool playing = false;
   Duration position = Duration.zero;
   Duration duration = Duration.zero;
 
@@ -850,14 +841,14 @@ class _SeekBarState extends State<SeekBar> {
   @override
   void initState() {
     super.initState();
-    isPlaying = widget.player.state.isPlaying;
+    playing = widget.player.state.playing;
     position = widget.player.state.position;
     duration = widget.player.state.duration;
     subscriptions.addAll(
       [
-        widget.player.streams.isPlaying.listen((event) {
+        widget.player.streams.playing.listen((event) {
           setState(() {
-            isPlaying = event;
+            playing = event;
           });
         }),
         widget.player.streams.position.listen((event) {
@@ -891,7 +882,7 @@ class _SeekBarState extends State<SeekBar> {
         IconButton(
           onPressed: widget.player.playOrPause,
           icon: Icon(
-            isPlaying ? Icons.pause : Icons.play_arrow,
+            playing ? Icons.pause : Icons.play_arrow,
           ),
           color: Theme.of(context).primaryColor,
           iconSize: 36.0,

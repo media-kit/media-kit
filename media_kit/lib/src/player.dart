@@ -7,14 +7,15 @@
 import 'dart:io';
 import 'dart:async';
 
-import 'package:media_kit/src/platform_player.dart';
-import 'package:media_kit/src/libmpv/player.dart' as libmpv;
-
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_streams.dart';
+
+import 'package:media_kit/src/platform_player.dart';
+import 'package:media_kit/src/libmpv/player.dart' as libmpv;
 
 /// {@template player}
 ///
@@ -205,6 +206,14 @@ class Player {
   /// Default is `false`.
   FutureOr<void> setShuffle(bool shuffle) {
     return platform?.setShuffle(shuffle);
+  }
+
+  /// Sets the current [AudioDevice] for audio output.
+  ///
+  /// * Currently selected [AudioDevice] can be accessed using [state.audioDevice] or [streams.audioDevice].
+  /// * The list of currently available [AudioDevice]s can be obtained accessed using [state.audioDevices] or [streams.audioDevices].
+  FutureOr<void> setAudioDevice(AudioDevice audioDevice) {
+    return platform?.setAudioDevice(audioDevice);
   }
 
   /// Internal platform specific identifier for this [Player] instance.

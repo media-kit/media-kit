@@ -9,9 +9,10 @@ import 'package:meta/meta.dart';
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/player_log.dart';
+import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/player_error.dart';
-import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_streams.dart';
@@ -139,31 +140,33 @@ abstract class PlatformPlayer {
   /// Current state of the player available as listenable [Stream]s.
   late PlayerStreams streams = PlayerStreams(
     playlistController.stream,
-    isPlayingController.stream,
-    isCompletedController.stream,
+    playingController.stream,
+    completedController.stream,
     positionController.stream,
     durationController.stream,
     volumeController.stream,
     rateController.stream,
     pitchController.stream,
-    isBufferingController.stream,
+    bufferingController.stream,
     logController.stream,
     errorController.stream,
     audioParamsController.stream,
     audioBitrateController.stream,
+    audioDeviceController.stream,
+    audioDevicesController.stream,
   );
 
   @mustCallSuper
   FutureOr<void> dispose({int code = 0}) async {
     await playlistController.close();
-    await isPlayingController.close();
-    await isCompletedController.close();
+    await playingController.close();
+    await completedController.close();
     await positionController.close();
     await durationController.close();
     await volumeController.close();
     await rateController.close();
     await pitchController.close();
-    await isBufferingController.close();
+    await bufferingController.close();
     await logController.close();
     await errorController.close();
     await audioParamsController.close();
@@ -270,6 +273,12 @@ abstract class PlatformPlayer {
     );
   }
 
+  FutureOr<void> setAudioDevice(AudioDevice audioDevice) {
+    throw UnimplementedError(
+      '[PlatformPlayer.setAudioDevice] is not implemented.',
+    );
+  }
+
   Future<int> get handle {
     throw UnimplementedError(
       '[PlatformPlayer.handle] is not implemented.',
@@ -278,19 +287,19 @@ abstract class PlatformPlayer {
 
   @protected
   final StreamController<Playlist> playlistController =
-      StreamController.broadcast();
+      StreamController<Playlist>.broadcast();
 
   @protected
-  final StreamController<bool> isPlayingController =
-      StreamController.broadcast();
+  final StreamController<bool> playingController =
+      StreamController<bool>.broadcast();
 
   @protected
-  final StreamController<bool> isCompletedController =
-      StreamController.broadcast();
+  final StreamController<bool> completedController =
+      StreamController<bool>.broadcast();
 
   @protected
   final StreamController<Duration> positionController =
-      StreamController.broadcast();
+      StreamController<Duration>.broadcast();
 
   @protected
   final StreamController<Duration> durationController =
@@ -301,28 +310,38 @@ abstract class PlatformPlayer {
       StreamController.broadcast();
 
   @protected
-  final StreamController<double> rateController = StreamController.broadcast();
+  final StreamController<double> rateController =
+      StreamController<double>.broadcast();
 
   @protected
-  final StreamController<double> pitchController = StreamController.broadcast();
+  final StreamController<double> pitchController =
+      StreamController<double>.broadcast();
 
   @protected
-  final StreamController<bool> isBufferingController =
-      StreamController.broadcast();
+  final StreamController<bool> bufferingController =
+      StreamController<bool>.broadcast();
 
   @protected
   final StreamController<PlayerLog> logController =
-      StreamController.broadcast();
+      StreamController<PlayerLog>.broadcast();
 
   @protected
   final StreamController<PlayerError> errorController =
-      StreamController.broadcast();
+      StreamController<PlayerError>.broadcast();
 
   @protected
   final StreamController<AudioParams> audioParamsController =
-      StreamController.broadcast();
+      StreamController<AudioParams>.broadcast();
 
   @protected
   final StreamController<double?> audioBitrateController =
-      StreamController.broadcast();
+      StreamController<double?>.broadcast();
+
+  @protected
+  final StreamController<AudioDevice> audioDeviceController =
+      StreamController<AudioDevice>.broadcast();
+
+  @protected
+  final StreamController<List<AudioDevice>> audioDevicesController =
+      StreamController<List<AudioDevice>>.broadcast();
 }

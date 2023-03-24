@@ -3,10 +3,18 @@ import 'package:media_kit/media_kit.dart';
 Future<void> main() async {
   final player = Player();
   player.streams.playlist.listen((e) => print(e));
-  player.streams.playlist.listen((e) => print(e));
+  player.streams.playing.listen((e) => print(e));
+  player.streams.completed.listen((e) => print(e));
   player.streams.position.listen((e) => print(e));
   player.streams.duration.listen((e) => print(e));
-  player.streams.audioBitrate.listen((e) => print('${e ?? 1 ~/ 1000} KB/s'));
+  player.streams.volume.listen((e) => print(e));
+  player.streams.rate.listen((e) => print(e));
+  player.streams.pitch.listen((e) => print(e));
+  player.streams.buffering.listen((e) => print(e));
+  player.streams.audioParams.listen((e) => print(e));
+  player.streams.audioBitrate.listen((e) => print(e));
+  player.streams.audioDevice.listen((e) => print(e));
+  player.streams.audioDevices.listen((e) => print(e));
   final items = [
     Media(
       'https://p.scdn.co/mp3-preview/2312e9b4429d32218bf18778afb4dca0b25ac3f5?cid=a46f5c5745a14fbf826186da8da5ecc3',

@@ -25,6 +25,9 @@ class AudioDevice {
     this.description,
   );
 
+  /// [AudioDevice] with automatic device selection.
+  factory AudioDevice.auto() => const AudioDevice('auto', '');
+
   @override
   bool operator ==(Object other) {
     if (other is AudioDevice) {
