@@ -15,7 +15,7 @@ class PlayerLog {
   /// The log message.
   final String text;
 
-  PlayerLog({
+  const PlayerLog({
     required this.prefix,
     required this.level,
     required this.text,

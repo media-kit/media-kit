@@ -52,7 +52,7 @@ class PlayerStreams {
   /// This may be used to catch errors raised by [Player].
   final Stream<PlayerError> error;
 
-  PlayerStreams(
+  const PlayerStreams(
     this.playlist,
     this.isPlaying,
     this.isCompleted,

@@ -20,7 +20,7 @@ class AudioDevice {
   final String description;
 
   /// {@macro audio_device}
-  AudioDevice(
+  const AudioDevice(
     this.name,
     this.description,
   );

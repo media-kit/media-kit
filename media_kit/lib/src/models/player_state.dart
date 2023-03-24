@@ -43,7 +43,7 @@ class PlayerState {
   /// Audio bitrate of the currently playing [Media].
   final double? audioBitrate;
 
-  PlayerState({
+  const PlayerState({
     this.playlist = const Playlist([]),
     this.isPlaying = false,
     this.isCompleted = false,
