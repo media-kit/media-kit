@@ -72,6 +72,9 @@ class Video extends StatefulWidget {
   /// Fit of the viewport.
   final BoxFit fit;
 
+  /// Preferred aspect ratio of the viewport.
+  final double? aspectRatio;
+
   /// Background color to fill the video background.
   final Color fill;
 
@@ -86,6 +89,7 @@ class Video extends StatefulWidget {
     this.height,
     this.alignment = Alignment.center,
     this.fit = BoxFit.contain,
+    this.aspectRatio,
     this.fill = const Color(0xFF000000),
     this.filterQuality = FilterQuality.low,
   }) : super(key: key);
@@ -97,6 +101,8 @@ class Video extends StatefulWidget {
 class _VideoState extends State<Video> {
   @override
   Widget build(BuildContext context) {
+    final controller = widget.controller;
+    final aspectRatio = widget.aspectRatio;
     return Container(
       width: widget.width ?? double.infinity,
       height: widget.height ?? double.infinity,
@@ -105,17 +111,20 @@ class _VideoState extends State<Video> {
         child: FittedBox(
           alignment: widget.alignment,
           fit: widget.fit,
-          child: widget.controller == null
+          child: controller == null
               ? const SizedBox.shrink()
               : ValueListenableBuilder<int?>(
-                  valueListenable: widget.controller!.id,
+                  valueListenable: controller.id,
                   builder: (context, id, _) {
                     return ValueListenableBuilder<Rect?>(
-                      valueListenable: widget.controller!.rect,
+                      valueListenable: controller.rect,
                       builder: (context, rect, _) {
                         if (id != null && rect != null) {
                           return SizedBox(
-                            width: rect.width,
+                            // Apply aspect ratio if provided.
+                            width: aspectRatio == null
+                                ? rect.width
+                                : rect.height * aspectRatio,
                             height: rect.height,
                             child: Stack(
                               children: [
