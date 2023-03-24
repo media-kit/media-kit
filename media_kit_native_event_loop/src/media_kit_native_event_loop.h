@@ -44,8 +44,6 @@ class MediaKitEventLoopHandler {
   // dealing with std::condition_variable(s) which would eventually lead to
   // deadlocks or stop working after a while.
   std::unordered_map<mpv_handle*, std::promise<void>> promises_;
-  std::function<bool(Dart_Port port_id, Dart_CObject* message)> post_c_object_;
-  Dart_Port send_port_;
 };
 
 // ---------------------------------------------------------------------------
