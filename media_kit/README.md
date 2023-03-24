@@ -61,21 +61,34 @@ dependencies:
 
 ### Brief Start
 
-Basic example.
-
 ```dart
 import 'package:media_kit/media_kit.dart';
 
-/// Create a new [Player] instance.
 final player = Player();
 
 ...
-/// Open some [Media] for playback.
+
+player.streams.playlist.listen((e) => print(e));
+player.streams.playing.listen((e) => print(e));
+player.streams.completed.listen((e) => print(e));
+player.streams.position.listen((e) => print(e));
+player.streams.duration.listen((e) => print(e));
+player.streams.volume.listen((e) => print(e));
+player.streams.rate.listen((e) => print(e));
+player.streams.pitch.listen((e) => print(e));
+player.streams.buffering.listen((e) => print(e));
+player.streams.audioParams.listen((e) => print(e));
+player.streams.audioBitrate.listen((e) => print(e));
+player.streams.audioDevice.listen((e) => print(e));
+player.streams.audioDevices.listen((e) => print(e));
+
+...
+
 await player.open(
   Playlist(
     [
-      Media('file:///C:/Users/Hitesh/Music/Sample.MP3'),
-      Media('file:///C:/Users/Hitesh/Video/Sample.MKV'),
+      Media('file:///C:/Users/Hitesh/Music/Sample.mp3'),
+      Media('file:///C:/Users/Hitesh/Video/Sample.mkv'),
       Media('https://www.example.com/sample.mp4'),
       Media('rtsp://www.example.com/live'),
     ],
@@ -83,46 +96,33 @@ await player.open(
 );
 
 ...
-/// Modify speed, pitch, volume or shuffle state.
-player.rate = 1.0;
-player.pitch = 1.2;
-player.volume = 50.0;
-player.shuffle = false;
+
+await player.play();
+await player.pause();
+await player.playOrPause();
+await player.seek(const Duration(seconds: 10));
 
 ...
-/// Play / Pause
-player.play();
-player.pause();
-player.playOrPause();
+
+await player.next();
+await player.previous();
+await player.jump(2);
+await player.add(Media('https://www.example.com/sample.mp4'));
+await player.move(0, 2);
 
 ...
-/// Release allocated resources back to the system.
-player.dispose();
+
+await player.setRate(1.0);
+await player.setPitch(1.2);
+await player.setVolume(50.0);
+await player.setShuffle(false);
+await player.setPlaylistMode(PlaylistMode.loop);
+await player.setAudioDevice(AudioDevice.auto());
 
 ...
-/// Subscribe to events.
-player.streams.playlist.listen((event) {
-  /// Trigger UI updates etc.
-  print(event);
-});
-player.streams.playlist.listen((event) {
-  /// Trigger UI updates etc.
-  print(event);
-});
-player.streams.position.listen((event) {
-  /// Trigger UI updates etc.
-  print(event);
-});
-player.streams.duration.listen((event) {
-  /// Trigger UI updates etc.
-  print(event);
-});
-player.streams.audioBitrate.listen((event) {
-  /// Trigger UI updates etc.
-  if (event != null) {
-    print('${event ~/ 1000} KB/s');
-  }
-});
+
+await player.dispose();
+
 ```
 
 ### Rendering Video
