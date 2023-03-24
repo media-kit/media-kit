@@ -2,28 +2,11 @@ import 'package:media_kit/media_kit.dart';
 
 Future<void> main() async {
   final player = Player();
-  player.streams.playlist.listen((event) {
-    print(event);
-  });
-  player.streams.playlist.listen((event) {
-    print(event);
-  });
-  player.streams.position.listen((event) {
-    print(event);
-  });
-  player.streams.duration.listen((event) {
-    print(event);
-  });
-  player.streams.audioBitrate.listen((event) {
-    if (event != null) {
-      print('${event ~/ 1000} KB/s');
-    }
-  });
-  // Sample audio segments.
-  // Shelter - Porter Robinson
-  // Look At The Sky - Porter Robinson
-  // Firefly pt. II (feat. STARLYTE) - Jim Yosef
-  // Stay - Zedd
+  player.streams.playlist.listen((e) => print(e));
+  player.streams.playlist.listen((e) => print(e));
+  player.streams.position.listen((e) => print(e));
+  player.streams.duration.listen((e) => print(e));
+  player.streams.audioBitrate.listen((e) => print('${e ?? 1 ~/ 1000} KB/s'));
   final items = [
     Media(
       'https://p.scdn.co/mp3-preview/2312e9b4429d32218bf18778afb4dca0b25ac3f5?cid=a46f5c5745a14fbf826186da8da5ecc3',
@@ -38,24 +21,20 @@ Future<void> main() async {
       'https://p.scdn.co/mp3-preview/3f794acc211c14f5bbaef6ff44aa57b02b69bd9d?cid=a46f5c5745a14fbf826186da8da5ecc3',
     ),
   ];
-  await player.open(
-    Playlist(items, index: 2),
-    play: false,
-  );
+  await player.setRate(1.0);
+  await player.setVolume(50.0);
+  await player.setShuffle(false);
   await player.setPlaylistMode(PlaylistMode.loop);
+  await player.open(Playlist(items, index: 2), play: false);
   await player.play();
-  player.volume = 50.0;
-  player.rate = 1.0;
-  player.shuffle = false;
   await Future.delayed(const Duration(seconds: 10));
-  player.next();
+  await player.next();
   await Future.delayed(const Duration(seconds: 10));
-  player.previous();
+  await player.previous();
   await Future.delayed(const Duration(seconds: 10));
-  await player.open(
-    Playlist(items, index: 0),
-    play: false,
-  );
+  await player.open(Playlist(items));
+  await Future.delayed(const Duration(seconds: 10));
+  await player.open(Playlist(items), play: false);
   await Future.delayed(const Duration(seconds: 10));
   await player.play();
   await Future.delayed(const Duration(seconds: 10));
