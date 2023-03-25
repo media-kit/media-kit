@@ -873,6 +873,10 @@ class _TracksSelectorState extends State<TracksSelector> {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         DropdownButton<VideoTrack>(
+          icon: const Padding(
+            padding: EdgeInsets.only(left: 8.0),
+            child: Icon(Icons.videocam_outlined),
+          ),
           value: track.video,
           items: tracks.video
               .map(
@@ -895,6 +899,10 @@ class _TracksSelectorState extends State<TracksSelector> {
         ),
         const SizedBox(width: 16.0),
         DropdownButton<AudioTrack>(
+          icon: const Padding(
+            padding: EdgeInsets.only(left: 8.0),
+            child: Icon(Icons.audiotrack_outlined),
+          ),
           value: track.audio,
           items: tracks.audio
               .map(
@@ -917,6 +925,10 @@ class _TracksSelectorState extends State<TracksSelector> {
         ),
         const SizedBox(width: 16.0),
         DropdownButton<SubtitleTrack>(
+          icon: const Padding(
+            padding: EdgeInsets.only(left: 8.0),
+            child: Icon(Icons.subtitles_outlined),
+          ),
           value: track.subtitle,
           items: tracks.subtitle
               .map(
