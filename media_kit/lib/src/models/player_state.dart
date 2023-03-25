@@ -4,6 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
+import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
@@ -50,6 +51,12 @@ class PlayerState {
   /// Currently available [AudioDevice]s.
   final List<AudioDevice> audioDevices;
 
+  /// Currently selected video, audio & subtitle tracks.
+  final Track track;
+
+  /// Currently available video, audio & subtitle tracks.
+  final Tracks tracks;
+
   const PlayerState({
     this.playlist = const Playlist([]),
     this.playing = false,
@@ -64,6 +71,8 @@ class PlayerState {
     this.audioBitrate,
     this.audioDevice = const AudioDevice('auto', ''),
     this.audioDevices = const [AudioDevice('auto', '')],
+    this.track = const Track(),
+    this.tracks = const Tracks(),
   });
 
   PlayerState copyWith({
@@ -80,6 +89,8 @@ class PlayerState {
     double? audioBitrate,
     AudioDevice? audioDevice,
     List<AudioDevice>? audioDevices,
+    Track? track,
+    Tracks? tracks,
   }) {
     return PlayerState(
       playlist: playlist ?? this.playlist,
@@ -95,10 +106,26 @@ class PlayerState {
       audioBitrate: audioBitrate ?? this.audioBitrate,
       audioDevice: audioDevice ?? this.audioDevice,
       audioDevices: audioDevices ?? this.audioDevices,
+      track: track ?? this.track,
+      tracks: tracks ?? this.tracks,
     );
   }
 
   @override
-  String toString() =>
-      'PlayerState(playlist: $playlist, playing: $playing, completed: $completed, position: $position, duration: $duration, volume: $volume, rate: $rate, pitch: $pitch, buffering: $buffering, audioParams: $audioParams, audioBitrate: $audioBitrate, audioDevice: $audioDevice, audioDevices: $audioDevices)';
+  String toString() => 'Player('
+      'playlist: $playlist, '
+      'playing: $playing, '
+      'completed: $completed, '
+      'position: $position, '
+      'duration: $duration, '
+      'volume: $volume, '
+      'rate: $rate, '
+      'pitch: $pitch, '
+      'buffering: $buffering, '
+      'audioParams: $audioParams, '
+      'audioBitrate: $audioBitrate, '
+      'audioDevice: $audioDevice, '
+      'audioDevices: $audioDevices, '
+      'track: $track, '
+      'tracks: $tracks, ';
 }
