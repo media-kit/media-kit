@@ -636,17 +636,14 @@ class Player extends PlatformPlayer {
     final ctx = await _handle.future;
     final name = 'audio-device'.toNativeUtf8();
     final value = audioDevice.name.toNativeUtf8();
-    final ptr = calloc<Pointer<Utf8>>();
-    ptr.value = value;
     _libmpv?.mpv_set_property(
       ctx,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_STRING,
-      ptr.cast(),
+      value.cast(),
     );
     calloc.free(name);
     calloc.free(value);
-    calloc.free(ptr);
   }
 
   /// Sets the current [VideoTrack] for video output.
@@ -658,17 +655,14 @@ class Player extends PlatformPlayer {
     final ctx = await _handle.future;
     final name = 'vid'.toNativeUtf8();
     final value = track.id.toNativeUtf8();
-    final ptr = calloc<Pointer<Utf8>>();
-    ptr.value = value;
     _libmpv?.mpv_set_property(
       ctx,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_STRING,
-      ptr.cast(),
+      value.cast(),
     );
     calloc.free(name);
     calloc.free(value);
-    calloc.free(ptr);
   }
 
   /// Sets the current [AudioTrack] for audio output.
@@ -680,17 +674,14 @@ class Player extends PlatformPlayer {
     final ctx = await _handle.future;
     final name = 'aid'.toNativeUtf8();
     final value = track.id.toNativeUtf8();
-    final ptr = calloc<Pointer<Utf8>>();
-    ptr.value = value;
     _libmpv?.mpv_set_property(
       ctx,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_STRING,
-      ptr.cast(),
+      value.cast(),
     );
     calloc.free(name);
     calloc.free(value);
-    calloc.free(ptr);
   }
 
   /// Sets the current [SubtitleTrack] for subtitle output.
@@ -702,17 +693,14 @@ class Player extends PlatformPlayer {
     final ctx = await _handle.future;
     final name = 'sid'.toNativeUtf8();
     final value = track.id.toNativeUtf8();
-    final ptr = calloc<Pointer<Utf8>>();
-    ptr.value = value;
     _libmpv?.mpv_set_property(
       ctx,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_STRING,
-      ptr.cast(),
+      value.cast(),
     );
     calloc.free(name);
     calloc.free(value);
-    calloc.free(ptr);
   }
 
   /// [generated.mpv_handle] address of the internal libmpv player instance.
