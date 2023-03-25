@@ -16,4 +16,7 @@ class PlayerError {
     this.code,
     this.message,
   );
+
+  @override
+  String toString() => 'PlayerError(code: $code, message: $message)';
 }

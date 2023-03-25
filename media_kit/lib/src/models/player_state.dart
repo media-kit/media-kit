@@ -97,4 +97,8 @@ class PlayerState {
       audioDevices: audioDevices ?? this.audioDevices,
     );
   }
+
+  @override
+  String toString() =>
+      'PlayerState(playlist: $playlist, playing: $playing, completed: $completed, position: $position, duration: $duration, volume: $volume, rate: $rate, pitch: $pitch, buffering: $buffering, audioParams: $audioParams, audioBitrate: $audioBitrate, audioDevice: $audioDevice, audioDevices: $audioDevices)';
 }
