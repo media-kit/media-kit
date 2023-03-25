@@ -655,14 +655,21 @@ class Player extends PlatformPlayer {
     final ctx = await _handle.future;
     final name = 'vid'.toNativeUtf8();
     final value = track.id.toNativeUtf8();
-    _libmpv?.mpv_set_property(
+    _libmpv?.mpv_set_property_string(
       ctx,
       name.cast(),
-      generated.mpv_format.MPV_FORMAT_STRING,
       value.cast(),
     );
     calloc.free(name);
     calloc.free(value);
+    state = state.copyWith(
+      track: state.track.copyWith(
+        video: track,
+      ),
+    );
+    if (!trackController.isClosed) {
+      trackController.add(state.track);
+    }
   }
 
   /// Sets the current [AudioTrack] for audio output.
@@ -674,14 +681,21 @@ class Player extends PlatformPlayer {
     final ctx = await _handle.future;
     final name = 'aid'.toNativeUtf8();
     final value = track.id.toNativeUtf8();
-    _libmpv?.mpv_set_property(
+    _libmpv?.mpv_set_property_string(
       ctx,
       name.cast(),
-      generated.mpv_format.MPV_FORMAT_STRING,
       value.cast(),
     );
     calloc.free(name);
     calloc.free(value);
+    state = state.copyWith(
+      track: state.track.copyWith(
+        audio: track,
+      ),
+    );
+    if (!trackController.isClosed) {
+      trackController.add(state.track);
+    }
   }
 
   /// Sets the current [SubtitleTrack] for subtitle output.
@@ -693,14 +707,21 @@ class Player extends PlatformPlayer {
     final ctx = await _handle.future;
     final name = 'sid'.toNativeUtf8();
     final value = track.id.toNativeUtf8();
-    _libmpv?.mpv_set_property(
+    _libmpv?.mpv_set_property_string(
       ctx,
       name.cast(),
-      generated.mpv_format.MPV_FORMAT_STRING,
       value.cast(),
     );
     calloc.free(name);
     calloc.free(value);
+    state = state.copyWith(
+      track: state.track.copyWith(
+        subtitle: track,
+      ),
+    );
+    if (!trackController.isClosed) {
+      trackController.add(state.track);
+    }
   }
 
   /// [generated.mpv_handle] address of the internal libmpv player instance.
@@ -996,9 +1017,9 @@ class Player extends PlatformPlayer {
           prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
         final value = prop.ref.data.cast<generated.mpv_node>();
         if (value.ref.format == generated.mpv_format.MPV_FORMAT_NODE_ARRAY) {
-          final videos = <VideoTrack>[];
-          final audios = <AudioTrack>[];
-          final subtitles = <SubtitleTrack>[];
+          final video = [VideoTrack.auto(), VideoTrack.no()];
+          final audio = [AudioTrack.auto(), AudioTrack.no()];
+          final subtitle = [SubtitleTrack.auto(), SubtitleTrack.no()];
 
           final tracks = value.ref.u.list.ref;
 
@@ -1037,13 +1058,13 @@ class Player extends PlatformPlayer {
               }
               switch (type) {
                 case 'video':
-                  videos.add(VideoTrack(id, title, lang));
+                  video.add(VideoTrack(id, title, lang));
                   break;
                 case 'audio':
-                  audios.add(AudioTrack(id, title, lang));
+                  audio.add(AudioTrack(id, title, lang));
                   break;
                 case 'sub':
-                  subtitles.add(SubtitleTrack(id, title, lang));
+                  subtitle.add(SubtitleTrack(id, title, lang));
                   break;
               }
             }
@@ -1051,19 +1072,29 @@ class Player extends PlatformPlayer {
 
           state = state.copyWith(
             tracks: Tracks(
-              videos: videos,
-              audios: audios,
-              subtitles: subtitles,
+              video: video,
+              audio: audio,
+              subtitle: subtitle,
+            ),
+            // Remove selections which are not in the list anymore.
+            track: Track(
+              video: video.contains(state.track.video)
+                  ? state.track.video
+                  : VideoTrack.auto(),
+              audio: audio.contains(state.track.audio)
+                  ? state.track.audio
+                  : AudioTrack.auto(),
+              subtitle: subtitle.contains(state.track.subtitle)
+                  ? state.track.subtitle
+                  : SubtitleTrack.auto(),
             ),
           );
+
           if (!tracksController.isClosed) {
-            tracksController.add(
-              Tracks(
-                videos: videos,
-                audios: audios,
-                subtitles: subtitles,
-              ),
-            );
+            tracksController.add(state.tracks);
+          }
+          if (!trackController.isClosed) {
+            trackController.add(state.track);
           }
         }
       }
