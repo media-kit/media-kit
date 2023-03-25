@@ -289,6 +289,24 @@ abstract class PlatformPlayer {
     );
   }
 
+  FutureOr<void> setVideoTrack(VideoTrack track) {
+    throw UnimplementedError(
+      '[PlatformPlayer.setVideoTrack] is not implemented.',
+    );
+  }
+
+  FutureOr<void> setAudioTrack(AudioTrack track) {
+    throw UnimplementedError(
+      '[PlatformPlayer.setAudioTrack] is not implemented.',
+    );
+  }
+
+  FutureOr<void> setSubtitleTrack(SubtitleTrack track) {
+    throw UnimplementedError(
+      '[PlatformPlayer.setSubtitleTrack] is not implemented.',
+    );
+  }
+
   Future<int> get handle {
     throw UnimplementedError(
       '[PlatformPlayer.handle] is not implemented.',

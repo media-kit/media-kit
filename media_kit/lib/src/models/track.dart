@@ -55,6 +55,9 @@ class VideoTrack extends _Track {
 
   /// Default video track. Selects the first video track.
   factory VideoTrack.auto() => VideoTrack('auto', null, null);
+
+  @override
+  String toString() => 'VideoTrack($id, $title, $language)';
 }
 
 /// {@template audio_track}
@@ -70,6 +73,9 @@ class AudioTrack extends _Track {
 
   /// Default audio track. Selects the first audio track.
   factory AudioTrack.auto() => AudioTrack('auto', null, null);
+
+  @override
+  String toString() => 'AudioTrack($id, $title, $language)';
 }
 
 /// {@template subtitle_track}
@@ -85,6 +91,9 @@ class SubtitleTrack extends _Track {
 
   /// Default subtitle track. Selects the first subtitle track.
   factory SubtitleTrack.auto() => SubtitleTrack('auto', null, null);
+
+  @override
+  String toString() => 'SubtitleTrack($id, $title, $language)';
 }
 
 // For composition in [PlayerState] & [PlayerStreams] classes.
@@ -108,6 +117,10 @@ class Track {
     this.audio = const AudioTrack('auto', null, null),
     this.subtitle = const SubtitleTrack('auto', null, null),
   });
+
+  @override
+  String toString() =>
+      'Track(video: $video, audio: $audio, subtitle: $subtitle)';
 }
 
 /// {@template tracks}
@@ -129,4 +142,8 @@ class Tracks {
     this.audios = const [AudioTrack('auto', null, null)],
     this.subtitles = const [SubtitleTrack('auto', null, null)],
   });
+
+  @override
+  String toString() =>
+      'Tracks(videos: $videos, audios: $audios, subtitles: $subtitles)';
 }
