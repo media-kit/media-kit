@@ -13,6 +13,7 @@ import 'package:media_kit/src/libmpv/core/native_library.dart';
 import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
 
 import 'package:media_kit/src/models/media.dart';
+import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_error.dart';
 import 'package:media_kit/src/models/player_log.dart';
@@ -449,7 +450,6 @@ class Player extends PlatformPlayer {
       if (!rateController.isClosed) {
         rateController.add(state.rate);
       }
-      // Rubberband library is expensive.
       // Apparently, using `scaletempo:scale` actually controls the playback rate
       // as intended after setting `audio-pitch-correction` as `FALSE`.
       // `speed` on the other hand, changes the pitch when `audio-pitch-correction`
@@ -512,47 +512,12 @@ class Player extends PlatformPlayer {
       if (!pitchController.isClosed) {
         pitchController.add(state.pitch);
       }
-      // Rubberband Library is expensive.
-      // Using `scaletempo` instead.
-      // final name = 'af'.toNativeUtf8();
-      // final keys = calloc<Pointer<Utf8>>(2);
-      // final paramKeys = calloc<Pointer<Utf8>>(2);
-      // final paramValues = calloc<Pointer<Utf8>>(2);
-      // paramKeys[0] = 'key'.toNativeUtf8();
-      // paramKeys[1] = 'value'.toNativeUtf8();
-      // paramValues[0] = 'pitch-scale'.toNativeUtf8();
-      // paramValues[1] = pitch.toStringAsFixed(8).toNativeUtf8();
-      // final values = calloc<Pointer<generated.mpv_node>>(2);
-      // keys[0] = 'name'.toNativeUtf8();
-      // keys[1] = 'params'.toNativeUtf8();
-      // values[0] = calloc<generated.mpv_node>();
-      // values[0].ref.format = generated.mpv_format.MPV_FORMAT_STRING;
-      // values[0].ref.u.string = 'rubberband'.toNativeUtf8().cast();
-      // values[1] = calloc<generated.mpv_node>();
-      // values[1].ref.format = generated.mpv_format.MPV_FORMAT_NODE_MAP;
-      // values[1].ref.u.list = calloc<generated.mpv_node_list>();
-      // values[1].ref.u.list.ref.num = 2;
-      // values[1].ref.u.list.ref.keys = paramKeys.cast();
-      // values[1].ref.u.list.ref.values = paramValues.cast();
-      // final data = calloc<generated.mpv_node>();
-      // data.ref.format = generated.mpv_format.MPV_FORMAT_NODE_ARRAY;
-      // data.ref.u.list = calloc<generated.mpv_node_list>();
-      // data.ref.u.list.ref.num = 1;
-      // data.ref.u.list.ref.values = calloc<generated.mpv_node>();
-      // data.ref.u.list.ref.values.ref.format =
-      //     generated.mpv_format.MPV_FORMAT_NODE_MAP;
-      // data.ref.u.list.ref.values.ref.u.list = calloc<generated.mpv_node_list>();
-      // data.ref.u.list.ref.values.ref.u.list.ref.num = 2;
-      // data.ref.u.list.ref.values.ref.u.list.ref.keys = keys.cast();
-      // data.ref.u.list.ref.values.ref.u.list.ref.values = values.cast();
-      // _libmpv?.mpv_set_property(
-      //   ctx,
-      //   name.cast(),
-      //   generated.mpv_format.MPV_FORMAT_NODE,
-      //   data.cast(),
-      // );
-      // calloc.free(name);
-      // _libmpv?.mpv_free_node_contents(data);
+      // Apparently, using `scaletempo:scale` actually controls the playback rate
+      // as intended after setting `audio-pitch-correction` as `FALSE`.
+      // `speed` on the other hand, changes the pitch when `audio-pitch-correction`
+      // is set to `FALSE`. Since, it also alters the actual [speed], the
+      // `scaletempo:scale` is divided by the same value of [pitch] to compensate the
+      // speed change.
       var name = 'audio-pitch-correction'.toNativeUtf8();
       final no = 'no'.toNativeUtf8();
       _libmpv?.mpv_set_property_string(
@@ -671,17 +636,92 @@ class Player extends PlatformPlayer {
     final ctx = await _handle.future;
     final name = 'audio-device'.toNativeUtf8();
     final value = audioDevice.name.toNativeUtf8();
-    final ptr = calloc<Pointer<Utf8>>();
-    ptr.value = value;
     _libmpv?.mpv_set_property(
       ctx,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_STRING,
-      ptr.cast(),
+      value.cast(),
     );
     calloc.free(name);
     calloc.free(value);
-    calloc.free(ptr);
+  }
+
+  /// Sets the current [VideoTrack] for video output.
+  ///
+  /// * Currently selected [VideoTrack] can be accessed using [state.track.video] or [streams.track.video].
+  /// * The list of currently available [VideoTrack]s can be obtained accessed using [state.tracks.video] or [streams.tracks.video].
+  @override
+  FutureOr<void> setVideoTrack(VideoTrack track) async {
+    final ctx = await _handle.future;
+    final name = 'vid'.toNativeUtf8();
+    final value = track.id.toNativeUtf8();
+    _libmpv?.mpv_set_property_string(
+      ctx,
+      name.cast(),
+      value.cast(),
+    );
+    calloc.free(name);
+    calloc.free(value);
+    state = state.copyWith(
+      track: state.track.copyWith(
+        video: track,
+      ),
+    );
+    if (!trackController.isClosed) {
+      trackController.add(state.track);
+    }
+  }
+
+  /// Sets the current [AudioTrack] for audio output.
+  ///
+  /// * Currently selected [AudioTrack] can be accessed using [state.track.audio] or [streams.track.audio].
+  /// * The list of currently available [AudioTrack]s can be obtained accessed using [state.tracks.audio] or [streams.tracks.audio].
+  @override
+  FutureOr<void> setAudioTrack(AudioTrack track) async {
+    final ctx = await _handle.future;
+    final name = 'aid'.toNativeUtf8();
+    final value = track.id.toNativeUtf8();
+    _libmpv?.mpv_set_property_string(
+      ctx,
+      name.cast(),
+      value.cast(),
+    );
+    calloc.free(name);
+    calloc.free(value);
+    state = state.copyWith(
+      track: state.track.copyWith(
+        audio: track,
+      ),
+    );
+    if (!trackController.isClosed) {
+      trackController.add(state.track);
+    }
+  }
+
+  /// Sets the current [SubtitleTrack] for subtitle output.
+  ///
+  /// * Currently selected [SubtitleTrack] can be accessed using [state.track.subtitle] or [streams.track.subtitle].
+  /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [streams.tracks.subtitle].
+  @override
+  FutureOr<void> setSubtitleTrack(SubtitleTrack track) async {
+    final ctx = await _handle.future;
+    final name = 'sid'.toNativeUtf8();
+    final value = track.id.toNativeUtf8();
+    _libmpv?.mpv_set_property_string(
+      ctx,
+      name.cast(),
+      value.cast(),
+    );
+    calloc.free(name);
+    calloc.free(value);
+    state = state.copyWith(
+      track: state.track.copyWith(
+        subtitle: track,
+      ),
+    );
+    if (!trackController.isClosed) {
+      trackController.add(state.track);
+    }
   }
 
   /// [generated.mpv_handle] address of the internal libmpv player instance.
@@ -973,6 +1013,91 @@ class Player extends PlatformPlayer {
           }
         }
       }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'track-list' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+        final value = prop.ref.data.cast<generated.mpv_node>();
+        if (value.ref.format == generated.mpv_format.MPV_FORMAT_NODE_ARRAY) {
+          final video = [VideoTrack.auto(), VideoTrack.no()];
+          final audio = [AudioTrack.auto(), AudioTrack.no()];
+          final subtitle = [SubtitleTrack.auto(), SubtitleTrack.no()];
+
+          final tracks = value.ref.u.list.ref;
+
+          for (int i = 0; i < tracks.num; i++) {
+            if (tracks.values[i].format ==
+                generated.mpv_format.MPV_FORMAT_NODE_MAP) {
+              final map = tracks.values[i].u.list.ref;
+              String id = '';
+              String type = '';
+              String? title;
+              String? lang;
+              for (int j = 0; j < map.num; j++) {
+                final property = map.keys[j].cast<Utf8>().toDartString();
+                if (map.values[j].format ==
+                    generated.mpv_format.MPV_FORMAT_INT64) {
+                  if (property == 'id') {
+                    id = map.values[j].u.int64.toString();
+                  }
+                }
+                if (map.values[j].format ==
+                    generated.mpv_format.MPV_FORMAT_STRING) {
+                  final value =
+                      map.values[j].u.string.cast<Utf8>().toDartString();
+                  switch (property) {
+                    case 'type':
+                      type = value;
+                      break;
+                    case 'title':
+                      title = value;
+                      break;
+                    case 'lang':
+                      lang = value;
+                      break;
+                  }
+                }
+              }
+              switch (type) {
+                case 'video':
+                  video.add(VideoTrack(id, title, lang));
+                  break;
+                case 'audio':
+                  audio.add(AudioTrack(id, title, lang));
+                  break;
+                case 'sub':
+                  subtitle.add(SubtitleTrack(id, title, lang));
+                  break;
+              }
+            }
+          }
+
+          state = state.copyWith(
+            tracks: Tracks(
+              video: video,
+              audio: audio,
+              subtitle: subtitle,
+            ),
+            // Remove selections which are not in the list anymore.
+            track: Track(
+              video: video.contains(state.track.video)
+                  ? state.track.video
+                  : VideoTrack.auto(),
+              audio: audio.contains(state.track.audio)
+                  ? state.track.audio
+                  : AudioTrack.auto(),
+              subtitle: subtitle.contains(state.track.subtitle)
+                  ? state.track.subtitle
+                  : SubtitleTrack.auto(),
+            ),
+          );
+
+          if (!tracksController.isClosed) {
+            tracksController.add(state.tracks);
+          }
+          if (!trackController.isClosed) {
+            trackController.add(state.track);
+          }
+        }
+      }
     }
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_LOG_MESSAGE) {
       final eventLogMessage =
@@ -1013,6 +1138,7 @@ class Player extends PlatformPlayer {
       'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'audio-device': generated.mpv_format.MPV_FORMAT_NODE,
       'audio-device-list': generated.mpv_format.MPV_FORMAT_NODE,
+      'track-list': generated.mpv_format.MPV_FORMAT_NODE,
     }.forEach(
       (property, format) {
         final ptr = property.toNativeUtf8();
@@ -1025,24 +1151,6 @@ class Player extends PlatformPlayer {
         calloc.free(ptr);
       },
     );
-    // No longer explicitly setting demuxer cache size.
-    // Though, it may cause rise in memory usage but still it is certainly better
-    // than files randomly stuttering or seeking to a random position on their own.
-    // <String, int>{
-    //   'demuxer-max-bytes': 8192000,
-    //   'demuxer-max-back-bytes': 8192000,
-    // }.forEach((key, value) {
-    //   final _key = key.toNativeUtf8();
-    //   final _value = calloc<Int64>()..value = value;
-    //   _libmpv?.mpv_set_property(
-    //     result,
-    //     _key.cast(),
-    //     generated.mpv_format.MPV_FORMAT_INT64,
-    //     _value.cast(),
-    //   );
-    //   calloc.free(_key);
-    //   calloc.free(_value);
-    // });
     if (!configuration.osc) {
       <String, String>{
         'osc': 'no',

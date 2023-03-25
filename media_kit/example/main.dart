@@ -15,6 +15,8 @@ Future<void> main() async {
   player.streams.audioBitrate.listen((e) => print(e));
   player.streams.audioDevice.listen((e) => print(e));
   player.streams.audioDevices.listen((e) => print(e));
+  player.streams.track.listen((e) => print(e));
+  player.streams.tracks.listen((e) => print(e));
   final items = [
     Media(
       'https://p.scdn.co/mp3-preview/2312e9b4429d32218bf18778afb4dca0b25ac3f5?cid=a46f5c5745a14fbf826186da8da5ecc3',
@@ -33,14 +35,14 @@ Future<void> main() async {
   await player.setVolume(50.0);
   await player.setShuffle(false);
   await player.setPlaylistMode(PlaylistMode.loop);
-  await player.open(Playlist(items, index: 2), play: false);
-  await player.play();
+  await player.open(Playlist(items));
   await Future.delayed(const Duration(seconds: 10));
   await player.next();
   await Future.delayed(const Duration(seconds: 10));
   await player.previous();
   await Future.delayed(const Duration(seconds: 10));
-  await player.open(Playlist(items));
+  await player.open(Playlist(items, index: 2), play: false);
+  await player.play();
   await Future.delayed(const Duration(seconds: 10));
   await player.open(Playlist(items), play: false);
   await Future.delayed(const Duration(seconds: 10));

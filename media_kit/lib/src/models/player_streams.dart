@@ -4,6 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
+import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/audio_device.dart';
@@ -59,6 +60,12 @@ class PlayerStreams {
   /// Currently available [AudioDevice]s.
   final Stream<List<AudioDevice>> audioDevices;
 
+  /// Currently selected video, audio and subtitle tracks.
+  final Stream<Track> track;
+
+  /// Currently available video, audio and subtitle tracks.
+  final Stream<Tracks> tracks;
+
   const PlayerStreams(
     this.playlist,
     this.playing,
@@ -75,5 +82,7 @@ class PlayerStreams {
     this.audioBitrate,
     this.audioDevice,
     this.audioDevices,
+    this.track,
+    this.tracks,
   );
 }

@@ -20,4 +20,7 @@ class PlayerLog {
     required this.level,
     required this.text,
   });
+
+  @override
+  String toString() => 'PlayerLog(prefix: $prefix, level: $level, text: $text)';
 }

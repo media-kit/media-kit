@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:meta/meta.dart';
 
 import 'package:media_kit/src/models/media.dart';
+import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/audio_device.dart';
@@ -80,7 +81,8 @@ class PlayerConfiguration {
 
   /// Enables or disables pitch shift control on libmpv backend.
   ///
-  /// Enabling this option may result in de-syncing of audio & video. Thus, usage in audio only applications is recommended.
+  /// Enabling this option may result in de-syncing of audio & video.
+  /// Thus, usage in audio only applications is recommended.
   /// This uses `scaletempo` under the hood & disables `audio-pitch-correction`.
   ///
   /// See: https://github.com/alexmercerind/media_kit/issues/45
@@ -154,24 +156,32 @@ abstract class PlatformPlayer {
     audioBitrateController.stream,
     audioDeviceController.stream,
     audioDevicesController.stream,
+    trackController.stream,
+    tracksController.stream,
   );
 
   @mustCallSuper
-  FutureOr<void> dispose({int code = 0}) async {
-    await playlistController.close();
-    await playingController.close();
-    await completedController.close();
-    await positionController.close();
-    await durationController.close();
-    await volumeController.close();
-    await rateController.close();
-    await pitchController.close();
-    await bufferingController.close();
-    await logController.close();
-    await errorController.close();
-    await audioParamsController.close();
-    await audioBitrateController.close();
-  }
+  FutureOr<void> dispose({int code = 0}) => Future.wait(
+        [
+          playlistController.close(),
+          playingController.close(),
+          completedController.close(),
+          positionController.close(),
+          durationController.close(),
+          volumeController.close(),
+          rateController.close(),
+          pitchController.close(),
+          bufferingController.close(),
+          logController.close(),
+          errorController.close(),
+          audioParamsController.close(),
+          audioBitrateController.close(),
+          audioDeviceController.close(),
+          audioDevicesController.close(),
+          trackController.close(),
+          tracksController.close(),
+        ],
+      );
 
   FutureOr<void> open(
     Playlist playlist, {
@@ -279,6 +289,24 @@ abstract class PlatformPlayer {
     );
   }
 
+  FutureOr<void> setVideoTrack(VideoTrack track) {
+    throw UnimplementedError(
+      '[PlatformPlayer.setVideoTrack] is not implemented.',
+    );
+  }
+
+  FutureOr<void> setAudioTrack(AudioTrack track) {
+    throw UnimplementedError(
+      '[PlatformPlayer.setAudioTrack] is not implemented.',
+    );
+  }
+
+  FutureOr<void> setSubtitleTrack(SubtitleTrack track) {
+    throw UnimplementedError(
+      '[PlatformPlayer.setSubtitleTrack] is not implemented.',
+    );
+  }
+
   Future<int> get handle {
     throw UnimplementedError(
       '[PlatformPlayer.handle] is not implemented.',
@@ -344,4 +372,12 @@ abstract class PlatformPlayer {
   @protected
   final StreamController<List<AudioDevice>> audioDevicesController =
       StreamController<List<AudioDevice>>.broadcast();
+
+  @protected
+  final StreamController<Track> trackController =
+      StreamController<Track>.broadcast();
+
+  @protected
+  final StreamController<Tracks> tracksController =
+      StreamController<Tracks>.broadcast();
 }

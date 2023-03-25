@@ -234,6 +234,7 @@ class _SimpleScreenState extends State<SimpleScreen> {
               ),
             ),
           ),
+          TracksSelector(player: player),
           SeekBar(player: player),
           const SizedBox(height: 32.0),
         ],
@@ -362,6 +363,7 @@ class _SimpleStreamState extends State<SimpleStream> {
               ),
             ),
           ),
+          TracksSelector(player: player),
           SeekBar(player: player),
           const SizedBox(height: 32.0),
         ],
@@ -608,6 +610,7 @@ class _SinglePlayerMultipleVideosScreenState
               ],
             ),
           ),
+          TracksSelector(player: player),
           SeekBar(player: player),
           const SizedBox(height: 32.0),
         ],
@@ -816,6 +819,138 @@ class _MultiplePlayersMultipleVideosScreenState
                 ]
               ],
             ),
+    );
+  }
+}
+
+class TracksSelector extends StatefulWidget {
+  final Player player;
+
+  const TracksSelector({
+    Key? key,
+    required this.player,
+  }) : super(key: key);
+
+  @override
+  State<TracksSelector> createState() => _TracksSelectorState();
+}
+
+class _TracksSelectorState extends State<TracksSelector> {
+  final List<StreamSubscription> _subscriptions = [];
+  Track track = const Track();
+  Tracks tracks = const Tracks();
+
+  @override
+  void initState() {
+    super.initState();
+    _subscriptions.addAll(
+      [
+        widget.player.streams.track.listen((event) {
+          setState(() {
+            track = event;
+          });
+        }),
+        widget.player.streams.tracks.listen((event) {
+          setState(() {
+            tracks = event;
+          });
+        }),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    for (final s in _subscriptions) {
+      s.cancel();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        DropdownButton<VideoTrack>(
+          icon: const Padding(
+            padding: EdgeInsets.only(left: 8.0),
+            child: Icon(Icons.videocam_outlined),
+          ),
+          value: track.video,
+          items: tracks.video
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(
+                    '${e.id} • ${e.title} • ${e.language}',
+                    style: const TextStyle(
+                      fontSize: 14.0,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (track) {
+            if (track != null) {
+              widget.player.setVideoTrack(track);
+            }
+          },
+        ),
+        const SizedBox(width: 16.0),
+        DropdownButton<AudioTrack>(
+          icon: const Padding(
+            padding: EdgeInsets.only(left: 8.0),
+            child: Icon(Icons.audiotrack_outlined),
+          ),
+          value: track.audio,
+          items: tracks.audio
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(
+                    '${e.id} • ${e.title} • ${e.language}',
+                    style: const TextStyle(
+                      fontSize: 14.0,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (track) {
+            if (track != null) {
+              widget.player.setAudioTrack(track);
+            }
+          },
+        ),
+        const SizedBox(width: 16.0),
+        DropdownButton<SubtitleTrack>(
+          icon: const Padding(
+            padding: EdgeInsets.only(left: 8.0),
+            child: Icon(Icons.subtitles_outlined),
+          ),
+          value: track.subtitle,
+          items: tracks.subtitle
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(
+                    '${e.id} • ${e.title} • ${e.language}',
+                    style: const TextStyle(
+                      fontSize: 14.0,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (track) {
+            if (track != null) {
+              widget.player.setSubtitleTrack(track);
+            }
+          },
+        ),
+        const SizedBox(width: 48.0),
+      ],
     );
   }
 }
