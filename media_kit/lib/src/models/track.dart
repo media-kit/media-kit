@@ -118,6 +118,18 @@ class Track {
     this.subtitle = const SubtitleTrack('auto', null, null),
   });
 
+  Track copyWith({
+    VideoTrack? video,
+    AudioTrack? audio,
+    SubtitleTrack? subtitle,
+  }) {
+    return Track(
+      video: video ?? this.video,
+      audio: audio ?? this.audio,
+      subtitle: subtitle ?? this.subtitle,
+    );
+  }
+
   @override
   String toString() =>
       'Track(video: $video, audio: $audio, subtitle: $subtitle)';
@@ -128,22 +140,22 @@ class Track {
 /// {@endtemplate}
 class Tracks {
   /// Currently available video tracks.
-  final List<VideoTrack> videos;
+  final List<VideoTrack> video;
 
   /// Currently available audio tracks.
-  final List<AudioTrack> audios;
+  final List<AudioTrack> audio;
 
   /// Currently available subtitle tracks.
-  final List<SubtitleTrack> subtitles;
+  final List<SubtitleTrack> subtitle;
 
   /// {@macro tracks}
   const Tracks({
-    this.videos = const [VideoTrack('auto', null, null)],
-    this.audios = const [AudioTrack('auto', null, null)],
-    this.subtitles = const [SubtitleTrack('auto', null, null)],
+    this.video = const [VideoTrack('auto', null, null)],
+    this.audio = const [AudioTrack('auto', null, null)],
+    this.subtitle = const [SubtitleTrack('auto', null, null)],
   });
 
   @override
   String toString() =>
-      'Tracks(videos: $videos, audios: $audios, subtitles: $subtitles)';
+      'Tracks(video: $video, audio: $audio, subtitle: $subtitle)';
 }
