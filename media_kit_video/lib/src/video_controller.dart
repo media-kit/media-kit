@@ -40,14 +40,17 @@ HashMap<int, VideoController> _controllers = HashMap<int, VideoController>();
 ///
 /// {@endtemplate}
 class VideoController {
+  int? _width;
+  int? _height;
+
   /// Handle of the [Player] from `package:media_kit`.
   final int handle;
 
   /// Fixed width of the video output.
-  final int? width;
+  int? get width => _width;
 
   /// Fixed height of the video output.
-  final int? height;
+  int? get height => _height;
 
   /// Whether hardware acceleration should be enabled or not.
   final bool enableHardwareAcceleration;
@@ -61,8 +64,8 @@ class VideoController {
   /// {@macro video_controller}
   VideoController._(
     this.handle,
-    this.width,
-    this.height, {
+    this._width,
+    this._height, {
     this.enableHardwareAcceleration = true,
   }) {
     // Save in [HashMap] for getting notified about updated texture IDs.
@@ -113,6 +116,33 @@ class VideoController {
 
     // Return the [VideoController].
     return controller;
+  }
+
+  /// Resize the [VideoController].
+  Future<void> resize({
+    int? width,
+    int? height,
+  }) async {
+    final controller = _controllers[handle];
+    if (controller == null) {
+      return;
+    }
+
+    if (controller.width == width && controller.height == height) {
+      return;
+    }
+
+    controller._width = width;
+    controller._height = height;
+
+    return _channel.invokeMethod(
+      'VideoOutputManager.Resize',
+      {
+        'handle': handle.toString(),
+        'width': controller.width.toString(),
+        'height': controller.height.toString(),
+      },
+    );
   }
 
   /// Disposes the [VideoController].

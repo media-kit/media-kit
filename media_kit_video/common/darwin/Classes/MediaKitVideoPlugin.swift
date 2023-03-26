@@ -45,6 +45,9 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
     case "VideoOutputManager.Create":
       handleCreateMethodCall(call.arguments, result)
       break
+    case "VideoOutputManager.Resize":
+      handleResizeMethodCall(call.arguments, result)
+      break
     case "VideoOutputManager.Dispose":
       handleDisposeMethodCall(call.arguments, result)
       break
@@ -91,6 +94,30 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
           ]
         )
       }
+    )
+
+    result(nil)
+  }
+
+  private func handleResizeMethodCall(
+    _ arguments: Any?,
+    _ result: FlutterResult
+  ) {
+    let args = arguments as? [String: Any]
+    let handleStr = args?["handle"] as! String
+    let widthStr = args?["width"] as! String
+    let heightStr = args?["height"] as! String
+
+    let handle: Int64? = Int64(handleStr)
+    let width: Int64? = Int64(widthStr)
+    let height: Int64? = Int64(heightStr)
+
+    assert(handle != nil, "handle must be an Int64")
+
+    self.videoOutputManager.resize(
+      handle: handle!,
+      width: width,
+      height: height
     )
 
     result(nil)
