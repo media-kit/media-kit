@@ -41,6 +41,7 @@
   - `PlayerLogs`: class
   - `Player.streams.logs`: logs as `Stream<PlayerLogs>`
 - feat: draw first frame on `Player.open` without `Player.play` (#69)
+- feat: `Player.open` now accepts `Playable` i.e. `Media` or `Playlist`
 - fix: improve internal playlist handling & management
 - refactor: rename `Player.volume` setter to `Player.setVolume`
 - refactor: rename `Player.rate` setter to `Player.setRate`
