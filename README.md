@@ -44,14 +44,14 @@ Add in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.1
+  media_kit: ^0.0.2
   # For video rendering.
-  media_kit_video: ^0.0.1
+  media_kit_video: ^0.0.2
   # For enabling support for more than 8 simultaneous players.
-  media_kit_native_event_loop: ^1.0.0
+  media_kit_native_event_loop: ^1.0.1
   # Pick based on your requirements / platform:
   media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.0          # Windows package for audio (only) native libraries.
+  media_kit_libs_windows_audio: ^1.0.1          # Windows package for audio (only) native libraries.
   media_kit_libs_ios_video: ^1.0.0              # iOS package for video (& audio) native libraries.
   media_kit_libs_macos_video: ^1.0.0            # macOS package for video (& audio) native libraries.
   media_kit_libs_linux: ^1.0.0                  # Linux dependency package.
@@ -94,11 +94,11 @@ player.streams.audioDevices.listen((e) => print(e));
 
 ...
 
+await player.open(Media('file:///C:/Users/Hitesh/Music/Sample.mp3'));
+await player.open(Media('file:///C:/Users/Hitesh/Video/Sample.mkv'));
 await player.open(
   Playlist(
     [
-      Media('file:///C:/Users/Hitesh/Music/Sample.mp3'),
-      Media('file:///C:/Users/Hitesh/Video/Sample.mkv'),
       Media('https://www.example.com/sample.mp4'),
       Media('rtsp://www.example.com/live'),
     ],
@@ -245,7 +245,7 @@ Everything ready. Just add one of the following packages to your `pubspec.yaml`.
 dependencies:
   ...
   media_kit_libs_windows_video: ^1.0.0       # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.0       # Windows package for audio (only) native libraries.
+  media_kit_libs_windows_audio: ^1.0.1       # Windows package for audio (only) native libraries.
 ```
 
 ### Linux
@@ -264,6 +264,26 @@ There are other ways to bundle these within your app package e.g. within Snap or
 
 - [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
 - [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/\_packaging)
+
+### macOS
+
+Everything ready. Just add one of the following packages to your `pubspec.yaml`.
+
+```yaml
+dependencies:
+  ...
+  media_kit_libs_macos_video: ^1.0.0       # Windows package for video (& audio) native libraries.
+```
+
+### iOS
+
+Everything ready. Just add one of the following packages to your `pubspec.yaml`.
+
+```yaml
+dependencies:
+  ...
+  media_kit_libs_ios_video: ^1.0.0         # Windows package for video (& audio) native libraries.
+```
 
 ## Goals
 
