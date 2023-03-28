@@ -262,7 +262,7 @@ Everything ready. Just add one of the following packages to your `pubspec.yaml`.
 ```yaml
 dependencies:
   ...
-  media_kit_libs_macos_video: ^1.0.0       # Windows package for video (& audio) native libraries.
+  media_kit_libs_macos_video: ^1.0.0       # macOS package for video (& audio) native libraries.
 ```
 
 ### iOS
@@ -272,7 +272,7 @@ Everything ready. Just add one of the following packages to your `pubspec.yaml`.
 ```yaml
 dependencies:
   ...
-  media_kit_libs_ios_video: ^1.0.0         # Windows package for video (& audio) native libraries.
+  media_kit_libs_ios_video: ^1.0.0         # iOS package for video (& audio) native libraries.
 ```
 
 ## Goals
