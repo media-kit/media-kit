@@ -9,7 +9,14 @@ import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 
-/// Current [Player] state.
+/// {@template player_state}
+///
+/// PlayerState
+/// -----------
+///
+/// Instantaneous state of the [Player].
+///
+/// {@endtemplate}
 class PlayerState {
   /// [List] of currently opened [Media]s.
   final Playlist playlist;
@@ -57,6 +64,7 @@ class PlayerState {
   /// Currently available video, audio & subtitle tracks.
   final Tracks tracks;
 
+  /// {@macro player_state}
   const PlayerState({
     this.playlist = const Playlist([]),
     this.playing = false,
@@ -127,5 +135,6 @@ class PlayerState {
       'audioDevice: $audioDevice, '
       'audioDevices: $audioDevices, '
       'track: $track, '
-      'tracks: $tracks, ';
+      'tracks: $tracks, '
+      ')';
 }

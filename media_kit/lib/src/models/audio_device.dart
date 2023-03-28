@@ -40,5 +40,5 @@ class AudioDevice {
   int get hashCode => name.hashCode;
 
   @override
-  String toString() => 'Device(name: $name, description: $description)';
+  String toString() => 'AudioDevice($name, $description)';
 }

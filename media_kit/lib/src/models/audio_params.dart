@@ -4,7 +4,14 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
+/// {@template audio_params}
+///
+/// AudioParams
+/// -----------
+///
 /// Audio format as output by the audio decoder.
+///
+/// {@endtemplate}
 class AudioParams {
   /// The sample format as string. This uses the same names as used in other places of mpv.
   final String? format;
@@ -22,6 +29,7 @@ class AudioParams {
   /// Usually only audio-out-params/hr-channels makes sense.
   final String? hrChannels;
 
+  /// {@macro audio_params}
   const AudioParams({
     this.format,
     this.sampleRate,
