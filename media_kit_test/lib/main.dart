@@ -5,6 +5,7 @@ import 'tests/02.single_player_multiple_video.dart';
 import 'tests/03.multiple_player_multiple_video.dart';
 import 'tests/04.tabs_test.dart';
 import 'tests/05.stress_test.dart';
+import 'tests/06.paint_first_frame.dart';
 
 void main() {
   runApp(const MyApp());
@@ -118,6 +119,17 @@ class HomeScreen extends StatelessWidget {
                   builder: (context) => const StressTestScreen(),
                 ),
               );
+            },
+          ),
+          ListTile(
+            title: const Text(
+              '06.paint_first_frame.dart',
+              style: TextStyle(fontSize: 14.0),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () {
+              paintFirstFrame(context);
             },
           ),
         ],
