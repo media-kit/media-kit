@@ -116,40 +116,42 @@ VideoOutput::VideoOutput(int64_t handle,
 
 VideoOutput::~VideoOutput() {
   destroyed_ = true;
+  auto promise = std::promise<void>();
   if (texture_id_) {
-    registrar_->texture_registrar()->UnregisterTexture(texture_id_);
+    registrar_->texture_registrar()->UnregisterTexture(
+        texture_id_, [&, texture_id = texture_id_]() {
+          // Add one more task into the thread pool queue & exit the destructor
+          // only when it gets executed. This will ensure that all the tasks
+          // posted to the thread pool i.e. render or resize before this are
+          // executed (and won't reference the dead object anymore), most
+          // notably |CheckAndResize| & |Render|.
+          auto future = thread_pool_ref_->Post([&, id = texture_id]() {
+            std::cout << "media_kit: VideoOutput: Free Texture: " << id
+                      << std::endl;
+            std::cout << "VideoOutput::~VideoOutput: "
+                      << reinterpret_cast<int64_t>(handle_) << std::endl;
+            texture_variants_.clear();
+            // H/W
+            textures_.clear();
+            // S/W
+            pixel_buffer_textures_.clear();
+
+            // Free (call destructor) |ANGLESurfaceManager| through the thread
+            // pool. This will ensure synchronized EGL or ANGLE usage & won't
+            // conflict with |Render| or |CheckAndResize| of other
+            // |VideoOutput|s.
+            surface_manager_.reset(nullptr);
+            promise.set_value();
+          });
+        });
   }
-  // Add one more task into the thread pool queue & exit the destructor only
-  // when it gets executed. This will ensure that all the tasks posted to
-  // the thread pool i.e. render or resize before this are executed (and won't
-  // reference the dead object anymore), most notably |CheckAndResize| &
-  // |Render|.
-  auto future = thread_pool_ref_->Post([&, id = texture_id_]() {
-    if (id) {
-      std::cout << "media_kit: VideoOutput: Free Texture: " << id << std::endl;
-      if (texture_variants_.find(id) != texture_variants_.end()) {
-        texture_variants_.erase(id);
-      }
-      // H/W
-      if (textures_.find(id) != textures_.end()) {
-        textures_.erase(id);
-      }
-      // S/W
-      if (pixel_buffer_textures_.find(id) != pixel_buffer_textures_.end()) {
-        pixel_buffer_textures_.erase(id);
-      }
-    }
-    std::cout << "VideoOutput::~VideoOutput: "
-              << reinterpret_cast<int64_t>(handle_) << std::endl;
-    // Free (call destructor) |ANGLESurfaceManager| through the thread pool.
-    // This will ensure synchronized EGL or ANGLE usage & won't conflict with
-    // |Render| or |CheckAndResize| of other |VideoOutput|s.
-    surface_manager_.reset(nullptr);
+
+  promise.get_future().wait();
+  texture_id_ = 0;
+
+  thread_pool_ref_->Post([render_context = render_context_]() {
+    mpv_render_context_free(render_context);
   });
-  future.wait();
-  if (render_context_) {
-    mpv_render_context_free(render_context_);
-  }
 }
 
 void VideoOutput::NotifyRender() {
@@ -240,29 +242,28 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
   std::cout << required_width << " " << required_height << std::endl;
   // Unregister previously registered texture.
   if (texture_id_) {
-    registrar_->texture_registrar()->UnregisterTexture(texture_id_);
+    registrar_->texture_registrar()->UnregisterTexture(
+        texture_id_, [&, texture_id = texture_id_]() {
+          thread_pool_ref_->Post([&, id = texture_id]() {
+            if (id) {
+              std::cout << "media_kit: VideoOutput: Free Texture: " << id
+                        << std::endl;
+              if (texture_variants_.find(id) != texture_variants_.end()) {
+                texture_variants_.erase(id);
+              }
+              // H/W
+              if (textures_.find(id) != textures_.end()) {
+                textures_.erase(id);
+              }
+              // S/W
+              if (pixel_buffer_textures_.find(id) !=
+                  pixel_buffer_textures_.end()) {
+                pixel_buffer_textures_.erase(id);
+              }
+            }
+          });
+        });
     texture_id_ = 0;
-    // Add one more task into the thread pool queue for clearing the previous
-    // texture objects. This will ensure that all the tasks posted to the thread
-    // pool before this are executed (and won't reference the dead object
-    // anymore), most notably |CheckAndResize| & |Render|.
-    thread_pool_ref_->Post([&, id = texture_id_]() {
-      if (id) {
-        std::cout << "media_kit: VideoOutput: Free Texture: " << id
-                  << std::endl;
-        if (texture_variants_.find(id) != texture_variants_.end()) {
-          texture_variants_.erase(id);
-        }
-        // H/W
-        if (textures_.find(id) != textures_.end()) {
-          textures_.erase(id);
-        }
-        // S/W
-        if (pixel_buffer_textures_.find(id) != pixel_buffer_textures_.end()) {
-          pixel_buffer_textures_.erase(id);
-        }
-      }
-    });
   }
   // H/W
   if (surface_manager_ != nullptr) {
