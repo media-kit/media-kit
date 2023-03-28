@@ -11,9 +11,9 @@ environment:
 
 dependencies:
   ffi: ^2.0.1
-  meta: ^1.9.1
-  path: ^1.8.3
-  http: ^0.13.5
+  meta: ^1.8.0
+  path: ^1.8.0
+  http: ^0.13.4
   uri_parser: ^2.0.2
   safe_local_storage: ^1.0.2
 
