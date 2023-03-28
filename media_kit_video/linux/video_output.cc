@@ -92,6 +92,8 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   self->width = width;
   self->height = height;
   self->enable_hardware_acceleration = enable_hardware_acceleration;
+  mpv_set_option_string(self->handle, "video-sync", "audio");
+  mpv_set_option_string(self->handle, "video-timing-offset", "0");
   gboolean hardware_acceleration_supported = FALSE;
   if (self->enable_hardware_acceleration) {
     GError* error = NULL;
