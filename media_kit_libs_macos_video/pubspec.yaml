@@ -1,5 +1,5 @@
 name: media_kit_libs_macos_video
-description: macOS dependency package for package:media_kit.
+description: macOS package providing video (& audio) native libraries for package:media_kit.
 version: 1.0.0
 homepage: https://github.com/alexmercerind/media_kit.git
 repository: https://github.com/alexmercerind/media_kit.git

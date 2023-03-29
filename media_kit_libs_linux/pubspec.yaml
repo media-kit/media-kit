@@ -1,6 +1,6 @@
 name: media_kit_libs_linux
-description: Linux dependency package for package:media_kit.
-version: 1.0.0
+description: GNU/Linux dependency package for package:media_kit. Necessary for initialization.
+version: 1.0.1
 homepage: https://github.com/alexmercerind/media_kit.git
 repository: https://github.com/alexmercerind/media_kit.git
 funding:

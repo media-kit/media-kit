@@ -7,4 +7,4 @@ dependencies:
   media_kit_libs_windows_audio: ^1.0.1
 ```
 
-This will automatically bundle required shared libraries for audio (only) playback on Windows.
+This will automatically invoke the necessary initialization code.
