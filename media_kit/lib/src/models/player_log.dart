@@ -4,7 +4,14 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
+/// {@template player_log}
+///
+/// PlayerLog
+/// ---------
+///
 /// A log message sent by the libmpv backend.
+///
+/// {@endtemplate}
 class PlayerLog {
   /// The sender of the message.
   final String prefix;
@@ -15,6 +22,7 @@ class PlayerLog {
   /// The log message.
   final String text;
 
+  /// {@macro player_log}
   const PlayerLog({
     required this.prefix,
     required this.level,

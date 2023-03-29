@@ -4,6 +4,14 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
+/// {@template playlist_mode}
+///
+/// PlaylistMode
+/// ------------
+///
+/// A [PlaylistMode] represents the mode of playback for a [Playlist] loaded in [Player].
+///
+/// {@endtemplate}
 enum PlaylistMode {
   /// End playback once end of the playlist is reached.
   none,

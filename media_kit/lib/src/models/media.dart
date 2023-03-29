@@ -9,6 +9,8 @@ import 'dart:collection';
 import 'package:path/path.dart' as path;
 import 'package:uri_parser/uri_parser.dart';
 
+import 'package:media_kit/src/models/playable.dart';
+
 HashMap<String, Media> medias = HashMap<String, Media>();
 HashMap<String, double> bitrates = HashMap<String, double>();
 
@@ -17,14 +19,14 @@ HashMap<String, double> bitrates = HashMap<String, double>();
 /// Media
 /// -----
 ///
-/// A [Media] object to open inside a [Player] instance using [Player.open] method for playback.
+/// A [Media] object to open inside a [Player] for playback.
 ///
 /// ```dart
-/// final playable = Media('https://www.example.com/music.mp3');
+/// final playable = Media('file:///C:/Users/Hitesh/Video/Sample.mkv');
 /// ```
 ///
 /// {@endtemplate}
-class Media {
+class Media extends Playable {
   /// URI of the [Media].
   final String uri;
 
@@ -35,14 +37,13 @@ class Media {
   Media(
     String resource, {
     this.extras,
-  }) : uri = getCleanedURI(resource) {
+  }) : uri = normalizeURI(resource) {
     medias[uri] = this;
   }
 
-  /// Returns normalized & cleaned-up [uri].
-  static String getCleanedURI(String uri) {
-    // Match the URI style with internal libmpv URI style.
-    // Handle asset:// scheme.
+  /// Normalizes the passed URI.
+  static String normalizeURI(String uri) {
+    // Handle asset:// scheme. Only for Flutter.
     if (uri.startsWith(_kAssetScheme)) {
       if (Platform.isWindows || Platform.isLinux) {
         return Uri.file(
@@ -76,10 +77,12 @@ class Media {
           ),
         ).toString();
       }
+      //
       throw UnimplementedError(
         '$_kAssetScheme is not supported on ${Platform.operatingSystem}',
       );
     }
+    // Keep the resulting URI same as used internally in libmpv.
     // [File] or network URIs.
     final parser = URIParser(uri);
     switch (parser.type) {

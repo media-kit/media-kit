@@ -9,6 +9,7 @@ import 'package:meta/meta.dart';
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/audio_device.dart';
@@ -184,9 +185,9 @@ abstract class PlatformPlayer {
       );
 
   FutureOr<void> open(
-    Playlist playlist, {
+    Playable playable, {
     bool play = true,
-    bool evictCache = true,
+    bool evictExtrasCache = true,
   }) {
     throw UnimplementedError(
       '[PlatformPlayer.open] is not implemented.',
@@ -235,7 +236,7 @@ abstract class PlatformPlayer {
     );
   }
 
-  FutureOr<void> jump(int index, {bool open = false}) {
+  FutureOr<void> jump(int index) {
     throw UnimplementedError(
       '[PlatformPlayer.jump] is not implemented.',
     );

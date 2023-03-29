@@ -9,6 +9,7 @@ import 'dart:async';
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/player_state.dart';
@@ -96,31 +97,34 @@ class Player {
     return platform?.dispose();
   }
 
-  /// Opens a [List] of [Media]s into the [Player] as a playlist.
-  /// Previously opened, added or inserted [Media]s get removed.
-  ///
-  /// Pass [play] as `true` to automatically start playback.
-  /// Otherwise, [Player.play] must be called manually afterwards.
+  /// Opens a [Media] or [Playlist] into the [Player].
+  /// Passing [play] as `true` starts the playback immediately.
   ///
   /// ```dart
-  /// player.open(
+  /// await player.open(Media('asset:///assets/videos/sample.mp4'));
+  /// await player.open(Media('file:///C:/Users/Hitesh/Music/Sample.mp3'));
+  /// await player.open(
   ///   Playlist(
   ///     [
-  ///       Media('https://alexmercerind.github.io/music.mp3'),
-  ///       Media('file://C:/documents/video.mp4'),
+  ///       Media('file:///C:/Users/Hitesh/Music/Sample.mp3'),
+  ///       Media('file:///C:/Users/Hitesh/Video/Sample.mkv'),
+  ///       Media('https://www.example.com/sample.mp4'),
+  ///       Media('rtsp://www.example.com/live'),
   ///     ],
   ///   ),
+  ///   play: true,
   /// );
   /// ```
+  ///
   FutureOr<void> open(
-    Playlist playlist, {
+    Playable playable, {
     bool play = true,
-    bool evictCache = true,
+    bool evictExtrasCache = true,
   }) {
     return platform?.open(
-      playlist,
+      playable,
       play: play,
-      evictCache: evictCache,
+      evictExtrasCache: evictExtrasCache,
     );
   }
 
@@ -160,14 +164,8 @@ class Player {
   }
 
   /// Jumps to specified [Media]'s index in the [Player]'s playlist.
-  FutureOr<void> jump(
-    int index, {
-    bool open = false,
-  }) {
-    return platform?.jump(
-      index,
-      open: open,
-    );
+  FutureOr<void> jump(int index) {
+    return platform?.jump(index);
   }
 
   /// Moves the playlist [Media] at [from], so that it takes the place of the [Media] [to].

@@ -46,7 +46,7 @@ abstract class FallbackBitrateHandler {
       final resource = extractLocalFLACorOGGFilePath(uri);
       if (resource != null) {
         final file = File(resource);
-        final size = await file.size_();
+        final size = await file.length_();
         final result = size * 8 / duration.inSeconds;
         return result;
       }

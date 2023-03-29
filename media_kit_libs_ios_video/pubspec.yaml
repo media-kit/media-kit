@@ -7,8 +7,8 @@ funding:
   - https://www.github.com/sponsors/alexmercerind
 
 environment:
-  sdk: '>=2.19.2 <3.0.0'
-  flutter: ">=2.5.0"
+  sdk: ">=2.17.0 <4.0.0"
+  flutter: ">=3.0.0"
 
 dependencies:
   flutter:

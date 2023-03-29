@@ -69,7 +69,6 @@ void ANGLESurfaceManager::Read() {
                                          internal_d3d_11_texture_2D_.Get());
     d3d_11_device_context_->Flush();
   }
-  // Internal HANDLE is same as public HANDLE on D3D 9 code path.
   ::ReleaseMutex(mutex_);
 }
 
