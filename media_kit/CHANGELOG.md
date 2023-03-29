@@ -1,12 +1,18 @@
 ## 0.0.2
 
 - macOS support:
-  - Video (& audio): [`media_kit_video: ^0.0.1`](https://pub.dev/packages/media_kit_video/versions/0.0.1) + [`media_kit_libs_macos_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_macos_video/versions/1.0.0)
+  - Video (& audio): [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2) + [`media_kit_libs_macos_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_macos_video/versions/1.0.0)
 - iOS support:
-  - Video (& audio): [`media_kit_video: ^0.0.1`](https://pub.dev/packages/media_kit_video/versions/0.0.1) + [`media_kit_libs_ios_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_ios_video/versions/1.0.0)
+  - Video (& audio): [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2) + [`media_kit_libs_ios_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_ios_video/versions/1.0.0)
+- feat: draw first frame on `Player.open` without `Player.play` (#69)
+- feat: `Player.open` now accepts `Playable` i.e. `Media` or `Playlist`
+- feat: access `Player` logs from internal backend e.g. libmpv
+  - `PlayerLogs`: class
+  - `Player.streams.logs`: logs as `Stream<PlayerLogs>`
+- fix: improve internal playlist handling & management
 - feat: audio output device selection & enumeration
   - `Player.setAudioDevice`: method
-  - `AudioDevice`: class.
+  - `AudioDevice`: class
   - `AudioDevice.auto`: factory constructor
   - `Player.state.audioDevice`: currently selected audio device as `AudioDevice`
   - `Player.streams.audioDevice`: currently selected audio device as `Stream<AudioDevice>`
@@ -37,12 +43,6 @@
   - `Player.streams.tracks.audio`: currently available audio track(s) as `Stream<List<AudioTrack>>`
   - `Player.state.tracks.subtitle`: currently available subtitle track(s) as `List<SubtitleTrack>`
   - `Player.streams.tracks.subtitle`: currently available subtitle track(s) as `Stream<List<SubtitleTrack>>`
-- feat: access `Player` logs from internal backend e.g. libmpv
-  - `PlayerLogs`: class
-  - `Player.streams.logs`: logs as `Stream<PlayerLogs>`
-- feat: draw first frame on `Player.open` without `Player.play` (#69)
-- feat: `Player.open` now accepts `Playable` i.e. `Media` or `Playlist`
-- fix: improve internal playlist handling & management
 - refactor: rename `Player.volume` setter to `Player.setVolume`
 - refactor: rename `Player.rate` setter to `Player.setRate`
 - refactor: rename `Player.pitch` setter to `Player.setPitch`
@@ -58,8 +58,8 @@
 
 #### Recommended sub-package versions
 
-- [`media_kit_video: ^0.0.1`](https://pub.dev/packages/media_kit_video/versions/0.0.1)
-- [`media_kit_native_event_loop: ^1.0.0`](https://pub.dev/packages/media_kit_native_event_loop/versions/1.0.0)
+- [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2)
+- [`media_kit_native_event_loop: ^1.0.1`](https://pub.dev/packages/media_kit_native_event_loop/versions/1.0.1)
 - [`media_kit_libs_windows_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_windows_video/versions/1.0.0)
 - [`media_kit_libs_windows_audio: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_audio/versions/1.0.1)
 - [`media_kit_libs_linux: ^1.0.0`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.0)
