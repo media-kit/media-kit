@@ -52,7 +52,7 @@ Future<void> paintFirstFrame(BuildContext context) async {
 
 class PaintFirstFrameScreen extends StatelessWidget {
   final List<Player> players;
-  final List<VideoController?> controllers;
+  final List<VideoController> controllers;
   const PaintFirstFrameScreen({
     Key? key,
     required this.players,
@@ -61,8 +61,6 @@ class PaintFirstFrameScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final width = (size.width - 32.0).clamp(0.0, 360.0);
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
@@ -79,11 +77,13 @@ class PaintFirstFrameScreen extends StatelessWidget {
         itemCount: 5,
         itemBuilder: (context, i) => Video(
           controller: controllers[i],
-          width: width,
-          height: width * 9.0 / 16.0,
+          width: MediaQuery.of(context).size.width.clamp(0, 480.0),
+          height:
+              MediaQuery.of(context).size.width.clamp(0, 480.0) * 9.0 / 16.0,
           fill: Colors.transparent,
         ),
         separatorBuilder: (context, i) => const SizedBox(height: 16.0),
+        padding: const EdgeInsets.all(16.0),
       ),
     );
   }
