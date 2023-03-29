@@ -1,6 +1,6 @@
 # [package:media_kit_libs_ios_video](https://github.com/alexmercerind/media_kit)
 
-iOS dependency package for [`package:media_kit`](https://github.com/alexmercerind/media_kit).
+macOS package providing video (& audio) native libraries for [`package:media_kit`](https://github.com/alexmercerind/media_kit).
 
 ## Support
 

@@ -1,6 +1,6 @@
 # [package:media_kit](https://github.com/alexmercerind/media_kit)
 
-A complete video & audio library for Flutter & Dart.
+A complete video & audio playback for Flutter & Dart. Performant, stable, feature-proof & modular.
 
 [![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml)
 
@@ -32,7 +32,7 @@ dependencies:
   media_kit: ^0.0.2
   # For video rendering.
   media_kit_video: ^0.0.2
-  # For enabling support for more than 8 simultaneous players.
+  # Enables support for higher number of concurrent instances. Optional.
   media_kit_native_event_loop: ^1.0.1
   # Pick based on your requirements / platform:
   media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
