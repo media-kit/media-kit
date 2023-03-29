@@ -17,6 +17,16 @@ A complete video & audio playback for Flutter & Dart. Performant, stable, featur
   Try the Flutter Chat tutorial
   </a>
 </strong>
+<br></br>
+<a href="https://ottomatic.io/" target="_blank">
+<img alt="Stream Chat" width="350" height="auto" src="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
+</a>
+<br></br>
+<strong>
+  <a href="https://ottomatic.io/" target="_blank">
+  Clever Apps for Film Professionals
+  </a>
+</strong>
 
 <hr>
 

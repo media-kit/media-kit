@@ -7,7 +7,7 @@ A complete video & audio playback for Flutter & Dart. Performant, stable, featur
 <hr>
 
 <strong>Sponsored with 💖 by</strong>
-<br>
+<br></br>
 <a href="https://getstream.io/chat/sdk/flutter/?utm_source=alexmercerind_dart&utm_medium=Github_Repo_Content_Ad&utm_content=Developer&utm_campaign=alexmercerind_December2022_FlutterSDK_klmh22" target="_blank">
 
 <picture>
@@ -17,7 +17,6 @@ A complete video & audio playback for Flutter & Dart. Performant, stable, featur
 </picture>
 
 </a>
-<br>
 
 <h6>
   Rapidly ship in-app messaging with Stream's highly reliable chat infrastructure & feature-rich SDKs, including Flutter!
@@ -26,6 +25,20 @@ A complete video & audio playback for Flutter & Dart. Performant, stable, featur
 <strong>
   <a href="https://getstream.io/chat/sdk/flutter/?utm_source=alexmercerind_dart&utm_medium=Github_Repo_Content_Ad&utm_content=Developer&utm_campaign=alexmercerind_December2022_FlutterSDK_klmh22" target="_blank">
   Try the Flutter Chat tutorial
+  </a>
+</strong>
+
+<br></br>
+
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/28951144/228648854-e5d7c557-ee92-47b2-a037-17b447873e1c.svg">
+<source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
+<img alt="Stream Chat" width="350" height="auto" src="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
+</picture>
+<br></br>
+<strong>
+  <a href="https://ottomatic.io/" target="_blank">
+  Clever Apps for Film Professionals
   </a>
 </strong>
 
