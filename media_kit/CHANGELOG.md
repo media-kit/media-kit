@@ -60,9 +60,9 @@
 
 - [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2)
 - [`media_kit_native_event_loop: ^1.0.1`](https://pub.dev/packages/media_kit_native_event_loop/versions/1.0.1)
-- [`media_kit_libs_windows_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_windows_video/versions/1.0.0)
+- [`media_kit_libs_windows_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_video/versions/1.0.1)
 - [`media_kit_libs_windows_audio: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_audio/versions/1.0.1)
-- [`media_kit_libs_linux: ^1.0.0`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.0)
+- [`media_kit_libs_linux: ^1.0.1`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.1)
 - [`media_kit_libs_macos_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_macos_video/versions/1.0.0)
 - [`media_kit_libs_ios_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_ios_video/versions/1.0.0)
 
@@ -80,8 +80,8 @@
 
 - [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2)
 - [`media_kit_native_event_loop: ^1.0.1`](https://pub.dev/packages/media_kit_native_event_loop/versions/1.0.1)
-- [`media_kit_libs_windows_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_windows_video/versions/1.0.0)
+- [`media_kit_libs_windows_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_video/versions/1.0.1)
 - [`media_kit_libs_windows_audio: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_audio/versions/1.0.1)
-- [`media_kit_libs_linux: ^1.0.0`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.0)
+- [`media_kit_libs_linux: ^1.0.1`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.1)
 - [`media_kit_libs_macos_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_macos_video/versions/1.0.0)
 - [`media_kit_libs_ios_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_ios_video/versions/1.0.0)
