@@ -6,7 +6,8 @@
 - iOS support:
   - Hardware: MPV_RENDER_API_TYPE_OPENGL + pixel buffer
   - Software: MPV_RENDER_API_TYPE_SW + pixel buffer
-- fix: use `TextureRegistrar::UnregisterTexture` release callback to free texture resources on Windows.
+- fix(windows): use `TextureRegistrar::UnregisterTexture` release callback to free texture resources
+- fix(windows): synchronize texture unregister & release on frame dimensions change
 - feat: `aspectRatio` parameter for `Video` widget.
 
 ## 0.0.1

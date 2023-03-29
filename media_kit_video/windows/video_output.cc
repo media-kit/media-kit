@@ -240,30 +240,36 @@ void VideoOutput::CheckAndResize() {
 
 void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
   std::cout << required_width << " " << required_height << std::endl;
+  // Create new texture with new dimensions parallelly.
+  // Wait until previous texture is unregistered & it's underlying resources
+  // i.e. |flutter::TextureVariant| & |FlutterDesktopGpuSurfaceDescriptor| or
+  // |FlutterDesktopPixelBuffer| are freed.
+  auto texture_promise = std::promise<void>();
   // Unregister previously registered texture.
   if (texture_id_) {
     registrar_->texture_registrar()->UnregisterTexture(
-        texture_id_, [&, texture_id = texture_id_]() {
-          thread_pool_ref_->Post([&, id = texture_id]() {
-            if (id) {
-              std::cout << "media_kit: VideoOutput: Free Texture: " << id
-                        << std::endl;
-              if (texture_variants_.find(id) != texture_variants_.end()) {
-                texture_variants_.erase(id);
-              }
-              // H/W
-              if (textures_.find(id) != textures_.end()) {
-                textures_.erase(id);
-              }
-              // S/W
-              if (pixel_buffer_textures_.find(id) !=
-                  pixel_buffer_textures_.end()) {
-                pixel_buffer_textures_.erase(id);
-              }
+        texture_id_, [&, id = texture_id_]() {
+          if (id) {
+            std::cout << "media_kit: VideoOutput: Free Texture: " << id
+                      << std::endl;
+            if (texture_variants_.find(id) != texture_variants_.end()) {
+              texture_variants_.erase(id);
             }
-          });
+            // H/W
+            if (textures_.find(id) != textures_.end()) {
+              textures_.erase(id);
+            }
+            // S/W
+            if (pixel_buffer_textures_.find(id) !=
+                pixel_buffer_textures_.end()) {
+              pixel_buffer_textures_.erase(id);
+            }
+          }
+          texture_promise.set_value();
         });
     texture_id_ = 0;
+  } else {
+    texture_promise.set_value();
   }
   // H/W
   if (surface_manager_ != nullptr) {
@@ -327,6 +333,11 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
         std::make_pair(texture_id_, std::move(texture_variant)));
     // Notify public texture update callback.
     texture_update_callback_(texture_id_, required_width, required_height);
+  }
+  auto result = texture_promise.get_future().wait_for(std::chrono::seconds(1));
+  if (result == std::future_status::timeout) {
+    std::cout << "media_kit: VideoOutput: std::future_status::timeout"
+              << std::endl;
   }
 }
 
