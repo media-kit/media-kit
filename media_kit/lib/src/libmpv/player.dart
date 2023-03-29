@@ -29,7 +29,8 @@ import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 /// Player
 /// ------
 ///
-/// Compatiblity has been tested with libmpv 0.33.0 or higher.
+/// Compatiblity has been tested with libmpv 0.28.0 & higher.
+/// Recommended libmpv version is 0.33.0 & higher.
 ///
 /// {@endtemplate}
 class Player extends PlatformPlayer {
@@ -79,6 +80,8 @@ class Player extends PlatformPlayer {
     bool play = true,
     bool evictExtrasCache = true,
   }) async {
+    final ctx = await _handle.future;
+
     final int index;
     final playlist = <Media>[];
     if (playable is Media) {
@@ -102,17 +105,29 @@ class Player extends PlatformPlayer {
       // Restore extras in currently added playlist.
       for (final media in playlist) {
         medias[media.uri] = media;
-        medias[Media.normalizeURI(media.uri)] = media;
       }
     }
 
     // Clean-up existing playlist & change currently playing libmpv index to none.
     // This causes playback to stop & player to enter the idle state.
-    await _command(['playlist-play-index', 'none']);
-    await _command(['playlist-clear']);
+    final commands = [
+      'stop',
+      'playlist-play-index none',
+      'playlist-clear',
+    ];
+    for (final command in commands) {
+      final args = command.toNativeUtf8();
+      _libmpv?.mpv_command_string(
+        ctx,
+        args.cast(),
+      );
+      calloc.free(args);
+    }
 
     // Enter the pause state.
     await pause();
+
+    _allowPlayingStateChange = false;
 
     for (int i = 0; i < playlist.length; i++) {
       await _command(
@@ -142,6 +157,12 @@ class Player extends PlatformPlayer {
   /// Starts playing the [Player].
   @override
   Future<void> play() async {
+    _allowPlayingStateChange = true;
+    state = state.copyWith(playing: true);
+    if (!playingController.isClosed) {
+      playingController.add(true);
+    }
+
     final ctx = await _handle.future;
     final name = 'pause'.toNativeUtf8();
     final value = calloc<Uint8>();
@@ -161,6 +182,12 @@ class Player extends PlatformPlayer {
   /// Pauses the [Player].
   @override
   Future<void> pause() async {
+    _allowPlayingStateChange = true;
+    state = state.copyWith(playing: false);
+    if (!playingController.isClosed) {
+      playingController.add(false);
+    }
+
     final ctx = await _handle.future;
     final name = 'pause'.toNativeUtf8();
     final value = calloc<Uint8>();
@@ -180,6 +207,7 @@ class Player extends PlatformPlayer {
   /// Cycles between [play] & [pause] states of the [Player].
   @override
   Future<void> playOrPause() async {
+    _allowPlayingStateChange = true;
     final ctx = await _handle.future;
     // This condition will occur when [PlaylistMode.none] is set & last item of the [Playlist] is played.
     // Thus, when user presses the play/pause button, we must start playing the [Playlist] from the beginning. Otherwise, the button just freezes.
@@ -690,38 +718,42 @@ class Player extends PlatformPlayer {
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
     _error(event.ref.error);
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
-      state = state.copyWith(
-        completed: false,
-        playing: true,
-      );
-      if (!completedController.isClosed) {
-        completedController.add(false);
-      }
-      if (!playingController.isClosed) {
-        playingController.add(true);
+      if (_allowPlayingStateChange) {
+        state = state.copyWith(
+          playing: true,
+          completed: false,
+        );
+        if (!playingController.isClosed) {
+          playingController.add(true);
+        }
+        if (!completedController.isClosed) {
+          completedController.add(false);
+        }
       }
     }
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
       // Check for mpv_end_file_reason.MPV_END_FILE_REASON_EOF before modifying state.completed.
       if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
           generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
-        state = state.copyWith(
-          completed: true,
-          playing: false,
-          audioParams: const AudioParams(),
-          audioBitrate: null,
-        );
-        if (!completedController.isClosed) {
-          completedController.add(true);
-        }
-        if (!playingController.isClosed) {
-          playingController.add(false);
-        }
-        if (!audioParamsController.isClosed) {
-          audioParamsController.add(const AudioParams());
-        }
-        if (!audioBitrateController.isClosed) {
-          audioBitrateController.add(null);
+        if (_allowPlayingStateChange) {
+          state = state.copyWith(
+            playing: false,
+            completed: true,
+            audioBitrate: null,
+            audioParams: const AudioParams(),
+          );
+          if (!playingController.isClosed) {
+            playingController.add(false);
+          }
+          if (!completedController.isClosed) {
+            completedController.add(true);
+          }
+          if (!audioBitrateController.isClosed) {
+            audioBitrateController.add(null);
+          }
+          if (!audioParamsController.isClosed) {
+            audioParamsController.add(const AudioParams());
+          }
         }
       }
     }
@@ -730,10 +762,12 @@ class Player extends PlatformPlayer {
       final prop = event.ref.data.cast<generated.mpv_event_property>();
       if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-        final playing = prop.ref.data.cast<Int8>().value != 1;
-        state = state.copyWith(playing: playing);
-        if (!playingController.isClosed) {
-          playingController.add(playing);
+        if (_allowPlayingStateChange) {
+          final playing = prop.ref.data.cast<Int8>().value != 1;
+          state = state.copyWith(playing: playing);
+          if (!playingController.isClosed) {
+            playingController.add(playing);
+          }
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
@@ -1250,4 +1284,16 @@ class Player extends PlatformPlayer {
   /// [Pointer] to [generated.mpv_handle] of this instance.
   final Completer<Pointer<generated.mpv_handle>> _handle =
       Completer<Pointer<generated.mpv_handle>>();
+
+  /// A simple flag to prevent changes to [state.playing] due to `loadfile` commands in [open].
+  ///
+  /// By default, `MPV_EVENT_START_FILE` is fired when a new media source is loaded.
+  /// This event modifies the [state.playing] & [streams.playing] to `true`.
+  ///
+  /// However, the [Player] is in paused state before the media source is loaded.
+  /// Thus, [state.playing] should not be changed, unless the user explicitly calls [play] or [playOrPause].
+  ///
+  /// We set [_allowPlayingStateChange] to `false` at the start of [open] to prevent this unwanted change & set it to `true` at the end of [open].
+  /// While [_allowPlayingStateChange] is `false`, any change to [state.playing] & [streams.playing] is ignored.
+  bool _allowPlayingStateChange = false;
 }
