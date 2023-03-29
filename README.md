@@ -63,11 +63,11 @@ dependencies:
   # Enables support for higher number of concurrent instances. Optional.
   media_kit_native_event_loop: ^1.0.1
   # Pick based on your requirements / platform:
-  media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_video: ^1.0.1          # Windows package for video (& audio) native libraries.
   media_kit_libs_windows_audio: ^1.0.1          # Windows package for audio (only) native libraries.
   media_kit_libs_ios_video: ^1.0.0              # iOS package for video (& audio) native libraries.
   media_kit_libs_macos_video: ^1.0.0            # macOS package for video (& audio) native libraries.
-  media_kit_libs_linux: ^1.0.0                  # Linux dependency package.
+  media_kit_libs_linux: ^1.0.1                  # Linux dependency package.
 ```
 
 ## Platforms
