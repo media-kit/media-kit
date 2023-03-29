@@ -4,7 +4,7 @@
   - Video (& audio): [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2) + [`media_kit_libs_macos_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_macos_video/versions/1.0.0)
 - iOS support:
   - Video (& audio): [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2) + [`media_kit_libs_ios_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_ios_video/versions/1.0.0)
-- feat: draw first frame on `Player.open` without `Player.play` (#69)
+- feat: draw first frame upon `Player.open` before `Player.play` (#69)
 - feat: `Player.open` now accepts `Playable` i.e. `Media` or `Playlist`
 - feat: access `Player` logs from internal backend e.g. libmpv
   - `PlayerLogs`: class
@@ -70,16 +70,18 @@
 
 - Initial release.
 - Windows support
-  - Video (& audio): [`media_kit_video: ^0.0.1`](https://pub.dev/packages/media_kit_video/versions/0.0.1) + [`media_kit_libs_windows_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_windows_video/versions/1.0.0)
-  - Audio (only): [`media_kit_libs_windows_audio: ^1.0.0`](https://pub.dev/packages/media_kit_libs_windows_audio/versions/1.0.0)
+  - Video (& audio): [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2) + [`media_kit_libs_windows_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_windows_video/versions/1.0.0)
+  - Audio (only): [`media_kit_libs_windows_audio: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_audio/versions/1.0.1)
 - GNU/Linux support
-  - Video (& audio): [`media_kit_video: ^0.0.1`](https://pub.dev/packages/media_kit_video/versions/0.0.1) + [`media_kit_libs_linux: ^1.0.0`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.0)
+  - Video (& audio): [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2) + [`media_kit_libs_linux: ^1.0.0`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.0)
   - Audio (only): [`media_kit_libs_linux: ^1.0.0`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.0)
 
 #### Recommended sub-package versions
 
-- [`media_kit_video: ^0.0.1`](https://pub.dev/packages/media_kit_video/versions/0.0.1)
-- [`media_kit_native_event_loop: ^1.0.0`](https://pub.dev/packages/media_kit_native_event_loop/versions/1.0.0)
+- [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2)
+- [`media_kit_native_event_loop: ^1.0.1`](https://pub.dev/packages/media_kit_native_event_loop/versions/1.0.1)
 - [`media_kit_libs_windows_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_windows_video/versions/1.0.0)
 - [`media_kit_libs_windows_audio: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_audio/versions/1.0.1)
 - [`media_kit_libs_linux: ^1.0.0`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.0)
+- [`media_kit_libs_macos_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_macos_video/versions/1.0.0)
+- [`media_kit_libs_ios_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_ios_video/versions/1.0.0)
