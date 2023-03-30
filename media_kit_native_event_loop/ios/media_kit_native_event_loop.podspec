@@ -26,8 +26,9 @@ Pod::Spec.new do |s|
     'DEFINES_MODULE' => 'YES',
     'GCC_WARN_INHIBIT_ALL_WARNINGS' => 'YES',
     'HEADER_SEARCH_PATHS' => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Headers"',
-    'LIBRARY_SEARCH_PATHS' => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Libs"',
-    'OTHER_LDFLAGS' => '"$(inherited)" -lmpv',
+    'FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]' => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/MPV.xcframework/ios-arm64"',
+    'FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]' => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/MPV.xcframework/ios-arm64_x86_64-simulator"',
+    'OTHER_LDFLAGS' => '"$(inherited)" -framework MPV',
     # Flutter.framework does not contain a i386 slice.
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
   }
