@@ -26,8 +26,8 @@ Pod::Spec.new do |s|
     'DEFINES_MODULE' => 'YES',
     'GCC_WARN_INHIBIT_ALL_WARNINGS' => 'YES',
     'HEADER_SEARCH_PATHS' => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Headers"',
-    'LIBRARY_SEARCH_PATHS' => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Libs"',
-    'OTHER_LDFLAGS' => '"$(inherited)" -lmpv',
+    'FRAMEWORK_SEARCH_PATHS[sdk=macosx*]' => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/MPV.xcframework/macos-arm64_x86_64"',
+    'OTHER_LDFLAGS' => '"$(inherited)" -framework MPV',
   }
   s.swift_version = '5.0'
 end
