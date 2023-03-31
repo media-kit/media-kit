@@ -38,9 +38,9 @@ Headers/mpv/*.h: .cache/headers/mpv.tar.gz
 	rm -f .cache/libs/libmpv-macos.tar.gz
 	ln -s libmpv-${MPV_LIBS_VERSION}-macos.tar.gz .cache/libs/libmpv-macos.tar.gz
 
-.tmp/Frameworks/macos/MPV.framework: .cache/libs/libmpv-macos.tar.gz
+.tmp/Frameworks/macos/MPV.framework: .cache/libs/libmpv-macos.tar.gz ./Scripts/Info.plist
 	rm -rf .tmp/Frameworks/macos/MPV.framework
-	sh ./Scripts/create_framework.sh
+	sh ./Scripts/create_framework.sh ".cache/libs/libmpv-macos.tar.gz" ".tmp/Frameworks/macos"
 	touch .tmp/Frameworks/macos/MPV.framework
 
 Frameworks/MPV.xcframework: .tmp/Frameworks/macos/MPV.framework

@@ -1,10 +1,11 @@
 #!/bin/sh
 
-TARGET_FOLDER=".tmp/Frameworks/macos"
+SOURCE_ARCHIVE="$1"
+TARGET_FOLDER="$2"
 
 # copy files
 mkdir -p "${TARGET_FOLDER}/MPV.framework/Libs"
-tar -xvf .cache/libs/libmpv-macos.tar.gz --strip-components 1 -C "${TARGET_FOLDER}"/MPV.framework/Libs/
+tar -xvf "${SOURCE_ARCHIVE}" --strip-components 1 -C "${TARGET_FOLDER}"/MPV.framework/Libs/
 
 # mv mpv dylib
 mv "${TARGET_FOLDER}"/MPV.framework/Libs/libmpv.dylib "${TARGET_FOLDER}"/MPV.framework/MPV
@@ -55,3 +56,7 @@ find "${TARGET_FOLDER}" -type f | while read DYLIB; do
 
     codesign --remove "${DYLIB}"
 done
+
+# copy Info.plist
+cp ./Scripts/Info.plist "${TARGET_FOLDER}"/MPV.framework/
+plutil -convert binary1 "${TARGET_FOLDER}"/MPV.framework/Info.plist

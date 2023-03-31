@@ -94,12 +94,12 @@ Headers/mpv/*.h: .cache/headers/mpv.tar.gz
 .tmp/libs/libmpv-iossimulator.tar.gz: .tmp/libs/libmpv-iossimulator-universal
 	cd .tmp/libs && tar -czvf libmpv-iossimulator.tar.gz libmpv-iossimulator-universal
 
-.tmp/Frameworks/ios/MPV.framework: .cache/libs/libmpv-ios.tar.gz
+.tmp/Frameworks/ios/MPV.framework: .cache/libs/libmpv-ios.tar.gz ./Scripts/Info.plist
 	rm -rf .tmp/Frameworks/ios/MPV.framework
 	sh ./Scripts/create_framework.sh ".cache/libs/libmpv-ios.tar.gz" ".tmp/Frameworks/ios"
 	touch .tmp/Frameworks/ios/MPV.framework
 
-.tmp/Frameworks/iossimulator/MPV.framework: .tmp/libs/libmpv-iossimulator.tar.gz
+.tmp/Frameworks/iossimulator/MPV.framework: .tmp/libs/libmpv-iossimulator.tar.gz ./Scripts/Info.plist
 	rm -rf .tmp/Frameworks/iossimulator/MPV.framework
 	sh ./Scripts/create_framework.sh ".tmp/libs/libmpv-iossimulator.tar.gz" ".tmp/Frameworks/iossimulator"
 	touch .tmp/Frameworks/iossimulator/MPV.framework

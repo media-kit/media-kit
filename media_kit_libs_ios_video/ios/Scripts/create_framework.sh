@@ -56,3 +56,7 @@ find "${TARGET_FOLDER}" -type f | while read DYLIB; do
 
     codesign --remove "${DYLIB}"
 done
+
+# copy Info.plist
+cp ./Scripts/Info.plist "${TARGET_FOLDER}"/MPV.framework/
+plutil -convert binary1 "${TARGET_FOLDER}"/MPV.framework/Info.plist
