@@ -29,3 +29,6 @@ flutter:
         pluginClass: MediaKitVideoPlugin
       ios:
         pluginClass: MediaKitVideoPlugin
+      android:
+        package: com.alexmercerind.media_kit_video
+        pluginClass: MediaKitVideoPlugin
