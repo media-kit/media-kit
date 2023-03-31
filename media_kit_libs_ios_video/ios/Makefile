@@ -1,4 +1,4 @@
-all: Frameworks/MPV.xcframework Headers/mpv/*.h
+all: Frameworks/*.xcframework Headers/mpv/*.h
 
 MPV_LIBS_IOS_VERSION=v0.2.0
 MPV_LIBS_IOS_SHA256SUM=e7d88dea134779ea43392dd0d763cbb3b6588a6b712c01164f9117c04416a05c
@@ -94,20 +94,20 @@ Headers/mpv/*.h: .cache/headers/mpv.tar.gz
 .tmp/libs/libmpv-iossimulator.tar.gz: .tmp/libs/libmpv-iossimulator-universal
 	cd .tmp/libs && tar -czvf libmpv-iossimulator.tar.gz libmpv-iossimulator-universal
 
-.tmp/Frameworks/ios/MPV.framework: .cache/libs/libmpv-ios.tar.gz ./Scripts/Info.plist
-	rm -rf .tmp/Frameworks/ios/MPV.framework
-	sh ./Scripts/create_framework.sh ".cache/libs/libmpv-ios.tar.gz" ".tmp/Frameworks/ios"
-	touch .tmp/Frameworks/ios/MPV.framework
+.tmp/Frameworks/ios/*.framework: .cache/libs/libmpv-ios.tar.gz ./Scripts/Info.plist
+	rm -rf .tmp/Frameworks/ios/*.framework
+	sh ./Scripts/create_frameworks.sh ".cache/libs/libmpv-ios.tar.gz" ".tmp/Frameworks/ios"
+	touch .tmp/Frameworks/ios/*.framework
 
-.tmp/Frameworks/iossimulator/MPV.framework: .tmp/libs/libmpv-iossimulator.tar.gz ./Scripts/Info.plist
-	rm -rf .tmp/Frameworks/iossimulator/MPV.framework
-	sh ./Scripts/create_framework.sh ".tmp/libs/libmpv-iossimulator.tar.gz" ".tmp/Frameworks/iossimulator"
-	touch .tmp/Frameworks/iossimulator/MPV.framework
+.tmp/Frameworks/iossimulator/*.framework: .tmp/libs/libmpv-iossimulator.tar.gz ./Scripts/Info.plist
+	rm -rf .tmp/Frameworks/iossimulator/*.framework
+	sh ./Scripts/create_frameworks.sh ".tmp/libs/libmpv-iossimulator.tar.gz" ".tmp/Frameworks/iossimulator"
+	touch .tmp/Frameworks/iossimulator/*.framework
 
-Frameworks/MPV.xcframework: .tmp/Frameworks/ios/MPV.framework .tmp/Frameworks/iossimulator/MPV.framework
-	rm -rf Frameworks/MPV.xcframework
-	sh ./Scripts/create_xcframework.sh
-	touch Frameworks/MPV.xcframework
+Frameworks/*.xcframework: .tmp/Frameworks/ios/*.framework .tmp/Frameworks/iossimulator/*.framework
+	rm -rf Frameworks/*.xcframework
+	sh ./Scripts/create_xcframeworks.sh
+	touch Frameworks/*.xcframework
 
 .PHONY: clean
 clean:

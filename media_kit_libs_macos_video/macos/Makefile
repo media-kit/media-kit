@@ -1,4 +1,4 @@
-all: Frameworks/MPV.xcframework Headers/mpv/*.h
+all: Frameworks/*.xcframework Headers/mpv/*.h
 
 MPV_LIBS_VERSION=v0.2.0
 MPV_LIBS_SHA256SUM=aeb41484867d9b726061ec9e4371d5d93e62a68578ff0b5c9a15cf4593a26128
@@ -38,15 +38,15 @@ Headers/mpv/*.h: .cache/headers/mpv.tar.gz
 	rm -f .cache/libs/libmpv-macos.tar.gz
 	ln -s libmpv-${MPV_LIBS_VERSION}-macos.tar.gz .cache/libs/libmpv-macos.tar.gz
 
-.tmp/Frameworks/macos/MPV.framework: .cache/libs/libmpv-macos.tar.gz ./Scripts/Info.plist
-	rm -rf .tmp/Frameworks/macos/MPV.framework
-	sh ./Scripts/create_framework.sh ".cache/libs/libmpv-macos.tar.gz" ".tmp/Frameworks/macos"
-	touch .tmp/Frameworks/macos/MPV.framework
+.tmp/Frameworks/macos/*.framework: .cache/libs/libmpv-macos.tar.gz ./Scripts/Info.plist
+	rm -rf .tmp/Frameworks/macos/*.framework
+	sh ./Scripts/create_frameworks.sh ".cache/libs/libmpv-macos.tar.gz" ".tmp/Frameworks/macos"
+	touch .tmp/Frameworks/macos/*.framework
 
-Frameworks/MPV.xcframework: .tmp/Frameworks/macos/MPV.framework
-	rm -rf Frameworks/MPV.xcframework
-	sh ./Scripts/create_xcframework.sh
-	touch Frameworks/MPV.xcframework
+Frameworks/*.xcframework: .tmp/Frameworks/macos/*.framework
+	rm -rf Frameworks/*.xcframework
+	sh ./Scripts/create_xcframeworks.sh
+	touch Frameworks/*.xcframework
 
 .PHONY: clean
 clean:

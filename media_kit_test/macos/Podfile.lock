@@ -26,8 +26,8 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
   media_kit_libs_macos_video: eba6dc4ba905a165b5c9ed2f3672040bcfdbf677
-  media_kit_native_event_loop: 506ca73dfd15d9a967b0614b5218e262a1685a12
-  media_kit_video: d0db0eb1b6d510dce357f9700ae80aab47cb6a9c
+  media_kit_native_event_loop: f3a2ccfb1a5314141c206a6f78e40959ce399d1e
+  media_kit_video: aa97598702d200610e513705a4c0f00b76fb3dfc
 
 PODFILE CHECKSUM: 353c8bcc5d5b0994e508d035b5431cfe18c1dea7
 
