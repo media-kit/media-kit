@@ -33,7 +33,7 @@ abstract class NativeLibrary {
         'MPV.framework/MPV',
       ],
       'ios': [
-        'libmpv.dylib',
+        'MPV.framework/MPV',
       ],
     }[Platform.operatingSystem];
     if (names != null) {
@@ -51,7 +51,7 @@ abstract class NativeLibrary {
           'macos':
               'Cannot find MPV.framework/MPV. Check that it is present in the Frameworks folder of your application.',
           'ios':
-              'Cannot find libmpv.dylib. Check that it is present in the Frameworks folder of your application.',
+              'Cannot find MPV.framework/MPV. Check that it is present in the Frameworks folder of your application.',
         }[Platform.operatingSystem]!,
       );
     }
