@@ -64,81 +64,6 @@ class _SinglePlayerMultipleVideoScreenState
           ),
       ];
 
-  Widget get video => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Card(
-                    elevation: 8.0,
-                    clipBehavior: Clip.antiAlias,
-                    margin: const EdgeInsets.fromLTRB(32.0, 32.0, 16.0, 8.0),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Video(
-                        controller: controller,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Card(
-                    elevation: 8.0,
-                    clipBehavior: Clip.antiAlias,
-                    margin: const EdgeInsets.fromLTRB(16.0, 32.0, 32.0, 8.0),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Video(
-                        controller: controller,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Card(
-                    elevation: 8.0,
-                    clipBehavior: Clip.antiAlias,
-                    margin: const EdgeInsets.fromLTRB(32.0, 8.0, 16.0, 32.0),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Video(
-                        controller: controller,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Card(
-                    elevation: 8.0,
-                    clipBehavior: Clip.antiAlias,
-                    margin: const EdgeInsets.fromLTRB(16.0, 8.0, 32.0, 32.0),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Video(
-                        controller: controller,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TracksSelector(player: player),
-          SeekBar(player: player),
-          const SizedBox(height: 32.0),
-        ],
-      );
-
   @override
   Widget build(BuildContext context) {
     final horizontal =
@@ -181,9 +106,45 @@ class _SinglePlayerMultipleVideoScreenState
                 children: [
                   Expanded(
                     flex: 3,
-                    child: Container(
-                      alignment: Alignment.center,
-                      child: video,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Expanded(
+                          child: Card(
+                            elevation: 8.0,
+                            color: Colors.black,
+                            clipBehavior: Clip.antiAlias,
+                            margin: const EdgeInsets.all(32.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                          child: Video(controller: controller)),
+                                      Expanded(
+                                          child: Video(controller: controller)),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                          child: Video(controller: controller)),
+                                      Expanded(
+                                          child: Video(controller: controller)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SeekBar(player: player),
+                        const SizedBox(height: 32.0),
+                      ],
                     ),
                   ),
                   const VerticalDivider(width: 1.0, thickness: 1.0),
@@ -198,11 +159,33 @@ class _SinglePlayerMultipleVideoScreenState
             : ListView(
                 children: [
                   Container(
-                    alignment: Alignment.center,
+                    color: Colors.black,
                     width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.width * 12.0 / 16.0,
-                    child: video,
+                    height: MediaQuery.of(context).size.height * 9.0 / 16.0,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(child: Video(controller: controller)),
+                              Expanded(child: Video(controller: controller)),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(child: Video(controller: controller)),
+                              Expanded(child: Video(controller: controller)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  SeekBar(player: player),
+                  const SizedBox(height: 32.0),
                   const Divider(height: 1.0, thickness: 1.0),
                   ...assets,
                 ],

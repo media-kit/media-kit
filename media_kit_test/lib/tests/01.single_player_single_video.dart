@@ -68,25 +68,6 @@ class _SinglePlayerSingleVideoScreenState
           ),
       ];
 
-  Widget get video => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: Card(
-              elevation: 8.0,
-              clipBehavior: Clip.antiAlias,
-              margin: const EdgeInsets.all(32.0),
-              child: Video(
-                controller: controller,
-              ),
-            ),
-          ),
-          TracksSelector(player: player),
-          SeekBar(player: player),
-          const SizedBox(height: 32.0),
-        ],
-      );
-
   @override
   Widget build(BuildContext context) {
     final horizontal =
@@ -131,7 +112,23 @@ class _SinglePlayerSingleVideoScreenState
                     flex: 3,
                     child: Container(
                       alignment: Alignment.center,
-                      child: video,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Expanded(
+                            child: Card(
+                              elevation: 8.0,
+                              clipBehavior: Clip.antiAlias,
+                              margin: const EdgeInsets.all(32.0),
+                              child: Video(
+                                controller: controller,
+                              ),
+                            ),
+                          ),
+                          SeekBar(player: player),
+                          const SizedBox(height: 32.0),
+                        ],
+                      ),
                     ),
                   ),
                   const VerticalDivider(width: 1.0, thickness: 1.0),
@@ -145,12 +142,14 @@ class _SinglePlayerSingleVideoScreenState
               )
             : ListView(
                 children: [
-                  Container(
-                    alignment: Alignment.center,
+                  Video(
+                    controller: controller,
                     width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.width * 12.0 / 16.0,
-                    child: video,
+                    height: MediaQuery.of(context).size.width * 9.0 / 16.0,
                   ),
+                  const SizedBox(height: 16.0),
+                  SeekBar(player: player),
+                  const SizedBox(height: 32.0),
                   const Divider(height: 1.0, thickness: 1.0),
                   ...assets,
                 ],

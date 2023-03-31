@@ -20,11 +20,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
-            TargetPlatform.android: OpenUpwardsPageTransitionsBuilder(),
-            TargetPlatform.iOS: OpenUpwardsPageTransitionsBuilder(),
             TargetPlatform.linux: OpenUpwardsPageTransitionsBuilder(),
-            TargetPlatform.macOS: OpenUpwardsPageTransitionsBuilder(),
-            TargetPlatform.windows: OpenUpwardsPageTransitionsBuilder(),
           },
         ),
       ),
