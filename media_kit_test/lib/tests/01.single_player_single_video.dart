@@ -27,7 +27,7 @@ class _SinglePlayerSingleVideoScreenState
   void initState() {
     super.initState();
     Future.microtask(() async {
-      controller = await VideoController.create(player.handle);
+      controller = await VideoController.create(player);
       setState(() {});
     });
   }

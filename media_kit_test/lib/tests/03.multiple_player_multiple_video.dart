@@ -23,7 +23,7 @@ class _MultiplePlayerMultipleVideoScreenState
     super.initState();
     Future.microtask(() async {
       for (int i = 0; i < players.length; i++) {
-        controllers[i] = await VideoController.create(players[i].handle);
+        controllers[i] = await VideoController.create(players[i]);
       }
       setState(() {});
     });

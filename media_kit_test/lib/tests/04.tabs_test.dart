@@ -59,7 +59,7 @@ class __ViewportState extends State<_Viewport> {
     super.initState();
     Future.microtask(() async {
       controller = await VideoController.create(
-        player.handle,
+        player,
       );
       await player.open(Media('asset://assets/video_${widget.i}.mp4'));
       await player.setPlaylistMode(PlaylistMode.loop);

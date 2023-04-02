@@ -24,7 +24,7 @@ class _StressTestScreenState extends State<StressTestScreen> {
           final player = Player(
             configuration: const PlayerConfiguration(events: false),
           );
-          final controller = await VideoController.create(player.handle);
+          final controller = await VideoController.create(player);
           players.add(player);
           controllers.add(controller);
         }

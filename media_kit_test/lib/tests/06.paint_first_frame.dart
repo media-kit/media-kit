@@ -15,11 +15,11 @@ Future<void> paintFirstFrame(BuildContext context) async {
     Player(),
   ];
   List<VideoController> controllers = [
-    await VideoController.create(players[0].handle),
-    await VideoController.create(players[1].handle),
-    await VideoController.create(players[2].handle),
-    await VideoController.create(players[3].handle),
-    await VideoController.create(players[4].handle),
+    await VideoController.create(players[0]),
+    await VideoController.create(players[1]),
+    await VideoController.create(players[2]),
+    await VideoController.create(players[3]),
+    await VideoController.create(players[4]),
   ];
   // Open some [Playable]s.
   // Do not start playback i.e. play: false.
