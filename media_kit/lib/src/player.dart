@@ -113,6 +113,9 @@ class Player {
     if (Platform.isIOS) {
       platform = libmpv.Player(configuration: configuration);
     }
+    if (Platform.isAndroid) {
+      platform = libmpv.Player(configuration: configuration);
+    }
     if (platform == null) {
       // TODO: Implement other platforms.
       throw UnimplementedError(
