@@ -173,8 +173,7 @@ class MyScreenState extends State<MyScreen> {
     super.initState();
     Future.microtask(() async {
       // Create a [VideoController] instance from `package:media_kit_video`.
-      // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
-      controller = await VideoController.create(player.handle);
+      controller = await VideoController.create(player);
       // Must be created before opening any media. Otherwise, a separate window will be created.
       setState(() {});
     });
@@ -211,7 +210,7 @@ Although [package:media_kit](https://github.com/alexmercerind/media_kit) is alre
 
 ```dart
 final controller = await VideoController.create(
-  player.handle,
+  player,
   width: 640,                                   // default: null
   height: 360,                                  // default: null
 );
@@ -224,7 +223,7 @@ final controller = await VideoController.create(
 
 ```dart
 final controller = await VideoController.create(
-  player.handle,
+  player,
   enableHardwareAcceleration: false,            // default: true
 );
 ```
