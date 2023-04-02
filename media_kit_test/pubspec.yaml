@@ -29,6 +29,22 @@ dependencies:
 
   file_picker: ^5.2.4
 
+dependency_overrides:
+  media_kit:
+    path: ../media_kit
+  media_kit_video:
+    path: ../media_kit_video
+  media_kit_native_event_loop:
+    path: ../media_kit_native_event_loop
+  media_kit_libs_windows_video:
+    path: ../media_kit_libs_windows_video
+  media_kit_libs_linux:
+    path: ../media_kit_libs_linux
+  media_kit_libs_macos_video:
+    path: ../media_kit_libs_macos_video
+  media_kit_libs_ios_video:
+    path: ../media_kit_libs_ios_video
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
