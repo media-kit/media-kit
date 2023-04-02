@@ -1055,6 +1055,22 @@ class Player extends PlatformPlayer {
           }
         }
       }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'width' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
+        final width = prop.ref.data.cast<Int64>().value;
+        state = state.copyWith(width: width);
+        if (!widthController.isClosed) {
+          widthController.add(width);
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'height' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
+        final height = prop.ref.data.cast<Int64>().value;
+        state = state.copyWith(height: height);
+        if (!heightController.isClosed) {
+          heightController.add(height);
+        }
+      }
     }
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_LOG_MESSAGE) {
       final eventLogMessage =
@@ -1143,6 +1159,8 @@ class Player extends PlatformPlayer {
       'audio-device': generated.mpv_format.MPV_FORMAT_NODE,
       'audio-device-list': generated.mpv_format.MPV_FORMAT_NODE,
       'track-list': generated.mpv_format.MPV_FORMAT_NODE,
+      'width': generated.mpv_format.MPV_FORMAT_INT64,
+      'height': generated.mpv_format.MPV_FORMAT_INT64,
     }.forEach(
       (property, format) {
         final name = property.toNativeUtf8();
