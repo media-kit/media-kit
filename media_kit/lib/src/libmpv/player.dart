@@ -3,6 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
@@ -1099,8 +1100,13 @@ class Player extends PlatformPlayer {
       configuration.events ? _handler : null,
     );
     // Set:
-    // idle=yes
-    // pause=yes
+    // idle = yes
+    // pause = yes
+    // demuxer-max-bytes = 32 * 1024 * 1024
+    // demuxer-max-back-bytes = 32 * 1024 * 1024
+    // ao = opensles (Android)
+    //
+    // We are using opensles on Android because default JNI based audiotrack output driver seems to crash randomly.
     {
       final name = 'idle'.toNativeUtf8();
       final value = calloc<Int32>();
@@ -1126,6 +1132,41 @@ class Player extends PlatformPlayer {
       );
       calloc.free(name);
       calloc.free(value);
+    }
+    {
+      final name = 'demuxer-max-bytes'.toNativeUtf8();
+      final value = (32 * 1024 * 1024).toString().toNativeUtf8();
+      _libmpv?.mpv_set_property_string(
+        result,
+        name.cast(),
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+    {
+      final name = 'demuxer-max-back-bytes'.toNativeUtf8();
+      final value = (32 * 1024 * 1024).toString().toNativeUtf8();
+      _libmpv?.mpv_set_property_string(
+        result,
+        name.cast(),
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+    {
+      if (Platform.isAndroid) {
+        final name = 'ao'.toNativeUtf8();
+        final value = 'opensles'.toNativeUtf8();
+        _libmpv?.mpv_set_property_string(
+          result,
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      }
     }
     // TODO(@alexmercerind):
     // This causes `MPV_EVENT_END_FILE` to not fire for last playlist item.
