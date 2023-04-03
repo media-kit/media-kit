@@ -1,6 +1,10 @@
+## 0.0.3+2
+
+- docs: document updated `media_kit_video`
+
 ## 0.0.3+1
 
-- docs: document updated `media_Kit_native_event_loop`
+- docs: document updated `media_kit_native_event_loop`
 
 ## 0.0.3
 
