@@ -1,7 +1,7 @@
 all: Frameworks/*.xcframework Headers/mpv/*.h
 
-MPV_XCFRAMEWORKS_VERSION=v0.3.0
-MPV_XCFRAMEWORKS_SHA256SUM=d9af7edb16ece0769a9db5f5ef326622bfa89f1e164ccdb342d7a8cc745f2a87
+MPV_XCFRAMEWORKS_VERSION=v0.3.1
+MPV_XCFRAMEWORKS_SHA256SUM=31ee432567b20ead46e10f224fb2f3fe38571ff37da2d712844aa51c84e9ca9f
 
 MPV_HEADERS_VERSION=v0.35.1
 MPV_HEADERS_SHA256SUM=41df981b7b84e33a2ef4478aaf81d6f4f5c8b9cd2c0d337ac142fc20b387d1a9
@@ -28,7 +28,7 @@ Headers/mpv/*.h: .cache/headers/mpv.tar.gz
 	mkdir -p .cache/xcframeworks
 	rm -f .cache/xcframeworks/*.tmp .cache/xcframeworks/*-macos-universal.tar.gz
 	curl -L \
-		https://github.com/birros/libmpv-build/releases/download/${MPV_XCFRAMEWORKS_VERSION}/libmpv-xcframeworks-${MPV_XCFRAMEWORKS_VERSION}-macos-universal.tar.gz \
+		https://github.com/media-kit/libmpv-darwin-build/releases/download/${MPV_XCFRAMEWORKS_VERSION}/libmpv-xcframeworks-${MPV_XCFRAMEWORKS_VERSION}-macos-universal.tar.gz \
 		-o .cache/xcframeworks/libmpv.tar.gz.tmp
 	shasum -a 256 -c <<< '${MPV_XCFRAMEWORKS_SHA256SUM}  .cache/xcframeworks/libmpv.tar.gz.tmp'
 	mv .cache/xcframeworks/libmpv.tar.gz.tmp .cache/xcframeworks/libmpv-xcframeworks-${MPV_XCFRAMEWORKS_VERSION}-macos-universal.tar.gz

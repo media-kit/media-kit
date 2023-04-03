@@ -1,7 +1,7 @@
 all: Frameworks/*.xcframework Headers/mpv/*.h
 
-MPV_XCFRAMEWORKS_VERSION=v0.3.0
-MPV_XCFRAMEWORKS_SHA256SUM=5b576bd76b20607d836ad6faaaeb05aea3df2e2e9a1eb563fc6b2dcab6823687
+MPV_XCFRAMEWORKS_VERSION=v0.3.1
+MPV_XCFRAMEWORKS_SHA256SUM=999047aeaf38d68d474a556f5922708cc671e75135508c35364efa8bacdc4134
 
 MPV_HEADERS_VERSION=v0.35.1
 MPV_HEADERS_SHA256SUM=41df981b7b84e33a2ef4478aaf81d6f4f5c8b9cd2c0d337ac142fc20b387d1a9
@@ -28,7 +28,7 @@ Headers/mpv/*.h: .cache/headers/mpv.tar.gz
 	mkdir -p .cache/xcframeworks
 	rm -f .cache/xcframeworks/*.tmp .cache/xcframeworks/*-ios-universal.tar.gz
 	curl -L \
-		https://github.com/birros/libmpv-build/releases/download/${MPV_XCFRAMEWORKS_VERSION}/libmpv-xcframeworks-${MPV_XCFRAMEWORKS_VERSION}-ios-universal.tar.gz \
+		https://github.com/media-kit/libmpv-darwin-build/releases/download/${MPV_XCFRAMEWORKS_VERSION}/libmpv-xcframeworks-${MPV_XCFRAMEWORKS_VERSION}-ios-universal.tar.gz \
 		-o .cache/xcframeworks/libmpv.tar.gz.tmp
 	shasum -a 256 -c <<< '${MPV_XCFRAMEWORKS_SHA256SUM}  .cache/xcframeworks/libmpv.tar.gz.tmp'
 	mv .cache/xcframeworks/libmpv.tar.gz.tmp .cache/xcframeworks/libmpv-xcframeworks-${MPV_XCFRAMEWORKS_VERSION}-ios-universal.tar.gz
