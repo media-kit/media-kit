@@ -1,6 +1,6 @@
 # [package:media_kit](https://github.com/alexmercerind/media_kit)
 
-A complete video & audio playback for Flutter & Dart. Performant, stable, feature-proof & modular.
+A complete video & audio playback library for Flutter & Dart. Performant, stable, feature-proof & modular.
 
 [![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml)
 
@@ -56,16 +56,15 @@ Add in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.2
+  media_kit: ^0.0.3
   # For video rendering.
   media_kit_video: ^0.0.2
   # Enables support for higher number of concurrent instances. Optional.
   media_kit_native_event_loop: ^1.0.1
   # Pick based on your requirements / platform:
   media_kit_libs_windows_video: ^1.0.1          # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.1          # Windows package for audio (only) native libraries.
-  media_kit_libs_ios_video: ^1.0.0              # iOS package for video (& audio) native libraries.
-  media_kit_libs_macos_video: ^1.0.0            # macOS package for video (& audio) native libraries.
+  media_kit_libs_ios_video: ^1.0.1              # iOS package for video (& audio) native libraries.
+  media_kit_libs_macos_video: ^1.0.1            # macOS package for video (& audio) native libraries.
   media_kit_libs_linux: ^1.0.1                  # Linux dependency package.
 ```
 
@@ -77,7 +76,8 @@ dependencies:
 | Linux    | Ready | Ready |
 | macOS    | Ready | Ready |
 | iOS      | Ready | Ready |
-| Android  | Soon  | Soon  |
+| Android  | [WIP](https://github.com/alexmercerind/media_kit/pull/100)   | [WIP](https://github.com/alexmercerind/media_kit/pull/100)   |
+| Web      | WIP   | WIP   |
 
 ## Guide
 
@@ -320,7 +320,7 @@ dependencies:
 
 The minimum supported iOS version is 13.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/ios-arm64.ini#L18)).
 
-Also, software rendering is forced in the iOS simulator, due to an incompatibility with OpenGL ES.
+Also, software rendering is forced in the iOS simulator due to an incompatibility with OpenGL ES.
 
 ## Goals
 
@@ -756,7 +756,7 @@ This hardware accelerated video output requires DirectX 11 or higher. Most Windo
 
 </details>
 
-You can visit my [experimentation repository](https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-Direct3D-Interop) to see a minimal example showing OpenGL ES rendering inside Flutter Windows.
+You can visit my [experimentation repository](https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-Direct3D-Interop) to see a minimal example showing OpenGL ES usage in Flutter Windows.
 
 #### Linux
 
@@ -764,20 +764,23 @@ On Flutter Linux, [both OpenGL (H/W) & pixel buffer (S/W) APIs](https://github.c
 
 #### macOS
 
-On macOS the current implementation is based on `libmpv` and can be summarized as follows:
-1. H/W video decoding: mpv option `hwdec` is set to `auto`, does not depend on a pixelBuffer
-2. OpenGL rendering to an OpenGL texture backed by a pixelBuffer interoperable with Metal ([#CVPixelBuffer](https://developer.apple.com/documentation/corevideo/cvpixelbuffer-q2e))
-3. This pixelBuffer is then read by Flutter to display the frame
+On macOS the current implementation is based on [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) and can be summarized as follows:
+1. H/W video decoding: mpv option `hwdec` is set to `auto`, does not depend on a pixel buffer.
+2. OpenGL rendering to an OpenGL texture backed by a pixel buffer, which makes it interoperable with METAL ([CVPixelBuffer](https://developer.apple.com/documentation/corevideo/cvpixelbuffer-q2e))
+
+<!--
 
 Possible improvements :
-- render directly to a Metal texture:
-  - use ANGLE to not depend on the host OpenGL implementation, deprecated by Apple
-  - use a future Metal API natively developed by mpv
-- share the Metal texture between `media_kit_video` and Flutter, without using a pixelBuffer
+- Render directly to METAL texture:
+  - Use ANGLE to not depend on the host OpenGL implementation, deprecated by Apple.
+  - Use a future METAL API natively developed by mpv.
+- Share the METAL texture between `media_kit_video` and Flutter, without using a pixel buffer.
+
+-->
 
 #### iOS
 
-On iOS, the implementation shares much of its code and logic with macOS, the main difference is the use of OpenGL ES instead of OpenGL.
+iOS shares much of it's implementation with macOS. Only difference is that OpenGL ES is used instead of OpenGL.
 
 ## License
 
