@@ -25,7 +25,7 @@ typedef FnDart = void Function(Pointer<Utf8> asset, Pointer<Utf8> result);
 /// This class is used to assets bundled with the application on Android.
 /// The implementation depends on the mediakitandroidhelper library.
 ///
-/// Learn more: https://github.com/alexmercerind/MediaKitAndroidHelper
+/// Learn more: https://github.com/media-kit/media-kit-android-helper
 ///
 /// {@endtemplate}
 class AndroidAssetLoader {
@@ -51,12 +51,12 @@ class AndroidAssetLoader {
   /// Copies an asset bundled with the application to the external files directory & returns it absolute path.
   String load(String asset) {
     final name = 'flutter_assets/$asset'.toNativeUtf8();
-    final result = calloc<Uint8>(4096);
+    final result = List.generate(4096, (index) => ' ').join('').toNativeUtf8();
     _mediaKitAndroidHelperCopyAssetToExternalFilesDir?.call(
       name.cast(),
       result.cast(),
     );
-    final path = result.cast<Utf8>().toDartString();
+    final path = result.cast<Utf8>().toDartString().trim();
     calloc.free(name);
     calloc.free(result);
     return path;
