@@ -58,13 +58,13 @@ Add in your `pubspec.yaml`:
 dependencies:
   media_kit: ^0.0.3
   # For video rendering.
-  media_kit_video: ^0.0.3
+  media_kit_video: ^0.0.4
   # Enables support for higher number of concurrent instances. Optional.
   media_kit_native_event_loop: ^1.0.2
   # Pick based on your requirements / platform:
   media_kit_libs_windows_video: ^1.0.1          # Windows package for video (& audio) native libraries.
-  media_kit_libs_ios_video: ^1.0.1              # iOS package for video (& audio) native libraries.
-  media_kit_libs_macos_video: ^1.0.1            # macOS package for video (& audio) native libraries.
+  media_kit_libs_ios_video: ^1.0.2              # iOS package for video (& audio) native libraries.
+  media_kit_libs_macos_video: ^1.0.2            # macOS package for video (& audio) native libraries.
   media_kit_libs_linux: ^1.0.1                  # Linux dependency package.
 ```
 
@@ -284,7 +284,7 @@ Everything ready. Just add one of the following packages to your `pubspec.yaml`.
 ```yaml
 dependencies:
   ...
-  media_kit_libs_macos_video: ^1.0.0       # macOS package for video (& audio) native libraries.
+  media_kit_libs_macos_video: ^1.0.2       # macOS package for video (& audio) native libraries.
 ```
 
 The minimum supported macOS version is 11.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/macos-arm64.ini#L18)).
@@ -315,7 +315,7 @@ Everything ready. Just add one of the following packages to your `pubspec.yaml`.
 ```yaml
 dependencies:
   ...
-  media_kit_libs_ios_video: ^1.0.0         # iOS package for video (& audio) native libraries.
+  media_kit_libs_ios_video: ^1.0.2         # iOS package for video (& audio) native libraries.
 ```
 
 The minimum supported iOS version is 13.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/ios-arm64.ini#L18)).

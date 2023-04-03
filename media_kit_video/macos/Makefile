@@ -13,12 +13,12 @@ MPV_HEADERS_SHA256SUM=41df981b7b84e33a2ef4478aaf81d6f4f5c8b9cd2c0d337ac142fc20b3
 	mv .cache/headers/mpv.tar.gz.tmp .cache/headers/mpv-${MPV_HEADERS_VERSION}.tar.gz
 	touch .cache/headers/mpv-${MPV_HEADERS_VERSION}.tar.gz
 
-
 .cache/headers/mpv.tar.gz: .cache/headers/mpv-${MPV_HEADERS_VERSION}.tar.gz
 	rm -f .cache/headers/mpv.tar.gz
 	ln -s mpv-${MPV_HEADERS_VERSION}.tar.gz .cache/headers/mpv.tar.gz
 
 Headers/mpv/*.h: .cache/headers/mpv.tar.gz
+	mkdir -p Headers/mpv
 	tar -xvf .cache/headers/mpv.tar.gz --strip-components 2 -C Headers/mpv/ 'mpv-*/libmpv/*.h'
 	touch Headers/mpv/*.h
 

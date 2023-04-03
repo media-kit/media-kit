@@ -1,3 +1,7 @@
+## 0.0.3+3
+
+- docs: document updated `media_kit_video`, `media_kit_libs_macos_video` and `media_kit_libs_ios_video` 
+
 ## 0.0.3+2
 
 - docs: document updated `media_kit_video`
