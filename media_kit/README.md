@@ -298,6 +298,8 @@ dependencies:
 
 The minimum supported iOS version is 13.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/ios-arm64.ini#L18)).
 
+Also, software rendering is forced in the iOS simulator, due to an incompatibility with OpenGL ES.
+
 ## Goals
 
 The primary goal of [package:media_kit](https://github.com/alexmercerind/media_kit) is to become a **strong, performant, stable, feature-proof & modular** media playback library for Flutter. The idea is to support both **audio & video playback**.
