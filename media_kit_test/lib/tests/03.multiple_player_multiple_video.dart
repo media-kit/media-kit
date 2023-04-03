@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:media_kit_test/common/widgets.dart';
+import '../common/sources.dart';
+import '../common/widgets.dart';
 
 class MultiplePlayerMultipleVideoScreen extends StatefulWidget {
   const MultiplePlayerMultipleVideoScreen({Key? key}) : super(key: key);
@@ -42,19 +43,10 @@ class _MultiplePlayerMultipleVideoScreenState
   }
 
   List<Widget> getAssetsListForIndex(BuildContext context, int i) => [
-        const Padding(
-          padding: EdgeInsets.only(
-            left: 16.0,
-            top: 16.0,
-            bottom: 16.0,
-          ),
-          child: Text('Asset Videos:'),
-        ),
-        const Divider(height: 1.0, thickness: 1.0),
-        for (int j = 0; j < 5; j++)
+        for (int j = 0; j < sources.length; j++)
           ListTile(
             title: Text(
-              'video_$j.mp4',
+              'Video $i',
               style: const TextStyle(
                 fontSize: 14.0,
               ),
@@ -62,7 +54,7 @@ class _MultiplePlayerMultipleVideoScreenState
               overflow: TextOverflow.ellipsis,
             ),
             onTap: () {
-              players[i].open(Media('asset://assets/video_$j.mp4'));
+              players[i].open(Media(sources[j]));
             },
           ),
       ];

@@ -4,7 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:media_kit_test/common/widgets.dart';
+import '../common/sources.dart';
+import '../common/widgets.dart';
 
 class SinglePlayerSingleVideoScreen extends StatefulWidget {
   const SinglePlayerSingleVideoScreen({Key? key}) : super(key: key);
@@ -42,20 +43,11 @@ class _SinglePlayerSingleVideoScreenState
     super.dispose();
   }
 
-  List<Widget> get assets => [
-        const Padding(
-          padding: EdgeInsets.only(
-            left: 16.0,
-            top: 16.0,
-            bottom: 16.0,
-          ),
-          child: Text('Asset Videos:'),
-        ),
-        const Divider(height: 1.0, thickness: 1.0),
-        for (int i = 0; i < 5; i++)
+  List<Widget> get items => [
+        for (int i = 0; i < sources.length; i++)
           ListTile(
             title: Text(
-              'video_$i.mp4',
+              'Video $i',
               style: const TextStyle(
                 fontSize: 14.0,
               ),
@@ -63,7 +55,7 @@ class _SinglePlayerSingleVideoScreenState
               overflow: TextOverflow.ellipsis,
             ),
             onTap: () {
-              player.open(Media('asset://assets/video_$i.mp4'));
+              player.open(Media(sources[i]));
             },
           ),
       ];
@@ -135,7 +127,7 @@ class _SinglePlayerSingleVideoScreenState
                   Expanded(
                     flex: 1,
                     child: ListView(
-                      children: [...assets],
+                      children: items,
                     ),
                   ),
                 ],
@@ -151,7 +143,7 @@ class _SinglePlayerSingleVideoScreenState
                   SeekBar(player: player),
                   const SizedBox(height: 32.0),
                   const Divider(height: 1.0, thickness: 1.0),
-                  ...assets,
+                  ...items,
                 ],
               ),
       ),

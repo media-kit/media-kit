@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../common/sources.dart';
+
 class StressTestScreen extends StatefulWidget {
   const StressTestScreen({Key? key}) : super(key: key);
 
@@ -30,7 +32,7 @@ class _StressTestScreenState extends State<StressTestScreen> {
         }
         for (int i = 0; i < count; i++) {
           await players[i].open(
-            Media('asset://assets/video_${i % 5}.mp4'),
+            Media(sources[i % sources.length]),
             play: true,
           );
           await players[i].setPlaylistMode(PlaylistMode.loop);

@@ -7,12 +7,18 @@ import 'tests/04.tabs_test.dart';
 import 'tests/05.stress_test.dart';
 import 'tests/06.paint_first_frame.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'common/sources.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MyApp(DownloadingScreen()));
+  await prepareSources();
+  runApp(const MyApp(PrimaryScreen()));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Widget child;
+  const MyApp(this.child, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,17 +26,21 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
+            TargetPlatform.windows: OpenUpwardsPageTransitionsBuilder(),
             TargetPlatform.linux: OpenUpwardsPageTransitionsBuilder(),
+            TargetPlatform.macOS: OpenUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: OpenUpwardsPageTransitionsBuilder(),
+            TargetPlatform.android: OpenUpwardsPageTransitionsBuilder(),
           },
         ),
       ),
-      home: const HomeScreen(),
+      home: child,
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class PrimaryScreen extends StatelessWidget {
+  const PrimaryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +139,25 @@ class HomeScreen extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class DownloadingScreen extends StatelessWidget {
+  const DownloadingScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('package:media_kit'),
+      ),
+      body: const Center(
+        child: Text(
+          'Downloading sample videos...',
+          style: TextStyle(fontSize: 14.0),
+        ),
       ),
     );
   }

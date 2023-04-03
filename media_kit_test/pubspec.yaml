@@ -27,7 +27,10 @@ dependencies:
   media_kit_libs_ios_video:
     path: ../media_kit_libs_ios_video
 
+  path: ^1.8.3
+  http: ^0.13.5
   file_picker: ^5.2.4
+  path_provider: ^2.0.14
 
 dependency_overrides:
   media_kit:
@@ -52,11 +55,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  # Assets for testing video playback.
-  assets:
-    - assets/video_0.mp4
-    - assets/video_1.mp4
-    - assets/video_2.mp4
-    - assets/video_3.mp4
-    - assets/video_4.mp4
