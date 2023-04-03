@@ -1,3 +1,7 @@
+## 0.0.3+1
+
+- docs: document updated `media_Kit_native_event_loop`
+
 ## 0.0.3
 
 - fix: unable to publish iOS to AppStore
