@@ -25,10 +25,10 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
-  media_kit_libs_macos_video: eba6dc4ba905a165b5c9ed2f3672040bcfdbf677
-  media_kit_native_event_loop: f3a2ccfb1a5314141c206a6f78e40959ce399d1e
-  media_kit_video: aa97598702d200610e513705a4c0f00b76fb3dfc
+  media_kit_libs_macos_video: d8f5b02cc1ab6f26dc3880e8367fd8ccaea73751
+  media_kit_native_event_loop: db47f732bacd877aaaf78c38c4fa8cdd7127db3f
+  media_kit_video: 4e7996581172a6b1dfae7deda317c4036d0c458c
 
-PODFILE CHECKSUM: 353c8bcc5d5b0994e508d035b5431cfe18c1dea7
+PODFILE CHECKSUM: 8d40c19d3cbdb380d870685c3a564c989f1efa52
 
 COCOAPODS: 1.12.0
