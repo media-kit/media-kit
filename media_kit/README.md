@@ -265,7 +265,7 @@ dependencies:
   media_kit_libs_macos_video: ^1.0.0       # macOS package for video (& audio) native libraries.
 ```
 
-The minimum supported macOS version is 10.14 ([#libmpv-build](https://github.com/birros/libmpv-build/blob/v0.1.1/cross-files/darwin-arm64.ini#L18)).
+The minimum supported macOS version is 11.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/macos-arm64.ini#L18)).
 
 Also, during the build phase, the following warnings are not critical and cannot be silenced:
 
@@ -296,7 +296,7 @@ dependencies:
   media_kit_libs_ios_video: ^1.0.0         # iOS package for video (& audio) native libraries.
 ```
 
-The minimum supported iOS version is 13.0 ([#libmpv-build](https://github.com/birros/libmpv-build/blob/v0.1.1/cross-files/ios-arm64.ini#L18)).
+The minimum supported iOS version is 13.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/ios-arm64.ini#L18)).
 
 ## Goals
 
