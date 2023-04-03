@@ -30,10 +30,10 @@ abstract class NativeLibrary {
         'libmpv.so',
       ],
       'macos': [
-        'libmpv.dylib',
+        'Mpv.framework/Mpv',
       ],
       'ios': [
-        'libmpv.dylib',
+        'Mpv.framework/Mpv',
       ],
       'android': [
         'libmpv.so',
@@ -52,9 +52,9 @@ abstract class NativeLibrary {
           'linux':
               'Cannot find libmpv at the usual places. Depending upon your distribution, you can install the libmpv package to make shared library available globally. On Debian or Ubuntu based systems, you can install it with: apt install libmpv-dev.',
           'macos':
-              'Cannot find libmpv.dylib. Please ensure it\'s presence in the Frameworks folder of the application.',
+              'Cannot find Mpv.framework/Mpv. Please ensure it\'s presence in the Frameworks folder of the application.',
           'ios':
-              'Cannot find libmpv.dylib. Please ensure it\'s presence in the Frameworks folder of the application.',
+              'Cannot find Mpv.framework/Mpv. Please ensure it\'s presence in the Frameworks folder of the application.',
           'android':
               'Cannot find libmpv.so. Please ensure it\'s presence in the APK.',
         }[Platform.operatingSystem]!,
