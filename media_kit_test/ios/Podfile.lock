@@ -76,9 +76,9 @@ SPEC CHECKSUMS:
   DKPhotoGallery: fdfad5125a9fdda9cc57df834d49df790dbb4179
   file_picker: ce3938a0df3cc1ef404671531facef740d03f920
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
-  media_kit_libs_ios_video: 6603538c9bf008a86dd723bff9550b4a7c94eb44
-  media_kit_native_event_loop: 4dda0451c7145f9a90c077f3c42af677384ab242
-  media_kit_video: 390da890cd7fee8be4c3a25a24b5e220acdc2fc7
+  media_kit_libs_ios_video: 045418d93c495fb3eaa7b8263839d991c206fa14
+  media_kit_native_event_loop: 0d273668d0ad6011258e91db0e0301370a721195
+  media_kit_video: 01504b1f7a2b4d11ebcf8637cd8919a4ed2452ed
   SDWebImage: fd7e1a22f00303e058058278639bf6196ee431fe
   SwiftyGif: 93a1cc87bf3a51916001cf8f3d63835fb64c819f
 
