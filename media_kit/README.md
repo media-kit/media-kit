@@ -270,6 +270,27 @@ dependencies:
   media_kit_libs_macos_video: ^1.0.0       # macOS package for video (& audio) native libraries.
 ```
 
+The minimum supported macOS version is 11.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/macos-arm64.ini#L18)).
+
+Also, during the build phase, the following warnings are not critical and cannot be silenced:
+
+```log
+#import "Headers/media_kit_video-Swift.h"
+        ^
+/path/to/media_kit/media_kit_test/build/macos/Build/Products/Debug/media_kit_video/media_kit_video.framework/Headers/media_kit_video-Swift.h:270:31: warning: 'objc_ownership' only applies to Objective-C object or block pointer types; type here is 'CVPixelBufferRef' (aka 'struct __CVBuffer *')
+- (CVPixelBufferRef _Nullable __unsafe_unretained)copyPixelBuffer SWIFT_WARN_UNUSED_RESULT;
+```
+
+```log
+# 1 "<command line>" 1
+ ^
+<command line>:20:9: warning: 'POD_CONFIGURATION_DEBUG' macro redefined
+#define POD_CONFIGURATION_DEBUG 1 DEBUG=1 
+        ^
+#define POD_CONFIGURATION_DEBUG 1
+        ^
+```
+
 ### iOS
 
 Everything ready. Just add one of the following packages to your `pubspec.yaml`.
@@ -279,6 +300,10 @@ dependencies:
   ...
   media_kit_libs_ios_video: ^1.0.0         # iOS package for video (& audio) native libraries.
 ```
+
+The minimum supported iOS version is 13.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/ios-arm64.ini#L18)).
+
+Also, software rendering is forced in the iOS simulator, due to an incompatibility with OpenGL ES.
 
 ## Goals
 
