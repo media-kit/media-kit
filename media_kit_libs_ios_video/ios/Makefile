@@ -46,6 +46,5 @@ Frameworks/*.xcframework: .cache/xcframeworks/libmpv-xcframeworks-ios-universal.
 .PHONY: clean
 clean:
 	rm -rf .cache
-	rm -rf .tmp
 	rm -f ./Headers/mpv/*.h
 	rm -rf ./Frameworks/*.xcframework
