@@ -1,6 +1,6 @@
 # [package:media_kit](https://github.com/alexmercerind/media_kit)
 
-A complete video & audio playback for Flutter & Dart. Performant, stable, feature-proof & modular.
+A complete video & audio playback library for Flutter & Dart. Performant, stable, feature-proof & modular.
 
 [![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml)
 
@@ -39,16 +39,15 @@ Add in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.2
+  media_kit: ^0.0.3
   # For video rendering.
   media_kit_video: ^0.0.2
   # Enables support for higher number of concurrent instances. Optional.
   media_kit_native_event_loop: ^1.0.1
   # Pick based on your requirements / platform:
   media_kit_libs_windows_video: ^1.0.1          # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.1          # Windows package for audio (only) native libraries.
-  media_kit_libs_ios_video: ^1.0.0              # iOS package for video (& audio) native libraries.
-  media_kit_libs_macos_video: ^1.0.0            # macOS package for video (& audio) native libraries.
+  media_kit_libs_ios_video: ^1.0.1              # iOS package for video (& audio) native libraries.
+  media_kit_libs_macos_video: ^1.0.1            # macOS package for video (& audio) native libraries.
   media_kit_libs_linux: ^1.0.1                  # Linux dependency package.
 ```
 
@@ -60,7 +59,8 @@ dependencies:
 | Linux    | Ready | Ready |
 | macOS    | Ready | Ready |
 | iOS      | Ready | Ready |
-| Android  | Soon  | Soon  |
+| Android  | [WIP](https://github.com/alexmercerind/media_kit/pull/100)   | [WIP](https://github.com/alexmercerind/media_kit/pull/100)   |
+| Web      | WIP   | WIP   |
 
 ## Docs
 
@@ -303,7 +303,7 @@ dependencies:
 
 The minimum supported iOS version is 13.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/ios-arm64.ini#L18)).
 
-Also, software rendering is forced in the iOS simulator, due to an incompatibility with OpenGL ES.
+Also, software rendering is forced in the iOS simulator due to an incompatibility with OpenGL ES.
 
 ## Goals
 

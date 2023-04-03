@@ -76,7 +76,7 @@ dependencies:
 | Linux    | Ready | Ready |
 | macOS    | Ready | Ready |
 | iOS      | Ready | Ready |
-| Android  | WIP   | WIP   |
+| Android  | [WIP](https://github.com/alexmercerind/media_kit/pull/100)   | [WIP](https://github.com/alexmercerind/media_kit/pull/100)   |
 | Web      | WIP   | WIP   |
 
 ## Guide
@@ -320,7 +320,7 @@ dependencies:
 
 The minimum supported iOS version is 13.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/ios-arm64.ini#L18)).
 
-Also, software rendering is forced in the iOS simulator, due to an incompatibility with OpenGL ES.
+Also, software rendering is forced in the iOS simulator due to an incompatibility with OpenGL ES.
 
 ## Goals
 
