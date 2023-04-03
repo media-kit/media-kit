@@ -41,7 +41,7 @@ Add in your `pubspec.yaml`:
 dependencies:
   media_kit: ^0.0.3
   # For video rendering.
-  media_kit_video: ^0.0.2
+  media_kit_video: ^0.0.3
   # Enables support for higher number of concurrent instances. Optional.
   media_kit_native_event_loop: ^1.0.2
   # Pick based on your requirements / platform:
