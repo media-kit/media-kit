@@ -13,13 +13,23 @@
 public class VideoOutput: NSObject {
   public typealias TextureUpdateCallback = (Int64, CGSize) -> Void
 
+  private static let isSimulator: Bool = {
+    let isSim: Bool
+    #if targetEnvironment(simulator)
+      isSim = true
+    #else
+      isSim = false
+    #endif
+    return isSim
+  }()
+
   private let handle: OpaquePointer
   private let width: Int64?
   private let height: Int64?
   private let enableHardwareAcceleration: Bool
   private let registry: FlutterTextureRegistry
   private let textureUpdateCallback: TextureUpdateCallback
-  private let worker: Worker = Worker()
+  private let worker: Worker = .init()
   private var texture: ResizableTextureProtocol!
   private var textureId: Int64 = -1
   private var currentWidth: Int64 = 0
@@ -65,9 +75,19 @@ public class VideoOutput: NSObject {
   }
 
   private func _init() {
+    let enableHardwareAcceleration =
+      VideoOutput.isSimulator ? false : enableHardwareAcceleration
+
     NSLog(
       "VideoOutput: enableHardwareAcceleration: \(enableHardwareAcceleration)"
     )
+
+    if VideoOutput.isSimulator {
+      NSLog(
+        "VideoOutput: warning: hardware rendering is disabled in the iOS simulator, due to an incompatibility with OpenGL ES"
+      )
+    }
+
     if enableHardwareAcceleration {
       texture = SafeResizableTexture(
         TextureHW(
@@ -120,12 +140,12 @@ public class VideoOutput: NSObject {
       return
     }
 
-    if self.disposed {
+    if disposed {
       return
     }
 
-    self.texture.render(size)
-    self.registry.textureFrameAvailable(self.textureId)
+    texture.render(size)
+    registry.textureFrameAvailable(textureId)
   }
 
   private var videoWidth: Int64 {
