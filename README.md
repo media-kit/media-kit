@@ -1,23 +1,20 @@
 # [package:media_kit](https://github.com/alexmercerind/media_kit)
 
-A complete video & audio library for Flutter & Dart.
+A complete video & audio playback library for Flutter & Dart. Performant, stable, feature-proof & modular.
 
 [![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml)
 
 <hr>
 
 <strong>Sponsored with 💖 by</strong>
-<br>
+
 <a href="https://getstream.io/chat/sdk/flutter/?utm_source=alexmercerind_dart&utm_medium=Github_Repo_Content_Ad&utm_content=Developer&utm_campaign=alexmercerind_December2022_FlutterSDK_klmh22" target="_blank">
-
-<picture>
-<source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/28951144/204903234-4a64b63c-2fc2-4eef-be44-d287d27021e5.svg">
-<source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
-<img alt="Stream Chat" width="350" height="auto" src="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
-</picture>
-
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/28951144/204903234-4a64b63c-2fc2-4eef-be44-d287d27021e5.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
+    <img alt="Stream Chat" width="350" height="auto" src="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
+  </picture>
 </a>
-<br>
 
 <h6>
   Rapidly ship in-app messaging with Stream's highly reliable chat infrastructure & feature-rich SDKs, including Flutter!
@@ -29,8 +26,23 @@ A complete video & audio library for Flutter & Dart.
   </a>
 </strong>
 
-<hr>
+<br></br>
 
+<a href="https://ottomatic.io/" target="_blank">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/28951144/228648854-e5d7c557-ee92-47b2-a037-17b447873e1c.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
+    <img alt="Stream Chat" width="350" height="auto" src="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
+  </picture>
+</a>
+<br></br>
+<strong>
+  <a href="https://ottomatic.io/" target="_blank">
+  Clever Apps for Film Professionals
+  </a>
+</strong>
+
+<hr>
 
 https://user-images.githubusercontent.com/28951144/223529386-c4039cf1-3ead-49c2-bcc7-5c5f8541958a.mp4
 
@@ -44,17 +56,16 @@ Add in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.1
+  media_kit: ^0.0.3
   # For video rendering.
-  media_kit_video: ^0.0.1
-  # For enabling support for more than 8 simultaneous players.
-  media_kit_native_event_loop: ^1.0.0
+  media_kit_video: ^0.0.4
+  # Enables support for higher number of concurrent instances. Optional.
+  media_kit_native_event_loop: ^1.0.2
   # Pick based on your requirements / platform:
-  media_kit_libs_windows_video: ^1.0.0          # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.0          # Windows package for audio (only) native libraries.
-  media_kit_libs_ios_video: ^1.0.0              # iOS package for video (& audio) native libraries.
-  media_kit_libs_macos_video: ^1.0.0            # macOS package for video (& audio) native libraries.
-  media_kit_libs_linux: ^1.0.0                  # Linux dependency package.
+  media_kit_libs_windows_video: ^1.0.1          # Windows package for video (& audio) native libraries.
+  media_kit_libs_ios_video: ^1.0.2              # iOS package for video (& audio) native libraries.
+  media_kit_libs_macos_video: ^1.0.2            # macOS package for video (& audio) native libraries.
+  media_kit_libs_linux: ^1.0.1                  # Linux dependency package.
 ```
 
 ## Platforms
@@ -65,7 +76,8 @@ dependencies:
 | Linux    | Ready | Ready |
 | macOS    | Ready | Ready |
 | iOS      | Ready | Ready |
-| Android  | Soon  | Soon  |
+| Android  | [WIP](https://github.com/alexmercerind/media_kit/pull/100)   | [WIP](https://github.com/alexmercerind/media_kit/pull/100)   |
+| Web      | WIP   | WIP   |
 
 ## Guide
 
@@ -94,11 +106,11 @@ player.streams.audioDevices.listen((e) => print(e));
 
 ...
 
+await player.open(Media('file:///C:/Users/Hitesh/Music/Sample.mp3'));
+await player.open(Media('file:///C:/Users/Hitesh/Video/Sample.mkv'));
 await player.open(
   Playlist(
     [
-      Media('file:///C:/Users/Hitesh/Music/Sample.mp3'),
-      Media('file:///C:/Users/Hitesh/Video/Sample.mkv'),
       Media('https://www.example.com/sample.mp4'),
       Media('rtsp://www.example.com/live'),
     ],
@@ -245,7 +257,7 @@ Everything ready. Just add one of the following packages to your `pubspec.yaml`.
 dependencies:
   ...
   media_kit_libs_windows_video: ^1.0.0       # Windows package for video (& audio) native libraries.
-  media_kit_libs_windows_audio: ^1.0.0       # Windows package for audio (only) native libraries.
+  media_kit_libs_windows_audio: ^1.0.1       # Windows package for audio (only) native libraries.
 ```
 
 ### Linux
@@ -265,11 +277,54 @@ There are other ways to bundle these within your app package e.g. within Snap or
 - [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
 - [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/\_packaging)
 
+### macOS
+
+Everything ready. Just add one of the following packages to your `pubspec.yaml`.
+
+```yaml
+dependencies:
+  ...
+  media_kit_libs_macos_video: ^1.0.2       # macOS package for video (& audio) native libraries.
+```
+
+The minimum supported macOS version is 11.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/macos-arm64.ini#L18)).
+
+Also, during the build phase, the following warnings are not critical and cannot be silenced:
+
+```log
+#import "Headers/media_kit_video-Swift.h"
+        ^
+/path/to/media_kit/media_kit_test/build/macos/Build/Products/Debug/media_kit_video/media_kit_video.framework/Headers/media_kit_video-Swift.h:270:31: warning: 'objc_ownership' only applies to Objective-C object or block pointer types; type here is 'CVPixelBufferRef' (aka 'struct __CVBuffer *')
+- (CVPixelBufferRef _Nullable __unsafe_unretained)copyPixelBuffer SWIFT_WARN_UNUSED_RESULT;
+```
+
+```log
+# 1 "<command line>" 1
+ ^
+<command line>:20:9: warning: 'POD_CONFIGURATION_DEBUG' macro redefined
+#define POD_CONFIGURATION_DEBUG 1 DEBUG=1 
+        ^
+#define POD_CONFIGURATION_DEBUG 1
+        ^
+```
+
+### iOS
+
+Everything ready. Just add one of the following packages to your `pubspec.yaml`.
+
+```yaml
+dependencies:
+  ...
+  media_kit_libs_ios_video: ^1.0.2         # iOS package for video (& audio) native libraries.
+```
+
+The minimum supported iOS version is 13.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/ios-arm64.ini#L18)).
+
+Also, software rendering is forced in the iOS simulator due to an incompatibility with OpenGL ES.
+
 ## Goals
 
-The primary goal of [package:media_kit](https://github.com/alexmercerind/media_kit) is to become a **strong, stable, feature-proof & modular** media playback library for Flutter. The idea is to support both **audio & video playback**.
-
-[package:media_kit](https://github.com/alexmercerind/media_kit) makes rendering [**hardware accelerated video playback**](https://github.com/alexmercerind/dart_vlc/issues/345) possible in Flutter.
+The primary goal of [package:media_kit](https://github.com/alexmercerind/media_kit) is to become a **strong, performant, stable, feature-proof & modular** media playback library for Flutter. The idea is to support both **audio & video playback**.
 
 Since, targetting multiple features at once & bundling redundant native libraries can result in increased bundle size of the application, you can manually select the native libraries you want to bundle, depending upon your use-case. The code is architectured to support multiple platforms & features. Support for more platforms will be added in future.
 
@@ -650,7 +705,11 @@ _TODO: documentation_
 
 ## Implementation
 
-[libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) is used for leveraging audio & video playback.
+[libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) is used for leveraging audio & video playback.  It _seems_ the best possible option since supports a wide variety of audio & video formats, provides hardware acceleration & bundle size is also minimal (select only required decoders etc. in FFmpeg/mpv).
+
+Another major advantage is that large part of implementation (80%+) is shared across platforms using FFI. This makes the behavior of package very-very similar on all supported platforms & makes maintenance easier (since there is less code & most of it within Dart).
+
+Alternative backends may be implemented in future to meet certain demands (& project architecture makes it possible).
 
 ### package:media_kit
 
@@ -662,15 +721,26 @@ A [big limitation with FFI in Dart SDK](https://github.com/dart-lang/sdk/issues/
 
 However, I could easily do this within Dart because [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) offers an "event polling"-like way to listen to events. I got awesome idea to spawn a background [`Isolate`](https://api.flutter.dev/flutter/dart-isolate/Isolate-class.html), where I run the event-loop. I get the memory address of each event and forward it outside the [`Isolate`](https://api.flutter.dev/flutter/dart-isolate/Isolate-class.html) with the help of [`ReceivePort`](https://api.dart.dev/stable/2.18.6/dart-isolate/ReceivePort-class.html), where I finally interpret it using more FFI code. I have explained this in detail within [the in-code comments of initializer.dart, where I had to perform a lot more trickery to get this to work](https://github.com/alexmercerind/media_kit/blob/master/media_kit/lib/src/libmpv/core/initializer.dart).
 
-This solved the issue of events & audio playback within 100% Dart using FFI.
+**Thus, invoking native methods & handling of events etc. could be done within 100% Dart using FFI.** This is enough for audio playback & supports both Flutter SDK & Dart VM. Although event handling works entirely within Dart. Later, it was discovered that going beyond certain number of simultaneous instances caused a deadlock ([dart-lang/sdk#51254](https://github.com/dart-lang/sdk/issues/51254) & [dart-lang/sdk#51261](https://github.com/dart-lang/sdk/issues/51261)), making UI entirely freezed along-side any other Dart code in execution. To deal with this, a new package [package:media_kit_native_event_loop](#packagemedia_kit_native_event_loop) is created. Adding [package:media_kit_native_event_loop](#packagemedia_kit_native_event_loop) to `pubspec.yaml` automatically resolves this issue without any chagnes to code!
 
-However, no such "event-polling" like API is possible for video rendering. It won't be performant to constantly do polling of video frames off a thread & forward frames back to primary thread for rendering. [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) does not have any such API anyway. So, I created new package [`package:media_kit_video`](https://github.com/alexmercerind/media_kit) for specifically offering platform-specific video playback implementation which internally handles Flutter's Texture Registry API & libmpv's OpenGL rendering API. This package only consumes the `mpv_handle*` (which can be shared as primitive `int` value easily) of the instance (created with [package:media_kit](https://github.com/alexmercerind/media_kit) through FFI) to setup a new viewport. Detailed implementation is discussed below.
+However, no such "event-polling" like API is possible for video rendering. So, I best idea seemed to create a new package [`package:media_kit_video`](https://github.com/alexmercerind/media_kit) for specifically offering platform-specific video embedding implementation which internally handles Flutter's Texture Registry API & libmpv's OpenGL rendering API. This package only consumes the `mpv_handle*` (which can be shared as primitive `int` value easily) of the instance (created with [package:media_kit](https://github.com/alexmercerind/media_kit) through FFI) to setup a new viewport. Detailed implementation is discussed below.
+
+### package:media_kit_native_event_loop
+
+> Platform specific threaded event handling for media_kit. Enables support for higher number of concurrent instances.
+
+The package contains a minimal C++ implementation which spawns a detach-ed [`std::thread`](https://en.cppreference.com/w/cpp/thread/thread). This runs the `mpv_wait_event` loop & forwads the events using [`postCObject`](https://api.dart.dev/stable/2.19.6/dart-ffi/NativeApi/postCObject.html), [`SendPort`](https://api.dart.dev/stable/2.19.6/dart-isolate/SendPort-class.html) & [`ReceivePort`](https://api.dart.dev/stable/2.19.6/dart-isolate/ReceivePort-class.html) to Dart VM. Necessary mutex synchronization also takes place.
+
+[`Isolate`](https://api.flutter.dev/flutter/dart-isolate/Isolate-class.html) based event loop is avoided once this package is added to the project.
 
 ### package:media_kit_video
 
 #### Windows
 
-- [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) gives access to C API for rendering hardware-accelerated video output using OpenGL. See: [render.h](https://github.com/mpv-player/mpv/blob/master/libmpv/render.h) & [render_gl.h](https://github.com/mpv-player/mpv/blob/master/libmpv/render_gl.h).
+- [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) gives access to C API for rendering hardware-accelerated video output using OpenGL.
+  - See:
+    - [render.h](https://github.com/mpv-player/mpv/blob/master/libmpv/render.h)
+    - [render_gl.h](https://github.com/mpv-player/mpv/blob/master/libmpv/render_gl.h)
 - Flutter recently added ability for Windows to [render Direct3D `ID3D11Texture2D` textures](https://github.com/flutter/engine/pull/26840).
 
 The two APIs above are hardware accelerated i.e. GPU backed buffers are used. **This is performant approach, easily capable for rendering 4K 60 FPS videos**, rest depends on the hardware. Since [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) API is OpenGL based & the Texture API in Flutter is Direct3D based, [ANGLE (Almost Native Graphics Layer Engine)](https://github.com/google/angle) is used for interop, which translates the OpenGL ES 2.0 calls into Direct3D.
@@ -686,7 +756,7 @@ This hardware accelerated video output requires DirectX 11 or higher. Most Windo
 
 </details>
 
-You can visit my [experimentation repository](https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-Direct3D-Interop) to see a minimal example showing OpenGL ES rendering inside Flutter Windows.
+You can visit my [experimentation repository](https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-Direct3D-Interop) to see a minimal example showing OpenGL ES usage in Flutter Windows.
 
 #### Linux
 
@@ -694,11 +764,23 @@ On Flutter Linux, [both OpenGL (H/W) & pixel buffer (S/W) APIs](https://github.c
 
 #### macOS
 
-_TODO: documentation_
+On macOS the current implementation is based on [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) and can be summarized as follows:
+1. H/W video decoding: mpv option `hwdec` is set to `auto`, does not depend on a pixel buffer.
+2. OpenGL rendering to an OpenGL texture backed by a pixel buffer, which makes it interoperable with METAL ([CVPixelBuffer](https://developer.apple.com/documentation/corevideo/cvpixelbuffer-q2e))
+
+<!--
+
+Possible improvements :
+- Render directly to METAL texture:
+  - Use ANGLE to not depend on the host OpenGL implementation, deprecated by Apple.
+  - Use a future METAL API natively developed by mpv.
+- Share the METAL texture between `media_kit_video` and Flutter, without using a pixel buffer.
+
+-->
 
 #### iOS
 
-_TODO: documentation_
+iOS shares much of it's implementation with macOS. Only difference is that OpenGL ES is used instead of OpenGL.
 
 ## License
 

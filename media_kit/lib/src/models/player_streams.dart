@@ -11,7 +11,14 @@ import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/player_error.dart';
 
-/// Private class for event handling of [Player].
+/// {@template player_streams}
+///
+/// PlayerStreams
+/// -------------
+///
+/// Event [Stream]s for subscribing to [Player] events.
+///
+/// {@endtemplate}
 class PlayerStreams {
   /// [List] of currently opened [Media]s.
   final Stream<Playlist> playlist;
@@ -66,6 +73,7 @@ class PlayerStreams {
   /// Currently available video, audio and subtitle tracks.
   final Stream<Tracks> tracks;
 
+  /// {@macro player_streams}
   const PlayerStreams(
     this.playlist,
     this.playing,

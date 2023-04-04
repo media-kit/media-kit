@@ -9,6 +9,7 @@ import 'dart:async';
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/player_state.dart';
@@ -31,32 +32,70 @@ import 'package:media_kit/src/libmpv/player.dart' as libmpv;
 /// Call [dispose] to free the allocated resources back to the system.
 ///
 /// ```dart
+/// import 'package:media_kit/media_kit.dart';
+///
 /// final player = Player();
-/// player.open(
+///
+/// ...
+///
+/// player.streams.playlist.listen((e) => print(e));
+/// player.streams.playing.listen((e) => print(e));
+/// player.streams.completed.listen((e) => print(e));
+/// player.streams.position.listen((e) => print(e));
+/// player.streams.duration.listen((e) => print(e));
+/// player.streams.volume.listen((e) => print(e));
+/// player.streams.rate.listen((e) => print(e));
+/// player.streams.pitch.listen((e) => print(e));
+/// player.streams.buffering.listen((e) => print(e));
+/// player.streams.audioParams.listen((e) => print(e));
+/// player.streams.audioBitrate.listen((e) => print(e));
+/// player.streams.audioDevice.listen((e) => print(e));
+/// player.streams.audioDevices.listen((e) => print(e));
+///
+/// ...
+///
+/// await player.open(Media('file:///C:/Users/Hitesh/Music/Sample.mp3'));
+/// await player.open(Media('file:///C:/Users/Hitesh/Video/Sample.mkv'));
+/// await player.open(
 ///   Playlist(
 ///     [
-///       Media('file:///C:/Users/Hitesh/Music/Sample.MP3'),
-///       Media('file:///C:/Users/Hitesh/Video/Sample.MKV'),
 ///       Media('https://www.example.com/sample.mp4'),
 ///       Media('rtsp://www.example.com/live'),
 ///     ],
 ///   ),
 /// );
 ///
-/// player.volume = 100.0;
-/// player.rate = 1.0;
-/// player.pitch = 1.2;
 /// ...
-/// player.setPlaylistMode(PlaylistMode.loop);
+///
+/// await player.play();
+/// await player.pause();
+/// await player.playOrPause();
+/// await player.seek(const Duration(seconds: 10));
+///
 /// ...
-/// player.next();
+///
+/// await player.next();
+/// await player.previous();
+/// await player.jump(2);
+/// await player.add(Media('https://www.example.com/sample.mp4'));
+/// await player.move(0, 2);
+///
 /// ...
-/// player.pause();
+///
+/// await player.setRate(1.0);
+/// await player.setPitch(1.2);
+/// await player.setVolume(50.0);
+/// await player.setShuffle(false);
+/// await player.setPlaylistMode(PlaylistMode.loop);
+/// await player.setAudioDevice(AudioDevice.auto());
+///
 /// ...
-/// player.dispose();
+///
+/// await player.dispose();
 /// ```
 ///
 /// {@endtemplate}
+///
 class Player {
   /// {@macro player}
   Player({
@@ -96,31 +135,34 @@ class Player {
     return platform?.dispose();
   }
 
-  /// Opens a [List] of [Media]s into the [Player] as a playlist.
-  /// Previously opened, added or inserted [Media]s get removed.
-  ///
-  /// Pass [play] as `true` to automatically start playback.
-  /// Otherwise, [Player.play] must be called manually afterwards.
+  /// Opens a [Media] or [Playlist] into the [Player].
+  /// Passing [play] as `true` starts the playback immediately.
   ///
   /// ```dart
-  /// player.open(
+  /// await player.open(Media('asset:///assets/videos/sample.mp4'));
+  /// await player.open(Media('file:///C:/Users/Hitesh/Music/Sample.mp3'));
+  /// await player.open(
   ///   Playlist(
   ///     [
-  ///       Media('https://alexmercerind.github.io/music.mp3'),
-  ///       Media('file://C:/documents/video.mp4'),
+  ///       Media('file:///C:/Users/Hitesh/Music/Sample.mp3'),
+  ///       Media('file:///C:/Users/Hitesh/Video/Sample.mkv'),
+  ///       Media('https://www.example.com/sample.mp4'),
+  ///       Media('rtsp://www.example.com/live'),
   ///     ],
   ///   ),
+  ///   play: true,
   /// );
   /// ```
+  ///
   FutureOr<void> open(
-    Playlist playlist, {
+    Playable playable, {
     bool play = true,
-    bool evictCache = true,
+    bool evictExtrasCache = true,
   }) {
     return platform?.open(
-      playlist,
+      playable,
       play: play,
-      evictCache: evictCache,
+      evictExtrasCache: evictExtrasCache,
     );
   }
 
@@ -160,14 +202,8 @@ class Player {
   }
 
   /// Jumps to specified [Media]'s index in the [Player]'s playlist.
-  FutureOr<void> jump(
-    int index, {
-    bool open = false,
-  }) {
-    return platform?.jump(
-      index,
-      open: open,
-    );
+  FutureOr<void> jump(int index) {
+    return platform?.jump(index);
   }
 
   /// Moves the playlist [Media] at [from], so that it takes the place of the [Media] [to].

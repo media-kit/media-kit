@@ -1,6 +1,10 @@
 # [package:media_kit_libs_macos_video](https://github.com/alexmercerind/media_kit)
 
-macOS dependency package for [`package:media_kit`](https://github.com/alexmercerind/media_kit).
+macOS package providing video (& audio) native libraries for [`package:media_kit`](https://github.com/alexmercerind/media_kit).
+
+Visit [birros/libmpv-build@`main`](https://github.com/birros/libmpv-build/tree/main) for descriptive details.
+
+Thanks to [Julien Muret](https://github.com/birros) for libmpv & FFmpeg builds for macOS.
 
 ## Support
 

@@ -14,6 +14,7 @@ import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_error.dart';
 import 'package:media_kit/src/models/player_log.dart';
@@ -28,7 +29,8 @@ import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 /// Player
 /// ------
 ///
-/// Compatiblity has been tested with libmpv 0.28.0 or higher. The recommended version is 0.33.0 or higher.
+/// Compatiblity has been tested with libmpv 0.28.0 & higher.
+/// Recommended libmpv version is 0.33.0 & higher.
 ///
 /// {@endtemplate}
 class Player extends PlatformPlayer {
@@ -53,149 +55,164 @@ class Player extends PlatformPlayer {
     super.dispose();
   }
 
-  /// Opens a [List] of [Media]s into the [Player] as a playlist.
-  /// Previously opened, added or inserted [Media]s get removed.
-  ///
-  /// Pass [play] as `true` to automatically start playback.
-  /// Otherwise, [Player.play] must be called manually afterwards.
+  /// Opens a [Media] or [Playlist] into the [Player].
+  /// Passing [play] as `true` starts the playback immediately.
   ///
   /// ```dart
-  /// player.open(
+  /// await player.open(Media('asset:///assets/videos/sample.mp4'));
+  /// await player.open(Media('file:///C:/Users/Hitesh/Music/Sample.mp3'));
+  /// await player.open(
   ///   Playlist(
   ///     [
-  ///       Media('https://alexmercerind.github.io/music.mp3'),
-  ///       Media('file://C:/documents/video.mp4'),
+  ///       Media('file:///C:/Users/Hitesh/Music/Sample.mp3'),
+  ///       Media('file:///C:/Users/Hitesh/Video/Sample.mkv'),
+  ///       Media('https://www.example.com/sample.mp4'),
+  ///       Media('rtsp://www.example.com/live'),
   ///     ],
   ///   ),
+  ///   play: true,
   /// );
   /// ```
+  ///
   @override
   Future<void> open(
-    Playlist playlist, {
+    Playable playable, {
     bool play = true,
-    bool evictCache = true,
+    bool evictExtrasCache = true,
   }) async {
-    if (evictCache) {
-      // Clean-up existing cached [medias].
+    final ctx = await _handle.future;
+
+    final int index;
+    final playlist = <Media>[];
+    if (playable is Media) {
+      index = 0;
+      playlist.add(playable);
+    } else if (playable is Playlist) {
+      index = playable.index;
+      playlist.addAll(playable.medias);
+    } else {
+      throw ArgumentError.value(
+        playable,
+        'playable',
+        'Must be of type [Media] or [Playlist].',
+      );
+    }
+
+    if (evictExtrasCache) {
+      // Clean-up previous extras cache.
       medias.clear();
       bitrates.clear();
-      // Restore current playlist.
-      for (final media in playlist.medias) {
+      // Restore extras in currently added playlist.
+      for (final media in playlist) {
         medias[media.uri] = media;
-        medias[Media.getCleanedURI(media.uri)] = media;
       }
     }
-    final ctx = await _handle.future;
-    // Clean-up existing playlist & change currently playing libmpv index to `none`.
-    // This causes playback to stop & player to enter `idle` state.
+
+    // Clean-up existing playlist & change currently playing libmpv index to none.
+    // This causes playback to stop & player to enter the idle state.
     final commands = [
-      'stop'.toNativeUtf8(),
-      'playlist-clear'.toNativeUtf8(),
-      'playlist-play-index none'.toNativeUtf8(),
+      'stop',
+      'playlist-play-index none',
+      'playlist-clear',
     ];
     for (final command in commands) {
+      final args = command.toNativeUtf8();
       _libmpv?.mpv_command_string(
         ctx,
-        command.cast(),
+        args.cast(),
       );
-      calloc.free(command);
+      calloc.free(args);
     }
-    await _unpause();
-    for (final media in playlist.medias) {
+
+    // Enter the pause state.
+    await pause();
+
+    _allowPlayingStateChange = false;
+
+    for (int i = 0; i < playlist.length; i++) {
       await _command(
         [
           'loadfile',
-          media.uri,
-          'append',
+          playlist[i].uri,
+          if (index == 0 && i == 0) 'replace',
+          if (index == 0 && i != 0) 'append',
+          if (index > 0 && i == index) 'append-play',
+          if (index > 0 && i != index) 'append',
         ],
       );
     }
-    // Even though `replace` parameter in `loadfile` automatically causes the
-    // [Media] to play but in certain cases like, where a [Media] is paused & then
-    // new [Media] is [Player.open]ed it causes [Media] to not starting playing
-    // automatically.
-    // Thanks to @DomingoMG for the fix!
-    state = state.copyWith(
-      playlist: playlist,
-      playing: play,
-    );
-    // To wait for the index change [jump] call.
+
+    // Update the [PlayerState] & feed the event [Stream].
+    final object = Playlist(playlist, index: index);
+    state = state.copyWith(playlist: object);
     if (!playlistController.isClosed) {
-      playlistController.add(state.playlist);
+      playlistController.add(object);
     }
-    if (!playingController.isClosed) {
-      playingController.add(state.playing);
-    }
-    _isPlaybackEverStarted = false;
+
     if (play) {
-      await jump(
-        playlist.index,
-        open: true,
-      );
+      await playOrPause();
     }
   }
 
   /// Starts playing the [Player].
   @override
   Future<void> play() async {
-    final ctx = await _handle.future;
-    if (!_isPlaybackEverStarted) {
-      _isPlaybackEverStarted = true;
-      final bounds = state.playlist.index < state.playlist.medias.length &&
-          state.playlist.index >= 0;
-      await jump(
-        bounds ? state.playlist.index : 0,
-        open: true,
-      );
-    } else {
-      if (state.playing) return;
-      _isPlaybackEverStarted = true;
-      final name = 'pause'.toNativeUtf8();
-      final flag = calloc<Int8>();
-      flag.value = 0;
-      _libmpv?.mpv_set_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_FLAG,
-        flag.cast(),
-      );
-      calloc.free(name);
-      calloc.free(flag);
+    _allowPlayingStateChange = true;
+    state = state.copyWith(playing: true);
+    if (!playingController.isClosed) {
+      playingController.add(true);
     }
+
+    final ctx = await _handle.future;
+    final name = 'pause'.toNativeUtf8();
+    final value = calloc<Uint8>();
+    _libmpv?.mpv_get_property(
+      ctx,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_FLAG,
+      value.cast(),
+    );
+    if (value.value == 1) {
+      await playOrPause();
+    }
+    calloc.free(name);
+    calloc.free(value);
   }
 
   /// Pauses the [Player].
   @override
   Future<void> pause() async {
-    final ctx = await _handle.future;
-    _isPlaybackEverStarted = true;
+    _allowPlayingStateChange = true;
     state = state.copyWith(playing: false);
+    if (!playingController.isClosed) {
+      playingController.add(false);
+    }
+
+    final ctx = await _handle.future;
     final name = 'pause'.toNativeUtf8();
-    final flag = calloc<Int8>();
-    flag.value = 1;
-    _libmpv?.mpv_set_property(
+    final value = calloc<Uint8>();
+    _libmpv?.mpv_get_property(
       ctx,
       name.cast(),
       generated.mpv_format.MPV_FORMAT_FLAG,
-      flag.cast(),
+      value.cast(),
     );
+    if (value.value == 0) {
+      await playOrPause();
+    }
     calloc.free(name);
-    calloc.free(flag);
+    calloc.free(value);
   }
 
   /// Cycles between [play] & [pause] states of the [Player].
   @override
   Future<void> playOrPause() async {
+    _allowPlayingStateChange = true;
     final ctx = await _handle.future;
-    if (!_isPlaybackEverStarted) {
-      await play();
-      return;
-    }
-    // This condition will occur when [PlaylistMode.none] is set & all playback of a [Playlist] is completed.
-    // Thus, when user presses the play/pause button, we must start playing the [Playlist] from the beginning.
-    // Otherwise the button just freezes.
-    else if (state.completed) {
-      await jump(0, open: true);
+    // This condition will occur when [PlaylistMode.none] is set & last item of the [Playlist] is played.
+    // Thus, when user presses the play/pause button, we must start playing the [Playlist] from the beginning. Otherwise, the button just freezes.
+    if (state.completed) {
+      await jump(0);
       return;
     }
     final command = 'cycle pause'.toNativeUtf8();
@@ -242,69 +259,34 @@ class Player extends PlatformPlayer {
   @override
   Future<void> next() async {
     final ctx = await _handle.future;
-    // Use `mpv_command_string` as `mpv_command` seems
-    // to randomly cause a crash on older libmpv versions.
-    if (_isPlaybackEverStarted && !state.completed) {
-      final next = 'playlist-next'.toNativeUtf8();
-      _libmpv?.mpv_command_string(
-        ctx,
-        next.cast(),
-      );
-      calloc.free(next);
-    } else {
-      await jump(
-        (state.playlist.index + 1).clamp(
-          0,
-          state.playlist.medias.length,
-        ),
-        open: true,
-      );
-    }
-    await _unpause();
+    await play();
+    final command = 'playlist-next'.toNativeUtf8();
+    _libmpv?.mpv_command_string(
+      ctx,
+      command.cast(),
+    );
+    calloc.free(command);
   }
 
   /// Jumps to previous [Media] in the [Player]'s playlist.
   @override
   Future<void> previous() async {
     final ctx = await _handle.future;
-    // Use `mpv_command_string` as `mpv_command` seems
-    // to randomly cause a crash on older libmpv versions.
-    if (_isPlaybackEverStarted && !state.completed) {
-      final next = 'playlist-prev'.toNativeUtf8();
-      _libmpv?.mpv_command_string(
-        ctx,
-        next.cast(),
-      );
-      calloc.free(next);
-    } else {
-      await jump(
-        (state.playlist.index - 1).clamp(
-          0,
-          state.playlist.medias.length,
-        ),
-        open: true,
-      );
-    }
-    await _unpause();
+    await play();
+    final command = 'playlist-prev'.toNativeUtf8();
+    _libmpv?.mpv_command_string(
+      ctx,
+      command.cast(),
+    );
+    calloc.free(command);
   }
 
   /// Jumps to specified [Media]'s index in the [Player]'s playlist.
   @override
-  Future<void> jump(
-    int index, {
-    bool open = false,
-  }) async {
+  Future<void> jump(int index) async {
     final ctx = await _handle.future;
-    _isPlaybackEverStarted = true;
-    state = state.copyWith(
-      playlist: state.playlist.copyWith(
-        index: index,
-      ),
-    );
-    if (!playlistController.isClosed) {
-      playlistController.add(state.playlist);
-    }
-    var name = 'playlist-pos'.toNativeUtf8();
+    await play();
+    final name = 'playlist-pos'.toNativeUtf8();
     final value = calloc<Int64>()..value = index;
     _libmpv?.mpv_set_property(
       ctx,
@@ -313,20 +295,6 @@ class Player extends PlatformPlayer {
       value.cast(),
     );
     calloc.free(name);
-    if (open) {
-      return;
-    }
-    name = 'pause'.toNativeUtf8();
-    final flag = calloc<Int8>();
-    flag.value = 0;
-    _libmpv?.mpv_set_property(
-      ctx,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      flag.cast(),
-    );
-    calloc.free(name);
-    calloc.free(flag);
     calloc.free(value);
   }
 
@@ -351,7 +319,7 @@ class Player extends PlatformPlayer {
     // Raw `mpv_command` calls cause crash on Windows.
     final args = [
       'seek',
-      (duration.inMilliseconds / 1000).toStringAsFixed(4).toString(),
+      (duration.inMilliseconds / 1000).toStringAsFixed(4),
       'absolute',
     ].join(' ').toNativeUtf8();
     _libmpv?.mpv_command_string(
@@ -365,8 +333,8 @@ class Player extends PlatformPlayer {
   @override
   Future<void> setPlaylistMode(PlaylistMode playlistMode) async {
     final ctx = await _handle.future;
-    final loopFile = 'loop-file'.toNativeUtf8();
-    final loopPlaylist = 'loop-playlist'.toNativeUtf8();
+    final file = 'loop-file'.toNativeUtf8();
+    final playlist = 'loop-playlist'.toNativeUtf8();
     final yes = 'yes'.toNativeUtf8();
     final no = 'no'.toNativeUtf8();
     switch (playlistMode) {
@@ -374,12 +342,12 @@ class Player extends PlatformPlayer {
         {
           _libmpv?.mpv_set_property_string(
             ctx,
-            loopFile.cast(),
+            file.cast(),
             no.cast(),
           );
           _libmpv?.mpv_set_property_string(
             ctx,
-            loopPlaylist.cast(),
+            playlist.cast(),
             no.cast(),
           );
           break;
@@ -388,12 +356,12 @@ class Player extends PlatformPlayer {
         {
           _libmpv?.mpv_set_property_string(
             ctx,
-            loopFile.cast(),
+            file.cast(),
             yes.cast(),
           );
           _libmpv?.mpv_set_property_string(
             ctx,
-            loopPlaylist.cast(),
+            playlist.cast(),
             no.cast(),
           );
           break;
@@ -402,12 +370,12 @@ class Player extends PlatformPlayer {
         {
           _libmpv?.mpv_set_property_string(
             ctx,
-            loopFile.cast(),
+            file.cast(),
             no.cast(),
           );
           _libmpv?.mpv_set_property_string(
             ctx,
-            loopPlaylist.cast(),
+            playlist.cast(),
             yes.cast(),
           );
           break;
@@ -415,8 +383,8 @@ class Player extends PlatformPlayer {
       default:
         break;
     }
-    calloc.free(loopFile);
-    calloc.free(loopPlaylist);
+    calloc.free(file);
+    calloc.free(playlist);
     calloc.free(yes);
     calloc.free(no);
   }
@@ -559,10 +527,6 @@ class Player extends PlatformPlayer {
   @override
   Future<void> setShuffle(bool shuffle) async {
     final ctx = await _handle.future;
-    if (!_isPlaybackEverStarted) {
-      await play();
-      return;
-    }
     await _command(
       [
         shuffle ? 'playlist-shuffle' : 'playlist-unshuffle',
@@ -731,7 +695,7 @@ class Player extends PlatformPlayer {
     return pointer.address;
   }
 
-  /// Sets property / option for the internal `libmpv` instance of this [Player].
+  /// Sets property for the internal `libmpv` instance of this [Player].
   /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
   ///
   /// See:
@@ -754,47 +718,42 @@ class Player extends PlatformPlayer {
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
     _error(event.ref.error);
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
-      state = state.copyWith(
-        completed: false,
-      );
-      if (_isPlaybackEverStarted) {
+      if (_allowPlayingStateChange) {
         state = state.copyWith(
           playing: true,
+          completed: false,
         );
-      }
-      if (!completedController.isClosed) {
-        completedController.add(false);
-      }
-      if (!playingController.isClosed && _isPlaybackEverStarted) {
-        playingController.add(true);
+        if (!playingController.isClosed) {
+          playingController.add(true);
+        }
+        if (!completedController.isClosed) {
+          completedController.add(false);
+        }
       }
     }
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
-      // Check for `mpv_end_file_reason.MPV_END_FILE_REASON_EOF` before modifying `state.completed`.
-      // Thanks to @DomingoMG for noticing the bug.
+      // Check for mpv_end_file_reason.MPV_END_FILE_REASON_EOF before modifying state.completed.
       if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
           generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
-        state = state.copyWith(
-          completed: true,
-        );
-        if (_isPlaybackEverStarted) {
+        if (_allowPlayingStateChange) {
           state = state.copyWith(
             playing: false,
+            completed: true,
+            audioBitrate: null,
+            audioParams: const AudioParams(),
           );
-        }
-        if (!completedController.isClosed) {
-          completedController.add(true);
-        }
-        if (!playingController.isClosed && _isPlaybackEverStarted) {
-          playingController.add(false);
-        }
-        if (!audioParamsController.isClosed) {
-          audioParamsController.add(const AudioParams());
-          state = state.copyWith(audioParams: const AudioParams());
-        }
-        if (!audioBitrateController.isClosed) {
-          audioBitrateController.add(null);
-          state = state.copyWith(audioBitrate: null);
+          if (!playingController.isClosed) {
+            playingController.add(false);
+          }
+          if (!completedController.isClosed) {
+            completedController.add(true);
+          }
+          if (!audioBitrateController.isClosed) {
+            audioBitrateController.add(null);
+          }
+          if (!audioParamsController.isClosed) {
+            audioParamsController.add(const AudioParams());
+          }
         }
       }
     }
@@ -803,7 +762,7 @@ class Player extends PlatformPlayer {
       final prop = event.ref.data.cast<generated.mpv_event_property>();
       if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-        if (_isPlaybackEverStarted) {
+        if (_allowPlayingStateChange) {
           final playing = prop.ref.data.cast<Int8>().value != 1;
           state = state.copyWith(playing: playing);
           if (!playingController.isClosed) {
@@ -842,7 +801,7 @@ class Player extends PlatformPlayer {
           final uri = state.playlist.medias[state.playlist.index].uri;
           if (FallbackBitrateHandler.isLocalFLACOrOGGFile(uri)) {
             if (!bitrates.containsKey(uri) ||
-                !bitrates.containsKey(Media.getCleanedURI(uri))) {
+                !bitrates.containsKey(Media.normalizeURI(uri))) {
               bitrates[uri] = await FallbackBitrateHandler.calculateBitrate(
                 uri,
                 duration,
@@ -861,15 +820,13 @@ class Player extends PlatformPlayer {
       if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
         final index = prop.ref.data.cast<Int64>().value;
-        if (_isPlaybackEverStarted) {
-          state = state.copyWith(
-            playlist: state.playlist.copyWith(
-              index: index,
-            ),
-          );
-          if (!playlistController.isClosed) {
-            playlistController.add(state.playlist);
-          }
+        state = state.copyWith(
+          playlist: state.playlist.copyWith(
+            index: index,
+          ),
+        );
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'volume' &&
@@ -947,11 +904,11 @@ class Player extends PlatformPlayer {
           // NOTE: Using manual bitrate calculation for FLAC.
           if (!FallbackBitrateHandler.isLocalFLACOrOGGFile(uri)) {
             if (!bitrates.containsKey(uri) ||
-                !bitrates.containsKey(Media.getCleanedURI(uri))) {
+                !bitrates.containsKey(Media.normalizeURI(uri))) {
               bitrates[uri] = data;
-              bitrates[Media.getCleanedURI(uri)] = data;
+              bitrates[Media.normalizeURI(uri)] = data;
             }
-            final bitrate = bitrates[uri] ?? bitrates[Media.getCleanedURI(uri)];
+            final bitrate = bitrates[uri] ?? bitrates[Media.normalizeURI(uri)];
             if (!audioBitrateController.isClosed &&
                 bitrate != state.audioBitrate) {
               audioBitrateController.add(bitrate);
@@ -1125,6 +1082,53 @@ class Player extends PlatformPlayer {
       configuration.libmpv,
       configuration.events ? _handler : null,
     );
+    // Set:
+    // idle=yes
+    // pause=yes
+    {
+      final name = 'idle'.toNativeUtf8();
+      final value = calloc<Int32>();
+      value.value = 1;
+      _libmpv?.mpv_set_property(
+        result,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+    {
+      final name = 'pause'.toNativeUtf8();
+      final value = calloc<Int32>();
+      value.value = 1;
+      _libmpv?.mpv_set_property(
+        result,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+    // TODO(@alexmercerind):
+    // This causes `MPV_EVENT_END_FILE` to not fire for last playlist item.
+    // Ideally, we want to keep the last video frame visible.
+    // {
+    //   final name = 'keep-open'.toNativeUtf8();
+    //   final value = calloc<Int32>();
+    //   value.value = 1;
+    //   _libmpv?.mpv_set_property(
+    //     result,
+    //     name.cast(),
+    //     generated.mpv_format.MPV_FORMAT_FLAG,
+    //     value.cast(),
+    //   );
+    //   calloc.free(name);
+    //   calloc.free(value);
+    // }
+
+    // Observe the properties to update the state & feed event streams.
     <String, int>{
       'pause': generated.mpv_format.MPV_FORMAT_FLAG,
       'time-pos': generated.mpv_format.MPV_FORMAT_DOUBLE,
@@ -1141,31 +1145,40 @@ class Player extends PlatformPlayer {
       'track-list': generated.mpv_format.MPV_FORMAT_NODE,
     }.forEach(
       (property, format) {
-        final ptr = property.toNativeUtf8();
+        final name = property.toNativeUtf8();
         _libmpv?.mpv_observe_property(
           result,
           0,
-          ptr.cast(),
+          name.cast(),
           format,
         );
-        calloc.free(ptr);
+        calloc.free(name);
       },
     );
+    // Set other properties based on [PlayerConfiguration].
     if (!configuration.osc) {
-      <String, String>{
-        'osc': 'no',
-        'osd-level': '0',
-      }.forEach((property, value) {
-        final ptr = property.toNativeUtf8();
-        final val = value.toNativeUtf8();
+      {
+        final name = 'osc'.toNativeUtf8();
+        final value = 'no'.toNativeUtf8();
         _libmpv?.mpv_set_property_string(
           result,
-          ptr.cast(),
-          val.cast(),
+          name.cast(),
+          value.cast(),
         );
-        calloc.free(ptr);
-        calloc.free(val);
-      });
+        calloc.free(name);
+        calloc.free(value);
+      }
+      {
+        final name = 'osd-level'.toNativeUtf8();
+        final value = '0'.toNativeUtf8();
+        _libmpv?.mpv_set_property_string(
+          result,
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      }
     }
     if (configuration.vid != null) {
       final name = 'vid'.toNativeUtf8();
@@ -1225,17 +1238,8 @@ class Player extends PlatformPlayer {
         calloc.free(minLevel);
       }
     }
-    final name = 'idle'.toNativeUtf8();
-    final value = calloc<Int32>();
-    value.value = 1;
-    _libmpv?.mpv_set_property(
-      result,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      value.cast(),
-    );
-    calloc.free(name);
-    calloc.free(value);
+    // The initialization is complete.
+    // Save the [Pointer<generated.mpv_handle>] & complete the [Future].
     _handle.complete(result);
   }
 
@@ -1274,31 +1278,6 @@ class Player extends PlatformPlayer {
     pointers.forEach(calloc.free);
   }
 
-  Future<void> _unpause() async {
-    final ctx = await _handle.future;
-    // We do not want the player to be in `paused` state before opening a new playlist or jumping to new index.
-    // We are only changing the `pause` property to `false` if it wasn't already `false` because this can cause problems with older libmpv versions.
-    final name = 'pause'.toNativeUtf8();
-    final data = calloc<Bool>();
-    _libmpv?.mpv_get_property(
-      ctx,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      data.cast(),
-    );
-    if (data.value) {
-      data.value = false;
-      _libmpv?.mpv_set_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_FLAG,
-        data.cast(),
-      );
-    }
-    calloc.free(name);
-    calloc.free(data);
-  }
-
   /// Internal generated libmpv C API bindings.
   generated.MPV? _libmpv;
 
@@ -1306,6 +1285,15 @@ class Player extends PlatformPlayer {
   final Completer<Pointer<generated.mpv_handle>> _handle =
       Completer<Pointer<generated.mpv_handle>>();
 
-  /// libmpv API hack, to prevent [state.playing] getting changed due to volume or rate being changed.
-  bool _isPlaybackEverStarted = false;
+  /// A simple flag to prevent changes to [state.playing] due to `loadfile` commands in [open].
+  ///
+  /// By default, `MPV_EVENT_START_FILE` is fired when a new media source is loaded.
+  /// This event modifies the [state.playing] & [streams.playing] to `true`.
+  ///
+  /// However, the [Player] is in paused state before the media source is loaded.
+  /// Thus, [state.playing] should not be changed, unless the user explicitly calls [play] or [playOrPause].
+  ///
+  /// We set [_allowPlayingStateChange] to `false` at the start of [open] to prevent this unwanted change & set it to `true` at the end of [open].
+  /// While [_allowPlayingStateChange] is `false`, any change to [state.playing] & [streams.playing] is ignored.
+  bool _allowPlayingStateChange = false;
 }

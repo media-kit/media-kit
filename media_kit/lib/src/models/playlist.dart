@@ -5,15 +5,36 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'package:media_kit/src/models/media.dart';
+import 'package:media_kit/src/models/playable.dart';
 
+/// {@template playlist}
+///
+/// Playlist
+/// --------
+///
 /// A [Playlist] represents a list of [Media]s & currently playing [index].
-class Playlist {
+/// This may be opened in [Player] for playback.
+///
+/// ```dart
+/// final playable = Playlist(
+///   [
+///     Media('file:///C:/Users/Hitesh/Music/Sample.mp3'),
+///     Media('file:///C:/Users/Hitesh/Video/Sample.mkv'),
+///     Media('https://www.example.com/sample.mp4'),
+///     Media('rtsp://www.example.com/live'),
+///   ],
+/// );
+/// ```
+///
+/// {@endtemplate}
+class Playlist extends Playable {
   /// Currently opened [List] of [Media]s.
   final List<Media> medias;
 
   /// Currently playing [index].
   final int index;
 
+  /// {@macro playlist}
   const Playlist(
     this.medias, {
     this.index = 0,

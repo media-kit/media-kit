@@ -43,6 +43,10 @@ abstract class _Track {
 }
 
 /// {@template video_track}
+///
+/// VideoTrack
+/// ----------
+///
 /// A video available in [Media].
 /// This may be selected for output in [Player].
 /// {@endtemplate}
@@ -61,6 +65,10 @@ class VideoTrack extends _Track {
 }
 
 /// {@template audio_track}
+///
+/// AudioTrack
+/// ----------
+///
 /// An audio available in [Media].
 /// This may be selected for output in [Player].
 /// {@endtemplate}
@@ -79,6 +87,10 @@ class AudioTrack extends _Track {
 }
 
 /// {@template subtitle_track}
+///
+/// SubtitleTrack
+/// -------------
+///
 /// A subtitle available in [Media].
 /// This may be selected for output in [Player].
 /// {@endtemplate}
@@ -99,6 +111,10 @@ class SubtitleTrack extends _Track {
 // For composition in [PlayerState] & [PlayerStreams] classes.
 
 /// {@template track}
+///
+/// Track
+/// -----
+///
 /// Currently selected tracks.
 /// {@endtemplate}
 class Track {
@@ -136,6 +152,10 @@ class Track {
 }
 
 /// {@template tracks}
+///
+/// Tracks
+/// ------
+///
 /// Currently available tracks.
 /// {@endtemplate}
 class Tracks {
