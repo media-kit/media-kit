@@ -64,6 +64,7 @@ class _SinglePlayerSingleVideoScreenState
             ),
             onTap: () {
               player.open(Media('asset://assets/video_$i.mp4'));
+              player.play();
             },
           ),
       ];
