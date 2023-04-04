@@ -183,7 +183,7 @@ class _SeekBarState extends State<SeekBar> {
       children: [
         const SizedBox(width: 48.0),
         IconButton(
-          onPressed: widget.player.playOrPause,
+          onPressed: playing ? widget.player.pause : widget.player.play,
           icon: Icon(
             playing ? Icons.pause : Icons.play_arrow,
           ),

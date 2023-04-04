@@ -150,7 +150,7 @@ class Player extends PlatformPlayer {
     }
 
     if (play) {
-      await playOrPause();
+      await this.play();
     }
   }
 
@@ -164,19 +164,12 @@ class Player extends PlatformPlayer {
     }
 
     final ctx = await _handle.future;
-    final name = 'pause'.toNativeUtf8();
-    final value = calloc<Uint8>();
-    _libmpv?.mpv_get_property(
+    final command = 'set pause no'.toNativeUtf8();
+    _libmpv?.mpv_command_string(
       ctx,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      value.cast(),
+      command.cast(),
     );
-    if (value.value == 1) {
-      await playOrPause();
-    }
-    calloc.free(name);
-    calloc.free(value);
+    calloc.free(command);
   }
 
   /// Pauses the [Player].
@@ -189,19 +182,12 @@ class Player extends PlatformPlayer {
     }
 
     final ctx = await _handle.future;
-    final name = 'pause'.toNativeUtf8();
-    final value = calloc<Uint8>();
-    _libmpv?.mpv_get_property(
+    final command = 'set pause yes'.toNativeUtf8();
+    _libmpv?.mpv_command_string(
       ctx,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      value.cast(),
+      command.cast(),
     );
-    if (value.value == 0) {
-      await playOrPause();
-    }
-    calloc.free(name);
-    calloc.free(value);
+    calloc.free(command);
   }
 
   /// Cycles between [play] & [pause] states of the [Player].
