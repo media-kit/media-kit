@@ -1,3 +1,7 @@
+## 1.0.2
+
+- fix: use `mkdir` instead of `.gitkeep`
+
 ## 1.0.1
 
 - fix: unable to publish iOS to AppStore

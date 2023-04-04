@@ -21,6 +21,7 @@ MPV_HEADERS_SHA256SUM=41df981b7b84e33a2ef4478aaf81d6f4f5c8b9cd2c0d337ac142fc20b3
 	ln -s mpv-${MPV_HEADERS_VERSION}.tar.gz .cache/headers/mpv.tar.gz
 
 Headers/mpv/*.h: .cache/headers/mpv.tar.gz
+	mkdir -p Headers/mpv
 	tar -xvf .cache/headers/mpv.tar.gz --strip-components 2 -C Headers/mpv/ 'mpv-*/libmpv/*.h'
 	touch Headers/mpv/*.h
 
@@ -39,6 +40,7 @@ Headers/mpv/*.h: .cache/headers/mpv.tar.gz
 	ln -s libmpv-xcframeworks-${MPV_XCFRAMEWORKS_VERSION}-ios-universal.tar.gz .cache/xcframeworks/libmpv-xcframeworks-ios-universal.tar.gz
 
 Frameworks/*.xcframework: .cache/xcframeworks/libmpv-xcframeworks-ios-universal.tar.gz
+	mkdir -p Frameworks
 	rm -rf Frameworks/*.xcframework
 	tar -xvf .cache/xcframeworks/libmpv-xcframeworks-ios-universal.tar.gz --strip-components 1 -C Frameworks
 	touch Frameworks/*.xcframework
