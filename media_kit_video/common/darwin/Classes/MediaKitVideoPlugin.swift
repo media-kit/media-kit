@@ -20,7 +20,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
       name: CHANNEL_NAME,
       binaryMessenger: binaryMessenger
     )
-    let instance = MediaKitVideoPlugin.init(
+    let instance = MediaKitVideoPlugin(
       registry: registry,
       channel: channel
     )
@@ -32,7 +32,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
 
   init(registry: FlutterTextureRegistry, channel: FlutterMethodChannel) {
     self.channel = channel
-    self.videoOutputManager = VideoOutputManager(
+    videoOutputManager = VideoOutputManager(
       registry: registry
     )
   }
@@ -44,13 +44,10 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
     switch call.method {
     case "VideoOutputManager.Create":
       handleCreateMethodCall(call.arguments, result)
-      break
     case "VideoOutputManager.Dispose":
       handleDisposeMethodCall(call.arguments, result)
-      break
     default:
       result(FlutterMethodNotImplemented)
-      break
     }
   }
 
@@ -71,12 +68,12 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
 
     assert(handle != nil, "handle must be an Int64")
 
-    self.videoOutputManager.create(
+    videoOutputManager.create(
       handle: handle!,
       width: width,
       height: height,
       enableHardwareAcceleration: enableHardwareAcceleration,
-      textureUpdateCallback: { (_ textureId: Int64, _ size: CGSize) -> Void in
+      textureUpdateCallback: { (_ textureId: Int64, _ size: CGSize) in
         self.channel.invokeMethod(
           "VideoOutput.Resize",
           arguments: [
@@ -88,7 +85,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
               "width": size.width,
               "height": size.height,
             ],
-          ]
+          ] as [String: Any]
         )
       }
     )
@@ -106,7 +103,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
 
     assert(handle != nil, "handle must be an Int64")
 
-    self.videoOutputManager.destroy(
+    videoOutputManager.destroy(
       handle: handle!
     )
 
