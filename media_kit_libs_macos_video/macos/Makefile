@@ -71,7 +71,7 @@ Headers/mpv/*.h: .cache/headers/mpv.tar.gz
 .tmp/frameworks/*.framework: .tmp/libs/*.dylib
 	mkdir -p .tmp/frameworks
 	rm -rf .tmp/frameworks/*.framework
-	sh ./Scripts/create_frameworks.sh macos .tmp/libs .tmp/frameworks
+	sh ./Scripts/create_frameworks.sh .tmp/libs .tmp/frameworks
 	touch .tmp/frameworks/*.framework
 
 Frameworks/*.xcframework: .tmp/frameworks/*.framework
