@@ -1,3 +1,11 @@
+## 0.0.4
+
+- fix: use `mkdir` instead of `.gitkeep`
+
+## 0.0.3
+
+- fix: add `.framework` & `.xcframework` for all libs
+
 ## 0.0.2
 
 - macOS support:

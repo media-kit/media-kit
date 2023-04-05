@@ -1,6 +1,6 @@
 name: media_kit_libs_ios_video
 description: iOS package providing video (& audio) native libraries for package:media_kit.
-version: 1.0.0
+version: 1.0.2
 homepage: https://github.com/alexmercerind/media_kit.git
 repository: https://github.com/alexmercerind/media_kit.git
 funding:
