@@ -50,6 +50,25 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     ${TARGET_NAME} PRIVATE
     PkgConfig::mpv
   )
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
+  # NOTE: package:media_kit ships pre-built media_kit_native_event_loop shared libraries on Android within package:media_kit_libs_android_audio & package:media_kit_libs_android_video packages along side libmpv/FFmpeg shared libraries.
+  # We do not build on dependent's machine because it requires setting up NDK etc. & build process is rather complex.
+  #
+  # For building a `libmedia_kit_native_event_loop.so` using this CMake:
+  # 1. Generate the plugin_ffi template project for Android using:
+  # * flutter create --org com.alexmercerind --template plugin_ffi --platforms=android -a java .
+  # 2. Add the libmpv/FFmpeg & other dependencies to which this target will link at:
+  # * ../android/libs/lib/arm64-v8a/*
+  # * ../android/libs/lib/armeabi-v7a/*
+  # * ../android/libs/lib/x86_64/*
+  # 3. Add the libmpv headers at include/*
+  # 4. Generate the APK file:
+  # * flutter build apk --release
+  # 5. Extract the `libmedia_kit_native_event_loop.so` for each ABI & architecture.
+  target_link_libraries(
+    ${TARGET_NAME} PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/../android/libs/lib/${ANDROID_ABI}/libmpv.so"
+  )
 endif()
 
 set_target_properties(
