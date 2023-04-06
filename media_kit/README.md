@@ -17,11 +17,7 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
     <img alt="Stream Chat" width="300" height="auto" src="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
   </picture>
 </a>
-
-<h6>
-  Rapidly ship in-app messaging with Stream's highly reliable chat infrastructure & feature-rich SDKs, including Flutter!
-</h6>
-
+<br></br>
 <strong>
   <a href="https://getstream.io/chat/sdk/flutter/?utm_source=alexmercerind_dart&utm_medium=Github_Repo_Content_Ad&utm_content=Developer&utm_campaign=alexmercerind_December2022_FlutterSDK_klmh22" target="_blank">
   Try the Flutter Chat tutorial
