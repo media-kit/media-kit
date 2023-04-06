@@ -4,6 +4,8 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
 
 [![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml)
 
+##### package:media_kit is in active development & documentation is under construction... 🏗️
+
 <hr>
 
 <strong>Sponsored with 💖 by</strong>
@@ -12,7 +14,7 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/28951144/204903234-4a64b63c-2fc2-4eef-be44-d287d27021e5.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
-    <img alt="Stream Chat" width="350" height="auto" src="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
+    <img alt="Stream Chat" width="300" height="auto" src="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
   </picture>
 </a>
 
@@ -32,7 +34,7 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/28951144/228648854-e5d7c557-ee92-47b2-a037-17b447873e1c.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
-    <img alt="Stream Chat" width="350" height="auto" src="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
+    <img alt="Stream Chat" width="300" height="auto" src="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
   </picture>
 </a>
 <br></br>
@@ -44,11 +46,13 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
 
 <hr>
 
-https://user-images.githubusercontent.com/28951144/223529386-c4039cf1-3ead-49c2-bcc7-5c5f8541958a.mp4
+https://user-images.githubusercontent.com/28951144/230392090-b50c8e8e-2224-4827-950e-a0df35c7ea01.mp4
 
-<br></br>
+<br>
 
-Performance on entry-level AMD Ryzen 3 2200U processor with integrated Radeon Vega 3 Mobile Graphics.
+**Notes:**
+- The video is recorded on entry-level AMD Ryzen 3 2200U with integrated Radeon Vega 3 Mobile Graphics.
+- See process specific resource usage _i.e._ `media_kit_test.exe`. Overall usage is high due to screen recording.
 
 ## Installation
 
@@ -56,39 +60,41 @@ Add in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.3
+  media_kit: ^0.0.4
   # For video rendering.
   media_kit_video: ^0.0.4
   # Enables support for higher number of concurrent instances. Optional.
   media_kit_native_event_loop: ^1.0.2
   # Pick based on your requirements / platform:
   media_kit_libs_windows_video: ^1.0.1          # Windows package for video (& audio) native libraries.
-  media_kit_libs_ios_video: ^1.0.2              # iOS package for video (& audio) native libraries.
-  media_kit_libs_macos_video: ^1.0.2            # macOS package for video (& audio) native libraries.
+  media_kit_libs_ios_video: ^1.0.3              # iOS package for video (& audio) native libraries.
+  media_kit_libs_macos_video: ^1.0.3            # macOS package for video (& audio) native libraries.
   media_kit_libs_linux: ^1.0.1                  # Linux dependency package.
 ```
 
 ## Platforms
 
-| Platform | Audio | Video |
-| -------- | ----- | ----- |
-| Windows  | Ready | Ready |
-| Linux    | Ready | Ready |
-| macOS    | Ready | Ready |
-| iOS      | Ready | Ready |
-| Android  | [WIP](https://github.com/alexmercerind/media_kit/pull/100)   | [WIP](https://github.com/alexmercerind/media_kit/pull/100)   |
-| Web      | WIP   | WIP   |
+| Platform  | Audio | Video |
+| --------- | ----- | ----- |
+| Windows   | Ready | Ready |
+| GNU/Linux | Ready | Ready |
+| macOS     | Ready | Ready |
+| iOS       | Ready | Ready |
+| Android   | [WIP](https://github.com/alexmercerind/media_kit/pull/100)   | [WIP](https://github.com/alexmercerind/media_kit/pull/100)   |
+| Web       | WIP   | WIP   |
 
 ## Guide
 
-### Brief Start
+#### Control audio or video playback
 
 ```dart
 import 'package:media_kit/media_kit.dart';
 
+/// Create a [Player] instance for audio or video playback.
+
 final player = Player();
 
-...
+/// Subscribe to event streams & listen to updates.
 
 player.streams.playlist.listen((e) => print(e));
 player.streams.playing.listen((e) => print(e));
@@ -104,27 +110,33 @@ player.streams.audioBitrate.listen((e) => print(e));
 player.streams.audioDevice.listen((e) => print(e));
 player.streams.audioDevices.listen((e) => print(e));
 
-...
+
+/// Open a playable [Media] or [Playlist].
 
 await player.open(Media('file:///C:/Users/Hitesh/Music/Sample.mp3'));
 await player.open(Media('file:///C:/Users/Hitesh/Video/Sample.mkv'));
+await player.open(Media('asset:///videos/bee.mp4'));
 await player.open(
   Playlist(
     [
       Media('https://www.example.com/sample.mp4'),
       Media('rtsp://www.example.com/live'),
     ],
+    /// Select the starting index.
+    index: 1,
   ),
+  /// Select whether playback should start or not.
+  play: false,
 );
 
-...
+/// Control playback state.
 
 await player.play();
 await player.pause();
 await player.playOrPause();
 await player.seek(const Duration(seconds: 10));
 
-...
+/// Use or modify the queue.
 
 await player.next();
 await player.previous();
@@ -132,7 +144,7 @@ await player.jump(2);
 await player.add(Media('https://www.example.com/sample.mp4'));
 await player.move(0, 2);
 
-...
+/// Customize speed, pitch, volume, shuffle, playlist mode, audio device.
 
 await player.setRate(1.0);
 await player.setPitch(1.2);
@@ -141,19 +153,20 @@ await player.setShuffle(false);
 await player.setPlaylistMode(PlaylistMode.loop);
 await player.setAudioDevice(AudioDevice.auto());
 
-...
+/// Release allocated resources back to the system.
 
 await player.dispose();
-
 ```
 
-### Rendering Video
+#### Display video output
 
 Performant & H/W accelerated, automatically fallbacks to S/W rendering if system does not support it.
 
 ```dart
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
+import 'package:flutter/material.dart';
+
+import 'package:media_kit/media_kit.dart';                        /// Provides [Player], [Media], [Playlist] etc.
+import 'package:media_kit_video/media_kit_video.dart';            /// Provides [VideoController] & [Video] etc.
 
 class MyScreen extends StatefulWidget {
   const MyScreen({Key? key}) : super(key: key);
@@ -162,19 +175,17 @@ class MyScreen extends StatefulWidget {
 }
 
 class MyScreenState extends State<MyScreen> {
-  // Create a [Player] instance from `package:media_kit`.
+  /// Create a [Player].
   final Player player = Player();
-  // Reference to the [VideoController] instance from `package:media_kit_video`.
+  /// Store reference to the [VideoController].
   VideoController? controller;
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() async {
-      // Create a [VideoController] instance from `package:media_kit_video`.
-      // Pass the [handle] of the [Player] from `package:media_kit` to the [VideoController] constructor.
-      controller = await VideoController.create(player.handle);
-      // Must be created before opening any media. Otherwise, a separate window will be created.
+      /// Create a [VideoController] to show video output of the [Player].
+      controller = await VideoController.create(player);
       setState(() {});
     });
   }
@@ -182,7 +193,7 @@ class MyScreenState extends State<MyScreen> {
   @override
   void dispose() {
     Future.microtask(() async {
-      // Release allocated resources back to the system.
+      /// Release allocated resources back to the system.
       await controller?.dispose();
       await player.dispose();
     });
@@ -191,15 +202,16 @@ class MyScreenState extends State<MyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    /// Use [Video] widget to display the output.
     return Video(
-      /// Pass the [controller] to display the video output.
+      /// Pass the [controller].
       controller: controller,
     );
   }
 }
 ```
 
-### Performance
+#### Performance
 
 Although [package:media_kit](https://github.com/alexmercerind/media_kit) is already fairly performant, you can further optimize things as follows:
 
@@ -251,16 +263,20 @@ Try out [the test application](https://github.com/harmonoid/media_kit/blob/maste
 
 ### Windows
 
-Everything ready. Just add one of the following packages to your `pubspec.yaml`.
+_Windows 7 or higher is supported._
+
+Everything ready. Just add **only one** of the following packages to your `pubspec.yaml` (if not already):
 
 ```yaml
 dependencies:
   ...
-  media_kit_libs_windows_video: ^1.0.0       # Windows package for video (& audio) native libraries.
+  media_kit_libs_windows_video: ^1.0.1       # Windows package for video (& audio) native libraries.
   media_kit_libs_windows_audio: ^1.0.1       # Windows package for audio (only) native libraries.
 ```
 
 ### Linux
+
+_Any modern Linux distribution is supported._
 
 System shared libraries from distribution specific user-installed packages are used by-default. You can install these as follows.
 
@@ -277,19 +293,29 @@ There are other ways to bundle these within your app package e.g. within Snap or
 - [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
 - [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/\_packaging)
 
-### macOS
 
-Everything ready. Just add one of the following packages to your `pubspec.yaml`.
+Add following package to your `pubspec.yaml` (if not already).
 
 ```yaml
 dependencies:
   ...
-  media_kit_libs_macos_video: ^1.0.2       # macOS package for video (& audio) native libraries.
+  media_kit_libs_linux: ^1.0.1                   # GNU/Linux dependency package.
 ```
 
-The minimum supported macOS version is 11.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/macos-arm64.ini#L18)).
 
-Also, during the build phase, the following warnings are not critical and cannot be silenced:
+### macOS
+
+_macOS 11.0 or higher is supported._
+
+Everything ready. Just add **only one** of the following packages to your `pubspec.yaml` (if not already).
+
+```yaml
+dependencies:
+  ...
+  media_kit_libs_macos_video: ^1.0.3             # macOS package for video native libraries.
+```
+
+During the build phase, the following warnings are not critical and cannot be silenced:
 
 ```log
 #import "Headers/media_kit_video-Swift.h"
@@ -310,23 +336,45 @@ Also, during the build phase, the following warnings are not critical and cannot
 
 ### iOS
 
-Everything ready. Just add one of the following packages to your `pubspec.yaml`.
+_iOS 13.0 or higher is supported._
+
+Everything ready. Just add **only one** of the following packages to your `pubspec.yaml` (if not already):
 
 ```yaml
 dependencies:
-  ...
-  media_kit_libs_ios_video: ^1.0.2         # iOS package for video (& audio) native libraries.
+  media_kit_libs_ios_video: ^1.0.3              # iOS package for video native libraries.
 ```
-
-The minimum supported iOS version is 13.0 ([#libmpv-darwin-build](https://github.com/media-kit/libmpv-darwin-build/blob/v0.3.1/cross-files/ios-arm64.ini#L18)).
-
-Also, software rendering is forced in the iOS simulator due to an incompatibility with OpenGL ES.
 
 ## Goals
 
-The primary goal of [package:media_kit](https://github.com/alexmercerind/media_kit) is to become a **strong, performant, stable, feature-proof & modular** media playback library for Flutter. The idea is to support both **audio & video playback**.
+[package:media_kit](https://github.com/alexmercerind/media_kit) is a library for Flutter & Dart which **provides audio & video playback**.
 
-Since, targetting multiple features at once & bundling redundant native libraries can result in increased bundle size of the application, you can manually select the native libraries you want to bundle, depending upon your use-case. The code is architectured to support multiple platforms & features. Support for more platforms will be added in future.
+- **Strong:** Supports _most_ audio & video codecs.
+- **Performant:**
+  - Handles multiple FHD videos flawlessly.
+  - Rendering is GPU powered (hardware accelerated).
+  - 4K / 8K 60 FPS is supported.
+- **Stable:** Implementation is well tested & used across number of intensive media playback related apps.
+- **Feature Proof:** A simple usage API offering large number of features to target multitude of apps.
+- **Modular:** Project is split into number of packages for reducing bundle size.
+- **Cross Platform**: Implementation works on all platforms supported by Flutter & Dart:
+  - Windows
+  - GNU/Linux
+  - macOS
+  - iOS
+  - ~~Android~~ [WIP]
+  - ~~Web~~ [WIP]
+- **Flexible Architecture:**
+  - Major part of implementation (80%+) is in 100% Dart (using [FFI](https://dart.dev/guides/libraries/c-interop)) & shared across platforms.
+    - Makes behavior of library same & more predictable across platforms.
+    - Makes development & implementation of new features easier & faster.
+    - Avoids separate maintenance of native implementation for each platform.
+  - Only video embedding code is platform specific & part of separate package.
+  - Learn more: [Architecture](https://github.com/alexmercerind/media_kit#architecture), [Implementation](https://github.com/alexmercerind/media_kit#implementation).
+
+The project aims to meet demands of the community, this includes:
+1. Holding accountability.
+2. Ensuring timely maintenance.
 
 ## Fund Development
 
@@ -647,6 +695,8 @@ classDiagram
   TextureGL "1" o-- "1" VideoOutput: Take VideoOutput as reference
   VideoOutput "1" *-- "1" TextureSW: For S/W rendering.
   TextureSW "1" o-- "1" VideoOutput: Take VideoOutput as reference
+  TextureGL "1" <-- "1" FlTextureGL
+  TextureSW "1" <-- "1" FlTexture
 
   class MediaKitVideoPlugin {
     -FlMethodChannel* channel
@@ -749,7 +799,7 @@ This hardware accelerated video output requires DirectX 11 or higher. Most Windo
 
 <details>
 
-<summary> Windows 7 & 8.x also seem to be working correctly. </summary>
+<summary> Windows 7 & 8.x also work correctly. </summary>
 
 ![0](https://user-images.githubusercontent.com/28951144/212947036-4a2430d6-729e-47d7-a356-c8cc8534a1aa.jpg)
 ![1](https://user-images.githubusercontent.com/28951144/212947046-cc8d441c-96f8-4437-9f59-b4613ca73f2a.jpg)
