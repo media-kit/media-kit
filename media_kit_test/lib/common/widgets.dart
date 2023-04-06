@@ -136,6 +136,7 @@ class SeekBar extends StatefulWidget {
 
 class _SeekBarState extends State<SeekBar> {
   bool playing = false;
+  bool seeking = false;
   Duration position = Duration.zero;
   Duration duration = Duration.zero;
 
@@ -154,9 +155,14 @@ class _SeekBarState extends State<SeekBar> {
             playing = event;
           });
         }),
+        widget.player.streams.completed.listen((event) {
+          setState(() {
+            position = Duration.zero;
+          });
+        }),
         widget.player.streams.position.listen((event) {
           setState(() {
-            position = event;
+            if (!seeking) position = event;
           });
         }),
         widget.player.streams.duration.listen((event) {
@@ -200,12 +206,18 @@ class _SeekBarState extends State<SeekBar> {
                   0,
                   duration.inMilliseconds.toDouble(),
                 ),
-            onChanged: (e) {
-              setState(() {
-                position = Duration(milliseconds: e ~/ 1);
-              });
+            onChangeStart: (e) {
+              seeking = true;
             },
+            onChanged: position.inMilliseconds > 0
+                ? (e) {
+                    setState(() {
+                      position = Duration(milliseconds: e ~/ 1);
+                    });
+                  }
+                : null,
             onChangeEnd: (e) {
+              seeking = false;
               widget.player.seek(Duration(milliseconds: e ~/ 1));
             },
           ),
