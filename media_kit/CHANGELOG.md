@@ -1,3 +1,7 @@
+## 0.0.4+1
+
+- docs(fix): images on pub.dev
+
 ## 0.0.4
 
 - fix: opening `Playlist` (with `index` > 0) causes index to be treated 0 after internal queue was finished
