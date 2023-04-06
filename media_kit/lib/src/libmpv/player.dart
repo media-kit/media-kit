@@ -112,8 +112,8 @@ class Player extends PlatformPlayer {
     // This causes playback to stop & player to enter the idle state.
     final commands = [
       'stop',
-      'playlist-play-index none',
       'playlist-clear',
+      'playlist-play-index none',
     ];
     for (final command in commands) {
       final args = command.toNativeUtf8();
@@ -150,7 +150,20 @@ class Player extends PlatformPlayer {
     }
 
     if (play) {
-      await playOrPause();
+      await jump(index);
+    } else {
+      if (index > 0) {
+        final name = 'playlist-pos'.toNativeUtf8();
+        final value = calloc<Int64>()..value = index;
+        _libmpv?.mpv_set_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_INT64,
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      }
     }
   }
 
