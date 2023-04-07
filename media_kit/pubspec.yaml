@@ -2,9 +2,12 @@ name: media_kit
 description: A complete video & audio playback library for Flutter & Dart. Performant, stable, feature-proof & modular.
 homepage: https://github.com/alexmercerind/media_kit
 repository: https://github.com/alexmercerind/media_kit
-version: 0.0.3+3
+version: 0.0.4+1
 funding:
   - https://www.github.com/sponsors/alexmercerind
+screenshots:
+  - description: "package:media_kit running on Microsoft Windows"
+    path: screenshots/windows.webp
 
 environment:
   sdk: ">=2.17.0 <4.0.0"
