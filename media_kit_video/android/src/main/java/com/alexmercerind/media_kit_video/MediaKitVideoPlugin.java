@@ -9,17 +9,17 @@ package com.alexmercerind.media_kit_video;
 
 import androidx.annotation.NonNull;
 
-import com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper;
-
 import java.util.HashMap;
+
+import com.alexmercerind.mpv.MPVLib;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
-import is.xyz.mpv.MPVLib;
 
+/** MediaKitVideoPlugin */
 public class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler {
     private MethodChannel channel;
     private VideoOutputManager videoOutputManager;
@@ -36,8 +36,6 @@ public class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler {
                 // We have our own abstraction & more capable implementation in package:media_kit.
                 MPVLib.create(flutterPluginBinding.getApplicationContext());
                 MPVLib.destroy();
-                // Save android.content.Context for access later within MediaKitAndroidHelpers e.g. loading bundled assets.
-                MediaKitAndroidHelper.setApplicationContext(flutterPluginBinding.getApplicationContext());
             }
         } catch (Exception e) {
             e.printStackTrace();

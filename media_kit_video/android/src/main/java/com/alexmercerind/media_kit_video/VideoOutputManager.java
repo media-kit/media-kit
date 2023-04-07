@@ -20,7 +20,6 @@ public class VideoOutputManager {
     private final TextureRegistry textureRegistryReference;
     private final Object lock = new Object();
 
-
     VideoOutputManager(TextureRegistry textureRegistryReference) {
         this.textureRegistryReference = textureRegistryReference;
     }
@@ -38,7 +37,7 @@ public class VideoOutputManager {
 
     public void dispose(long handle) {
         synchronized (lock) {
-            Log.d("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.dispose: %d", handle));
+            Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.dispose: %d", handle));
             if (videoOutputs.containsKey(handle)) {
                 Objects.requireNonNull(videoOutputs.get(handle)).dispose();
                 videoOutputs.remove(handle);
