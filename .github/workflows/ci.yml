@@ -18,9 +18,7 @@ jobs:
           channel: "stable"
       - run: flutter pub get
       - run: flutter build windows --verbose
-      - run: |
-        cd build\windows\runner\Release
-        cmake -E tar "cfv" "media_kit_test_win32_x64.7z" --format=7zip .
+      - run: cmake -E tar "cfv" "media_kit_test_win32_x64.7z" --format=7zip "build\windows\runner\Release"
       - uses: actions/upload-artifact@v1
         with:
           name: media_kit_test_win32_x64
@@ -48,9 +46,7 @@ jobs:
           channel: "stable"
       - run: flutter pub get
       - run: flutter build linux --verbose
-      - run: |
-        cd build/linux/x64/release/bundle
-        7z a media_kit_test_linux_x64.7z .
+      - run: 7z a media_kit_test_linux_x64.7z build/linux/x64/release/bundle
       - uses: actions/upload-artifact@v1
         with:
           name: media_kit_test_linux_x64
@@ -76,9 +72,7 @@ jobs:
           channel: "stable"
       - run: flutter pub get
       - run: flutter build macos --verbose
-      - run: |
-        cd build/macos/Build/Products/Release/media_kit_test.app
-        7z a media_kit_test_macos_universal.7z .
+      - run: 7z a media_kit_test_macos_universal.7z build/macos/Build/Products/Release/media_kit_test.app
       - uses: actions/upload-artifact@v1
         with:
           name: media_kit_test_macos_universal
@@ -104,9 +98,7 @@ jobs:
           channel: "stable"
       - run: flutter pub get
       - run: flutter build ios --verbose --no-codesign
-      - run: |
-        cd build/ios/iphoneos/Runner.app
-        7z a media_kit_test_ios_arm64.7z .
+      - run: 7z a media_kit_test_ios_arm64.7z build/ios/iphoneos/Runner.app
       - uses: actions/upload-artifact@v1
         with:
           name: media_kit_test_ios_arm64
