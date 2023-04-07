@@ -24,8 +24,9 @@ Pod::Spec.new do |s|
     'DEFINES_MODULE' => 'YES',
     'GCC_WARN_INHIBIT_ALL_WARNINGS' => 'YES',
     'GCC_PREPROCESSOR_DEFINITIONS' => '"$(inherited)" GL_SILENCE_DEPRECATION COREVIDEO_SILENCE_GL_DEPRECATION',
-    'FRAMEWORK_SEARCH_PATHS[sdk=macosx*]' => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/MPV.xcframework/macos-arm64_x86_64"',
-    'OTHER_LDFLAGS' => '"$(inherited)" -framework Mpv',
+    # # Uncomment the following two lines to activate the dynamic link
+    # 'FRAMEWORK_SEARCH_PATHS[sdk=macosx*]' => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/MPV.xcframework/macos-arm64_x86_64"',
+    # 'OTHER_LDFLAGS' => '"$(inherited)" -framework Mpv',
   }
   s.swift_version = '5.0'
 end

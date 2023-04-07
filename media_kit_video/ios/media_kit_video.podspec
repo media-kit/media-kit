@@ -24,11 +24,12 @@ Pod::Spec.new do |s|
     'DEFINES_MODULE' => 'YES',
     'GCC_WARN_INHIBIT_ALL_WARNINGS' => 'YES',
     'GCC_PREPROCESSOR_DEFINITIONS' => '"$(inherited)" GL_SILENCE_DEPRECATION COREVIDEO_SILENCE_GL_DEPRECATION',
-    'FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]' => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/MPV.xcframework/ios-arm64"',
-    'FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]' => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/MPV.xcframework/ios-arm64_x86_64-simulator"',
-    'OTHER_LDFLAGS' => '"$(inherited)" -framework Mpv',
     # Flutter.framework does not contain a i386 slice.
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
+    # # Uncomment the following three lines to activate the dynamic link
+    # 'FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]' => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/MPV.xcframework/ios-arm64"',
+    # 'FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]' => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/MPV.xcframework/ios-arm64_x86_64-simulator"',
+    # 'OTHER_LDFLAGS' => '"$(inherited)" -framework Mpv',
   }
   s.swift_version = '5.0'
 end
