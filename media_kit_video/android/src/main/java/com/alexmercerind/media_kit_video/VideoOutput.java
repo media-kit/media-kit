@@ -35,7 +35,7 @@ public class VideoOutput {
             newGlobalObjectRef.setAccessible(true);
             deleteGlobalObjectRef.setAccessible(true);
         } catch (Exception e) {
-            Log.d("media_kit", "package:media_kit_libs_android_video missing. Make sure you have added it to pubspec.yaml.");
+            Log.i("media_kit", "package:media_kit_libs_android_video missing. Make sure you have added it to pubspec.yaml.");
             throw new RuntimeException("Failed to initialize com.alexmercerind.media_kit_video.VideoOutput.");
         }
 
