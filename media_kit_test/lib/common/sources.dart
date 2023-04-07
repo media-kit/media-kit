@@ -15,7 +15,7 @@ Future<void> prepareSources() async {
     'https://user-images.githubusercontent.com/28951144/229373718-86ce5e1d-d195-45d5-baa6-ef94041d0b90.mp4',
     'https://user-images.githubusercontent.com/28951144/229373720-14d69157-1a56-4a78-a2f4-d7a134d7c3e9.mp4',
   ];
-  final directory = await path.getApplicationDocumentsDirectory();
+  final directory = await path.getApplicationSupportDirectory();
   for (int i = 0; i < uris.length; i++) {
     final file = File(
       path.join(

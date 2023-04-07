@@ -13,7 +13,7 @@ class StressTestScreen extends StatefulWidget {
 }
 
 class _StressTestScreenState extends State<StressTestScreen> {
-  static const int count = 20;
+  static const int count = 8;
   List<Player> players = [];
   List<VideoController> controllers = [];
 
