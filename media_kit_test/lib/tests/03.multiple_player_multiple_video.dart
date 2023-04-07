@@ -46,7 +46,7 @@ class _MultiplePlayerMultipleVideoScreenState
         for (int j = 0; j < sources.length; j++)
           ListTile(
             title: Text(
-              'Video $i',
+              'Video $j',
               style: const TextStyle(
                 fontSize: 14.0,
               ),
