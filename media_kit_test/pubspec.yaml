@@ -26,6 +26,8 @@ dependencies:
     path: ../media_kit_libs_macos_video
   media_kit_libs_ios_video:
     path: ../media_kit_libs_ios_video
+  media_kit_libs_android_video:
+    path: ../media_kit_libs_android_video
 
   path: ^1.8.2
   http: ^0.13.5
@@ -47,6 +49,8 @@ dependency_overrides:
     path: ../media_kit_libs_macos_video
   media_kit_libs_ios_video:
     path: ../media_kit_libs_ios_video
+  media_kit_libs_android_video:
+    path: ../media_kit_libs_android_video
 
 dev_dependencies:
   flutter_test:
