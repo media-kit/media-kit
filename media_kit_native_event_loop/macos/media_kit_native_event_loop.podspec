@@ -3,7 +3,7 @@
 # Run `pod lib lint media_kit_native_event_loop.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
-  system("make")
+  system("make -C ../common/darwin")
 
   s.name             = 'media_kit_native_event_loop'
   s.version          = '1.0.0'
@@ -27,7 +27,7 @@ Pod::Spec.new do |s|
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'GCC_WARN_INHIBIT_ALL_WARNINGS' => 'YES',
-    'HEADER_SEARCH_PATHS' => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_native_event_loop/macos/Headers"',
+    'HEADER_SEARCH_PATHS' => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_native_event_loop/common/darwin/Headers"',
     'FRAMEWORK_SEARCH_PATHS[sdk=macosx*]' => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/MPV.xcframework/macos-arm64_x86_64"',
     'OTHER_LDFLAGS' => '"$(inherited)" -framework Mpv',
   }

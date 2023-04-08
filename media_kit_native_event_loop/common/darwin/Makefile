@@ -21,8 +21,3 @@ Headers/mpv/*.h: .cache/headers/mpv.tar.gz
 	mkdir -p Headers/mpv
 	tar -xvf .cache/headers/mpv.tar.gz --strip-components 2 -C Headers/mpv/ 'mpv-*/libmpv/*.h'
 	touch Headers/mpv/*.h
-
-.PHONY: clean
-clean:
-	rm -rf .cache
-	rm -f ./Headers/mpv/*.h
