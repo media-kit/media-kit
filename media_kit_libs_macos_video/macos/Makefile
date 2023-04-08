@@ -1,29 +1,7 @@
-all: Frameworks/*.xcframework Headers/mpv/*.h
+all: Frameworks/*.xcframework
 
 MPV_XCFRAMEWORKS_VERSION=v0.3.2
 MPV_XCFRAMEWORKS_SHA256SUM=f642811f755db1f6f808e0e40ef543c887c5dfc76b7e55d2028fe3f16ab7906d
-
-MPV_HEADERS_VERSION=v0.35.1
-MPV_HEADERS_SHA256SUM=41df981b7b84e33a2ef4478aaf81d6f4f5c8b9cd2c0d337ac142fc20b387d1a9
-
-.cache/headers/mpv-${MPV_HEADERS_VERSION}.tar.gz:
-	mkdir -p .cache/headers
-	rm -f .cache/headers/*.tmp .cache/headers/*.tar.gz
-	curl -L \
-		https://github.com/mpv-player/mpv/archive/refs/tags/${MPV_HEADERS_VERSION}.tar.gz \
-		-o .cache/headers/mpv.tar.gz.tmp
-	shasum -a 256 -c <<< '${MPV_HEADERS_SHA256SUM}  .cache/headers/mpv.tar.gz.tmp'
-	mv .cache/headers/mpv.tar.gz.tmp .cache/headers/mpv-${MPV_HEADERS_VERSION}.tar.gz
-	touch .cache/headers/mpv-${MPV_HEADERS_VERSION}.tar.gz
-
-.cache/headers/mpv.tar.gz: .cache/headers/mpv-${MPV_HEADERS_VERSION}.tar.gz
-	rm -f .cache/headers/mpv.tar.gz
-	ln -s mpv-${MPV_HEADERS_VERSION}.tar.gz .cache/headers/mpv.tar.gz
-
-Headers/mpv/*.h: .cache/headers/mpv.tar.gz
-	mkdir -p Headers/mpv
-	tar -xvf .cache/headers/mpv.tar.gz --strip-components 2 -C Headers/mpv/ 'mpv-*/libmpv/*.h'
-	touch Headers/mpv/*.h
 
 .cache/xcframeworks/libmpv-xcframeworks-${MPV_XCFRAMEWORKS_VERSION}-macos-universal.tar.gz:
 	mkdir -p .cache/xcframeworks

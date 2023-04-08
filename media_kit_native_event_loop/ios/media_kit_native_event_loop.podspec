@@ -3,6 +3,8 @@
 # Run `pod lib lint media_kit_native_event_loop.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
+  system("make")
+
   s.name             = 'media_kit_native_event_loop'
   s.version          = '1.0.0'
   s.summary          = 'Platform specific threaded event handling for media_kit.'
@@ -25,7 +27,7 @@ Pod::Spec.new do |s|
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'GCC_WARN_INHIBIT_ALL_WARNINGS' => 'YES',
-    'HEADER_SEARCH_PATHS' => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Headers"',
+    'HEADER_SEARCH_PATHS' => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_native_event_loop/ios/Headers"',
     'FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]' => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/MPV.xcframework/ios-arm64"',
     'FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]' => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_libs_ios_video/ios/Frameworks/MPV.xcframework/ios-arm64_x86_64-simulator"',
     'OTHER_LDFLAGS' => '"$(inherited)" -framework Mpv',
