@@ -15,7 +15,7 @@ import Foundation
 // ```
 //
 // Next, just search `main.sil` for definitions starting with `@convention(c)`.
-public enum MPVLazyBinding {
+public enum MPVLib {
   private static let dylib: UnsafeMutableRawPointer = {
     let dylib = dlopen("Mpv.framework/Mpv", RTLD_LAZY)
     if dylib == nil {
@@ -28,7 +28,7 @@ public enum MPVLazyBinding {
   }()
 
   private static func _dlsym(_ symbol: String) -> UnsafeMutableRawPointer {
-    let sym = dlsym(MPVLazyBinding.dylib, symbol)
+    let sym = dlsym(MPVLib.dylib, symbol)
     if sym == nil {
       let error = String(cString: dlerror())
       NSLog("dlsym: error: \(error)")
@@ -43,7 +43,7 @@ public enum MPVLazyBinding {
       Int32
     ) -> UnsafeMutablePointer<Int8>
 
-    let sym = MPVLazyBinding._dlsym("mpv_error_string")
+    let sym = MPVLib._dlsym("mpv_error_string")
     let mpv_error_string = unsafeBitCast(sym, to: FunctionPrototype.self)
 
     return { (_ error: Int32) -> String in
@@ -65,7 +65,7 @@ public enum MPVLazyBinding {
       UnsafeMutableRawPointer
     ) -> Int32
 
-    let sym = MPVLazyBinding._dlsym("mpv_get_property")
+    let sym = MPVLib._dlsym("mpv_get_property")
     let mpv_get_property = unsafeBitCast(sym, to: FunctionPrototype.self)
 
     return { (
@@ -99,7 +99,7 @@ public enum MPVLazyBinding {
       UnsafeMutablePointer<Int8>
     ) -> Int32
 
-    let sym = MPVLazyBinding._dlsym("mpv_set_option_string")
+    let sym = MPVLib._dlsym("mpv_set_option_string")
     let mpv_set_option_string = unsafeBitCast(sym, to: FunctionPrototype.self)
 
     return { (
@@ -131,7 +131,7 @@ public enum MPVLazyBinding {
       UnsafeMutablePointer<mpv_render_param>
     ) -> Int32
 
-    let sym = MPVLazyBinding._dlsym("mpv_render_context_create")
+    let sym = MPVLib._dlsym("mpv_render_context_create")
     let mpv_render_context_create =
       unsafeBitCast(sym, to: FunctionPrototype.self)
 
@@ -156,7 +156,7 @@ public enum MPVLazyBinding {
   public static let mpv_render_context_free: (OpaquePointer?) -> Void = {
     typealias FunctionPrototype = @convention(c) (OpaquePointer?) -> Void
 
-    let sym = MPVLazyBinding._dlsym("mpv_render_context_free")
+    let sym = MPVLib._dlsym("mpv_render_context_free")
     let mpv_render_context_free = unsafeBitCast(sym, to: FunctionPrototype.self)
 
     return { (_ ctx: OpaquePointer?) in
@@ -173,7 +173,7 @@ public enum MPVLazyBinding {
       UnsafeMutablePointer<mpv_render_param>
     ) -> Int32
 
-    let sym = MPVLazyBinding._dlsym("mpv_render_context_render")
+    let sym = MPVLib._dlsym("mpv_render_context_render")
     let mpv_render_context_render =
       unsafeBitCast(sym, to: FunctionPrototype.self)
 
@@ -208,7 +208,7 @@ public enum MPVLazyBinding {
       UnsafeMutableRawPointer?
     ) -> Void
 
-    let sym = MPVLazyBinding._dlsym("mpv_render_context_set_update_callback")
+    let sym = MPVLib._dlsym("mpv_render_context_set_update_callback")
     let mpv_render_context_set_update_callback =
       unsafeBitCast(sym, to: FunctionPrototype.self)
 

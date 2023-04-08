@@ -57,7 +57,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
     }
 
     MPVHelpers.checkError(
-      MPVLazyBinding.mpv_set_option_string(handle, "hwdec", "auto")
+      MPVLib.mpv_set_option_string(handle, "hwdec", "auto")
     )
 
     let api = UnsafeMutableRawPointer(
@@ -86,10 +86,10 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
     }
 
     MPVHelpers.checkError(
-      MPVLazyBinding.mpv_render_context_create(&renderContext, handle, &params)
+      MPVLib.mpv_render_context_create(&renderContext, handle, &params)
     )
 
-    MPVLazyBinding.mpv_render_context_set_update_callback(
+    MPVLib.mpv_render_context_set_update_callback(
       renderContext,
       { ctx in
         let that = unsafeBitCast(ctx, to: TextureHW.self)
@@ -102,7 +102,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   private func disposeMPV() {
-    MPVLazyBinding.mpv_render_context_free(renderContext)
+    MPVLib.mpv_render_context_free(renderContext)
   }
 
   public func resize(_ size: CGSize) {
@@ -173,7 +173,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
       mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
     ]
 
-    MPVLazyBinding.mpv_render_context_render(renderContext, &params)
+    MPVLib.mpv_render_context_render(renderContext, &params)
 
     glFlush()
 
