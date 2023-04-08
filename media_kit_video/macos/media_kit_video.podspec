@@ -3,7 +3,7 @@
 # Run `pod lib lint media_kit_video.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
-  system("make")
+  system("make -C ../common/darwin HEADERS_DESTDIR=\"$(pwd)/Headers\"")
 
   s.name             = 'media_kit_video'
   s.version          = '0.0.1'

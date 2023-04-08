@@ -1,4 +1,4 @@
-all: Headers/mpv/*.h
+all: ${HEADERS_DESTDIR}/mpv/*.h
 
 MPV_HEADERS_VERSION=v0.35.1
 MPV_HEADERS_SHA256SUM=41df981b7b84e33a2ef4478aaf81d6f4f5c8b9cd2c0d337ac142fc20b387d1a9
@@ -17,12 +17,7 @@ MPV_HEADERS_SHA256SUM=41df981b7b84e33a2ef4478aaf81d6f4f5c8b9cd2c0d337ac142fc20b3
 	rm -f .cache/headers/mpv.tar.gz
 	ln -s mpv-${MPV_HEADERS_VERSION}.tar.gz .cache/headers/mpv.tar.gz
 
-Headers/mpv/*.h: .cache/headers/mpv.tar.gz
-	mkdir -p Headers/mpv
-	tar -xvf .cache/headers/mpv.tar.gz --strip-components 2 -C Headers/mpv/ 'mpv-*/libmpv/*.h'
-	touch Headers/mpv/*.h
-
-.PHONY: clean
-clean:
-	rm -rf .cache
-	rm -f ./Headers/mpv/*.h
+${HEADERS_DESTDIR}/mpv/*.h: .cache/headers/mpv.tar.gz
+	mkdir -p "${HEADERS_DESTDIR}"/mpv
+	tar -xvf .cache/headers/mpv.tar.gz --strip-components 2 -C "${HEADERS_DESTDIR}"/mpv/ 'mpv-*/libmpv/*.h'
+	touch "${HEADERS_DESTDIR}"/mpv/*.h
