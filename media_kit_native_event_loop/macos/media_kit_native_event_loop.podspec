@@ -3,7 +3,23 @@
 # Run `pod lib lint media_kit_native_event_loop.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
+  # Setup required files
   system("make -C ../common/darwin")
+
+  # Checks the presence of any `media_kit_libs`
+  pwd                    = ENV["PWD"]
+  pubspec_lock           = YAML.load_file(sprintf("%s/../pubspec.lock", pwd))
+  packages               = pubspec_lock['packages']
+  libs_audio_dep_found   = packages.keys.include?('media_kit_libs_macos_audio')
+  libs_video_dep_found   = packages.keys.include?('media_kit_libs_macos_video')
+  libs_dep_found         = libs_audio_dep_found || libs_video_dep_found
+
+  framework_search_paths_macosx = ''
+  if libs_audio_dep_found
+    framework_search_paths_macosx = '$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_audio/macos/Frameworks/MPV.xcframework/macos-arm64_x86_64'
+  elsif libs_video_dep_found
+    framework_search_paths_macosx = '$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/MPV.xcframework/macos-arm64_x86_64'
+  end
 
   s.name             = 'media_kit_native_event_loop'
   s.version          = '1.0.0'
@@ -20,16 +36,18 @@ Pod::Spec.new do |s|
   # paths, so Classes contains a forwarder C file that relatively imports
   # `../src/*` so that the C sources can be shared among all target platforms.
   s.source           = { :path => '.' }
-  s.source_files     = 'Classes/**/*'
-  s.dependency 'FlutterMacOS'
+  s.dependency         'FlutterMacOS'
 
-  s.platform = :osx, '11.0'
-  s.pod_target_xcconfig = {
-    'DEFINES_MODULE' => 'YES',
-    'GCC_WARN_INHIBIT_ALL_WARNINGS' => 'YES',
-    'HEADER_SEARCH_PATHS' => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_native_event_loop/common/darwin/Headers"',
-    'FRAMEWORK_SEARCH_PATHS[sdk=macosx*]' => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos/Frameworks/MPV.xcframework/macos-arm64_x86_64"',
-    'OTHER_LDFLAGS' => '"$(inherited)" -framework Mpv',
-  }
-  s.swift_version = '5.0'
+  if libs_dep_found
+    s.source_files        = 'Classes/**/*'
+    s.platform            = :osx, '11.0'
+    s.swift_version       = '5.0'
+    s.pod_target_xcconfig = {
+      'DEFINES_MODULE'                      => 'YES',
+      'GCC_WARN_INHIBIT_ALL_WARNINGS'       => 'YES',
+      'HEADER_SEARCH_PATHS'                 => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_native_event_loop/common/darwin/Headers"',
+      'FRAMEWORK_SEARCH_PATHS[sdk=macosx*]' => sprintf('"$(inherited)" "%s"', framework_search_paths_macosx),
+      'OTHER_LDFLAGS'                       => '"$(inherited)" -framework Mpv',
+    }
+  end
 end
