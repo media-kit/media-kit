@@ -19,9 +19,7 @@ import 'package:media_kit_video/src/video_controller.dart';
 /// **Example:**
 ///
 /// ```dart
-/// /// Create a [Player] from `package:media_kit`.
 /// final player = Player();
-/// /// Create a [VideoController] from `package:media_kit_video`.
 /// VideoController? controller;
 ///
 /// @override

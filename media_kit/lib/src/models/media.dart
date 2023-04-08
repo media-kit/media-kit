@@ -10,6 +10,7 @@ import 'package:path/path.dart' as path;
 import 'package:uri_parser/uri_parser.dart';
 
 import 'package:media_kit/src/models/playable.dart';
+import 'package:media_kit/src/android_asset_loader.dart';
 
 HashMap<String, Media> medias = HashMap<String, Media>();
 HashMap<String, double> bitrates = HashMap<String, double>();
@@ -43,9 +44,9 @@ class Media extends Playable {
 
   /// Normalizes the passed URI.
   static String normalizeURI(String uri) {
-    // Handle asset:// scheme. Only for Flutter.
     if (uri.startsWith(_kAssetScheme)) {
-      if (Platform.isWindows || Platform.isLinux) {
+      // Handle asset:// scheme. Only for Flutter.
+      if (Platform.isWindows) {
         return Uri.file(
           path.join(
             path.dirname(Platform.resolvedExecutable),
@@ -54,7 +55,18 @@ class Media extends Playable {
             path.normalize(uri.split(_kAssetScheme).last),
           ),
         ).toString();
-      } else if (Platform.isMacOS) {
+      }
+      if (Platform.isLinux) {
+        return Uri.file(
+          path.join(
+            path.dirname(Platform.resolvedExecutable),
+            'data',
+            'flutter_assets',
+            path.normalize(uri.split(_kAssetScheme).last),
+          ),
+        ).toString();
+      }
+      if (Platform.isMacOS) {
         return Uri.file(
           path.join(
             path.dirname(Platform.resolvedExecutable),
@@ -66,7 +78,8 @@ class Media extends Playable {
             path.normalize(uri.split(_kAssetScheme).last),
           ),
         ).toString();
-      } else if (Platform.isIOS) {
+      }
+      if (Platform.isIOS) {
         return Uri.file(
           path.join(
             path.dirname(Platform.resolvedExecutable),
@@ -77,12 +90,16 @@ class Media extends Playable {
           ),
         ).toString();
       }
-      //
+      if (Platform.isAndroid) {
+        return AndroidAssetLoader.instance.load(
+          path.normalize(uri.split(_kAssetScheme).last),
+        );
+      }
       throw UnimplementedError(
         '$_kAssetScheme is not supported on ${Platform.operatingSystem}',
       );
     }
-    // Keep the resulting URI same as used internally in libmpv.
+    // Keep the resulting URI normalization same as used by libmpv internally.
     // [File] or network URIs.
     final parser = URIParser(uri);
     switch (parser.type) {

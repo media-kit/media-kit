@@ -11,6 +11,9 @@
 
 #ifdef _WIN32
 #include <client.h>
+#elif defined(ANDROID) || defined(__ANDROID__)
+// Check for Android before GNU/Linux.
+#include "include/client.h"
 #elif __linux__
 #include <mpv/client.h>
 #elif __APPLE__
@@ -39,6 +42,7 @@ class MediaKitEventLoopHandler {
   MediaKitEventLoopHandler();
 
   ~MediaKitEventLoopHandler();
+
   std::unordered_map<mpv_handle*, std::mutex> mutexes_;
   // std::promise(s) are working very well & look more readable. I'm tired of
   // dealing with std::condition_variable(s) which would eventually lead to

@@ -73,6 +73,12 @@ class PlayerStreams {
   /// Currently available video, audio and subtitle tracks.
   final Stream<Tracks> tracks;
 
+  /// Currently playing video's width.
+  final Stream<int> width;
+
+  /// Currently playing video's height.
+  final Stream<int> height;
+
   /// {@macro player_streams}
   const PlayerStreams(
     this.playlist,
@@ -92,5 +98,7 @@ class PlayerStreams {
     this.audioDevices,
     this.track,
     this.tracks,
+    this.width,
+    this.height,
   );
 }

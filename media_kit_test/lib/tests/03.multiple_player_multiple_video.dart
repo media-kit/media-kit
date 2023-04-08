@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:media_kit_test/common/widgets.dart';
+import '../common/sources.dart';
+import '../common/widgets.dart';
 
 class MultiplePlayerMultipleVideoScreen extends StatefulWidget {
   const MultiplePlayerMultipleVideoScreen({Key? key}) : super(key: key);
@@ -23,7 +24,7 @@ class _MultiplePlayerMultipleVideoScreenState
     super.initState();
     Future.microtask(() async {
       for (int i = 0; i < players.length; i++) {
-        controllers[i] = await VideoController.create(players[i].handle);
+        controllers[i] = await VideoController.create(players[i]);
       }
       setState(() {});
     });
@@ -41,20 +42,11 @@ class _MultiplePlayerMultipleVideoScreenState
     super.dispose();
   }
 
-  List<Widget> getAssetsListForIndex(int i) => [
-        const Padding(
-          padding: EdgeInsets.only(
-            left: 16.0,
-            top: 16.0,
-            bottom: 16.0,
-          ),
-          child: Text('Asset Videos:'),
-        ),
-        const Divider(height: 1.0, thickness: 1.0),
-        for (int j = 0; j < 5; j++)
+  List<Widget> getAssetsListForIndex(BuildContext context, int i) => [
+        for (int j = 0; j < sources.length; j++)
           ListTile(
             title: Text(
-              'video_$j.mp4',
+              'Video $j',
               style: const TextStyle(
                 fontSize: 14.0,
               ),
@@ -62,28 +54,35 @@ class _MultiplePlayerMultipleVideoScreenState
               overflow: TextOverflow.ellipsis,
             ),
             onTap: () {
-              players[i].open(Media('asset://assets/video_$j.mp4'));
+              players[i].open(Media(sources[j]));
             },
           ),
       ];
 
-  Widget getVideoForIndex(int i) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: Card(
-              elevation: 8.0,
-              clipBehavior: Clip.antiAlias,
-              margin: const EdgeInsets.all(32.0),
-              child: Video(
-                controller: controllers[i],
-              ),
-            ),
-          ),
-          SeekBar(player: players[i]),
-          const SizedBox(height: 32.0),
-        ],
-      );
+  Widget getVideoForIndex(BuildContext context, int i) =>
+      MediaQuery.of(context).size.width > MediaQuery.of(context).size.height
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(
+                  child: Card(
+                    elevation: 8.0,
+                    clipBehavior: Clip.antiAlias,
+                    margin: const EdgeInsets.all(32.0),
+                    child: Video(
+                      controller: controllers[i],
+                    ),
+                  ),
+                ),
+                SeekBar(player: players[i]),
+                const SizedBox(height: 32.0),
+              ],
+            )
+          : Video(
+              controller: controllers[i],
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.width * 9.0 / 16.0,
+            );
 
   @override
   Widget build(BuildContext context) {
@@ -107,10 +106,10 @@ class _MultiplePlayerMultipleVideoScreenState
                               2 *
                               12.0 /
                               16.0,
-                          child: getVideoForIndex(i),
+                          child: getVideoForIndex(context, i),
                         ),
                         const Divider(height: 1.0, thickness: 1.0),
-                        ...getAssetsListForIndex(i),
+                        ...getAssetsListForIndex(context, i),
                       ],
                     ),
                   ),
@@ -119,14 +118,9 @@ class _MultiplePlayerMultipleVideoScreenState
           : ListView(
               children: [
                 for (int i = 0; i < 2; i++) ...[
-                  Container(
-                    alignment: Alignment.center,
-                    width: (MediaQuery.of(context).size.width - 64.0),
-                    height: (MediaQuery.of(context).size.width - 64.0),
-                    child: getVideoForIndex(i),
-                  ),
+                  getVideoForIndex(context, i),
                   const Divider(height: 1.0, thickness: 1.0),
-                  ...getAssetsListForIndex(i),
+                  ...getAssetsListForIndex(context, i),
                 ]
               ],
             ),

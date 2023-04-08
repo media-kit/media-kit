@@ -3,6 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
@@ -1068,6 +1069,22 @@ class Player extends PlatformPlayer {
           }
         }
       }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'width' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
+        final width = prop.ref.data.cast<Int64>().value;
+        state = state.copyWith(width: width);
+        if (!widthController.isClosed) {
+          widthController.add(width);
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'height' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
+        final height = prop.ref.data.cast<Int64>().value;
+        state = state.copyWith(height: height);
+        if (!heightController.isClosed) {
+          heightController.add(height);
+        }
+      }
     }
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_LOG_MESSAGE) {
       final eventLogMessage =
@@ -1091,13 +1108,20 @@ class Player extends PlatformPlayer {
 
   Future<void> _create() async {
     _libmpv = generated.MPV(NativeLibrary.find(path: configuration.libmpv));
+    // We cannot disable events on Android because they are consumed by package:media_kit_video.
+    final events = Platform.isAndroid ? true : configuration.events;
     final result = await create(
       configuration.libmpv,
-      configuration.events ? _handler : null,
+      events ? _handler : null,
     );
     // Set:
-    // idle=yes
-    // pause=yes
+    // idle = yes
+    // pause = yes
+    // demuxer-max-bytes = 32 * 1024 * 1024
+    // demuxer-max-back-bytes = 32 * 1024 * 1024
+    // ao = opensles (Android)
+    //
+    // We are using opensles on Android because default JNI based audiotrack output driver seems to crash randomly.
     {
       final name = 'idle'.toNativeUtf8();
       final value = calloc<Int32>();
@@ -1123,6 +1147,41 @@ class Player extends PlatformPlayer {
       );
       calloc.free(name);
       calloc.free(value);
+    }
+    {
+      final name = 'demuxer-max-bytes'.toNativeUtf8();
+      final value = (32 * 1024 * 1024).toString().toNativeUtf8();
+      _libmpv?.mpv_set_property_string(
+        result,
+        name.cast(),
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+    {
+      final name = 'demuxer-max-back-bytes'.toNativeUtf8();
+      final value = (32 * 1024 * 1024).toString().toNativeUtf8();
+      _libmpv?.mpv_set_property_string(
+        result,
+        name.cast(),
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+    {
+      if (Platform.isAndroid) {
+        final name = 'ao'.toNativeUtf8();
+        final value = 'opensles'.toNativeUtf8();
+        _libmpv?.mpv_set_property_string(
+          result,
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      }
     }
     // TODO(@alexmercerind):
     // This causes `MPV_EVENT_END_FILE` to not fire for last playlist item.
@@ -1156,6 +1215,8 @@ class Player extends PlatformPlayer {
       'audio-device': generated.mpv_format.MPV_FORMAT_NODE,
       'audio-device-list': generated.mpv_format.MPV_FORMAT_NODE,
       'track-list': generated.mpv_format.MPV_FORMAT_NODE,
+      'width': generated.mpv_format.MPV_FORMAT_INT64,
+      'height': generated.mpv_format.MPV_FORMAT_INT64,
     }.forEach(
       (property, format) {
         final name = property.toNativeUtf8();
@@ -1228,7 +1289,7 @@ class Player extends PlatformPlayer {
       calloc.free(name);
       calloc.free(value);
     }
-    if (configuration.events && configuration.logLevel != MPVLogLevel.none) {
+    if (events && configuration.logLevel != MPVLogLevel.none) {
       // https://github.com/mpv-player/mpv/blob/e1727553f164181265f71a20106fbd5e34fa08b0/libmpv/client.h#L1410-L1419
       final levels = {
         MPVLogLevel.none: 'no',
