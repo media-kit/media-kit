@@ -117,7 +117,7 @@ class _TracksSelectorState extends State<TracksSelector> {
             }
           },
         ),
-        const SizedBox(width: 48.0),
+        const SizedBox(width: 52.0),
       ],
     );
   }
@@ -136,6 +136,7 @@ class SeekBar extends StatefulWidget {
 
 class _SeekBarState extends State<SeekBar> {
   bool playing = false;
+  bool seeking = false;
   Duration position = Duration.zero;
   Duration duration = Duration.zero;
 
@@ -154,9 +155,14 @@ class _SeekBarState extends State<SeekBar> {
             playing = event;
           });
         }),
+        widget.player.streams.completed.listen((event) {
+          setState(() {
+            position = Duration.zero;
+          });
+        }),
         widget.player.streams.position.listen((event) {
           setState(() {
-            position = event;
+            if (!seeking) position = event;
           });
         }),
         widget.player.streams.duration.listen((event) {
@@ -178,40 +184,77 @@ class _SeekBarState extends State<SeekBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    final horiontal =
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    return Column(
       children: [
-        const SizedBox(width: 48.0),
-        IconButton(
-          onPressed: widget.player.playOrPause,
-          icon: Icon(
-            playing ? Icons.pause : Icons.play_arrow,
-          ),
-          color: Theme.of(context).primaryColor,
-          iconSize: 36.0,
-        ),
-        const SizedBox(width: 24.0),
-        Text(position.toString().substring(2, 7)),
-        Expanded(
-          child: Slider(
-            min: 0.0,
-            max: duration.inMilliseconds.toDouble(),
-            value: position.inMilliseconds.toDouble().clamp(
-                  0,
-                  duration.inMilliseconds.toDouble(),
+        const SizedBox(height: 16.0),
+        if (horiontal)
+          Row(
+            children: [
+              const Spacer(),
+              TracksSelector(player: widget.player),
+            ],
+          )
+        else
+          Row(
+            children: [
+              const Spacer(),
+              IconButton(
+                onPressed: widget.player.playOrPause,
+                icon: Icon(
+                  playing ? Icons.pause : Icons.play_arrow,
                 ),
-            onChanged: (e) {
-              setState(() {
-                position = Duration(milliseconds: e ~/ 1);
-              });
-            },
-            onChangeEnd: (e) {
-              widget.player.seek(Duration(milliseconds: e ~/ 1));
-            },
+                color: Theme.of(context).primaryColor,
+                iconSize: 36.0,
+              ),
+              const Spacer(),
+            ],
           ),
-        ),
-        Text(duration.toString().substring(2, 7)),
-        const SizedBox(width: 48.0),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(width: 48.0),
+            if (horiontal) ...[
+              IconButton(
+                onPressed: widget.player.playOrPause,
+                icon: Icon(
+                  playing ? Icons.pause : Icons.play_arrow,
+                ),
+                color: Theme.of(context).primaryColor,
+                iconSize: 36.0,
+              ),
+              const SizedBox(width: 24.0),
+            ],
+            Text(position.toString().substring(2, 7)),
+            Expanded(
+              child: Slider(
+                min: 0.0,
+                max: duration.inMilliseconds.toDouble(),
+                value: position.inMilliseconds.toDouble().clamp(
+                      0,
+                      duration.inMilliseconds.toDouble(),
+                    ),
+                onChangeStart: (e) {
+                  seeking = true;
+                },
+                onChanged: position.inMilliseconds > 0
+                    ? (e) {
+                        setState(() {
+                          position = Duration(milliseconds: e ~/ 1);
+                        });
+                      }
+                    : null,
+                onChangeEnd: (e) {
+                  seeking = false;
+                  widget.player.seek(Duration(milliseconds: e ~/ 1));
+                },
+              ),
+            ),
+            Text(duration.toString().substring(2, 7)),
+            const SizedBox(width: 48.0),
+          ],
+        )
       ],
     );
   }

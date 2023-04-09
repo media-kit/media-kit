@@ -4,7 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:media_kit_test/common/widgets.dart';
+import '../common/sources.dart';
+import '../common/widgets.dart';
 
 class SinglePlayerSingleVideoScreen extends StatefulWidget {
   const SinglePlayerSingleVideoScreen({Key? key}) : super(key: key);
@@ -27,7 +28,7 @@ class _SinglePlayerSingleVideoScreenState
   void initState() {
     super.initState();
     Future.microtask(() async {
-      controller = await VideoController.create(player.handle);
+      controller = await VideoController.create(player);
       setState(() {});
     });
   }
@@ -42,20 +43,11 @@ class _SinglePlayerSingleVideoScreenState
     super.dispose();
   }
 
-  List<Widget> get assets => [
-        const Padding(
-          padding: EdgeInsets.only(
-            left: 16.0,
-            top: 16.0,
-            bottom: 16.0,
-          ),
-          child: Text('Asset Videos:'),
-        ),
-        const Divider(height: 1.0, thickness: 1.0),
-        for (int i = 0; i < 5; i++)
+  List<Widget> get items => [
+        for (int i = 0; i < sources.length; i++)
           ListTile(
             title: Text(
-              'video_$i.mp4',
+              'Video $i',
               style: const TextStyle(
                 fontSize: 14.0,
               ),
@@ -63,29 +55,10 @@ class _SinglePlayerSingleVideoScreenState
               overflow: TextOverflow.ellipsis,
             ),
             onTap: () {
-              player.open(Media('asset://assets/video_$i.mp4'));
+              player.open(Media(sources[i]));
             },
           ),
       ];
-
-  Widget get video => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: Card(
-              elevation: 8.0,
-              clipBehavior: Clip.antiAlias,
-              margin: const EdgeInsets.all(32.0),
-              child: Video(
-                controller: controller,
-              ),
-            ),
-          ),
-          TracksSelector(player: player),
-          SeekBar(player: player),
-          const SizedBox(height: 32.0),
-        ],
-      );
 
   @override
   Widget build(BuildContext context) {
@@ -131,28 +104,46 @@ class _SinglePlayerSingleVideoScreenState
                     flex: 3,
                     child: Container(
                       alignment: Alignment.center,
-                      child: video,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Expanded(
+                            child: Card(
+                              elevation: 8.0,
+                              clipBehavior: Clip.antiAlias,
+                              margin: const EdgeInsets.all(32.0),
+                              child: Video(
+                                controller: controller,
+                              ),
+                            ),
+                          ),
+                          SeekBar(player: player),
+                          const SizedBox(height: 32.0),
+                        ],
+                      ),
                     ),
                   ),
                   const VerticalDivider(width: 1.0, thickness: 1.0),
                   Expanded(
                     flex: 1,
                     child: ListView(
-                      children: [...assets],
+                      children: items,
                     ),
                   ),
                 ],
               )
             : ListView(
                 children: [
-                  Container(
-                    alignment: Alignment.center,
+                  Video(
+                    controller: controller,
                     width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.width * 12.0 / 16.0,
-                    child: video,
+                    height: MediaQuery.of(context).size.width * 9.0 / 16.0,
                   ),
+                  const SizedBox(height: 16.0),
+                  SeekBar(player: player),
+                  const SizedBox(height: 32.0),
                   const Divider(height: 1.0, thickness: 1.0),
-                  ...assets,
+                  ...items,
                 ],
               ),
       ),

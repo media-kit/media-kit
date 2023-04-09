@@ -1,6 +1,15 @@
+## 0.0.4+1
+
+- docs(fix): images on pub.dev
+
+## 0.0.4
+
+- fix: opening `Playlist` (with `index` > 0) causes index to be treated 0 after internal queue was finished
+- fix: double `play` calls making `Player` paused
+
 ## 0.0.3+3
 
-- docs: document updated `media_kit_video`, `media_kit_libs_macos_video` and `media_kit_libs_ios_video` 
+- docs: document updated `media_kit_video`, `media_kit_libs_macos_video` and `media_kit_libs_ios_video`
 
 ## 0.0.3+2
 
@@ -15,22 +24,10 @@
 - fix: unable to publish iOS to AppStore
 - fix: support for iOS simulator
 
-#### Recommended sub-package versions
-
-- [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2)
-- [`media_kit_native_event_loop: ^1.0.1`](https://pub.dev/packages/media_kit_native_event_loop/versions/1.0.1)
-- [`media_kit_libs_windows_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_video/versions/1.0.1)
-- [`media_kit_libs_windows_audio: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_audio/versions/1.0.1)
-- [`media_kit_libs_linux: ^1.0.1`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.1)
-- [`media_kit_libs_macos_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_macos_video/versions/1.0.1)
-- [`media_kit_libs_ios_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_ios_video/versions/1.0.1)
-
 ## 0.0.2
 
-- macOS support:
-  - Video (& audio): [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2) + [`media_kit_libs_macos_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_macos_video/versions/1.0.0)
-- iOS support:
-  - Video (& audio): [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2) + [`media_kit_libs_ios_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_ios_video/versions/1.0.1)
+- macOS support
+- iOS support
 - feat: draw first frame upon `Player.open` before `Player.play` (#69)
 - feat: `Player.open` now accepts `Playable` i.e. `Media` or `Playlist`
 - feat: access `Player` logs from internal backend e.g. libmpv
@@ -83,32 +80,8 @@
 - refactor: rename `Player.streams.isCompleted` to `Player.streams.completed`
 - refactor: rename `Player.streams.isBuffering` to `Player.streams.buffering`
 
-#### Recommended sub-package versions
-
-- [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2)
-- [`media_kit_native_event_loop: ^1.0.1`](https://pub.dev/packages/media_kit_native_event_loop/versions/1.0.1)
-- [`media_kit_libs_windows_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_video/versions/1.0.1)
-- [`media_kit_libs_windows_audio: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_audio/versions/1.0.1)
-- [`media_kit_libs_linux: ^1.0.1`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.1)
-- [`media_kit_libs_macos_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_macos_video/versions/1.0.1)
-- [`media_kit_libs_ios_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_ios_video/versions/1.0.1)
-
 ## 0.0.1
 
-- Initial release.
-- Windows support
-  - Video (& audio): [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2) + [`media_kit_libs_windows_video: ^1.0.0`](https://pub.dev/packages/media_kit_libs_windows_video/versions/1.0.0)
-  - Audio (only): [`media_kit_libs_windows_audio: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_audio/versions/1.0.1)
+- Microsoft Windows support
 - GNU/Linux support
-  - Video (& audio): [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2) + [`media_kit_libs_linux: ^1.0.1`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.1)
-  - Audio (only): [`media_kit_libs_linux: ^1.0.1`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.1)
-
-#### Recommended sub-package versions
-
-- [`media_kit_video: ^0.0.2`](https://pub.dev/packages/media_kit_video/versions/0.0.2)
-- [`media_kit_native_event_loop: ^1.0.1`](https://pub.dev/packages/media_kit_native_event_loop/versions/1.0.1)
-- [`media_kit_libs_windows_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_video/versions/1.0.1)
-- [`media_kit_libs_windows_audio: ^1.0.1`](https://pub.dev/packages/media_kit_libs_windows_audio/versions/1.0.1)
-- [`media_kit_libs_linux: ^1.0.1`](https://pub.dev/packages/media_kit_libs_linux/versions/1.0.1)
-- [`media_kit_libs_macos_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_macos_video/versions/1.0.1)
-- [`media_kit_libs_ios_video: ^1.0.1`](https://pub.dev/packages/media_kit_libs_ios_video/versions/1.0.1)
+- Initial release
