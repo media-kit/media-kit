@@ -25,7 +25,7 @@ Pod::Spec.new do |s|
     )
   end
 
-  # Checks the presence of any `media_kit_libs_*` in `pubspec.lock`
+  # Checks for `media_kit_libs_*` in `pubspec.lock`
   pubspec_lock           = YAML.load_file(pubspec_lock_path)
   packages               = pubspec_lock['packages']
   libs_audio_dep_found   = packages.keys.include?('media_kit_libs_macos_audio')
