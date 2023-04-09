@@ -32,6 +32,11 @@ Pod::Spec.new do |s|
   libs_video_dep_found   = packages.keys.include?('media_kit_libs_macos_video')
   libs_dep_found         = libs_audio_dep_found || libs_video_dep_found
 
+  # Warn if no `media_kit_libs_*` is found
+  if !libs_dep_found
+    warn("media_kit_native_event_loop: WARNING: package:media_kit_libs_*** not found")
+  end
+
   # Define paths to frameworks dir
   framework_search_paths_macosx = ''
   if libs_audio_dep_found
