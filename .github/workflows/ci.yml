@@ -111,3 +111,37 @@ jobs:
           tag_name: "vnext"
           files: |
             media_kit_test/media_kit_test_ios_arm64.7z
+
+  optional-libs-macos:
+    name: Optional Libs macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Delete lines containing `media_kit_libs_` in `pubspec.yaml`
+        run: |
+          sed -i '' '/media_kit_libs_/d' pubspec.yaml
+          cat pubspec.yaml
+      - run: flutter pub get
+      - run: flutter build macos --verbose
+
+  optional-libs-ios:
+    name: Optional Libs iOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Delete lines containing `media_kit_libs_` in `pubspec.yaml`
+        run: |
+          sed -i '' '/media_kit_libs_/d' pubspec.yaml
+          cat pubspec.yaml
+      - run: flutter pub get
+      - run: flutter build ios --verbose --no-codesign
