@@ -78,7 +78,7 @@ SPEC CHECKSUMS:
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   media_kit_libs_ios_video: 045418d93c495fb3eaa7b8263839d991c206fa14
   media_kit_native_event_loop: 9f9eb778d0d806ab9486eff7513f7f90f07d50f8
-  media_kit_video: 146117b688b21551dbd626baf4bb523f4a3f2367
+  media_kit_video: 01504b1f7a2b4d11ebcf8637cd8919a4ed2452ed
   SDWebImage: fd7e1a22f00303e058058278639bf6196ee431fe
   SwiftyGif: 93a1cc87bf3a51916001cf8f3d63835fb64c819f
 

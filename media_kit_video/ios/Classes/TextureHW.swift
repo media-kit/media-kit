@@ -20,12 +20,12 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   ) {
     self.handle = handle
     self.updateCallback = updateCallback
-    context = OpenGLESHelpers.createContext()
-    textureCache = OpenGLESHelpers.createTextureCache(context)
+    self.context = OpenGLESHelpers.createContext()
+    self.textureCache = OpenGLESHelpers.createTextureCache(context)
 
     super.init()
 
-    initMPV()
+    self.initMPV()
   }
 
   public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
@@ -56,24 +56,22 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
       EAGLContext.setCurrent(nil)
     }
 
-    MPVHelpers.checkError(
-      MPVLib.mpv_set_option_string(handle, "hwdec", "auto")
-    )
+    MPVHelpers.checkError(mpv_set_option_string(handle, "hwdec", "auto"))
 
     let api = UnsafeMutableRawPointer(
       mutating: (MPV_RENDER_API_TYPE_OPENGL as NSString).utf8String
     )
     var procAddress = mpv_opengl_init_params(
       get_proc_address: {
-        ctx, name in
-        TextureHW.getProcAddress(ctx, name)
+        (ctx, name) in
+        return TextureHW.getProcAddress(ctx, name)
       },
       get_proc_address_ctx: nil
     )
 
     var params: [mpv_render_param] = withUnsafeMutableBytes(of: &procAddress) {
       procAddress in
-      [
+      return [
         mpv_render_param(type: MPV_RENDER_PARAM_API_TYPE, data: api),
         mpv_render_param(
           type: MPV_RENDER_PARAM_OPENGL_INIT_PARAMS,
@@ -86,12 +84,12 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
     }
 
     MPVHelpers.checkError(
-      MPVLib.mpv_render_context_create(&renderContext, handle, &params)
+      mpv_render_context_create(&renderContext, handle, &params)
     )
 
-    MPVLib.mpv_render_context_set_update_callback(
+    mpv_render_context_set_update_callback(
       renderContext,
-      { ctx in
+      { (ctx) in
         let that = unsafeBitCast(ctx, to: TextureHW.self)
         DispatchQueue.main.async {
           that.updateCallback()
@@ -102,7 +100,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   private func disposeMPV() {
-    MPVLib.mpv_render_context_free(renderContext)
+    mpv_render_context_free(renderContext)
   }
 
   public func resize(_ size: CGSize) {
@@ -173,15 +171,15 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
       mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
     ]
 
-    MPVLib.mpv_render_context_render(renderContext, &params)
+    mpv_render_context_render(renderContext, &params)
 
     glFlush()
 
     textureContexts.pushAsReady(textureContext!)
   }
 
-  private static func getProcAddress(
-    _: UnsafeMutableRawPointer?,
+  static private func getProcAddress(
+    _ ctx: UnsafeMutableRawPointer?,
     _ name: UnsafePointer<Int8>?
   ) -> UnsafeMutableRawPointer? {
     let symbol: CFString = CFStringCreateWithCString(

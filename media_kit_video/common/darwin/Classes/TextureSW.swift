@@ -44,9 +44,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   private func initMPV() {
-    MPVHelpers.checkError(
-      MPVLib.mpv_set_option_string(handle, "hwdec", "auto")
-    )
+    MPVHelpers.checkError(mpv_set_option_string(handle, "hwdec", "auto"))
 
     let api = UnsafeMutableRawPointer(
       mutating: (MPV_RENDER_API_TYPE_SW as NSString).utf8String
@@ -57,12 +55,12 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
     ]
 
     MPVHelpers.checkError(
-      MPVLib.mpv_render_context_create(&renderContext, handle, &params)
+      mpv_render_context_create(&renderContext, handle, &params)
     )
 
-    MPVLib.mpv_render_context_set_update_callback(
+    mpv_render_context_set_update_callback(
       renderContext,
-      { ctx in
+      { (ctx) in
         let that = unsafeBitCast(ctx, to: TextureSW.self)
         DispatchQueue.main.async {
           that.updateCallback()
@@ -73,7 +71,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   private func disposeMPV() {
-    MPVLib.mpv_render_context_free(renderContext)
+    mpv_render_context_free(renderContext)
   }
 
   public func resize(_ size: CGSize) {
@@ -120,7 +118,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
     }
 
     var ssize: [Int32] = [Int32(size.width), Int32(size.height)]
-    let format = "bgr0"
+    let format: String = "bgr0"
     var pitch: Int = CVPixelBufferGetBytesPerRow(textureContext!.pixelBuffer)
     let buffer = CVPixelBufferGetBaseAddress(textureContext!.pixelBuffer)
 
@@ -142,7 +140,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
       mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
     ]
 
-    MPVLib.mpv_render_context_render(renderContext, &params)
+    mpv_render_context_render(renderContext, &params)
 
     textureContexts.pushAsReady(textureContext!)
   }

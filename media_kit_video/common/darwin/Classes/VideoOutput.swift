@@ -155,7 +155,7 @@ public class VideoOutput: NSObject {
     }
 
     var width: Int64 = 0
-    MPVLib.mpv_get_property(handle, "width", MPV_FORMAT_INT64, &width)
+    mpv_get_property(handle, "width", MPV_FORMAT_INT64, &width)
 
     return width
   }
@@ -167,7 +167,7 @@ public class VideoOutput: NSObject {
     }
 
     var height: Int64 = 0
-    MPVLib.mpv_get_property(handle, "height", MPV_FORMAT_INT64, &height)
+    mpv_get_property(handle, "height", MPV_FORMAT_INT64, &height)
 
     return height
   }

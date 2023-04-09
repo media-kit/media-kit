@@ -27,7 +27,7 @@ SPEC CHECKSUMS:
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
   media_kit_libs_macos_video: d8f5b02cc1ab6f26dc3880e8367fd8ccaea73751
   media_kit_native_event_loop: 9a1b256cfb11adcaebd13a2969c617720c3187e0
-  media_kit_video: eea0415b2323f0b324a582e00e392e62ec9a1372
+  media_kit_video: 4e7996581172a6b1dfae7deda317c4036d0c458c
 
 PODFILE CHECKSUM: 8d40c19d3cbdb380d870685c3a564c989f1efa52
 
