@@ -163,7 +163,7 @@ jobs:
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
-      - name: Delete lines containing `media_kit_libs_` in `pubspec.yaml`
+      - name: Remove `media_kit_libs_*` dependencies
         run: |
           sed -i '' '/media_kit_libs_/d' pubspec.yaml
           cat pubspec.yaml
@@ -180,9 +180,26 @@ jobs:
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
-      - name: Delete lines containing `media_kit_libs_` in `pubspec.yaml`
+      - name: Remove `media_kit_libs_*` dependencies
         run: |
           sed -i '' '/media_kit_libs_/d' pubspec.yaml
           cat pubspec.yaml
       - run: flutter pub get
       - run: flutter build ios --verbose --no-codesign
+
+  optional-libs-android:
+    name: Optional Libs Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '/media_kit_libs_/d' pubspec.yaml
+          cat pubspec.yaml
+      - run: flutter pub get
+      - run: flutter build apk --split-per-abi --verbose
