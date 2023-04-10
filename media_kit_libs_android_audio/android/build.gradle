@@ -41,6 +41,7 @@ android {
     }
 }
 
+task downloadDependencies(type: Exec) {
     println "media_kit: Downloading dependencies..."
 
     def urlARM64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.1/audio-arm64-v8a.jar"
