@@ -4,7 +4,7 @@
 - [ANGLE 2.1.18844 git hash: 2693b03eba82](https://github.com/google/angle)
 - MSVCRT
 - UCRT
-- fix: migrate to the plugin template.
+- fix: migrate to the plugin template
 
 ## 1.0.1
 

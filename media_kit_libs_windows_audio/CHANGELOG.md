@@ -1,12 +1,12 @@
 ## 1.0.2
 
 - [mpv-player/mpv@`68b3239`](https://github.com/mpv-player/mpv/commit/68b3239b523cd75ba0a12f680ac7bc77e5647d40)
-- fix: migrate to the plugin template.
+- fix: migrate to the plugin template
 
 ## 1.0.1
 
 - [mpv-player/mpv@`5510d9f`](https://github.com/mpv-player/mpv/commit/5510d9f6632c009c398ce48a4d5a89c7f95efc96)
-- fix: location of extracted header files (compatibility with [`media_kit_native_event_loop`](https://github.com/alexmercerind/media_kit/tree/main/media_kit_native_event_loop)).
+- fix: location of extracted header files (compatibility with [`media_kit_native_event_loop`](https://github.com/alexmercerind/media_kit/tree/main/media_kit_native_event_loop))
 
 ## 1.0.0
 
