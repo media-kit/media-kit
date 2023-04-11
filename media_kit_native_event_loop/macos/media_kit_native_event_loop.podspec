@@ -34,7 +34,7 @@ Pod::Spec.new do |s|
 
   # Warn if no `media_kit_libs_*` is found
   if !libs_dep_found
-    warn("media_kit_native_event_loop: WARNING: package:media_kit_libs_*** not found")
+    warn("media_kit: WARNING: package:media_kit_libs_*** not found")
   end
 
   # Define paths to frameworks dir
