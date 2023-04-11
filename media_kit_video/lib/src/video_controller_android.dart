@@ -135,6 +135,36 @@ class VideoControllerAndroid extends VideoController {
     return controller;
   }
 
+  /// Resizes the video output.
+  /// This may yield substantial performance improvements.
+  ///
+  /// Remember, “Premature optimization is the root of all evil”. So, use this method wisely.
+  @override
+  Future<void> resize({
+    int? width,
+    int? height,
+  }) async {
+    final handle = await player.handle;
+    if (this.width == width && this.height == height) {
+      // No need to resize if the requested size is same as the current size.
+      return;
+    }
+    this.width = width;
+    this.height = height;
+    // ----------------------------------------------
+    final mpv = MPV(NativeLibrary.find());
+    final name = 'android-surface-size'.toNativeUtf8();
+    final value = '${width}x$height'.toNativeUtf8();
+    mpv.mpv_set_option_string(
+      Pointer.fromAddress(handle),
+      name.cast(),
+      value.cast(),
+    );
+    calloc.free(name);
+    calloc.free(value);
+    // ----------------------------------------------
+  }
+
   /// Disposes the [VideoController].
   /// Releases the allocated resources back to the system.
   @override
