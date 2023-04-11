@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../common/sources.dart';
+
 class TabsTest extends StatelessWidget {
   const TabsTest({Key? key}) : super(key: key);
 
@@ -26,7 +28,7 @@ class TabsTest extends StatelessWidget {
                 tabs: [
                   for (int i = 0; i < count; i++)
                     Tab(
-                      text: 'video_$i.mp4',
+                      text: 'Video $i',
                     ),
                 ],
               ),
@@ -59,9 +61,9 @@ class __ViewportState extends State<_Viewport> {
     super.initState();
     Future.microtask(() async {
       controller = await VideoController.create(
-        player.handle,
+        player,
       );
-      await player.open(Media('asset://assets/video_${widget.i}.mp4'));
+      await player.open(Media(sources[widget.i]));
       await player.setPlaylistMode(PlaylistMode.loop);
       await player.setVolume(0.0);
       setState(() {});

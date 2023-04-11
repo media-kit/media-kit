@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../common/sources.dart';
+
 // ignore_for_file: use_build_context_synchronously
 
 Future<void> paintFirstFrame(BuildContext context) async {
@@ -15,17 +17,17 @@ Future<void> paintFirstFrame(BuildContext context) async {
     Player(),
   ];
   List<VideoController> controllers = [
-    await VideoController.create(players[0].handle),
-    await VideoController.create(players[1].handle),
-    await VideoController.create(players[2].handle),
-    await VideoController.create(players[3].handle),
-    await VideoController.create(players[4].handle),
+    await VideoController.create(players[0]),
+    await VideoController.create(players[1]),
+    await VideoController.create(players[2]),
+    await VideoController.create(players[3]),
+    await VideoController.create(players[4]),
   ];
   // Open some [Playable]s.
   // Do not start playback i.e. play: false.
   for (int i = 0; i < 5; i++) {
     await players[i].open(
-      Media('asset://assets/video_${i % 5}.mp4'),
+      Media(sources[i % sources.length]),
       play: false,
     );
   }

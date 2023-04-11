@@ -26,8 +26,31 @@ dependencies:
     path: ../media_kit_libs_macos_video
   media_kit_libs_ios_video:
     path: ../media_kit_libs_ios_video
+  media_kit_libs_android_video:
+    path: ../media_kit_libs_android_video
 
+  path: ^1.8.2
+  http: ^0.13.5
   file_picker: ^5.2.4
+  path_provider: ^2.0.14
+
+dependency_overrides:
+  media_kit:
+    path: ../media_kit
+  media_kit_video:
+    path: ../media_kit_video
+  media_kit_native_event_loop:
+    path: ../media_kit_native_event_loop
+  media_kit_libs_windows_video:
+    path: ../media_kit_libs_windows_video
+  media_kit_libs_linux:
+    path: ../media_kit_libs_linux
+  media_kit_libs_macos_video:
+    path: ../media_kit_libs_macos_video
+  media_kit_libs_ios_video:
+    path: ../media_kit_libs_ios_video
+  media_kit_libs_android_video:
+    path: ../media_kit_libs_android_video
 
 dev_dependencies:
   flutter_test:
@@ -36,11 +59,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  # Assets for testing video playback.
-  assets:
-    - assets/video_0.mp4
-    - assets/video_1.mp4
-    - assets/video_2.mp4
-    - assets/video_3.mp4
-    - assets/video_4.mp4

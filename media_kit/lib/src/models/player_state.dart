@@ -64,6 +64,12 @@ class PlayerState {
   /// Currently available video, audio & subtitle tracks.
   final Tracks tracks;
 
+  /// Currently playing video's width.
+  final int? width;
+
+  /// Currently playing video's height.
+  final int? height;
+
   /// {@macro player_state}
   const PlayerState({
     this.playlist = const Playlist([]),
@@ -81,6 +87,8 @@ class PlayerState {
     this.audioDevices = const [AudioDevice('auto', '')],
     this.track = const Track(),
     this.tracks = const Tracks(),
+    this.width,
+    this.height,
   });
 
   PlayerState copyWith({
@@ -99,6 +107,8 @@ class PlayerState {
     List<AudioDevice>? audioDevices,
     Track? track,
     Tracks? tracks,
+    int? width,
+    int? height,
   }) {
     return PlayerState(
       playlist: playlist ?? this.playlist,
@@ -116,6 +126,8 @@ class PlayerState {
       audioDevices: audioDevices ?? this.audioDevices,
       track: track ?? this.track,
       tracks: tracks ?? this.tracks,
+      width: width ?? this.width,
+      height: height ?? this.height,
     );
   }
 
@@ -136,5 +148,7 @@ class PlayerState {
       'audioDevices: $audioDevices, '
       'track: $track, '
       'tracks: $tracks, '
+      'width: $width, '
+      'height: $height'
       ')';
 }

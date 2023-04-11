@@ -1,0 +1,99 @@
+import java.nio.file.Files
+import java.security.MessageDigest
+
+group 'com.alexmercerind.media_kit_libs_android_audio'
+version '1.0'
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.3.0'
+    }
+}
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 31
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        minSdkVersion 16
+    }
+
+    dependencies {
+        implementation fileTree(dir: "$buildDir", include: "*.jar")
+    }
+}
+
+task downloadDependencies(type: Exec) {
+    println "media_kit: Downloading dependencies..."
+
+    def urlARM64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.1/audio-arm64-v8a.jar"
+    def urlARMEABI = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.1/audio-armeabi-v7a.jar"
+    def urlX86_64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.1/audio-x86_64.jar"
+
+    def destARM64 = file("$buildDir/audio-arm64-v8a.jar")
+    def destARMEABI = file("$buildDir/audio-armeabi-v7a.jar")
+    def destX86_64 = file("$buildDir/audio-x86_64.jar")
+
+    if (!destARM64.exists()) {
+        println "media_kit: Downloading arm64-v8a JAR..."
+        destARM64.parentFile.mkdirs()
+        destARM64.withOutputStream { os ->
+            os << new URL(urlARM64).openStream()
+        }
+    }
+    if (!destARMEABI.exists()) {
+        println "media_kit: Downloading armeabi-v7a JAR..."
+        destARMEABI.parentFile.mkdirs()
+        destARMEABI.withOutputStream { os ->
+            os << new URL(urlARMEABI).openStream()
+        }
+    }
+    if (!destX86_64.exists()) {
+        println "media_kit: Downloading x86_64 JAR..."
+        destX86_64.parentFile.mkdirs()
+        destX86_64.withOutputStream { os ->
+            os << new URL(urlX86_64).openStream()
+        }
+    }
+
+    def md5ARM64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destARM64.toPath())).encodeHex().toString().toUpperCase()
+    def md5ARMEABI = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destARMEABI.toPath())).encodeHex().toString().toUpperCase()
+    def md5X86_64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destX86_64.toPath())).encodeHex().toString().toUpperCase()
+
+    if (md5ARM64 != "73F6B522DA05423A97EF0DE9ED73A9BB") {
+        throw new GradleException("media_kit: arm64-v8a JAR integrity check failed.")
+    } else {
+        println "media_kit: arm64-v8a JAR integrity check successful."
+    }
+    if (md5ARMEABI != "41FB84ABDA8AC73B5A05B9D162402202") {
+        throw new GradleException("media_kit: armeabi-v7a JAR integrity check failed.")
+    } else {
+        println "media_kit: armeabi-v7a JAR integrity check successful."
+    }
+    if (md5X86_64 != "35244C860221F5C18D1CBF6DCE1254C6") {
+        throw new GradleException("media_kit: x86_64 JAR integrity check failed.")
+    } else {
+        println "media_kit: x86_64 JAR integrity check successful."
+    }
+    println "media_kit: Dependencies downloaded successfully."
+}
+
+assemble.dependsOn(downloadDependencies)

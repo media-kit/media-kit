@@ -159,6 +159,8 @@ abstract class PlatformPlayer {
     audioDevicesController.stream,
     trackController.stream,
     tracksController.stream,
+    widthController.stream,
+    heightController.stream,
   );
 
   @mustCallSuper
@@ -181,6 +183,8 @@ abstract class PlatformPlayer {
           audioDevicesController.close(),
           trackController.close(),
           tracksController.close(),
+          widthController.close(),
+          heightController.close(),
         ],
       );
 
@@ -381,4 +385,12 @@ abstract class PlatformPlayer {
   @protected
   final StreamController<Tracks> tracksController =
       StreamController<Tracks>.broadcast();
+
+  @protected
+  final StreamController<int> widthController =
+      StreamController<int>.broadcast();
+
+  @protected
+  final StreamController<int> heightController =
+      StreamController<int>.broadcast();
 }
