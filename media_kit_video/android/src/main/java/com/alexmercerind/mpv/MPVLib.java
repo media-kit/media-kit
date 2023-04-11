@@ -13,9 +13,10 @@ package com.alexmercerind.mpv;
 import java.util.List;
 import java.util.ArrayList;
 
+import android.util.Log;
+import android.view.Surface;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.view.Surface;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
@@ -41,7 +42,7 @@ public class MPVLib {
                 System.loadLibrary(library);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e("media_kit", "WARNING: package:media_kit_libs_*** not found.");
         }
     }
 

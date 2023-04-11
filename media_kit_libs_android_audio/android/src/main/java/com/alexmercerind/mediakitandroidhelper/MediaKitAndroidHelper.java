@@ -7,6 +7,7 @@
  */
 package com.alexmercerind.mediakitandroidhelper;
 
+import android.util.Log;
 import android.content.Context;
 
 import androidx.annotation.Keep;
@@ -18,7 +19,7 @@ public class MediaKitAndroidHelper {
         try {
             System.loadLibrary("mediakitandroidhelper");
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e("media_kit", "WARNING: package:media_kit_libs_*** not found.");
         }
     }
 
