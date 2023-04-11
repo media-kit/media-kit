@@ -35,9 +35,13 @@ import androidx.annotation.NonNull;
 public class MPVLib {
 
     static {
-        String[] libs = {"mpv", "player"};
-        for (String lib : libs) {
-            System.loadLibrary(lib);
+        try {
+            String[] libraries = {"mpv", "player"};
+            for (String library : libraries) {
+                System.loadLibrary(library);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

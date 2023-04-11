@@ -15,7 +15,11 @@ import androidx.annotation.Keep;
 @Keep()
 public class MediaKitAndroidHelper {
     static {
-        System.loadLibrary("mediakitandroidhelper");
+        try {
+            System.loadLibrary("mediakitandroidhelper");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static native long newGlobalObjectRef(Object obj);
