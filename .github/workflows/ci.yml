@@ -165,6 +165,7 @@ jobs:
         run: |
           "C:\Program Files\Git\usr\bin\sed.exe" -i "/media_kit_libs_/d" pubspec.yaml
           type pubspec.yaml
+        shell: cmd
       - run: flutter pub get
       - run: flutter build windows --verbose
 
@@ -182,7 +183,7 @@ jobs:
           channel: "stable"
       - name: Remove `media_kit_libs_*` dependencies
         run: |
-          sed -i '' '/media_kit_libs_/d' pubspec.yaml
+          sed -i '/media_kit_libs_/d' pubspec.yaml
           cat pubspec.yaml
       - run: flutter pub get
       - run: flutter build linux --verbose
