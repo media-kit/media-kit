@@ -18,7 +18,7 @@ set(PLUGIN_NAME "media_kit_video_plugin")
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
 set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
 
-if(EXISTS "${LIBMPV_SRC}" AND EXISTS "${ANGLE_SRC}")
+if(MEDIA_KIT_LIBS_AVAILABLE)
   # Add libmpv & ANGLE headers to the include path.
   include_directories(
     "${LIBMPV_SRC}/include"

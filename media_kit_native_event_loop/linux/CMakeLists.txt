@@ -14,7 +14,7 @@ add_subdirectory(
   "${CMAKE_CURRENT_BINARY_DIR}/shared"
 )
 
-if(LIBMPV_FOUND)
+if(MEDIA_KIT_LIBS_AVAILABLE)
   set(media_kit_native_event_loop_bundled_libraries
     $<TARGET_FILE:media_kit_native_event_loop>
     PARENT_SCOPE

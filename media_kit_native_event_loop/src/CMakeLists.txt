@@ -15,9 +15,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   # Must be built before this CMake project.
   set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
 
-  if(EXISTS "${LIBMPV_SRC}")
-    set(LIBMPV_FOUND TRUE)
-
+  if(MEDIA_KIT_LIBS_AVAILABLE)
     # Add media_kit_native_event_loop target.
     project(${TARGET_NAME}_library VERSION 1.0.0 LANGUAGES CXX)
     add_library(${TARGET_NAME} SHARED "${TARGET_NAME}.cc")
@@ -48,9 +46,7 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(mpv IMPORTED_TARGET mpv)
 
-  if(mpv_FOUND)
-    set(LIBMPV_FOUND TRUE)
-
+  if(MEDIA_KIT_LIBS_AVAILABLE)
     # Add media_kit_native_event_loop target.
     project(${TARGET_NAME}_library VERSION 1.0.0 LANGUAGES CXX)
     add_library(${TARGET_NAME} SHARED "${TARGET_NAME}.cc")
@@ -77,7 +73,7 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     )
     target_compile_definitions(${TARGET_NAME} PUBLIC DART_SHARED_LIB)
   else()
-    message(NOTICE "media_kit: WARNING: libmpv not found.")
+    message(NOTICE "media_kit: WARNING: package:media_kit_libs_*** not found.")
   endif()
 
 # Android
@@ -96,7 +92,6 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
   # 4. Generate the APK file:
   # * flutter build apk --release
   # 5. Extract the `libmedia_kit_native_event_loop.so` for each ABI & architecture.
-  set(LIBMPV_FOUND TRUE)
 
   # Add media_kit_native_event_loop target.
   project(${TARGET_NAME}_library VERSION 1.0.0 LANGUAGES CXX)
