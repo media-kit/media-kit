@@ -6,6 +6,9 @@
 
 cmake_minimum_required(VERSION 3.10)
 
+# This option is read by the other packages which are part of package:media_kit.
+option(MEDIA_KIT_LIBS_AVAILABLE "package:media_kit libraries are available." ON)
+
 set(PROJECT_NAME "media_kit_libs_linux")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
