@@ -61,7 +61,7 @@ public class VideoOutput: NSObject {
     }
   }
 
-  public func resize(width: Int64?, height: Int64?) {
+  public func setSize(width: Int64?, height: Int64?) {
     worker.enqueue {
       self.width = width
       self.height = height

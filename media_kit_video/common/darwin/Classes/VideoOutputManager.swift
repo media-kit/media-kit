@@ -31,7 +31,7 @@ public class VideoOutputManager: NSObject {
     self.videoOutputs[handle] = videoOutput
   }
 
-  public func resize(
+  public func setSize(
     handle: Int64,
     width: Int64?,
     height: Int64?
@@ -41,7 +41,7 @@ public class VideoOutputManager: NSObject {
       return
     }
 
-    videoOutput!.resize(
+    videoOutput!.setSize(
       width: width,
       height: height
     )

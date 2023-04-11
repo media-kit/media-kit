@@ -135,12 +135,12 @@ class VideoControllerAndroid extends VideoController {
     return controller;
   }
 
-  /// Resizes the video output.
-  /// This may yield substantial performance improvements.
+  /// Sets the required size of the video output.
+  /// This may yield substantial performance improvements if a small [width] & [height] is specified.
   ///
   /// Remember, “Premature optimization is the root of all evil”. So, use this method wisely.
   @override
-  Future<void> resize({
+  Future<void> setSize({
     int? width,
     int? height,
   }) async {

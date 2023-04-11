@@ -44,8 +44,8 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
     switch call.method {
     case "VideoOutputManager.Create":
       handleCreateMethodCall(call.arguments, result)
-    case "VideoOutputManager.Resize":
-      handleResizeMethodCall(call.arguments, result)
+    case "VideoOutputManager.SetSize":
+      handleSetSizeMethodCall(call.arguments, result)
     case "VideoOutputManager.Dispose":
       handleDisposeMethodCall(call.arguments, result)
     default:
@@ -95,7 +95,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
     result(nil)
   }
 
-  private func handleResizeMethodCall(
+  private func handleSetSizeMethodCall(
     _ arguments: Any?,
     _ result: FlutterResult
   ) {
@@ -110,7 +110,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
 
     assert(handle != nil, "handle must be an Int64")
 
-    self.videoOutputManager.resize(
+    self.videoOutputManager.setSize(
       handle: handle!,
       width: width,
       height: height
