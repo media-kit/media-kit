@@ -163,8 +163,8 @@ jobs:
           channel: "stable"
       - name: Remove `media_kit_libs_*` dependencies
         run: |
-          "C:\Program Files\Git\usr\bin\sed.exe" -i "" "/media_kit_libs_/d" pubspec.yaml
-          cat pubspec.yaml
+          "C:\Program Files\Git\usr\bin\sed.exe" -i "/media_kit_libs_/d" pubspec.yaml
+          type pubspec.yaml
       - run: flutter pub get
       - run: flutter build windows --verbose
 
