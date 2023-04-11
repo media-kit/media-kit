@@ -7,9 +7,12 @@
 // LICENSE file.
 
 #include "include/media_kit_video/media_kit_video_plugin.h"
-#include "include/media_kit_video/video_output_manager.h"
+
+#ifndef MEDIA_KIT_LIBS_NOT_FOUND
 
 #include <gtk/gtk.h>
+
+#include "include/media_kit_video/video_output_manager.h"
 
 #define MEDIA_KIT_VIDEO_PLUGIN(obj)                                     \
   (G_TYPE_CHECK_INSTANCE_CAST((obj), media_kit_video_plugin_get_type(), \
@@ -134,3 +137,15 @@ void media_kit_video_plugin_register_with_registrar(
     FlPluginRegistrar* registrar) {
   media_kit_video_plugin_new(registrar);
 }
+
+#else
+
+#include <iostream>
+
+void media_kit_video_plugin_register_with_registrar(
+    FlPluginRegistrar* registrar) {
+  std::cout << "media_kit: WARNING: package:media_kit_libs_*** not found."
+            << std::endl;
+}
+
+#endif

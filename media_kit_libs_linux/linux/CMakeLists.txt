@@ -30,7 +30,8 @@ target_include_directories(
 
 target_link_libraries(${PLUGIN_NAME} PRIVATE flutter)
 
-set(media_kit_libs_linux_bundled_libraries
+set(
+  media_kit_libs_linux_bundled_libraries
   ""
   PARENT_SCOPE
 )
