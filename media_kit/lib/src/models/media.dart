@@ -46,19 +46,25 @@ class Media extends Playable {
   static String normalizeURI(String uri) {
     if (uri.startsWith(_kAssetScheme)) {
       // Handle asset:// scheme. Only for Flutter.
+      // https://github.com/alexmercerind/media_kit/issues/121
+      String asset = path.normalize(uri.split(_kAssetScheme).last);
+      if (asset.startsWith('/')) {
+        asset = asset.substring(1);
+      }
+      asset = asset.split('/').map((e) => Uri.encodeComponent(e)).join('/');
       if (Platform.isWindows) {
         uri = path.join(
           path.dirname(Platform.resolvedExecutable),
           'data',
           'flutter_assets',
-          path.normalize(uri.split(_kAssetScheme).last),
+          asset,
         );
       } else if (Platform.isLinux) {
         uri = path.join(
           path.dirname(Platform.resolvedExecutable),
           'data',
           'flutter_assets',
-          path.normalize(uri.split(_kAssetScheme).last),
+          asset,
         );
       } else if (Platform.isMacOS) {
         uri = path.join(
@@ -68,7 +74,7 @@ class Media extends Playable {
           'App.framework',
           'Resources',
           'flutter_assets',
-          path.normalize(uri.split(_kAssetScheme).last),
+          asset,
         );
       } else if (Platform.isIOS) {
         uri = path.join(
@@ -76,12 +82,10 @@ class Media extends Playable {
           'Frameworks',
           'App.framework',
           'flutter_assets',
-          path.normalize(uri.split(_kAssetScheme).last),
+          asset,
         );
       } else if (Platform.isAndroid) {
-        uri = AndroidAssetLoader.instance.load(
-          path.normalize(uri.split(_kAssetScheme).last),
-        );
+        uri = AndroidAssetLoader.instance.load(asset);
       } else {
         throw UnimplementedError(
           '$_kAssetScheme is not supported on ${Platform.operatingSystem}',
