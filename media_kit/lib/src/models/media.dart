@@ -47,57 +47,46 @@ class Media extends Playable {
     if (uri.startsWith(_kAssetScheme)) {
       // Handle asset:// scheme. Only for Flutter.
       if (Platform.isWindows) {
-        return Uri.file(
-          path.join(
-            path.dirname(Platform.resolvedExecutable),
-            'data',
-            'flutter_assets',
-            path.normalize(uri.split(_kAssetScheme).last),
-          ),
-        ).toString();
-      }
-      if (Platform.isLinux) {
-        return Uri.file(
-          path.join(
-            path.dirname(Platform.resolvedExecutable),
-            'data',
-            'flutter_assets',
-            path.normalize(uri.split(_kAssetScheme).last),
-          ),
-        ).toString();
-      }
-      if (Platform.isMacOS) {
-        return Uri.file(
-          path.join(
-            path.dirname(Platform.resolvedExecutable),
-            '..',
-            'Frameworks',
-            'App.framework',
-            'Resources',
-            'flutter_assets',
-            path.normalize(uri.split(_kAssetScheme).last),
-          ),
-        ).toString();
-      }
-      if (Platform.isIOS) {
-        return Uri.file(
-          path.join(
-            path.dirname(Platform.resolvedExecutable),
-            'Frameworks',
-            'App.framework',
-            'flutter_assets',
-            path.normalize(uri.split(_kAssetScheme).last),
-          ),
-        ).toString();
-      }
-      if (Platform.isAndroid) {
-        return AndroidAssetLoader.instance.load(
+        uri = path.join(
+          path.dirname(Platform.resolvedExecutable),
+          'data',
+          'flutter_assets',
           path.normalize(uri.split(_kAssetScheme).last),
         );
+      } else if (Platform.isLinux) {
+        uri = path.join(
+          path.dirname(Platform.resolvedExecutable),
+          'data',
+          'flutter_assets',
+          path.normalize(uri.split(_kAssetScheme).last),
+        );
+      } else if (Platform.isMacOS) {
+        uri = path.join(
+          path.dirname(Platform.resolvedExecutable),
+          '..',
+          'Frameworks',
+          'App.framework',
+          'Resources',
+          'flutter_assets',
+          path.normalize(uri.split(_kAssetScheme).last),
+        );
+      } else if (Platform.isIOS) {
+        uri = path.join(
+          path.dirname(Platform.resolvedExecutable),
+          'Frameworks',
+          'App.framework',
+          'flutter_assets',
+          path.normalize(uri.split(_kAssetScheme).last),
+        );
+      } else if (Platform.isAndroid) {
+        uri = AndroidAssetLoader.instance.load(
+          path.normalize(uri.split(_kAssetScheme).last),
+        );
+      } else {
+        throw UnimplementedError(
+          '$_kAssetScheme is not supported on ${Platform.operatingSystem}',
+        );
       }
-      throw UnimplementedError(
-        '$_kAssetScheme is not supported on ${Platform.operatingSystem}',
-      );
     }
     // Keep the resulting URI normalization same as used by libmpv internally.
     // [File] or network URIs.
