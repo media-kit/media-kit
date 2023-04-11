@@ -34,7 +34,7 @@ public class VideoOutput {
             deleteGlobalObjectRef = mediaKitAndroidHelperClass.getDeclaredMethod("deleteGlobalObjectRef", long.class);
             newGlobalObjectRef.setAccessible(true);
             deleteGlobalObjectRef.setAccessible(true);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Log.i("media_kit", "package:media_kit_libs_android_video missing. Make sure you have added it to pubspec.yaml.");
             throw new RuntimeException("Failed to initialize com.alexmercerind.media_kit_video.VideoOutput.");
         }
@@ -47,7 +47,7 @@ public class VideoOutput {
             wid = (long) newGlobalObjectRef.invoke(null, surface);
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutput: id = %d", id));
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutput: wid = %d", wid));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }
@@ -55,17 +55,17 @@ public class VideoOutput {
     public void dispose() {
         try {
             surfaceTextureEntry.release();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         try {
             surface.release();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         try {
             deleteGlobalObjectRef.invoke(null, wid);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }

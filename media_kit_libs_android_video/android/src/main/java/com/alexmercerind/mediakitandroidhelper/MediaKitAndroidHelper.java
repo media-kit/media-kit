@@ -18,7 +18,7 @@ public class MediaKitAndroidHelper {
     static {
         try {
             System.loadLibrary("mediakitandroidhelper");
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Log.e("media_kit", "WARNING: package:media_kit_libs_*** not found.");
         }
     }

@@ -41,7 +41,7 @@ public class MPVLib {
             for (String library : libraries) {
                 System.loadLibrary(library);
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Log.e("media_kit", "WARNING: package:media_kit_libs_*** not found.");
         }
     }
