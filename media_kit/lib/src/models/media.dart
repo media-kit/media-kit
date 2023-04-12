@@ -8,6 +8,7 @@ import 'dart:io';
 import 'dart:collection';
 import 'package:path/path.dart' as path;
 import 'package:uri_parser/uri_parser.dart';
+import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/android_asset_loader.dart';
@@ -46,50 +47,59 @@ class Media extends Playable {
   static String normalizeURI(String uri) {
     if (uri.startsWith(_kAssetScheme)) {
       // Handle asset:// scheme. Only for Flutter.
-      String asset = path.normalize(uri.split(_kAssetScheme).last);
-      if (asset.startsWith('/')) {
-        asset = asset.substring(1);
-      }
-      asset = encodePath(asset);
+      final key = encodeAssetKey(uri);
+      final String asset;
       if (Platform.isWindows) {
-        uri = path.join(
-          path.dirname(Platform.resolvedExecutable),
-          'data',
-          'flutter_assets',
-          asset,
+        asset = path.normalize(
+          path.join(
+            path.dirname(Platform.resolvedExecutable),
+            'data',
+            'flutter_assets',
+            key,
+          ),
         );
       } else if (Platform.isLinux) {
-        uri = path.join(
-          path.dirname(Platform.resolvedExecutable),
-          'data',
-          'flutter_assets',
-          asset,
+        asset = path.normalize(
+          path.join(
+            path.dirname(Platform.resolvedExecutable),
+            'data',
+            'flutter_assets',
+            key,
+          ),
         );
       } else if (Platform.isMacOS) {
-        uri = path.join(
-          path.dirname(Platform.resolvedExecutable),
-          '..',
-          'Frameworks',
-          'App.framework',
-          'Resources',
-          'flutter_assets',
-          asset,
+        asset = path.normalize(
+          path.join(
+            path.dirname(Platform.resolvedExecutable),
+            '..',
+            'Frameworks',
+            'App.framework',
+            'Resources',
+            'flutter_assets',
+            key,
+          ),
         );
       } else if (Platform.isIOS) {
-        uri = path.join(
-          path.dirname(Platform.resolvedExecutable),
-          'Frameworks',
-          'App.framework',
-          'flutter_assets',
-          asset,
+        asset = path.normalize(
+          path.join(
+            path.dirname(Platform.resolvedExecutable),
+            'Frameworks',
+            'App.framework',
+            'flutter_assets',
+            key,
+          ),
         );
       } else if (Platform.isAndroid) {
-        uri = AndroidAssetLoader.instance.load(asset);
+        asset = path.normalize(AndroidAssetLoader.instance.load(key));
       } else {
         throw UnimplementedError(
           '$_kAssetScheme is not supported on ${Platform.operatingSystem}',
         );
       }
+      if (!File(asset).existsSync_()) {
+        throw Exception('Unable to load asset: $asset');
+      }
+      uri = asset;
     }
     // Keep the resulting URI normalization same as used by libmpv internally.
     // [File] or network URIs.
@@ -108,9 +118,13 @@ class Media extends Playable {
     }
   }
 
-  static String encodePath(String path) {
+  static String encodeAssetKey(String uri) {
+    String key = uri.split(_kAssetScheme).last;
+    if (key.startsWith('/')) {
+      key = key.substring(1);
+    }
     // https://github.com/alexmercerind/media_kit/issues/121
-    return path.split('/').map((e) => Uri.encodeComponent(e)).join('/');
+    return key.split('/').map((e) => Uri.encodeComponent(e)).join('/');
   }
 
   /// For comparing with other [Media] instances.
