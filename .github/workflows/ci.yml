@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   media_kit-tests:
-    name: media_kit Tests
+    name: package:media_kit tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -15,7 +15,7 @@ jobs:
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
-      - run: flutter pub get
+      - run: dart pub get
       - run: dart test
 
   windows:
