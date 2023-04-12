@@ -17,7 +17,7 @@ import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_streams.dart';
 
 import 'package:media_kit/src/platform_player.dart';
-import 'package:media_kit/src/libmpv/player.dart' as libmpv;
+import 'package:media_kit/src/libmpv/player.dart' as _libmpv;
 
 /// {@template player}
 ///
@@ -112,19 +112,19 @@ class Player {
     PlayerConfiguration configuration = const PlayerConfiguration(),
   }) {
     if (Platform.isWindows) {
-      platform = libmpv.Player(configuration: configuration);
+      platform = _libmpv.Player(configuration: configuration);
     }
     if (Platform.isLinux) {
-      platform = libmpv.Player(configuration: configuration);
+      platform = _libmpv.Player(configuration: configuration);
     }
     if (Platform.isMacOS) {
-      platform = libmpv.Player(configuration: configuration);
+      platform = _libmpv.Player(configuration: configuration);
     }
     if (Platform.isIOS) {
-      platform = libmpv.Player(configuration: configuration);
+      platform = _libmpv.Player(configuration: configuration);
     }
     if (Platform.isAndroid) {
-      platform = libmpv.Player(configuration: configuration);
+      platform = _libmpv.Player(configuration: configuration);
     }
     // TODO: Implement other platforms.
   }

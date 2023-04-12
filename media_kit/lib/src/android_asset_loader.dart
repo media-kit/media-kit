@@ -7,16 +7,6 @@ import 'dart:io';
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 
-// Type definitions for native functions in the shared library.
-
-// C/C++:
-
-typedef FnCXX = Void Function(Pointer<Utf8> asset, Pointer<Utf8> result);
-
-// Dart:
-
-typedef FnDart = void Function(Pointer<Utf8> asset, Pointer<Utf8> result);
-
 /// {@template android_asset_loader}
 ///
 /// AndroidAssetLoader
@@ -64,3 +54,13 @@ class AndroidAssetLoader {
 
   FnDart? _mediaKitAndroidHelperCopyAssetToExternalFilesDir;
 }
+
+// Type definitions for native functions in the shared library.
+
+// C/C++:
+
+typedef FnCXX = Void Function(Pointer<Utf8> asset, Pointer<Utf8> result);
+
+// Dart:
+
+typedef FnDart = void Function(Pointer<Utf8> asset, Pointer<Utf8> result);
