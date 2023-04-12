@@ -60,10 +60,6 @@ enum MPVLogLevel {
 ///
 /// {@endtemplate}
 class PlayerConfiguration {
-  /// Enables or disables event handling. This may improve performance if there is no need to listen to events.
-  /// Default: `true`.
-  final bool events;
-
   /// Sets the log level on libmpv backend.
   /// Default: `none`.
   final MPVLogLevel logLevel;
@@ -91,11 +87,6 @@ class PlayerConfiguration {
   /// Default: `false`.
   final bool pitch;
 
-  /// Sets manually specified location to the libmpv shared library & overrides the default look-up behavior.
-  ///
-  /// Default: `null`.
-  final String? libmpv;
-
   /// Sets the name of the underlying window & process on libmpv backend. This is visible inside the Windows' volume mixer.
   ///
   /// Default: `null`.
@@ -108,13 +99,11 @@ class PlayerConfiguration {
 
   /// {@macro player_configuration}
   const PlayerConfiguration({
-    this.events = true,
     this.logLevel = MPVLogLevel.none,
     this.osc = false,
     this.vid,
-    this.vo,
+    this.vo = 'null',
     this.pitch = false,
-    this.libmpv,
     this.title,
     this.ready,
   });
