@@ -23,12 +23,15 @@
 #include "dart_api_types.h"
 
 #include <future>
+#include <iostream>
 #include <functional>
 #include <unordered_map>
 
 class MediaKitEventLoopHandler {
  public:
   static MediaKitEventLoopHandler& GetInstance();
+
+  void Initialize();
 
   void Register(int64_t handle, void* post_c_object, int64_t send_port);
 
@@ -42,6 +45,8 @@ class MediaKitEventLoopHandler {
   MediaKitEventLoopHandler();
 
   ~MediaKitEventLoopHandler();
+
+  std::mutex mutex_;
 
   std::unordered_map<mpv_handle*, std::mutex> mutexes_;
   // std::promise(s) are working very well & look more readable. I'm tired of
@@ -63,6 +68,8 @@ class MediaKitEventLoopHandler {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+DLLEXPORT void MediaKitEventLoopHandlerInitialize();
 
 DLLEXPORT void MediaKitEventLoopHandlerRegister(int64_t handle,
                                                 void* post_c_object,

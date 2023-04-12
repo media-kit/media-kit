@@ -13,6 +13,22 @@ MediaKitEventLoopHandler& MediaKitEventLoopHandler::GetInstance() {
   return instance;
 }
 
+void MediaKitEventLoopHandler::Initialize() {
+  std::lock_guard<std::mutex> l(mutex_);
+  if (mutexes_.size() > 0 && promises_.size() > 0) {
+    // Destroy already running |mpv_handle|(s).
+    std::cout << "media_kit: "
+              << "Destroying " << mutexes_.size() << " [Player] instances..."
+              << std::endl;
+    for (auto& [handle, _] : mutexes_) {
+      mpv_command_string(handle, "quit 0");
+    }
+    std::cout << "media_kit: Done." << std::endl;
+    mutexes_.clear();
+    promises_.clear();
+  }
+}
+
 void MediaKitEventLoopHandler::Register(int64_t handle,
                                         void* post_c_object,
                                         int64_t send_port) {
@@ -21,6 +37,7 @@ void MediaKitEventLoopHandler::Register(int64_t handle,
 
     for (;;) {
       {
+        std::lock_guard<std::mutex> l(mutex_);
         std::lock_guard<std::mutex> lock(mutexes_[context]);
         promises_[context] = std::promise<void>();
       }
@@ -46,6 +63,11 @@ void MediaKitEventLoopHandler::Register(int64_t handle,
       fn(send_port, &event_object);
 
       if (event->event_id == MPV_EVENT_SHUTDOWN) {
+        std::cout << "media_kit: " << reinterpret_cast<int64_t>(context) << " "
+                  << "MPV_EVENT_SHUTDOWN" << std::endl;
+        std::lock_guard<std::mutex> l(mutex_);
+        mutexes_.erase(context);
+        promises_.erase(context);
         break;
       }
 
@@ -58,6 +80,7 @@ void MediaKitEventLoopHandler::Register(int64_t handle,
 
 void MediaKitEventLoopHandler::Notify(int64_t handle) {
   auto context = reinterpret_cast<mpv_handle*>(handle);
+  std::lock_guard<std::mutex> l(mutex_);
   std::lock_guard<std::mutex> lock(mutexes_[context]);
   // Allow next |mpv_wait_event| to be called.
   promises_[context].set_value();
@@ -70,6 +93,10 @@ MediaKitEventLoopHandler::~MediaKitEventLoopHandler() {}
 // ---------------------------------------------------------------------------
 // C API for access using dart:ffi
 // ---------------------------------------------------------------------------
+
+void MediaKitEventLoopHandlerInitialize() {
+  MediaKitEventLoopHandler::GetInstance().Initialize();
+}
 
 void MediaKitEventLoopHandlerRegister(int64_t handle,
                                       void* post_c_object,
