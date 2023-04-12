@@ -139,6 +139,7 @@ class _SeekBarState extends State<SeekBar> {
   bool seeking = false;
   Duration position = Duration.zero;
   Duration duration = Duration.zero;
+  Duration lastBuffered = Duration.zero;
 
   List<StreamSubscription> subscriptions = [];
 
@@ -148,6 +149,7 @@ class _SeekBarState extends State<SeekBar> {
     playing = widget.player.state.playing;
     position = widget.player.state.position;
     duration = widget.player.state.duration;
+    lastBuffered = widget.player.state.lastBuffered;
     subscriptions.addAll(
       [
         widget.player.streams.playing.listen((event) {
@@ -168,6 +170,11 @@ class _SeekBarState extends State<SeekBar> {
         widget.player.streams.duration.listen((event) {
           setState(() {
             duration = event;
+          });
+        }),
+        widget.player.streams.lastBuffered.listen((event) {
+          setState(() {
+            lastBuffered = event;
           });
         }),
       ],
@@ -235,6 +242,7 @@ class _SeekBarState extends State<SeekBar> {
                       0,
                       duration.inMilliseconds.toDouble(),
                     ),
+                secondaryTrackValue: lastBuffered.inMilliseconds.toDouble(),
                 onChangeStart: (e) {
                   seeking = true;
                 },

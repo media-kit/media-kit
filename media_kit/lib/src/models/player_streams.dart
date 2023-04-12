@@ -47,6 +47,9 @@ class PlayerStreams {
   /// Whether the [Player] has stopped for buffering.
   final Stream<bool> buffering;
 
+  /// last buffered Duration of the currently playing [Media] in the [Player].
+  final Stream<Duration> lastBuffered;
+
   /// [Stream] emitting [PlayerLog]s.
   final Stream<PlayerLog> log;
 
@@ -90,6 +93,7 @@ class PlayerStreams {
     this.rate,
     this.pitch,
     this.buffering,
+    this.lastBuffered,
     this.log,
     this.error,
     this.audioParams,

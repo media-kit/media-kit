@@ -151,6 +151,7 @@ abstract class PlatformPlayer {
     rateController.stream,
     pitchController.stream,
     bufferingController.stream,
+    lastBufferedController.stream,
     logController.stream,
     errorController.stream,
     audioParamsController.stream,
@@ -175,6 +176,7 @@ abstract class PlatformPlayer {
           rateController.close(),
           pitchController.close(),
           bufferingController.close(),
+          lastBufferedController.close(),
           logController.close(),
           errorController.close(),
           audioParamsController.close(),
@@ -353,6 +355,10 @@ abstract class PlatformPlayer {
   @protected
   final StreamController<bool> bufferingController =
       StreamController<bool>.broadcast();
+
+  @protected
+  final StreamController<Duration> lastBufferedController =
+      StreamController<Duration>.broadcast();
 
   @protected
   final StreamController<PlayerLog> logController =

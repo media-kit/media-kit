@@ -45,6 +45,9 @@ class PlayerState {
   /// Whether the [Player] is buffering.
   final bool buffering;
 
+  /// last buffered Duration of the currently playing [Media] in the [Player].
+  final Duration lastBuffered;
+
   /// Audio parameters of the currently playing [Media].
   /// e.g. sample rate, channels, etc.
   final AudioParams audioParams;
@@ -81,6 +84,7 @@ class PlayerState {
     this.rate = 1.0,
     this.pitch = 1.0,
     this.buffering = false,
+    this.lastBuffered = Duration.zero,
     this.audioParams = const AudioParams(),
     this.audioBitrate,
     this.audioDevice = const AudioDevice('auto', ''),
@@ -101,6 +105,7 @@ class PlayerState {
     double? rate,
     double? pitch,
     bool? buffering,
+    Duration? lastBuffered,
     AudioParams? audioParams,
     double? audioBitrate,
     AudioDevice? audioDevice,
@@ -120,6 +125,7 @@ class PlayerState {
       rate: rate ?? this.rate,
       pitch: pitch ?? this.pitch,
       buffering: buffering ?? this.buffering,
+      lastBuffered: lastBuffered??this.lastBuffered,
       audioParams: audioParams ?? this.audioParams,
       audioBitrate: audioBitrate ?? this.audioBitrate,
       audioDevice: audioDevice ?? this.audioDevice,
@@ -142,6 +148,7 @@ class PlayerState {
       'rate: $rate, '
       'pitch: $pitch, '
       'buffering: $buffering, '
+      'lastBuffered: $lastBuffered, '
       'audioParams: $audioParams, '
       'audioBitrate: $audioBitrate, '
       'audioDevice: $audioDevice, '
