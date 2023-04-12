@@ -1,14 +1,29 @@
 name: Github Actions
 on: [push, pull_request]
 
-defaults:
-  run:
-    working-directory: media_kit_test
-
 jobs:
+  media_kit-tests:
+    name: Windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: media_kit
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - run: flutter pub get
+      - run: dart test
+
   windows:
     name: Windows
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
     steps:
       - uses: actions/checkout@v2
         with:
@@ -35,6 +50,9 @@ jobs:
   linux:
     name: Linux
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
     steps:
       - uses: actions/checkout@v2
         with:
@@ -63,6 +81,9 @@ jobs:
   macos:
     name: macOS
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
     steps:
       - uses: actions/checkout@v2
         with:
@@ -89,6 +110,9 @@ jobs:
   ios:
     name: iOS
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
     steps:
       - uses: actions/checkout@v2
         with:
@@ -115,6 +139,9 @@ jobs:
   android:
     name: Android
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
     steps:
       - uses: actions/checkout@v2
         with:
