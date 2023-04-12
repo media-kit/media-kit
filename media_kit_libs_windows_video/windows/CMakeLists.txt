@@ -1,14 +1,58 @@
+# This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+#
+# Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+# All rights reserved.
+# Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 cmake_minimum_required(VERSION 3.14)
+
+# This option is read by the other packages which are part of package:media_kit.
+option(MEDIA_KIT_LIBS_AVAILABLE "package:media_kit libraries are available." ON)
 
 set(PROJECT_NAME "media_kit_libs_windows_video")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
+set(PLUGIN_NAME "media_kit_libs_windows_video_plugin")
+
+add_library(
+  ${PLUGIN_NAME} SHARED
+  "include/media_kit_libs_windows_video/media_kit_libs_windows_video_plugin_c_api.h"
+  "media_kit_libs_windows_video_plugin_c_api.cpp"
+)
+
+apply_standard_settings(${PLUGIN_NAME})
+
+set_target_properties(
+  ${PLUGIN_NAME}
+  PROPERTIES
+  CXX_VISIBILITY_PRESET
+  hidden
+)
+target_compile_definitions(
+  ${PLUGIN_NAME}
+  PRIVATE
+  FLUTTER_PLUGIN_IMPL
+)
+
+target_include_directories(
+  ${PLUGIN_NAME} INTERFACE
+  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+target_link_libraries(
+  ${PLUGIN_NAME}
+  PRIVATE
+  flutter
+  flutter_wrapper_plugin
+)
+
+# ------------------------------------------------------------------------------
+
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20230201-git-7990dd8.7z")
+set(LIBMPV "mpv-dev-x86_64-20230408-git-7ae7fc0.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/alexmercerind/mpv-win32-build/releases/download/2023-02-01/${LIBMPV}")
-set(LIBMPV_MD5 "f74bc12679a6ab2b800500ee6567bc6f")
+set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-04-08/${LIBMPV}")
+set(LIBMPV_MD5 "3d6e3686b5d543dfed6a775b8bff6b14")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
@@ -49,7 +93,7 @@ endif()
 set(ANGLE "ANGLE.7z")
 
 # Download URL & MD5 hash of the ANGLE archive.
-set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-Direct3D-Interop/releases/download/v1.0.0/ANGLE.7z")
+set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-OpenGLES/releases/download/v1.0.0/ANGLE.7z")
 set(ANGLE_MD5 "e5be38d0e1c5cbe5f70e53701ea8b6c9")
 
 # Download location of the ANGLE archive.
@@ -84,6 +128,7 @@ if(NOT EXISTS "${ANGLE_SRC}")
   )
 endif()
 
+# ------------------------------------------------------------------------------
 set(
   media_kit_libs_windows_video_bundled_libraries
   "${LIBMPV_SRC}/libmpv-2.dll"

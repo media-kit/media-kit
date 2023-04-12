@@ -62,6 +62,8 @@ class VideoOutput {
   void SetTextureUpdateCallback(
       std::function<void(int64_t, int64_t, int64_t)> callback);
 
+  void SetSize(std::optional<int64_t> width, std::optional<int64_t> height);
+
  private:
   void NotifyRender();
 

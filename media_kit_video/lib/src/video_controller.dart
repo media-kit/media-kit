@@ -27,6 +27,9 @@ import 'package:media_kit_video/src/video_controller_android.dart';
 /// It is important to [dispose] the [VideoController] when it is no longer needed.
 /// It will release the allocated resources back to the system.
 ///
+/// You may dynamically resize the video output resolution using the [resize] method.
+/// This may yield substantial performance improvements.
+///
 /// **Notes**
 ///
 /// 1. You can limit size of the video output by specifying `width` & `height`.
@@ -40,10 +43,10 @@ abstract class VideoController {
   final Player player;
 
   /// Fixed width of the video output.
-  final int? width;
+  int? width;
 
   /// Fixed height of the video output.
-  final int? height;
+  int? height;
 
   /// Whether hardware acceleration should be enabled or not.
   final bool enableHardwareAcceleration;
@@ -89,6 +92,15 @@ abstract class VideoController {
       'VideoController is not supported on this platform.',
     );
   }
+
+  /// Sets the required size of the video output.
+  /// This may yield substantial performance improvements if a small [width] & [height] is specified.
+  ///
+  /// Remember, “Premature optimization is the root of all evil”. So, use this method wisely.
+  Future<void> setSize({
+    int? width,
+    int? height,
+  });
 
   /// Disposes the [VideoController].
   /// Releases the allocated resources back to the system.

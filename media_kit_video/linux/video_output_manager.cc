@@ -33,7 +33,7 @@ static void video_output_manager_class_init(VideoOutputManagerClass* klass) {
 
 VideoOutputManager* video_output_manager_new(
     FlTextureRegistrar* texture_registrar) {
-  auto video_output_manager = VIDEO_OUTPUT_MANAGER(
+  VideoOutputManager* video_output_manager = VIDEO_OUTPUT_MANAGER(
       g_object_new(video_output_manager_get_type(), nullptr));
   video_output_manager->texture_registrar = texture_registrar;
   return video_output_manager;
@@ -54,6 +54,17 @@ void video_output_manager_create(VideoOutputManager* self,
         video_output, texture_update_callback, texture_update_callback_context);
     g_hash_table_insert(self->video_outputs, &handle,
                         g_object_ref(video_output));
+  }
+}
+
+void video_output_manager_set_size(VideoOutputManager* self,
+                                   gint64 handle,
+                                   gint64 width,
+                                   gint64 height) {
+  if (g_hash_table_contains(self->video_outputs, &handle)) {
+    VideoOutput* video_output =
+        VIDEO_OUTPUT(g_hash_table_lookup(self->video_outputs, &handle));
+    video_output_set_size(video_output, width, height);
   }
 }
 

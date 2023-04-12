@@ -4,20 +4,20 @@
 # This file should be version controlled.
 
 version:
-  revision: bc1591ed5b7336711b97a664a3188c4009b3b322
-  channel: master
+  revision: 4b12645012342076800eb701bcdfe18f87da21cf
+  channel: stable
 
-project_type: plugin_ffi
+project_type: plugin
 
 # Tracks metadata for the flutter migrate command
 migration:
   platforms:
     - platform: root
-      create_revision: bc1591ed5b7336711b97a664a3188c4009b3b322
-      base_revision: bc1591ed5b7336711b97a664a3188c4009b3b322
+      create_revision: 4b12645012342076800eb701bcdfe18f87da21cf
+      base_revision: 4b12645012342076800eb701bcdfe18f87da21cf
     - platform: windows
-      create_revision: bc1591ed5b7336711b97a664a3188c4009b3b322
-      base_revision: bc1591ed5b7336711b97a664a3188c4009b3b322
+      create_revision: 4b12645012342076800eb701bcdfe18f87da21cf
+      base_revision: 4b12645012342076800eb701bcdfe18f87da21cf
 
   # User provided section
 

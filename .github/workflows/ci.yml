@@ -146,8 +146,6 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - run: sudo apt-get update
-      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev dpkg-dev p7zip-full p7zip-rar
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
@@ -179,3 +177,91 @@ jobs:
             media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-armeabi-v7a.apk
             media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-arm64-v8a.apk
             media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-x86_64.apk
+
+  optional-libs-windows:
+    name: Windows (optional libs)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          "C:\Program Files\Git\usr\bin\sed.exe" -i "/media_kit_libs_/d" pubspec.yaml
+          type pubspec.yaml
+        shell: cmd
+      - run: flutter pub get
+      - run: flutter build windows --verbose
+
+  optional-libs-linux:
+    name: Linux (optional libs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - run: sudo apt-get update
+      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '/media_kit_libs_/d' pubspec.yaml
+          cat pubspec.yaml
+      - run: flutter pub get
+      - run: flutter build linux --verbose
+
+  optional-libs-macos:
+    name: macOS (optional libs)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '' '/media_kit_libs_/d' pubspec.yaml
+          cat pubspec.yaml
+      - run: flutter pub get
+      - run: flutter build macos --verbose
+
+  optional-libs-ios:
+    name: iOS (optional libs)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '' '/media_kit_libs_/d' pubspec.yaml
+          cat pubspec.yaml
+      - run: flutter pub get
+      - run: flutter build ios --verbose --no-codesign
+
+  optional-libs-android:
+    name: Android (optional libs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '/media_kit_libs_/d' pubspec.yaml
+          cat pubspec.yaml
+      - run: flutter pub get
+      - run: flutter build apk --split-per-abi --verbose

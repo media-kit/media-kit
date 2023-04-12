@@ -238,6 +238,16 @@ void video_output_set_texture_update_callback(
   }
 }
 
+void video_output_set_size(VideoOutput* self, gint64 width, gint64 height) {
+  // Ideally, a mutex should be used here & |video_output_get_width| +
+  // |video_output_get_height|. However, that is throwing everything into a
+  // deadlock.
+  // Flutter itself seems to have some synchronization mechanism in rendering &
+  // platform channels AFAIK.
+  self->width = width;
+  self->height = height;
+}
+
 mpv_render_context* video_output_get_render_context(VideoOutput* self) {
   return self->render_context;
 }

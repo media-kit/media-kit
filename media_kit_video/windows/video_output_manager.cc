@@ -28,6 +28,17 @@ void VideoOutputManager::Create(
   }).detach();
 }
 
+void VideoOutputManager::SetSize(int64_t handle,
+                                 std::optional<int64_t> width,
+                                 std::optional<int64_t> height) {
+  std::thread([=]() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (video_outputs_.find(handle) != video_outputs_.end()) {
+      video_outputs_[handle]->SetSize(width, height);
+    }
+  }).detach();
+}
+
 void VideoOutputManager::Dispose(int64_t handle) {
   std::thread([=]() {
     std::lock_guard<std::mutex> lock(mutex_);
