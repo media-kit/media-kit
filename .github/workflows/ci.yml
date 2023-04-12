@@ -3,8 +3,8 @@ on: [push, pull_request]
 
 jobs:
   media_kit-tests:
-    name: Windows
-    runs-on: windows-latest
+    name: media_kit Tests
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: media_kit
