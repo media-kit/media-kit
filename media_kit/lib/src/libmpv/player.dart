@@ -775,17 +775,6 @@ class Player extends PlatformPlayer {
     if (event.ref.event_id ==
         generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
       final prop = event.ref.data.cast<generated.mpv_event_property>();
-
-      if (prop.ref.name.cast<Utf8>().toDartString() == 'demuxer-cache-time' &&
-          prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
-        final lastBuffered = Duration(
-            microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
-        state = state.copyWith(lastBuffered: lastBuffered);
-        if (!lastBufferedController.isClosed) {
-          lastBufferedController.add(lastBuffered);
-        }
-      }
-
       if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
         if (_allowPlayingStateChange) {
@@ -802,6 +791,16 @@ class Player extends PlatformPlayer {
         state = state.copyWith(buffering: buffering);
         if (!bufferingController.isClosed) {
           bufferingController.add(buffering);
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'demuxer-cache-time' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+        final buffer = Duration(
+          microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1,
+        );
+        state = state.copyWith(buffer: buffer);
+        if (!bufferController.isClosed) {
+          bufferController.add(buffer);
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
