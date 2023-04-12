@@ -731,6 +731,7 @@ class Player extends PlatformPlayer {
 
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
     _error(event.ref.error);
+
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
       if (_allowPlayingStateChange) {
         state = state.copyWith(
@@ -790,6 +791,16 @@ class Player extends PlatformPlayer {
         state = state.copyWith(buffering: buffering);
         if (!bufferingController.isClosed) {
           bufferingController.add(buffering);
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'demuxer-cache-time' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+        final buffer = Duration(
+          microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1,
+        );
+        state = state.copyWith(buffer: buffer);
+        if (!bufferController.isClosed) {
+          bufferController.add(buffer);
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
@@ -1210,6 +1221,7 @@ class Player extends PlatformPlayer {
       'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
+      'demuxer-cache-time': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'audio-params': generated.mpv_format.MPV_FORMAT_NODE,
       'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'audio-device': generated.mpv_format.MPV_FORMAT_NODE,

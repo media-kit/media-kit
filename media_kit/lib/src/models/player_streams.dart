@@ -35,6 +35,10 @@ class PlayerStreams {
   /// Duration of the currently playing [Media] in the [Player].
   final Stream<Duration> duration;
 
+  /// The total buffered duration of the currently playing [Media] in the [Player].
+  /// This indicates how much of the stream has been decoded & cached by the demuxer.
+  final Stream<Duration> buffer;
+
   /// Current volume of the [Player].
   final Stream<double> volume;
 
@@ -86,6 +90,7 @@ class PlayerStreams {
     this.completed,
     this.position,
     this.duration,
+    this.buffer,
     this.volume,
     this.rate,
     this.pitch,

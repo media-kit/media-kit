@@ -45,6 +45,10 @@ class PlayerState {
   /// Whether the [Player] is buffering.
   final bool buffering;
 
+  /// The total buffered duration of the currently playing [Media] in the [Player].
+  /// This indicates how much of the stream has been decoded & cached by the demuxer.
+  final Duration buffer;
+
   /// Audio parameters of the currently playing [Media].
   /// e.g. sample rate, channels, etc.
   final AudioParams audioParams;
@@ -77,6 +81,7 @@ class PlayerState {
     this.completed = false,
     this.position = Duration.zero,
     this.duration = Duration.zero,
+    this.buffer = Duration.zero,
     this.volume = 1.0,
     this.rate = 1.0,
     this.pitch = 1.0,
@@ -97,6 +102,7 @@ class PlayerState {
     bool? completed,
     Duration? position,
     Duration? duration,
+    Duration? buffer,
     double? volume,
     double? rate,
     double? pitch,
@@ -116,6 +122,7 @@ class PlayerState {
       completed: completed ?? this.completed,
       position: position ?? this.position,
       duration: duration ?? this.duration,
+      buffer: buffer ?? this.buffer,
       volume: volume ?? this.volume,
       rate: rate ?? this.rate,
       pitch: pitch ?? this.pitch,
@@ -138,6 +145,7 @@ class PlayerState {
       'completed: $completed, '
       'position: $position, '
       'duration: $duration, '
+      'buffer: $buffer, '
       'volume: $volume, '
       'rate: $rate, '
       'pitch: $pitch, '

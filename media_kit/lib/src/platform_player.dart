@@ -147,6 +147,7 @@ abstract class PlatformPlayer {
     completedController.stream,
     positionController.stream,
     durationController.stream,
+    bufferController.stream,
     volumeController.stream,
     rateController.stream,
     pitchController.stream,
@@ -171,6 +172,7 @@ abstract class PlatformPlayer {
           completedController.close(),
           positionController.close(),
           durationController.close(),
+          bufferController.close(),
           volumeController.close(),
           rateController.close(),
           pitchController.close(),
@@ -337,6 +339,10 @@ abstract class PlatformPlayer {
   @protected
   final StreamController<Duration> durationController =
       StreamController.broadcast();
+
+  @protected
+  final StreamController<Duration> bufferController =
+      StreamController<Duration>.broadcast();
 
   @protected
   final StreamController<double> volumeController =
