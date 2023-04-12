@@ -51,6 +51,21 @@ void video_output_manager_create(VideoOutputManager* self,
                                  gpointer texture_update_callback_context);
 
 /**
+ * @brief Sets the required video output size. This forces |VideoOutput| to
+ * resize the internal OpenGL surface / texture.
+ *
+ * @param texture_registrar |FlTextureRegistrar| reference.
+ * @param width Preferred width of the video. Pass `NULL` for using texture
+ * dimensions based on video's resolution.
+ * @param height Preferred height of the video. Pass `NULL` for using texture
+ * dimensions based on video's resolution.
+ */
+void video_output_manager_set_size(VideoOutputManager* self,
+                                   gint64 handle,
+                                   gint64 width,
+                                   gint64 height);
+
+/**
  * @brief Disposes |VideoOutput| instance for given |handle|.
  *
  * @param self |VideoOutputManager| reference.

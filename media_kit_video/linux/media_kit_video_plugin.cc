@@ -77,6 +77,25 @@ static void media_kit_video_plugin_handle_method_call(
         data);
     FlValue* result = fl_value_new_null();
     response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+  } else if (g_strcmp0(method, "VideoOutputManager.SetSize") == 0) {
+    FlValue* arguments = fl_method_call_get_args(method_call);
+    FlValue* handle = fl_value_lookup_string(arguments, "handle");
+    FlValue* width = fl_value_lookup_string(arguments, "width");
+    FlValue* height = fl_value_lookup_string(arguments, "height");
+    gint64 handle_value =
+        g_ascii_strtoll(fl_value_get_string(handle), NULL, 10);
+    gint64 width_value = 0;
+    gint64 height_value = 0;
+    if (g_strcmp0(fl_value_get_string(width), "null") != 0 &&
+        g_strcmp0(fl_value_get_string(height), "null") != 0) {
+      width_value = g_ascii_strtoll(fl_value_get_string(width), NULL, 10);
+      height_value = g_ascii_strtoll(fl_value_get_string(height), NULL, 10);
+    }
+    g_print("%ld %ld\n", width_value, height_value);
+    video_output_manager_set_size(self->video_output_manager, handle_value,
+                                  width_value, height_value);
+    FlValue* result = fl_value_new_null();
+    response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
   } else if (g_strcmp0(method, "VideoOutputManager.Dispose") == 0) {
     FlValue* arguments = fl_method_call_get_args(method_call);
     FlValue* handle = fl_value_lookup_string(arguments, "handle");
