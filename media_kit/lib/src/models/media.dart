@@ -46,12 +46,11 @@ class Media extends Playable {
   static String normalizeURI(String uri) {
     if (uri.startsWith(_kAssetScheme)) {
       // Handle asset:// scheme. Only for Flutter.
-      // https://github.com/alexmercerind/media_kit/issues/121
       String asset = path.normalize(uri.split(_kAssetScheme).last);
       if (asset.startsWith('/')) {
         asset = asset.substring(1);
       }
-      asset = asset.split('/').map((e) => Uri.encodeComponent(e)).join('/');
+      asset = encodePath(asset);
       if (Platform.isWindows) {
         uri = path.join(
           path.dirname(Platform.resolvedExecutable),
@@ -107,6 +106,11 @@ class Media extends Playable {
       default:
         return uri;
     }
+  }
+
+  static String encodePath(String path) {
+    // https://github.com/alexmercerind/media_kit/issues/121
+    return path.split('/').map((e) => Uri.encodeComponent(e)).join('/');
   }
 
   /// For comparing with other [Media] instances.
