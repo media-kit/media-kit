@@ -37,7 +37,7 @@ public class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler {
                 MPVLib.create(flutterPluginBinding.getApplicationContext());
                 MPVLib.destroy();
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }

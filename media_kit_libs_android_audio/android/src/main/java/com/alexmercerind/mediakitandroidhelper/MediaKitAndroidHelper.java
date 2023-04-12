@@ -7,6 +7,7 @@
  */
 package com.alexmercerind.mediakitandroidhelper;
 
+import android.util.Log;
 import android.content.Context;
 
 import androidx.annotation.Keep;
@@ -15,7 +16,11 @@ import androidx.annotation.Keep;
 @Keep()
 public class MediaKitAndroidHelper {
     static {
-        System.loadLibrary("mediakitandroidhelper");
+        try {
+            System.loadLibrary("mediakitandroidhelper");
+        } catch (Throwable e) {
+            Log.e("media_kit", "WARNING: package:media_kit_libs_*** not found.");
+        }
     }
 
     public static native long newGlobalObjectRef(Object obj);
