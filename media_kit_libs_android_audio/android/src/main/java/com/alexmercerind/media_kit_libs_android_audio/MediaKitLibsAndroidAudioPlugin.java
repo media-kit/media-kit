@@ -16,7 +16,7 @@ public class MediaKitLibsAndroidAudioPlugin implements FlutterPlugin {
             // Save android.content.Context for access later within MediaKitAndroidHelpers e.g. loading bundled assets.
             MediaKitAndroidHelper.setApplicationContext(flutterPluginBinding.getApplicationContext());
             Log.i("media_kit", "Saved application context.");
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }
