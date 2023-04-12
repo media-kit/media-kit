@@ -99,6 +99,25 @@ void MediaKitVideoPlugin::HandleMethodCall(
         static_cast<int64_t>(strtoll(handle.c_str(), nullptr, 10));
     video_output_manager_->Dispose(handle_value);
     result->Success(flutter::EncodableValue(std::monostate{}));
+  } else if (method_call.method_name().compare("VideoOutputManager.SetSize") ==
+             0) {
+    auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
+    auto handle =
+        std::get<std::string>(arguments[flutter::EncodableValue("handle")]);
+    auto width =
+        std::get<std::string>(arguments[flutter::EncodableValue("width")]);
+    auto height =
+        std::get<std::string>(arguments[flutter::EncodableValue("height")]);
+    auto handle_value =
+        static_cast<int64_t>(strtoll(handle.c_str(), nullptr, 10));
+    auto width_value = std::optional<int64_t>{};
+    auto height_value = std::optional<int64_t>{};
+    if (height.compare("null") != 0 && width.compare("null") != 0) {
+      width_value = static_cast<int64_t>(strtoll(width.c_str(), nullptr, 10));
+      height_value = static_cast<int64_t>(strtoll(height.c_str(), nullptr, 10));
+    }
+    video_output_manager_->SetSize(handle_value, width_value, height_value);
+    result->Success(flutter::EncodableValue(std::monostate{}));
   } else {
     result->NotImplemented();
   }

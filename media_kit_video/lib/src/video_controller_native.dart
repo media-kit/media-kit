@@ -95,6 +95,32 @@ class VideoControllerNative extends VideoController {
     return controller;
   }
 
+  /// Sets the required size of the video output.
+  /// This may yield substantial performance improvements if a small [width] & [height] is specified.
+  ///
+  /// Remember, “Premature optimization is the root of all evil”. So, use this method wisely.
+  @override
+  Future<void> setSize({
+    int? width,
+    int? height,
+  }) async {
+    final handle = await player.handle;
+    if (this.width == width && this.height == height) {
+      // No need to resize if the requested size is same as the current size.
+      return;
+    }
+    this.width = width;
+    this.height = height;
+    await _channel.invokeMethod(
+      'VideoOutputManager.SetSize',
+      {
+        'handle': handle.toString(),
+        'width': width.toString(),
+        'height': height.toString(),
+      },
+    );
+  }
+
   /// Disposes the [VideoController].
   /// Releases the allocated resources back to the system.
   @override

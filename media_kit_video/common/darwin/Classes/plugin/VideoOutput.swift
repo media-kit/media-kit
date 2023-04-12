@@ -24,12 +24,12 @@ public class VideoOutput: NSObject {
   }()
 
   private let handle: OpaquePointer
-  private let width: Int64?
-  private let height: Int64?
   private let enableHardwareAcceleration: Bool
   private let registry: FlutterTextureRegistry
   private let textureUpdateCallback: TextureUpdateCallback
   private let worker: Worker = .init()
+  private var width: Int64?
+  private var height: Int64?
   private var texture: ResizableTextureProtocol!
   private var textureId: Int64 = -1
   private var currentWidth: Int64 = 0
@@ -58,6 +58,13 @@ public class VideoOutput: NSObject {
 
     worker.enqueue {
       self._init()
+    }
+  }
+
+  public func setSize(width: Int64?, height: Int64?) {
+    worker.enqueue {
+      self.width = width
+      self.height = height
     }
   }
 

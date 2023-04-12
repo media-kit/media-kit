@@ -63,6 +63,18 @@ void video_output_set_texture_update_callback(
     TextureUpdateCallback texture_update_callback,
     gpointer texture_update_callback_context);
 
+/**
+ * @brief Sets the required video output size. This forces |VideoOutput| to
+ * resize the internal OpenGL surface / texture.
+ *
+ * @param texture_registrar |FlTextureRegistrar| reference.
+ * @param width Preferred width of the video. Pass `NULL` for using texture
+ * dimensions based on video's resolution.
+ * @param height Preferred height of the video. Pass `NULL` for using texture
+ * dimensions based on video's resolution.
+ */
+void video_output_set_size(VideoOutput* self, gint64 width, gint64 height);
+
 mpv_render_context* video_output_get_render_context(VideoOutput* self);
 
 GdkGLContext* video_output_get_gdk_gl_context(VideoOutput* self);

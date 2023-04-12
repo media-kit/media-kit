@@ -23,7 +23,7 @@
 #define SW_RENDERING_MAX_WIDTH 1920
 #define SW_RENDERING_MAX_HEIGHT 1080
 #define SW_RENDERING_PIXEL_BUFFER_SIZE \
-  SW_RENDERING_MAX_WIDTH* SW_RENDERING_MAX_HEIGHT * 4
+  (SW_RENDERING_MAX_WIDTH) * (SW_RENDERING_MAX_HEIGHT) * (4)
 
 VideoOutput::VideoOutput(int64_t handle,
                          std::optional<int64_t> width,
@@ -211,6 +211,14 @@ void VideoOutput::SetTextureUpdateCallback(
   texture_update_callback_(texture_id_, GetVideoWidth(), GetVideoHeight());
 }
 
+void VideoOutput::SetSize(std::optional<int64_t> width,
+                          std::optional<int64_t> height) {
+  thread_pool_ref_->Post([&, width, height]() {
+    width_ = width;
+    height_ = height;
+  });
+}
+
 void VideoOutput::CheckAndResize() {
   // Check if a new texture with different dimensions is needed.
   auto required_width = GetVideoWidth(), required_height = GetVideoHeight();
@@ -287,13 +295,17 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
     texture->format = kFlutterDesktopPixelFormatBGRA8888;
     auto texture_variant =
         std::make_unique<flutter::TextureVariant>(flutter::GpuSurfaceTexture(
-            kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle,
-            [&](auto, auto) -> FlutterDesktopGpuSurfaceDescriptor* {
-              if (texture_id_) {
-                surface_manager_->Read();
-                return textures_.at(texture_id_).get();
-              }
-              return nullptr;
+            kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle, [&](auto, auto) {
+              std::promise<FlutterDesktopGpuSurfaceDescriptor*> promise;
+              thread_pool_ref_->Post([&]() {
+                if (texture_id_) {
+                  surface_manager_->Read();
+                  promise.set_value(textures_.at(texture_id_).get());
+                } else {
+                  promise.set_value(nullptr);
+                }
+              });
+              return promise.get_future().get();
             }));
     // Register new texture.
     texture_id_ =
@@ -314,14 +326,18 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
     pixel_buffer_texture->height = required_height;
     pixel_buffer_texture->release_context = nullptr;
     pixel_buffer_texture->release_callback = [](void*) {};
-    auto texture_variant =
-        std::make_unique<flutter::TextureVariant>(flutter::PixelBufferTexture(
-            [&](auto, auto) -> FlutterDesktopPixelBuffer* {
-              if (texture_id_) {
-                return pixel_buffer_textures_.at(texture_id_).get();
-              }
-              return nullptr;
-            }));
+    auto texture_variant = std::make_unique<flutter::TextureVariant>(
+        flutter::PixelBufferTexture([&](auto, auto) {
+          std::promise<FlutterDesktopPixelBuffer*> promise;
+          thread_pool_ref_->Post([&]() {
+            if (texture_id_) {
+              promise.set_value(pixel_buffer_textures_.at(texture_id_).get());
+            } else {
+              promise.set_value(nullptr);
+            }
+          });
+          return promise.get_future().get();
+        }));
     // Register new texture.
     texture_id_ =
         registrar_->texture_registrar()->RegisterTexture(texture_variant.get());
