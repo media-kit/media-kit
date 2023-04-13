@@ -23,9 +23,7 @@ class _StressTestScreenState extends State<StressTestScreen> {
     Future.microtask(
       () async {
         for (int i = 0; i < count; i++) {
-          final player = Player(
-            configuration: const PlayerConfiguration(events: false),
-          );
+          final player = Player();
           final controller = await VideoController.create(player);
           players.add(player);
           controllers.add(controller);

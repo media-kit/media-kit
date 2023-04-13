@@ -7,6 +7,7 @@
 // ignore_for_file: camel_case_types
 
 export 'package:media_kit/src/player.dart';
+export 'package:media_kit/src/media_kit.dart';
 export 'package:media_kit/src/platform_player.dart';
 
 export 'package:media_kit/src/models/media.dart';
@@ -18,8 +19,6 @@ export 'package:media_kit/src/models/playlist_mode.dart';
 
 // For invoking platform specific API.
 
-import 'package:media_kit/src/libmpv/player.dart' as libmpv;
-import 'package:media_kit/src/libmpv/core/native_library.dart' as libmpv;
+import 'package:media_kit/src/libmpv/player.dart' as _libmpv;
 
-typedef libmpvPlayer = libmpv.Player;
-typedef libmpvNativeLibrary = libmpv.NativeLibrary;
+typedef libmpvPlayer = _libmpv.Player;

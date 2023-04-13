@@ -1118,13 +1118,9 @@ class Player extends PlatformPlayer {
   }
 
   Future<void> _create() async {
-    _libmpv = generated.MPV(NativeLibrary.find(path: configuration.libmpv));
+    _libmpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
     // We cannot disable events on Android because they are consumed by package:media_kit_video.
-    final events = Platform.isAndroid ? true : configuration.events;
-    final result = await create(
-      configuration.libmpv,
-      events ? _handler : null,
-    );
+    final result = await create(NativeLibrary.path, _handler);
     // Set:
     // idle = yes
     // pause = yes
@@ -1301,7 +1297,7 @@ class Player extends PlatformPlayer {
       calloc.free(name);
       calloc.free(value);
     }
-    if (events && configuration.logLevel != MPVLogLevel.none) {
+    if (configuration.logLevel != MPVLogLevel.none) {
       // https://github.com/mpv-player/mpv/blob/e1727553f164181265f71a20106fbd5e34fa08b0/libmpv/client.h#L1410-L1419
       final levels = {
         MPVLogLevel.none: 'no',
