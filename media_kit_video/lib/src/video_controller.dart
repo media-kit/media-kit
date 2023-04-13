@@ -3,11 +3,14 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'package:flutter/widgets.dart';
 import 'package:media_kit/media_kit.dart';
 
-import 'package:media_kit_video/src/video_controller_native.dart';
-import 'package:media_kit_video/src/video_controller_android.dart';
+import 'package:media_kit_video/src/video_controller_native.dart'
+    if (dart.library.html) 'package:media_kit_video/src/video_controller_stub.dart';
+import 'package:media_kit_video/src/video_controller_android.dart'
+    if (dart.library.html) 'package:media_kit_video/src/video_controller_stub.dart';
 
 /// {@template video_controller}
 ///
@@ -79,8 +82,7 @@ abstract class VideoController {
         height: height,
         enableHardwareAcceleration: enableHardwareAcceleration,
       );
-    }
-    if (VideoControllerAndroid.supported) {
+    } else if (VideoControllerAndroid.supported) {
       return VideoControllerAndroid.create(
         player,
         width: width,
@@ -88,6 +90,7 @@ abstract class VideoController {
         enableHardwareAcceleration: enableHardwareAcceleration,
       );
     }
+    // TODO(@alexmercerind): Add support for Flutter Web.
     throw UnsupportedError(
       'VideoController is not supported on this platform.',
     );
