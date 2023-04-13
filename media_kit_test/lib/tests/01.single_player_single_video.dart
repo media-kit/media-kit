@@ -20,6 +20,7 @@ class _SinglePlayerSingleVideoScreenState
   final Player player = Player(
     configuration: const PlayerConfiguration(
       logLevel: MPVLogLevel.warn,
+      // bufferSize: 1 << 20, // 1 MiB of buffer
     ),
   );
   VideoController? controller;

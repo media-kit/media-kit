@@ -101,6 +101,14 @@ class PlayerConfiguration {
   /// Default: `null`.
   final String? title;
 
+  /// This controls how much the demuxer is allowed to buffer ahead in bytes.
+  /// This is useful for network streams, where it can prevent playback
+  /// from stalling or consuming too much bandwidth.
+  ///
+  /// Default: `32` MB or `32 * 1024 * 1024` bytes.
+  ///
+  final int bufferSize;
+
   /// Optional callback invoked when the internals of the [Player] are initialized & ready for playback.
   ///
   /// Default: `null`.
@@ -116,8 +124,9 @@ class PlayerConfiguration {
     this.pitch = false,
     this.libmpv,
     this.title,
+    this.bufferSize = 32 * 1024 * 1024,
     this.ready,
-  });
+  }) : assert(bufferSize > 0, 'bufferSize must be greater than 0');
 }
 
 /// {@template platform_player}
