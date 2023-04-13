@@ -7,17 +7,20 @@
 import 'dart:io';
 import 'dart:async';
 
-import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_streams.dart';
 
+import 'package:media_kit/src/utils.dart';
 import 'package:media_kit/src/platform_player.dart';
-import 'package:media_kit/src/libmpv/player.dart' as libmpv;
+import 'package:media_kit/src/libmpv/player.dart'
+    if (dart.library.html) 'package:media_kit/src/platform_player.dart'
+    as libmpv show Player;
 
 /// {@template player}
 ///
@@ -101,26 +104,18 @@ class Player {
   Player({
     PlayerConfiguration configuration = const PlayerConfiguration(),
   }) {
-    if (Platform.isWindows) {
+    if (kIsWeb) {
+      // TODO(@alexmercerind): Add support for Flutter Web.
+    } else if (Platform.isWindows) {
       platform = libmpv.Player(configuration: configuration);
-    }
-    if (Platform.isLinux) {
+    } else if (Platform.isLinux) {
       platform = libmpv.Player(configuration: configuration);
-    }
-    if (Platform.isMacOS) {
+    } else if (Platform.isMacOS) {
       platform = libmpv.Player(configuration: configuration);
-    }
-    if (Platform.isIOS) {
+    } else if (Platform.isIOS) {
       platform = libmpv.Player(configuration: configuration);
-    }
-    if (Platform.isAndroid) {
+    } else if (Platform.isAndroid) {
       platform = libmpv.Player(configuration: configuration);
-    }
-    if (platform == null) {
-      // TODO: Implement other platforms.
-      throw UnimplementedError(
-        'No [Player] implementation found for ${Platform.operatingSystem}.',
-      );
     }
   }
 

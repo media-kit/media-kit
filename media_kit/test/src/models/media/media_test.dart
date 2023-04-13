@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:media_kit/src/models/media.dart';
+import 'package:media_kit/src/models/media/media.dart';
 
 void main() {
   test(
