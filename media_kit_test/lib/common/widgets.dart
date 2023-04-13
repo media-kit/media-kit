@@ -191,12 +191,12 @@ class _SeekBarState extends State<SeekBar> {
 
   @override
   Widget build(BuildContext context) {
-    final horiontal =
+    final horizontal =
         MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Column(
       children: [
         const SizedBox(height: 16.0),
-        if (horiontal)
+        if (horizontal)
           Row(
             children: [
               const Spacer(),
@@ -222,7 +222,7 @@ class _SeekBarState extends State<SeekBar> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(width: 48.0),
-            if (horiontal) ...[
+            if (horizontal) ...[
               IconButton(
                 onPressed: widget.player.playOrPause,
                 icon: Icon(

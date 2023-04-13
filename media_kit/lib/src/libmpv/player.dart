@@ -1157,7 +1157,7 @@ class Player extends PlatformPlayer {
     }
     {
       final name = 'demuxer-max-bytes'.toNativeUtf8();
-      final value = (32 * 1024 * 1024).toString().toNativeUtf8();
+      final value = configuration.bufferSize.toString().toNativeUtf8();
       _libmpv?.mpv_set_property_string(
         result,
         name.cast(),
