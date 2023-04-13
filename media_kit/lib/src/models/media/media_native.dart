@@ -24,7 +24,9 @@ HashMap<String, double> bitrates = HashMap<String, double>();
 /// A [Media] object to open inside a [Player] for playback.
 ///
 /// ```dart
+/// final player = Player();
 /// final playable = Media('file:///C:/Users/Hitesh/Video/Sample.mkv');
+/// await player.open(playable);
 /// ```
 ///
 /// {@endtemplate}
