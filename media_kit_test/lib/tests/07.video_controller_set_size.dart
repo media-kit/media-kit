@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import '../common/sources.dart';
+import '../common/sources/sources.dart';
 
 class VideoControllerSetSizeScreen extends StatefulWidget {
   const VideoControllerSetSizeScreen({Key? key}) : super(key: key);

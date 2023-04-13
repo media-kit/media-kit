@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import '../common/sources.dart';
+import '../common/sources/sources.dart';
 
 // ignore_for_file: use_build_context_synchronously
 

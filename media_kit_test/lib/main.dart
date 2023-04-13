@@ -8,7 +8,7 @@ import 'tests/05.stress_test.dart';
 import 'tests/06.paint_first_frame.dart';
 import 'tests/07.video_controller_set_size.dart';
 
-import 'common/sources.dart';
+import 'common/sources/sources.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

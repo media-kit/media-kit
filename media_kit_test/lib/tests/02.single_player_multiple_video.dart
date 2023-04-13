@@ -4,8 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import '../common/sources.dart';
 import '../common/widgets.dart';
+import '../common/sources/sources.dart';
 
 class SinglePlayerMultipleVideoScreen extends StatefulWidget {
   const SinglePlayerMultipleVideoScreen({Key? key}) : super(key: key);
