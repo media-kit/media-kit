@@ -64,23 +64,23 @@ class PlayerConfiguration {
   /// Default: `true`.
   final bool events;
 
-  /// Sets the log level on libmpv backend.
+  /// Sets the log level for libmpv backend.
   /// Default: `none`.
   final MPVLogLevel logLevel;
 
-  /// Enables on-screen controls on libmpv backend.
+  /// Enables on-screen controls for libmpv backend.
   /// Default: `false`.
   final bool osc;
 
-  /// Enables or disables video output on libmpv backend.
+  /// Enables or disables video output for libmpv backend.
   /// Default: `null`.
   final bool? vid;
 
-  /// Sets the video output driver on libmpv backend.
+  /// Sets the video output driver for libmpv backend.
   /// Default: `null`.
   final String? vo;
 
-  /// Enables or disables pitch shift control on libmpv backend.
+  /// Enables or disables pitch shift control for libmpv backend.
   ///
   /// Enabling this option may result in de-syncing of audio & video.
   /// Thus, usage in audio only applications is recommended.
@@ -96,10 +96,16 @@ class PlayerConfiguration {
   /// Default: `null`.
   final String? libmpv;
 
-  /// Sets the name of the underlying window & process on libmpv backend. This is visible inside the Windows' volume mixer.
+  /// Sets the name of the underlying window & process for libmpv backend.
+  /// This is visible inside the Windows' volume mixer.
   ///
   /// Default: `null`.
   final String? title;
+
+  /// Sets the demuxer cache size (in bytes) for libmpv backend.
+  ///
+  /// Default: `32` MB or `32 * 1024 * 1024` bytes.
+  final int bufferSize;
 
   /// Optional callback invoked when the internals of the [Player] are initialized & ready for playback.
   ///
@@ -116,8 +122,9 @@ class PlayerConfiguration {
     this.pitch = false,
     this.libmpv,
     this.title,
+    this.bufferSize = 32 * 1024 * 1024,
     this.ready,
-  });
+  }) : assert(bufferSize > 0, 'bufferSize must be greater than 0');
 }
 
 /// {@template platform_player}
