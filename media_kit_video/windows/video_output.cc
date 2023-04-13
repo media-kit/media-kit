@@ -40,13 +40,14 @@ VideoOutput::VideoOutput(int64_t handle,
   // the existing |Render| or |Resize| calls from another |VideoOutput|
   // instances (which will result in access violation).
   auto future = thread_pool_ref_->Post([&]() {
+    mpv_set_option_string(handle_, "vo", "libmpv");
+    mpv_set_option_string(handle_, "video-sync", "audio");
+    mpv_set_option_string(handle_, "video-timing-offset", "0");
     // First try to initialize video playback with hardware acceleration &
     // |ANGLESurfaceManager|, use S/W API as fallback.
     auto is_hardware_acceleration_enabled = false;
     // Attempt to use H/W rendering.
     try {
-      mpv_set_option_string(handle_, "video-sync", "audio");
-      mpv_set_option_string(handle_, "video-timing-offset", "0");
       // OpenGL context needs to be set before |mpv_render_context_create|.
       surface_manager_ = std::make_unique<ANGLESurfaceManager>(
           static_cast<int32_t>(width_.value_or(1)),

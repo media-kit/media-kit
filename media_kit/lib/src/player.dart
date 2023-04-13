@@ -20,7 +20,7 @@ import 'package:media_kit/src/utils.dart';
 import 'package:media_kit/src/platform_player.dart';
 import 'package:media_kit/src/libmpv/player.dart'
     if (dart.library.html) 'package:media_kit/src/platform_player.dart'
-    as libmpv show Player;
+    as _libmpv show Player;
 
 /// {@template player}
 ///
@@ -37,9 +37,13 @@ import 'package:media_kit/src/libmpv/player.dart'
 /// ```dart
 /// import 'package:media_kit/media_kit.dart';
 ///
+/// MediaKit.ensureInitialized();
+///
+/// // Create a [Player] instance for audio or video playback.
+///
 /// final player = Player();
 ///
-/// ...
+/// // Subscribe to event streams & listen to updates.
 ///
 /// player.streams.playlist.listen((e) => print(e));
 /// player.streams.playing.listen((e) => print(e));
@@ -55,27 +59,33 @@ import 'package:media_kit/src/libmpv/player.dart'
 /// player.streams.audioDevice.listen((e) => print(e));
 /// player.streams.audioDevices.listen((e) => print(e));
 ///
-/// ...
+///
+/// // Open a playable [Media] or [Playlist].
 ///
 /// await player.open(Media('file:///C:/Users/Hitesh/Music/Sample.mp3'));
 /// await player.open(Media('file:///C:/Users/Hitesh/Video/Sample.mkv'));
+/// await player.open(Media('asset:///videos/bee.mp4'));
 /// await player.open(
 ///   Playlist(
 ///     [
 ///       Media('https://www.example.com/sample.mp4'),
 ///       Media('rtsp://www.example.com/live'),
 ///     ],
+///     // Select the starting index.
+///     index: 1,
 ///   ),
+///   // Select whether playback should start or not.
+///   play: false,
 /// );
 ///
-/// ...
+/// // Control playback state.
 ///
 /// await player.play();
 /// await player.pause();
 /// await player.playOrPause();
 /// await player.seek(const Duration(seconds: 10));
 ///
-/// ...
+/// // Use or modify the queue.
 ///
 /// await player.next();
 /// await player.previous();
@@ -83,7 +93,7 @@ import 'package:media_kit/src/libmpv/player.dart'
 /// await player.add(Media('https://www.example.com/sample.mp4'));
 /// await player.move(0, 2);
 ///
-/// ...
+/// // Customize speed, pitch, volume, shuffle, playlist mode, audio device.
 ///
 /// await player.setRate(1.0);
 /// await player.setPitch(1.2);
@@ -92,7 +102,7 @@ import 'package:media_kit/src/libmpv/player.dart'
 /// await player.setPlaylistMode(PlaylistMode.loop);
 /// await player.setAudioDevice(AudioDevice.auto());
 ///
-/// ...
+/// // Release allocated resources back to the system.
 ///
 /// await player.dispose();
 /// ```
@@ -107,15 +117,15 @@ class Player {
     if (kIsWeb) {
       // TODO(@alexmercerind): Add support for Flutter Web.
     } else if (Platform.isWindows) {
-      platform = libmpv.Player(configuration: configuration);
+      platform = _libmpv.Player(configuration: configuration);
     } else if (Platform.isLinux) {
-      platform = libmpv.Player(configuration: configuration);
+      platform = _libmpv.Player(configuration: configuration);
     } else if (Platform.isMacOS) {
-      platform = libmpv.Player(configuration: configuration);
+      platform = _libmpv.Player(configuration: configuration);
     } else if (Platform.isIOS) {
-      platform = libmpv.Player(configuration: configuration);
+      platform = _libmpv.Player(configuration: configuration);
     } else if (Platform.isAndroid) {
-      platform = libmpv.Player(configuration: configuration);
+      platform = _libmpv.Player(configuration: configuration);
     }
   }
 

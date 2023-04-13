@@ -7,6 +7,7 @@
 // ignore_for_file: camel_case_types
 
 export 'package:media_kit/src/player.dart';
+export 'package:media_kit/src/media_kit.dart';
 export 'package:media_kit/src/platform_player.dart' hide Player;
 
 export 'package:media_kit/src/models/media/media.dart';
@@ -20,6 +21,6 @@ export 'package:media_kit/src/models/playlist_mode.dart';
 
 import 'package:media_kit/src/libmpv/player.dart'
     if (dart.library.html) 'package:media_kit/src/platform_player.dart'
-    as libmpv show Player;
+    as _libmpv show Player;
 
-typedef libmpvPlayer = libmpv.Player;
+typedef libmpvPlayer = _libmpv.Player;

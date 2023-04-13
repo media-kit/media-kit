@@ -98,7 +98,8 @@ class VideoControllerAndroid extends VideoController {
 
     // ----------------------------------------------
     // https://mpv.io/manual/stable/#video-output-drivers-mediacodec-embed
-    final mpv = MPV(NativeLibrary.find());
+    NativeLibrary.ensureInitialized();
+    final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
     final values = {
       'opengl-es': 'yes',
       'force-window': 'yes',
@@ -153,7 +154,8 @@ class VideoControllerAndroid extends VideoController {
     this.width = width;
     this.height = height;
     // ----------------------------------------------
-    final mpv = MPV(NativeLibrary.find());
+    NativeLibrary.ensureInitialized();
+    final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
     final name = 'android-surface-size'.toNativeUtf8();
     final value = '${width}x$height'.toNativeUtf8();
     mpv.mpv_set_option_string(
