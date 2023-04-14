@@ -1,13 +1,13 @@
 all: Frameworks/*.xcframework
 
 MPV_XCFRAMEWORKS_VERSION=v0.4.0
-MPV_XCFRAMEWORKS_SHA256SUM=e700222e99443dcedddf92b3a7968880fd1f7a37a15f16cf7c30d5e89d49c2f0
+MPV_XCFRAMEWORKS_SHA256SUM=432b34c36139be7cd8a89131a0d8d500feb08c135293e13a3c0129a9576230e5
 
 .cache/xcframeworks/libmpv-xcframeworks-${MPV_XCFRAMEWORKS_VERSION}-ios-universal.tar.gz:
 	mkdir -p .cache/xcframeworks
 	rm -f .cache/xcframeworks/*.tmp .cache/xcframeworks/*-ios-universal.tar.gz
 	curl -L \
-		https://github.com/media-kit/libmpv-darwin-build/releases/download/${MPV_XCFRAMEWORKS_VERSION}/libmpv-xcframeworks-video-${MPV_XCFRAMEWORKS_VERSION}-ios-universal.tar.gz \
+		https://github.com/media-kit/libmpv-darwin-build/releases/download/${MPV_XCFRAMEWORKS_VERSION}/libmpv-xcframeworks-audio-${MPV_XCFRAMEWORKS_VERSION}-ios-universal.tar.gz \
 		-o .cache/xcframeworks/libmpv.tar.gz.tmp
 	shasum -a 256 -c <<< '${MPV_XCFRAMEWORKS_SHA256SUM}  .cache/xcframeworks/libmpv.tar.gz.tmp'
 	mv .cache/xcframeworks/libmpv.tar.gz.tmp .cache/xcframeworks/libmpv-xcframeworks-${MPV_XCFRAMEWORKS_VERSION}-ios-universal.tar.gz
