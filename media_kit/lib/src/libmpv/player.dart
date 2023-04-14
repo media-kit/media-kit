@@ -1190,6 +1190,19 @@ class Player extends PlatformPlayer {
         calloc.free(value);
       }
     }
+    {
+      final whitelist = configuration.protocolWhitelist.join(',');
+      final name = "demuxer-lavf-o".toNativeUtf8();
+      final data = "protocol_whitelist=[$whitelist]".toNativeUtf8();
+      _libmpv?.mpv_set_property_string(
+        result,
+        name.cast(),
+        data.cast(),
+      );
+      calloc.free(name);
+      calloc.free(data);
+    }
+
     // TODO(@alexmercerind):
     // This causes `MPV_EVENT_END_FILE` to not fire for last playlist item.
     // Ideally, we want to keep the last video frame visible.
