@@ -1,5 +1,5 @@
-name: media_kit_libs_macos_video
-description: macOS package providing video (& audio) native libraries for package:media_kit.
+name: media_kit_libs_macos_audio
+description: macOS package providing audio native libraries for package:media_kit.
 version: 1.0.4
 homepage: https://github.com/alexmercerind/media_kit.git
 repository: https://github.com/alexmercerind/media_kit.git
@@ -24,4 +24,4 @@ flutter:
   plugin:
     platforms:
       macos:
-        pluginClass: MediaKitLibsMacosVideoPlugin
+        pluginClass: MediaKitLibsMacosAudioPlugin

@@ -49,8 +49,8 @@ dependencies:
   media_kit_native_event_loop: ^1.0.2
   # Pick based on your requirements / platform:
   media_kit_libs_windows_video: ^1.0.1          # Windows package for video (& audio) native libraries.
-  media_kit_libs_ios_video: ^1.0.3              # iOS package for video (& audio) native libraries.
-  media_kit_libs_macos_video: ^1.0.3            # macOS package for video (& audio) native libraries.
+  media_kit_libs_ios_video: ^1.0.4              # iOS package for video (& audio) native libraries.
+  media_kit_libs_macos_video: ^1.0.4            # macOS package for video (& audio) native libraries.
   media_kit_libs_linux: ^1.0.1                  # Linux dependency package.
 ```
 
@@ -294,7 +294,8 @@ Everything ready. Just add **only one** of the following packages to your `pubsp
 ```yaml
 dependencies:
   ...
-  media_kit_libs_macos_video: ^1.0.3             # macOS package for video native libraries.
+  media_kit_libs_macos_video: ^1.0.4             # macOS package for video (& audio) native libraries.
+  media_kit_libs_macos_audio: ^1.0.4             # macOS package for audio (only) native libraries.
 ```
 
 During the build phase, the following warnings are not critical and cannot be silenced:
@@ -324,8 +325,11 @@ Everything ready. Just add **only one** of the following packages to your `pubsp
 
 ```yaml
 dependencies:
-  media_kit_libs_ios_video: ^1.0.3              # iOS package for video native libraries.
+  media_kit_libs_ios_video: ^1.0.4              # iOS package for video (& audio) native libraries.
+  media_kit_libs_ios_audio: ^1.0.4              # iOS package for audio (only) native libraries.
 ```
+
+Known bug: The sound does not work in the simulator.
 
 ## Goals
 
