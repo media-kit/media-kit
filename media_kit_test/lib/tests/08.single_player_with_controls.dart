@@ -33,7 +33,6 @@ class _SinglePlayerWithControlsState extends State<SinglePlayerWithControls> {
         autoPlay: true,
         looping: true,
       );
-      player.open(Media(sources[0]));
       setState(() {});
     });
   }
@@ -138,7 +137,7 @@ class _SinglePlayerWithControlsState extends State<SinglePlayerWithControls> {
                 children: const [
                   CircularProgressIndicator(),
                   SizedBox(height: 20),
-                  Text('Loading'),
+                  Text('Pick a video'),
                 ],
               ),
       ),
