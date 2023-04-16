@@ -1192,8 +1192,8 @@ class Player extends PlatformPlayer {
     }
     {
       final whitelist = configuration.protocolWhitelist.join(',');
-      final name = "demuxer-lavf-o".toNativeUtf8();
-      final data = "protocol_whitelist=[$whitelist]".toNativeUtf8();
+      final name = 'demuxer-lavf-o'.toNativeUtf8();
+      final data = 'protocol_whitelist=[$whitelist]'.toNativeUtf8();
       _libmpv?.mpv_set_property_string(
         result,
         name.cast(),
