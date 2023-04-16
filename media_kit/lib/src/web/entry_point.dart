@@ -4,4 +4,10 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-export 'media_native.dart' if (dart.library.html) 'media_web.dart';
+/// Initializes the libmpv backend for package:media_kit.
+///
+/// Following optional parameters are available:
+/// * `libmpv`: Manually specified the path to the libmpv shared library.
+void ensureInitialized({String? libmpv}) {
+  // N/A
+}

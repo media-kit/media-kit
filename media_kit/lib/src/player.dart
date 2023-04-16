@@ -21,6 +21,9 @@ import 'package:media_kit/src/platform_player.dart';
 import 'package:media_kit/src/libmpv/player.dart'
     if (dart.library.html) 'package:media_kit/src/platform_player.dart'
     as _libmpv show Player;
+import 'package:media_kit/src/web/player.dart'
+    if (dart.library.io) 'package:media_kit/src/platform_player.dart' as _web
+    show Player;
 
 /// {@template player}
 ///
@@ -115,7 +118,7 @@ class Player {
     PlayerConfiguration configuration = const PlayerConfiguration(),
   }) {
     if (kIsWeb) {
-      // TODO(@alexmercerind): Add support for Flutter Web.
+      platform = _web.Player(configuration: configuration);
     } else if (Platform.isWindows) {
       platform = _libmpv.Player(configuration: configuration);
     } else if (Platform.isLinux) {

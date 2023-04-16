@@ -53,7 +53,7 @@ class Player extends PlatformPlayer {
       command.cast(),
     );
     calloc.free(command);
-    super.dispose();
+    await super.dispose();
   }
 
   /// Opens a [Media] or [Playlist] into the [Player].
