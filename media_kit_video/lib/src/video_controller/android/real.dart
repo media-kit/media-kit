@@ -22,7 +22,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit/generated/libmpv/bindings.dart';
 import 'package:media_kit/src/libmpv/core/native_library.dart';
 
-import 'package:media_kit_video/src/video_controller.dart';
+import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
 /// {@template video_controller_android}
 ///
