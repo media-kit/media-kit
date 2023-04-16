@@ -65,14 +65,17 @@ class PlayerConfiguration {
   final MPVLogLevel logLevel;
 
   /// Enables on-screen controls for libmpv backend.
+  ///
   /// Default: `false`.
   final bool osc;
 
   /// Enables or disables video output for libmpv backend.
+  ///
   /// Default: `null`.
   final bool? vid;
 
   /// Sets the video output driver for libmpv backend.
+  ///
   /// Default: `null`.
   final String? vo;
 
@@ -98,6 +101,13 @@ class PlayerConfiguration {
   /// Default: `32` MB or `32 * 1024 * 1024` bytes.
   final int bufferSize;
 
+  /// Sets the list of allowed protocols for libmpv backend.
+  ///
+  /// Default: `['file', 'tcp', 'tls', 'http', 'https', 'crypto', 'data']`.
+  ///
+  /// Learn more: https://ffmpeg.org/ffmpeg-protocols.html#Protocol-Options
+  final List<String> protocolWhitelist;
+
   /// Optional callback invoked when the internals of the [Player] are initialized & ready for playback.
   ///
   /// Default: `null`.
@@ -113,6 +123,15 @@ class PlayerConfiguration {
     this.title,
     this.bufferSize = 32 * 1024 * 1024,
     this.ready,
+    this.protocolWhitelist = const [
+      'file',
+      'tcp',
+      'tls',
+      'http',
+      'https',
+      'crypto',
+      'data',
+    ],
   });
 }
 
