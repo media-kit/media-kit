@@ -8,18 +8,13 @@ class CupertinoVideoProgressBar extends StatelessWidget {
   CupertinoVideoProgressBar(
     this.controller, {
     MediaKitProgressColors? colors,
-    this.onDragEnd,
-    this.onDragStart,
-    this.onDragUpdate,
+
     Key? key,
   })  : colors = colors ?? MediaKitProgressColors(),
         super(key: key);
 
   final Player controller;
   final MediaKitProgressColors colors;
-  final Function()? onDragStart;
-  final Function()? onDragEnd;
-  final Function()? onDragUpdate;
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +24,7 @@ class CupertinoVideoProgressBar extends StatelessWidget {
       handleHeight: 6,
       drawShadow: true,
       colors: colors,
-      onDragEnd: onDragEnd,
-      onDragStart: onDragStart,
-      onDragUpdate: onDragUpdate,
+
     );
   }
 }

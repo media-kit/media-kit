@@ -677,20 +677,6 @@ class _CupertinoControlsState extends State<CupertinoControls>
         padding: const EdgeInsets.only(right: 12.0),
         child: CupertinoVideoProgressBar(
           controller,
-          onDragStart: () {
-            setState(() {
-              _dragging = true;
-            });
-
-            _hideTimer?.cancel();
-          },
-          onDragEnd: () {
-            setState(() {
-              _dragging = false;
-            });
-
-            _startHideTimer();
-          },
           colors: mediaKitController.cupertinoProgressColors ??
               MediaKitProgressColors(
                 playedColor: const Color.fromARGB(

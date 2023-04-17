@@ -592,20 +592,7 @@ class _MaterialControlsState extends State<MaterialControls>
     return Expanded(
       child: MaterialVideoProgressBar(
         controller,
-        onDragStart: () {
-          setState(() {
-            _dragging = true;
-          });
 
-          _hideTimer?.cancel();
-        },
-        onDragEnd: () {
-          setState(() {
-            _dragging = false;
-          });
-
-          _startHideTimer();
-        },
         colors: mediaKitController.materialProgressColors ??
             MediaKitProgressColors(
               playedColor: Theme.of(context).colorScheme.secondary,
