@@ -56,6 +56,8 @@ class _MaterialDesktopControlsState extends State<MaterialDesktopControls>
 
   StreamSubscription? buffering;
 
+  StreamSubscription? volume;
+
   @override
   void initState() {
     super.initState();
@@ -124,6 +126,7 @@ class _MaterialDesktopControlsState extends State<MaterialDesktopControls>
 
   void _dispose() {
     buffering?.cancel();
+    volume?.cancel();
     _hideTimer?.cancel();
     _initTimer?.cancel();
     _showAfterExpandCollapseTimer?.cancel();
@@ -304,9 +307,9 @@ class _MaterialDesktopControlsState extends State<MaterialDesktopControls>
     );
   }
 
-  GestureDetector _buildExpandButton() {
-    return GestureDetector(
-      onTap: _onExpandCollapse,
+  Widget _buildExpandButton() {
+    return TextButton(
+      onPressed: _onExpandCollapse,
       child: AnimatedOpacity(
         opacity: notifier.hideStuff ? 0.0 : 1.0,
         duration: const Duration(milliseconds: 300),
@@ -386,15 +389,23 @@ class _MaterialDesktopControlsState extends State<MaterialDesktopControls>
     }
   }
 
-  GestureDetector _buildMuteButton(
+  double? getLatestVolume(Player controller) {
+    if (_latestVolume == null || _latestVolume == 0) {
+      return 0.5;
+    }
+
+    return _latestVolume;
+  }
+
+  Widget _buildMuteButton(
     Player controller,
   ) {
-    return GestureDetector(
-      onTap: () {
+    return TextButton(
+      onPressed: () {
         _cancelAndRestartTimer();
 
         if (_latestValue.volume == 0) {
-          controller.setVolume(_latestVolume ?? 0.5);
+          controller.setVolume(getLatestVolume(controller) ?? 0.5);
         } else {
           _latestVolume = controller.state.volume;
           controller.setVolume(0.0);
@@ -419,9 +430,9 @@ class _MaterialDesktopControlsState extends State<MaterialDesktopControls>
     );
   }
 
-  GestureDetector _buildPlayPause(Player controller) {
-    return GestureDetector(
-      onTap: _playPause,
+  Widget _buildPlayPause(Player controller) {
+    return TextButton(
+      onPressed: _playPause,
       child: Container(
         height: barHeight,
         color: Colors.transparent,
@@ -470,6 +481,9 @@ class _MaterialDesktopControlsState extends State<MaterialDesktopControls>
   Future<void> _initialize() async {
     _subtitleOn = mediaKitController.subtitle?.isNotEmpty ?? false;
     buffering = controller.streams.buffer.listen((event) {
+      _updateState();
+    });
+    volume = controller.streams.volume.listen((event) {
       _updateState();
     });
 

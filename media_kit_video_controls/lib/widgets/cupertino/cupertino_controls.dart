@@ -56,6 +56,7 @@ class _CupertinoControlsState extends State<CupertinoControls>
   MediaKitController get mediaKitController => _mediaKitController!;
   MediaKitController? _mediaKitController;
   StreamSubscription? buffering;
+  StreamSubscription? volume;
 
   @override
   void initState() {
@@ -88,8 +89,8 @@ class _CupertinoControlsState extends State<CupertinoControls>
 
     return MouseRegion(
       onHover: (_) => _cancelAndRestartTimer(),
-      child: GestureDetector(
-        onTap: () => _cancelAndRestartTimer(),
+      child: TextButton(
+        onPressed: () => _cancelAndRestartTimer(),
         child: AbsorbPointer(
           absorbing: notifier.hideStuff,
           child: Stack(
@@ -136,6 +137,7 @@ class _CupertinoControlsState extends State<CupertinoControls>
 
   void _dispose() {
     buffering?.cancel();
+    volume?.cancel();
     _hideTimer?.cancel();
     _expandCollapseTimer?.cancel();
     _initTimer?.cancel();
@@ -155,7 +157,7 @@ class _CupertinoControlsState extends State<CupertinoControls>
     super.didChangeDependencies();
   }
 
-  GestureDetector _buildOptionsButton(
+  Widget _buildOptionsButton(
     Color iconColor,
     double barHeight,
   ) {
@@ -166,8 +168,8 @@ class _CupertinoControlsState extends State<CupertinoControls>
       options.addAll(mediaKitController.additionalOptions!(context));
     }
 
-    return GestureDetector(
-      onTap: () async {
+    return TextButton(
+      onPressed: () async {
         _hideTimer?.cancel();
 
         if (mediaKitController.optionsBuilder != null) {
@@ -308,14 +310,14 @@ class _CupertinoControlsState extends State<CupertinoControls>
     );
   }
 
-  GestureDetector _buildExpandButton(
+  Widget _buildExpandButton(
     Color backgroundColor,
     Color iconColor,
     double barHeight,
     double buttonPadding,
   ) {
-    return GestureDetector(
-      onTap: _onExpandCollapse,
+    return TextButton(
+      onPressed: _onExpandCollapse,
       child: AnimatedOpacity(
         opacity: notifier.hideStuff ? 0.0 : 1.0,
         duration: const Duration(milliseconds: 300),
@@ -351,8 +353,8 @@ class _CupertinoControlsState extends State<CupertinoControls>
     final bool showPlayButton =
         widget.showPlayButton && !_latestValue.playing && !_dragging;
 
-    return GestureDetector(
-      onTap: _latestValue.playing
+    return TextButton(
+      onPressed: _latestValue.playing
           ? _cancelAndRestartTimer
           : () {
               _hideTimer?.cancel();
@@ -372,15 +374,15 @@ class _CupertinoControlsState extends State<CupertinoControls>
     );
   }
 
-  GestureDetector _buildMuteButton(
+  TextButton _buildMuteButton(
     Player controller,
     Color backgroundColor,
     Color iconColor,
     double barHeight,
     double buttonPadding,
   ) {
-    return GestureDetector(
-      onTap: () {
+    return TextButton(
+      onPressed: () {
         _cancelAndRestartTimer();
 
         if (_latestValue.volume == 0) {
@@ -418,13 +420,13 @@ class _CupertinoControlsState extends State<CupertinoControls>
     );
   }
 
-  GestureDetector _buildPlayPause(
+  TextButton _buildPlayPause(
     Player controller,
     Color iconColor,
     double barHeight,
   ) {
-    return GestureDetector(
-      onTap: _playPause,
+    return TextButton(
+      onPressed: _playPause,
       child: Container(
         height: barHeight,
         color: Colors.transparent,
@@ -472,8 +474,8 @@ class _CupertinoControlsState extends State<CupertinoControls>
     if (mediaKitController.subtitle?.isEmpty ?? true) {
       return const SizedBox();
     }
-    return GestureDetector(
-      onTap: _subtitleToggle,
+    return TextButton(
+      onPressed: _subtitleToggle,
       child: Container(
         height: barHeight,
         color: Colors.transparent,
@@ -497,9 +499,9 @@ class _CupertinoControlsState extends State<CupertinoControls>
     });
   }
 
-  GestureDetector _buildSkipBack(Color iconColor, double barHeight) {
-    return GestureDetector(
-      onTap: _skipBack,
+  Widget _buildSkipBack(Color iconColor, double barHeight) {
+    return TextButton(
+      onPressed: _skipBack,
       child: Container(
         height: barHeight,
         color: Colors.transparent,
@@ -517,9 +519,9 @@ class _CupertinoControlsState extends State<CupertinoControls>
     );
   }
 
-  GestureDetector _buildSkipForward(Color iconColor, double barHeight) {
-    return GestureDetector(
-      onTap: _skipForward,
+  Widget _buildSkipForward(Color iconColor, double barHeight) {
+    return TextButton(
+      onPressed: _skipForward,
       child: Container(
         height: barHeight,
         color: Colors.transparent,
@@ -539,13 +541,13 @@ class _CupertinoControlsState extends State<CupertinoControls>
     );
   }
 
-  GestureDetector _buildSpeedButton(
+  Widget _buildSpeedButton(
     Player controller,
     Color iconColor,
     double barHeight,
   ) {
-    return GestureDetector(
-      onTap: () async {
+    return TextButton(
+      onPressed: () async {
         _hideTimer?.cancel();
 
         final chosenSpeed = await showCupertinoModalPopup<double>(
@@ -640,6 +642,9 @@ class _CupertinoControlsState extends State<CupertinoControls>
   Future<void> _initialize() async {
     _subtitleOn = mediaKitController.subtitle?.isNotEmpty ?? false;
     buffering = controller.streams.buffer.listen((event) {
+      _updateState();
+    });
+    volume = controller.streams.volume.listen((event) {
       _updateState();
     });
 

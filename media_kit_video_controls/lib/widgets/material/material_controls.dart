@@ -54,6 +54,7 @@ class _MaterialControlsState extends State<MaterialControls>
   MediaKitController get mediaKitController => _mediaKitController!;
 
   StreamSubscription? buffering;
+  StreamSubscription? volume;
   @override
   void initState() {
     super.initState();
@@ -123,6 +124,7 @@ class _MaterialControlsState extends State<MaterialControls>
 
   void _dispose() {
     buffering?.cancel();
+    volume?.cancel();
     _hideTimer?.cancel();
     _initTimer?.cancel();
     _showAfterExpandCollapseTimer?.cancel();
@@ -306,11 +308,11 @@ class _MaterialControlsState extends State<MaterialControls>
     );
   }
 
-  GestureDetector _buildMuteButton(
+  Widget _buildMuteButton(
     Player controller,
   ) {
-    return GestureDetector(
-      onTap: () {
+    return TextButton(
+      onPressed: () {
         _cancelAndRestartTimer();
 
         if (_latestValue.volume == 0) {
@@ -339,9 +341,9 @@ class _MaterialControlsState extends State<MaterialControls>
     );
   }
 
-  GestureDetector _buildExpandButton() {
-    return GestureDetector(
-      onTap: _onExpandCollapse,
+  Widget _buildExpandButton() {
+    return TextButton(
+      onPressed: _onExpandCollapse,
       child: AnimatedOpacity(
         opacity: notifier.hideStuff ? 0.0 : 1.0,
         duration: const Duration(milliseconds: 300),
@@ -452,8 +454,8 @@ class _MaterialControlsState extends State<MaterialControls>
     if (mediaKitController.subtitle?.isEmpty ?? true) {
       return const SizedBox();
     }
-    return GestureDetector(
-      onTap: _onSubtitleTap,
+    return TextButton(
+      onPressed: _onSubtitleTap,
       child: Container(
         height: barHeight,
         color: Colors.transparent,
@@ -592,7 +594,6 @@ class _MaterialControlsState extends State<MaterialControls>
     return Expanded(
       child: MaterialVideoProgressBar(
         controller,
-
         colors: mediaKitController.materialProgressColors ??
             MediaKitProgressColors(
               playedColor: Theme.of(context).colorScheme.secondary,
