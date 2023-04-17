@@ -19,7 +19,7 @@ dependencies:
   media_kit_video: ^0.0.4
   provider: ^6.0.3
   wakelock: ^0.6.2
-
+  window_manager: ^0.3.2
 dev_dependencies:
   flutter_lints: ^2.0.0
 

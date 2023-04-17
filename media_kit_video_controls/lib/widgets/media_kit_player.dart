@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:media_kit/media_kit.dart';
 
 import 'package:wakelock/wakelock.dart';
+import 'package:window_manager/window_manager.dart';
 
 typedef MediaKitRoutePageBuilder = Widget Function(
   BuildContext context,
@@ -89,9 +90,7 @@ class MediaKitState extends State<MediaKitControls> {
       controller: widget.controller,
       child: ChangeNotifierProvider<PlayerNotifier>.value(
         value: notifier,
-        builder: (context, w) =>  PlayerWithControls(
-          video:widget.video
-        ),
+        builder: (context, w) => PlayerWithControls(video: widget.video),
       ),
     );
   }
@@ -134,7 +133,9 @@ class MediaKitState extends State<MediaKitControls> {
       controller: widget.controller,
       child: ChangeNotifierProvider<PlayerNotifier>.value(
         value: notifier,
-        builder: (context, w) =>  PlayerWithControls(video: widget.video,),
+        builder: (context, w) => PlayerWithControls(
+          video: widget.video,
+        ),
       ),
     );
 
@@ -424,8 +425,6 @@ class MediaKitController extends ChangeNotifier {
   /// The controller for the video you want to play
   final Player player;
 
-
-
   /// Initialize the Video on Startup. This will prep the video for playback.
   final bool autoInitialize;
 
@@ -590,6 +589,12 @@ class MediaKitController extends ChangeNotifier {
 
   void toggleFullScreen() {
     _isFullScreen = !_isFullScreen;
+    Future.microtask(() async {
+      await windowManager.ensureInitialized();
+
+      await windowManager.setFullScreen(_isFullScreen);
+    });
+
     notifyListeners();
   }
 
