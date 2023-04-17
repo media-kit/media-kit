@@ -98,7 +98,7 @@ class _VideoProgressBarState extends State<VideoProgressBar> {
       child: Container(
         height: MediaQuery.of(context).size.height,
         width: MediaQuery.of(context).size.width,
-        color: widget.colors.backgroundColor,
+        color: Colors.transparent,
         child: Slider(
           thumbColor: widget.colors.handleColor,
           // overlayColor:widget.colors.backgroundColor ,
