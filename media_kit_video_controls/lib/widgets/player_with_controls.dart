@@ -6,8 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class PlayerWithControls extends StatelessWidget {
-  const PlayerWithControls({Key? key}) : super(key: key);
+  PlayerWithControls({
+    Key? key,
+    required this.video,
+  }) : super(key: key);
 
+  Widget video;
   @override
   Widget build(BuildContext context) {
     final MediaKitController mediaKitController =
@@ -45,7 +49,7 @@ class PlayerWithControls extends StatelessWidget {
             panEnabled: mediaKitController.zoomAndPan,
             scaleEnabled: mediaKitController.zoomAndPan,
             child: Center(
-              child: Video(controller: mediaKitController.videoController),
+              child: video,
             ),
           ),
           if (mediaKitController.overlay != null) mediaKitController.overlay!,

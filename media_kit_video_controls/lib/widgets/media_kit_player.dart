@@ -22,22 +22,25 @@ typedef MediaKitRoutePageBuilder = Widget Function(
 ///
 /// `video_player` is pretty low level. MediaKitVideo wraps it in a friendly skin to
 /// make it easy to use!
-class MediaKitVideo extends StatefulWidget {
-  const MediaKitVideo({
+class MediaKitControls extends StatefulWidget {
+  const MediaKitControls({
     Key? key,
     required this.controller,
+    required this.video,
   }) : super(key: key);
 
   /// The [MediaKitController]
   final MediaKitController controller;
 
+  /// The [Video Widget]
+  final Widget video;
   @override
   MediaKitState createState() {
     return MediaKitState();
   }
 }
 
-class MediaKitState extends State<MediaKitVideo> {
+class MediaKitState extends State<MediaKitControls> {
   bool _isFullScreen = false;
 
   bool get isControllerFullScreen => widget.controller.isFullScreen;
@@ -57,7 +60,7 @@ class MediaKitState extends State<MediaKitVideo> {
   }
 
   @override
-  void didUpdateWidget(MediaKitVideo oldWidget) {
+  void didUpdateWidget(MediaKitControls oldWidget) {
     if (oldWidget.controller != widget.controller) {
       widget.controller.addListener(listener);
     }
@@ -86,7 +89,9 @@ class MediaKitState extends State<MediaKitVideo> {
       controller: widget.controller,
       child: ChangeNotifierProvider<PlayerNotifier>.value(
         value: notifier,
-        builder: (context, w) => const PlayerWithControls(),
+        builder: (context, w) =>  PlayerWithControls(
+          video:widget.video
+        ),
       ),
     );
   }
@@ -129,7 +134,7 @@ class MediaKitState extends State<MediaKitVideo> {
       controller: widget.controller,
       child: ChangeNotifierProvider<PlayerNotifier>.value(
         value: notifier,
-        builder: (context, w) => const PlayerWithControls(),
+        builder: (context, w) =>  PlayerWithControls(video: widget.video,),
       ),
     );
 
@@ -244,7 +249,6 @@ class MediaKitState extends State<MediaKitVideo> {
 class MediaKitController extends ChangeNotifier {
   MediaKitController({
     required this.player,
-    required this.videoController,
     this.optionsTranslation,
     this.autoInitialize = false,
     this.autoPlay = false,
@@ -291,7 +295,6 @@ class MediaKitController extends ChangeNotifier {
 
   MediaKitController copyWith({
     Player? player,
-    VideoController? videoController,
     OptionsTranslation? optionsTranslation,
     bool? autoInitialize,
     bool? autoPlay,
@@ -338,7 +341,6 @@ class MediaKitController extends ChangeNotifier {
   }) {
     return MediaKitController(
       player: player ?? this.player,
-      videoController: videoController ?? this.videoController,
       optionsTranslation: optionsTranslation ?? this.optionsTranslation,
       autoInitialize: autoInitialize ?? this.autoInitialize,
       autoPlay: autoPlay ?? this.autoPlay,
@@ -422,8 +424,7 @@ class MediaKitController extends ChangeNotifier {
   /// The controller for the video you want to play
   final Player player;
 
-  /// The controller for the video you want to play
-  final VideoController? videoController;
+
 
   /// Initialize the Video on Startup. This will prep the video for playback.
   final bool autoInitialize;
@@ -460,7 +461,6 @@ class MediaKitController extends ChangeNotifier {
   /// error message.
   final Widget Function(BuildContext context, String errorMessage)?
       errorBuilder;
-
 
   /// The colors to use for controls on iOS. By default, the iOS player uses
   /// colors sampled from the original iOS 11 designs.

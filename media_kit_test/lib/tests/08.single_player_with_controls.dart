@@ -23,17 +23,19 @@ class _SinglePlayerWithControlsState extends State<SinglePlayerWithControls> {
     ),
   );
   MediaKitController? mediaKitController;
+  VideoController? videoController;
+
   @override
   void initState() {
     super.initState();
+    mediaKitController = MediaKitController(
+      player: player,
+      autoPlay: true,
+      looping: true,
+    );
 
     Future.microtask(() async {
-      mediaKitController = MediaKitController(
-        player: player,
-        videoController: await VideoController.create(player),
-        autoPlay: true,
-        looping: true,
-      );
+      videoController = await VideoController.create(player);
       setState(() {});
     });
   }
@@ -43,6 +45,7 @@ class _SinglePlayerWithControlsState extends State<SinglePlayerWithControls> {
     Future.microtask(() async {
       debugPrint('Disposing [Player] and [VideoController]...');
       await player.dispose();
+      await videoController?.dispose();
       mediaKitController?.dispose();
     });
     super.dispose();
@@ -99,7 +102,7 @@ class _SinglePlayerWithControlsState extends State<SinglePlayerWithControls> {
         ],
       ),
       body: Center(
-        child: mediaKitController != null
+        child: (mediaKitController != null && videoController != null)
             ? Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -115,8 +118,9 @@ class _SinglePlayerWithControlsState extends State<SinglePlayerWithControls> {
                                 elevation: 8.0,
                                 clipBehavior: Clip.antiAlias,
                                 margin: const EdgeInsets.all(32.0),
-                                child: MediaKitVideo(
+                                child: MediaKitControls(
                                   controller: mediaKitController!,
+                                  video: Video(controller: videoController),
                                 )),
                           ),
                           const SizedBox(height: 32.0),
