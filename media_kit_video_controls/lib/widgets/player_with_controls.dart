@@ -49,27 +49,26 @@ class PlayerWithControls extends StatelessWidget {
             ),
           ),
           if (mediaKitController.overlay != null) mediaKitController.overlay!,
-          if (Theme.of(context).platform != TargetPlatform.iOS)
-            Consumer<PlayerNotifier>(
-              builder: (
-                BuildContext context,
-                PlayerNotifier notifier,
-                Widget? widget,
-              ) =>
-                  Visibility(
-                visible: !notifier.hideStuff,
-                child: AnimatedOpacity(
-                  opacity: notifier.hideStuff ? 0.0 : 0.8,
-                  duration: const Duration(
-                    milliseconds: 250,
-                  ),
-                  child: const DecoratedBox(
-                    decoration: BoxDecoration(color: Colors.black54),
-                    child: SizedBox(),
-                  ),
+          Consumer<PlayerNotifier>(
+            builder: (
+              BuildContext context,
+              PlayerNotifier notifier,
+              Widget? widget,
+            ) =>
+                Visibility(
+              visible: !notifier.hideStuff,
+              child: AnimatedOpacity(
+                opacity: notifier.hideStuff ? 0.0 : 1,
+                duration: const Duration(
+                  milliseconds: 350,
+                ),
+                child: const DecoratedBox(
+                  decoration: BoxDecoration(color: Colors.black26),
+                  child: SizedBox.expand(),
                 ),
               ),
             ),
+          ),
           if (!mediaKitController.isFullScreen)
             buildControls(context, mediaKitController)
           else
