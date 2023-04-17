@@ -45,10 +45,7 @@ class PlayerWithControls extends StatelessWidget {
             panEnabled: mediaKitController.zoomAndPan,
             scaleEnabled: mediaKitController.zoomAndPan,
             child: Center(
-              child: AspectRatio(
-                aspectRatio: mediaKitController.aspectRatio ?? 16 / 9,
-                child: Video(controller: mediaKitController.videoController),
-              ),
+              child: Video(controller: mediaKitController.videoController),
             ),
           ),
           if (mediaKitController.overlay != null) mediaKitController.overlay!,
@@ -88,10 +85,7 @@ class PlayerWithControls extends StatelessWidget {
       child: SizedBox(
         height: MediaQuery.of(context).size.height,
         width: MediaQuery.of(context).size.width,
-        child: AspectRatio(
-          aspectRatio: calculateAspectRatio(context),
-          child: buildPlayerWithControls(mediaKitController, context),
-        ),
+        child: buildPlayerWithControls(mediaKitController, context),
       ),
     );
   }

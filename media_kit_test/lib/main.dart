@@ -159,7 +159,7 @@ class PrimaryScreen extends StatelessWidget {
           ),
           ListTile(
             title: const Text(
-              '08.video_controller_set_size.dart',
+              '08.single_player_with_controls.dart',
               style: TextStyle(fontSize: 14.0),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

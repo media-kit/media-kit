@@ -246,7 +246,6 @@ class MediaKitController extends ChangeNotifier {
     required this.player,
     required this.videoController,
     this.optionsTranslation,
-    this.aspectRatio,
     this.autoInitialize = false,
     this.autoPlay = false,
     this.startAt,
@@ -294,7 +293,6 @@ class MediaKitController extends ChangeNotifier {
     Player? player,
     VideoController? videoController,
     OptionsTranslation? optionsTranslation,
-    double? aspectRatio,
     bool? autoInitialize,
     bool? autoPlay,
     Duration? startAt,
@@ -342,7 +340,6 @@ class MediaKitController extends ChangeNotifier {
       player: player ?? this.player,
       videoController: videoController ?? this.videoController,
       optionsTranslation: optionsTranslation ?? this.optionsTranslation,
-      aspectRatio: aspectRatio ?? this.aspectRatio,
       autoInitialize: autoInitialize ?? this.autoInitialize,
       autoPlay: autoPlay ?? this.autoPlay,
       startAt: startAt ?? this.startAt,
@@ -464,11 +461,6 @@ class MediaKitController extends ChangeNotifier {
   final Widget Function(BuildContext context, String errorMessage)?
       errorBuilder;
 
-  /// The Aspect Ratio of the Video. Important to get the correct size of the
-  /// video!
-  ///
-  /// Will fallback to fitting within the space allowed.
-  final double? aspectRatio;
 
   /// The colors to use for controls on iOS. By default, the iOS player uses
   /// colors sampled from the original iOS 11 designs.
