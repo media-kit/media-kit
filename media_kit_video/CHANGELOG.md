@@ -1,3 +1,7 @@
+## 0.0.6
+
+- fix(windows): synchronize texture object deletion in on unregister _v.i.z_ `VideoOutput::Resize` or `VideoOutput::~VideoOutput`
+
 ## 0.0.5
 
 - Android support
