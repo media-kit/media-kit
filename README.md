@@ -88,7 +88,7 @@ dependencies:
 | macOS       | ✅    | ✅    | macOS 11 or above.                 | [Download](#)    |
 | Windows     | ✅    | ✅    | Windows 7 or above.                | [Download](#)    |
 | GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution. | [Download](#)    |
-| Web         | 🚧    | 🚧    | WIP                                | WIP              |
+| Web         | 🚧    | 🚧    | [WIP](https://github.com/alexmercerind/media_kit/pull/128)                                | [WIP](https://github.com/alexmercerind/media_kit/pull/128)              |
 
 <table>
   <tr>
@@ -122,13 +122,13 @@ dependencies:
   </tr>
   <tr>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696378-5c8f76a6-d0a5-4215-8c4f-5a76957e5692.jpg" height="162" width="288" alt="macOS"></img>
+      <img src="https://user-images.githubusercontent.com/28951144/232696378-5c8f76a6-d0a5-4215-8c4f-5a76957e5692.jpg" height="140" width="248.8" alt="macOS"></img>
     </td>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696391-c2577912-21c7-4a63-ad7c-37ded5cb2973.jpg" height="162" width="288" alt="Windows"></img>
+      <img src="https://user-images.githubusercontent.com/28951144/232696391-c2577912-21c7-4a63-ad7c-37ded5cb2973.jpg" height="140" width="248.8" alt="Windows"></img>
     </td>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696361-57fa500a-1c24-4e5e-9152-a03bd5b7cfa6.jpg" height="162" width="288" alt="GNU/Linux"></img>
+      <img src="https://user-images.githubusercontent.com/28951144/232696361-57fa500a-1c24-4e5e-9152-a03bd5b7cfa6.jpg" height="140" width="248.8" alt="GNU/Linux"></img>
     </td>
 </table>
 
