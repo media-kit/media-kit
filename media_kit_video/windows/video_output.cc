@@ -131,12 +131,12 @@ VideoOutput::~VideoOutput() {
                       << std::endl;
             std::cout << "VideoOutput::~VideoOutput: "
                       << reinterpret_cast<int64_t>(handle_) << std::endl;
+            std::lock_guard<std::mutex> lock(textures_mutex_);
             texture_variants_.clear();
             // H/W
             textures_.clear();
             // S/W
             pixel_buffer_textures_.clear();
-
             // Free (call destructor) |ANGLESurfaceManager| through the thread
             // pool. This will ensure synchronized EGL or ANGLE usage & won't
             // conflict with |Render| or |CheckAndResize| of other
@@ -261,6 +261,7 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
           if (id) {
             std::cout << "media_kit: VideoOutput: Free Texture: " << id
                       << std::endl;
+            std::lock_guard<std::mutex> lock(textures_mutex_);
             if (texture_variants_.find(id) != texture_variants_.end()) {
               texture_variants_.erase(id);
             }
@@ -297,22 +298,20 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
     auto texture_variant =
         std::make_unique<flutter::TextureVariant>(flutter::GpuSurfaceTexture(
             kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle, [&](auto, auto) {
-              std::promise<FlutterDesktopGpuSurfaceDescriptor*> promise;
-              thread_pool_ref_->Post([&]() {
-                if (texture_id_) {
-                  surface_manager_->Read();
-                  promise.set_value(textures_.at(texture_id_).get());
-                } else {
-                  promise.set_value(nullptr);
-                }
-              });
-              return promise.get_future().get();
+              std::lock_guard<std::mutex> lock(textures_mutex_);
+              if (texture_id_) {
+                surface_manager_->Read();
+                return textures_.at(texture_id_).get();
+              } else {
+                return (FlutterDesktopGpuSurfaceDescriptor*)nullptr;
+              }
             }));
     // Register new texture.
     texture_id_ =
         registrar_->texture_registrar()->RegisterTexture(texture_variant.get());
     std::cout << "media_kit: VideoOutput: Create Texture: " << texture_id_
               << std::endl;
+    std::lock_guard<std::mutex> lock(textures_mutex_);
     textures_.emplace(std::make_pair(texture_id_, std::move(texture)));
     texture_variants_.emplace(
         std::make_pair(texture_id_, std::move(texture_variant)));
@@ -329,21 +328,19 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
     pixel_buffer_texture->release_callback = [](void*) {};
     auto texture_variant = std::make_unique<flutter::TextureVariant>(
         flutter::PixelBufferTexture([&](auto, auto) {
-          std::promise<FlutterDesktopPixelBuffer*> promise;
-          thread_pool_ref_->Post([&]() {
-            if (texture_id_) {
-              promise.set_value(pixel_buffer_textures_.at(texture_id_).get());
-            } else {
-              promise.set_value(nullptr);
-            }
-          });
-          return promise.get_future().get();
+          std::lock_guard<std::mutex> lock(textures_mutex_);
+          if (texture_id_) {
+            return pixel_buffer_textures_.at(texture_id_).get();
+          } else {
+            return (FlutterDesktopPixelBuffer*)nullptr;
+          }
         }));
     // Register new texture.
     texture_id_ =
         registrar_->texture_registrar()->RegisterTexture(texture_variant.get());
     std::cout << "media_kit: VideoOutput: Create Texture: " << texture_id_
               << std::endl;
+    std::lock_guard<std::mutex> lock(textures_mutex_);
     pixel_buffer_textures_.emplace(
         std::make_pair(texture_id_, std::move(pixel_buffer_texture)));
     texture_variants_.emplace(
@@ -360,6 +357,8 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
               << std::endl;
     delete texture_promise;
   } else {
+    std::cout << "media_kit: VideoOutput: std::future_status::timeout"
+              << std::endl;
     std::thread([=]() {
       texture_promise->get_future().wait();
       delete texture_promise;

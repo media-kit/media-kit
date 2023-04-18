@@ -86,6 +86,8 @@ class VideoOutput {
   ThreadPool* thread_pool_ref_ = nullptr;
   bool destroyed_ = false;
 
+  std::mutex textures_mutex_ = std::mutex();
+
   std::unordered_map<int64_t, std::unique_ptr<flutter::TextureVariant>>
       texture_variants_ = {};
 
