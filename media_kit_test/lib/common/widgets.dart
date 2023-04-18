@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 import 'package:media_kit/media_kit.dart';
@@ -315,10 +316,17 @@ Future<void> showURIPicker(BuildContext context, Player player) async {
                 child: ElevatedButton(
                   onPressed: () {
                     if (key.currentState!.validate()) {
+                      String audioUrl = audio.text;
+                      if (Platform.isLinux ||
+                          Platform.isAndroid ||
+                          Platform.isMacOS) {
+                        // mpv use ':' as a list separator. we need to escape it to avoid problem with url
+                        audioUrl = audioUrl.replaceAll(':', '\\:');
+                      }
                       if (player.platform is libmpvPlayer) {
                         (player.platform as libmpvPlayer).setProperty(
                           "audio-files",
-                          audio.text,
+                          audioUrl,
                         );
                       }
                       player.open(Media(video.text));
