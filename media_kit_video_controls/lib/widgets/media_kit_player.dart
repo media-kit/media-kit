@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -589,11 +590,14 @@ class MediaKitController extends ChangeNotifier {
 
   void toggleFullScreen() {
     _isFullScreen = !_isFullScreen;
+    if( defaultTargetPlatform == TargetPlatform.macOS ||
+      defaultTargetPlatform == TargetPlatform.linux ||
+      defaultTargetPlatform == TargetPlatform.windows){
     Future.microtask(() async {
       await windowManager.ensureInitialized();
 
       await windowManager.setFullScreen(_isFullScreen);
-    });
+    });}
 
     notifyListeners();
   }
