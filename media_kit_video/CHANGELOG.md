@@ -3,7 +3,7 @@
 - Android support
 - feat: `VideoController.setSize`
 - fix: set `vo` to `libmpv` before creating render context
-- refactor: `VideoController.create` takes `Player` reference instead of `handle`.
+- refactor: `VideoController.create` takes `Player` reference instead of `handle`
 
 ## 0.0.4
 
