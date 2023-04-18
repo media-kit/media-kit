@@ -170,6 +170,7 @@ player.streams.buffering.listen((e) => print(e));
 
 await player.open(Media('file:///C:/Users/Hitesh/Music/Sample.mp3'));
 await player.open(Media('file:///C:/Users/Hitesh/Video/Sample.mkv'));
+await player.open(Media('rtsp://www.example.com/live'));
 await player.open(Media('asset:///videos/bee.mp4'));
 await player.open(
   Playlist(
