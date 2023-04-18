@@ -75,11 +75,11 @@ dependencies:
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.              | [Download](#)    |
-| iOS         | ✅    | ✅    | iOS 13 or above.                   | [Download](#)    |
-| macOS       | ✅    | ✅    | macOS 11 or above.                 | [Download](#)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                | [Download](#)    |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution. | [Download](#)    |
+| Android     | ✅    | ✅    | Android 5.0 or above.              | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 13 or above.                   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 11 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution. | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_linux_x64.7z)          |
 | Web         | 🚧    | 🚧    | [WIP](https://github.com/alexmercerind/media_kit/pull/128)                                | [WIP](https://github.com/alexmercerind/media_kit/pull/128)              |
 
 <table>
