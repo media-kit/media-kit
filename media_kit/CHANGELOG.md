@@ -15,7 +15,7 @@
 - fix: HTTPS m3u8 file loading
 - fix: asset names with special characters
 - feat: `protocolWhitelist` in `PlayerConfiguration` for whitelisting protocols
-- feat: `bufferSize` in `PlayerConfiguration` for changing demuxer cache size
+- feat: `bufferSize` in `PlayerConfiguration` for setting demuxer cache size
 
 ## 0.0.4+1
 
