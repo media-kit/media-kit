@@ -249,7 +249,7 @@ class MyScreenState extends State<MyScreen> {
       /// Create a [VideoController] to show video output of the [Player].
       controller = await VideoController.create(player);
       /// Play any media source.
-      await player.open(Media('file:///C:/Users/Hitesh/Music/Sample.mp3'));
+      await player.open(Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4'));
       setState(() {});
     });
   }

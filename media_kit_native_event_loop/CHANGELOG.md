@@ -1,3 +1,7 @@
+## 1.0.3
+
+- feat: make package optional during build
+
 ## 1.0.2
 
 - fix: add `.framework` & `.xcframework` for all libs
