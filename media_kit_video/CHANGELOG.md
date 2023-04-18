@@ -1,3 +1,10 @@
+## 0.0.5
+
+- Android support
+- feat: `VideoController.setSize`
+- fix: set `vo` to `libmpv` before creating render context
+- refactor: `VideoController.create` takes `Player` reference instead of `handle`.
+
 ## 0.0.4
 
 - fix: use `mkdir` instead of `.gitkeep`
@@ -16,7 +23,7 @@
   - Software: MPV_RENDER_API_TYPE_SW + pixel buffer
 - fix(windows): use `TextureRegistrar::UnregisterTexture` release callback to free texture resources
 - fix(windows): synchronize texture unregister & release on frame dimensions change
-- feat: `aspectRatio` parameter for `Video` widget.
+- feat: `aspectRatio` parameter for `Video` widget
 
 ## 0.0.1
 

@@ -1,3 +1,22 @@
+## 0.0.5
+
+- Android support
+- feat: video output width & height states/events:
+  - `Player.state.width`: currently playing video's width as `int`
+  - `Player.streams.width`: currently playing video's width as `Stream<int>`
+  - `Player.state.height`: currently playing video's height as `int`
+  - `Player.streams.height`: currently playing video's height as `Stream<int>`
+- feat(refactor): entry point
+  - `MediaKit.ensureInitialized`
+- feat: media stream buffer state/event:
+  - `Player.state.buffer`: currently buffered duration of the media stream as `Duration`
+  - `Player.streams.buffer`: currently buffered duration of the media stream as `Stream<Duration>`
+- perf: limit demuxer cache size to 32 MB by default
+- fix: HTTPS m3u8 file loading
+- fix: asset names with special characters
+- feat: `protocolWhitelist` in `PlayerConfiguration` for whitelisting protocols
+- feat: `bufferSize` in `PlayerConfiguration` for changing demuxer cache size
+
 ## 0.0.4+1
 
 - docs(fix): images on pub.dev
