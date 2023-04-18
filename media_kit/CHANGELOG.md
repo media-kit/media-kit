@@ -1,3 +1,7 @@
+## 0.0.5+1
+
+- docs: document updated `media_kit_video`
+
 ## 0.0.5
 
 - Android support
