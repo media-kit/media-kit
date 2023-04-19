@@ -249,12 +249,7 @@ void VideoOutput::CheckAndResize() {
 
 void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
   std::cout << required_width << " " << required_height << std::endl;
-  // Create new texture with new dimensions parallelly.
-  // Wait until previous texture is unregistered & it's underlying resources
-  // i.e. |flutter::TextureVariant| & |FlutterDesktopGpuSurfaceDescriptor| or
-  // |FlutterDesktopPixelBuffer| are freed.
-  auto texture_promise = new std::promise<void>();
-  // Unregister previously registered texture.
+  // Unregister previously registered texture & delete underlying objects.
   if (texture_id_) {
     registrar_->texture_registrar()->UnregisterTexture(
         texture_id_, [&, id = texture_id_]() {
@@ -262,6 +257,9 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
             std::cout << "media_kit: VideoOutput: Free Texture: " << id
                       << std::endl;
             std::lock_guard<std::mutex> lock(textures_mutex_);
+            if (destroyed_) {
+              return;
+            }
             if (texture_variants_.find(id) != texture_variants_.end()) {
               texture_variants_.erase(id);
             }
@@ -275,11 +273,8 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
               pixel_buffer_textures_.erase(id);
             }
           }
-          texture_promise->set_value();
         });
     texture_id_ = 0;
-  } else {
-    texture_promise->set_value();
   }
   // H/W
   if (surface_manager_ != nullptr) {
@@ -347,22 +342,6 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
         std::make_pair(texture_id_, std::move(texture_variant)));
     // Notify public texture update callback.
     texture_update_callback_(texture_id_, required_width, required_height);
-  }
-  // This will prevent any synchronization or access violation issues e.g.
-  // |VideoOutput| being disposed before texture is unregistered or
-  // |ObtainDescriptor| being called after texture is unregistered etc.
-  auto result = texture_promise->get_future().wait_for(std::chrono::seconds(1));
-  if (result == std::future_status::ready) {
-    std::cout << "media_kit: VideoOutput: std::future_status::ready"
-              << std::endl;
-    delete texture_promise;
-  } else {
-    std::cout << "media_kit: VideoOutput: std::future_status::timeout"
-              << std::endl;
-    std::thread([=]() {
-      texture_promise->get_future().wait();
-      delete texture_promise;
-    }).detach();
   }
 }
 
