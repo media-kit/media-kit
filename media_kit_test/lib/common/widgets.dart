@@ -196,14 +196,7 @@ class _SeekBarState extends State<SeekBar> {
     return Column(
       children: [
         const SizedBox(height: 16.0),
-        if (horizontal)
-          Row(
-            children: [
-              const Spacer(),
-              TracksSelector(player: widget.player),
-            ],
-          )
-        else
+        if (!horizontal)
           Row(
             children: [
               const Spacer(),
