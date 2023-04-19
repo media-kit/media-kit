@@ -1,3 +1,8 @@
+## 0.0.7
+
+- fix(linux): VAAPI hardware acceleration
+- perf(windows): `VideoOutput::Resize`: delete texture objects in background
+
 ## 0.0.6
 
 - fix(windows): synchronize texture object deletion in on unregister _v.i.z_ `VideoOutput::Resize` or `VideoOutput::~VideoOutput`
