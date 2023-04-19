@@ -1333,6 +1333,21 @@ class Player extends PlatformPlayer {
         calloc.free(minLevel);
       }
     }
+    if (configuration.httpHeaders != null) {
+      final name = 'http-header-fields'.toNativeUtf8();
+      var kvArray = [];
+      configuration.httpHeaders!
+          .forEach((key, value) => kvArray.add(key + ': ' + value));
+      final data = kvArray.join(',').toNativeUtf8();
+      _libmpv?.mpv_set_property_string(
+        result,
+        name.cast(),
+        data.cast(),
+      );
+      calloc.free(name);
+      calloc.free(data);
+    }
+
     // The initialization is complete.
     // Save the [Pointer<generated.mpv_handle>] & complete the [Future].
     _handle.complete(result);

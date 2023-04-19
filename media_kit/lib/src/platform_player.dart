@@ -108,31 +108,36 @@ class PlayerConfiguration {
   /// Learn more: https://ffmpeg.org/ffmpeg-protocols.html#Protocol-Options
   final List<String> protocolWhitelist;
 
+  /// Sets HTTP headers for libmpv backend.
+  ///
+  /// Default: `null`.
+  final Map<String, String>? httpHeaders;
+
   /// Optional callback invoked when the internals of the [Player] are initialized & ready for playback.
   ///
   /// Default: `null`.
   final void Function()? ready;
 
   /// {@macro player_configuration}
-  const PlayerConfiguration({
-    this.logLevel = MPVLogLevel.none,
-    this.osc = false,
-    this.vid,
-    this.vo = 'null',
-    this.pitch = false,
-    this.title,
-    this.bufferSize = 32 * 1024 * 1024,
-    this.ready,
-    this.protocolWhitelist = const [
-      'file',
-      'tcp',
-      'tls',
-      'http',
-      'https',
-      'crypto',
-      'data',
-    ],
-  });
+  const PlayerConfiguration(
+      {this.logLevel = MPVLogLevel.none,
+      this.osc = false,
+      this.vid,
+      this.vo = 'null',
+      this.pitch = false,
+      this.title,
+      this.bufferSize = 32 * 1024 * 1024,
+      this.ready,
+      this.protocolWhitelist = const [
+        'file',
+        'tcp',
+        'tls',
+        'http',
+        'https',
+        'crypto',
+        'data',
+      ],
+      this.httpHeaders});
 }
 
 /// {@template platform_player}
