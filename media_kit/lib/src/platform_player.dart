@@ -208,7 +208,6 @@ abstract class PlatformPlayer {
   FutureOr<void> open(
     Playable playable, {
     bool play = true,
-    bool evictExtrasCache = true,
   }) {
     throw UnimplementedError(
       '[PlatformPlayer.open] is not implemented.',
