@@ -27,7 +27,10 @@ Future<void> paintFirstFrame(BuildContext context) async {
   // Do not start playback i.e. play: false.
   for (int i = 0; i < 5; i++) {
     await players[i].open(
-      Media(sources[i % sources.length]),
+      Playlist(
+        sources.map((e) => Media(e)).toList(),
+        index: i,
+      ),
       play: false,
     );
   }
