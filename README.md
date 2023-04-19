@@ -48,7 +48,7 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
 dependencies:
   media_kit: ^0.0.5                              # Primary package.
   
-  media_kit_video: ^0.0.6                        # For video rendering.
+  media_kit_video: ^0.0.7                        # For video rendering.
   
   media_kit_native_event_loop: ^1.0.3            # Support for higher number of concurrent instances & better performance.
   
@@ -67,7 +67,7 @@ dependencies:
   
   media_kit_native_event_loop: ^1.0.2            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_windows_audio: ^1.0.2           # Windows package for audio native libraries.
+  media_kit_libs_windows_audio: ^1.0.3           # Windows package for audio native libraries.
   media_kit_libs_android_audio: ^1.0.0           # Android package for audio native libraries.
   media_kit_libs_macos_audio: ^1.0.4             # macOS package for audio native libraries.
   media_kit_libs_ios_audio: ^1.0.4               # iOS package for audio native libraries.

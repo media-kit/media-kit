@@ -1,3 +1,7 @@
+## 0.0.5+2
+
+- docs: document updated `media_kit_video` & `media_kit_libs_windows_audio`
+
 ## 0.0.5+1
 
 - docs: document updated `media_kit_video`
