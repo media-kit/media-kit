@@ -3,7 +3,6 @@ import 'package:media_kit_video_controls/widgets/media_kit_player.dart';
 import 'package:media_kit_video_controls/widgets/helpers/adaptive_controls.dart';
 import 'package:media_kit_video_controls/widgets/notifiers/index.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class PlayerWithControls extends StatelessWidget {
   PlayerWithControls({
@@ -53,25 +52,27 @@ class PlayerWithControls extends StatelessWidget {
             ),
           ),
           if (mediaKitController.overlay != null) mediaKitController.overlay!,
-          Consumer<PlayerNotifier>(
-            builder: (
-              BuildContext context,
-              PlayerNotifier notifier,
-              Widget? widget,
-            ) =>
-                Visibility(
-              visible: !notifier.hideStuff,
-              child: AnimatedOpacity(
-                opacity: notifier.hideStuff ? 0.0 : 1,
-                duration: const Duration(
-                  milliseconds: 350,
-                ),
-                child: const DecoratedBox(
-                  decoration: BoxDecoration(color: Colors.black26),
-                  child: SizedBox.expand(),
-                ),
-              ),
-            ),
+          StreamBuilder<bool>(
+            stream: PlayerNotifier.of(context).hideStuffStream,
+            builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+              if (snapshot.hasData) {
+                return Visibility(
+                  visible: !snapshot.data!,
+                  child: AnimatedOpacity(
+                    opacity: snapshot.data! ? 0.0 : 1,
+                    duration: const Duration(
+                      milliseconds: 350,
+                    ),
+                    child: const DecoratedBox(
+                      decoration: BoxDecoration(color: Colors.black26),
+                      child: SizedBox.expand(),
+                    ),
+                  ),
+                );
+              } else {
+                return const Text('No PlayerNotifier initialized');
+              }
+            },
           ),
           if (!mediaKitController.isFullScreen)
             buildControls(context, mediaKitController)

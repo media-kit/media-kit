@@ -12,7 +12,6 @@ import 'package:media_kit_video_controls/widgets/material/widgets/playback_speed
 import 'package:media_kit_video_controls/widgets/models/option_item.dart';
 import 'package:media_kit_video_controls/widgets/models/subtitle_model.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:media_kit/media_kit.dart';
 
 class MaterialControls extends StatefulWidget {
@@ -31,7 +30,10 @@ class MaterialControls extends StatefulWidget {
 
 class _MaterialControlsState extends State<MaterialControls>
     with SingleTickerProviderStateMixin {
-  late PlayerNotifier notifier;
+    PlayerNotifier? _notifier;
+
+  // We know that _notifier is set in didChangeDependencies
+  PlayerNotifier get notifier => _notifier!;
   late PlayerState _latestValue;
   double? _latestVolume;
   Timer? _hideTimer;
@@ -55,11 +57,7 @@ class _MaterialControlsState extends State<MaterialControls>
 
   StreamSubscription? buffering;
   StreamSubscription? volume;
-  @override
-  void initState() {
-    super.initState();
-    notifier = Provider.of<PlayerNotifier>(context, listen: false);
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +138,13 @@ class _MaterialControlsState extends State<MaterialControls>
       _dispose();
       _initialize();
     }
+    final oldPlayerNotifier = _notifier;
+    _notifier = PlayerNotifier.of(context);
 
+    if (oldPlayerNotifier != notifier) {
+      _dispose();
+      _initialize();
+    }
     super.didChangeDependencies();
   }
 

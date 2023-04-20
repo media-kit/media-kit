@@ -7,7 +7,6 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video_controls/widgets/widgets.dart';
-import 'package:provider/provider.dart';
 import 'package:media_kit/media_kit.dart';
 
 import 'package:wakelock/wakelock.dart';
@@ -46,7 +45,7 @@ class MediaKitState extends State<MediaKitControls> {
   bool _isFullScreen = false;
 
   bool get isControllerFullScreen => widget.controller.isFullScreen;
-  late PlayerNotifier notifier;
+  PlayerNotifier? notifier;
 
   @override
   void initState() {
@@ -89,10 +88,8 @@ class MediaKitState extends State<MediaKitControls> {
   Widget build(BuildContext context) {
     return MediaKitControllerProvider(
       controller: widget.controller,
-      child: ChangeNotifierProvider<PlayerNotifier>.value(
-        value: notifier,
-        builder: (context, w) => PlayerWithControls(video: widget.video),
-      ),
+      child: PlayerNotifierProvider(
+          notifier: notifier!, child: PlayerWithControls(video: widget.video)),
     );
   }
 
@@ -132,9 +129,9 @@ class MediaKitState extends State<MediaKitControls> {
   ) {
     final controllerProvider = MediaKitControllerProvider(
       controller: widget.controller,
-      child: ChangeNotifierProvider<PlayerNotifier>.value(
-        value: notifier,
-        builder: (context, w) => PlayerWithControls(
+      child: PlayerNotifierProvider(
+        notifier: notifier!,
+        child: PlayerWithControls(
           video: widget.video,
         ),
       ),
@@ -537,6 +534,10 @@ class MediaKitController extends ChangeNotifier {
 
   bool get isFullScreen => _isFullScreen;
 
+  bool _showingControls = false;
+
+  bool get showingControls => _showingControls;
+
   bool get isPlaying => player.state.playing;
 
   bool playerIsNotInitialized() {
@@ -590,14 +591,15 @@ class MediaKitController extends ChangeNotifier {
 
   void toggleFullScreen() {
     _isFullScreen = !_isFullScreen;
-    if( defaultTargetPlatform == TargetPlatform.macOS ||
-      defaultTargetPlatform == TargetPlatform.linux ||
-      defaultTargetPlatform == TargetPlatform.windows){
-    Future.microtask(() async {
-      await windowManager.ensureInitialized();
+    if (defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.linux ||
+        defaultTargetPlatform == TargetPlatform.windows) {
+      Future.microtask(() async {
+        await windowManager.ensureInitialized();
 
-      await windowManager.setFullScreen(_isFullScreen);
-    });}
+        await windowManager.setFullScreen(_isFullScreen);
+      });
+    }
 
     notifyListeners();
   }

@@ -13,7 +13,6 @@ import 'package:media_kit_video_controls/widgets/models/option_item.dart';
 import 'package:media_kit_video_controls/widgets/models/subtitle_model.dart';
 import 'package:media_kit_video_controls/widgets/notifiers/index.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class MaterialDesktopControls extends StatefulWidget {
   const MaterialDesktopControls({
@@ -31,7 +30,11 @@ class MaterialDesktopControls extends StatefulWidget {
 
 class _MaterialDesktopControlsState extends State<MaterialDesktopControls>
     with SingleTickerProviderStateMixin {
-  late PlayerNotifier notifier;
+
+  PlayerNotifier? _notifier;
+
+  // We know that _notifier is set in didChangeDependencies
+  PlayerNotifier get notifier => _notifier!;
 
   late PlayerState _latestValue;
   double? _latestVolume;
@@ -57,12 +60,6 @@ class _MaterialDesktopControlsState extends State<MaterialDesktopControls>
   StreamSubscription? buffering;
 
   StreamSubscription? volume;
-
-  @override
-  void initState() {
-    super.initState();
-    notifier = Provider.of<PlayerNotifier>(context, listen: false);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -143,6 +140,13 @@ class _MaterialDesktopControlsState extends State<MaterialDesktopControls>
       _initialize();
     }
 
+    final oldPlayerNotifier = _notifier;
+    _notifier = PlayerNotifier.of(context);
+
+    if (oldPlayerNotifier != notifier) {
+      _dispose();
+      _initialize();
+    }
     super.didChangeDependencies();
   }
 
