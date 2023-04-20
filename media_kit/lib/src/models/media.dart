@@ -32,6 +32,11 @@ class Media extends Playable {
   /// URI of the [Media].
   final String uri;
 
+  /// HTTP headers.
+  ///
+  /// Default: `null`.
+  final Map<String,String>? httpHeaders;
+
   /// Additional optional user data.
   final dynamic extras;
 
@@ -39,6 +44,7 @@ class Media extends Playable {
   Media(
     String resource, {
     this.extras,
+    this.httpHeaders
   }) : uri = normalizeURI(resource) {
     medias[uri] = this;
   }

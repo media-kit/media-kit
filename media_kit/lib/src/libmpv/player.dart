@@ -746,6 +746,27 @@ class Player extends PlatformPlayer {
         }
       }
     }
+
+    if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_HOOK) {
+      final prop = event.ref.data.cast<generated.mpv_event_hook>();
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'on_load') {
+        final ctx = await _handle.future;
+        if (state.playlist.medias[state.playlist.index].httpHeaders != null) {
+          var kvArray = [];
+          state.playlist.medias[state.playlist.index].httpHeaders!
+              .forEach((key, value) => kvArray.add(key + ': ' + value));
+          await setProperty('http-header-fields', kvArray.join(','));
+        }
+        _libmpv?.mpv_hook_continue(ctx, prop.ref.id);
+      }
+
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'on_unload') {
+        final ctx = await _handle.future;
+        await setProperty('http-header-fields', '');
+        _libmpv?.mpv_hook_continue(ctx, prop.ref.id);
+      }
+    }
+
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
       // Check for mpv_end_file_reason.MPV_END_FILE_REASON_EOF before modifying state.completed.
       if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
@@ -1220,6 +1241,14 @@ class Player extends PlatformPlayer {
     //   calloc.free(value);
     // }
 
+    // Adds a hook to the libmpv instance that will be called when the video player loads.
+
+    _libmpv?.mpv_hook_add(result, 0, 'on_load'.toNativeUtf8().cast(), 0);
+
+    // Adds a hook to the libmpv instance that will be called when the video player unloads.
+    _libmpv?.mpv_hook_add(result, 0, 'on_unload'.toNativeUtf8().cast(), 0);
+
+    
     // Observe the properties to update the state & feed event streams.
     <String, int>{
       'pause': generated.mpv_format.MPV_FORMAT_FLAG,
