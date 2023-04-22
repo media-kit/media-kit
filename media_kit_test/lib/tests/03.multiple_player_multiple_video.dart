@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../common/globals.dart';
 import '../common/sources.dart';
 import '../common/widgets.dart';
 
@@ -24,7 +25,10 @@ class _MultiplePlayerMultipleVideoScreenState
     super.initState();
     Future.microtask(() async {
       for (int i = 0; i < players.length; i++) {
-        controllers[i] = await VideoController.create(players[i]);
+        controllers[i] = await VideoController.create(
+          players[i],
+          enableHardwareAcceleration: enableHardwareAcceleration.value,
+        );
       }
       setState(() {});
     });

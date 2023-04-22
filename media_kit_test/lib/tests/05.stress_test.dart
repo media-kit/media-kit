@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../common/globals.dart';
 import '../common/sources.dart';
 
 class StressTestScreen extends StatefulWidget {
@@ -24,7 +25,10 @@ class _StressTestScreenState extends State<StressTestScreen> {
       () async {
         for (int i = 0; i < count; i++) {
           final player = Player();
-          final controller = await VideoController.create(player);
+          final controller = await VideoController.create(
+            player,
+            enableHardwareAcceleration: enableHardwareAcceleration.value,
+          );
           players.add(player);
           controllers.add(controller);
         }
