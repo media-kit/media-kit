@@ -108,20 +108,23 @@ class Player extends PlatformPlayer {
       );
       calloc.free(args);
     }
+
     // Enter paused state.
-    final name = 'pause'.toNativeUtf8();
-    final value = calloc<Uint8>()..value = 1;
-    _libmpv?.mpv_set_property(
-      ctx,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      value.cast(),
-    );
-    calloc.free(name);
-    calloc.free(value);
-    state = state.copyWith(playing: false);
-    if (!playingController.isClosed) {
-      playingController.add(false);
+    {
+      var name = 'pause'.toNativeUtf8();
+      var value = calloc<Uint8>()..value = 1;
+      _libmpv?.mpv_set_property(
+        ctx,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+      state = state.copyWith(playing: false);
+      if (!playingController.isClosed) {
+        playingController.add(false);
+      }
     }
 
     _allowPlayingStateChange = false;
@@ -136,9 +139,23 @@ class Player extends PlatformPlayer {
       );
     }
 
+    // If [play] is `true`, then exit paused state.
     if (play) {
-      await jump(index);
-    } else {
+      _allowPlayingStateChange = true;
+      final name = 'pause'.toNativeUtf8();
+      final value = calloc<Uint8>()..value = 0;
+      _libmpv?.mpv_set_property(
+        ctx,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+
+    // Jump to the specified [index] (in both cases either [play] is `true` or `false`).
+    {
       final name = 'playlist-pos'.toNativeUtf8();
       final value = calloc<Int64>()..value = index;
       _libmpv?.mpv_set_property(
@@ -207,7 +224,19 @@ class Player extends PlatformPlayer {
   Future<void> playOrPause() async {
     _allowPlayingStateChange = true;
     final ctx = await _handle.future;
-    // TODO(@alexmercerind): Handle playlist completion condition.
+    // This condition is specifically for the case when the internal playlist is ended (with [PlaylistLoopMode.none]), and we want to play the playlist again if play/pause is pressed.
+    if (state.completed) {
+      final name = 'playlist-pos'.toNativeUtf8();
+      final value = calloc<Int64>()..value = 0;
+      _libmpv?.mpv_set_property(
+        ctx,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_INT64,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
     final command = 'cycle pause'.toNativeUtf8();
     _libmpv?.mpv_command_string(
       ctx,
@@ -657,24 +686,25 @@ class Player extends PlatformPlayer {
         }
       }
     }
-    if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
-      // Check for mpv_end_file_reason.MPV_END_FILE_REASON_EOF before modifying state.completed.
-      if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
-          generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
-        if (_allowPlayingStateChange) {
-          state = state.copyWith(
-            playing: false,
-            completed: true,
-          );
-          if (!playingController.isClosed) {
-            playingController.add(false);
-          }
-          if (!completedController.isClosed) {
-            completedController.add(true);
-          }
-        }
-      }
-    }
+    // NOTE: Now, --keep-open=yes is used. Thus, eof-reached property is used instead of this.
+    // if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
+    //   // Check for mpv_end_file_reason.MPV_END_FILE_REASON_EOF before modifying state.completed.
+    //   if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
+    //       generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
+    //     if (_allowPlayingStateChange) {
+    //       state = state.copyWith(
+    //         playing: false,
+    //         completed: true,
+    //       );
+    //       if (!playingController.isClosed) {
+    //         playingController.add(false);
+    //       }
+    //       if (!completedController.isClosed) {
+    //         completedController.add(true);
+    //       }
+    //     }
+    //   }
+    // }
     if (event.ref.event_id ==
         generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
       final prop = event.ref.data.cast<generated.mpv_event_property>();
@@ -1032,15 +1062,31 @@ class Player extends PlatformPlayer {
           heightController.add(height);
         }
       }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'eof-reached' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+        final value = prop.ref.data.cast<Bool>().value;
+        if (value) {
+          if (_allowPlayingStateChange) {
+            state = state.copyWith(
+              playing: false,
+              completed: true,
+            );
+            if (!playingController.isClosed) {
+              playingController.add(false);
+            }
+            if (!completedController.isClosed) {
+              completedController.add(true);
+            }
+          }
+        }
+      }
     }
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_LOG_MESSAGE) {
       final eventLogMessage =
           event.ref.data.cast<generated.mpv_event_log_message>().ref;
-
       final prefix = eventLogMessage.prefix.cast<Utf8>().toDartString().trim();
       final level = eventLogMessage.level.cast<Utf8>().toDartString().trim();
       final text = eventLogMessage.text.cast<Utf8>().toDartString().trim();
-
       if (!logController.isClosed) {
         logController.add(
           PlayerLog(
@@ -1055,11 +1101,11 @@ class Player extends PlatformPlayer {
 
   Future<void> _create() async {
     _libmpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
-    // We cannot disable events on Android because they are consumed by package:media_kit_video.
     final result = await create(NativeLibrary.path, _handler);
     // Set:
     // idle = yes
     // pause = yes
+    // keep-open = yes
     // demuxer-max-bytes = 32 * 1024 * 1024
     // demuxer-max-back-bytes = 32 * 1024 * 1024
     // ao = opensles (Android)
@@ -1080,6 +1126,19 @@ class Player extends PlatformPlayer {
     }
     {
       final name = 'pause'.toNativeUtf8();
+      final value = calloc<Int32>();
+      value.value = 1;
+      _libmpv?.mpv_set_property(
+        result,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+    {
+      final name = 'keep-open'.toNativeUtf8();
       final value = calloc<Int32>();
       value.value = 1;
       _libmpv?.mpv_set_property(
@@ -1139,23 +1198,6 @@ class Player extends PlatformPlayer {
       calloc.free(data);
     }
 
-    // TODO(@alexmercerind):
-    // This causes `MPV_EVENT_END_FILE` to not fire for last playlist item.
-    // Ideally, we want to keep the last video frame visible.
-    // {
-    //   final name = 'keep-open'.toNativeUtf8();
-    //   final value = calloc<Int32>();
-    //   value.value = 1;
-    //   _libmpv?.mpv_set_property(
-    //     result,
-    //     name.cast(),
-    //     generated.mpv_format.MPV_FORMAT_FLAG,
-    //     value.cast(),
-    //   );
-    //   calloc.free(name);
-    //   calloc.free(value);
-    // }
-
     // Observe the properties to update the state & feed event streams.
     <String, int>{
       'pause': generated.mpv_format.MPV_FORMAT_FLAG,
@@ -1173,6 +1215,7 @@ class Player extends PlatformPlayer {
       'track-list': generated.mpv_format.MPV_FORMAT_NODE,
       'width': generated.mpv_format.MPV_FORMAT_INT64,
       'height': generated.mpv_format.MPV_FORMAT_INT64,
+      'eof-reached': generated.mpv_format.MPV_FORMAT_FLAG,
     }.forEach(
       (property, format) {
         final name = property.toNativeUtf8();
