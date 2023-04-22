@@ -43,53 +43,32 @@ class VideoControllerAndroid extends VideoController {
     super.height, {
     super.enableHardwareAcceleration = true,
   }) {
-    final lock = Lock();
+    // Merge the width & height [Stream]s into a single [Stream] of [Rect]s.
+    int w = -1;
+    int h = -1;
     _widthStreamSubscription = player.streams.width.listen(
-      (width) => lock.synchronized(() async {
-        debugPrint(width.toString());
-        final w = width;
-        final h = rect.value?.height.toInt() ?? 0;
-        rect.value = Rect.zero;
-        // ----------------------------------------------
-        // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
-        // In native Android, this kind of rendering is done with `android.view.SurfaceView` + `android.view.SurfaceHolder`, which offers `onSurfaceChanged` callback to handle this.
-        if (!enableHardwareAcceleration) {
-          final handle = await player.handle;
-          await _channel.invokeMethod(
-            'VideoOutputManager.SetSurfaceTextureSize',
-            {
-              'handle': handle.toString(),
-              'width': w.toString(),
-              'height': h.toString(),
-            },
-          );
-
-          NativeLibrary.ensureInitialized();
-          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-          final name = 'android-surface-size'.toNativeUtf8();
-          final value = '${w}x$h'.toNativeUtf8();
-          mpv.mpv_set_option_string(
-            Pointer.fromAddress(handle),
-            name.cast(),
-            value.cast(),
-          );
-          calloc.free(name);
-          calloc.free(value);
+      (event) => _lock.synchronized(() {
+        w = event;
+        if (w != -1 && h != -1) {
+          _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
+          w = -1;
+          h = -1;
         }
-        // ----------------------------------------------
-        rect.value = Rect.fromLTWH(
-          0,
-          0,
-          w * 1.0,
-          h * 1.0,
-        );
       }),
     );
     _heightStreamSubscription = player.streams.height.listen(
-      (height) => lock.synchronized(() async {
-        debugPrint(height.toString());
-        final w = rect.value?.width.toInt() ?? 0;
-        final h = height;
+      (event) => _lock.synchronized(() {
+        h = event;
+        if (w != -1 && h != -1) {
+          _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
+          w = -1;
+          h = -1;
+        }
+      }),
+    );
+    final lock = Lock();
+    _rectStreamSubscription = _controller.stream.listen(
+      (event) => lock.synchronized(() async {
         rect.value = Rect.zero;
         // ----------------------------------------------
         // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
@@ -100,15 +79,15 @@ class VideoControllerAndroid extends VideoController {
             'VideoOutputManager.SetSurfaceTextureSize',
             {
               'handle': handle.toString(),
-              'width': w.toString(),
-              'height': h.toString(),
+              'width': event.width.toInt().toString(),
+              'height': event.height.toInt().toString(),
             },
           );
-
           NativeLibrary.ensureInitialized();
           final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
           final name = 'android-surface-size'.toNativeUtf8();
-          final value = '${w}x$h'.toNativeUtf8();
+          final value =
+              '${event.width.toInt()}x${event.height.toInt()}'.toNativeUtf8();
           mpv.mpv_set_option_string(
             Pointer.fromAddress(handle),
             name.cast(),
@@ -118,12 +97,7 @@ class VideoControllerAndroid extends VideoController {
           calloc.free(value);
         }
         // ----------------------------------------------
-        rect.value = Rect.fromLTWH(
-          0,
-          0,
-          w * 1.0,
-          h * 1.0,
-        );
+        rect.value = event;
       }),
     );
   }
@@ -253,6 +227,9 @@ class VideoControllerAndroid extends VideoController {
     // Dispose the [StreamSubscription]s.
     await _widthStreamSubscription?.cancel();
     await _heightStreamSubscription?.cancel();
+    await _rectStreamSubscription?.cancel();
+    // Close the [StreamController]s.
+    await _controller.close();
     // Release the native resources.
     final handle = await player.handle;
     _controllers.remove(handle);
@@ -264,11 +241,20 @@ class VideoControllerAndroid extends VideoController {
     );
   }
 
+  /// [Lock] used to synchronize the [_widthStreamSubscription] & [_heightStreamSubscription].
+  final _lock = Lock();
+
+  /// [StreamController] for merging the [_widthStreamSubscription] & [_heightStreamSubscription] into a single [Stream<Rect>].
+  final _controller = StreamController<Rect>();
+
   /// [StreamSubscription] for listening to video width.
   StreamSubscription<int>? _widthStreamSubscription;
 
   /// [StreamSubscription] for listening to video height.
   StreamSubscription<int>? _heightStreamSubscription;
+
+  /// [StreamSubscription] for listening to video [Rect] from [_controller].
+  StreamSubscription<Rect>? _rectStreamSubscription;
 
   /// Currently created [VideoControllerAndroid]s.
   static final _controllers = HashMap<int, VideoControllerAndroid>();
