@@ -40,9 +40,9 @@ class VideoControllerAndroid extends VideoController {
   VideoControllerAndroid(
     super.player,
     super.width,
-    super.height, {
-    super.enableHardwareAcceleration = true,
-  }) {
+    super.height,
+    super.enableHardwareAcceleration,
+  ) {
     // Merge the width & height [Stream]s into a single [Stream] of [Rect]s.
     int w = -1;
     int h = -1;
@@ -130,7 +130,7 @@ class VideoControllerAndroid extends VideoController {
       player,
       width,
       height,
-      enableHardwareAcceleration: enableHardwareAcceleration,
+      enableHardwareAcceleration,
     );
     // Store the [VideoController] in the [_controllers].
     _controllers[handle] = controller;

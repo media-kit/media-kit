@@ -61,9 +61,9 @@ abstract class VideoController {
   VideoController(
     this.player,
     this.width,
-    this.height, {
-    this.enableHardwareAcceleration = true,
-  });
+    this.height,
+    this.enableHardwareAcceleration,
+  );
 
   /// {@macro video_controller}
   static Future<VideoController> create(
