@@ -17,11 +17,7 @@ class SinglePlayerSingleVideoScreen extends StatefulWidget {
 
 class _SinglePlayerSingleVideoScreenState
     extends State<SinglePlayerSingleVideoScreen> {
-  final Player player = Player(
-    configuration: const PlayerConfiguration(
-      logLevel: MPVLogLevel.warn,
-    ),
-  );
+  final Player player = Player();
   VideoController? controller;
 
   @override
