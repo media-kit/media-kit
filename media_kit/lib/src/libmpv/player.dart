@@ -93,9 +93,9 @@ class Player extends PlatformPlayer {
       index = -1;
     }
 
-    // Clean-up existing playlist & change currently playing libmpv index to none.
-    // This causes playback to stop & player to enter the idle state.
     final commands = [
+      // Clear existing playlist & change currently playing libmpv index to none.
+      // This causes playback to stop & player to enter the idle state.
       'stop',
       'playlist-clear',
       'playlist-play-index none',
@@ -108,9 +108,21 @@ class Player extends PlatformPlayer {
       );
       calloc.free(args);
     }
-
-    // Enter the pause state.
-    await pause();
+    // Enter paused state.
+    final name = 'pause'.toNativeUtf8();
+    final value = calloc<Uint8>()..value = 1;
+    _libmpv?.mpv_set_property(
+      ctx,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_FLAG,
+      value.cast(),
+    );
+    calloc.free(name);
+    calloc.free(value);
+    state = state.copyWith(playing: false);
+    if (!playingController.isClosed) {
+      playingController.add(false);
+    }
 
     _allowPlayingStateChange = false;
 
@@ -119,10 +131,7 @@ class Player extends PlatformPlayer {
         [
           'loadfile',
           playlist[i].uri,
-          if (index == 0 && i == 0) 'replace',
-          if (index == 0 && i != 0) 'append',
-          if (index > 0 && i == index) 'append-play',
-          if (index > 0 && i != index) 'append',
+          'append',
         ],
       );
     }
@@ -130,18 +139,16 @@ class Player extends PlatformPlayer {
     if (play) {
       await jump(index);
     } else {
-      if (index > 0) {
-        final name = 'playlist-pos'.toNativeUtf8();
-        final value = calloc<Int64>()..value = index;
-        _libmpv?.mpv_set_property(
-          ctx,
-          name.cast(),
-          generated.mpv_format.MPV_FORMAT_INT64,
-          value.cast(),
-        );
-        calloc.free(name);
-        calloc.free(value);
-      }
+      final name = 'playlist-pos'.toNativeUtf8();
+      final value = calloc<Int64>()..value = index;
+      _libmpv?.mpv_set_property(
+        ctx,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_INT64,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
     }
   }
 
@@ -200,12 +207,7 @@ class Player extends PlatformPlayer {
   Future<void> playOrPause() async {
     _allowPlayingStateChange = true;
     final ctx = await _handle.future;
-    // This condition will occur when [PlaylistMode.none] is set & last item of the [Playlist] is played.
-    // Thus, when user presses the play/pause button, we must start playing the [Playlist] from the beginning. Otherwise, the button just freezes.
-    if (state.completed) {
-      await jump(0);
-      return;
-    }
+    // TODO(@alexmercerind): Handle playlist completion condition.
     final command = 'cycle pause'.toNativeUtf8();
     _libmpv?.mpv_command_string(
       ctx,
@@ -646,20 +648,12 @@ class Player extends PlatformPlayer {
         state = state.copyWith(
           playing: true,
           completed: false,
-          audioBitrate: null,
-          audioParams: const AudioParams(),
         );
         if (!playingController.isClosed) {
           playingController.add(true);
         }
         if (!completedController.isClosed) {
           completedController.add(false);
-        }
-        if (!audioBitrateController.isClosed) {
-          audioBitrateController.add(null);
-        }
-        if (!audioParamsController.isClosed) {
-          audioParamsController.add(const AudioParams());
         }
       }
     }
@@ -729,11 +723,11 @@ class Player extends PlatformPlayer {
         if (!durationController.isClosed) {
           durationController.add(duration);
         }
-        // NOTE: Using manual bitrate calculation for FLAC.
+        // NOTE: Using manual bitrate calculation for some local files.
         if (state.playlist.index >= 0 &&
             state.playlist.index < state.playlist.medias.length) {
           final uri = state.playlist.medias[state.playlist.index].uri;
-          if (FallbackBitrateHandler.isLocalFLACOrOGGFile(uri)) {
+          if (FallbackBitrateHandler.supported(uri)) {
             if (!bitrates.containsKey(uri) ||
                 !bitrates.containsKey(Media.normalizeURI(uri))) {
               bitrates[uri] = await FallbackBitrateHandler.calculateBitrate(
@@ -868,8 +862,8 @@ class Player extends PlatformPlayer {
             state.playlist.index >= 0) {
           final data = prop.ref.data.cast<Double>().value;
           final uri = state.playlist.medias[state.playlist.index].uri;
-          // NOTE: Using manual bitrate calculation for FLAC.
-          if (!FallbackBitrateHandler.isLocalFLACOrOGGFile(uri)) {
+          // NOTE: Using manual bitrate calculation for some local files.
+          if (!FallbackBitrateHandler.supported(uri)) {
             if (!bitrates.containsKey(uri) ||
                 !bitrates.containsKey(Media.normalizeURI(uri))) {
               bitrates[uri] = data;
