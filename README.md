@@ -52,10 +52,10 @@ dependencies:
   
   media_kit_native_event_loop: ^1.0.3            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_windows_video: ^1.0.2           # Windows package for video native libraries.
   media_kit_libs_android_video: ^1.0.0           # Android package for video native libraries.
-  media_kit_libs_macos_video: ^1.0.4             # macOS package for video native libraries.
   media_kit_libs_ios_video: ^1.0.4               # iOS package for video native libraries.
+  media_kit_libs_macos_video: ^1.0.4             # macOS package for video native libraries.
+  media_kit_libs_windows_video: ^1.0.2           # Windows package for video native libraries.
   media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.
 ```
 
@@ -67,10 +67,10 @@ dependencies:
   
   media_kit_native_event_loop: ^1.0.2            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_windows_audio: ^1.0.3           # Windows package for audio native libraries.
   media_kit_libs_android_audio: ^1.0.0           # Android package for audio native libraries.
-  media_kit_libs_macos_audio: ^1.0.4             # macOS package for audio native libraries.
   media_kit_libs_ios_audio: ^1.0.4               # iOS package for audio native libraries.
+  media_kit_libs_macos_audio: ^1.0.4             # macOS package for audio native libraries.
+  media_kit_libs_windows_audio: ^1.0.3           # Windows package for audio native libraries.
   media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.
 ```
 
@@ -148,6 +148,7 @@ import 'package:media_kit/media_kit.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  /// [MediaKit.ensureInitialized] must be called before using the library.
   MediaKit.ensureInitialized();
   runApp(const MyApp());
 }
