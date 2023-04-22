@@ -11,6 +11,7 @@ import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:synchronized/synchronized.dart';
 
 // ignore_for_file: unused_import, implementation_imports
 // It's absolutely crazy that C/C++ interop in Dart is so much easier & less tedious (possibly more performant as well) than in Java/Kotlin.
@@ -42,22 +43,89 @@ class VideoControllerAndroid extends VideoController {
     super.height, {
     super.enableHardwareAcceleration = true,
   }) {
-    _widthStreamSubscription = player.streams.width.listen((width) {
-      rect.value = Rect.fromLTWH(
-        0,
-        0,
-        width.toDouble(),
-        rect.value?.height ?? 0,
-      );
-    });
-    _heightStreamSubscription = player.streams.height.listen((height) {
-      rect.value = Rect.fromLTWH(
-        0,
-        0,
-        rect.value?.width ?? 0,
-        height.toDouble(),
-      );
-    });
+    final lock = Lock();
+    _widthStreamSubscription = player.streams.width.listen(
+      (width) => lock.synchronized(() async {
+        debugPrint(width.toString());
+        final w = width;
+        final h = rect.value?.height.toInt() ?? 0;
+        rect.value = Rect.zero;
+        // ----------------------------------------------
+        // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
+        // In native Android, this kind of rendering is done with `android.view.SurfaceView` + `android.view.SurfaceHolder`, which offers `onSurfaceChanged` callback to handle this.
+        if (!enableHardwareAcceleration) {
+          final handle = await player.handle;
+          await _channel.invokeMethod(
+            'VideoOutputManager.SetSurfaceTextureSize',
+            {
+              'handle': handle.toString(),
+              'width': w.toString(),
+              'height': h.toString(),
+            },
+          );
+
+          NativeLibrary.ensureInitialized();
+          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+          final name = 'android-surface-size'.toNativeUtf8();
+          final value = '${w}x$h'.toNativeUtf8();
+          mpv.mpv_set_option_string(
+            Pointer.fromAddress(handle),
+            name.cast(),
+            value.cast(),
+          );
+          calloc.free(name);
+          calloc.free(value);
+        }
+        // ----------------------------------------------
+        rect.value = Rect.fromLTWH(
+          0,
+          0,
+          w * 1.0,
+          h * 1.0,
+        );
+      }),
+    );
+    _heightStreamSubscription = player.streams.height.listen(
+      (height) => lock.synchronized(() async {
+        debugPrint(height.toString());
+        final w = rect.value?.width.toInt() ?? 0;
+        final h = height;
+        rect.value = Rect.zero;
+        // ----------------------------------------------
+        // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
+        // In native Android, this kind of rendering is done with `android.view.SurfaceView` + `android.view.SurfaceHolder`, which offers `onSurfaceChanged` callback to handle this.
+        if (!enableHardwareAcceleration) {
+          final handle = await player.handle;
+          await _channel.invokeMethod(
+            'VideoOutputManager.SetSurfaceTextureSize',
+            {
+              'handle': handle.toString(),
+              'width': w.toString(),
+              'height': h.toString(),
+            },
+          );
+
+          NativeLibrary.ensureInitialized();
+          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+          final name = 'android-surface-size'.toNativeUtf8();
+          final value = '${w}x$h'.toNativeUtf8();
+          mpv.mpv_set_option_string(
+            Pointer.fromAddress(handle),
+            name.cast(),
+            value.cast(),
+          );
+          calloc.free(name);
+          calloc.free(value);
+        }
+        // ----------------------------------------------
+        rect.value = Rect.fromLTWH(
+          0,
+          0,
+          w * 1.0,
+          h * 1.0,
+        );
+      }),
+    );
   }
 
   /// {@macro video_controller_android}
@@ -72,6 +140,14 @@ class VideoControllerAndroid extends VideoController {
     // Return the existing [VideoController] if it's already created.
     if (_controllers.containsKey(handle)) {
       return _controllers[handle]!;
+    }
+
+    // Enforce software rendering in emulators.
+    final bool isEmulator = await _channel.invokeMethod('Utils.IsEmulator');
+    if (isEmulator) {
+      debugPrint('media_kit: VideoControllerAndroid: Emulator detected.');
+      debugPrint('media_kit: VideoControllerAndroid: Enforcing S/W rendering.');
+      enableHardwareAcceleration = false;
     }
 
     // Creation:
@@ -96,19 +172,39 @@ class VideoControllerAndroid extends VideoController {
     debugPrint(data.toString());
 
     // ----------------------------------------------
-    // https://mpv.io/manual/stable/#video-output-drivers-mediacodec-embed
     NativeLibrary.ensureInitialized();
     final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-    final values = {
-      'opengl-es': 'yes',
-      'force-window': 'yes',
-      'gpu-context': 'android',
-      'vo': 'mediacodec_embed',
-      'wid': wid.toString(),
-      if (enableHardwareAcceleration) 'hwdec': 'mediacodec' else 'hwdec': 'no',
-      if (width != null && height != null)
-        'android-surface-size': '${width}x$height',
-    };
+    final values = enableHardwareAcceleration
+        ? {
+            // https://mpv.io/manual/stable/#video-output-drivers-mediacodec-embed
+            // Truly native hardware decoding & rendering with --vo=mediacodec_embed & --hwdec=mediacodec.
+            'opengl-es': 'yes',
+            'force-window': 'yes',
+            'hwdec': 'mediacodec',
+            'gpu-context': 'android',
+            'vo': 'mediacodec_embed',
+            'wid': wid.toString(),
+          }
+        : {
+            // Software decoding & rendering with --vo=gpu & --hwdec=no.
+            // The `android.view.Surface` (bind with `android.graphics.SurfaceTexture`) instance which is passed as --wid to libmpv for rendering, is not actually "mounted" to the Android view hierarchy, because we are using Flutter.
+            // The `android.view.Surface` instance is solely created for allowing libmpv to render into it. The Flutter internally reads from `android.graphics.SurfaceTexture` AFAIK.
+            //
+            // This makes the `android.view.Surface` not size accordingly to the video / display size (& render video as a single 1x1 pixel forever).
+            // So, we use `setDefaultBufferSize` to set the size of the video output & make it render accordingly.
+            // Learn more: https://developer.android.com/reference/android/graphics/SurfaceTexture#setDefaultBufferSize(int,%20int)
+            //
+            // From my observations, as soon as we use --vo=gpu, we need to use `setDefaultBufferSize` even with hardware acceleration enabled due to the reason mentioned above.
+            'opengl-es': 'yes',
+            'force-window': 'yes',
+            'hwdec': 'no',
+            'gpu-context': 'android',
+            'vo': 'gpu',
+            'wid': wid.toString(),
+          };
+    // TODO(@alexmercerind): A few other rendering options might be worth exposing to clients in the future e.g.
+    // * --vo=gpu + --hwdec=mediacodec
+    // * --vo=gpu + --hwdec=mediacodec-copy
     for (final entry in values.entries) {
       final name = entry.key.toNativeUtf8();
       final value = entry.value.toNativeUtf8();
@@ -144,27 +240,10 @@ class VideoControllerAndroid extends VideoController {
   Future<void> setSize({
     int? width,
     int? height,
-  }) async {
-    final handle = await player.handle;
-    if (this.width == width && this.height == height) {
-      // No need to resize if the requested size is same as the current size.
-      return;
-    }
-    this.width = width;
-    this.height = height;
-    // ----------------------------------------------
-    NativeLibrary.ensureInitialized();
-    final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-    final name = 'android-surface-size'.toNativeUtf8();
-    final value = '${width}x$height'.toNativeUtf8();
-    mpv.mpv_set_option_string(
-      Pointer.fromAddress(handle),
-      name.cast(),
-      value.cast(),
+  }) {
+    throw UnimplementedError(
+      '[VideoControllerAndroid.setSize] is not available on Android.',
     );
-    calloc.free(name);
-    calloc.free(value);
-    // ----------------------------------------------
   }
 
   /// Disposes the [VideoController].
