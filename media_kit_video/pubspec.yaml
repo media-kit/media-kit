@@ -16,6 +16,7 @@ dependencies:
   ffi: ^2.0.1
   # WARNING: Bump before publishing to pub.dev
   media_kit: ^0.0.5+1
+  synchronized: ^3.1.0
   plugin_platform_interface: ^2.0.2
 
 dev_dependencies:
