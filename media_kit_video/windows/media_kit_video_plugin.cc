@@ -42,6 +42,8 @@ void MediaKitVideoPlugin::HandleMethodCall(
         std::get<std::string>(arguments[flutter::EncodableValue("width")]);
     auto height =
         std::get<std::string>(arguments[flutter::EncodableValue("height")]);
+    auto enable_hardware_acceleration = std::get<bool>(
+        arguments[flutter::EncodableValue("enableHardwareAcceleration")]);
     auto handle_value =
         static_cast<int64_t>(strtoll(handle.c_str(), nullptr, 10));
     auto width_value = std::optional<int64_t>{};
@@ -51,7 +53,7 @@ void MediaKitVideoPlugin::HandleMethodCall(
       height_value = static_cast<int64_t>(strtoll(height.c_str(), nullptr, 10));
     }
     video_output_manager_->Create(
-        handle_value, width_value, height_value,
+        handle_value, width_value, height_value, enable_hardware_acceleration,
         [channel_ptr = channel_.get(), handle = handle_value](
             auto id, auto width, auto height) {
           channel_ptr->InvokeMethod(

@@ -28,11 +28,13 @@
 VideoOutput::VideoOutput(int64_t handle,
                          std::optional<int64_t> width,
                          std::optional<int64_t> height,
+                         bool enable_hardware_acceleration,
                          flutter::PluginRegistrarWindows* registrar,
                          ThreadPool* thread_pool_ref)
     : handle_(reinterpret_cast<mpv_handle*>(handle)),
       width_(width),
       height_(height),
+      enable_hardware_acceleration_(enable_hardware_acceleration),
       registrar_(registrar),
       thread_pool_ref_(thread_pool_ref) {
   // The constructor must be invoked through the thread pool, because
@@ -47,46 +49,48 @@ VideoOutput::VideoOutput(int64_t handle,
     // |ANGLESurfaceManager|, use S/W API as fallback.
     auto is_hardware_acceleration_enabled = false;
     // Attempt to use H/W rendering.
-    try {
-      // OpenGL context needs to be set before |mpv_render_context_create|.
-      surface_manager_ = std::make_unique<ANGLESurfaceManager>(
-          static_cast<int32_t>(width_.value_or(1)),
-          static_cast<int32_t>(height_.value_or(1)));
-      Resize(width_.value_or(1), height_.value_or(1));
-      mpv_opengl_init_params gl_init_params{
-          [](auto, auto name) {
-            return reinterpret_cast<void*>(eglGetProcAddress(name));
-          },
-          nullptr,
-      };
-      mpv_render_param params[] = {
-          {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL},
-          {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, &gl_init_params},
-          {MPV_RENDER_PARAM_INVALID, nullptr},
-      };
-      // Request H/W decoding.
-      mpv_set_option_string(handle_, "hwdec", "auto");
-      // Create render context.
-      if (mpv_render_context_create(&render_context_, handle_, params) == 0) {
-        mpv_render_context_set_update_callback(
-            render_context_,
-            [](void* context) {
-              // Notify Flutter that a new frame is available. The actual
-              // rendering will take place in the |Render| method, which will be
-              // called by Flutter on the render thread.
-              auto that = reinterpret_cast<VideoOutput*>(context);
-              that->NotifyRender();
+    if (enable_hardware_acceleration_) {
+      try {
+        // OpenGL context needs to be set before |mpv_render_context_create|.
+        surface_manager_ = std::make_unique<ANGLESurfaceManager>(
+            static_cast<int32_t>(width_.value_or(1)),
+            static_cast<int32_t>(height_.value_or(1)));
+        Resize(width_.value_or(1), height_.value_or(1));
+        mpv_opengl_init_params gl_init_params{
+            [](auto, auto name) {
+              return reinterpret_cast<void*>(eglGetProcAddress(name));
             },
-            reinterpret_cast<void*>(this));
-        // Set flag to true, indicating that H/W rendering is supported.
-        is_hardware_acceleration_enabled = true;
-        std::cout << "media_kit: VideoOutput: Using H/W rendering."
-                  << std::endl;
+            nullptr,
+        };
+        mpv_render_param params[] = {
+            {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL},
+            {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, &gl_init_params},
+            {MPV_RENDER_PARAM_INVALID, nullptr},
+        };
+        // Request H/W decoding.
+        mpv_set_option_string(handle_, "hwdec", "auto");
+        // Create render context.
+        if (mpv_render_context_create(&render_context_, handle_, params) == 0) {
+          mpv_render_context_set_update_callback(
+              render_context_,
+              [](void* context) {
+                // Notify Flutter that a new frame is available. The actual
+                // rendering will take place in the |Render| method, which will
+                // be called by Flutter on the render thread.
+                auto that = reinterpret_cast<VideoOutput*>(context);
+                that->NotifyRender();
+              },
+              reinterpret_cast<void*>(this));
+          // Set flag to true, indicating that H/W rendering is supported.
+          is_hardware_acceleration_enabled = true;
+          std::cout << "media_kit: VideoOutput: Using H/W rendering."
+                    << std::endl;
+        }
+      } catch (...) {
+        // Do nothing.
+        // Likely received an |std::runtime_error| from |ANGLESurfaceManager|,
+        // which indicates that H/W rendering is not supported.
       }
-    } catch (...) {
-      // Do nothing.
-      // Likely received an |std::runtime_error| from |ANGLESurfaceManager|,
-      // which indicates that H/W rendering is not supported.
     }
     if (!is_hardware_acceleration_enabled) {
       std::cout << "media_kit: VideoOutput: Using S/W rendering." << std::endl;
@@ -215,8 +219,34 @@ void VideoOutput::SetTextureUpdateCallback(
 void VideoOutput::SetSize(std::optional<int64_t> width,
                           std::optional<int64_t> height) {
   thread_pool_ref_->Post([&, width, height]() {
-    width_ = width;
-    height_ = height;
+    if (width.has_value()) {
+      // H/W
+      if (surface_manager_ != nullptr) {
+        width_ = width.value();
+      }
+      // S/W
+      if (pixel_buffer_ != nullptr) {
+        // Limit width if software rendering is being used.
+        width_ = std::clamp(width.value(), static_cast<int64_t>(0),
+                            static_cast<int64_t>(SW_RENDERING_MAX_WIDTH));
+      }
+    } else {
+      width_ = std::nullopt;
+    }
+    if (height.has_value()) {
+      // H/W
+      if (surface_manager_ != nullptr) {
+        height_ = height.value();
+      }
+      // S/W
+      if (pixel_buffer_ != nullptr) {
+        // Limit width if software rendering is being used.
+        height_ = std::clamp(height.value(), static_cast<int64_t>(0),
+                             static_cast<int64_t>(SW_RENDERING_MAX_HEIGHT));
+      }
+    } else {
+      height_ = std::nullopt;
+    }
   });
 }
 
