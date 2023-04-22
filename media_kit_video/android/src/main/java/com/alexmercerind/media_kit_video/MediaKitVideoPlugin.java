@@ -1,6 +1,6 @@
 /**
  * This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
- *
+ * <p>
  * Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
  * All rights reserved.
  * Use of this source code is governed by MIT license that can be found in the LICENSE file.
@@ -10,6 +10,7 @@ package com.alexmercerind.media_kit_video;
 import androidx.annotation.NonNull;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 import com.alexmercerind.mpv.MPVLib;
 
@@ -19,7 +20,9 @@ import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 
-/** MediaKitVideoPlugin */
+/**
+ * MediaKitVideoPlugin
+ */
 public class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler {
     private MethodChannel channel;
     private VideoOutputManager videoOutputManager;
@@ -44,26 +47,50 @@ public class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler {
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-        if (call.method.equals("VideoOutputManager.Create")) {
-            final String handle = call.argument("handle");
-            if (handle != null) {
-                final VideoOutput videoOutput = videoOutputManager.create(Long.parseLong(handle));
-                final HashMap<String, Long> data = new HashMap<>();
-                data.put("id", videoOutput.id);
-                data.put("wid", videoOutput.wid);
-                result.success(data);
-            } else {
+        switch (call.method) {
+            case "VideoOutputManager.Create": {
+                final String handle = call.argument("handle");
+                if (handle != null) {
+                    final VideoOutput videoOutput = videoOutputManager.create(Long.parseLong(handle));
+                    final HashMap<String, Long> data = new HashMap<>();
+                    data.put("id", videoOutput.id);
+                    data.put("wid", videoOutput.wid);
+                    result.success(data);
+                } else {
+                    result.success(null);
+                }
+                break;
+            }
+            case "VideoOutputManager.SetSurfaceTextureSize": {
+                final String handle = call.argument("handle");
+                final String width = call.argument("width");
+                final String height = call.argument("height");
+                if (handle != null) {
+                    videoOutputManager.setSurfaceTextureSize(
+                            Long.parseLong(handle),
+                            Integer.parseInt(Objects.requireNonNull(width)),
+                            Integer.parseInt(Objects.requireNonNull(height))
+                    );
+                }
                 result.success(null);
+                break;
             }
-
-        } else if (call.method.equals("VideoOutputManager.Dispose")) {
-            final String handle = call.argument("handle");
-            if (handle != null) {
-                videoOutputManager.dispose(Long.parseLong(handle));
+            case "VideoOutputManager.Dispose": {
+                final String handle = call.argument("handle");
+                if (handle != null) {
+                    videoOutputManager.dispose(Long.parseLong(handle));
+                }
+                result.success(null);
+                break;
             }
-            result.success(null);
-        } else {
-            result.notImplemented();
+            case "Utils.IsEmulator": {
+                result.success(Utils.isEmulator());
+                break;
+            }
+            default: {
+                result.notImplemented();
+                break;
+            }
         }
     }
 
