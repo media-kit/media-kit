@@ -111,14 +111,22 @@ class Player extends PlatformPlayer {
 
     // Enter paused state.
     {
-      var name = 'pause'.toNativeUtf8();
-      var value = calloc<Uint8>()..value = 1;
-      _libmpv?.mpv_set_property(
+      final name = 'pause'.toNativeUtf8();
+      final value = calloc<Uint8>();
+      _libmpv?.mpv_get_property(
         ctx,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_FLAG,
         value.cast(),
       );
+      if (value.value == 0) {
+        // We are using `cycle pause` because it waits & prevents the race condition.
+        final command = 'cycle pause'.toNativeUtf8();
+        _libmpv?.mpv_command_string(
+          ctx,
+          command.cast(),
+        );
+      }
       calloc.free(name);
       calloc.free(value);
       state = state.copyWith(playing: false);
@@ -143,13 +151,21 @@ class Player extends PlatformPlayer {
     if (play) {
       _allowPlayingStateChange = true;
       final name = 'pause'.toNativeUtf8();
-      final value = calloc<Uint8>()..value = 0;
-      _libmpv?.mpv_set_property(
+      final value = calloc<Uint8>();
+      _libmpv?.mpv_get_property(
         ctx,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_FLAG,
         value.cast(),
       );
+      if (value.value == 1) {
+        // We are using `cycle pause` because it waits & prevents the race condition.
+        final command = 'cycle pause'.toNativeUtf8();
+        _libmpv?.mpv_command_string(
+          ctx,
+          command.cast(),
+        );
+      }
       calloc.free(name);
       calloc.free(value);
     }
