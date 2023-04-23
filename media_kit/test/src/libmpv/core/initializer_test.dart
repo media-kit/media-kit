@@ -5,6 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'dart:ffi';
+import 'dart:async';
 import 'package:ffi/ffi.dart';
 import 'package:test/test.dart';
 
@@ -29,15 +30,28 @@ void main() {
     () async {
       final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
 
-      bool pause = false;
+      int count = 0;
+      final shutdown = Completer();
 
-      final expectPauseFalse = expectAsync0(() {
-        print(pause);
-        expect(pause, isFalse);
+      final expectPauseFalse = expectAsync1((value) {
+        print(value);
+        expect(value, isFalse);
+        count++;
+        if (count == 2) {
+          shutdown.complete();
+        }
       });
-      final expectPauseTrue = expectAsync0(() {
-        print(pause);
-        expect(pause, isTrue);
+      final expectPauseTrue = expectAsync1((value) {
+        print(value);
+        expect(value, isTrue);
+        count++;
+        if (count == 2) {
+          shutdown.complete();
+        }
+      });
+      final expectShutdown = expectAsync0(() {
+        print('MPV_EVENT_SHUTDOWN');
+        expect(true, isTrue);
       });
 
       final handle = await create(
@@ -48,14 +62,16 @@ void main() {
             if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
                 prop.ref.format == mpv_format.MPV_FORMAT_FLAG) {
               final value = prop.ref.data.cast<Bool>().value;
-              pause = value;
               if (value) {
-                expectPauseTrue();
+                expectPauseTrue(value);
               }
               if (!value) {
-                expectPauseFalse();
+                expectPauseFalse(value);
               }
             }
+          }
+          if (event.ref.event_id == mpv_event_id.MPV_EVENT_SHUTDOWN) {
+            expectShutdown();
           }
         },
       );
@@ -72,6 +88,15 @@ void main() {
       }
       {
         final command = 'cycle pause'.toNativeUtf8();
+        mpv.mpv_command_string(
+          handle,
+          command.cast(),
+        );
+        calloc.free(command);
+      }
+      await shutdown.future;
+      {
+        final command = 'quit 0'.toNativeUtf8();
         mpv.mpv_command_string(
           handle,
           command.cast(),
