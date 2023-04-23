@@ -32,10 +32,14 @@ import 'package:media_kit_video/src/video_controller_android.dart';
 ///
 /// **Notes**
 ///
-/// 1. You can limit size of the video output by specifying `width` & `height`.
-///    By default, both `height` & `width` are `null` i.e. output is based on video's resolution.
-/// 2. You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
-///    By default, `enableHardwareAcceleration` is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
+/// 1. You can limit size of the video output by specifying [width] & [height].
+///    By default, both [height] & [width] are `null` i.e. output is based on video's resolution.
+/// 2. You can switch between GPU & CPU rendering by specifying [enableHardwareAcceleration].
+///    By default, [enableHardwareAcceleration] is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
+///
+/// **Additional Information**
+///
+/// 1. [width] & [height] arguments have no effect on Android.
 ///
 /// {@endtemplate}
 abstract class VideoController {
@@ -113,6 +117,6 @@ abstract class VideoController {
       'height: $height, '
       'enableHardwareAcceleration: $enableHardwareAcceleration, '
       'id: $id, '
-      'rect: $rect, '
+      'rect: $rect'
       ')';
 }
