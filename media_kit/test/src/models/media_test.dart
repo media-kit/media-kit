@@ -1,3 +1,9 @@
+/// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+///
+/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+/// All rights reserved.
+/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:io';
 import 'package:test/test.dart';
 
@@ -5,8 +11,8 @@ import 'package:media_kit/src/models/media.dart';
 
 import '../../common/sources.dart';
 
-Future<void> main() async {
-  await sources.prepare();
+void main() {
+  setUp(sources.prepare);
   test(
     'media-uri-normalization-network',
     () {

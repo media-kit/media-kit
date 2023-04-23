@@ -19,122 +19,6 @@ import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_streams.dart';
 
-/// {@template mpv_log_level}
-///
-/// MPVLogLevel
-/// --------------------
-/// Options to customise the [Player] libmpv backend log level.
-///
-/// {@endtemplate}
-enum MPVLogLevel {
-  /// Disable absolutely all messages.
-  none,
-
-  /// Critical/aborting errors.
-  fatal,
-
-  /// Simple errors.
-  error,
-
-  /// Possible problems.
-  warn,
-
-  /// Informational message.
-  info,
-
-  /// Noisy informational message.
-  v,
-
-  /// Very noisy technical information.
-  debug,
-
-  /// Extremely noisy.
-  trace,
-}
-
-/// {@template player_configuration}
-///
-/// PlayerConfiguration
-/// --------------------
-/// Configurable options for customizing the [Player] behavior.
-///
-/// {@endtemplate}
-class PlayerConfiguration {
-  /// Sets the log level on libmpv backend.
-  /// Default: `none`.
-  final MPVLogLevel logLevel;
-
-  /// Enables on-screen controls for libmpv backend.
-  ///
-  /// Default: `false`.
-  final bool osc;
-
-  /// Enables or disables video output for libmpv backend.
-  ///
-  /// Default: `null`.
-  final bool? vid;
-
-  /// Sets the video output driver for libmpv backend.
-  ///
-  /// Default: `null`.
-  final String? vo;
-
-  /// Enables or disables pitch shift control for libmpv backend.
-  ///
-  /// Enabling this option may result in de-syncing of audio & video.
-  /// Thus, usage in audio only applications is recommended.
-  /// This uses `scaletempo` under the hood & disables `audio-pitch-correction`.
-  ///
-  /// See: https://github.com/alexmercerind/media_kit/issues/45
-  ///
-  /// Default: `false`.
-  final bool pitch;
-
-  /// Sets the name of the underlying window & process for libmpv backend.
-  /// This is visible inside the Windows' volume mixer.
-  ///
-  /// Default: `null`.
-  final String? title;
-
-  /// Sets the demuxer cache size (in bytes) for libmpv backend.
-  ///
-  /// Default: `32` MB or `32 * 1024 * 1024` bytes.
-  final int bufferSize;
-
-  /// Sets the list of allowed protocols for libmpv backend.
-  ///
-  /// Default: `['file', 'tcp', 'tls', 'http', 'https', 'crypto', 'data']`.
-  ///
-  /// Learn more: https://ffmpeg.org/ffmpeg-protocols.html#Protocol-Options
-  final List<String> protocolWhitelist;
-
-  /// Optional callback invoked when the internals of the [Player] are initialized & ready for playback.
-  ///
-  /// Default: `null`.
-  final void Function()? ready;
-
-  /// {@macro player_configuration}
-  const PlayerConfiguration({
-    this.logLevel = MPVLogLevel.none,
-    this.osc = false,
-    this.vid,
-    this.vo = 'null',
-    this.pitch = false,
-    this.title,
-    this.bufferSize = 32 * 1024 * 1024,
-    this.ready,
-    this.protocolWhitelist = const [
-      'file',
-      'tcp',
-      'tls',
-      'http',
-      'https',
-      'crypto',
-      'data',
-    ],
-  });
-}
-
 /// {@template platform_player}
 /// PlatformPlayer
 /// --------------
@@ -413,4 +297,120 @@ abstract class PlatformPlayer {
   @protected
   final StreamController<int> heightController =
       StreamController<int>.broadcast();
+}
+
+/// {@template player_configuration}
+///
+/// PlayerConfiguration
+/// --------------------
+/// Configurable options for customizing the [Player] behavior.
+///
+/// {@endtemplate}
+class PlayerConfiguration {
+  /// Sets the log level on libmpv backend.
+  /// Default: `none`.
+  final MPVLogLevel logLevel;
+
+  /// Enables on-screen controls for libmpv backend.
+  ///
+  /// Default: `false`.
+  final bool osc;
+
+  /// Enables or disables video output for libmpv backend.
+  ///
+  /// Default: `null`.
+  final bool? vid;
+
+  /// Sets the video output driver for libmpv backend.
+  ///
+  /// Default: `null`.
+  final String? vo;
+
+  /// Enables or disables pitch shift control for libmpv backend.
+  ///
+  /// Enabling this option may result in de-syncing of audio & video.
+  /// Thus, usage in audio only applications is recommended.
+  /// This uses `scaletempo` under the hood & disables `audio-pitch-correction`.
+  ///
+  /// See: https://github.com/alexmercerind/media_kit/issues/45
+  ///
+  /// Default: `false`.
+  final bool pitch;
+
+  /// Sets the name of the underlying window & process for libmpv backend.
+  /// This is visible inside the Windows' volume mixer.
+  ///
+  /// Default: `null`.
+  final String? title;
+
+  /// Sets the demuxer cache size (in bytes) for libmpv backend.
+  ///
+  /// Default: `32` MB or `32 * 1024 * 1024` bytes.
+  final int bufferSize;
+
+  /// Sets the list of allowed protocols for libmpv backend.
+  ///
+  /// Default: `['file', 'tcp', 'tls', 'http', 'https', 'crypto', 'data']`.
+  ///
+  /// Learn more: https://ffmpeg.org/ffmpeg-protocols.html#Protocol-Options
+  final List<String> protocolWhitelist;
+
+  /// Optional callback invoked when the internals of the [Player] are initialized & ready for playback.
+  ///
+  /// Default: `null`.
+  final void Function()? ready;
+
+  /// {@macro player_configuration}
+  const PlayerConfiguration({
+    this.logLevel = MPVLogLevel.none,
+    this.osc = false,
+    this.vid,
+    this.vo = 'null',
+    this.pitch = false,
+    this.title,
+    this.bufferSize = 32 * 1024 * 1024,
+    this.ready,
+    this.protocolWhitelist = const [
+      'file',
+      'tcp',
+      'tls',
+      'http',
+      'https',
+      'crypto',
+      'data',
+    ],
+  });
+}
+
+/// {@template mpv_log_level}
+///
+/// MPVLogLevel
+/// --------------------
+/// Options to customise the [Player] libmpv backend log level.
+///
+/// {@endtemplate}
+enum MPVLogLevel {
+  /// Disable absolutely all messages.
+  none,
+
+  /// Critical/aborting errors.
+  fatal,
+
+  /// Simple errors.
+  error,
+
+  /// Possible problems.
+  warn,
+
+  /// Informational message.
+  info,
+
+  /// Noisy informational message.
+  v,
+
+  /// Very noisy technical information.
+  debug,
+
+  /// Extremely noisy.
+  trace,
 }
