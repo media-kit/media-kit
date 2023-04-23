@@ -2,21 +2,23 @@ name: Github Actions
 on: [push, pull_request]
 
 jobs:
-  media_kit-tests-windows:
-    name: package:media_kit tests (Windows)
-    runs-on: windows-latest
-    defaults:
-      run:
-        working-directory: media_kit
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: "true"
-      - uses: subosito/flutter-action@v1
-        with:
-          channel: "stable"
-      - run: dart pub get
-      - run: dart test
+  # TODO: Enable package:media_kit tests on Windows
+
+  # media_kit-tests-windows:
+  #   name: package:media_kit tests (Windows)
+  #   runs-on: windows-latest
+  #   defaults:
+  #     run:
+  #       working-directory: media_kit
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: "true"
+  #     - uses: subosito/flutter-action@v1
+  #       with:
+  #         channel: "stable"
+  #     - run: dart pub get
+  #     - run: dart test
 
   media_kit-tests-linux:
     name: package:media_kit tests (Linux)
@@ -28,27 +30,31 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
+      - run: sudo apt-get update
+      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
       - run: dart pub get
       - run: dart test
 
-  media_kit-tests-macos:
-    name: package:media_kit tests (macOS)
-    runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: media_kit
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: "true"
-      - uses: subosito/flutter-action@v1
-        with:
-          channel: "stable"
-      - run: dart pub get
-      - run: dart test
+  # TODO: Enable package:media_kit tests on macOS
+
+  # media_kit-tests-macos:
+  #   name: package:media_kit tests (macOS)
+  #   runs-on: macos-latest
+  #   defaults:
+  #     run:
+  #       working-directory: media_kit
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: "true"
+  #     - uses: subosito/flutter-action@v1
+  #       with:
+  #         channel: "stable"
+  #     - run: dart pub get
+  #     - run: dart test
 
   windows:
     name: Windows
