@@ -59,7 +59,7 @@ Future<void> main() async {
   test(
     'media-uri-normalization-file',
     () async {
-      // File path: forward slash separators.
+      // Path: forward slash separators
       for (final source in sources.file) {
         final test = source;
         print(test);
@@ -72,7 +72,7 @@ Future<void> main() async {
           equals(source),
         );
       }
-      // File path: backwards slash separators.
+      // Path: backwards slash separators
       for (final source in sources.file) {
         final test = source.replaceAll('/', r'\');
         print(test);
