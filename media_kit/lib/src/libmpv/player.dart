@@ -71,7 +71,6 @@ class Player extends PlatformPlayer {
   ///       Media('rtsp://www.example.com/live'),
   ///     ],
   ///   ),
-  ///   play: true,
   /// );
   /// ```
   ///
@@ -79,7 +78,6 @@ class Player extends PlatformPlayer {
   Future<void> open(
     Playable playable, {
     bool play = true,
-    bool evictExtrasCache = true,
   }) async {
     final ctx = await _handle.future;
 
@@ -92,26 +90,12 @@ class Player extends PlatformPlayer {
       index = playable.index;
       playlist.addAll(playable.medias);
     } else {
-      throw ArgumentError.value(
-        playable,
-        'playable',
-        'Must be of type [Media] or [Playlist].',
-      );
+      index = -1;
     }
 
-    if (evictExtrasCache) {
-      // Clean-up previous extras cache.
-      medias.clear();
-      bitrates.clear();
-      // Restore extras in currently added playlist.
-      for (final media in playlist) {
-        medias[media.uri] = media;
-      }
-    }
-
-    // Clean-up existing playlist & change currently playing libmpv index to none.
-    // This causes playback to stop & player to enter the idle state.
     final commands = [
+      // Clear existing playlist & change currently playing libmpv index to none.
+      // This causes playback to stop & player to enter the idle state.
       'stop',
       'playlist-clear',
       'playlist-play-index none',
@@ -125,8 +109,31 @@ class Player extends PlatformPlayer {
       calloc.free(args);
     }
 
-    // Enter the pause state.
-    await pause();
+    // Enter paused state.
+    {
+      final name = 'pause'.toNativeUtf8();
+      final value = calloc<Uint8>();
+      _libmpv?.mpv_get_property(
+        ctx,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        value.cast(),
+      );
+      if (value.value == 0) {
+        // We are using `cycle pause` because it waits & prevents the race condition.
+        final command = 'cycle pause'.toNativeUtf8();
+        _libmpv?.mpv_command_string(
+          ctx,
+          command.cast(),
+        );
+      }
+      calloc.free(name);
+      calloc.free(value);
+      state = state.copyWith(playing: false);
+      if (!playingController.isClosed) {
+        playingController.add(false);
+      }
+    }
 
     _allowPlayingStateChange = false;
 
@@ -135,36 +142,46 @@ class Player extends PlatformPlayer {
         [
           'loadfile',
           playlist[i].uri,
-          if (index == 0 && i == 0) 'replace',
-          if (index == 0 && i != 0) 'append',
-          if (index > 0 && i == index) 'append-play',
-          if (index > 0 && i != index) 'append',
+          'append',
         ],
       );
     }
 
-    // Update the [PlayerState] & feed the event [Stream].
-    final object = Playlist(playlist, index: index);
-    state = state.copyWith(playlist: object);
-    if (!playlistController.isClosed) {
-      playlistController.add(object);
+    // If [play] is `true`, then exit paused state.
+    if (play) {
+      _allowPlayingStateChange = true;
+      final name = 'pause'.toNativeUtf8();
+      final value = calloc<Uint8>();
+      _libmpv?.mpv_get_property(
+        ctx,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        value.cast(),
+      );
+      if (value.value == 1) {
+        // We are using `cycle pause` because it waits & prevents the race condition.
+        final command = 'cycle pause'.toNativeUtf8();
+        _libmpv?.mpv_command_string(
+          ctx,
+          command.cast(),
+        );
+      }
+      calloc.free(name);
+      calloc.free(value);
     }
 
-    if (play) {
-      await jump(index);
-    } else {
-      if (index > 0) {
-        final name = 'playlist-pos'.toNativeUtf8();
-        final value = calloc<Int64>()..value = index;
-        _libmpv?.mpv_set_property(
-          ctx,
-          name.cast(),
-          generated.mpv_format.MPV_FORMAT_INT64,
-          value.cast(),
-        );
-        calloc.free(name);
-        calloc.free(value);
-      }
+    // Jump to the specified [index] (in both cases either [play] is `true` or `false`).
+    {
+      final name = 'playlist-pos'.toNativeUtf8();
+      final value = calloc<Int64>()..value = index;
+      _libmpv?.mpv_set_property(
+        ctx,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_INT64,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
     }
   }
 
@@ -223,11 +240,18 @@ class Player extends PlatformPlayer {
   Future<void> playOrPause() async {
     _allowPlayingStateChange = true;
     final ctx = await _handle.future;
-    // This condition will occur when [PlaylistMode.none] is set & last item of the [Playlist] is played.
-    // Thus, when user presses the play/pause button, we must start playing the [Playlist] from the beginning. Otherwise, the button just freezes.
+    // This condition is specifically for the case when the internal playlist is ended (with [PlaylistLoopMode.none]), and we want to play the playlist again if play/pause is pressed.
     if (state.completed) {
-      await jump(0);
-      return;
+      final name = 'playlist-pos'.toNativeUtf8();
+      final value = calloc<Int64>()..value = 0;
+      _libmpv?.mpv_set_property(
+        ctx,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_INT64,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
     }
     final command = 'cycle pause'.toNativeUtf8();
     _libmpv?.mpv_command_string(
@@ -248,10 +272,6 @@ class Player extends PlatformPlayer {
         null,
       ],
     );
-    state.playlist.medias.add(media);
-    if (!playlistController.isClosed) {
-      playlistController.add(state.playlist);
-    }
   }
 
   /// Removes the [Media] at specified index from the [Player]'s playlist.
@@ -263,10 +283,6 @@ class Player extends PlatformPlayer {
         index.toString(),
       ],
     );
-    state.playlist.medias.removeAt(index);
-    if (!playlistController.isClosed) {
-      playlistController.add(state.playlist);
-    }
   }
 
   /// Jumps to next [Media] in the [Player]'s playlist.
@@ -322,8 +338,6 @@ class Player extends PlatformPlayer {
         to.toString(),
       ],
     );
-    state.playlist.medias.insert(to, state.playlist.medias.removeAt(from));
-    playlistController.add(state.playlist);
   }
 
   /// Seeks the currently playing [Media] in the [Player] by specified [Duration].
@@ -540,69 +554,11 @@ class Player extends PlatformPlayer {
   /// Enables or disables shuffle for [Player]. Default is `false`.
   @override
   Future<void> setShuffle(bool shuffle) async {
-    final ctx = await _handle.future;
     await _command(
       [
         shuffle ? 'playlist-shuffle' : 'playlist-unshuffle',
       ],
     );
-    final name = 'playlist'.toNativeUtf8();
-    final data = calloc<generated.mpv_node>();
-    _libmpv?.mpv_get_property(
-      ctx,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_NODE,
-      data.cast(),
-    );
-    try {
-      // Shuffling updates the order of [state.playlist]. Fetching latest playlist from mpv & updating Dart stream.
-      if (data.ref.format == generated.mpv_format.MPV_FORMAT_NODE_ARRAY) {
-        final playlist = <Media>[];
-        for (int i = 0; i < data.ref.u.list.ref.num; i++) {
-          if (data.ref.u.list.ref.values[i].format ==
-              generated.mpv_format.MPV_FORMAT_NODE_MAP) {
-            for (int j = 0;
-                j < data.ref.u.list.ref.values[i].u.list.ref.num;
-                j++) {
-              if (data.ref.u.list.ref.values[i].u.list.ref.values[j].format ==
-                  generated.mpv_format.MPV_FORMAT_STRING) {
-                final property = data
-                    .ref.u.list.ref.values[i].u.list.ref.keys[j]
-                    .cast<Utf8>()
-                    .toDartString();
-                if (property == 'filename') {
-                  final value = data
-                      .ref.u.list.ref.values[i].u.list.ref.values[j].u.string
-                      .cast<Utf8>()
-                      .toDartString();
-                  playlist.add(medias[value]!);
-                }
-              }
-            }
-          }
-        }
-        state = state.copyWith(
-          playlist: state.playlist.copyWith(
-            medias: playlist,
-          ),
-        );
-        if (!playlistController.isClosed) {
-          playlistController.add(state.playlist);
-        }
-        // Free the memory allocated by `mpv_get_property`.
-        _libmpv?.mpv_free_node_contents(data);
-        calloc.free(name);
-        calloc.free(data);
-      }
-    } catch (exception, stacktrace) {
-      print(exception);
-      print(stacktrace);
-      await _command(
-        [
-          'playlist-unshuffle',
-        ],
-      );
-    }
   }
 
   /// Sets the current [AudioDevice] for audio output.
@@ -746,32 +702,25 @@ class Player extends PlatformPlayer {
         }
       }
     }
-    if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
-      // Check for mpv_end_file_reason.MPV_END_FILE_REASON_EOF before modifying state.completed.
-      if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
-          generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
-        if (_allowPlayingStateChange) {
-          state = state.copyWith(
-            playing: false,
-            completed: true,
-            audioBitrate: null,
-            audioParams: const AudioParams(),
-          );
-          if (!playingController.isClosed) {
-            playingController.add(false);
-          }
-          if (!completedController.isClosed) {
-            completedController.add(true);
-          }
-          if (!audioBitrateController.isClosed) {
-            audioBitrateController.add(null);
-          }
-          if (!audioParamsController.isClosed) {
-            audioParamsController.add(const AudioParams());
-          }
-        }
-      }
-    }
+    // NOTE: Now, --keep-open=yes is used. Thus, eof-reached property is used instead of this.
+    // if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
+    //   // Check for mpv_end_file_reason.MPV_END_FILE_REASON_EOF before modifying state.completed.
+    //   if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
+    //       generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
+    //     if (_allowPlayingStateChange) {
+    //       state = state.copyWith(
+    //         playing: false,
+    //         completed: true,
+    //       );
+    //       if (!playingController.isClosed) {
+    //         playingController.add(false);
+    //       }
+    //       if (!completedController.isClosed) {
+    //         completedController.add(true);
+    //       }
+    //     }
+    //   }
+    // }
     if (event.ref.event_id ==
         generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
       final prop = event.ref.data.cast<generated.mpv_event_property>();
@@ -820,11 +769,11 @@ class Player extends PlatformPlayer {
         if (!durationController.isClosed) {
           durationController.add(duration);
         }
-        // NOTE: Using manual bitrate calculation for FLAC.
+        // NOTE: Using manual bitrate calculation for some local files.
         if (state.playlist.index >= 0 &&
             state.playlist.index < state.playlist.medias.length) {
           final uri = state.playlist.medias[state.playlist.index].uri;
-          if (FallbackBitrateHandler.isLocalFLACOrOGGFile(uri)) {
+          if (FallbackBitrateHandler.supported(uri)) {
             if (!bitrates.containsKey(uri) ||
                 !bitrates.containsKey(Media.normalizeURI(uri))) {
               bitrates[uri] = await FallbackBitrateHandler.calculateBitrate(
@@ -842,16 +791,51 @@ class Player extends PlatformPlayer {
           }
         }
       }
-      if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-pos' &&
-          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
-        final index = prop.ref.data.cast<Int64>().value;
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+        final data = prop.ref.data.cast<generated.mpv_node>();
+        final list = data.ref.u.list.ref;
+        int index = -1;
+        List<Media> playlist = [];
+        for (int i = 0; i < list.num; i++) {
+          if (list.values[i].format ==
+              generated.mpv_format.MPV_FORMAT_NODE_MAP) {
+            final map = list.values[i].u.list.ref;
+            for (int j = 0; j < map.num; j++) {
+              final property = map.keys[j].cast<Utf8>().toDartString();
+              if (map.values[j].format ==
+                  generated.mpv_format.MPV_FORMAT_FLAG) {
+                if (property == 'playing') {
+                  final value = map.values[j].u.flag;
+                  if (value == 1) {
+                    index = i;
+                  }
+                }
+              }
+              if (map.values[j].format ==
+                  generated.mpv_format.MPV_FORMAT_STRING) {
+                if (property == 'filename') {
+                  final value =
+                      map.values[j].u.string.cast<Utf8>().toDartString();
+                  playlist.add(medias[value] ?? Media(value));
+                }
+              }
+            }
+          }
+        }
         state = state.copyWith(
-          playlist: state.playlist.copyWith(
+          playlist: Playlist(
+            playlist,
             index: index,
           ),
         );
         if (!playlistController.isClosed) {
-          playlistController.add(state.playlist);
+          playlistController.add(
+            Playlist(
+              playlist,
+              index: index,
+            ),
+          );
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'volume' &&
@@ -865,40 +849,38 @@ class Player extends PlatformPlayer {
       if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-params' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
         final data = prop.ref.data.cast<generated.mpv_node>();
+        final list = data.ref.u.list.ref;
         final params = <String, dynamic>{};
-        for (int i = 0; i < data.ref.u.list.ref.num; i++) {
-          final key = data.ref.u.list.ref.keys[i].cast<Utf8>().toDartString();
+        for (int i = 0; i < list.num; i++) {
+          final key = list.keys[i].cast<Utf8>().toDartString();
 
           switch (key) {
             case 'format':
               {
-                params[key] = data.ref.u.list.ref.values[i].u.string
-                    .cast<Utf8>()
-                    .toDartString();
+                params[key] =
+                    list.values[i].u.string.cast<Utf8>().toDartString();
                 break;
               }
             case 'samplerate':
               {
-                params[key] = data.ref.u.list.ref.values[i].u.int64;
+                params[key] = list.values[i].u.int64;
                 break;
               }
             case 'channels':
               {
-                params[key] = data.ref.u.list.ref.values[i].u.string
-                    .cast<Utf8>()
-                    .toDartString();
+                params[key] =
+                    list.values[i].u.string.cast<Utf8>().toDartString();
                 break;
               }
             case 'channel-count':
               {
-                params[key] = data.ref.u.list.ref.values[i].u.int64;
+                params[key] = list.values[i].u.int64;
                 break;
               }
             case 'hr-channels':
               {
-                params[key] = data.ref.u.list.ref.values[i].u.string
-                    .cast<Utf8>()
-                    .toDartString();
+                params[key] =
+                    list.values[i].u.string.cast<Utf8>().toDartString();
                 break;
               }
             default:
@@ -926,8 +908,8 @@ class Player extends PlatformPlayer {
             state.playlist.index >= 0) {
           final data = prop.ref.data.cast<Double>().value;
           final uri = state.playlist.medias[state.playlist.index].uri;
-          // NOTE: Using manual bitrate calculation for FLAC.
-          if (!FallbackBitrateHandler.isLocalFLACOrOGGFile(uri)) {
+          // NOTE: Using manual bitrate calculation for some local files.
+          if (!FallbackBitrateHandler.supported(uri)) {
             if (!bitrates.containsKey(uri) ||
                 !bitrates.containsKey(Media.normalizeURI(uri))) {
               bitrates[uri] = data;
@@ -1096,15 +1078,31 @@ class Player extends PlatformPlayer {
           heightController.add(height);
         }
       }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'eof-reached' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+        final value = prop.ref.data.cast<Bool>().value;
+        if (value) {
+          if (_allowPlayingStateChange) {
+            state = state.copyWith(
+              playing: false,
+              completed: true,
+            );
+            if (!playingController.isClosed) {
+              playingController.add(false);
+            }
+            if (!completedController.isClosed) {
+              completedController.add(true);
+            }
+          }
+        }
+      }
     }
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_LOG_MESSAGE) {
       final eventLogMessage =
           event.ref.data.cast<generated.mpv_event_log_message>().ref;
-
       final prefix = eventLogMessage.prefix.cast<Utf8>().toDartString().trim();
       final level = eventLogMessage.level.cast<Utf8>().toDartString().trim();
       final text = eventLogMessage.text.cast<Utf8>().toDartString().trim();
-
       if (!logController.isClosed) {
         logController.add(
           PlayerLog(
@@ -1119,11 +1117,11 @@ class Player extends PlatformPlayer {
 
   Future<void> _create() async {
     _libmpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
-    // We cannot disable events on Android because they are consumed by package:media_kit_video.
     final result = await create(NativeLibrary.path, _handler);
     // Set:
     // idle = yes
     // pause = yes
+    // keep-open = yes
     // demuxer-max-bytes = 32 * 1024 * 1024
     // demuxer-max-back-bytes = 32 * 1024 * 1024
     // ao = opensles (Android)
@@ -1144,6 +1142,19 @@ class Player extends PlatformPlayer {
     }
     {
       final name = 'pause'.toNativeUtf8();
+      final value = calloc<Int32>();
+      value.value = 1;
+      _libmpv?.mpv_set_property(
+        result,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+    {
+      final name = 'keep-open'.toNativeUtf8();
       final value = calloc<Int32>();
       value.value = 1;
       _libmpv?.mpv_set_property(
@@ -1203,30 +1214,12 @@ class Player extends PlatformPlayer {
       calloc.free(data);
     }
 
-    // TODO(@alexmercerind):
-    // This causes `MPV_EVENT_END_FILE` to not fire for last playlist item.
-    // Ideally, we want to keep the last video frame visible.
-    // {
-    //   final name = 'keep-open'.toNativeUtf8();
-    //   final value = calloc<Int32>();
-    //   value.value = 1;
-    //   _libmpv?.mpv_set_property(
-    //     result,
-    //     name.cast(),
-    //     generated.mpv_format.MPV_FORMAT_FLAG,
-    //     value.cast(),
-    //   );
-    //   calloc.free(name);
-    //   calloc.free(value);
-    // }
-
     // Observe the properties to update the state & feed event streams.
     <String, int>{
       'pause': generated.mpv_format.MPV_FORMAT_FLAG,
       'time-pos': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
-      'playlist-pos': generated.mpv_format.MPV_FORMAT_INT64,
-      'seekable': generated.mpv_format.MPV_FORMAT_FLAG,
+      'playlist': generated.mpv_format.MPV_FORMAT_NODE,
       'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
       'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
@@ -1238,6 +1231,7 @@ class Player extends PlatformPlayer {
       'track-list': generated.mpv_format.MPV_FORMAT_NODE,
       'width': generated.mpv_format.MPV_FORMAT_INT64,
       'height': generated.mpv_format.MPV_FORMAT_INT64,
+      'eof-reached': generated.mpv_format.MPV_FORMAT_FLAG,
     }.forEach(
       (property, format) {
         final name = property.toNativeUtf8();

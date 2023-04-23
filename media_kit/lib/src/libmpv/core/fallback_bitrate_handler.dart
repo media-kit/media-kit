@@ -11,14 +11,12 @@ import 'package:safe_local_storage/safe_local_storage.dart';
 /// libmpv doesn't seem to read the bitrate from the files which contain bitrate in their stream metadata (not file metadata).
 /// Typically, I've seen this happening with FLAC & OGG files, since they do not offer the bitrate as a metadata / attached-tags key.
 ///
-/// Adding this helper class to calculate the bitrate of the FLAC & OGG files manually.
-/// Considering FLAC is a lossless format, this approximation should be fine.
+/// Adding this helper class to calculate the bitrate of the FLAC & OGG files manually. Considering FLAC is a lossless format, this approximation should be fine.
 /// At-least better than the one in libmpv, because it calculates the bitrate from the loaded stream currently in-memory & updates it dynamically as playback progresses.
 abstract class FallbackBitrateHandler {
-  static bool isLocalFLACOrOGGFile(String uri) =>
-      extractLocalFLACorOGGFilePath(uri) != null;
+  static bool supported(String uri) => extractFilePath(uri) != null;
 
-  static String? extractLocalFLACorOGGFilePath(String uri) {
+  static String? extractFilePath(String uri) {
     try {
       // Handle local [File] paths.
       final parser = URIParser(uri);
@@ -43,7 +41,7 @@ abstract class FallbackBitrateHandler {
 
   static Future<double> calculateBitrate(String uri, Duration duration) async {
     try {
-      final resource = extractLocalFLACorOGGFilePath(uri);
+      final resource = extractFilePath(uri);
       if (resource != null) {
         final file = File(resource);
         final size = await file.length_();
