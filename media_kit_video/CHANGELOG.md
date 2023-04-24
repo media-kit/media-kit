@@ -1,3 +1,9 @@
+## 0.0.8
+
+- fix(android): subtitle rendering
+- fix(android): video rendering inside emulators (#149)
+- fix(android): video rendering with `enableHardwareAcceleration: false`
+
 ## 0.0.7
 
 - fix(linux): VAAPI hardware acceleration

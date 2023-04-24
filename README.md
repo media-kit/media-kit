@@ -46,13 +46,13 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.5                              # Primary package.
+  media_kit: ^0.0.6                              # Primary package.
   
-  media_kit_video: ^0.0.7                        # For video rendering.
+  media_kit_video: ^0.0.8                        # For video rendering.
   
   media_kit_native_event_loop: ^1.0.3            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_android_video: ^1.0.0           # Android package for video native libraries.
+  media_kit_libs_android_video: ^1.0.1           # Android package for video native libraries.
   media_kit_libs_ios_video: ^1.0.4               # iOS package for video native libraries.
   media_kit_libs_macos_video: ^1.0.4             # macOS package for video native libraries.
   media_kit_libs_windows_video: ^1.0.2           # Windows package for video native libraries.
@@ -63,7 +63,7 @@ dependencies:
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.5                              # Primary package.
+  media_kit: ^0.0.6                              # Primary package.
   
   media_kit_native_event_loop: ^1.0.2            # Support for higher number of concurrent instances & better performance.
   
@@ -83,11 +83,11 @@ dependencies:
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.              | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 13 or above.                   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 11 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution. | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.              | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.6/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 13 or above.                   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.6/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 11 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.6/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.6/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution. | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.6/media_kit_test_linux_x64.7z)          |
 | Web         | 🚧    | 🚧    | [WIP](https://github.com/alexmercerind/media_kit/pull/128)                                | [WIP](https://github.com/alexmercerind/media_kit/pull/128)              |
 
 <table>
