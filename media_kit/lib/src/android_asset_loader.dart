@@ -3,9 +3,11 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:io';
 import 'dart:ffi';
+import 'dart:collection';
 import 'package:ffi/ffi.dart';
+
+import 'package:media_kit/src/isolates.dart';
 
 /// {@template android_asset_loader}
 ///
@@ -18,41 +20,53 @@ import 'package:ffi/ffi.dart';
 /// Learn more: https://github.com/media-kit/media-kit-android-helper
 ///
 /// {@endtemplate}
-class AndroidAssetLoader {
-  /// {@macro android_asset_loader}
-  static final instance = AndroidAssetLoader._();
-
-  /// {@macro android_asset_loader}
-  AndroidAssetLoader._() {
-    try {
-      if (Platform.isAndroid) {
-        final library = DynamicLibrary.open('libmediakitandroidhelper.so');
-        _mediaKitAndroidHelperCopyAssetToExternalFilesDir =
-            library.lookupFunction<FnCXX, FnDart>(
-          'MediaKitAndroidHelperCopyAssetToExternalFilesDir',
-        );
-      }
-    } catch (exception, stacktrace) {
-      print(exception);
-      print(stacktrace);
-    }
-  }
-
+abstract class AndroidAssetLoader {
   /// Copies an asset bundled with the application to the external files directory & returns it absolute path.
-  String load(String asset) {
-    final name = asset.toNativeUtf8();
-    final result = List.generate(4096, (index) => ' ').join('').toNativeUtf8();
-    _mediaKitAndroidHelperCopyAssetToExternalFilesDir?.call(
-      name.cast(),
-      result.cast(),
-    );
-    final path = result.cast<Utf8>().toDartString().trim();
-    calloc.free(name);
-    calloc.free(result);
+  static Future<String> load(String asset) async {
+    if (_loaded.containsKey(asset)) {
+      return _loaded[asset]!;
+    }
+
+    // Run on another [Isolate] to avoid blocking the UI.
+    final path = await compute(loadSync, asset);
+
+    _loaded[asset] = path;
+
     return path;
   }
 
-  FnDart? _mediaKitAndroidHelperCopyAssetToExternalFilesDir;
+  /// Copies an asset bundled with the application to the external files directory & returns it absolute path.
+  @pragma('vm:entry-point')
+  static String loadSync(String asset) {
+    if (_loaded.containsKey(asset)) {
+      return _loaded[asset]!;
+    }
+
+    final lib = DynamicLibrary.open('libmediakitandroidhelper.so');
+    final fn = lib.lookupFunction<FnCXX, FnDart>(
+      'MediaKitAndroidHelperCopyAssetToExternalFilesDir',
+    );
+
+    final name = asset.toNativeUtf8();
+    final result = List.generate(4096, (index) => ' ').join('').toNativeUtf8();
+
+    fn.call(
+      name.cast(),
+      result.cast(),
+    );
+
+    final path = result.cast<Utf8>().toDartString().trim();
+
+    calloc.free(name);
+    calloc.free(result);
+
+    _loaded[asset] = path;
+
+    return path;
+  }
+
+  /// Stores the names of previously loaded assets. This avoids redundant FFI calls.
+  static final HashMap<String, String> _loaded = HashMap<String, String>();
 }
 
 // Type definitions for native functions in the shared library.
