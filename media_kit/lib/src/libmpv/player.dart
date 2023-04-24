@@ -7,11 +7,15 @@ import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
+import 'package:path/path.dart' as path;
+import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/src/platform_player.dart';
 import 'package:media_kit/src/libmpv/core/initializer.dart';
 import 'package:media_kit/src/libmpv/core/native_library.dart';
 import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
+
+import 'package:media_kit/src/android_asset_loader.dart';
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/track.dart';
@@ -44,16 +48,47 @@ class Player extends PlatformPlayer {
 
   /// Disposes the [Player] instance & releases the resources.
   @override
-  Future<void> dispose({int code = 0}) async {
-    final ctx = await _handle.future;
-    // Raw `mpv_command` calls cause crash on Windows.
-    final command = 'quit $code'.toNativeUtf8();
-    _libmpv?.mpv_command_string(
-      ctx,
-      command.cast(),
-    );
-    calloc.free(command);
-    super.dispose();
+  Future<void> dispose({int code = 0, bool synchronized = true}) {
+    function() async {
+      final ctx = await _handle.future;
+      final vid = 'vid'.toNativeUtf8();
+      final aid = 'aid'.toNativeUtf8();
+      final sid = 'sid'.toNativeUtf8();
+      final no = 'no'.toNativeUtf8();
+      _libmpv?.mpv_set_property_string(
+        ctx,
+        vid.cast(),
+        no.cast(),
+      );
+      _libmpv?.mpv_set_property_string(
+        ctx,
+        aid.cast(),
+        no.cast(),
+      );
+      _libmpv?.mpv_set_property_string(
+        ctx,
+        sid.cast(),
+        no.cast(),
+      );
+      calloc.free(vid);
+      calloc.free(aid);
+      calloc.free(sid);
+      calloc.free(no);
+      // Raw [mpv_command] calls cause crash on Windows.
+      final command = 'quit $code'.toNativeUtf8();
+      _libmpv?.mpv_command_string(
+        ctx,
+        command.cast(),
+      );
+      calloc.free(command);
+      super.dispose();
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   /// Opens a [Media] or [Playlist] into the [Player].
@@ -78,78 +113,135 @@ class Player extends PlatformPlayer {
   Future<void> open(
     Playable playable, {
     bool play = true,
-  }) async {
-    final ctx = await _handle.future;
+    bool synchronized = true,
+  }) {
+    function() async {
+      final ctx = await _handle.future;
 
-    final int index;
-    final playlist = <Media>[];
-    if (playable is Media) {
-      index = 0;
-      playlist.add(playable);
-    } else if (playable is Playlist) {
-      index = playable.index;
-      playlist.addAll(playable.medias);
-    } else {
-      index = -1;
-    }
+      final int index;
+      final playlist = <Media>[];
+      if (playable is Media) {
+        index = 0;
+        playlist.add(playable);
+      } else if (playable is Playlist) {
+        index = playable.index;
+        playlist.addAll(playable.medias);
+      } else {
+        index = -1;
+      }
 
-    final commands = [
-      // Clear existing playlist & change currently playing libmpv index to none.
-      // This causes playback to stop & player to enter the idle state.
-      'stop',
-      'playlist-clear',
-      'playlist-play-index none',
-    ];
-    for (final command in commands) {
-      final args = command.toNativeUtf8();
-      _libmpv?.mpv_command_string(
-        ctx,
-        args.cast(),
-      );
-      calloc.free(args);
-    }
-
-    // Enter paused state.
-    {
-      final name = 'pause'.toNativeUtf8();
-      final value = calloc<Uint8>();
-      _libmpv?.mpv_get_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_FLAG,
-        value.cast(),
-      );
-      if (value.value == 0) {
-        // We are using `cycle pause` because it waits & prevents the race condition.
-        final command = 'cycle pause'.toNativeUtf8();
+      final commands = [
+        // Clear existing playlist & change currently playing libmpv index to none.
+        // This causes playback to stop & player to enter the idle state.
+        'stop',
+        'playlist-clear',
+        'playlist-play-index none',
+      ];
+      for (final command in commands) {
+        final args = command.toNativeUtf8();
         _libmpv?.mpv_command_string(
           ctx,
-          command.cast(),
+          args.cast(),
+        );
+        calloc.free(args);
+      }
+
+      // Enter paused state.
+      {
+        final name = 'pause'.toNativeUtf8();
+        final value = calloc<Uint8>();
+        _libmpv?.mpv_get_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_FLAG,
+          value.cast(),
+        );
+        if (value.value == 0) {
+          // We are using `cycle pause` because it waits & prevents the race condition.
+          final command = 'cycle pause'.toNativeUtf8();
+          _libmpv?.mpv_command_string(
+            ctx,
+            command.cast(),
+          );
+        }
+        calloc.free(name);
+        calloc.free(value);
+        state = state.copyWith(playing: false);
+        if (!playingController.isClosed) {
+          playingController.add(false);
+        }
+      }
+
+      _allowPlayingStateChange = false;
+
+      for (int i = 0; i < playlist.length; i++) {
+        await _command(
+          [
+            'loadfile',
+            playlist[i].uri,
+            'append',
+          ],
         );
       }
-      calloc.free(name);
-      calloc.free(value);
-      state = state.copyWith(playing: false);
-      if (!playingController.isClosed) {
-        playingController.add(false);
+
+      // If [play] is `true`, then exit paused state.
+      if (play) {
+        _allowPlayingStateChange = true;
+        final name = 'pause'.toNativeUtf8();
+        final value = calloc<Uint8>();
+        _libmpv?.mpv_get_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_FLAG,
+          value.cast(),
+        );
+        if (value.value == 1) {
+          // We are using `cycle pause` because it waits & prevents the race condition.
+          final command = 'cycle pause'.toNativeUtf8();
+          _libmpv?.mpv_command_string(
+            ctx,
+            command.cast(),
+          );
+        }
+        calloc.free(name);
+        calloc.free(value);
+      }
+
+      // Jump to the specified [index] (in both cases either [play] is `true` or `false`).
+      {
+        final name = 'playlist-pos'.toNativeUtf8();
+        final value = calloc<Int64>()..value = index;
+        _libmpv?.mpv_set_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_INT64,
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
       }
     }
 
-    _allowPlayingStateChange = false;
-
-    for (int i = 0; i < playlist.length; i++) {
-      await _command(
-        [
-          'loadfile',
-          playlist[i].uri,
-          'append',
-        ],
-      );
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
     }
+  }
 
-    // If [play] is `true`, then exit paused state.
-    if (play) {
+  /// Starts playing the [Player].
+  @override
+  Future<void> play({
+    bool synchronized = true,
+  }) {
+    function() async {
       _allowPlayingStateChange = true;
+      state = state.copyWith(playing: true);
+      if (!playingController.isClosed) {
+        playingController.add(true);
+      }
+
+      final ctx = await _handle.future;
       final name = 'pause'.toNativeUtf8();
       final value = calloc<Uint8>();
       _libmpv?.mpv_get_property(
@@ -159,19 +251,191 @@ class Player extends PlatformPlayer {
         value.cast(),
       );
       if (value.value == 1) {
-        // We are using `cycle pause` because it waits & prevents the race condition.
-        final command = 'cycle pause'.toNativeUtf8();
-        _libmpv?.mpv_command_string(
-          ctx,
-          command.cast(),
-        );
+        await playOrPause(synchronized: false);
       }
       calloc.free(name);
       calloc.free(value);
     }
 
-    // Jump to the specified [index] (in both cases either [play] is `true` or `false`).
-    {
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Pauses the [Player].
+  @override
+  Future<void> pause({
+    bool synchronized = true,
+  }) {
+    function() async {
+      _allowPlayingStateChange = true;
+      state = state.copyWith(playing: false);
+      if (!playingController.isClosed) {
+        playingController.add(false);
+      }
+
+      final ctx = await _handle.future;
+      final name = 'pause'.toNativeUtf8();
+      final value = calloc<Uint8>();
+      _libmpv?.mpv_get_property(
+        ctx,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        value.cast(),
+      );
+      if (value.value == 0) {
+        await playOrPause(synchronized: false);
+      }
+      calloc.free(name);
+      calloc.free(value);
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Cycles between [play] & [pause] states of the [Player].
+  @override
+  Future<void> playOrPause({
+    bool synchronized = true,
+  }) {
+    function() async {
+      _allowPlayingStateChange = true;
+      final ctx = await _handle.future;
+      // This condition is specifically for the case when the internal playlist is ended (with [PlaylistLoopMode.none]), and we want to play the playlist again if play/pause is pressed.
+      if (state.completed) {
+        final name = 'playlist-pos'.toNativeUtf8();
+        final value = calloc<Int64>()..value = 0;
+        _libmpv?.mpv_set_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_INT64,
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      }
+      final command = 'cycle pause'.toNativeUtf8();
+      _libmpv?.mpv_command_string(
+        ctx,
+        command.cast(),
+      );
+      calloc.free(command);
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Appends a [Media] to the [Player]'s playlist.
+  @override
+  Future<void> add(
+    Media media, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      await _command(
+        [
+          'loadfile',
+          media.uri,
+          'append',
+          null,
+        ],
+      );
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Removes the [Media] at specified index from the [Player]'s playlist.
+  @override
+  Future<void> remove(
+    int index, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      await _command(
+        [
+          'playlist-remove',
+          index.toString(),
+        ],
+      );
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Jumps to next [Media] in the [Player]'s playlist.
+  @override
+  Future<void> next({
+    bool synchronized = true,
+  }) {
+    function() async {
+      final ctx = await _handle.future;
+      await play(synchronized: false);
+      final command = 'playlist-next'.toNativeUtf8();
+      _libmpv?.mpv_command_string(
+        ctx,
+        command.cast(),
+      );
+      calloc.free(command);
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Jumps to previous [Media] in the [Player]'s playlist.
+  @override
+  Future<void> previous({
+    bool synchronized = true,
+  }) {
+    function() async {
+      final ctx = await _handle.future;
+      await play(synchronized: false);
+      final command = 'playlist-prev'.toNativeUtf8();
+      _libmpv?.mpv_command_string(
+        ctx,
+        command.cast(),
+      );
+      calloc.free(command);
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Jumps to specified [Media]'s index in the [Player]'s playlist.
+  @override
+  Future<void> jump(
+    int index, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      final ctx = await _handle.future;
+      await play(synchronized: false);
       final name = 'playlist-pos'.toNativeUtf8();
       final value = calloc<Int64>()..value = index;
       _libmpv?.mpv_set_property(
@@ -183,308 +447,148 @@ class Player extends PlatformPlayer {
       calloc.free(name);
       calloc.free(value);
     }
-  }
 
-  /// Starts playing the [Player].
-  @override
-  Future<void> play() async {
-    _allowPlayingStateChange = true;
-    state = state.copyWith(playing: true);
-    if (!playingController.isClosed) {
-      playingController.add(true);
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
     }
-
-    final ctx = await _handle.future;
-    final name = 'pause'.toNativeUtf8();
-    final value = calloc<Uint8>();
-    _libmpv?.mpv_get_property(
-      ctx,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      value.cast(),
-    );
-    if (value.value == 1) {
-      await playOrPause();
-    }
-    calloc.free(name);
-    calloc.free(value);
-  }
-
-  /// Pauses the [Player].
-  @override
-  Future<void> pause() async {
-    _allowPlayingStateChange = true;
-    state = state.copyWith(playing: false);
-    if (!playingController.isClosed) {
-      playingController.add(false);
-    }
-
-    final ctx = await _handle.future;
-    final name = 'pause'.toNativeUtf8();
-    final value = calloc<Uint8>();
-    _libmpv?.mpv_get_property(
-      ctx,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      value.cast(),
-    );
-    if (value.value == 0) {
-      await playOrPause();
-    }
-    calloc.free(name);
-    calloc.free(value);
-  }
-
-  /// Cycles between [play] & [pause] states of the [Player].
-  @override
-  Future<void> playOrPause() async {
-    _allowPlayingStateChange = true;
-    final ctx = await _handle.future;
-    // This condition is specifically for the case when the internal playlist is ended (with [PlaylistLoopMode.none]), and we want to play the playlist again if play/pause is pressed.
-    if (state.completed) {
-      final name = 'playlist-pos'.toNativeUtf8();
-      final value = calloc<Int64>()..value = 0;
-      _libmpv?.mpv_set_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_INT64,
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
-    }
-    final command = 'cycle pause'.toNativeUtf8();
-    _libmpv?.mpv_command_string(
-      ctx,
-      command.cast(),
-    );
-    calloc.free(command);
-  }
-
-  /// Appends a [Media] to the [Player]'s playlist.
-  @override
-  Future<void> add(Media media) async {
-    await _command(
-      [
-        'loadfile',
-        media.uri,
-        'append',
-        null,
-      ],
-    );
-  }
-
-  /// Removes the [Media] at specified index from the [Player]'s playlist.
-  @override
-  Future<void> remove(int index) async {
-    await _command(
-      [
-        'playlist-remove',
-        index.toString(),
-      ],
-    );
-  }
-
-  /// Jumps to next [Media] in the [Player]'s playlist.
-  @override
-  Future<void> next() async {
-    final ctx = await _handle.future;
-    await play();
-    final command = 'playlist-next'.toNativeUtf8();
-    _libmpv?.mpv_command_string(
-      ctx,
-      command.cast(),
-    );
-    calloc.free(command);
-  }
-
-  /// Jumps to previous [Media] in the [Player]'s playlist.
-  @override
-  Future<void> previous() async {
-    final ctx = await _handle.future;
-    await play();
-    final command = 'playlist-prev'.toNativeUtf8();
-    _libmpv?.mpv_command_string(
-      ctx,
-      command.cast(),
-    );
-    calloc.free(command);
-  }
-
-  /// Jumps to specified [Media]'s index in the [Player]'s playlist.
-  @override
-  Future<void> jump(int index) async {
-    final ctx = await _handle.future;
-    await play();
-    final name = 'playlist-pos'.toNativeUtf8();
-    final value = calloc<Int64>()..value = index;
-    _libmpv?.mpv_set_property(
-      ctx,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_INT64,
-      value.cast(),
-    );
-    calloc.free(name);
-    calloc.free(value);
   }
 
   /// Moves the playlist [Media] at [from], so that it takes the place of the [Media] [to].
   @override
-  Future<void> move(int from, int to) async {
-    await _command(
-      [
-        'playlist-move',
-        from.toString(),
-        to.toString(),
-      ],
-    );
+  Future<void> move(
+    int from,
+    int to, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      await _command(
+        [
+          'playlist-move',
+          from.toString(),
+          to.toString(),
+        ],
+      );
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   /// Seeks the currently playing [Media] in the [Player] by specified [Duration].
   @override
-  Future<void> seek(Duration duration) async {
-    final ctx = await _handle.future;
-    // Raw `mpv_command` calls cause crash on Windows.
-    final args = [
-      'seek',
-      (duration.inMilliseconds / 1000).toStringAsFixed(4),
-      'absolute',
-    ].join(' ').toNativeUtf8();
-    _libmpv?.mpv_command_string(
-      ctx,
-      args.cast(),
-    );
-    calloc.free(args);
+  Future<void> seek(
+    Duration duration, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      final ctx = await _handle.future;
+      // Raw `mpv_command` calls cause crash on Windows.
+      final args = [
+        'seek',
+        (duration.inMilliseconds / 1000).toStringAsFixed(4),
+        'absolute',
+      ].join(' ').toNativeUtf8();
+      _libmpv?.mpv_command_string(
+        ctx,
+        args.cast(),
+      );
+      calloc.free(args);
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   /// Sets playlist mode.
   @override
-  Future<void> setPlaylistMode(PlaylistMode playlistMode) async {
-    final ctx = await _handle.future;
-    final file = 'loop-file'.toNativeUtf8();
-    final playlist = 'loop-playlist'.toNativeUtf8();
-    final yes = 'yes'.toNativeUtf8();
-    final no = 'no'.toNativeUtf8();
-    switch (playlistMode) {
-      case PlaylistMode.none:
-        {
-          _libmpv?.mpv_set_property_string(
-            ctx,
-            file.cast(),
-            no.cast(),
-          );
-          _libmpv?.mpv_set_property_string(
-            ctx,
-            playlist.cast(),
-            no.cast(),
-          );
+  Future<void> setPlaylistMode(
+    PlaylistMode playlistMode, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      final ctx = await _handle.future;
+      final file = 'loop-file'.toNativeUtf8();
+      final playlist = 'loop-playlist'.toNativeUtf8();
+      final yes = 'yes'.toNativeUtf8();
+      final no = 'no'.toNativeUtf8();
+      switch (playlistMode) {
+        case PlaylistMode.none:
+          {
+            _libmpv?.mpv_set_property_string(
+              ctx,
+              file.cast(),
+              no.cast(),
+            );
+            _libmpv?.mpv_set_property_string(
+              ctx,
+              playlist.cast(),
+              no.cast(),
+            );
+            break;
+          }
+        case PlaylistMode.single:
+          {
+            _libmpv?.mpv_set_property_string(
+              ctx,
+              file.cast(),
+              yes.cast(),
+            );
+            _libmpv?.mpv_set_property_string(
+              ctx,
+              playlist.cast(),
+              no.cast(),
+            );
+            break;
+          }
+        case PlaylistMode.loop:
+          {
+            _libmpv?.mpv_set_property_string(
+              ctx,
+              file.cast(),
+              no.cast(),
+            );
+            _libmpv?.mpv_set_property_string(
+              ctx,
+              playlist.cast(),
+              yes.cast(),
+            );
+            break;
+          }
+        default:
           break;
-        }
-      case PlaylistMode.single:
-        {
-          _libmpv?.mpv_set_property_string(
-            ctx,
-            file.cast(),
-            yes.cast(),
-          );
-          _libmpv?.mpv_set_property_string(
-            ctx,
-            playlist.cast(),
-            no.cast(),
-          );
-          break;
-        }
-      case PlaylistMode.loop:
-        {
-          _libmpv?.mpv_set_property_string(
-            ctx,
-            file.cast(),
-            no.cast(),
-          );
-          _libmpv?.mpv_set_property_string(
-            ctx,
-            playlist.cast(),
-            yes.cast(),
-          );
-          break;
-        }
-      default:
-        break;
+      }
+      calloc.free(file);
+      calloc.free(playlist);
+      calloc.free(yes);
+      calloc.free(no);
     }
-    calloc.free(file);
-    calloc.free(playlist);
-    calloc.free(yes);
-    calloc.free(no);
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   /// Sets the playback volume of the [Player]. Defaults to `100.0`.
   @override
-  Future<void> setVolume(double volume) async {
-    final ctx = await _handle.future;
-    final name = 'volume'.toNativeUtf8();
-    final value = calloc<Double>();
-    value.value = volume;
-    _libmpv?.mpv_set_property(
-      ctx,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_DOUBLE,
-      value.cast(),
-    );
-    calloc.free(name);
-    calloc.free(value);
-  }
-
-  /// Sets the playback rate of the [Player]. Defaults to `1.0`.
-  @override
-  Future<void> setRate(double rate) async {
-    if (configuration.pitch) {
-      // Pitch shift control is enabled.
+  Future<void> setVolume(
+    double volume, {
+    bool synchronized = true,
+  }) {
+    function() async {
       final ctx = await _handle.future;
-      state = state.copyWith(
-        rate: rate,
-      );
-      if (!rateController.isClosed) {
-        rateController.add(state.rate);
-      }
-      // Apparently, using `scaletempo:scale` actually controls the playback rate
-      // as intended after setting `audio-pitch-correction` as `FALSE`.
-      // `speed` on the other hand, changes the pitch when `audio-pitch-correction`
-      // is set to `FALSE`. Since, it also alters the actual [speed], the
-      // `scaletempo:scale` is divided by the same value of [pitch] to compensate the
-      // speed change.
-      var name = 'audio-pitch-correction'.toNativeUtf8();
-      final no = 'no'.toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        no.cast(),
-      );
-      calloc.free(name);
-      calloc.free(no);
-      name = 'af'.toNativeUtf8();
-      // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
-      final value =
-          'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
-              .toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
-    } else {
-      // Pitch shift control is disabled.
-      final ctx = await _handle.future;
-      state = state.copyWith(
-        rate: rate,
-      );
-      if (!rateController.isClosed) {
-        rateController.add(state.rate);
-      }
-      final name = 'speed'.toNativeUtf8();
+      final name = 'volume'.toNativeUtf8();
       final value = calloc<Double>();
-      value.value = rate;
+      value.value = volume;
       _libmpv?.mpv_set_property(
         ctx,
         name.cast(),
@@ -493,72 +597,173 @@ class Player extends PlatformPlayer {
       );
       calloc.free(name);
       calloc.free(value);
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Sets the playback rate of the [Player]. Defaults to `1.0`.
+  @override
+  Future<void> setRate(
+    double rate, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      if (configuration.pitch) {
+        // Pitch shift control is enabled.
+        final ctx = await _handle.future;
+        state = state.copyWith(
+          rate: rate,
+        );
+        if (!rateController.isClosed) {
+          rateController.add(state.rate);
+        }
+        // Apparently, using `scaletempo:scale` actually controls the playback rate
+        // as intended after setting `audio-pitch-correction` as `FALSE`.
+        // `speed` on the other hand, changes the pitch when `audio-pitch-correction`
+        // is set to `FALSE`. Since, it also alters the actual [speed], the
+        // `scaletempo:scale` is divided by the same value of [pitch] to compensate the
+        // speed change.
+        var name = 'audio-pitch-correction'.toNativeUtf8();
+        final no = 'no'.toNativeUtf8();
+        _libmpv?.mpv_set_property_string(
+          ctx,
+          name.cast(),
+          no.cast(),
+        );
+        calloc.free(name);
+        calloc.free(no);
+        name = 'af'.toNativeUtf8();
+        // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
+        final value =
+            'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
+                .toNativeUtf8();
+        _libmpv?.mpv_set_property_string(
+          ctx,
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      } else {
+        // Pitch shift control is disabled.
+        final ctx = await _handle.future;
+        state = state.copyWith(
+          rate: rate,
+        );
+        if (!rateController.isClosed) {
+          rateController.add(state.rate);
+        }
+        final name = 'speed'.toNativeUtf8();
+        final value = calloc<Double>();
+        value.value = rate;
+        _libmpv?.mpv_set_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_DOUBLE,
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      }
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
     }
   }
 
   /// Sets the relative pitch of the [Player]. Defaults to `1.0`.
   @override
-  Future<void> setPitch(double pitch) async {
-    if (configuration.pitch) {
-      // Pitch shift control is enabled.
-      final ctx = await _handle.future;
-      state = state.copyWith(
-        pitch: pitch,
-      );
-      if (!pitchController.isClosed) {
-        pitchController.add(state.pitch);
+  Future<void> setPitch(
+    double pitch, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      if (configuration.pitch) {
+        // Pitch shift control is enabled.
+        final ctx = await _handle.future;
+        state = state.copyWith(
+          pitch: pitch,
+        );
+        if (!pitchController.isClosed) {
+          pitchController.add(state.pitch);
+        }
+        // Apparently, using `scaletempo:scale` actually controls the playback rate
+        // as intended after setting `audio-pitch-correction` as `FALSE`.
+        // `speed` on the other hand, changes the pitch when `audio-pitch-correction`
+        // is set to `FALSE`. Since, it also alters the actual [speed], the
+        // `scaletempo:scale` is divided by the same value of [pitch] to compensate the
+        // speed change.
+        var name = 'audio-pitch-correction'.toNativeUtf8();
+        final no = 'no'.toNativeUtf8();
+        _libmpv?.mpv_set_property_string(
+          ctx,
+          name.cast(),
+          no.cast(),
+        );
+        calloc.free(name);
+        calloc.free(no);
+        name = 'speed'.toNativeUtf8();
+        final speed = calloc<Double>()..value = pitch;
+        _libmpv?.mpv_set_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_DOUBLE,
+          speed.cast(),
+        );
+        calloc.free(name);
+        calloc.free(speed);
+        name = 'af'.toNativeUtf8();
+        // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
+        final value =
+            'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
+                .toNativeUtf8();
+        _libmpv?.mpv_set_property_string(
+          ctx,
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      } else {
+        // Pitch shift control is disabled.
+        throw Exception('[PlayerConfiguration.pitch] is false.');
       }
-      // Apparently, using `scaletempo:scale` actually controls the playback rate
-      // as intended after setting `audio-pitch-correction` as `FALSE`.
-      // `speed` on the other hand, changes the pitch when `audio-pitch-correction`
-      // is set to `FALSE`. Since, it also alters the actual [speed], the
-      // `scaletempo:scale` is divided by the same value of [pitch] to compensate the
-      // speed change.
-      var name = 'audio-pitch-correction'.toNativeUtf8();
-      final no = 'no'.toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        no.cast(),
-      );
-      calloc.free(name);
-      calloc.free(no);
-      name = 'speed'.toNativeUtf8();
-      final speed = calloc<Double>()..value = pitch;
-      _libmpv?.mpv_set_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_DOUBLE,
-        speed.cast(),
-      );
-      calloc.free(name);
-      calloc.free(speed);
-      name = 'af'.toNativeUtf8();
-      // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
-      final value =
-          'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
-              .toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
     } else {
-      // Pitch shift control is disabled.
-      throw Exception('[PlayerConfiguration.pitch] is false.');
+      return function();
     }
   }
 
   /// Enables or disables shuffle for [Player]. Default is `false`.
   @override
-  Future<void> setShuffle(bool shuffle) async {
-    await _command(
-      [
-        shuffle ? 'playlist-shuffle' : 'playlist-unshuffle',
-      ],
-    );
+  Future<void> setShuffle(
+    bool shuffle, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      await _command(
+        [
+          shuffle ? 'playlist-shuffle' : 'playlist-unshuffle',
+        ],
+      );
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   /// Sets the current [AudioDevice] for audio output.
@@ -566,18 +771,29 @@ class Player extends PlatformPlayer {
   /// * Currently selected [AudioDevice] can be accessed using [state.audioDevice] or [streams.audioDevice].
   /// * The list of currently available [AudioDevice]s can be obtained accessed using [state.audioDevices] or [streams.audioDevices].
   @override
-  FutureOr<void> setAudioDevice(AudioDevice audioDevice) async {
-    final ctx = await _handle.future;
-    final name = 'audio-device'.toNativeUtf8();
-    final value = audioDevice.name.toNativeUtf8();
-    _libmpv?.mpv_set_property(
-      ctx,
-      name.cast(),
-      generated.mpv_format.MPV_FORMAT_STRING,
-      value.cast(),
-    );
-    calloc.free(name);
-    calloc.free(value);
+  FutureOr<void> setAudioDevice(
+    AudioDevice audioDevice, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      final ctx = await _handle.future;
+      final name = 'audio-device'.toNativeUtf8();
+      final value = audioDevice.name.toNativeUtf8();
+      _libmpv?.mpv_set_property(
+        ctx,
+        name.cast(),
+        generated.mpv_format.MPV_FORMAT_STRING,
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   /// Sets the current [VideoTrack] for video output.
@@ -585,24 +801,35 @@ class Player extends PlatformPlayer {
   /// * Currently selected [VideoTrack] can be accessed using [state.track.video] or [streams.track.video].
   /// * The list of currently available [VideoTrack]s can be obtained accessed using [state.tracks.video] or [streams.tracks.video].
   @override
-  FutureOr<void> setVideoTrack(VideoTrack track) async {
-    final ctx = await _handle.future;
-    final name = 'vid'.toNativeUtf8();
-    final value = track.id.toNativeUtf8();
-    _libmpv?.mpv_set_property_string(
-      ctx,
-      name.cast(),
-      value.cast(),
-    );
-    calloc.free(name);
-    calloc.free(value);
-    state = state.copyWith(
-      track: state.track.copyWith(
-        video: track,
-      ),
-    );
-    if (!trackController.isClosed) {
-      trackController.add(state.track);
+  FutureOr<void> setVideoTrack(
+    VideoTrack track, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      final ctx = await _handle.future;
+      final name = 'vid'.toNativeUtf8();
+      final value = track.id.toNativeUtf8();
+      _libmpv?.mpv_set_property_string(
+        ctx,
+        name.cast(),
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+      state = state.copyWith(
+        track: state.track.copyWith(
+          video: track,
+        ),
+      );
+      if (!trackController.isClosed) {
+        trackController.add(state.track);
+      }
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
     }
   }
 
@@ -611,24 +838,35 @@ class Player extends PlatformPlayer {
   /// * Currently selected [AudioTrack] can be accessed using [state.track.audio] or [streams.track.audio].
   /// * The list of currently available [AudioTrack]s can be obtained accessed using [state.tracks.audio] or [streams.tracks.audio].
   @override
-  FutureOr<void> setAudioTrack(AudioTrack track) async {
-    final ctx = await _handle.future;
-    final name = 'aid'.toNativeUtf8();
-    final value = track.id.toNativeUtf8();
-    _libmpv?.mpv_set_property_string(
-      ctx,
-      name.cast(),
-      value.cast(),
-    );
-    calloc.free(name);
-    calloc.free(value);
-    state = state.copyWith(
-      track: state.track.copyWith(
-        audio: track,
-      ),
-    );
-    if (!trackController.isClosed) {
-      trackController.add(state.track);
+  FutureOr<void> setAudioTrack(
+    AudioTrack track, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      final ctx = await _handle.future;
+      final name = 'aid'.toNativeUtf8();
+      final value = track.id.toNativeUtf8();
+      _libmpv?.mpv_set_property_string(
+        ctx,
+        name.cast(),
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+      state = state.copyWith(
+        track: state.track.copyWith(
+          audio: track,
+        ),
+      );
+      if (!trackController.isClosed) {
+        trackController.add(state.track);
+      }
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
     }
   }
 
@@ -637,24 +875,35 @@ class Player extends PlatformPlayer {
   /// * Currently selected [SubtitleTrack] can be accessed using [state.track.subtitle] or [streams.track.subtitle].
   /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [streams.tracks.subtitle].
   @override
-  FutureOr<void> setSubtitleTrack(SubtitleTrack track) async {
-    final ctx = await _handle.future;
-    final name = 'sid'.toNativeUtf8();
-    final value = track.id.toNativeUtf8();
-    _libmpv?.mpv_set_property_string(
-      ctx,
-      name.cast(),
-      value.cast(),
-    );
-    calloc.free(name);
-    calloc.free(value);
-    state = state.copyWith(
-      track: state.track.copyWith(
-        subtitle: track,
-      ),
-    );
-    if (!trackController.isClosed) {
-      trackController.add(state.track);
+  FutureOr<void> setSubtitleTrack(
+    SubtitleTrack track, {
+    bool synchronized = true,
+  }) {
+    function() async {
+      final ctx = await _handle.future;
+      final name = 'sid'.toNativeUtf8();
+      final value = track.id.toNativeUtf8();
+      _libmpv?.mpv_set_property_string(
+        ctx,
+        name.cast(),
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+      state = state.copyWith(
+        track: state.track.copyWith(
+          subtitle: track,
+        ),
+      );
+      if (!trackController.isClosed) {
+        trackController.add(state.track);
+      }
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
     }
   }
 
@@ -1117,14 +1366,53 @@ class Player extends PlatformPlayer {
 
   Future<void> _create() async {
     _libmpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
-    final result = await create(NativeLibrary.path, _handler);
+
+    // The libmpv options which must be set before [MPV.mpv_initialize].
+    final options = <String, String>{};
+
+    if (Platform.isAndroid) {
+      try {
+        // On Android, the system fonts cannot be picked up by libass/fontconfig. This makes subtitles not work.
+        // We manually save `subfont.ttf` to the application's cache directory and set `config` & `config-dir` to use it.
+        final subfont = await AndroidAssetLoader.load('subfont.ttf');
+        if (subfont.isNotEmpty) {
+          final directory = path.dirname(subfont);
+          // This asset is bundled as part of `package:media_kit_libs_android_video`.
+          // Use it if located inside the application bundle, otherwise no worries.
+          options.addAll(
+            {
+              'config': 'yes',
+              'config-dir': directory,
+            },
+          );
+          print(subfont);
+          print(directory);
+        }
+      } catch (exception, stacktrace) {
+        print(exception);
+        print(stacktrace);
+      }
+    }
+
+    final result = await create(
+      NativeLibrary.path,
+      _handler,
+      options: options,
+    );
+
     // Set:
+    //
+    // ALL:
+    //
     // idle = yes
     // pause = yes
     // keep-open = yes
     // demuxer-max-bytes = 32 * 1024 * 1024
     // demuxer-max-back-bytes = 32 * 1024 * 1024
-    // ao = opensles (Android)
+    //
+    // ANDROID:
+    //
+    // ao = opensles
     //
     // We are using opensles on Android because default JNI based audiotrack output driver seems to crash randomly.
     {
@@ -1369,6 +1657,9 @@ class Player extends PlatformPlayer {
 
   /// Internal generated libmpv C API bindings.
   generated.MPV? _libmpv;
+
+  /// Synchronization & mutual exclusion between methods of this class.
+  final Lock _lock = Lock();
 
   /// [Pointer] to [generated.mpv_handle] of this instance.
   final Completer<Pointer<generated.mpv_handle>> _handle =
