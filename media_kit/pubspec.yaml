@@ -26,6 +26,7 @@ dependencies:
   path: ^1.8.0
   http: ^0.13.4
   uri_parser: ^2.0.2
+  synchronized: ^3.1.0
   safe_local_storage: ^1.0.2
 
 dev_dependencies:

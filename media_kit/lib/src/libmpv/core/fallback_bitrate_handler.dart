@@ -3,7 +3,6 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-
 import 'dart:io';
 import 'package:uri_parser/uri_parser.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';

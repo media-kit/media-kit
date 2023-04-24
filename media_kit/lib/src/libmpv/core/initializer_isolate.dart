@@ -3,10 +3,10 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-
 import 'dart:ffi';
 import 'dart:async';
 import 'dart:isolate';
+import 'package:ffi/ffi.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
 
@@ -19,11 +19,28 @@ abstract class InitializerIsolate {
   static Future<Pointer<mpv_handle>> create(
     String path,
     Future<void> Function(Pointer<mpv_event> event)? callback,
+    Map<String, String> options,
   ) async {
     if (callback == null) {
       // No requirement for separate isolate.
       final mpv = MPV(DynamicLibrary.open(path));
+      // Creating [mpv_handle].
       final handle = mpv.mpv_create();
+
+      // Set custom defined options before [mpv_initialize].
+      for (final entry in options.entries) {
+        final name = entry.key.toNativeUtf8();
+        final value = entry.value.toNativeUtf8();
+        mpv.mpv_set_option_string(
+          handle,
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      }
+
+      // Initializing [mpv_handle].
       mpv.mpv_initialize(handle);
       return handle;
     } else {
@@ -39,29 +56,34 @@ abstract class InitializerIsolate {
         _mainloop,
         receiver.sendPort,
       );
-      receiver.listen((message) async {
-        // Receiving [SendPort] of the [ReceivePort] inside the separate isolate to send the path to [DynamicLibrary].
-        if (!completer.isCompleted && message is SendPort) {
-          port = message;
-          port.send(path);
-        }
-        // Receiving [Pointer] to [mpv_handle] created by separate isolate.
-        else if (!completer.isCompleted && message is int) {
-          handle = Pointer.fromAddress(message);
-          completer.complete();
-        }
-        // Receiving event callbacks.
-        else {
-          Pointer<mpv_event> event = Pointer.fromAddress(message);
-          try {
-            await callback(event);
-          } catch (exception, stacktrace) {
-            print(exception.toString());
-            print(stacktrace.toString());
+      receiver.listen(
+        (message) async {
+          // Receiving [SendPort] of the [ReceivePort] inside the separate isolate to:
+          // 1. Send the custom defined options.
+          // 2. Send the path to [DynamicLibrary].
+          if (!completer.isCompleted && message is SendPort) {
+            port = message;
+            port.send(options);
+            port.send(path);
           }
-          port.send(true);
-        }
-      });
+          // Receiving [Pointer] to [mpv_handle] created by separate isolate.
+          else if (!completer.isCompleted && message is int) {
+            handle = Pointer.fromAddress(message);
+            completer.complete();
+          }
+          // Receiving event callbacks.
+          else {
+            Pointer<mpv_event> event = Pointer.fromAddress(message);
+            try {
+              await callback(event);
+            } catch (exception, stacktrace) {
+              print(exception.toString());
+              print(stacktrace.toString());
+            }
+            port.send(true);
+          }
+        },
+      );
       // Awaiting the retrieval of [Pointer] to [mpv_handle].
       await completer.future;
       return handle;
@@ -80,31 +102,61 @@ abstract class InitializerIsolate {
   /// Subsequent sent values are [Pointer] to [mpv_event].
   @pragma('vm:entry-point')
   static void _mainloop(SendPort port) async {
-    // Used to ensure that the last [mpv_event] is NOT reset to [mpv_event_id.MPV_EVENT_NONE] after waiting using [MPV.mpv_wait_event] again in the continuously running while loop.
+    // [Completer] used to ensure that the last [mpv_event] is NOT reset to [mpv_event_id.MPV_EVENT_NONE] after waiting using [MPV.mpv_wait_event] again in the continuously running while loop.
     var completer = Completer();
+
     // Used to recieve the confirmation messages from the main thread about successful receive of the sent event through [SendPort].
     // Upon confirmation, the [Completer] is completed & we jump to next iteration of the while loop waiting with [MPV.mpv_wait_event].
     final receiver = ReceivePort();
+
     // Send the [SendPort] of internal [ReceivePort].
     port.send(receiver.sendPort);
-    // Separately creating [MPV] object since isolates don't share finaliables.
+
+    // Received data from the [SendPort] for initialization.
+    late Map<String, String> options;
     late MPV mpv;
-    receiver.listen((message) {
-      // Initializing the local [MPV] object.
-      if (message is String) {
-        mpv = MPV(DynamicLibrary.open(message));
-      }
-      // Notifying about the successful sending of the event & move onto next [MPV.mpv_wait_event] after completing the [Completer].
-      completer.complete();
-    });
-    // Waiting for [MPV] to be late initialized.
+
+    // First received value is [Map<String, String>] of options.
+    // Second received value is [String] of path to [DynamicLibrary].
+    receiver.listen(
+      (message) {
+        if (message is Map<String, String>) {
+          options = message;
+        } else if (message is String) {
+          mpv = MPV(DynamicLibrary.open(message));
+          completer.complete();
+        } else if (message is bool) {
+          completer.complete();
+        }
+      },
+    );
+
+    // Wait for the [Completer] to complete.
     await completer.future;
-    // Creating & initializing [mpv_handle].
+
+    // Creating [mpv_handle].
     final handle = mpv.mpv_create();
+
+    // Set custom defined options before [mpv_initialize].
+    for (final entry in options.entries) {
+      final name = entry.key.toNativeUtf8();
+      final value = entry.value.toNativeUtf8();
+      mpv.mpv_set_option_string(
+        handle,
+        name.cast(),
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+
+    // Initializing [mpv_handle].
     mpv.mpv_initialize(handle);
+
     // Sending the address of the created [mpv_handle] & the [SendPort] of the [receivePort].
     // Raw address is sent as [int] since we cannot transfer objects through Native Ports, only primatives.
     port.send(handle.address);
+
     // Lookup for events & send to main thread through [SendPort].
     // Ensuring the successful sending of the last event before moving to next [MPV.mpv_wait_event].
     while (true) {

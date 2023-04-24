@@ -73,29 +73,29 @@ class VideoControllerAndroid extends VideoController {
         // ----------------------------------------------
         // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
         // In native Android, this kind of rendering is done with `android.view.SurfaceView` + `android.view.SurfaceHolder`, which offers `onSurfaceChanged` callback to handle this.
-        if (!enableHardwareAcceleration) {
-          final handle = await player.handle;
-          await _channel.invokeMethod(
-            'VideoOutputManager.SetSurfaceTextureSize',
-            {
-              'handle': handle.toString(),
-              'width': event.width.toInt().toString(),
-              'height': event.height.toInt().toString(),
-            },
-          );
-          NativeLibrary.ensureInitialized();
-          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-          final name = 'android-surface-size'.toNativeUtf8();
-          final value =
-              '${event.width.toInt()}x${event.height.toInt()}'.toNativeUtf8();
-          mpv.mpv_set_option_string(
-            Pointer.fromAddress(handle),
-            name.cast(),
-            value.cast(),
-          );
-          calloc.free(name);
-          calloc.free(value);
-        }
+        //
+        // NOTE: Not needed with --vo=mediacodec_embed.
+        final handle = await player.handle;
+        await _channel.invokeMethod(
+          'VideoOutputManager.SetSurfaceTextureSize',
+          {
+            'handle': handle.toString(),
+            'width': event.width.toInt().toString(),
+            'height': event.height.toInt().toString(),
+          },
+        );
+        NativeLibrary.ensureInitialized();
+        final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+        final name = 'android-surface-size'.toNativeUtf8();
+        final value =
+            '${event.width.toInt()}x${event.height.toInt()}'.toNativeUtf8();
+        mpv.mpv_set_option_string(
+          Pointer.fromAddress(handle),
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
         // ----------------------------------------------
         rect.value = event;
       }),
@@ -151,17 +151,17 @@ class VideoControllerAndroid extends VideoController {
     final values = enableHardwareAcceleration
         ? {
             // https://mpv.io/manual/stable/#video-output-drivers-mediacodec-embed
-            // Truly native hardware decoding & rendering with --vo=mediacodec_embed & --hwdec=mediacodec.
+            // Hardware decoding & rendering with --vo=gpu + --hwdec=mediacodec.
             'opengl-es': 'yes',
             'force-window': 'yes',
             'hwdec': 'mediacodec',
             'gpu-context': 'android',
-            'vo': 'mediacodec_embed',
+            'vo': 'gpu',
             'wid': wid.toString(),
           }
         : {
-            // Software decoding & rendering with --vo=gpu & --hwdec=no.
-            // The `android.view.Surface` (bind with `android.graphics.SurfaceTexture`) instance which is passed as --wid to libmpv for rendering, is not actually "mounted" to the Android view hierarchy, because we are using Flutter.
+            // Software decoding & rendering with --vo=gpu + --hwdec=no.
+            // The `android.view.Surface` (bind with `android.graphics.SurfaceTexture`) instance which is passed as --wid to libmpv for rendering, is not actually 'mounted' to the Android view hierarchy, because we are using Flutter.
             // The `android.view.Surface` instance is solely created for allowing libmpv to render into it. The Flutter internally reads from `android.graphics.SurfaceTexture` AFAIK.
             //
             // This makes the `android.view.Surface` not size accordingly to the video / display size (& render video as a single 1x1 pixel forever).
@@ -176,9 +176,19 @@ class VideoControllerAndroid extends VideoController {
             'vo': 'gpu',
             'wid': wid.toString(),
           };
-    // TODO(@alexmercerind): A few other rendering options might be worth exposing to clients in the future e.g.
-    // * --vo=gpu + --hwdec=mediacodec
-    // * --vo=gpu + --hwdec=mediacodec-copy
+    // TODO(@alexmercerind): Few other rendering options might be worth exposing to clients in the future e.g.
+    // * --vo=mediacodec_embed + --hwdec=mediacodec
+    // * --vo=mediacodec_embed + --hwdec=mediacodec-copy
+
+    values.addAll(
+      {
+        'sub-use-margins': 'no',
+        'sub-font-provider': 'none',
+        'sub-scale-with-window': 'yes',
+        'hwdec-codecs': 'h264,hevc,mpeg4,mpeg2video,vp8,vp9',
+      },
+    );
+
     for (final entry in values.entries) {
       final name = entry.key.toNativeUtf8();
       final value = entry.value.toNativeUtf8();
