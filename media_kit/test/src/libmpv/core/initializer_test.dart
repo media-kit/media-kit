@@ -4,9 +4,11 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
+import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
+import 'package:path/path.dart';
 import 'package:test/test.dart';
 
 import 'package:media_kit/src/libmpv/core/initializer.dart';
@@ -50,7 +52,7 @@ void main() {
         }
       });
       final expectShutdown = expectAsync0(() {
-        print('MPV_EVENT_SHUTDOWN');
+        print('shutdown');
         expect(true, isTrue);
       });
 
@@ -75,7 +77,7 @@ void main() {
           }
         },
       );
-      await Future.delayed(Duration(seconds: 1));
+      await Future.delayed(Duration(seconds: 5));
       {
         final name = 'pause'.toNativeUtf8();
         mpv.mpv_observe_property(
@@ -102,6 +104,82 @@ void main() {
           command.cast(),
         );
         calloc.free(command);
+      }
+    },
+  );
+  test(
+    'initializer-options-with-callback',
+    () async {
+      final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+      final handle = await create(
+        NativeLibrary.path,
+        (_) async {},
+        options: {
+          'config': 'yes',
+          'config-dir': dirname(Platform.script.toFilePath()),
+        },
+      );
+      {
+        final name = 'config'.toNativeUtf8();
+        final value = mpv.mpv_get_property_string(
+          handle,
+          name.cast(),
+        );
+        calloc.free(name);
+        expect(
+          value.cast<Utf8>().toDartString(),
+          'yes',
+        );
+      }
+      {
+        final name = 'config-dir'.toNativeUtf8();
+        final value = mpv.mpv_get_property_string(
+          handle,
+          name.cast(),
+        );
+        calloc.free(name);
+        expect(
+          value.cast<Utf8>().toDartString(),
+          dirname(Platform.script.toFilePath()),
+        );
+      }
+    },
+  );
+  test(
+    'initializer-options-without-callback',
+    () async {
+      final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+      final handle = await create(
+        NativeLibrary.path,
+        null,
+        options: {
+          'config': 'yes',
+          'config-dir': dirname(Platform.script.toFilePath()),
+        },
+      );
+      {
+        final name = 'config'.toNativeUtf8();
+        final value = mpv.mpv_get_property_string(
+          handle,
+          name.cast(),
+        );
+        calloc.free(name);
+        expect(
+          value.cast<Utf8>().toDartString(),
+          'yes',
+        );
+      }
+      {
+        final name = 'config-dir'.toNativeUtf8();
+        final value = mpv.mpv_get_property_string(
+          handle,
+          name.cast(),
+        );
+        calloc.free(name);
+        expect(
+          value.cast<Utf8>().toDartString(),
+          dirname(Platform.script.toFilePath()),
+        );
       }
     },
   );
