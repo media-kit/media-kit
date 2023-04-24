@@ -1659,7 +1659,7 @@ class Player extends PlatformPlayer {
   generated.MPV? _libmpv;
 
   /// Synchronization & mutual exclusion between methods of this class.
-  final _lock = Lock();
+  final Lock _lock = Lock();
 
   /// [Pointer] to [generated.mpv_handle] of this instance.
   final Completer<Pointer<generated.mpv_handle>> _handle =
