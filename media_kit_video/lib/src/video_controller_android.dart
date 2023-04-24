@@ -179,6 +179,16 @@ class VideoControllerAndroid extends VideoController {
     // TODO(@alexmercerind): Few other rendering options might be worth exposing to clients in the future e.g.
     // * --vo=mediacodec_embed + --hwdec=mediacodec
     // * --vo=mediacodec_embed + --hwdec=mediacodec-copy
+
+    values.addAll(
+      {
+        'sub-use-margins': 'no',
+        'sub-font-provider': 'none',
+        'sub-scale-with-window': 'yes',
+        'hwdec-codecs': 'h264,hevc,mpeg4,mpeg2video,vp8,vp9',
+      },
+    );
+
     for (final entry in values.entries) {
       final name = entry.key.toNativeUtf8();
       final value = entry.value.toNativeUtf8();
