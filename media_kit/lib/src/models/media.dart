@@ -90,7 +90,14 @@ class Media extends Playable {
           ),
         );
       } else if (Platform.isAndroid) {
-        asset = path.normalize(AndroidAssetLoader.instance.load(key));
+        asset = path.normalize(
+          AndroidAssetLoader.instance.load(
+            path.join(
+              'flutter_assets',
+              key,
+            ),
+          ),
+        );
       } else {
         throw UnimplementedError(
           '$_kAssetScheme is not supported on ${Platform.operatingSystem}',

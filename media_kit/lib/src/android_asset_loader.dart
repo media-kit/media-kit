@@ -40,7 +40,7 @@ class AndroidAssetLoader {
 
   /// Copies an asset bundled with the application to the external files directory & returns it absolute path.
   String load(String asset) {
-    final name = 'flutter_assets/$asset'.toNativeUtf8();
+    final name = asset.toNativeUtf8();
     final result = List.generate(4096, (index) => ' ').join('').toNativeUtf8();
     _mediaKitAndroidHelperCopyAssetToExternalFilesDir?.call(
       name.cast(),
