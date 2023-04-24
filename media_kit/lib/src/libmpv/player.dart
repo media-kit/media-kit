@@ -7,12 +7,15 @@ import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
+import 'package:path/path.dart' as path;
 import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/src/platform_player.dart';
 import 'package:media_kit/src/libmpv/core/initializer.dart';
 import 'package:media_kit/src/libmpv/core/native_library.dart';
 import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
+
+import 'package:media_kit/src/android_asset_loader.dart';
 
 import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/track.dart';
@@ -1363,7 +1366,40 @@ class Player extends PlatformPlayer {
 
   Future<void> _create() async {
     _libmpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
-    final result = await create(NativeLibrary.path, _handler);
+
+    // The libmpv options which must be set before [MPV.mpv_initialize].
+    final options = <String, String>{};
+
+    if (Platform.isAndroid) {
+      try {
+        // On Android, the system fonts cannot be picked up by libass/fontconfig. This makes subtitles not work.
+        // We manually save `subfont.ttf` to the application's cache directory and set `config` & `config-dir` to use it.
+        final subfont = await AndroidAssetLoader.load('subfont.ttf');
+        if (subfont.isNotEmpty) {
+          final directory = path.dirname(subfont);
+          // This asset is bundled as part of `package:media_kit_libs_android_video`.
+          // Use it if located inside the application bundle, otherwise no worries.
+          options.addAll(
+            {
+              'config': 'yes',
+              'config-dir': directory,
+            },
+          );
+          print(subfont);
+          print(directory);
+        }
+      } catch (exception, stacktrace) {
+        print(exception);
+        print(stacktrace);
+      }
+    }
+
+    final result = await create(
+      NativeLibrary.path,
+      _handler,
+      options: options,
+    );
+
     // Set:
     //
     // ALL:

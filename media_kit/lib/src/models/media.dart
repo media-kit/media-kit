@@ -91,7 +91,7 @@ class Media extends Playable {
         );
       } else if (Platform.isAndroid) {
         asset = path.normalize(
-          AndroidAssetLoader.instance.load(
+          AndroidAssetLoader.loadSync(
             path.join(
               'flutter_assets',
               key,
