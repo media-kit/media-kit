@@ -95,7 +95,7 @@ void main() {
   MediaKit.ensureInitialized();
   runApp(
     const MaterialApp(
-      home: MyScreen()
+      home: MyScreen(),
     ),
   );
 }
