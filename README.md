@@ -1029,13 +1029,18 @@ classDiagram
 
   class VideoOutput {
     +«get» texture_id: int64_t
-    -mpv_handle* handle
-    -mpv_render_context* context
-    -std::optional<int64_t> width
-    -std::optional<int64_t> height
+    +«get» width: int64_t
+    +«get» height: int64_t
+    -mpv_handle* handle_
+    -mpv_render_context* render_context_
+    -std::optional<int64_t> width_
+    -std::optional<int64_t> height_
+    -bool enable_hardware_acceleration_
     -int64_t texture_id_
     -flutter::PluginRegistrarWindows registrar_
     -ThreadPool* thread_pool_ref_
+    -bool destroyed_
+    -std::mutex textures_mutex_
     -std::unordered_map<int64_t, std::unique_ptr<flutter::TextureVariant>> texture_variants_
     -std::unique_ptr<ANGLESurfaceManager> surface_manager_ HW
     -std::unordered_map<int64_t, std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor>> textures_ HW
@@ -1044,6 +1049,8 @@ classDiagram
     -std::function texture_update_callback_
 
     +SetTextureUpdateCallback(callback: std::function<void(int64_t, int64_t, int64_t)>)
+    +SetSize(width: std::optional<int64_t>, height: std::optional<int64_t>)
+    -NotifyRender()
     -Render()
     -CheckAndResize()
     -Resize(required_width: int64_t, required_height: int64_t)
