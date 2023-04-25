@@ -27,19 +27,19 @@ abstract class MediaKit {
   /// {@macro media_kit}
   static void ensureInitialized({String? libmpv}) {
     if (Platform.isWindows) {
-      implementation.ensureInitialized();
+      implementation.ensureInitialized(libmpv: libmpv);
     }
     if (Platform.isLinux) {
-      implementation.ensureInitialized();
+      implementation.ensureInitialized(libmpv: libmpv);
     }
     if (Platform.isMacOS) {
-      implementation.ensureInitialized();
+      implementation.ensureInitialized(libmpv: libmpv);
     }
     if (Platform.isIOS) {
-      implementation.ensureInitialized();
+      implementation.ensureInitialized(libmpv: libmpv);
     }
     if (Platform.isAndroid) {
-      implementation.ensureInitialized();
+      implementation.ensureInitialized(libmpv: libmpv);
     }
   }
 }
