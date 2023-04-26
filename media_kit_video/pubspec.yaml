@@ -2,7 +2,7 @@ name: media_kit_video
 description: Native implementation for video playback in package:media_kit.
 homepage: https://github.com/alexmercerind/media_kit
 repository: https://github.com/alexmercerind/media_kit
-version: 0.0.8
+version: 0.0.9
 funding:
   - https://www.github.com/sponsors/alexmercerind
 

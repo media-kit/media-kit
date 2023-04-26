@@ -1,3 +1,7 @@
+## 0.0.7
+
+- fix: `MediaKit.ensureInitialized` not passing optional `libmpv` argument
+
 ## 0.0.6
 
 - feat: synchronize `Player` methods
