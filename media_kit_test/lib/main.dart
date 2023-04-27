@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_test/common/globals.dart';
 
 import 'tests/01.single_player_single_video.dart';
 import 'tests/02.single_player_multiple_video.dart';
@@ -50,6 +51,24 @@ class PrimaryScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
+        actions: [
+          ValueListenableBuilder<bool>(
+            valueListenable: enableHardwareAcceleration,
+            builder: (context, value, _) => TextButton(
+              onPressed: () {
+                enableHardwareAcceleration.value =
+                    !enableHardwareAcceleration.value;
+              },
+              child: Text(
+                value ? 'H/W' : 'S/W',
+                style: const TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16.0),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

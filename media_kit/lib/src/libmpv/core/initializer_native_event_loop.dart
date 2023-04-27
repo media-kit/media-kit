@@ -3,12 +3,12 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-
 import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'dart:isolate';
 import 'dart:collection';
+import 'package:ffi/ffi.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
 
@@ -66,6 +66,7 @@ abstract class InitializerNativeEventLoop {
   static Future<Pointer<mpv_handle>> create(
     String path,
     Future<void> Function(Pointer<mpv_event> event)? callback,
+    Map<String, String> options,
   ) async {
     // Native functions from the shared library should be resolved by now.
     // If not, throw an exception.
@@ -80,6 +81,20 @@ abstract class InitializerNativeEventLoop {
     final mpv = MPV(DynamicLibrary.open(path));
 
     final handle = mpv.mpv_create();
+
+    // Set custom defined options before [mpv_initialize].
+    for (final entry in options.entries) {
+      final name = entry.key.toNativeUtf8();
+      final value = entry.value.toNativeUtf8();
+      mpv.mpv_set_option_string(
+        handle,
+        name.cast(),
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+
     mpv.mpv_initialize(handle);
 
     // Only register for event callbacks if [callback] is not null.

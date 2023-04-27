@@ -46,16 +46,16 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.5                              # Primary package.
+  media_kit: ^0.0.7                              # Primary package.
   
-  media_kit_video: ^0.0.7                        # For video rendering.
+  media_kit_video: ^0.0.9                        # For video rendering.
   
   media_kit_native_event_loop: ^1.0.3            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_windows_video: ^1.0.2           # Windows package for video native libraries.
-  media_kit_libs_android_video: ^1.0.0           # Android package for video native libraries.
-  media_kit_libs_macos_video: ^1.0.4             # macOS package for video native libraries.
+  media_kit_libs_android_video: ^1.0.1           # Android package for video native libraries.
   media_kit_libs_ios_video: ^1.0.4               # iOS package for video native libraries.
+  media_kit_libs_macos_video: ^1.0.4             # macOS package for video native libraries.
+  media_kit_libs_windows_video: ^1.0.2           # Windows package for video native libraries.
   media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.
 ```
 
@@ -63,14 +63,14 @@ dependencies:
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.5                              # Primary package.
+  media_kit: ^0.0.7                              # Primary package.
   
   media_kit_native_event_loop: ^1.0.2            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_windows_audio: ^1.0.3           # Windows package for audio native libraries.
   media_kit_libs_android_audio: ^1.0.0           # Android package for audio native libraries.
-  media_kit_libs_macos_audio: ^1.0.4             # macOS package for audio native libraries.
   media_kit_libs_ios_audio: ^1.0.4               # iOS package for audio native libraries.
+  media_kit_libs_macos_audio: ^1.0.4             # macOS package for audio native libraries.
+  media_kit_libs_windows_audio: ^1.0.3           # Windows package for audio native libraries.
   media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.
 ```
 
@@ -83,11 +83,11 @@ dependencies:
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.              | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 13 or above.                   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 11 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution. | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.5/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.              | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 13 or above.                   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 11 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution. | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_linux_x64.7z)          |
 | Web         | 🚧    | 🚧    | [WIP](https://github.com/alexmercerind/media_kit/pull/128)                                | [WIP](https://github.com/alexmercerind/media_kit/pull/128)              |
 
 <table>
@@ -148,6 +148,7 @@ import 'package:media_kit/media_kit.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  /// [MediaKit.ensureInitialized] must be called before using the library.
   MediaKit.ensureInitialized();
   runApp(const MyApp());
 }
@@ -231,10 +232,20 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';                        /// Provides [Player], [Media], [Playlist] etc.
 import 'package:media_kit_video/media_kit_video.dart';            /// Provides [VideoController] & [Video] etc.
 
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
+  runApp(
+    const MaterialApp(
+      home: MyScreen(),
+    ),
+  );
+}
+
 class MyScreen extends StatefulWidget {
   const MyScreen({Key? key}) : super(key: key);
   @override
-  State<MyScreen> createState() => _MyScreenState();
+  State<MyScreen> createState() => MyScreenState();
 }
 
 class MyScreenState extends State<MyScreen> {
@@ -744,13 +755,19 @@ classDiagram
 
   Player *-- PlatformPlayer
   PlatformPlayer <|-- libmpv_Player
-  PlatformPlayer <|-- xyz_Player
+  PlatformPlayer <|-- web_Player
   PlatformPlayer *-- PlayerState
   PlatformPlayer *-- PlayerStreams
   PlatformPlayer o-- PlayerConfiguration
 
   libmpv_Player <.. NativeLibrary
-
+  
+  Playable <.. Media
+  Playable <.. Playlist
+  
+  class Playable {
+  }
+  
   class Media {
     +String uri
     +dynamic extras
@@ -763,39 +780,56 @@ classDiagram
 
   class PlayerConfiguration {
     + bool osc
+    + bool vid
     + String vo
     + String title
-    ... other platform-specific configurable values
+    ... other initialization values
   }
 
   class PlayerStreams {
     +Stream<Playlist> playlist
-    +Stream<bool> isPlaying
-    +Stream<bool> isCompleted
+    +Stream<bool> playing
+    +Stream<bool> completed
     +Stream<Duration> position
     +Stream<Duration> duration
+    +Stream<Duration> buffer
     +Stream<double> volume
     +Stream<double> rate
     +Stream<double> pitch
-    +Stream<bool> isBuffering
-    +Stream<AudioParams> audioParams
-    +Stream<double> audioBitrate
+    +Stream<bool> buffering
+    +Stream<PlayerLog> log
     +Stream<PlayerError> error
+    +Stream<AudioParams> audioParams
+    +Stream<double?> audioBitrate
+    +Stream<AudioDevice> audioDevice
+    +Stream<List<AudioDevice>> audioDevices
+    +Stream<Track> track
+    +Stream<Tracks> tracks
+    +Stream<int> width
+    +Stream<int> height
   }
 
   class PlayerState {
     +Playlist playlist
-    +bool isPlaying
-    +bool isCompleted
+    +bool playing
+    +bool completed
     +Duration position
     +Duration duration
+    +Duration buffer
     +double volume
     +double rate
     +double pitch
-    +bool isBuffering
-    +AudioParams audioParams
-    +double audioBitrate
+    +bool buffering
+    +PlayerLog log
     +PlayerError error
+    +AudioParams audioParams
+    +double? audioBitrate
+    +AudioDevice audioDevice
+    +List<AudioDevice audioDevices
+    +Track track
+    +Tracks tracks
+    +int width
+    +int height
   }
 
   class Player {
@@ -804,110 +838,130 @@ classDiagram
     +«get» PlayerState state
     +«get» PlayerStreams streams
 
-    +«set» volume: double*
-    +«set» rate: double*
-    +«set» pitch: double*
-    +«set» shuffle: bool*
-    +«get» handle: Future<int>
-
-    +open(playlist)
+    +dispose()
+    +open(playable: Playable)
     +play()
     +pause()
     +playOrPause()
-    +add(media)
-    +remove(index)
+    +add(media: Media)
+    +remove(index: int)
     +next()
     +previous()
-    +jump(index)
-    +move(from, to)
-    +seek(duration)
-    +setPlaylistMode(playlistMode)
-    +dispose()
+    +jump(index: int)
+    +move(from: int, to: int)
+    +seek(duration: Duration)
+    +setPlaylistMode(playlistMode: PlaylistMode)
+    +setVolume(volume: double)
+    +setRate(rate: double)
+    +setPitch(pitch: double)
+    +setShuffle(bool: double)
+    +setVideoTrack(track: VideoTrack)
+    +setAudioTrack(track: AudioTrack)
+    +setSubtitleTrack(track: SubtitleTrack)
   }
 
   class PlatformPlayer {
     +PlayerState state
     +PlayerStreams streams
     +PlayerConfiguration configuration
-
-    +open(playlist)*
+    
+    +dispose()*
+    +open(playable: Playable)*
     +play()*
     +pause()*
     +playOrPause()*
-    +add(media)*
-    +remove(index)*
+    +add(media: Media)*
+    +remove(index: int)*
     +next()*
     +previous()*
-    +jump(index)*
-    +move(from, to)*
-    +seek(duration)*
-    +setPlaylistMode(playlistMode)*
-    +dispose()*
+    +jump(index: int)*
+    +move(from: int, to: int)*
+    +seek(duration: Duration)*
+    +setPlaylistMode(playlistMode: PlaylistMode)*
+    +setVolume(volume: double)*
+    +setRate(rate: double)*
+    +setPitch(pitch: double)*
+    +setShuffle(bool: double)*
+    +setVideoTrack(track: VideoTrack)*
+    +setAudioTrack(track: AudioTrack)*
+    +setSubtitleTrack(track: SubtitleTrack)*
 
-    +«set» volume: double*
-    +«set» rate: double*
-    +«set» pitch: double*
-    +«set» shuffle: bool*
     +«get» handle: Future<int>*
 
     #StreamController<Playlist> playlistController
-    #StreamController<bool> isPlayingController
-    #StreamController<bool> isCompletedController
+    #StreamController<bool> playingController
+    #StreamController<bool> completedController
     #StreamController<Duration> positionController
     #StreamController<Duration> durationController
+    #StreamController<Duration> bufferController
     #StreamController<double> volumeController
     #StreamController<double> rateController
     #StreamController<double> pitchController
-    #StreamController<bool> isBufferingController
+    #StreamController<bool> bufferingController
+    #StreamController<PlayerLog> logController
     #StreamController<PlayerError> errorController
     #StreamController<AudioParams> audioParamsController
     #StreamController<double?> audioBitrateController
+    #StreamController<AudioDevice> audioDeviceController
+    #StreamController<List<AudioDevice>> audioDevicesController
+    #StreamController<Track> trackController
+    #StreamController<Tracks> tracksController
+    #StreamController<int> widthController
+    #StreamController<int> heightController
   }
 
   class libmpv_Player {
-    +open(playlist)
+    +dispose()
+    +open(playable: Playable)
     +play()
     +pause()
     +playOrPause()
-    +add(media)
-    +remove(index)
+    +add(media: Media)
+    +remove(index: int)
     +next()
     +previous()
-    +jump(index)
-    +move(from, to)
-    +seek(duration)
-    +setPlaylistMode(playlistMode)
-    +«set» volume: double
-    +«set» rate: double
-    +«set» pitch: double
-    +«set» shuffle: bool
+    +jump(index: int)
+    +move(from: int, to: int)
+    +seek(duration: Duration)
+    +setPlaylistMode(playlistMode: PlaylistMode)
+    +setVolume(volume: double)
+    +setRate(rate: double)
+    +setPitch(pitch: double)
+    +setShuffle(bool: double)
+    +setVideoTrack(track: VideoTrack)
+    +setAudioTrack(track: AudioTrack)
+    +setSubtitleTrack(track: SubtitleTrack)
+
     +«get» handle: Future<int>
+  }
+  
+  class web_Player {
     +dispose()
+    +open(playable: Playable)
+    +play()
+    +pause()
+    +playOrPause()
+    +add(media: Media)
+    +remove(index: int)
+    +next()
+    +previous()
+    +jump(index: int)
+    +move(from: int, to: int)
+    +seek(duration: Duration)
+    +setPlaylistMode(playlistMode: PlaylistMode)
+    +setVolume(volume: double)
+    +setRate(rate: double)
+    +setPitch(pitch: double)
+    +setShuffle(bool: double)
+    +setVideoTrack(track: VideoTrack)
+    +setAudioTrack(track: AudioTrack)
+    +setSubtitleTrack(track: SubtitleTrack)
+
+    +«get» handle: Future<int>
   }
 
   class NativeLibrary {
     +find()$ String?
-  }
-
-  class xyz_Player {
-    +open(playlist)
-    +play()
-    +pause()
-    +playOrPause()
-    +add(media)
-    +remove(index)
-    +next()
-    +previous()
-    +jump(index)
-    +move(from, to)
-    +seek(duration)
-    +setPlaylistMode(playlistMode)
-    +«set» volume: double
-    +«set» rate: double
-    +«set» pitch: double
-    +«set» shuffle: bool
-    +«get» handle: Future<int>
-    +dispose()
   }
 ```
 
@@ -1018,13 +1072,18 @@ classDiagram
 
   class VideoOutput {
     +«get» texture_id: int64_t
-    -mpv_handle* handle
-    -mpv_render_context* context
-    -std::optional<int64_t> width
-    -std::optional<int64_t> height
+    +«get» width: int64_t
+    +«get» height: int64_t
+    -mpv_handle* handle_
+    -mpv_render_context* render_context_
+    -std::optional<int64_t> width_
+    -std::optional<int64_t> height_
+    -bool enable_hardware_acceleration_
     -int64_t texture_id_
     -flutter::PluginRegistrarWindows registrar_
     -ThreadPool* thread_pool_ref_
+    -bool destroyed_
+    -std::mutex textures_mutex_
     -std::unordered_map<int64_t, std::unique_ptr<flutter::TextureVariant>> texture_variants_
     -std::unique_ptr<ANGLESurfaceManager> surface_manager_ HW
     -std::unordered_map<int64_t, std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor>> textures_ HW
@@ -1033,6 +1092,8 @@ classDiagram
     -std::function texture_update_callback_
 
     +SetTextureUpdateCallback(callback: std::function<void(int64_t, int64_t, int64_t)>)
+    +SetSize(width: std::optional<int64_t>, height: std::optional<int64_t>)
+    -NotifyRender()
     -Render()
     -CheckAndResize()
     -Resize(required_width: int64_t, required_height: int64_t)

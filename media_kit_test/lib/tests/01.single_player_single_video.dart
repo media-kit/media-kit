@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../common/globals.dart';
 import '../common/sources.dart';
 import '../common/widgets.dart';
 
@@ -17,18 +18,17 @@ class SinglePlayerSingleVideoScreen extends StatefulWidget {
 
 class _SinglePlayerSingleVideoScreenState
     extends State<SinglePlayerSingleVideoScreen> {
-  final Player player = Player(
-    configuration: const PlayerConfiguration(
-      logLevel: MPVLogLevel.warn,
-    ),
-  );
+  final Player player = Player();
   VideoController? controller;
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() async {
-      controller = await VideoController.create(player);
+      controller = await VideoController.create(
+        player,
+        enableHardwareAcceleration: enableHardwareAcceleration.value,
+      );
       setState(() {});
     });
   }

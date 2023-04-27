@@ -1,3 +1,13 @@
+## 0.0.7
+
+- fix: `MediaKit.ensureInitialized` not passing optional `libmpv` argument
+
+## 0.0.6
+
+- feat: synchronize `Player` methods
+- refactor: improve `Playlist` handling in `Player`
+- refactor: improve handling of `playlist`, `audioBitrate` & `audioParams` states/events
+
 ## 0.0.5+2
 
 - docs: document updated `media_kit_video` & `media_kit_libs_windows_audio`

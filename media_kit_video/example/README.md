@@ -4,10 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';                        /// Provides [Player], [Media], [Playlist] etc.
 import 'package:media_kit_video/media_kit_video.dart';            /// Provides [VideoController] & [Video] etc.
 
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
+  runApp(
+    const MaterialApp(
+      home: MyScreen(),
+    ),
+  );
+}
+
 class MyScreen extends StatefulWidget {
   const MyScreen({Key? key}) : super(key: key);
   @override
-  State<MyScreen> createState() => _MyScreenState();
+  State<MyScreen> createState() => MyScreenState();
 }
 
 class MyScreenState extends State<MyScreen> {

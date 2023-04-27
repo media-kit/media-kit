@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../common/globals.dart';
 import '../common/sources.dart';
 import '../common/widgets.dart';
 
@@ -24,7 +25,10 @@ class _SinglePlayerMultipleVideoScreenState
   void initState() {
     super.initState();
     Future.microtask(() async {
-      controller = await VideoController.create(player);
+      controller = await VideoController.create(
+        player,
+        enableHardwareAcceleration: enableHardwareAcceleration.value,
+      );
       setState(() {});
     });
   }

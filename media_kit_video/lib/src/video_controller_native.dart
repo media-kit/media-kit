@@ -36,9 +36,9 @@ class VideoControllerNative extends VideoController {
   VideoControllerNative(
     super.player,
     super.width,
-    super.height, {
-    super.enableHardwareAcceleration = true,
-  });
+    super.height,
+    super.enableHardwareAcceleration,
+  );
 
   /// {@macro video_controller_native}
   static Future<VideoController> create(
@@ -60,7 +60,7 @@ class VideoControllerNative extends VideoController {
       player,
       width,
       height,
-      enableHardwareAcceleration: enableHardwareAcceleration,
+      enableHardwareAcceleration,
     );
     // Store the [VideoControllerNative] in the [_controllers].
     _controllers[handle] = controller;
