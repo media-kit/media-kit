@@ -44,9 +44,9 @@ dependencies:
   
   media_kit_native_event_loop: ^1.0.3            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_android_video: ^1.0.1           # Android package for video native libraries.
+  media_kit_libs_android_video: ^1.0.2           # Android package for video native libraries.
   media_kit_libs_ios_video: ^1.0.4               # iOS package for video native libraries.
-  media_kit_libs_macos_video: ^1.0.4             # macOS package for video native libraries.
+  media_kit_libs_macos_video: ^1.0.5             # macOS package for video native libraries.
   media_kit_libs_windows_video: ^1.0.2           # Windows package for video native libraries.
   media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.
 ```
@@ -59,9 +59,9 @@ dependencies:
   
   media_kit_native_event_loop: ^1.0.2            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_android_audio: ^1.0.0           # Android package for audio native libraries.
+  media_kit_libs_android_audio: ^1.0.2           # Android package for audio native libraries.
   media_kit_libs_ios_audio: ^1.0.4               # iOS package for audio native libraries.
-  media_kit_libs_macos_audio: ^1.0.4             # macOS package for audio native libraries.
+  media_kit_libs_macos_audio: ^1.0.5             # macOS package for audio native libraries.
   media_kit_libs_windows_audio: ^1.0.3           # Windows package for audio native libraries.
   media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.
 ```
@@ -69,18 +69,18 @@ dependencies:
 **Notes:**
 
 - If app needs both video & audio playback, select video playback libraries.
-- media_kit_libs_*** packages may be omitted depending upon the platform your app targets. 
+- media_kit_libs_*** packages may be omitted depending upon the platform your app targets.
 
 ## Platforms
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.              | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 13 or above.                   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 11 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution. | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_linux_x64.7z)          |
-| Web         | 🚧    | 🚧    | [WIP](https://github.com/alexmercerind/media_kit/pull/128)                                | [WIP](https://github.com/alexmercerind/media_kit/pull/128)              |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 13 or above.                     | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_linux_x64.7z)          |
+| Web         | 🚧    | 🚧    | [WIP](https://github.com/alexmercerind/media_kit/pull/128)                                 | [WIP](https://github.com/alexmercerind/media_kit/pull/128)               |
 
 <table>
   <tr>
