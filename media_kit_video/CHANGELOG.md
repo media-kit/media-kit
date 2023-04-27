@@ -1,6 +1,6 @@
 ## 0.0.9
 
-- fix(android): improve stability
+- fix(android): revert to `--vo=mediacodec_embed` in `enableHardwareAcceleration`
 
 ## 0.0.8
 
