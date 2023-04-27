@@ -69,33 +69,35 @@ class VideoControllerAndroid extends VideoController {
     final lock = Lock();
     _rectStreamSubscription = _controller.stream.listen(
       (event) => lock.synchronized(() async {
-        rect.value = Rect.zero;
-        // ----------------------------------------------
-        // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
-        // In native Android, this kind of rendering is done with `android.view.SurfaceView` + `android.view.SurfaceHolder`, which offers `onSurfaceChanged` callback to handle this.
-        //
-        // NOTE: Not needed with --vo=mediacodec_embed.
-        final handle = await player.handle;
-        await _channel.invokeMethod(
-          'VideoOutputManager.SetSurfaceTextureSize',
-          {
-            'handle': handle.toString(),
-            'width': event.width.toInt().toString(),
-            'height': event.height.toInt().toString(),
-          },
-        );
-        NativeLibrary.ensureInitialized();
-        final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-        final name = 'android-surface-size'.toNativeUtf8();
-        final value =
-            '${event.width.toInt()}x${event.height.toInt()}'.toNativeUtf8();
-        mpv.mpv_set_option_string(
-          Pointer.fromAddress(handle),
-          name.cast(),
-          value.cast(),
-        );
-        calloc.free(name);
-        calloc.free(value);
+        if (!enableHardwareAcceleration) {
+          rect.value = Rect.zero;
+          // ----------------------------------------------
+          // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
+          // In native Android, this kind of rendering is done with `android.view.SurfaceView` + `android.view.SurfaceHolder`, which offers `onSurfaceChanged` callback to handle this.
+          //
+          // NOTE: Not needed with --vo=mediacodec_embed.
+          final handle = await player.handle;
+          await _channel.invokeMethod(
+            'VideoOutputManager.SetSurfaceTextureSize',
+            {
+              'handle': handle.toString(),
+              'width': event.width.toInt().toString(),
+              'height': event.height.toInt().toString(),
+            },
+          );
+          NativeLibrary.ensureInitialized();
+          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+          final name = 'android-surface-size'.toNativeUtf8();
+          final value =
+              '${event.width.toInt()}x${event.height.toInt()}'.toNativeUtf8();
+          mpv.mpv_set_option_string(
+            Pointer.fromAddress(handle),
+            name.cast(),
+            value.cast(),
+          );
+          calloc.free(name);
+          calloc.free(value);
+        }
         // ----------------------------------------------
         rect.value = event;
       }),
@@ -156,7 +158,7 @@ class VideoControllerAndroid extends VideoController {
             'force-window': 'yes',
             'hwdec': 'mediacodec',
             'gpu-context': 'android',
-            'vo': 'gpu',
+            'vo': 'mediacodec_embed',
             'wid': wid.toString(),
           }
         : {
@@ -177,9 +179,8 @@ class VideoControllerAndroid extends VideoController {
             'wid': wid.toString(),
           };
     // TODO(@alexmercerind): Few other rendering options might be worth exposing to clients in the future e.g.
-    // * --vo=mediacodec_embed + --hwdec=mediacodec
-    // * --vo=mediacodec_embed + --hwdec=mediacodec-copy
-
+    // * --vo=gpu + --hwdec=mediacodec
+    // * --vo=gpu + --hwdec=mediacodec-copy
     values.addAll(
       {
         'sub-use-margins': 'no',
