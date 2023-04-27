@@ -1100,11 +1100,9 @@ class Player extends PlatformPlayer {
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_LOG_MESSAGE) {
       final eventLogMessage =
           event.ref.data.cast<generated.mpv_event_log_message>().ref;
-
       final prefix = eventLogMessage.prefix.cast<Utf8>().toDartString().trim();
       final level = eventLogMessage.level.cast<Utf8>().toDartString().trim();
       final text = eventLogMessage.text.cast<Utf8>().toDartString().trim();
-
       if (!logController.isClosed) {
         logController.add(
           PlayerLog(
@@ -1113,6 +1111,84 @@ class Player extends PlatformPlayer {
             text: text,
           ),
         );
+      }
+    }
+    // Handle HTTP headers specified in the [Media].
+    if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_HOOK) {
+      final prop = event.ref.data.cast<generated.mpv_event_hook>();
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'on_load') {
+        final ctx = await _handle.future;
+        try {
+          final name = 'path'.toNativeUtf8();
+          final uri = _libmpv?.mpv_get_property_string(
+            ctx,
+            name.cast(),
+          );
+          if (uri != null) {
+            // Get the headers for current [Media] by looking up [uri] in the [HashMap].
+            final headers =
+                medias[uri.cast<Utf8>().toDartString()]?.httpHeaders;
+            if (headers != null) {
+              final property = 'http-header-fields'.toNativeUtf8();
+              // Allocate & fill the [mpv_node] with the headers.
+              final value = calloc<generated.mpv_node>();
+              value.ref.format = generated.mpv_format.MPV_FORMAT_NODE_ARRAY;
+              value.ref.u.list = calloc<generated.mpv_node_list>();
+              value.ref.u.list.ref.num = headers.length;
+              value.ref.u.list.ref.values = calloc<generated.mpv_node>(
+                headers.length,
+              );
+              for (int i = 0; i < headers.entries.length; i++) {
+                final k = headers.entries.elementAt(i).key;
+                final v = headers.entries.elementAt(i).value;
+                final data = '$k: $v'.toNativeUtf8();
+                value.ref.u.list.ref.values[i].format =
+                    generated.mpv_format.MPV_FORMAT_STRING;
+                value.ref.u.list.ref.values[i].u.string = data.cast();
+              }
+              _libmpv?.mpv_set_property(
+                ctx,
+                property.cast(),
+                generated.mpv_format.MPV_FORMAT_NODE,
+                value.cast(),
+              );
+              // Free the allocated memory.
+              calloc.free(property);
+              for (int i = 0; i < value.ref.u.list.ref.num; i++) {
+                calloc.free(value.ref.u.list.ref.values[i].u.string);
+              }
+              calloc.free(value.ref.u.list.ref.values);
+              calloc.free(value.ref.u.list);
+              calloc.free(value);
+            }
+            _libmpv?.mpv_free(uri.cast());
+          }
+          calloc.free(name);
+        } catch (exception, stacktrace) {
+          print(exception);
+          print(stacktrace);
+        }
+        _libmpv?.mpv_hook_continue(ctx, prop.ref.id);
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'on_unload') {
+        final ctx = await _handle.future;
+        try {
+          // Set http-header-fields as empty [generated.mpv_node].
+          final property = 'http-header-fields'.toNativeUtf8();
+          final value = calloc<generated.mpv_node>();
+          _libmpv?.mpv_set_property(
+            ctx,
+            property.cast(),
+            generated.mpv_format.MPV_FORMAT_NODE,
+            value.cast(),
+          );
+          calloc.free(property);
+          calloc.free(value);
+        } catch (exception, stacktrace) {
+          print(exception);
+          print(stacktrace);
+        }
+        _libmpv?.mpv_hook_continue(ctx, prop.ref.id);
       }
     }
   }
@@ -1333,6 +1409,17 @@ class Player extends PlatformPlayer {
         calloc.free(minLevel);
       }
     }
+
+    // Add libmpv hooks for supporting custom HTTP headers in [Media].
+    {
+      final load = 'on_load'.toNativeUtf8();
+      final unload = 'on_unload'.toNativeUtf8();
+      _libmpv?.mpv_hook_add(result, 0, load.cast(), 0);
+      _libmpv?.mpv_hook_add(result, 0, unload.cast(), 0);
+      calloc.free(load);
+      calloc.free(unload);
+    }
+
     // The initialization is complete.
     // Save the [Pointer<generated.mpv_handle>] & complete the [Future].
     _handle.complete(result);
