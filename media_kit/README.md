@@ -69,7 +69,7 @@ dependencies:
 **Notes:**
 
 - If app needs both video & audio playback, select video playback libraries.
-- media_kit_libs_*** packages may be omitted depending upon the platform your app targets. 
+- media_kit_libs_*** packages may be omitted depending upon the platform your app targets.
 
 ## Platforms
 
