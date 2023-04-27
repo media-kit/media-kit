@@ -74,6 +74,12 @@ class PlayerState {
   /// Currently playing video's height.
   final int? height;
 
+  /// Currently playing visible primary subtitles.
+  final String primarySubtitles;
+
+  /// Currently playing visible secondary subtitles.
+  final String secondarySubtitles;
+
   /// {@macro player_state}
   const PlayerState({
     this.playlist = const Playlist([]),
@@ -94,6 +100,8 @@ class PlayerState {
     this.tracks = const Tracks(),
     this.width,
     this.height,
+    this.primarySubtitles = "",
+    this.secondarySubtitles = "",
   });
 
   PlayerState copyWith({
@@ -115,6 +123,8 @@ class PlayerState {
     Tracks? tracks,
     int? width,
     int? height,
+    String? primarySubtitles,
+    String? secondarySubtitles,
   }) {
     return PlayerState(
       playlist: playlist ?? this.playlist,
@@ -135,6 +145,8 @@ class PlayerState {
       tracks: tracks ?? this.tracks,
       width: width ?? this.width,
       height: height ?? this.height,
+      primarySubtitles: primarySubtitles ?? this.primarySubtitles,
+      secondarySubtitles: secondarySubtitles ?? this.secondarySubtitles,
     );
   }
 

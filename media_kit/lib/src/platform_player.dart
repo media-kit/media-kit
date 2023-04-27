@@ -61,6 +61,8 @@ abstract class PlatformPlayer {
     tracksController.stream,
     widthController.stream,
     heightController.stream,
+    primarySubtitlesController.stream,
+    secondarySubtitlesController.stream,
   );
 
   @mustCallSuper
@@ -86,6 +88,8 @@ abstract class PlatformPlayer {
           tracksController.close(),
           widthController.close(),
           heightController.close(),
+          primarySubtitlesController.close(),
+          secondarySubtitlesController.close(),
         ],
       );
 
@@ -297,6 +301,14 @@ abstract class PlatformPlayer {
   @protected
   final StreamController<int> heightController =
       StreamController<int>.broadcast();
+
+  @protected
+  final StreamController<String> primarySubtitlesController =
+      StreamController<String>.broadcast();
+
+  @protected
+  final StreamController<String> secondarySubtitlesController =
+      StreamController<String>.broadcast();
 }
 
 /// {@template player_configuration}

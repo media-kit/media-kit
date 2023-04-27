@@ -7,6 +7,7 @@ import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'package:ffi/ffi.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:path/path.dart' as path;
 import 'package:synchronized/synchronized.dart';
 
@@ -1344,6 +1345,38 @@ class Player extends PlatformPlayer {
             }
           }
         }
+        state = state.copyWith(
+          primarySubtitles: "",
+          secondarySubtitles: "",
+        );
+        if (!primarySubtitlesController.isClosed) {
+          primarySubtitlesController.add("");
+        }
+        if (!secondarySubtitlesController.isClosed) {
+          secondarySubtitlesController.add("");
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'sub-text' && prop.ref.format == generated.mpv_format.MPV_FORMAT_STRING) {
+        //fixme: prop.ref.data.cast<Utf8>(); is not working
+        final pointer = await _libmpv!.mpv_get_property_string(await _handle.future, prop.ref.name);
+        final value = pointer == nullptr ? null : pointer.cast<Utf8>().toDartString();
+        if (!primarySubtitlesController.isClosed) {
+          primarySubtitlesController.add(value ?? "");
+        }
+        state = state.copyWith(
+          primarySubtitles: value ?? "",
+        );
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'secondary-sub-text' && prop.ref.format == generated.mpv_format.MPV_FORMAT_STRING) {
+        //fixme: prop.ref.data.cast<Utf8>(); is not working
+        final pointer = await _libmpv!.mpv_get_property_string(await _handle.future, prop.ref.name);
+        final value = pointer == nullptr ? null : pointer.cast<Utf8>().toDartString();
+        if (!secondarySubtitlesController.isClosed) {
+          secondarySubtitlesController.add(value ?? "");
+        }
+        state = state.copyWith(
+          secondarySubtitles: value ?? "",
+        );
       }
     }
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_LOG_MESSAGE) {
@@ -1520,6 +1553,8 @@ class Player extends PlatformPlayer {
       'width': generated.mpv_format.MPV_FORMAT_INT64,
       'height': generated.mpv_format.MPV_FORMAT_INT64,
       'eof-reached': generated.mpv_format.MPV_FORMAT_FLAG,
+      'sub-text': generated.mpv_format.MPV_FORMAT_STRING,
+      'secondary-sub-text': generated.mpv_format.MPV_FORMAT_STRING,
     }.forEach(
       (property, format) {
         final name = property.toNativeUtf8();

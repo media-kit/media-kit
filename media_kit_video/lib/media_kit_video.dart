@@ -6,3 +6,4 @@
 
 export 'package:media_kit_video/src/video.dart';
 export 'package:media_kit_video/src/video_controller.dart';
+export 'package:media_kit_video/src/subtitles_view.dart';

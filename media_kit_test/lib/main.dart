@@ -11,6 +11,7 @@ import 'tests/06.paint_first_frame.dart';
 import 'tests/07.video_controller_set_size.dart';
 
 import 'common/sources.dart';
+import 'tests/08.single_player_with_subtitle_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -171,6 +172,21 @@ class PrimaryScreen extends StatelessWidget {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => const VideoControllerSetSizeScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            title: const Text(
+              '08.single_player_with_subtitles_view.dart',
+              style: TextStyle(fontSize: 14.0),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SinglePlayerWithSubtitleViewScreen(),
                 ),
               );
             },

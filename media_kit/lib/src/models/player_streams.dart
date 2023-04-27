@@ -83,6 +83,12 @@ class PlayerStreams {
   /// Currently playing video's height.
   final Stream<int> height;
 
+  /// Currently playing visible primary subtitles.
+  final Stream<String> primarySubtitles;
+
+  /// Currently playing visible secondary subtitles.
+  final Stream<String> secondarySubtitles;
+
   /// {@macro player_streams}
   const PlayerStreams(
     this.playlist,
@@ -105,5 +111,7 @@ class PlayerStreams {
     this.tracks,
     this.width,
     this.height,
+    this.primarySubtitles,
+    this.secondarySubtitles,
   );
 }
