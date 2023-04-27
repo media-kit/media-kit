@@ -64,7 +64,7 @@ Pod::Spec.new do |s|
 
   if libs_dep_found
     s.source_files        = 'Classes/**/*'
-    s.platform            = :osx, '11.0'
+    s.platform            = :osx, '10.9'
     s.swift_version       = '5.0'
     s.pod_target_xcconfig = {
       'DEFINES_MODULE'                      => 'YES',
