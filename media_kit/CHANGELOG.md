@@ -1,3 +1,7 @@
+## 0.0.7+1
+
+- docs: document updated `media_kit_libs_android_video` and `media_kit_libs_android_audio`
+
 ## 0.0.7
 
 - fix: `MediaKit.ensureInitialized` not passing optional `libmpv` argument
