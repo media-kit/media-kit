@@ -81,6 +81,11 @@ class Player extends PlatformPlayer {
         command.cast(),
       );
       calloc.free(command);
+
+      // Wake up in order to stop hanging mpv_wait_event within event loop.
+      _libmpv?.mpv_wakeup(ctx);
+
+
       super.dispose();
     }
 

@@ -79,6 +79,7 @@ abstract class InitializerNativeEventLoop {
 
     // Create [mpv_handle] & initialize it.
     final mpv = MPV(DynamicLibrary.open(path));
+    globalMpv ??= mpv;
 
     final handle = mpv.mpv_create();
 
@@ -112,6 +113,8 @@ abstract class InitializerNativeEventLoop {
     return handle;
   }
 
+  static MPV? globalMpv;
+
   /// [ReceivePort] used to listen for `mpv_event`(s) from the native event loop.
   /// A single [ReceivePort] is used for multiple instances.
   static final _receiver = ReceivePort()
@@ -122,6 +125,12 @@ abstract class InitializerNativeEventLoop {
           final event = Pointer<mpv_event>.fromAddress(message[1]);
           if (event.ref.event_id == mpv_event_id.MPV_EVENT_SHUTDOWN) {
             _callbacks.remove(handle);
+
+            // if android, also call mpv_terminate_destroy
+            if(Platform.isAndroid){
+              print("DESTROYED!!!!");
+              globalMpv?.mpv_terminate_destroy(Pointer.fromAddress(handle));
+            }
           } else {
             // Notify public event handler.
             await _callbacks[handle]?.call(event);
