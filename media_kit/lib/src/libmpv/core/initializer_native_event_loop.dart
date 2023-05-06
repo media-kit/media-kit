@@ -79,7 +79,6 @@ abstract class InitializerNativeEventLoop {
 
     // Create [mpv_handle] & initialize it.
     final mpv = MPV(DynamicLibrary.open(path));
-    globalMpv ??= mpv;
 
     final handle = mpv.mpv_create();
 
@@ -112,8 +111,6 @@ abstract class InitializerNativeEventLoop {
 
     return handle;
   }
-
-  static MPV? globalMpv;
 
   /// [ReceivePort] used to listen for `mpv_event`(s) from the native event loop.
   /// A single [ReceivePort] is used for multiple instances.
