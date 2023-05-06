@@ -123,17 +123,10 @@ abstract class InitializerNativeEventLoop {
         try {
           final handle = message[0] as int;
           final event = Pointer<mpv_event>.fromAddress(message[1]);
+          await _callbacks[handle]?.call(event);
+
           if (event.ref.event_id == mpv_event_id.MPV_EVENT_SHUTDOWN) {
             _callbacks.remove(handle);
-
-            // if android, also call mpv_terminate_destroy
-            if(Platform.isAndroid){
-              print("DESTROYED!!!!");
-              globalMpv?.mpv_terminate_destroy(Pointer.fromAddress(handle));
-            }
-          } else {
-            // Notify public event handler.
-            await _callbacks[handle]?.call(event);
           }
         } catch (exception, stacktrace) {
           print(exception);

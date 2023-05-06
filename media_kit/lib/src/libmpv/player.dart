@@ -74,6 +74,7 @@ class Player extends PlatformPlayer {
       calloc.free(aid);
       calloc.free(sid);
       calloc.free(no);
+
       // Raw [mpv_command] calls cause crash on Windows.
       final command = 'quit $code'.toNativeUtf8();
       _libmpv?.mpv_command_string(
@@ -82,9 +83,19 @@ class Player extends PlatformPlayer {
       );
       calloc.free(command);
 
-      // Wake up in order to stop hanging mpv_wait_event within event loop.
+      // Wake up in order to skip potentially hanging `mpv_wait_event()` within event loop.
       _libmpv?.mpv_wakeup(ctx);
 
+      // Wait for shutdown event to actually occur. 
+      // If timed out, don't do anything. Perhaps implement a solution to handle this in the future.
+      await _mpvShutdownComplete.future.timeout(Duration(seconds: 3), onTimeout: () {});
+
+      // On android, calling `quit 0` does not actually clean the resources.
+      // We must call `mpv_destroy()` in order to prevent extremely high CPU usage.
+      // In the future, find out whether other platforms require this as well.
+      if(Platform.isAndroid){
+        _libmpv?.mpv_destroy(ctx);
+      }
 
       super.dispose();
     }
@@ -1367,6 +1378,11 @@ class Player extends PlatformPlayer {
         );
       }
     }
+
+    // Complete the shutdown future when MPV_EVENT_SHUTDOWN is received.
+    if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_SHUTDOWN) {
+      _mpvShutdownComplete.complete();
+    }
   }
 
   Future<void> _create() async {
@@ -1669,6 +1685,9 @@ class Player extends PlatformPlayer {
   /// [Pointer] to [generated.mpv_handle] of this instance.
   final Completer<Pointer<generated.mpv_handle>> _handle =
       Completer<Pointer<generated.mpv_handle>>();
+
+  // [Completer] that signifies that `MPV_EVENT_SHUTDOWN`
+  final Completer<void> _mpvShutdownComplete = Completer<void>();
 
   /// A simple flag to prevent changes to [state.playing] due to `loadfile` commands in [open].
   ///
