@@ -120,11 +120,15 @@ abstract class InitializerNativeEventLoop {
         try {
           final handle = message[0] as int;
           final event = Pointer<mpv_event>.fromAddress(message[1]);
-          await _callbacks[handle]?.call(event);
 
+          final callback = _callbacks[handle];
           if (event.ref.event_id == mpv_event_id.MPV_EVENT_SHUTDOWN) {
+            // First remove from callbacks list before calling callback to prevent weird races.
             _callbacks.remove(handle);
           }
+
+          // Notify public event handler.
+          await callback?.call(event);
         } catch (exception, stacktrace) {
           print(exception);
           print(stacktrace);

@@ -90,12 +90,10 @@ class Player extends PlatformPlayer {
       // If timed out, don't do anything. Perhaps implement a solution to handle this in the future.
       await _mpvShutdownComplete.future.timeout(Duration(seconds: 3), onTimeout: () {});
 
-      // On android, calling `quit 0` does not actually clean the resources.
+      // On Android, calling `quit 0` does not actually clean the resources.
       // We must call `mpv_destroy()` in order to prevent extremely high CPU usage.
-      // In the future, find out whether other platforms require this as well.
-      if(Platform.isAndroid){
-        _libmpv?.mpv_destroy(ctx);
-      }
+      // This should also be useful for other platforms.
+      _libmpv?.mpv_destroy(ctx);
 
       super.dispose();
     }
