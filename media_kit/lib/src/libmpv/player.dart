@@ -1686,7 +1686,7 @@ class Player extends PlatformPlayer {
   final Completer<Pointer<generated.mpv_handle>> _handle =
       Completer<Pointer<generated.mpv_handle>>();
 
-  // [Completer] that signifies that `MPV_EVENT_SHUTDOWN`
+  // [Completer] that signifies that the `MPV_EVENT_SHUTDOWN` event was received. 
   final Completer<void> _mpvShutdownComplete = Completer<void>();
 
   /// A simple flag to prevent changes to [state.playing] due to `loadfile` commands in [open].
