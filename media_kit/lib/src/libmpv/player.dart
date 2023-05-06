@@ -92,8 +92,10 @@ class Player extends PlatformPlayer {
 
       // On Android, calling `quit 0` does not actually clean the resources.
       // We must call `mpv_destroy()` in order to prevent extremely high CPU usage.
-      // This should also be useful for other platforms.
-      _libmpv?.mpv_destroy(ctx);
+      // This can cause crashes on other platforms, so we run it on Android only - where it is necessary.
+      if(Platform.isAndroid){
+        _libmpv?.mpv_destroy(ctx);
+      }
 
       super.dispose();
     }
