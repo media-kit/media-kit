@@ -11,6 +11,7 @@ import 'package:path/path.dart' as path;
 import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/src/platform_player.dart';
+import 'package:media_kit/src/libmpv/core/task_queue.dart';
 import 'package:media_kit/src/libmpv/core/initializer.dart';
 import 'package:media_kit/src/libmpv/core/native_library.dart';
 import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
@@ -56,7 +57,6 @@ class Player extends PlatformPlayer {
         'set vid no',
         'set aid no',
         'set sid no',
-        'quit',
       ];
       for (final command in commands) {
         final data = command.toNativeUtf8();
@@ -66,6 +66,10 @@ class Player extends PlatformPlayer {
         );
         calloc.free(data);
       }
+      TaskQueue.instance.add(() {
+        _libmpv?.mpv_terminate_destroy(ctx);
+        print('media_kit: mpv_terminate_destroy: ${ctx.address}');
+      });
       super.dispose();
     }
 
