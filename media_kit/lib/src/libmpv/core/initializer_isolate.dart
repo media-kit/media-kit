@@ -13,9 +13,9 @@ import 'package:media_kit/generated/libmpv/bindings.dart';
 /// InitializerIsolate
 /// ------------------
 ///
-/// Creates & returns initialized [Pointer] to [mpv_handle] whose event loop is running on separate isolate.
+/// Creates & returns initialized [Pointer<mpv_handle>] whose event loop is running on separate isolate.
 abstract class InitializerIsolate {
-  /// Creates & returns initialized [Pointer] to [mpv_handle] whose event loop is running on separate isolate.
+  /// Creates & returns initialized [Pointer<mpv_handle>] whose event loop is running on separate isolate.
   static Future<Pointer<mpv_handle>> create(
     String path,
     Future<void> Function(Pointer<mpv_event> event)? callback,
@@ -44,7 +44,7 @@ abstract class InitializerIsolate {
       mpv.mpv_initialize(handle);
       return handle;
     } else {
-      // Used to wait for retrieval of [Pointer] to [mpv_handle] from the running isolate.
+      // Used to wait for retrieval of [Pointer<mpv_handle>] from the running isolate.
       final completer = Completer();
       // Used to receive events from the separate isolate.
       final receiver = ReceivePort();
@@ -66,7 +66,7 @@ abstract class InitializerIsolate {
             port.send(options);
             port.send(path);
           }
-          // Receiving [Pointer] to [mpv_handle] created by separate isolate.
+          // Receiving [Pointer<mpv_handle>] created by separate isolate.
           else if (!completer.isCompleted && message is int) {
             handle = Pointer.fromAddress(message);
             completer.complete();
@@ -84,7 +84,7 @@ abstract class InitializerIsolate {
           }
         },
       );
-      // Awaiting the retrieval of [Pointer] to [mpv_handle].
+      // Awaiting the retrieval of [Pointer<mpv_handle>].
       await completer.future;
       return handle;
     }
@@ -98,8 +98,8 @@ abstract class InitializerIsolate {
   /// Uses [MPV.mpv_wait_event] to wait for the next event & notifies through the passed [SendPort] as the argument.
   ///
   /// First value sent through the [SendPort] is [SendPort] of the internal [ReceivePort].
-  /// Second value sent through the [SendPort] is raw address of the [Pointer] to [mpv_handle] created by the isolate.
-  /// Subsequent sent values are [Pointer] to [mpv_event].
+  /// Second value sent through the [SendPort] is raw address of the [Pointer<mpv_handle>] created by the isolate.
+  /// Subsequent sent values are [Pointer<mpv_event>].
   @pragma('vm:entry-point')
   static void _mainloop(SendPort port) async {
     // [Completer] used to ensure that the last [mpv_event] is NOT reset to [mpv_event_id.MPV_EVENT_NONE] after waiting using [MPV.mpv_wait_event] again in the continuously running while loop.
@@ -132,6 +132,7 @@ abstract class InitializerIsolate {
         } else if (message == null) {
           if (handle != null) {
             mpv.mpv_wakeup(handle);
+            // TODO(@alexmercerind): Missing implementation.
           }
         }
       },
@@ -172,9 +173,6 @@ abstract class InitializerIsolate {
       port.send(event.address);
       // Ensuring that the last [mpv_event] (which is at the same address) is NOT reset to [mpv_event_id.MPV_EVENT_NONE] after next [MPV.mpv_wait_event] in the loop.
       await completer.future;
-      if (event.ref.event_id == mpv_event_id.MPV_EVENT_SHUTDOWN) {
-        break;
-      }
     }
   }
 }

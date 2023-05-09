@@ -64,7 +64,7 @@ abstract class PlatformPlayer {
   );
 
   @mustCallSuper
-  FutureOr<void> dispose({int code = 0}) => Future.wait(
+  FutureOr<void> dispose() => Future.wait(
         [
           playlistController.close(),
           playingController.close(),

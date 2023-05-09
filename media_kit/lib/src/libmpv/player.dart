@@ -48,39 +48,24 @@ class Player extends PlatformPlayer {
 
   /// Disposes the [Player] instance & releases the resources.
   @override
-  Future<void> dispose({int code = 0, bool synchronized = true}) {
+  Future<void> dispose({bool synchronized = true}) {
     function() async {
       final ctx = await _handle.future;
-      final vid = 'vid'.toNativeUtf8();
-      final aid = 'aid'.toNativeUtf8();
-      final sid = 'sid'.toNativeUtf8();
-      final no = 'no'.toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
-        ctx,
-        vid.cast(),
-        no.cast(),
-      );
-      _libmpv?.mpv_set_property_string(
-        ctx,
-        aid.cast(),
-        no.cast(),
-      );
-      _libmpv?.mpv_set_property_string(
-        ctx,
-        sid.cast(),
-        no.cast(),
-      );
-      calloc.free(vid);
-      calloc.free(aid);
-      calloc.free(sid);
-      calloc.free(no);
-      // Raw [mpv_command] calls cause crash on Windows.
-      final command = 'quit $code'.toNativeUtf8();
-      _libmpv?.mpv_command_string(
-        ctx,
-        command.cast(),
-      );
-      calloc.free(command);
+      Initializer.dispose(ctx);
+      final commands = [
+        'set vid no',
+        'set aid no',
+        'set sid no',
+        'quit',
+      ];
+      for (final command in commands) {
+        final data = command.toNativeUtf8();
+        _libmpv?.mpv_command_string(
+          ctx,
+          data.cast(),
+        );
+        calloc.free(data);
+      }
       super.dispose();
     }
 

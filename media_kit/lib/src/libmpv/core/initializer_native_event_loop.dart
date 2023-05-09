@@ -15,7 +15,7 @@ import 'package:media_kit/generated/libmpv/bindings.dart';
 /// InitializerNativeEventLoop
 /// --------------------------
 ///
-/// Creates & returns initialized [Pointer] to [mpv_handle] whose event loop is running on native thread.
+/// Creates & returns initialized [Pointer<mpv_handle>] whose event loop is running on native thread.
 ///
 /// See:
 /// * https://github.com/alexmercerind/media_kit/issues/40
@@ -52,6 +52,10 @@ abstract class InitializerNativeEventLoop {
           MediaKitEventLoopHandlerNotifyDart>(
         'MediaKitEventLoopHandlerNotify',
       );
+      _dispose = dylib.lookupFunction<MediaKitEventLoopHandlerDisposeCXX,
+          MediaKitEventLoopHandlerDisposeDart>(
+        'MediaKitEventLoopHandlerDispose',
+      );
 
       // Initialize the native event loop handler.
       _initialize?.call();
@@ -62,7 +66,7 @@ abstract class InitializerNativeEventLoop {
     }
   }
 
-  /// Creates & returns initialized [Pointer] to [mpv_handle] whose event loop is running on native thread.
+  /// Creates & returns initialized [Pointer<mpv_handle>] whose event loop is running on native thread.
   static Future<Pointer<mpv_handle>> create(
     String path,
     Future<void> Function(Pointer<mpv_event> event)? callback,
@@ -112,6 +116,13 @@ abstract class InitializerNativeEventLoop {
     return handle;
   }
 
+  /// Disposes the event loop of the [Pointer<mpv_handle>] created by [create].
+  /// NOTE: [Pointer<mpv_handle>] itself is not disposed.
+  static void dispose(Pointer<mpv_handle> handle) {
+    _dispose?.call(handle.address);
+    _callbacks.remove(handle.address);
+  }
+
   /// [ReceivePort] used to listen for `mpv_event`(s) from the native event loop.
   /// A single [ReceivePort] is used for multiple instances.
   static final _receiver = ReceivePort()
@@ -120,12 +131,8 @@ abstract class InitializerNativeEventLoop {
         try {
           final handle = message[0] as int;
           final event = Pointer<mpv_event>.fromAddress(message[1]);
-          if (event.ref.event_id == mpv_event_id.MPV_EVENT_SHUTDOWN) {
-            _callbacks.remove(handle);
-          } else {
-            // Notify public event handler.
-            await _callbacks[handle]?.call(event);
-          }
+          // Notify public event handler.
+          await _callbacks[handle]?.call(event);
         } catch (exception, stacktrace) {
           print(exception);
           print(stacktrace);
@@ -144,6 +151,7 @@ abstract class InitializerNativeEventLoop {
   static MediaKitEventLoopHandlerInitializeDart? _initialize;
   static MediaKitEventLoopHandlerRegisterDart? _register;
   static MediaKitEventLoopHandlerNotifyDart? _notify;
+  static MediaKitEventLoopHandlerDisposeDart? _dispose;
 }
 
 // Type definitions for native functions in the shared library.
@@ -157,6 +165,7 @@ typedef MediaKitEventLoopHandlerRegisterCXX = Void Function(
   Int64 port,
 );
 typedef MediaKitEventLoopHandlerNotifyCXX = Void Function(Int64 handle);
+typedef MediaKitEventLoopHandlerDisposeCXX = Void Function(Int64 handle);
 
 // Dart:
 
@@ -167,3 +176,4 @@ typedef MediaKitEventLoopHandlerRegisterDart = void Function(
   int port,
 );
 typedef MediaKitEventLoopHandlerNotifyDart = void Function(int handle);
+typedef MediaKitEventLoopHandlerDisposeDart = void Function(int handle);

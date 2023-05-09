@@ -10,15 +10,15 @@ import 'initializer_native_event_loop.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
 
-/// Creates & returns initialized [Pointer] to [mpv_handle].
-/// Pass [path] to libmpv dynamic library & [callback] to receive event callbacks as [Pointer] to [mpv_event].
+/// Creates & returns initialized [Pointer<mpv_handle>].
+/// Pass [path] to libmpv dynamic library & [callback] to receive event callbacks as [Pointer<mpv_event>].
 ///
 /// Optionally, [options] may be passed to set libmpv options before the initialization.
 ///
 /// Platform specific threaded event loop is preferred over [Isolate] based event loop (automatic fallback).
 /// See package:media_kit_native_event_loop for more details.
-///
 abstract class Initializer {
+  /// Creates & returns initialized [Pointer<mpv_handle>].
   static Future<Pointer<mpv_handle>> create(
     String path,
     Future<void> Function(Pointer<mpv_event> event)? callback, {
@@ -36,6 +36,17 @@ abstract class Initializer {
         callback,
         options,
       );
+    }
+  }
+
+  /// Disposes the event loop of the [Pointer<mpv_handle>] created by [create].
+  /// NOTE: [Pointer<mpv_handle>] itself is not disposed.
+  static void dispose(Pointer<mpv_handle> handle) {
+    try {
+      InitializerNativeEventLoop.dispose(handle);
+    } catch (_) {
+      // TODO(@alexmercerind): Missing implementation.
+      // InitializerIsolate.dispose(handle);
     }
   }
 }

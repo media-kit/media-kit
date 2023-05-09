@@ -133,7 +133,7 @@ class Player {
   PlayerStreams get streams => platform!.streams;
 
   /// Disposes the [Player] instance & releases the resources.
-  FutureOr<void> dispose({int code = 0}) {
+  FutureOr<void> dispose() {
     return platform?.dispose();
   }
 
