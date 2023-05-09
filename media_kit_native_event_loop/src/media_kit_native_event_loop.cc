@@ -14,18 +14,26 @@ MediaKitEventLoopHandler& MediaKitEventLoopHandler::GetInstance() {
 }
 
 void MediaKitEventLoopHandler::Initialize() {
-  std::lock_guard<std::mutex> l(mutex_);
-  if (mutexes_.size() > 0 && promises_.size() > 0) {
-    // Destroy already running |mpv_handle|(s).
-    std::cout << "media_kit: "
-              << "Destroying " << mutexes_.size() << " [Player] instances..."
-              << std::endl;
-    for (auto& [handle, _] : mutexes_) {
-      mpv_command_string(handle, "quit 0");
+  auto contexts = std::vector<mpv_handle*>{};
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto& [context, _] : promises_) {
+      contexts.push_back(context);
     }
-    std::cout << "media_kit: Done." << std::endl;
-    mutexes_.clear();
+  }
+  for (auto& context : contexts) {
+    // Release the |MediaKitEventLoopHandler| resources.
+    Dispose(reinterpret_cast<int64_t>(context));
+    // Release the internal libmpv resources.
+    mpv_command_string(context, "set vid no");
+    mpv_command_string(context, "set aid no");
+    mpv_command_string(context, "set sid no");
+    mpv_command_string(context, "quit");
+  }
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
     promises_.clear();
+    disposed_.clear();
   }
 }
 
@@ -37,12 +45,24 @@ void MediaKitEventLoopHandler::Register(int64_t handle,
 
     for (;;) {
       {
-        std::lock_guard<std::mutex> l(mutex_);
-        std::lock_guard<std::mutex> lock(mutexes_[context]);
+        std::lock_guard<std::mutex> lock(mutex_);
         promises_[context] = std::promise<void>();
       }
 
       auto event = mpv_wait_event(context, -1);
+
+      {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (disposed_.find(context) != disposed_.end()) {
+          // The |context| was marked as |Dispose|'d.
+          std::cout << "MediaKitEventLoopHandler::Dispose: "
+                    << reinterpret_cast<int64_t>(context) << std::endl;
+          promises_.erase(context);
+          // Notify |Dispose| to return.
+          disposed_[context].set_value();
+          break;
+        }
+      }
 
       // [mpv_handle*, mpv_event*]
       Dart_CObject mpv_handle_object;
@@ -62,15 +82,6 @@ void MediaKitEventLoopHandler::Register(int64_t handle,
           reinterpret_cast<bool (*)(Dart_Port, Dart_CObject*)>(post_c_object);
       fn(send_port, &event_object);
 
-      if (event->event_id == MPV_EVENT_SHUTDOWN) {
-        std::cout << "media_kit: " << reinterpret_cast<int64_t>(context) << " "
-                  << "MPV_EVENT_SHUTDOWN" << std::endl;
-        std::lock_guard<std::mutex> l(mutex_);
-        mutexes_.erase(context);
-        promises_.erase(context);
-        break;
-      }
-
       // Interpret the event inside Dart.
       // Wait for |MediaKitEventLoopHandler::Notify| to be called.
       promises_[context].get_future().wait();
@@ -80,10 +91,30 @@ void MediaKitEventLoopHandler::Register(int64_t handle,
 
 void MediaKitEventLoopHandler::Notify(int64_t handle) {
   auto context = reinterpret_cast<mpv_handle*>(handle);
-  std::lock_guard<std::mutex> l(mutex_);
-  std::lock_guard<std::mutex> lock(mutexes_[context]);
-  // Allow next |mpv_wait_event| to be called.
-  promises_[context].set_value();
+  if (disposed_.find(context) != disposed_.end()) {
+    // The |context| was marked as |Dispose|'d.
+    return;
+  }
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    // Allow next |mpv_wait_event| to be called.
+    promises_[context].set_value();
+  }
+}
+
+void MediaKitEventLoopHandler::Dispose(int64_t handle) {
+  auto context = reinterpret_cast<mpv_handle*>(handle);
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    // Break out of the possible |promises_| wait on the Dart side.
+    promises_[context].set_value();
+    // Mark the |context| as |Dispose|'d.
+    disposed_[context] = std::promise<void>();
+  }
+  // Break out of the possible |mpv_wait_event| call.
+  mpv_wakeup(context);
+  // Wait for the event loop |std::thread| of that |context| to exit.
+  disposed_[context].get_future().wait();
 }
 
 MediaKitEventLoopHandler::MediaKitEventLoopHandler() {}
@@ -107,4 +138,8 @@ void MediaKitEventLoopHandlerRegister(int64_t handle,
 
 void MediaKitEventLoopHandlerNotify(int64_t handle) {
   MediaKitEventLoopHandler::GetInstance().Notify(handle);
+}
+
+void MediaKitEventLoopHandlerDispose(int64_t handle) {
+  MediaKitEventLoopHandler::GetInstance().Dispose(handle);
 }

@@ -22,9 +22,9 @@
 
 #include "dart_api_types.h"
 
+#include <functional>
 #include <future>
 #include <iostream>
-#include <functional>
 #include <unordered_map>
 
 class MediaKitEventLoopHandler {
@@ -37,6 +37,8 @@ class MediaKitEventLoopHandler {
 
   void Notify(int64_t handle);
 
+  void Dispose(int64_t handle);
+
   MediaKitEventLoopHandler(const MediaKitEventLoopHandler&) = delete;
 
   void operator=(const MediaKitEventLoopHandler&) = delete;
@@ -47,12 +49,8 @@ class MediaKitEventLoopHandler {
   ~MediaKitEventLoopHandler();
 
   std::mutex mutex_;
-
-  std::unordered_map<mpv_handle*, std::mutex> mutexes_;
-  // std::promise(s) are working very well & look more readable. I'm tired of
-  // dealing with std::condition_variable(s) which would eventually lead to
-  // deadlocks or stop working after a while.
   std::unordered_map<mpv_handle*, std::promise<void>> promises_;
+  std::unordered_map<mpv_handle*, std::promise<void>> disposed_;
 };
 
 // ---------------------------------------------------------------------------
@@ -76,6 +74,8 @@ DLLEXPORT void MediaKitEventLoopHandlerRegister(int64_t handle,
                                                 int64_t send_port);
 
 DLLEXPORT void MediaKitEventLoopHandlerNotify(int64_t handle);
+
+DLLEXPORT void MediaKitEventLoopHandlerDispose(int64_t handle);
 
 #ifdef __cplusplus
 }
