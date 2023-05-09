@@ -1394,7 +1394,7 @@ class Player extends PlatformPlayer {
       }
     }
 
-    final result = await create(
+    final result = await Initializer.create(
       NativeLibrary.path,
       _handler,
       options: options,

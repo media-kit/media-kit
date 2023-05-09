@@ -18,22 +18,24 @@ import 'package:media_kit/generated/libmpv/bindings.dart';
 /// Platform specific threaded event loop is preferred over [Isolate] based event loop (automatic fallback).
 /// See package:media_kit_native_event_loop for more details.
 ///
-Future<Pointer<mpv_handle>> create(
-  String path,
-  Future<void> Function(Pointer<mpv_event> event)? callback, {
-  Map<String, String> options = const {},
-}) async {
-  try {
-    return await InitializerNativeEventLoop.create(
-      path,
-      callback,
-      options,
-    );
-  } catch (_) {
-    return await InitializerIsolate.create(
-      path,
-      callback,
-      options,
-    );
+abstract class Initializer {
+  static Future<Pointer<mpv_handle>> create(
+    String path,
+    Future<void> Function(Pointer<mpv_event> event)? callback, {
+    Map<String, String> options = const {},
+  }) async {
+    try {
+      return await InitializerNativeEventLoop.create(
+        path,
+        callback,
+        options,
+      );
+    } catch (_) {
+      return await InitializerIsolate.create(
+        path,
+        callback,
+        options,
+      );
+    }
   }
 }

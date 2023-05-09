@@ -22,7 +22,7 @@ void main() {
     'initializer-create',
     () async {
       expect(
-        create(NativeLibrary.path, (_) async {}),
+        Initializer.create(NativeLibrary.path, (_) async {}),
         completes,
       );
     },
@@ -56,7 +56,7 @@ void main() {
         expect(true, isTrue);
       });
 
-      final handle = await create(
+      final handle = await Initializer.create(
         NativeLibrary.path,
         (event) async {
           if (event.ref.event_id == mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
@@ -111,7 +111,7 @@ void main() {
     'initializer-options-with-callback',
     () async {
       final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-      final handle = await create(
+      final handle = await Initializer.create(
         NativeLibrary.path,
         (_) async {},
         options: {
@@ -149,7 +149,7 @@ void main() {
     'initializer-options-without-callback',
     () async {
       final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-      final handle = await create(
+      final handle = await Initializer.create(
         NativeLibrary.path,
         null,
         options: {

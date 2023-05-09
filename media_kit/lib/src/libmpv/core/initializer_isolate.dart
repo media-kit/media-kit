@@ -116,6 +116,8 @@ abstract class InitializerIsolate {
     late Map<String, String> options;
     late MPV mpv;
 
+    Pointer<mpv_handle>? handle;
+
     // First received value is [Map<String, String>] of options.
     // Second received value is [String] of path to [DynamicLibrary].
     receiver.listen(
@@ -127,6 +129,10 @@ abstract class InitializerIsolate {
           completer.complete();
         } else if (message is bool) {
           completer.complete();
+        } else if (message == null) {
+          if (handle != null) {
+            mpv.mpv_wakeup(handle);
+          }
         }
       },
     );
@@ -135,7 +141,7 @@ abstract class InitializerIsolate {
     await completer.future;
 
     // Creating [mpv_handle].
-    final handle = mpv.mpv_create();
+    handle ??= mpv.mpv_create();
 
     // Set custom defined options before [mpv_initialize].
     for (final entry in options.entries) {

@@ -6,8 +6,6 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../common/globals.dart';
 import '../common/sources.dart';
 
-// ignore_for_file: use_build_context_synchronously
-
 Future<void> paintFirstFrame(BuildContext context) async {
   // Create [Player] and [VideoController] instances.
   List<Player> players = [
@@ -51,18 +49,20 @@ Future<void> paintFirstFrame(BuildContext context) async {
     );
   }
 
-  // Some voluntary delay.
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.wait(controllers.map((e) => e.waitUntilFirstFrameRendered));
 
   // The first frame should be painted!
-  await Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (context) => PaintFirstFrameScreen(
-        players: players,
-        controllers: controllers,
+  if (context.mounted) {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PaintFirstFrameScreen(
+          players: players,
+          controllers: controllers,
+        ),
       ),
-    ),
-  );
+    );
+  }
+
   for (final e in controllers) {
     await e.dispose();
   }
