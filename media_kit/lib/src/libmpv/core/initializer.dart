@@ -45,8 +45,7 @@ abstract class Initializer {
     try {
       InitializerNativeEventLoop.dispose(handle);
     } catch (_) {
-      // TODO(@alexmercerind): Missing implementation.
-      // InitializerIsolate.dispose(handle);
+      InitializerIsolate.dispose(handle);
     }
   }
 }

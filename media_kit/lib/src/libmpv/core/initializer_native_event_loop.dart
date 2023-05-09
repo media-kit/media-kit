@@ -72,10 +72,9 @@ abstract class InitializerNativeEventLoop {
     Future<void> Function(Pointer<mpv_event> event)? callback,
     Map<String, String> options,
   ) async {
-    // Native functions from the shared library should be resolved by now.
-    // If not, throw an exception.
+    // Native functions from the shared library should be resolved by now. If not, throw an exception.
     // Primarily, this will happen when the shared library is not found i.e. package:media_kit_native_event_loop is not installed.
-    if (_register == null || _notify == null) {
+    if (_register == null || _notify == null || _dispose == null) {
       throw Exception(
         'package:media_kit_native_event_loop shared library not loaded.',
       );
@@ -119,6 +118,13 @@ abstract class InitializerNativeEventLoop {
   /// Disposes the event loop of the [Pointer<mpv_handle>] created by [create].
   /// NOTE: [Pointer<mpv_handle>] itself is not disposed.
   static void dispose(Pointer<mpv_handle> handle) {
+    // Native functions from the shared library should be resolved by now. If not, throw an exception.
+    // Primarily, this will happen when the shared library is not found i.e. package:media_kit_native_event_loop is not installed.
+    if (_register == null || _notify == null || _dispose == null) {
+      throw Exception(
+        'package:media_kit_native_event_loop shared library not loaded.',
+      );
+    }
     _dispose?.call(handle.address);
     _callbacks.remove(handle.address);
   }
