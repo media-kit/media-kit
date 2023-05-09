@@ -22,9 +22,10 @@
 
 #include "dart_api_types.h"
 
-#include <functional>
 #include <future>
+#include <vector>
 #include <iostream>
+#include <functional>
 #include <unordered_map>
 
 class MediaKitEventLoopHandler {
