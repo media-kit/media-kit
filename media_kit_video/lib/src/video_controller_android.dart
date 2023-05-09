@@ -43,6 +43,14 @@ class VideoControllerAndroid extends VideoController {
     super.height,
     super.enableHardwareAcceleration,
   ) {
+    // Notify about the first frame being rendered.
+    // Case: If some [Media] is already playing when [VideoController] is created.
+    if (player.state.width != null && player.state.height != null) {
+      if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+        waitUntilFirstFrameRenderedCompleter.complete();
+      }
+    }
+
     // Merge the width & height [Stream]s into a single [Stream] of [Rect]s.
     int w = -1;
     int h = -1;
@@ -51,6 +59,10 @@ class VideoControllerAndroid extends VideoController {
         w = event;
         if (w != -1 && h != -1) {
           _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
+          // Notify about the first frame being rendered.
+          if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+            waitUntilFirstFrameRenderedCompleter.complete();
+          }
           w = -1;
           h = -1;
         }
@@ -61,6 +73,10 @@ class VideoControllerAndroid extends VideoController {
         h = event;
         if (w != -1 && h != -1) {
           _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
+          // Notify about the first frame being rendered.
+          if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+            waitUntilFirstFrameRenderedCompleter.complete();
+          }
           w = -1;
           h = -1;
         }

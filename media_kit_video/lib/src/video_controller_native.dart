@@ -161,6 +161,14 @@ class VideoControllerNative extends VideoController {
                     final int id = call.arguments['id'];
                     _controllers[handle]?.rect.value = rect;
                     _controllers[handle]?.id.value = id;
+                    // Notify about the first frame being rendered.
+                    if (rect.width > 0 && rect.height > 0) {
+                      final completer = _controllers[handle]
+                          ?.waitUntilFirstFrameRenderedCompleter;
+                      if (!(completer?.isCompleted ?? true)) {
+                        completer?.complete();
+                      }
+                    }
                     break;
                   }
                 default:

@@ -3,6 +3,8 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:media_kit/media_kit.dart';
 
@@ -119,4 +121,13 @@ abstract class VideoController {
       'id: $id, '
       'rect: $rect'
       ')';
+
+  /// A [Future] that completes when the first video frame has been rendered.
+  Future<void> get waitUntilFirstFrameRendered =>
+      waitUntilFirstFrameRenderedCompleter.future;
+
+  /// [Completer] used to signal the decoding & rendering of the first video frame.
+  /// Use [waitUntilFirstFrameRendered] to wait for the first frame to be rendered.
+  @protected
+  final waitUntilFirstFrameRenderedCompleter = Completer<void>();
 }
