@@ -40,10 +40,6 @@ abstract class InitializerNativeEventLoop {
           return DynamicLibrary.open('media_kit_native_event_loop.dll');
         }
       }()!;
-      _initialize = dylib.lookupFunction<MediaKitEventLoopHandlerInitializeCXX,
-          MediaKitEventLoopHandlerInitializeDart>(
-        'MediaKitEventLoopHandlerInitialize',
-      );
       _register = dylib.lookupFunction<MediaKitEventLoopHandlerRegisterCXX,
           MediaKitEventLoopHandlerRegisterDart>(
         'MediaKitEventLoopHandlerRegister',
@@ -56,8 +52,10 @@ abstract class InitializerNativeEventLoop {
           MediaKitEventLoopHandlerDisposeDart>(
         'MediaKitEventLoopHandlerDispose',
       );
-
-      // Initialize the native event loop handler.
+      _initialize = dylib.lookupFunction<MediaKitEventLoopHandlerInitializeCXX,
+          MediaKitEventLoopHandlerInitializeDart>(
+        'MediaKitEventLoopHandlerInitialize',
+      );
       _initialize?.call();
     } catch (exception) {
       print(
@@ -154,17 +152,16 @@ abstract class InitializerNativeEventLoop {
 
   // Resolved native functions from the shared library:
 
-  static MediaKitEventLoopHandlerInitializeDart? _initialize;
   static MediaKitEventLoopHandlerRegisterDart? _register;
   static MediaKitEventLoopHandlerNotifyDart? _notify;
   static MediaKitEventLoopHandlerDisposeDart? _dispose;
+  static MediaKitEventLoopHandlerInitializeDart? _initialize;
 }
 
 // Type definitions for native functions in the shared library.
 
 // C/C++:
 
-typedef MediaKitEventLoopHandlerInitializeCXX = Void Function();
 typedef MediaKitEventLoopHandlerRegisterCXX = Void Function(
   Int64 handle,
   Pointer<Void> callback,
@@ -172,10 +169,10 @@ typedef MediaKitEventLoopHandlerRegisterCXX = Void Function(
 );
 typedef MediaKitEventLoopHandlerNotifyCXX = Void Function(Int64 handle);
 typedef MediaKitEventLoopHandlerDisposeCXX = Void Function(Int64 handle);
+typedef MediaKitEventLoopHandlerInitializeCXX = Void Function();
 
 // Dart:
 
-typedef MediaKitEventLoopHandlerInitializeDart = void Function();
 typedef MediaKitEventLoopHandlerRegisterDart = void Function(
   int handle,
   Pointer<Void> callback,
@@ -183,3 +180,4 @@ typedef MediaKitEventLoopHandlerRegisterDart = void Function(
 );
 typedef MediaKitEventLoopHandlerNotifyDart = void Function(int handle);
 typedef MediaKitEventLoopHandlerDisposeDart = void Function(int handle);
+typedef MediaKitEventLoopHandlerInitializeDart = void Function();

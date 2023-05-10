@@ -4,7 +4,7 @@ Add in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  media_kit_native_event_loop: ^1.0.2
+  media_kit_native_event_loop: ^1.0.4
 ```
 
 This will automatically allow using higher number of concurrent instances.

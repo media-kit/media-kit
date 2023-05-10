@@ -1,3 +1,7 @@
+## 1.0.4
+
+- refactor: utilize `std::condition_variable`(s) in event loops
+
 ## 1.0.3
 
 - feat: make package optional during build

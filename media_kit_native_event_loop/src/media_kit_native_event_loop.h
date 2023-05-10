@@ -1,32 +1,30 @@
-// This file is a part of media_kit
-// (https://github.com/alexmercerind/media_kit).
+// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
 //
-// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-// All rights reserved.
-// Use of this source code is governed by MIT license that can be found in the
-// LICENSE file.
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>. All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 #ifndef MEDIA_KIT_NATIVE_EVENT_LOOP_H_
 #define MEDIA_KIT_NATIVE_EVENT_LOOP_H_
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <client.h>
 #elif defined(ANDROID) || defined(__ANDROID__)
-// Check for Android before GNU/Linux.
 #include "include/client.h"
-#elif __linux__
+#elif defined(__linux__)
 #include <mpv/client.h>
-#elif __APPLE__
+#elif defined(__APPLE__)
 #include <mpv/client.h>
 #endif
 
 #include "dart_api_types.h"
 
-#include <future>
-#include <vector>
-#include <iostream>
+#include <condition_variable>
 #include <functional>
-#include <unordered_map>
+#include <future>
+#include <iostream>
+#include <mutex>
+#include <unordered_set>
+#include <vector>
 
 class MediaKitEventLoopHandler {
  public:
@@ -45,13 +43,18 @@ class MediaKitEventLoopHandler {
   void operator=(const MediaKitEventLoopHandler&) = delete;
 
  private:
+  bool IsRegistered(int64_t handle);
+
   MediaKitEventLoopHandler();
 
   ~MediaKitEventLoopHandler();
 
   std::mutex mutex_;
-  std::unordered_map<mpv_handle*, std::promise<void>> promises_;
-  std::unordered_map<mpv_handle*, std::promise<void>> disposed_;
+  std::unordered_map<mpv_handle*, std::unique_ptr<std::mutex>> mutexes_;
+  std::unordered_map<mpv_handle*, std::unique_ptr<std::thread>> threads_;
+  std::unordered_map<mpv_handle*, std::unique_ptr<std::condition_variable>> condition_variables_;
+
+  std::unordered_set<mpv_handle*> disposed_handles_;
 };
 
 // ---------------------------------------------------------------------------
@@ -68,9 +71,7 @@ class MediaKitEventLoopHandler {
 extern "C" {
 #endif
 
-DLLEXPORT void MediaKitEventLoopHandlerRegister(int64_t handle,
-                                                void* post_c_object,
-                                                int64_t send_port);
+DLLEXPORT void MediaKitEventLoopHandlerRegister(int64_t handle, void* post_c_object, int64_t send_port);
 
 DLLEXPORT void MediaKitEventLoopHandlerNotify(int64_t handle);
 
