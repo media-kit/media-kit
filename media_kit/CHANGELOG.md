@@ -1,3 +1,7 @@
+## 0.0.8
+
+- perf: make `Player.dispose` release event loop effectively
+
 ## 0.0.7+1
 
 - docs: document updated `media_kit_libs_android_video` and `media_kit_libs_android_audio`

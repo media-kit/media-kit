@@ -1,3 +1,7 @@
+## 0.0.10
+
+- fix(android): `--vo=gpu` + `--hwdec=mediacodec-copy` in `enableHardwareAcceleration`
+
 ## 0.0.9
 
 - fix(android): revert to `--vo=mediacodec_embed` in `enableHardwareAcceleration`
