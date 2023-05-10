@@ -32,13 +32,13 @@ class MediaKitEventLoopHandler {
  public:
   static MediaKitEventLoopHandler& GetInstance();
 
-  void Initialize();
-
   void Register(int64_t handle, void* post_c_object, int64_t send_port);
 
   void Notify(int64_t handle);
 
   void Dispose(int64_t handle);
+
+  void Initialize();
 
   MediaKitEventLoopHandler(const MediaKitEventLoopHandler&) = delete;
 
@@ -68,8 +68,6 @@ class MediaKitEventLoopHandler {
 extern "C" {
 #endif
 
-DLLEXPORT void MediaKitEventLoopHandlerInitialize();
-
 DLLEXPORT void MediaKitEventLoopHandlerRegister(int64_t handle,
                                                 void* post_c_object,
                                                 int64_t send_port);
@@ -77,6 +75,8 @@ DLLEXPORT void MediaKitEventLoopHandlerRegister(int64_t handle,
 DLLEXPORT void MediaKitEventLoopHandlerNotify(int64_t handle);
 
 DLLEXPORT void MediaKitEventLoopHandlerDispose(int64_t handle);
+
+DLLEXPORT void MediaKitEventLoopHandlerInitialize();
 
 #ifdef __cplusplus
 }
