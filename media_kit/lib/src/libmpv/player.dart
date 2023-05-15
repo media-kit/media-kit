@@ -67,8 +67,20 @@ class Player extends PlatformPlayer {
         calloc.free(data);
       }
       TaskQueue.instance.add(() {
-        _libmpv?.mpv_terminate_destroy(ctx);
         print('media_kit: mpv_terminate_destroy: ${ctx.address}');
+        if (Platform.isWindows ||
+            Platform.isMacOS ||
+            Platform.isIOS ||
+            Platform.isAndroid) {
+          _libmpv?.mpv_terminate_destroy(ctx);
+        }
+        if (Platform.isLinux) {
+          _command(
+            [
+              'quit',
+            ],
+          );
+        }
       });
       super.dispose();
     }
