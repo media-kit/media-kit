@@ -11,15 +11,23 @@ MediaKitEventLoopHandler& MediaKitEventLoopHandler::GetInstance() {
 }
 
 void MediaKitEventLoopHandler::Register(int64_t handle, void* post_c_object, int64_t send_port) {
-  auto context = reinterpret_cast<mpv_handle*>(handle);
   if (!IsRegistered(handle)) {
     std::lock_guard<std::mutex> lock(mutex_);
+
+    auto context = reinterpret_cast<mpv_handle*>(handle);
+
     mutexes_.emplace(std::make_pair(context, std::make_unique<std::mutex>()));
     condition_variables_.emplace(std::make_pair(context, std::make_unique<std::condition_variable>()));
 
     auto thread = std::make_unique<std::thread>([&, context, post_c_object, send_port]() {
       for (;;) {
+        mutex_.lock();
+
         std::unique_lock<std::mutex> l(*mutexes_[context]);
+
+        auto condition_variable = condition_variables_[context].get();
+
+        mutex_.unlock();
 
         auto event = mpv_wait_event(context, -1);
 
@@ -41,10 +49,13 @@ void MediaKitEventLoopHandler::Register(int64_t handle, void* post_c_object, int
         fn(send_port, &event_object);
 
         // Interpret the posted event in Dart. Wait for |Notify| to be called.
-        condition_variables_[context]->wait(l);
+        condition_variable->wait(l);
 
-        // Check if this |handle| has been disposed. Exit this |std::thread|, if yes.
-        if (disposed_handles_.find(context) != disposed_handles_.end()) {
+        // Check if this |handle| has been marked to exit.
+        mutex_.lock();
+        auto exit = exit_handles_.find(context) != exit_handles_.end();
+        mutex_.unlock();
+        if (exit) {
           std::cout << "MediaKitEventLoopHandler::Register: std::thread exit: " << reinterpret_cast<int64_t>(context)
                     << std::endl;
           break;
@@ -57,46 +68,53 @@ void MediaKitEventLoopHandler::Register(int64_t handle, void* post_c_object, int
 }
 
 void MediaKitEventLoopHandler::Notify(int64_t handle) {
-  auto context = reinterpret_cast<mpv_handle*>(handle);
   if (IsRegistered(handle)) {
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    auto context = reinterpret_cast<mpv_handle*>(handle);
+
     std::unique_lock<std::mutex> l(*mutexes_[context]);
-    condition_variables_[context]->notify_one();
+    condition_variables_[context]->notify_all();
   }
 }
 
 void MediaKitEventLoopHandler::Dispose(int64_t handle) {
   auto context = reinterpret_cast<mpv_handle*>(handle);
-
   if (IsRegistered(handle)) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    disposed_handles_.insert(context);
+    mutex_.lock();
+    // Mark this |handle| to exit.
+    exit_handles_.insert(context);
+    mutex_.unlock();
 
     // Break out of previous possible |mpv_wait_event|.
     mpv_wakeup(context);
-    // Break out of previous possible |condition_variables_| |std::condition_variable::wait|.
+    // Break out of possible |std::condition_variable| wait.
     Notify(handle);
 
-    // Wait for the thread to exit.
+    // Wait for the |std::thread| to exit.
     try {
-      threads_[context]->join();
+      mutex_.lock();
+      auto thread = threads_[context].get();
+      mutex_.unlock();
+      thread->join();
     } catch (std::system_error& e) {
       std::cout << "MediaKitEventLoopHandler::Dispose: " << e.code() << " " << e.what() << std::endl;
     }
+
+    std::thread([&, context]() {
+      // In extreme usage, |std::thread::join| does not stop the |std::mutex| from being released upon exit, resulting
+      // in "mutex destroyed while busy" on Windows. Destroying resources after a voluntary delay of 1 second.
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+
+      std::lock_guard<std::mutex> lock(mutex_);
+
+      mutexes_.erase(context);
+      threads_.erase(context);
+      condition_variables_.erase(context);
+
+      exit_handles_.erase(context);
+    }).detach();
   }
-
-  std::thread([&, context]() {
-    // In extreme usage, |std::thread::join| does not stop the |std::mutex| from being released upon exit, resulting in
-    // "mutex destroyed while busy" on Windows. Destroying resources after a voluntary delay of 1 second.
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    mutexes_.erase(context);
-    threads_.erase(context);
-    condition_variables_.erase(context);
-
-    disposed_handles_.erase(context);
-  }).detach();
 
   std::cout << "MediaKitEventLoopHandler::Dispose: " << handle << std::endl;
 }
@@ -113,6 +131,7 @@ void MediaKitEventLoopHandler::Initialize() {
 }
 
 bool MediaKitEventLoopHandler::IsRegistered(int64_t handle) {
+  std::lock_guard<std::mutex> lock(mutex_);
   return mutexes_.find(reinterpret_cast<mpv_handle*>(handle)) != mutexes_.end() &&
          threads_.find(reinterpret_cast<mpv_handle*>(handle)) != threads_.end() &&
          condition_variables_.find(reinterpret_cast<mpv_handle*>(handle)) != condition_variables_.end();

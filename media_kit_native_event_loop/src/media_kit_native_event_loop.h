@@ -52,11 +52,12 @@ class MediaKitEventLoopHandler {
   ~MediaKitEventLoopHandler();
 
   std::mutex mutex_;
+
   std::unordered_map<mpv_handle*, std::unique_ptr<std::mutex>> mutexes_;
   std::unordered_map<mpv_handle*, std::unique_ptr<std::thread>> threads_;
   std::unordered_map<mpv_handle*, std::unique_ptr<std::condition_variable>> condition_variables_;
 
-  std::unordered_set<mpv_handle*> disposed_handles_;
+  std::unordered_set<mpv_handle*> exit_handles_;
 };
 
 // ---------------------------------------------------------------------------
