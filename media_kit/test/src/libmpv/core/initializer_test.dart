@@ -28,6 +28,16 @@ void main() {
     },
   );
   test(
+    'initializer-dispose',
+    () async {
+      final handle = await Initializer.create(NativeLibrary.path, (_) async {});
+      expect(
+        () => Initializer.dispose(handle),
+        returnsNormally,
+      );
+    },
+  );
+  test(
     'initializer-callback',
     () async {
       final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
