@@ -23,7 +23,7 @@ import 'package:media_kit/src/models/player_streams.dart';
 /// PlatformPlayer
 /// --------------
 ///
-/// This class provides the interface for platform specific player implementations.
+/// This class provides the interface for platform specific [Player] implementations.
 /// The platform specific implementations are expected to implement the methods accordingly.
 ///
 /// The subclasses are then used in composition with the [Player] class, based on the platform the application is running on.
@@ -64,30 +64,40 @@ abstract class PlatformPlayer {
   );
 
   @mustCallSuper
-  FutureOr<void> dispose() => Future.wait(
-        [
-          playlistController.close(),
-          playingController.close(),
-          completedController.close(),
-          positionController.close(),
-          durationController.close(),
-          bufferController.close(),
-          volumeController.close(),
-          rateController.close(),
-          pitchController.close(),
-          bufferingController.close(),
-          logController.close(),
-          errorController.close(),
-          audioParamsController.close(),
-          audioBitrateController.close(),
-          audioDeviceController.close(),
-          audioDevicesController.close(),
-          trackController.close(),
-          tracksController.close(),
-          widthController.close(),
-          heightController.close(),
-        ],
-      );
+  FutureOr<void> dispose() async {
+    await Future.wait(
+      [
+        playlistController.close(),
+        playingController.close(),
+        completedController.close(),
+        positionController.close(),
+        durationController.close(),
+        bufferController.close(),
+        volumeController.close(),
+        rateController.close(),
+        pitchController.close(),
+        bufferingController.close(),
+        logController.close(),
+        errorController.close(),
+        audioParamsController.close(),
+        audioBitrateController.close(),
+        audioDeviceController.close(),
+        audioDevicesController.close(),
+        trackController.close(),
+        tracksController.close(),
+        widthController.close(),
+        heightController.close(),
+      ],
+    );
+    for (final callback in release) {
+      try {
+        callback.call();
+      } catch (exception, stacktrace) {
+        print(exception.toString());
+        print(stacktrace.toString());
+      }
+    }
+  }
 
   FutureOr<void> open(
     Playable playable, {
@@ -297,6 +307,23 @@ abstract class PlatformPlayer {
   @protected
   final StreamController<int> heightController =
       StreamController<int>.broadcast();
+
+  /// Publicly defined clean-up [Function]s which must be called before [dispose].
+  final List<Future<void> Function()> release = [];
+
+  /// [bool] for signaling [VideoController] (from `package:media_kit_video`) initialization.
+  bool isVideoControllerAttached = false;
+
+  /// [Completer] for signaling [VideoController] (from `package:media_kit_video`) initialization.
+  final Completer<void> videoPlayerCompleter = Completer<void>();
+
+  /// [Future<void>] to wait for [VideoController] (from `package:media_kit_video`) initialization.
+  Future<void> get waitForVideoControllerInitializationIfAttached {
+    if (isVideoControllerAttached) {
+      return videoPlayerCompleter.future;
+    }
+    return Future.value(null);
+  }
 }
 
 /// {@template player_configuration}
