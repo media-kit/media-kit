@@ -8,7 +8,7 @@ import 'dart:io';
 import 'package:test/test.dart';
 import 'package:media_kit/src/models/media/media.dart';
 
-import '../../common/sources.dart';
+import '../../../common/sources.dart';
 
 void main() {
   setUp(sources.prepare);
