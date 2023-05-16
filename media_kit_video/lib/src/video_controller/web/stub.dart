@@ -3,7 +3,6 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-
 import 'package:media_kit/media_kit.dart';
 
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
@@ -16,9 +15,9 @@ class VideoControllerWeb extends VideoController {
   VideoControllerWeb(
     super.player,
     super.width,
-    super.height, {
-    super.enableHardwareAcceleration = true,
-  });
+    super.height,
+    super.enableHardwareAcceleration,
+  );
 
   static Future<VideoController> create(
     Player player, {

@@ -3,11 +3,9 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-
 // ignore_for_file: avoid_web_libraries_in_flutter
-
-import 'dart:async';
 import 'dart:ui';
+import 'dart:async';
 import 'dart:js' as js;
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
@@ -31,9 +29,9 @@ class VideoControllerWeb extends VideoController {
   VideoControllerWeb(
     super.player,
     super.width,
-    super.height, {
-    super.enableHardwareAcceleration = true,
-  });
+    super.height,
+    super.enableHardwareAcceleration,
+  );
 
   /// {@macro video_controller_web}
   static Future<VideoController> create(
@@ -49,7 +47,7 @@ class VideoControllerWeb extends VideoController {
       player,
       width,
       height,
-      enableHardwareAcceleration: enableHardwareAcceleration,
+      enableHardwareAcceleration,
     );
 
     // Retrieve the [html.VideoElement] instance from [js.context].
