@@ -5,7 +5,6 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'dart:io';
-import 'dart:async';
 
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
@@ -21,9 +20,6 @@ import 'package:media_kit/src/platform_player.dart';
 import 'package:media_kit/src/libmpv/player.dart'
     if (dart.library.html) 'package:media_kit/src/platform_player.dart'
     as _libmpv show Player;
-import 'package:media_kit/src/web/player.dart'
-    if (dart.library.io) 'package:media_kit/src/platform_player.dart' as _web
-    show Player;
 
 /// {@template player}
 ///
@@ -112,7 +108,7 @@ class Player {
     PlayerConfiguration configuration = const PlayerConfiguration(),
   }) {
     if (kIsWeb) {
-      platform = _web.Player(configuration: configuration);
+      // TODO(@alexmercerind): Missing implementation.
     } else if (Platform.isWindows) {
       platform = _libmpv.Player(configuration: configuration);
     } else if (Platform.isLinux) {
@@ -136,7 +132,7 @@ class Player {
   PlayerStreams get streams => platform!.streams;
 
   /// Disposes the [Player] instance & releases the resources.
-  FutureOr<void> dispose() {
+  Future<void> dispose() async {
     return platform?.dispose();
   }
 
@@ -159,10 +155,10 @@ class Player {
   /// );
   /// ```
   ///
-  FutureOr<void> open(
+  Future<void> open(
     Playable playable, {
     bool play = true,
-  }) {
+  }) async {
     return platform?.open(
       playable,
       play: play,
@@ -170,81 +166,81 @@ class Player {
   }
 
   /// Starts playing the [Player].
-  FutureOr<void> play() {
+  Future<void> play() async {
     return platform?.play();
   }
 
   /// Pauses the [Player].
-  FutureOr<void> pause() {
+  Future<void> pause() async {
     return platform?.pause();
   }
 
   /// Cycles between [play] & [pause] states of the [Player].
-  FutureOr<void> playOrPause() {
+  Future<void> playOrPause() async {
     return platform?.playOrPause();
   }
 
   /// Appends a [Media] to the [Player]'s playlist.
-  FutureOr<void> add(Media media) {
+  Future<void> add(Media media) async {
     return platform?.add(media);
   }
 
   /// Removes the [Media] at specified index from the [Player]'s playlist.
-  FutureOr<void> remove(int index) {
+  Future<void> remove(int index) async {
     return platform?.remove(index);
   }
 
   /// Jumps to next [Media] in the [Player]'s playlist.
-  FutureOr<void> next() {
+  Future<void> next() async {
     return platform?.next();
   }
 
   /// Jumps to previous [Media] in the [Player]'s playlist.
-  FutureOr<void> previous() {
+  Future<void> previous() async {
     return platform?.previous();
   }
 
   /// Jumps to specified [Media]'s index in the [Player]'s playlist.
-  FutureOr<void> jump(int index) {
+  Future<void> jump(int index) async {
     return platform?.jump(index);
   }
 
   /// Moves the playlist [Media] at [from], so that it takes the place of the [Media] [to].
-  FutureOr<void> move(int from, int to) {
+  Future<void> move(int from, int to) async {
     return platform?.move(from, to);
   }
 
   /// Seeks the currently playing [Media] in the [Player] by specified [Duration].
-  FutureOr<void> seek(Duration duration) {
+  Future<void> seek(Duration duration) async {
     return platform?.seek(duration);
   }
 
   /// Sets playlist mode.
-  FutureOr<void> setPlaylistMode(PlaylistMode playlistMode) {
+  Future<void> setPlaylistMode(PlaylistMode playlistMode) async {
     return platform?.setPlaylistMode(playlistMode);
   }
 
   /// Sets the playback volume of the [Player].
   /// Defaults to `100.0`.
-  FutureOr<void> setVolume(double volume) {
+  Future<void> setVolume(double volume) async {
     return platform?.setVolume(volume);
   }
 
   /// Sets the playback rate of the [Player].
   /// Defaults to `1.0`.
-  FutureOr<void> setRate(double rate) {
+  Future<void> setRate(double rate) async {
     return platform?.setRate(rate);
   }
 
   /// Sets the relative pitch of the [Player].
   /// Defaults to `1.0`.
-  FutureOr<void> setPitch(double pitch) {
+  Future<void> setPitch(double pitch) async {
     return platform?.setPitch(pitch);
   }
 
   /// Enables or disables shuffle for [Player].
   /// Default is `false`.
-  FutureOr<void> setShuffle(bool shuffle) {
+  Future<void> setShuffle(bool shuffle) async {
     return platform?.setShuffle(shuffle);
   }
 
@@ -252,7 +248,7 @@ class Player {
   ///
   /// * Currently selected [AudioDevice] can be accessed using [state.audioDevice] or [streams.audioDevice].
   /// * The list of currently available [AudioDevice]s can be obtained accessed using [state.audioDevices] or [streams.audioDevices].
-  FutureOr<void> setAudioDevice(AudioDevice audioDevice) {
+  Future<void> setAudioDevice(AudioDevice audioDevice) async {
     return platform?.setAudioDevice(audioDevice);
   }
 
@@ -260,7 +256,7 @@ class Player {
   ///
   /// * Currently selected [VideoTrack] can be accessed using [state.track.video] or [streams.track.video].
   /// * The list of currently available [VideoTrack]s can be obtained accessed using [state.tracks.video] or [streams.tracks.video].
-  FutureOr<void> setVideoTrack(VideoTrack track) async {
+  Future<void> setVideoTrack(VideoTrack track) async {
     return platform?.setVideoTrack(track);
   }
 
@@ -268,7 +264,7 @@ class Player {
   ///
   /// * Currently selected [AudioTrack] can be accessed using [state.track.audio] or [streams.track.audio].
   /// * The list of currently available [AudioTrack]s can be obtained accessed using [state.tracks.audio] or [streams.tracks.audio].
-  FutureOr<void> setAudioTrack(AudioTrack track) async {
+  Future<void> setAudioTrack(AudioTrack track) async {
     return platform?.setAudioTrack(track);
   }
 
@@ -276,7 +272,7 @@ class Player {
   ///
   /// * Currently selected [SubtitleTrack] can be accessed using [state.track.subtitle] or [streams.track.subtitle].
   /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [streams.tracks.subtitle].
-  FutureOr<void> setSubtitleTrack(SubtitleTrack track) async {
+  Future<void> setSubtitleTrack(SubtitleTrack track) async {
     return platform?.setSubtitleTrack(track);
   }
 

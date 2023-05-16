@@ -47,7 +47,7 @@ class Player extends PlatformPlayer {
   }
 
   @override
-  FutureOr<void> dispose({int code = 0}) async {
+  Future<void> dispose() async {
     _element
       ..src = ''
       ..load()
@@ -58,11 +58,11 @@ class Player extends PlatformPlayer {
   }
 
   @override
-  FutureOr<void> open(
+  Future<void> open(
     Playable playable, {
     bool play = true,
     bool evictExtrasCache = true,
-  }) {
+  }) async {
     if (playable is Media) {
       _element.src = playable.uri;
     }
@@ -70,17 +70,17 @@ class Player extends PlatformPlayer {
   }
 
   @override
-  FutureOr<void> play() async {
+  Future<void> play() async {
     await _element.play();
   }
 
   @override
-  FutureOr<void> pause() {
+  Future<void> pause() async {
     _element.pause();
   }
 
   @override
-  FutureOr<void> playOrPause() async {
+  Future<void> playOrPause() async {
     if (_element.paused) {
       await _element.play();
     } else {
@@ -89,82 +89,82 @@ class Player extends PlatformPlayer {
   }
 
   @override
-  FutureOr<void> add(Media media) {
+  Future<void> add(Media media) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> remove(int index) {
+  Future<void> remove(int index) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> next() {
+  Future<void> next() async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> previous() {
+  Future<void> previous() async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> jump(int index) {
+  Future<void> jump(int index) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> move(int from, int to) {
+  Future<void> move(int from, int to) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> seek(Duration duration) {
+  Future<void> seek(Duration duration) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> setPlaylistMode(PlaylistMode playlistMode) {
+  Future<void> setPlaylistMode(PlaylistMode playlistMode) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> setVolume(double volume) {
+  Future<void> setVolume(double volume) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> setRate(double rate) {
+  Future<void> setRate(double rate) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> setPitch(double pitch) {
+  Future<void> setPitch(double pitch) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> setShuffle(bool shuffle) {
+  Future<void> setShuffle(bool shuffle) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> setAudioDevice(AudioDevice audioDevice) {
+  Future<void> setAudioDevice(AudioDevice audioDevice) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> setVideoTrack(VideoTrack track) {
+  Future<void> setVideoTrack(VideoTrack track) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> setAudioTrack(AudioTrack track) {
+  Future<void> setAudioTrack(AudioTrack track) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
   @override
-  FutureOr<void> setSubtitleTrack(SubtitleTrack track) {
+  Future<void> setSubtitleTrack(SubtitleTrack track) async {
     // TODO(@alexmercerind): Missing implementation.
   }
 
@@ -174,7 +174,7 @@ class Player extends PlatformPlayer {
   /// Unique handle of this [Player] instance.
   final int _handle;
 
-  /// HTML [html.VideoElement] instance reference.
+  /// [html.VideoElement] instance reference.
   final html.VideoElement _element;
 
   /// JavaScript object attribute used to store various [VideoElement] instances in [js.context].
