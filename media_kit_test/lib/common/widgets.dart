@@ -16,45 +16,14 @@ class TracksSelector extends StatefulWidget {
 }
 
 class _TracksSelectorState extends State<TracksSelector> {
-  final List<StreamSubscription> _subscriptions = [];
-  Track track = const Track();
-  Tracks tracks = const Tracks();
-
-  @override
-  void initState() {
-    super.initState();
-    _subscriptions.addAll(
-      [
-        widget.player.streams.track.listen((event) {
-          setState(() {
-            track = event;
-          });
-        }),
-        widget.player.streams.tracks.listen((event) {
-          setState(() {
-            tracks = event;
-          });
-        }),
-      ],
-    );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    for (final s in _subscriptions) {
-      s.cancel();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         DropdownButton<VideoTrack>(
-          value: track.video,
-          items: tracks.video
+          value: widget.player.state.track.video,
+          items: widget.player.state.tracks.video
               .map(
                 (e) => DropdownMenuItem(
                   value: e,
@@ -67,16 +36,17 @@ class _TracksSelectorState extends State<TracksSelector> {
                 ),
               )
               .toList(),
-          onChanged: (track) {
+          onChanged: (track) async {
             if (track != null) {
-              widget.player.setVideoTrack(track);
+              await widget.player.setVideoTrack(track);
+              setState(() {});
             }
           },
         ),
         const SizedBox(width: 16.0),
         DropdownButton<AudioTrack>(
-          value: track.audio,
-          items: tracks.audio
+          value: widget.player.state.track.audio,
+          items: widget.player.state.tracks.audio
               .map(
                 (e) => DropdownMenuItem(
                   value: e,
@@ -89,16 +59,17 @@ class _TracksSelectorState extends State<TracksSelector> {
                 ),
               )
               .toList(),
-          onChanged: (track) {
+          onChanged: (track) async {
             if (track != null) {
-              widget.player.setAudioTrack(track);
+              await widget.player.setAudioTrack(track);
+              setState(() {});
             }
           },
         ),
         const SizedBox(width: 16.0),
         DropdownButton<SubtitleTrack>(
-          value: track.subtitle,
-          items: tracks.subtitle
+          value: widget.player.state.track.subtitle,
+          items: widget.player.state.tracks.subtitle
               .map(
                 (e) => DropdownMenuItem(
                   value: e,
@@ -111,9 +82,10 @@ class _TracksSelectorState extends State<TracksSelector> {
                 ),
               )
               .toList(),
-          onChanged: (track) {
+          onChanged: (track) async {
             if (track != null) {
-              widget.player.setSubtitleTrack(track);
+              await widget.player.setSubtitleTrack(track);
+              setState(() {});
             }
           },
         ),
@@ -135,11 +107,12 @@ class SeekBar extends StatefulWidget {
 }
 
 class _SeekBarState extends State<SeekBar> {
-  bool playing = false;
+  late bool playing = widget.player.state.playing;
+  late Duration position = widget.player.state.position;
+  late Duration duration = widget.player.state.duration;
+  late Duration buffer = widget.player.state.buffer;
+
   bool seeking = false;
-  Duration position = Duration.zero;
-  Duration duration = Duration.zero;
-  Duration buffer = Duration.zero;
 
   List<StreamSubscription> subscriptions = [];
 
@@ -211,6 +184,7 @@ class _SeekBarState extends State<SeekBar> {
               const Spacer(),
             ],
           ),
+        TracksSelector(player: widget.player),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
