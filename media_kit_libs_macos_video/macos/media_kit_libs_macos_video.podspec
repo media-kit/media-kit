@@ -6,7 +6,7 @@ Pod::Spec.new do |s|
   system("make")
 
   s.name             = 'media_kit_libs_macos_video'
-  s.version          = '1.0.0'
+  s.version          = '1.0.4'
   s.summary          = 'macOS dependency package for package:media_kit'
   s.description      = <<-DESC
   macOS dependency package for package:media_kit.
@@ -21,7 +21,7 @@ Pod::Spec.new do |s|
 
   s.vendored_frameworks = 'Frameworks/*.xcframework'
 
-  s.platform = :osx, '11.0'
+  s.platform = :osx, '10.9'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'
 end

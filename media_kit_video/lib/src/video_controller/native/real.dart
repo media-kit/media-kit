@@ -37,9 +37,9 @@ class VideoControllerNative extends VideoController {
   VideoControllerNative(
     super.player,
     super.width,
-    super.height, {
-    super.enableHardwareAcceleration = true,
-  });
+    super.height,
+    super.enableHardwareAcceleration,
+  );
 
   /// {@macro video_controller_native}
   static Future<VideoController> create(
@@ -61,7 +61,7 @@ class VideoControllerNative extends VideoController {
       player,
       width,
       height,
-      enableHardwareAcceleration: enableHardwareAcceleration,
+      enableHardwareAcceleration,
     );
     // Store the [VideoControllerNative] in the [_controllers].
     _controllers[handle] = controller;
@@ -162,6 +162,14 @@ class VideoControllerNative extends VideoController {
                     final int id = call.arguments['id'];
                     _controllers[handle]?.rect.value = rect;
                     _controllers[handle]?.id.value = id;
+                    // Notify about the first frame being rendered.
+                    if (rect.width > 0 && rect.height > 0) {
+                      final completer = _controllers[handle]
+                          ?.waitUntilFirstFrameRenderedCompleter;
+                      if (!(completer?.isCompleted ?? true)) {
+                        completer?.complete();
+                      }
+                    }
                     break;
                   }
                 default:

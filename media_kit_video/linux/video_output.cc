@@ -128,7 +128,19 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
               {MPV_RENDER_PARAM_API_TYPE, (void*)MPV_RENDER_API_TYPE_OPENGL},
               {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, (void*)&gl_init_params},
               {MPV_RENDER_PARAM_INVALID, (void*)0},
+              {MPV_RENDER_PARAM_INVALID, (void*)0}
           };
+          // VAAPI acceleration requires passing X11/Wayland display
+          // to the render context.
+          GdkDisplay* display = gdk_display_get_default();
+          if (GDK_IS_WAYLAND_DISPLAY(display)) {
+            params[2].type = MPV_RENDER_PARAM_WL_DISPLAY;
+            params[2].data = gdk_wayland_display_get_wl_display(display);
+          }
+          else if (GDK_IS_X11_DISPLAY(display)) {
+            params[2].type = MPV_RENDER_PARAM_X11_DISPLAY;
+            params[2].data = gdk_x11_display_get_xdisplay(display);
+          }
           if (mpv_render_context_create(&self->render_context, self->handle,
                                         params) == 0) {
             mpv_render_context_set_update_callback(

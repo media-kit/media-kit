@@ -1,6 +1,6 @@
 /**
  * This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
- *
+ * <p>
  * Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
  * All rights reserved.
  * Use of this source code is governed by MIT license that can be found in the LICENSE file.
@@ -41,12 +41,19 @@ public class VideoOutput {
 
         surfaceTextureEntry = textureRegistryReference.createSurfaceTexture();
         surface = new Surface(surfaceTextureEntry.surfaceTexture());
-
         try {
             id = surfaceTextureEntry.id();
             wid = (long) newGlobalObjectRef.invoke(null, surface);
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutput: id = %d", id));
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutput: wid = %d", wid));
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setSurfaceTextureSize(int width, int height) {
+        try {
+            surfaceTextureEntry.surfaceTexture().setDefaultBufferSize(width, height);
         } catch (Throwable e) {
             e.printStackTrace();
         }

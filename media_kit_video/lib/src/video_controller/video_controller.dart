@@ -3,6 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:media_kit/media_kit.dart';
@@ -39,10 +40,10 @@ import 'package:media_kit_video/src/video_controller/android/video_controller_an
 /// 2. You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
 ///    By default, [enableHardwareAcceleration] is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 ///
-/// **Additional Notes for Flutter Web:**
+/// **Additional Information**
 ///
-/// 1. The [width] & [height] parameters are ignored on Flutter Web i.e. render size cannot be changed manually.
-/// 2. The [enableHardwareAcceleration] parameter is ignored on Flutter Web i.e. GPU rendering is dependent on the client's web browser.
+/// 1. [width] & [height] arguments have no effect on Android.
+/// 2. The [enableHardwareAcceleration] argument is ignored on Flutter Web i.e. GPU rendering is dependent on the client's web browser.
 ///
 /// {@endtemplate}
 abstract class VideoController {
@@ -68,9 +69,9 @@ abstract class VideoController {
   VideoController(
     this.player,
     this.width,
-    this.height, {
-    this.enableHardwareAcceleration = true,
-  });
+    this.height,
+    this.enableHardwareAcceleration,
+  );
 
   /// {@macro video_controller}
   static Future<VideoController> create(
@@ -128,4 +129,13 @@ abstract class VideoController {
       'id: $id, '
       'rect: $rect'
       ')';
+
+  /// A [Future] that completes when the first video frame has been rendered.
+  Future<void> get waitUntilFirstFrameRendered =>
+      waitUntilFirstFrameRenderedCompleter.future;
+
+  /// [Completer] used to signal the decoding & rendering of the first video frame.
+  /// Use [waitUntilFirstFrameRendered] to wait for the first frame to be rendered.
+  @protected
+  final waitUntilFirstFrameRenderedCompleter = Completer<void>();
 }

@@ -1,3 +1,7 @@
+## 1.0.4
+
+- build: bump libs version
+
 ## 1.0.3
 
 - fix: update xcframeworks

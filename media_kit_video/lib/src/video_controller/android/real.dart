@@ -12,6 +12,7 @@ import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:synchronized/synchronized.dart';
 
 // ignore_for_file: unused_import, implementation_imports
 // It's absolutely crazy that C/C++ interop in Dart is so much easier & less tedious (possibly more performant as well) than in Java/Kotlin.
@@ -40,25 +41,84 @@ class VideoControllerAndroid extends VideoController {
   VideoControllerAndroid(
     super.player,
     super.width,
-    super.height, {
-    super.enableHardwareAcceleration = true,
-  }) {
-    _widthStreamSubscription = player.streams.width.listen((width) {
-      rect.value = Rect.fromLTWH(
-        0,
-        0,
-        width.toDouble(),
-        rect.value?.height ?? 0,
-      );
-    });
-    _heightStreamSubscription = player.streams.height.listen((height) {
-      rect.value = Rect.fromLTWH(
-        0,
-        0,
-        rect.value?.width ?? 0,
-        height.toDouble(),
-      );
-    });
+    super.height,
+    super.enableHardwareAcceleration,
+  ) {
+    // Notify about the first frame being rendered.
+    // Case: If some [Media] is already playing when [VideoController] is created.
+    if (player.state.width != null && player.state.height != null) {
+      if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+        waitUntilFirstFrameRenderedCompleter.complete();
+      }
+    }
+
+    // Merge the width & height [Stream]s into a single [Stream] of [Rect]s.
+    int w = -1;
+    int h = -1;
+    _widthStreamSubscription = player.streams.width.listen(
+      (event) => _lock.synchronized(() {
+        w = event;
+        if (w != -1 && h != -1) {
+          _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
+          // Notify about the first frame being rendered.
+          if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+            waitUntilFirstFrameRenderedCompleter.complete();
+          }
+          w = -1;
+          h = -1;
+        }
+      }),
+    );
+    _heightStreamSubscription = player.streams.height.listen(
+      (event) => _lock.synchronized(() {
+        h = event;
+        if (w != -1 && h != -1) {
+          _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
+          // Notify about the first frame being rendered.
+          if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+            waitUntilFirstFrameRenderedCompleter.complete();
+          }
+          w = -1;
+          h = -1;
+        }
+      }),
+    );
+    final lock = Lock();
+    _rectStreamSubscription = _controller.stream.listen(
+      (event) => lock.synchronized(() async {
+        if (!enableHardwareAcceleration) {
+          rect.value = Rect.zero;
+          // ----------------------------------------------
+          // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
+          // In native Android, this kind of rendering is done with `android.view.SurfaceView` + `android.view.SurfaceHolder`, which offers `onSurfaceChanged` callback to handle this.
+          //
+          // NOTE: Not needed with --vo=mediacodec_embed.
+          final handle = await player.handle;
+          await _channel.invokeMethod(
+            'VideoOutputManager.SetSurfaceTextureSize',
+            {
+              'handle': handle.toString(),
+              'width': event.width.toInt().toString(),
+              'height': event.height.toInt().toString(),
+            },
+          );
+          NativeLibrary.ensureInitialized();
+          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+          final name = 'android-surface-size'.toNativeUtf8();
+          final value =
+              '${event.width.toInt()}x${event.height.toInt()}'.toNativeUtf8();
+          mpv.mpv_set_option_string(
+            Pointer.fromAddress(handle),
+            name.cast(),
+            value.cast(),
+          );
+          calloc.free(name);
+          calloc.free(value);
+        }
+        // ----------------------------------------------
+        rect.value = event;
+      }),
+    );
   }
 
   /// {@macro video_controller_android}
@@ -75,13 +135,21 @@ class VideoControllerAndroid extends VideoController {
       return _controllers[handle]!;
     }
 
+    // Enforce software rendering in emulators.
+    final bool isEmulator = await _channel.invokeMethod('Utils.IsEmulator');
+    if (isEmulator) {
+      debugPrint('media_kit: VideoControllerAndroid: Emulator detected.');
+      debugPrint('media_kit: VideoControllerAndroid: Enforcing S/W rendering.');
+      enableHardwareAcceleration = false;
+    }
+
     // Creation:
 
     final controller = VideoControllerAndroid(
       player,
       width,
       height,
-      enableHardwareAcceleration: enableHardwareAcceleration,
+      enableHardwareAcceleration,
     );
     // Store the [VideoController] in the [_controllers].
     _controllers[handle] = controller;
@@ -97,19 +165,48 @@ class VideoControllerAndroid extends VideoController {
     debugPrint(data.toString());
 
     // ----------------------------------------------
-    // https://mpv.io/manual/stable/#video-output-drivers-mediacodec-embed
     NativeLibrary.ensureInitialized();
     final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-    final values = {
-      'opengl-es': 'yes',
-      'force-window': 'yes',
-      'gpu-context': 'android',
-      'vo': 'mediacodec_embed',
-      'wid': wid.toString(),
-      if (enableHardwareAcceleration) 'hwdec': 'mediacodec' else 'hwdec': 'no',
-      if (width != null && height != null)
-        'android-surface-size': '${width}x$height',
-    };
+    final values = enableHardwareAcceleration
+        ? {
+            // https://mpv.io/manual/stable/#video-output-drivers-mediacodec-embed
+            // Hardware decoding & rendering with --vo=gpu + --hwdec=mediacodec.
+            'opengl-es': 'yes',
+            'force-window': 'yes',
+            'hwdec': 'mediacodec',
+            'gpu-context': 'android',
+            'vo': 'mediacodec_embed',
+            'wid': wid.toString(),
+          }
+        : {
+            // Software decoding & rendering with --vo=gpu + --hwdec=no.
+            // The `android.view.Surface` (bind with `android.graphics.SurfaceTexture`) instance which is passed as --wid to libmpv for rendering, is not actually 'mounted' to the Android view hierarchy, because we are using Flutter.
+            // The `android.view.Surface` instance is solely created for allowing libmpv to render into it. The Flutter internally reads from `android.graphics.SurfaceTexture` AFAIK.
+            //
+            // This makes the `android.view.Surface` not size accordingly to the video / display size (& render video as a single 1x1 pixel forever).
+            // So, we use `setDefaultBufferSize` to set the size of the video output & make it render accordingly.
+            // Learn more: https://developer.android.com/reference/android/graphics/SurfaceTexture#setDefaultBufferSize(int,%20int)
+            //
+            // From my observations, as soon as we use --vo=gpu, we need to use `setDefaultBufferSize` even with hardware acceleration enabled due to the reason mentioned above.
+            'opengl-es': 'yes',
+            'force-window': 'yes',
+            'hwdec': 'no',
+            'gpu-context': 'android',
+            'vo': 'gpu',
+            'wid': wid.toString(),
+          };
+    // TODO(@alexmercerind): Few other rendering options might be worth exposing to clients in the future e.g.
+    // * --vo=gpu + --hwdec=mediacodec
+    // * --vo=gpu + --hwdec=mediacodec-copy
+    values.addAll(
+      {
+        'sub-use-margins': 'no',
+        'sub-font-provider': 'none',
+        'sub-scale-with-window': 'yes',
+        'hwdec-codecs': 'h264,hevc,mpeg4,mpeg2video,vp8,vp9',
+      },
+    );
+
     for (final entry in values.entries) {
       final name = entry.key.toNativeUtf8();
       final value = entry.value.toNativeUtf8();
@@ -145,27 +242,10 @@ class VideoControllerAndroid extends VideoController {
   Future<void> setSize({
     int? width,
     int? height,
-  }) async {
-    final handle = await player.handle;
-    if (this.width == width && this.height == height) {
-      // No need to resize if the requested size is same as the current size.
-      return;
-    }
-    this.width = width;
-    this.height = height;
-    // ----------------------------------------------
-    NativeLibrary.ensureInitialized();
-    final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-    final name = 'android-surface-size'.toNativeUtf8();
-    final value = '${width}x$height'.toNativeUtf8();
-    mpv.mpv_set_option_string(
-      Pointer.fromAddress(handle),
-      name.cast(),
-      value.cast(),
+  }) {
+    throw UnimplementedError(
+      '[VideoControllerAndroid.setSize] is not available on Android.',
     );
-    calloc.free(name);
-    calloc.free(value);
-    // ----------------------------------------------
   }
 
   /// Disposes the [VideoController].
@@ -175,6 +255,9 @@ class VideoControllerAndroid extends VideoController {
     // Dispose the [StreamSubscription]s.
     await _widthStreamSubscription?.cancel();
     await _heightStreamSubscription?.cancel();
+    await _rectStreamSubscription?.cancel();
+    // Close the [StreamController]s.
+    await _controller.close();
     // Release the native resources.
     final handle = await player.handle;
     _controllers.remove(handle);
@@ -186,11 +269,20 @@ class VideoControllerAndroid extends VideoController {
     );
   }
 
+  /// [Lock] used to synchronize the [_widthStreamSubscription] & [_heightStreamSubscription].
+  final _lock = Lock();
+
+  /// [StreamController] for merging the [_widthStreamSubscription] & [_heightStreamSubscription] into a single [Stream<Rect>].
+  final _controller = StreamController<Rect>();
+
   /// [StreamSubscription] for listening to video width.
   StreamSubscription<int>? _widthStreamSubscription;
 
   /// [StreamSubscription] for listening to video height.
   StreamSubscription<int>? _heightStreamSubscription;
+
+  /// [StreamSubscription] for listening to video [Rect] from [_controller].
+  StreamSubscription<Rect>? _rectStreamSubscription;
 
   /// Currently created [VideoControllerAndroid]s.
   static final _controllers = HashMap<int, VideoControllerAndroid>();

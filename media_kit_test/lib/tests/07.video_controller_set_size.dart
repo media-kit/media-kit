@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../common/globals.dart';
 import '../common/sources/sources.dart';
 
 class VideoControllerSetSizeScreen extends StatefulWidget {
@@ -21,7 +22,10 @@ class _VideoControllerSetSizeScreenState
   void initState() {
     super.initState();
     Future.microtask(() async {
-      controller = await VideoController.create(player);
+      controller = await VideoController.create(
+        player,
+        enableHardwareAcceleration: enableHardwareAcceleration.value,
+      );
       await player.open(Media(sources[0]));
       await player.setPlaylistMode(PlaylistMode.loop);
       await player.setVolume(0.0);

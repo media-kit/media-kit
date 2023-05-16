@@ -35,6 +35,15 @@ public class VideoOutputManager {
         }
     }
 
+    public void setSurfaceTextureSize(long handle, int width, int height) {
+        synchronized (lock) {
+            Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.setSurfaceTextureSize: %d %d %d", handle, width, height));
+            if (videoOutputs.containsKey(handle)) {
+                Objects.requireNonNull(videoOutputs.get(handle)).setSurfaceTextureSize(width, height);
+            }
+        }
+    }
+
     public void dispose(long handle) {
         synchronized (lock) {
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.dispose: %d", handle));

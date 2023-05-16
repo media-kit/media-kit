@@ -1,24 +1,23 @@
-## Installation
-
-Add in your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  media_kit_video: ^0.0.4
-```
-
-## Usage
-
 ```dart
 import 'package:flutter/material.dart';
 
 import 'package:media_kit/media_kit.dart';                        /// Provides [Player], [Media], [Playlist] etc.
 import 'package:media_kit_video/media_kit_video.dart';            /// Provides [VideoController] & [Video] etc.
 
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
+  runApp(
+    const MaterialApp(
+      home: MyScreen(),
+    ),
+  );
+}
+
 class MyScreen extends StatefulWidget {
   const MyScreen({Key? key}) : super(key: key);
   @override
-  State<MyScreen> createState() => _MyScreenState();
+  State<MyScreen> createState() => MyScreenState();
 }
 
 class MyScreenState extends State<MyScreen> {
@@ -33,6 +32,8 @@ class MyScreenState extends State<MyScreen> {
     Future.microtask(() async {
       /// Create a [VideoController] to show video output of the [Player].
       controller = await VideoController.create(player);
+      /// Play any media source.
+      await player.open(Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4'));
       setState(() {});
     });
   }

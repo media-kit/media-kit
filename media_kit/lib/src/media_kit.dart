@@ -6,10 +6,10 @@
 
 import 'dart:io';
 
+import 'package:media_kit/src/utils.dart';
 import 'package:media_kit/src/libmpv/entry_point.dart'
     if (dart.library.html) 'package:media_kit/src/web/entry_point.dart'
     as implementation;
-import 'package:media_kit/src/utils.dart';
 
 /// {@template media_kit}
 ///

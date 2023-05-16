@@ -37,49 +37,91 @@ android {
     }
 
     dependencies {
-        implementation fileTree(dir: "$buildDir", include: "*.jar")
+        implementation fileTree(dir: "$buildDir/output", include: "*.jar")
     }
 }
 
 task downloadDependencies(type: Exec) {
-    println "media_kit: Downloading dependencies..."
+    
+    // Delete previously created /output subdirectory.
 
-    def urlARM64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.3/audio-arm64-v8a.jar"
-    def urlARMEABI = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.3/audio-armeabi-v7a.jar"
-    def urlX86_64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.3/audio-x86_64.jar"
-    def urlX86 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.3/audio-x86.jar"
+    def outputDir = file("$buildDir/output")
+    if (outputDir.exists()) {
+        outputDir.deleteDir()
+    }
+    
+    // Download all *.jar dependencies & verify their MD5 checksums.
 
-    def destARM64 = file("$buildDir/audio-arm64-v8a.jar")
-    def destARMEABI = file("$buildDir/audio-armeabi-v7a.jar")
-    def destX86_64 = file("$buildDir/audio-x86_64.jar")
-    def destX86 = file("$buildDir/audio-x86.jar")
+    def urlARM64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.5/audio-arm64-v8a.jar"
+    def urlARMEABI = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.5/audio-armeabi-v7a.jar"
+    def urlX86_64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.5/audio-x86_64.jar"
+    def urlX86 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.5/audio-x86.jar"
+
+    def urlNoFFmpegARM64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.5/no-ffmpeg-audio-arm64-v8a.jar"
+    def urlNoFFmpegARMEABI = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.5/no-ffmpeg-audio-armeabi-v7a.jar"
+    def urlNoFFmpegX86_64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.5/no-ffmpeg-audio-x86_64.jar"
+    def urlNoFFmpegX86 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.5/no-ffmpeg-audio-x86.jar"
+
+    def destARM64 = file("$buildDir/v0.0.5/audio-arm64-v8a.jar")
+    def destARMEABI = file("$buildDir/v0.0.5/audio-armeabi-v7a.jar")
+    def destX86_64 = file("$buildDir/v0.0.5/audio-x86_64.jar")
+    def destX86 = file("$buildDir/v0.0.5/audio-x86.jar")
+    
+    def destNoFFmpegARM64 = file("$buildDir/v0.0.5/no-ffmpeg-audio-arm64-v8a.jar")
+    def destNoFFmpegARMEABI = file("$buildDir/v0.0.5/no-ffmpeg-audio-armeabi-v7a.jar")
+    def destNoFFmpegX86_64 = file("$buildDir/v0.0.5/no-ffmpeg-audio-x86_64.jar")
+    def destNoFFmpegX86 = file("$buildDir/v0.0.5/no-ffmpeg-audio-x86.jar")
 
     if (!destARM64.exists()) {
-        println "media_kit: Downloading arm64-v8a JAR..."
         destARM64.parentFile.mkdirs()
         destARM64.withOutputStream { os ->
             os << new URL(urlARM64).openStream()
         }
     }
     if (!destARMEABI.exists()) {
-        println "media_kit: Downloading armeabi-v7a JAR..."
         destARMEABI.parentFile.mkdirs()
         destARMEABI.withOutputStream { os ->
             os << new URL(urlARMEABI).openStream()
         }
     }
     if (!destX86_64.exists()) {
-        println "media_kit: Downloading x86_64 JAR..."
         destX86_64.parentFile.mkdirs()
         destX86_64.withOutputStream { os ->
             os << new URL(urlX86_64).openStream()
         }
     }
     if (!destX86.exists()) {
-        println "media_kit: Downloading x86 JAR..."
         destX86.parentFile.mkdirs()
         destX86.withOutputStream { os ->
             os << new URL(urlX86).openStream()
+        }
+    }
+
+    if (!destNoFFmpegARM64.exists()) {
+        destNoFFmpegARM64.parentFile.mkdirs()
+        destNoFFmpegARM64.withOutputStream { os ->
+            os << new URL(urlNoFFmpegARM64).openStream()
+        }
+    }
+
+    if (!destNoFFmpegARMEABI.exists()) {
+        destNoFFmpegARMEABI.parentFile.mkdirs()
+        destNoFFmpegARMEABI.withOutputStream { os ->
+            os << new URL(urlNoFFmpegARMEABI).openStream()
+        }
+    }
+
+    if (!destNoFFmpegX86_64.exists()) {
+        destNoFFmpegX86_64.parentFile.mkdirs()
+        destNoFFmpegX86_64.withOutputStream { os ->
+            os << new URL(urlNoFFmpegX86_64).openStream()
+        }
+    }
+
+    if (!destNoFFmpegX86.exists()) {
+        destNoFFmpegX86.parentFile.mkdirs()
+        destNoFFmpegX86.withOutputStream { os ->
+            os << new URL(urlNoFFmpegX86).openStream()
         }
     }
 
@@ -87,29 +129,89 @@ task downloadDependencies(type: Exec) {
     def md5ARMEABI = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destARMEABI.toPath())).encodeHex().toString().toUpperCase()
     def md5X86_64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destX86_64.toPath())).encodeHex().toString().toUpperCase()
     def md5X86 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destX86.toPath())).encodeHex().toString().toUpperCase()
+    
+    def md5NoFFmpegARM64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegARM64.toPath())).encodeHex().toString().toUpperCase()
+    def md5NoFFmpegARMEABI = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegARMEABI.toPath())).encodeHex().toString().toUpperCase()
+    def md5NoFFmpegX86_64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegX86_64.toPath())).encodeHex().toString().toUpperCase()
+    def md5NoFFmpegX86 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegX86.toPath())).encodeHex().toString().toUpperCase()
 
-    if (md5ARM64 != "5223EF27AC457E2DBC931DB484A95935") {
+    if (md5ARM64 != "FFE08F95C9F87FA6A2A445C62C89CF38") {
         throw new GradleException("media_kit: arm64-v8a JAR verification failed.")
-    } else {
-        println "media_kit: arm64-v8a JAR verification successful."
     }
-    if (md5ARMEABI != "D547EEE9B25661B56B0989AC74FFB6EA") {
+    if (md5ARMEABI != "7972EFCCBD62BD33E1D529AE51BA35CF") {
         throw new GradleException("media_kit: armeabi-v7a JAR verification failed.")
-    } else {
-        println "media_kit: armeabi-v7a JAR verification successful."
     }
-    if (md5X86_64 != "EC2F1DF85B0709957599B0A3FAF3E84D") {
+    if (md5X86_64 != "36640AE5490DA237D95DA98A6E199FD7") {
         throw new GradleException("media_kit: x86_64 JAR verification failed.")
-    } else {
-        println "media_kit: x86_64 JAR verification successful."
     }
-    if (md5X86 != "C54F5FEA79723AB8B6E93D2FE608E5CD") {
+    if (md5X86 != "CDDF3063FA9141767413C04671688AD7") {
         throw new GradleException("media_kit: x86 JAR verification failed.")
-    } else {
-        println "media_kit: x86 JAR verification successful."
     }
 
-    println "media_kit: Dependencies downloaded successfully."
+    if (md5NoFFmpegARM64 != "DF3DDC39A36DB89BD678517785091D11") {
+        throw new GradleException("media_kit: arm64-v8a JAR verification failed.")
+    }
+    if (md5NoFFmpegARMEABI != "D31E485F5B8678494B6466A606D3AA63") {
+        throw new GradleException("media_kit: armeabi-v7a JAR verification failed.")
+    }
+    if (md5NoFFmpegX86_64 != "38F2C42C3BFD0501FB992D93980637DE") {
+        throw new GradleException("media_kit: x86_64 JAR verification failed.")
+    }
+    if (md5NoFFmpegX86 != "0C936C80DDBC85CA90CEA90E200B16DE") {
+        throw new GradleException("media_kit: x86 JAR verification failed.")
+    }
+
+    // Check if package:ffmpeg_kit_flutter is present in pubspec.lock.
+
+    def ffmpeg = false;
+    def pubspec = file("$buildDir/../../pubspec.lock")
+    if (!pubspec.exists()) {
+        println "media_kit: WARNING: pubspec.lock not found."
+    } else {
+        ffmpeg = pubspec.text.contains("ffmpeg_kit_flutter")
+    }
+    if (ffmpeg) {
+        println "media_kit: package:ffmpeg_kit_flutter found..."
+        println "media_kit: Skipping FFmpeg download..."
+    }
+
+    // Create a copy of the selected *.jar files to an /output subdirectory.
+
+    if (!ffmpeg) {
+        copy {
+            from destARM64
+            into "$buildDir/output"
+        }
+        copy {
+            from destARMEABI
+            into "$buildDir/output"
+        }
+        copy {
+            from destX86_64
+            into "$buildDir/output"
+        }
+        copy {
+            from destX86
+            into "$buildDir/output"
+        }
+    } else {
+        copy {
+            from destNoFFmpegARM64
+            into "$buildDir/output"
+        }
+        copy {
+            from destNoFFmpegARMEABI
+            into "$buildDir/output"
+        }
+        copy {
+            from destNoFFmpegX86_64
+            into "$buildDir/output"
+        }
+        copy {
+            from destNoFFmpegX86
+            into "$buildDir/output"
+        }
+    }
 }
 
 assemble.dependsOn(downloadDependencies)

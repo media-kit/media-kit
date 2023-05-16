@@ -2,7 +2,7 @@ name: media_kit_video
 description: Native implementation for video playback in package:media_kit.
 homepage: https://github.com/alexmercerind/media_kit
 repository: https://github.com/alexmercerind/media_kit
-version: 0.0.4
+version: 0.0.9
 funding:
   - https://www.github.com/sponsors/alexmercerind
 
@@ -14,15 +14,16 @@ dependencies:
   flutter:
     sdk: flutter
   ffi: ^2.0.1
-  # NOTE: Bump before publishing to pub.dev.
-  media_kit: ^0.0.4
+  # WARNING: Bump before publishing to pub.dev
+  media_kit: ^0.0.7+1
+  synchronized: ^3.1.0
   plugin_platform_interface: ^2.0.2
 
 dev_dependencies:
   flutter_lints: ^2.0.0
 
+# WARNING: Remove before publishing to pub.dev
 dependency_overrides:
-  # NOTE: Remove before publishing to pub.dev.
   media_kit:
     path: ../media_kit
 

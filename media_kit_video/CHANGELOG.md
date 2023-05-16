@@ -1,3 +1,29 @@
+## 0.0.9
+
+- fix(android): revert to `--vo=mediacodec_embed` in `enableHardwareAcceleration`
+
+## 0.0.8
+
+- fix(android): subtitle rendering
+- fix(android): video rendering inside emulators (#149)
+- fix(android): video rendering with `enableHardwareAcceleration: false`
+
+## 0.0.7
+
+- fix(linux): VAAPI hardware acceleration
+- perf(windows): `VideoOutput::Resize`: delete texture objects in background
+
+## 0.0.6
+
+- fix(windows): synchronize texture object deletion in on unregister _v.i.z_ `VideoOutput::Resize` or `VideoOutput::~VideoOutput`
+
+## 0.0.5
+
+- Android support
+- feat: `VideoController.setSize`
+- fix: set `vo` to `libmpv` before creating render context
+- refactor: `VideoController.create` takes `Player` reference instead of `handle`
+
 ## 0.0.4
 
 - fix: use `mkdir` instead of `.gitkeep`
@@ -16,7 +42,7 @@
   - Software: MPV_RENDER_API_TYPE_SW + pixel buffer
 - fix(windows): use `TextureRegistrar::UnregisterTexture` release callback to free texture resources
 - fix(windows): synchronize texture unregister & release on frame dimensions change
-- feat: `aspectRatio` parameter for `Video` widget.
+- feat: `aspectRatio` parameter for `Video` widget
 
 ## 0.0.1
 

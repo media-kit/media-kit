@@ -1,3 +1,44 @@
+## 0.0.7+1
+
+- docs: document updated `media_kit_libs_android_video` and `media_kit_libs_android_audio`
+
+## 0.0.7
+
+- fix: `MediaKit.ensureInitialized` not passing optional `libmpv` argument
+
+## 0.0.6
+
+- feat: synchronize `Player` methods
+- refactor: improve `Playlist` handling in `Player`
+- refactor: improve handling of `playlist`, `audioBitrate` & `audioParams` states/events
+
+## 0.0.5+2
+
+- docs: document updated `media_kit_video` & `media_kit_libs_windows_audio`
+
+## 0.0.5+1
+
+- docs: document updated `media_kit_video`
+
+## 0.0.5
+
+- Android support
+- feat: video output width & height states/events:
+  - `Player.state.width`: currently playing video's width as `int`
+  - `Player.streams.width`: currently playing video's width as `Stream<int>`
+  - `Player.state.height`: currently playing video's height as `int`
+  - `Player.streams.height`: currently playing video's height as `Stream<int>`
+- feat(refactor): entry point
+  - `MediaKit.ensureInitialized`
+- feat: media stream buffer state/event:
+  - `Player.state.buffer`: currently buffered duration of the media stream as `Duration`
+  - `Player.streams.buffer`: currently buffered duration of the media stream as `Stream<Duration>`
+- perf: limit demuxer cache size to 32 MB by default
+- fix: HTTPS m3u8 file loading
+- fix: asset names with special characters
+- feat: `protocolWhitelist` in `PlayerConfiguration` for whitelisting protocols
+- feat: `bufferSize` in `PlayerConfiguration` for setting demuxer cache size
+
 ## 0.0.4+1
 
 - docs(fix): images on pub.dev

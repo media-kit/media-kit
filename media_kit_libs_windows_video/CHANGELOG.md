@@ -4,7 +4,9 @@
 - [ANGLE 2.1.18844 git hash: 2693b03eba82](https://github.com/google/angle)
 - MSVCRT
 - UCRT
-- fix: migrate to the plugin template
+- feat: migrate to the plugin template
+- feat: make package optional during build
+- feat: add MEDIA_KIT_LIBS_AVAILABLE option
 
 ## 1.0.1
 
