@@ -8,37 +8,36 @@ import '../common/sources/sources.dart';
 
 Future<void> paintFirstFrame(BuildContext context) async {
   // Create [Player] and [VideoController] instances.
-  List<Player> players = [
+  final players = [
     Player(),
     Player(),
     Player(),
     Player(),
     Player(),
   ];
-  List<VideoController> controllers = [
-    await VideoController.create(
+  final controllers = [
+    VideoController(
       players[0],
       enableHardwareAcceleration: enableHardwareAcceleration.value,
     ),
-    await VideoController.create(
+    VideoController(
       players[1],
       enableHardwareAcceleration: enableHardwareAcceleration.value,
     ),
-    await VideoController.create(
+    VideoController(
       players[2],
       enableHardwareAcceleration: enableHardwareAcceleration.value,
     ),
-    await VideoController.create(
+    VideoController(
       players[3],
       enableHardwareAcceleration: enableHardwareAcceleration.value,
     ),
-    await VideoController.create(
+    VideoController(
       players[4],
       enableHardwareAcceleration: enableHardwareAcceleration.value,
     ),
   ];
-  // Open some [Playable]s.
-  // Do not start playback i.e. play: false.
+  // Open some [Playable]s. Do not start playback i.e. play: false.
   for (int i = 0; i < 5; i++) {
     await players[i].open(
       Playlist(
@@ -51,7 +50,7 @@ Future<void> paintFirstFrame(BuildContext context) async {
 
   await Future.wait(controllers.map((e) => e.waitUntilFirstFrameRendered));
 
-  // The first frame should be painted!
+  // The first frame should be drawn.
   if (context.mounted) {
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -63,11 +62,8 @@ Future<void> paintFirstFrame(BuildContext context) async {
     );
   }
 
-  for (final e in controllers) {
-    await e.dispose();
-  }
-  for (final e in players) {
-    await e.dispose();
+  for (final player in players) {
+    await player.dispose();
   }
 }
 

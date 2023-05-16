@@ -38,7 +38,7 @@ class TabsTest extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            for (int i = 0; i < count; i++) _Viewport(i),
+            for (int i = 0; i < count; i++) TabView(i),
           ],
         ),
       ),
@@ -46,38 +46,31 @@ class TabsTest extends StatelessWidget {
   }
 }
 
-class _Viewport extends StatefulWidget {
+class TabView extends StatefulWidget {
   final int i;
-  const _Viewport(this.i, {Key? key}) : super(key: key);
+  const TabView(this.i, {Key? key}) : super(key: key);
   @override
-  State<_Viewport> createState() => __ViewportState();
+  State<TabView> createState() => TabViewState();
 }
 
-class __ViewportState extends State<_Viewport> {
-  Player player = Player();
-  VideoController? controller;
+class TabViewState extends State<TabView> {
+  late final Player player = Player();
+  late final VideoController controller = VideoController(
+    player,
+    enableHardwareAcceleration: enableHardwareAcceleration.value,
+  );
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() async {
-      controller = await VideoController.create(
-        player,
-        enableHardwareAcceleration: enableHardwareAcceleration.value,
-      );
-      await player.open(Media(sources[widget.i]));
-      await player.setPlaylistMode(PlaylistMode.loop);
-      await player.setVolume(0.0);
-      setState(() {});
-    });
+    player.setVolume(0.0);
+    player.setPlaylistMode(PlaylistMode.loop);
+    player.open(Media(sources[widget.i]));
   }
 
   @override
   void dispose() {
-    Future.microtask(() async {
-      await controller?.dispose();
-      await player.dispose();
-    });
+    player.dispose();
     super.dispose();
   }
 

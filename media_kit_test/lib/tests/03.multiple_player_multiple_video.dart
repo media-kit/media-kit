@@ -17,32 +17,26 @@ class MultiplePlayerMultipleVideoScreen extends StatefulWidget {
 
 class _MultiplePlayerMultipleVideoScreenState
     extends State<MultiplePlayerMultipleVideoScreen> {
-  final List<Player> players = [Player(), Player()];
-  List<VideoController?> controllers = [null, null];
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() async {
-      for (int i = 0; i < players.length; i++) {
-        controllers[i] = await VideoController.create(
-          players[i],
-          enableHardwareAcceleration: enableHardwareAcceleration.value,
-        );
-      }
-      setState(() {});
-    });
-  }
+  late final List<Player> players = [
+    Player(),
+    Player(),
+  ];
+  late final List<VideoController> controllers = [
+    VideoController(
+      players[0],
+      enableHardwareAcceleration: enableHardwareAcceleration.value,
+    ),
+    VideoController(
+      players[1],
+      enableHardwareAcceleration: enableHardwareAcceleration.value,
+    ),
+  ];
 
   @override
   void dispose() {
-    Future.microtask(() async {
-      debugPrint('Disposing [Player]s and [VideoController]s...');
-      for (int i = 0; i < players.length; i++) {
-        await controllers[i]?.dispose();
-        await players[i].dispose();
-      }
-    });
+    for (final player in players) {
+      player.dispose();
+    }
     super.dispose();
   }
 

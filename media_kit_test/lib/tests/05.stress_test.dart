@@ -15,46 +15,34 @@ class StressTestScreen extends StatefulWidget {
 
 class _StressTestScreenState extends State<StressTestScreen> {
   static const int count = 8;
-  List<Player> players = [];
-  List<VideoController> controllers = [];
+
+  final List<Player> players = [];
+  final List<VideoController> controllers = [];
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () async {
-        for (int i = 0; i < count; i++) {
-          final player = Player();
-          final controller = await VideoController.create(
-            player,
-            enableHardwareAcceleration: enableHardwareAcceleration.value,
-          );
-          players.add(player);
-          controllers.add(controller);
-        }
-        for (int i = 0; i < count; i++) {
-          await players[i].open(
-            Media(sources[i % sources.length]),
-            play: true,
-          );
-          await players[i].setPlaylistMode(PlaylistMode.loop);
-          await players[i].setVolume(0.0);
-        }
-        setState(() {});
-      },
-    );
+    for (int i = 0; i < count; i++) {
+      final player = Player();
+      final controller = VideoController(
+        player,
+        enableHardwareAcceleration: enableHardwareAcceleration.value,
+      );
+      players.add(player);
+      controllers.add(controller);
+    }
+    for (int i = 0; i < count; i++) {
+      players[i].setVolume(0.0);
+      players[i].setPlaylistMode(PlaylistMode.loop);
+      players[i].open(Media(sources[i % sources.length]));
+    }
   }
 
   @override
   void dispose() {
-    Future.microtask(() async {
-      for (final e in controllers) {
-        await e.dispose();
-      }
-      for (final e in players) {
-        await e.dispose();
-      }
-    });
+    for (final player in players) {
+      player.dispose();
+    }
     super.dispose();
   }
 
