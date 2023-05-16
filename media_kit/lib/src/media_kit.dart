@@ -6,7 +6,10 @@
 
 import 'dart:io';
 
-import 'package:media_kit/src/libmpv/entry_point.dart' as implementation;
+import 'package:media_kit/src/utils.dart';
+import 'package:media_kit/src/libmpv/entry_point.dart'
+    if (dart.library.html) 'package:media_kit/src/web/entry_point.dart'
+    as implementation;
 
 /// {@template media_kit}
 ///
@@ -26,19 +29,17 @@ import 'package:media_kit/src/libmpv/entry_point.dart' as implementation;
 abstract class MediaKit {
   /// {@macro media_kit}
   static void ensureInitialized({String? libmpv}) {
-    if (Platform.isWindows) {
+    if (kIsWeb) {
       implementation.ensureInitialized(libmpv: libmpv);
-    }
-    if (Platform.isLinux) {
+    } else if (Platform.isWindows) {
       implementation.ensureInitialized(libmpv: libmpv);
-    }
-    if (Platform.isMacOS) {
+    } else if (Platform.isLinux) {
       implementation.ensureInitialized(libmpv: libmpv);
-    }
-    if (Platform.isIOS) {
+    } else if (Platform.isMacOS) {
       implementation.ensureInitialized(libmpv: libmpv);
-    }
-    if (Platform.isAndroid) {
+    } else if (Platform.isIOS) {
+      implementation.ensureInitialized(libmpv: libmpv);
+    } else if (Platform.isAndroid) {
       implementation.ensureInitialized(libmpv: libmpv);
     }
   }

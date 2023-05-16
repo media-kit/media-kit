@@ -7,17 +7,23 @@
 import 'dart:io';
 import 'dart:async';
 
-import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_streams.dart';
 
+import 'package:media_kit/src/utils.dart';
 import 'package:media_kit/src/platform_player.dart';
-import 'package:media_kit/src/libmpv/player.dart' as _libmpv;
+import 'package:media_kit/src/libmpv/player.dart'
+    if (dart.library.html) 'package:media_kit/src/platform_player.dart'
+    as _libmpv show Player;
+import 'package:media_kit/src/web/player.dart'
+    if (dart.library.io) 'package:media_kit/src/platform_player.dart' as _web
+    show Player;
 
 /// {@template player}
 ///
@@ -105,22 +111,19 @@ class Player {
   Player({
     PlayerConfiguration configuration = const PlayerConfiguration(),
   }) {
-    if (Platform.isWindows) {
+    if (kIsWeb) {
+      platform = _web.Player(configuration: configuration);
+    } else if (Platform.isWindows) {
+      platform = _libmpv.Player(configuration: configuration);
+    } else if (Platform.isLinux) {
+      platform = _libmpv.Player(configuration: configuration);
+    } else if (Platform.isMacOS) {
+      platform = _libmpv.Player(configuration: configuration);
+    } else if (Platform.isIOS) {
+      platform = _libmpv.Player(configuration: configuration);
+    } else if (Platform.isAndroid) {
       platform = _libmpv.Player(configuration: configuration);
     }
-    if (Platform.isLinux) {
-      platform = _libmpv.Player(configuration: configuration);
-    }
-    if (Platform.isMacOS) {
-      platform = _libmpv.Player(configuration: configuration);
-    }
-    if (Platform.isIOS) {
-      platform = _libmpv.Player(configuration: configuration);
-    }
-    if (Platform.isAndroid) {
-      platform = _libmpv.Player(configuration: configuration);
-    }
-    // TODO: Implement other platforms.
   }
 
   /// Platform specific internal implementation initialized depending upon the current platform.

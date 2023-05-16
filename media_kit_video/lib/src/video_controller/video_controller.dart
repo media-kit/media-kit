@@ -8,8 +8,9 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:media_kit/media_kit.dart';
 
-import 'package:media_kit_video/src/video_controller_native.dart';
-import 'package:media_kit_video/src/video_controller_android.dart';
+import 'package:media_kit_video/src/video_controller/web/video_controller_web.dart';
+import 'package:media_kit_video/src/video_controller/native/video_controller_native.dart';
+import 'package:media_kit_video/src/video_controller/android/video_controller_android.dart';
 
 /// {@template video_controller}
 ///
@@ -32,16 +33,17 @@ import 'package:media_kit_video/src/video_controller_android.dart';
 /// You may dynamically resize the video output resolution using the [resize] method.
 /// This may yield substantial performance improvements.
 ///
-/// **Notes**
+/// **Notes:**
 ///
 /// 1. You can limit size of the video output by specifying [width] & [height].
 ///    By default, both [height] & [width] are `null` i.e. output is based on video's resolution.
-/// 2. You can switch between GPU & CPU rendering by specifying [enableHardwareAcceleration].
+/// 2. You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
 ///    By default, [enableHardwareAcceleration] is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 ///
 /// **Additional Information**
 ///
 /// 1. [width] & [height] arguments have no effect on Android.
+/// 2. The [enableHardwareAcceleration] argument is ignored on Flutter Web i.e. GPU rendering is dependent on the client's web browser.
 ///
 /// {@endtemplate}
 abstract class VideoController {
@@ -78,15 +80,21 @@ abstract class VideoController {
     int? height,
     bool enableHardwareAcceleration = true,
   }) {
-    if (VideoControllerNative.supported) {
+    if (VideoControllerWeb.supported) {
+      return VideoControllerWeb.create(
+        player,
+        width: width,
+        height: height,
+        enableHardwareAcceleration: enableHardwareAcceleration,
+      );
+    } else if (VideoControllerNative.supported) {
       return VideoControllerNative.create(
         player,
         width: width,
         height: height,
         enableHardwareAcceleration: enableHardwareAcceleration,
       );
-    }
-    if (VideoControllerAndroid.supported) {
+    } else if (VideoControllerAndroid.supported) {
       return VideoControllerAndroid.create(
         player,
         width: width,
@@ -95,7 +103,7 @@ abstract class VideoController {
       );
     }
     throw UnsupportedError(
-      'VideoController is not supported on this platform.',
+      '[VideoController] is not supported on this platform.',
     );
   }
 

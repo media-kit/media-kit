@@ -7,11 +7,11 @@
 import 'dart:async';
 import 'package:meta/meta.dart';
 
-import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_log.dart';
+import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/player_error.dart';
@@ -413,4 +413,10 @@ enum MPVLogLevel {
 
   /// Extremely noisy.
   trace,
+}
+
+// A stub implementation of PlatformPlayer for conditionally importing/avoiding the supported platform-specific implementation.
+
+class Player extends PlatformPlayer {
+  Player({required super.configuration});
 }

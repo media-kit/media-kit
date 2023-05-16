@@ -4,7 +4,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../common/globals.dart';
-import '../common/sources.dart';
+import '../common/sources/sources.dart';
 
 class StressTestScreen extends StatefulWidget {
   const StressTestScreen({Key? key}) : super(key: key);

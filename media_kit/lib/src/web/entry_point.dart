@@ -4,5 +4,10 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-export 'package:media_kit_video/src/video/video.dart';
-export 'package:media_kit_video/src/video_controller/video_controller.dart';
+/// Initializes the libmpv backend for package:media_kit.
+///
+/// Following optional parameters are available:
+/// * `libmpv`: Manually specified the path to the libmpv shared library.
+void ensureInitialized({String? libmpv}) {
+  // N/A
+}

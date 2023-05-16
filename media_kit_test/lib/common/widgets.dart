@@ -282,7 +282,7 @@ Future<void> showURIPicker(BuildContext context, Player player) async {
                   onPressed: () {
                     if (key.currentState!.validate()) {
                       if (player.platform is libmpvPlayer) {
-                        (player.platform as libmpvPlayer).setProperty(
+                        (player.platform as dynamic).setProperty(
                           "audio-files",
                           audio.text,
                         );

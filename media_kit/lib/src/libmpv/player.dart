@@ -18,12 +18,12 @@ import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
 
 import 'package:media_kit/src/android_asset_loader.dart';
 
-import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/playlist.dart';
-import 'package:media_kit/src/models/player_error.dart';
 import 'package:media_kit/src/models/player_log.dart';
+import 'package:media_kit/src/models/media/media.dart';
+import 'package:media_kit/src/models/player_error.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';

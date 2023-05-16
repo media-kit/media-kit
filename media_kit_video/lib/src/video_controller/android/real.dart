@@ -22,7 +22,7 @@ import 'package:synchronized/synchronized.dart';
 import 'package:media_kit/generated/libmpv/bindings.dart';
 import 'package:media_kit/src/libmpv/core/native_library.dart';
 
-import 'package:media_kit_video/src/video_controller.dart';
+import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
 /// {@template video_controller_android}
 ///
@@ -166,7 +166,7 @@ class VideoControllerAndroid extends VideoController {
     final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
     final values = enableHardwareAcceleration
         ? {
-            // Hardware decoding & rendering with --vo=gpu + --hwdec=mediacodec-copy.
+            // H/W decoding & rendering with --vo=gpu + --hwdec=mediacodec-copy.
             'opengl-es': 'yes',
             'force-window': 'yes',
             'hwdec': 'mediacodec-copy',
@@ -175,15 +175,7 @@ class VideoControllerAndroid extends VideoController {
             'wid': wid.toString(),
           }
         : {
-            // Software decoding & rendering with --vo=gpu + --hwdec=no.
-            // The `android.view.Surface` (bind with `android.graphics.SurfaceTexture`) instance which is passed as --wid to libmpv for rendering, is not actually 'mounted' to the Android view hierarchy, because we are using Flutter.
-            // The `android.view.Surface` instance is solely created for allowing libmpv to render into it. The Flutter internally reads from `android.graphics.SurfaceTexture` AFAIK.
-            //
-            // This makes the `android.view.Surface` not size accordingly to the video / display size (& render video as a single 1x1 pixel forever).
-            // So, we use `setDefaultBufferSize` to set the size of the video output & make it render accordingly.
-            // Learn more: https://developer.android.com/reference/android/graphics/SurfaceTexture#setDefaultBufferSize(int,%20int)
-            //
-            // From my observations, as soon as we use --vo=gpu, we need to use `setDefaultBufferSize` even with hardware acceleration enabled due to the reason mentioned above.
+            // S/W decoding & rendering with --vo=gpu + --hwdec=no.
             'opengl-es': 'yes',
             'force-window': 'yes',
             'hwdec': 'no',
