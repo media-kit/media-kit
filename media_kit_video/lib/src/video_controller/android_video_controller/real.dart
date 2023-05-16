@@ -22,22 +22,22 @@ import 'package:synchronized/synchronized.dart';
 import 'package:media_kit/generated/libmpv/bindings.dart';
 import 'package:media_kit/src/libmpv/core/native_library.dart';
 
-import 'package:media_kit_video/src/video_controller/video_controller.dart';
+import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 
-/// {@template video_controller_android}
+/// {@template android_video_controller}
 ///
-/// VideoControllerAndroid
+/// AndroidVideoController
 /// ----------------------
 ///
-/// The [VideoController] implementation based on native JNI & C/C++ used on Android.
+/// The [PlatformVideoController] implementation based on native JNI & C/C++ used on Android.
 ///
 /// {@endtemplate}
-class VideoControllerAndroid extends VideoController {
-  /// Whether [VideoControllerAndroid] is supported on the current platform or not.
+class AndroidVideoController extends PlatformVideoController {
+  /// Whether [AndroidVideoController] is supported on the current platform or not.
   static bool get supported => Platform.isAndroid;
 
-  /// {@macro video_controller_android}
-  VideoControllerAndroid(
+  /// {@macro android_video_controller}
+  AndroidVideoController._(
     super.player,
     super.width,
     super.height,
@@ -118,13 +118,11 @@ class VideoControllerAndroid extends VideoController {
     );
   }
 
-  /// {@macro video_controller_android}
-  static Future<VideoController> create(
-    Player player, {
-    int? width,
-    int? height,
-    bool enableHardwareAcceleration = true,
-  }) async {
+  /// {@macro android_video_controller}
+  static Future<PlatformVideoController> create(
+    Player player,
+    bool enableHardwareAcceleration,
+  ) async {
     // Retrieve the native handle of the [Player].
     final handle = await player.handle;
     // Return the existing [VideoController] if it's already created.
@@ -135,19 +133,21 @@ class VideoControllerAndroid extends VideoController {
     // Enforce software rendering in emulators.
     final bool isEmulator = await _channel.invokeMethod('Utils.IsEmulator');
     if (isEmulator) {
-      debugPrint('media_kit: VideoControllerAndroid: Emulator detected.');
-      debugPrint('media_kit: VideoControllerAndroid: Enforcing S/W rendering.');
+      debugPrint('media_kit: AndroidVideoController: Emulator detected.');
+      debugPrint('media_kit: AndroidVideoController: Enforcing S/W rendering.');
       enableHardwareAcceleration = false;
     }
 
     // Creation:
-
-    final controller = VideoControllerAndroid(
+    final controller = AndroidVideoController._(
       player,
-      width,
-      height,
+      null,
+      null,
       enableHardwareAcceleration,
     );
+    // Register [_dispose] for execution upon [Player.dispose].
+    player.platform?.release.add(controller._dispose);
+
     // Store the [VideoController] in the [_controllers].
     _controllers[handle] = controller;
 
@@ -207,37 +207,29 @@ class VideoControllerAndroid extends VideoController {
     // ----------------------------------------------
 
     controller.id.value = id;
-    if (width != null && height != null) {
-      controller.rect.value = Rect.fromLTWH(
-        0,
-        0,
-        width.toDouble(),
-        height.toDouble(),
-      );
-    }
 
-    // Return the [VideoController].
+    // Return the [PlatformVideoController].
     return controller;
   }
 
   /// Sets the required size of the video output.
   /// This may yield substantial performance improvements if a small [width] & [height] is specified.
   ///
-  /// Remember, “Premature optimization is the root of all evil”. So, use this method wisely.
+  /// Remember:
+  /// * “Premature optimization is the root of all evil”
+  /// * “With great power comes great responsibility”
   @override
   Future<void> setSize({
     int? width,
     int? height,
   }) {
     throw UnimplementedError(
-      '[VideoControllerAndroid.setSize] is not available on Android.',
+      '[AndroidVideoController.setSize] is not available on Android.',
     );
   }
 
-  /// Disposes the [VideoController].
-  /// Releases the allocated resources back to the system.
-  @override
-  Future<void> dispose() async {
+  /// Disposes the instance. Releases allocated resources back to the system.
+  Future<void> _dispose() async {
     // Dispose the [StreamSubscription]s.
     await _widthStreamSubscription?.cancel();
     await _heightStreamSubscription?.cancel();
@@ -270,8 +262,8 @@ class VideoControllerAndroid extends VideoController {
   /// [StreamSubscription] for listening to video [Rect] from [_controller].
   StreamSubscription<Rect>? _rectStreamSubscription;
 
-  /// Currently created [VideoControllerAndroid]s.
-  static final _controllers = HashMap<int, VideoControllerAndroid>();
+  /// Currently created [AndroidVideoController]s.
+  static final _controllers = HashMap<int, AndroidVideoController>();
 
   /// [MethodChannel] for invoking platform specific native implementation.
   static const _channel = MethodChannel('com.alexmercerind/media_kit_video');

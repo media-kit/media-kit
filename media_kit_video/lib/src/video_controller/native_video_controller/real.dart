@@ -10,43 +10,43 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 
-import 'package:media_kit_video/src/video_controller/video_controller.dart';
+import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 
-/// {@template video_controller_native}
+/// {@template native_video_controller}
 ///
-/// VideoControllerNative
+/// NativeVideoController
 /// ---------------------
 ///
-/// The [VideoController] implementation based on native C/C++ used on:
+/// The [PlatformVideoController] implementation based on native C/C++ used on:
 /// * Windows
 /// * GNU/Linux
 /// * macOS
 /// * iOS
 ///
 /// {@endtemplate}
-class VideoControllerNative extends VideoController {
-  /// Whether [VideoControllerNative] is supported on the current platform or not.
+class NativeVideoController extends PlatformVideoController {
+  /// Whether [NativeVideoController] is supported on the current platform or not.
   static bool get supported =>
       Platform.isWindows ||
       Platform.isLinux ||
       Platform.isMacOS ||
       Platform.isIOS;
 
-  /// {@macro video_controller_native}
-  VideoControllerNative(
+  /// {@macro native_video_controller}
+  NativeVideoController._(
     super.player,
     super.width,
     super.height,
     super.enableHardwareAcceleration,
   );
 
-  /// {@macro video_controller_native}
-  static Future<VideoController> create(
-    Player player, {
+  /// {@macro native_video_controller}
+  static Future<PlatformVideoController> create(
+    Player player,
     int? width,
     int? height,
-    bool enableHardwareAcceleration = true,
-  }) async {
+    bool enableHardwareAcceleration,
+  ) async {
     // Retrieve the native handle of the [Player].
     final handle = await player.handle;
     // Return the existing [VideoController] if it's already created.
@@ -55,14 +55,16 @@ class VideoControllerNative extends VideoController {
     }
 
     // Creation:
-
-    final controller = VideoControllerNative(
+    final controller = NativeVideoController._(
       player,
       width,
       height,
       enableHardwareAcceleration,
     );
-    // Store the [VideoControllerNative] in the [_controllers].
+    // Register [_dispose] for execution upon [Player.dispose].
+    player.platform?.release.add(controller._dispose);
+
+    // Store the [NativeVideoController] in the [_controllers].
     _controllers[handle] = controller;
 
     // Wait until first texture ID is received i.e. render context & EGL/D3D surface is created.
@@ -71,7 +73,7 @@ class VideoControllerNative extends VideoController {
     final completer = Completer<void>();
     void listener() {
       if (controller.id.value != null) {
-        debugPrint('VideoController: Texture ID: ${controller.id.value}');
+        debugPrint('NativeVideoController: Texture ID: ${controller.id.value}');
         completer.complete();
       }
     }
@@ -98,7 +100,9 @@ class VideoControllerNative extends VideoController {
   /// Sets the required size of the video output.
   /// This may yield substantial performance improvements if a small [width] & [height] is specified.
   ///
-  /// Remember, “Premature optimization is the root of all evil”. So, use this method wisely.
+  /// Remember:
+  /// * “Premature optimization is the root of all evil”
+  /// * “With great power comes great responsibility”
   @override
   Future<void> setSize({
     int? width,
@@ -121,10 +125,8 @@ class VideoControllerNative extends VideoController {
     );
   }
 
-  /// Disposes the [VideoController].
-  /// Releases the allocated resources back to the system.
-  @override
-  Future<void> dispose() async {
+  /// Disposes the instance. Releases allocated resources back to the system.
+  Future<void> _dispose() async {
     final handle = await player.handle;
     _controllers.remove(handle);
     await _channel.invokeMethod(
@@ -135,9 +137,9 @@ class VideoControllerNative extends VideoController {
     );
   }
 
-  /// Currently created [VideoControllerNative]s.
+  /// Currently created [NativeVideoController]s.
   /// This is used to notify about updated texture IDs & [Rect]s through [channel].
-  static final _controllers = HashMap<int, VideoControllerNative>();
+  static final _controllers = HashMap<int, NativeVideoController>();
 
   /// [MethodChannel] for invoking platform specific native implementation.
   static final _channel =

@@ -5,30 +5,24 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'package:media_kit/media_kit.dart';
 
-import 'package:media_kit_video/src/video_controller/video_controller.dart';
+import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 
 // Stub declaration for avoiding compilation errors on Dart Native using conditional imports.
 
-class VideoControllerWeb extends VideoController {
+class WebVideoController extends PlatformVideoController {
   static const bool supported = false;
 
-  VideoControllerWeb(
+  WebVideoController._(
     super.player,
     super.width,
     super.height,
     super.enableHardwareAcceleration,
   );
 
-  static Future<VideoController> create(
-    Player player, {
-    int? width,
-    int? height,
-    bool enableHardwareAcceleration = true,
-  }) =>
+  static Future<PlatformVideoController> create(
+    Player player,
+  ) =>
       throw UnimplementedError();
-
-  @override
-  Future<void> dispose() => throw UnimplementedError();
 
   @override
   Future<void> setSize({int? width, int? height}) => throw UnimplementedError();

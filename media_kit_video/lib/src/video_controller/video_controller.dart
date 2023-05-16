@@ -4,138 +4,114 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:async';
-
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 
-import 'package:media_kit_video/src/video_controller/web/video_controller_web.dart';
-import 'package:media_kit_video/src/video_controller/native/video_controller_native.dart';
-import 'package:media_kit_video/src/video_controller/android/video_controller_android.dart';
+import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
+
+import 'package:media_kit_video/src/video_controller/web_video_controller/web_video_controller.dart';
+import 'package:media_kit_video/src/video_controller/native_video_controller/native_video_controller.dart';
+import 'package:media_kit_video/src/video_controller/android_video_controller/android_video_controller.dart';
 
 /// {@template video_controller}
 ///
 /// VideoController
 /// ---------------
 ///
-/// This class is used to initialize & handle the video rendering inside the Flutter widget tree.
-///
-/// A [VideoController] must be created right after creating the [Player] from `package:media_kit`.
-/// Pass the [Player] from `package:media_kit` to the [VideoController] constructor.
+/// [VideoController] is used to initialize & display video output.
+/// It takes reference to existing [Player] instance from `package:media_kit`.
 ///
 /// ```dart
-/// final player = Player();
-/// final controller = await VideoController.create(player);
+/// late final player = Player();
+/// late final controller = VideoController(player);
 /// ```
-///
-/// It is important to [dispose] the [VideoController] when it is no longer needed.
-/// It will release the allocated resources back to the system.
-///
-/// You may dynamically resize the video output resolution using the [resize] method.
-/// This may yield substantial performance improvements.
 ///
 /// **Notes:**
 ///
 /// 1. You can limit size of the video output by specifying [width] & [height].
-///    By default, both [height] & [width] are `null` i.e. output is based on video's resolution.
+///    * By default, both [height] & [width] are `null` i.e. output is based on video's resolution.
 /// 2. You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
-///    By default, [enableHardwareAcceleration] is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
+///    * By default, [enableHardwareAcceleration] is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 ///
-/// **Additional Information**
+/// **Platform specific differences:**
 ///
 /// 1. [width] & [height] arguments have no effect on Android.
-/// 2. The [enableHardwareAcceleration] argument is ignored on Flutter Web i.e. GPU rendering is dependent on the client's web browser.
+/// 2. The [enableHardwareAcceleration] argument is ignored on Flutter Web i.e. GPU usage is dependent on the client's web browser.
 ///
 /// {@endtemplate}
-abstract class VideoController {
-  /// The [Player] instance associated with this [VideoController].
-  final Player player;
+class VideoController {
+  /// Platform specific internal implementation initialized depending upon the current platform.
+  final platform = Completer<PlatformVideoController>();
 
-  /// Fixed width of the video output.
-  int? width;
+  /// Platform specific internal implementation initialized depending upon the current platform.
+  final notifier = ValueNotifier<PlatformVideoController?>(null);
 
-  /// Fixed height of the video output.
-  int? height;
-
-  /// Whether hardware acceleration should be enabled or not.
-  final bool enableHardwareAcceleration;
-
-  /// Texture ID of the video output, registered with Flutter engine by the native implementation.
-  final ValueNotifier<int?> id = ValueNotifier<int?>(null);
-
-  /// [Rect] of the video output, received from the native implementation.
-  final ValueNotifier<Rect?> rect = ValueNotifier<Rect?>(null);
-
-  /// {@macro video_controller}
+  /// {@macro platform_video_controller}
   VideoController(
-    this.player,
-    this.width,
-    this.height,
-    this.enableHardwareAcceleration,
-  );
-
-  /// {@macro video_controller}
-  static Future<VideoController> create(
     Player player, {
     int? width,
     int? height,
     bool enableHardwareAcceleration = true,
   }) {
-    if (VideoControllerWeb.supported) {
-      return VideoControllerWeb.create(
-        player,
-        width: width,
-        height: height,
-        enableHardwareAcceleration: enableHardwareAcceleration,
-      );
-    } else if (VideoControllerNative.supported) {
-      return VideoControllerNative.create(
-        player,
-        width: width,
-        height: height,
-        enableHardwareAcceleration: enableHardwareAcceleration,
-      );
-    } else if (VideoControllerAndroid.supported) {
-      return VideoControllerAndroid.create(
-        player,
-        width: width,
-        height: height,
-        enableHardwareAcceleration: enableHardwareAcceleration,
-      );
-    }
-    throw UnsupportedError(
-      '[VideoController] is not supported on this platform.',
-    );
+    player.platform?.isVideoControllerAttached = true;
+
+    () async {
+      try {
+        if (WebVideoController.supported) {
+          // TODO(@alexmercerind): Missing implementation.
+        } else if (NativeVideoController.supported) {
+          final result = await NativeVideoController.create(
+            player,
+            width,
+            height,
+            enableHardwareAcceleration,
+          );
+          platform.complete(result);
+          notifier.value = result;
+        } else if (AndroidVideoController.supported) {
+          final result = await AndroidVideoController.create(
+            player,
+            enableHardwareAcceleration,
+          );
+          platform.complete(result);
+          notifier.value = result;
+        }
+      } catch (exception, stacktrace) {
+        debugPrint(exception.toString());
+        debugPrint(stacktrace.toString());
+      }
+      if (!platform.isCompleted) {
+        platform.completeError(
+          UnimplementedError(
+            '[VideoController] is unavailable for this platform.',
+          ),
+        );
+      }
+
+      player.platform?.videoPlayerCompleter.complete();
+    }();
   }
 
   /// Sets the required size of the video output.
   /// This may yield substantial performance improvements if a small [width] & [height] is specified.
   ///
-  /// Remember, “Premature optimization is the root of all evil”. So, use this method wisely.
+  /// Remember:
+  /// * “Premature optimization is the root of all evil”
+  /// * “With great power comes great responsibility”
   Future<void> setSize({
     int? width,
     int? height,
-  });
-
-  /// Disposes the [VideoController].
-  /// Releases the allocated resources back to the system.
-  Future<void> dispose();
-
-  @override
-  String toString() => 'VideoController('
-      'player: $player, '
-      'width: $width, '
-      'height: $height, '
-      'enableHardwareAcceleration: $enableHardwareAcceleration, '
-      'id: $id, '
-      'rect: $rect'
-      ')';
+  }) async {
+    final instance = await platform.future;
+    return instance.setSize(
+      width: width,
+      height: height,
+    );
+  }
 
   /// A [Future] that completes when the first video frame has been rendered.
-  Future<void> get waitUntilFirstFrameRendered =>
-      waitUntilFirstFrameRenderedCompleter.future;
-
-  /// [Completer] used to signal the decoding & rendering of the first video frame.
-  /// Use [waitUntilFirstFrameRendered] to wait for the first frame to be rendered.
-  @protected
-  final waitUntilFirstFrameRenderedCompleter = Completer<void>();
+  Future<void> get waitUntilFirstFrameRendered async {
+    final instance = await platform.future;
+    return instance.waitUntilFirstFrameRendered;
+  }
 }

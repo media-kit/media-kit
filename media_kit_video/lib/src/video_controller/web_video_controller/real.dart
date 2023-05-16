@@ -11,44 +11,41 @@ import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 
-import 'package:media_kit_video/src/video_controller/video_controller.dart';
+import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 
-/// {@template video_controller_web}
+/// {@template web_video_controller}
 ///
-/// VideoControllerWeb
+/// WebVideoController
 /// ------------------
 ///
-/// The [VideoController] implementation based on native C/C++ used on web.
+/// The [WebVideoController] implementation based on HTML & JavaScript used on web.
 ///
 /// {@endtemplate}
-class VideoControllerWeb extends VideoController {
-  /// Whether [VideoControllerNative] is supported on the current platform or not.
+class WebVideoController extends PlatformVideoController {
+  /// Whether [WebVideoController] is supported on the current platform or not.
   static const bool supported = kIsWeb;
 
-  /// {@macro video_controller_web}
-  VideoControllerWeb(
+  /// {@macro web_video_controller}
+  WebVideoController._(
     super.player,
     super.width,
     super.height,
     super.enableHardwareAcceleration,
   );
 
-  /// {@macro video_controller_web}
-  static Future<VideoController> create(
-    Player player, {
-    int? width,
-    int? height,
-    bool enableHardwareAcceleration = true,
-  }) async {
+  /// {@macro web_video_controller}
+  static Future<PlatformVideoController> create(Player player) async {
     // Retrieve the native handle of the [Player].
     final handle = await player.handle;
 
-    final controller = VideoControllerWeb(
+    final controller = WebVideoController._(
       player,
-      width,
-      height,
-      enableHardwareAcceleration,
+      null,
+      null,
+      true,
     );
+    // Register [_dispose] for execution upon [Player.dispose].
+    player.platform?.release.add(controller._dispose);
 
     // Retrieve the [html.VideoElement] instance from [js.context].
     controller._element = js.context[_kInstances][handle];
@@ -66,9 +63,9 @@ class VideoControllerWeb extends VideoController {
     controller._resizeStreamSubscription = controller._element?.onResize.listen(
       (event) {
         debugPrint(
-          'media_kit: VideoController: ${controller._element?.videoWidth}, ${controller._element?.videoHeight}',
+          'media_kit: WebVideoController: ${controller._element?.videoWidth}, ${controller._element?.videoHeight}',
         );
-        // Update the size of the [VideoController].
+        // Update the size of the [PlatformVideoController].
         controller.rect.value = Rect.fromLTWH(
           0.0,
           0.0,
@@ -78,14 +75,16 @@ class VideoControllerWeb extends VideoController {
       },
     );
 
-    // Return the [VideoController].
+    // Return the [PlatformVideoController].
     return controller;
   }
 
   /// Sets the required size of the video output.
   /// This may yield substantial performance improvements if a small [width] & [height] is specified.
   ///
-  /// Remember, “Premature optimization is the root of all evil”. So, use this method wisely.
+  /// Remember:
+  /// * “Premature optimization is the root of all evil”
+  /// * “With great power comes great responsibility”
   @override
   Future<void> setSize({
     int? width,
@@ -94,10 +93,8 @@ class VideoControllerWeb extends VideoController {
     // N/A
   }
 
-  /// Disposes the [VideoController].
-  /// Releases the allocated resources back to the system.
-  @override
-  Future<void> dispose() async {
+  /// Disposes the instance. Releases allocated resources back to the system.
+  Future<void> _dispose() async {
     // Close the resize event stream subscription.
     await _resizeStreamSubscription?.cancel();
   }
