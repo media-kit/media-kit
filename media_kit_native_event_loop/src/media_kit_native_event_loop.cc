@@ -121,9 +121,13 @@ void MediaKitEventLoopHandler::Dispose(int64_t handle) {
 
 void MediaKitEventLoopHandler::Initialize() {
   auto contexts = std::vector<mpv_handle*>();
+
+  mutex_.lock();
   for (auto& [context, _] : mutexes_) {
     contexts.push_back(context);
   }
+  mutex_.unlock();
+
   for (auto& context : contexts) {
     Dispose(reinterpret_cast<int64_t>(context));
     mpv_command_string(context, "quit");
@@ -139,7 +143,19 @@ bool MediaKitEventLoopHandler::IsRegistered(int64_t handle) {
 
 MediaKitEventLoopHandler::MediaKitEventLoopHandler() {}
 
-MediaKitEventLoopHandler::~MediaKitEventLoopHandler() {}
+MediaKitEventLoopHandler::~MediaKitEventLoopHandler() {
+  auto contexts = std::vector<mpv_handle*>();
+
+  mutex_.lock();
+  for (auto& [context, _] : mutexes_) {
+    contexts.push_back(context);
+  }
+  mutex_.unlock();
+
+  for (auto& context : contexts) {
+    Dispose(reinterpret_cast<int64_t>(context));
+  }
+}
 
 // ---------------------------------------------------------------------------
 // C API for access using dart:ffi
