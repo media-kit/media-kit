@@ -36,7 +36,6 @@ abstract class AndroidAssetLoader {
   }
 
   /// Copies an asset bundled with the application to the external files directory & returns it absolute path.
-  @pragma('vm:entry-point')
   static String loadSync(String asset) {
     if (_loaded.containsKey(asset)) {
       return _loaded[asset]!;

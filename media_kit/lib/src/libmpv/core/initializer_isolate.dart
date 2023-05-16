@@ -3,10 +3,10 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:collection';
 import 'dart:ffi';
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:collection';
 import 'package:ffi/ffi.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
@@ -119,7 +119,6 @@ abstract class InitializerIsolate {
   /// First value sent through the [SendPort] is [SendPort] of the internal [ReceivePort].
   /// Second value sent through the [SendPort] is raw address of the [Pointer<mpv_handle>] created by the [Isolate].
   /// Subsequent sent values are [Pointer<mpv_event>].
-  @pragma('vm:entry-point')
   static void _mainloop(SendPort port) async {
     // [Completer] used to ensure that the last [mpv_event] is NOT reset to [mpv_event_id.MPV_EVENT_NONE] after waiting using [MPV.mpv_wait_event] again in the continuously running while loop.
     var completer = Completer();

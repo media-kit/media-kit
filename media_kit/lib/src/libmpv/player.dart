@@ -35,13 +35,14 @@ import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 /// Player
 /// ------
 ///
-/// Compatiblity has been tested with libmpv 0.28.0 & higher.
+/// Compatibility has been tested with libmpv 0.28.0 & higher.
 /// Recommended libmpv version is 0.33.0 & higher.
 ///
 /// {@endtemplate}
 class Player extends PlatformPlayer {
   /// {@macro libmpv_player}
-  Player({required super.configuration}) {
+  Player({required super.configuration})
+      : _mpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path)) {
     _create().then((_) {
       configuration.ready?.call();
     });
@@ -50,7 +51,7 @@ class Player extends PlatformPlayer {
   /// Disposes the [Player] instance & releases the resources.
   @override
   Future<void> dispose({bool synchronized = true}) {
-    function() async {
+    Future<void> function() async {
       final ctx = await _handle.future;
       Initializer.dispose(ctx);
       final commands = [
@@ -60,7 +61,7 @@ class Player extends PlatformPlayer {
       ];
       for (final command in commands) {
         final data = command.toNativeUtf8();
-        _libmpv?.mpv_command_string(
+        _mpv.mpv_command_string(
           ctx,
           data.cast(),
         );
@@ -72,7 +73,7 @@ class Player extends PlatformPlayer {
             Platform.isMacOS ||
             Platform.isIOS ||
             Platform.isAndroid) {
-          _libmpv?.mpv_terminate_destroy(ctx);
+          _mpv.mpv_terminate_destroy(ctx);
         }
         if (Platform.isLinux) {
           _command(
@@ -116,7 +117,7 @@ class Player extends PlatformPlayer {
     bool play = true,
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       final ctx = await _handle.future;
 
       final int index;
@@ -140,7 +141,7 @@ class Player extends PlatformPlayer {
       ];
       for (final command in commands) {
         final args = command.toNativeUtf8();
-        _libmpv?.mpv_command_string(
+        _mpv.mpv_command_string(
           ctx,
           args.cast(),
         );
@@ -151,7 +152,7 @@ class Player extends PlatformPlayer {
       {
         final name = 'pause'.toNativeUtf8();
         final value = calloc<Uint8>();
-        _libmpv?.mpv_get_property(
+        _mpv.mpv_get_property(
           ctx,
           name.cast(),
           generated.mpv_format.MPV_FORMAT_FLAG,
@@ -160,7 +161,7 @@ class Player extends PlatformPlayer {
         if (value.value == 0) {
           // We are using `cycle pause` because it waits & prevents the race condition.
           final command = 'cycle pause'.toNativeUtf8();
-          _libmpv?.mpv_command_string(
+          _mpv.mpv_command_string(
             ctx,
             command.cast(),
           );
@@ -190,7 +191,7 @@ class Player extends PlatformPlayer {
         _allowPlayingStateChange = true;
         final name = 'pause'.toNativeUtf8();
         final value = calloc<Uint8>();
-        _libmpv?.mpv_get_property(
+        _mpv.mpv_get_property(
           ctx,
           name.cast(),
           generated.mpv_format.MPV_FORMAT_FLAG,
@@ -199,7 +200,7 @@ class Player extends PlatformPlayer {
         if (value.value == 1) {
           // We are using `cycle pause` because it waits & prevents the race condition.
           final command = 'cycle pause'.toNativeUtf8();
-          _libmpv?.mpv_command_string(
+          _mpv.mpv_command_string(
             ctx,
             command.cast(),
           );
@@ -212,7 +213,7 @@ class Player extends PlatformPlayer {
       {
         final name = 'playlist-pos'.toNativeUtf8();
         final value = calloc<Int64>()..value = index;
-        _libmpv?.mpv_set_property(
+        _mpv.mpv_set_property(
           ctx,
           name.cast(),
           generated.mpv_format.MPV_FORMAT_INT64,
@@ -235,7 +236,7 @@ class Player extends PlatformPlayer {
   Future<void> play({
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       _allowPlayingStateChange = true;
       state = state.copyWith(playing: true);
       if (!playingController.isClosed) {
@@ -245,7 +246,7 @@ class Player extends PlatformPlayer {
       final ctx = await _handle.future;
       final name = 'pause'.toNativeUtf8();
       final value = calloc<Uint8>();
-      _libmpv?.mpv_get_property(
+      _mpv.mpv_get_property(
         ctx,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_FLAG,
@@ -270,7 +271,7 @@ class Player extends PlatformPlayer {
   Future<void> pause({
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       _allowPlayingStateChange = true;
       state = state.copyWith(playing: false);
       if (!playingController.isClosed) {
@@ -280,7 +281,7 @@ class Player extends PlatformPlayer {
       final ctx = await _handle.future;
       final name = 'pause'.toNativeUtf8();
       final value = calloc<Uint8>();
-      _libmpv?.mpv_get_property(
+      _mpv.mpv_get_property(
         ctx,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_FLAG,
@@ -305,14 +306,14 @@ class Player extends PlatformPlayer {
   Future<void> playOrPause({
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       _allowPlayingStateChange = true;
       final ctx = await _handle.future;
       // This condition is specifically for the case when the internal playlist is ended (with [PlaylistLoopMode.none]), and we want to play the playlist again if play/pause is pressed.
       if (state.completed) {
         final name = 'playlist-pos'.toNativeUtf8();
         final value = calloc<Int64>()..value = 0;
-        _libmpv?.mpv_set_property(
+        _mpv.mpv_set_property(
           ctx,
           name.cast(),
           generated.mpv_format.MPV_FORMAT_INT64,
@@ -322,7 +323,7 @@ class Player extends PlatformPlayer {
         calloc.free(value);
       }
       final command = 'cycle pause'.toNativeUtf8();
-      _libmpv?.mpv_command_string(
+      _mpv.mpv_command_string(
         ctx,
         command.cast(),
       );
@@ -342,7 +343,7 @@ class Player extends PlatformPlayer {
     Media media, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       await _command(
         [
           'loadfile',
@@ -366,7 +367,7 @@ class Player extends PlatformPlayer {
     int index, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       await _command(
         [
           'playlist-remove',
@@ -387,11 +388,11 @@ class Player extends PlatformPlayer {
   Future<void> next({
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       final ctx = await _handle.future;
       await play(synchronized: false);
       final command = 'playlist-next'.toNativeUtf8();
-      _libmpv?.mpv_command_string(
+      _mpv.mpv_command_string(
         ctx,
         command.cast(),
       );
@@ -410,11 +411,11 @@ class Player extends PlatformPlayer {
   Future<void> previous({
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       final ctx = await _handle.future;
       await play(synchronized: false);
       final command = 'playlist-prev'.toNativeUtf8();
-      _libmpv?.mpv_command_string(
+      _mpv.mpv_command_string(
         ctx,
         command.cast(),
       );
@@ -434,12 +435,12 @@ class Player extends PlatformPlayer {
     int index, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       final ctx = await _handle.future;
       await play(synchronized: false);
       final name = 'playlist-pos'.toNativeUtf8();
       final value = calloc<Int64>()..value = index;
-      _libmpv?.mpv_set_property(
+      _mpv.mpv_set_property(
         ctx,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_INT64,
@@ -463,7 +464,7 @@ class Player extends PlatformPlayer {
     int to, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       await _command(
         [
           'playlist-move',
@@ -486,7 +487,7 @@ class Player extends PlatformPlayer {
     Duration duration, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       final ctx = await _handle.future;
       // Raw `mpv_command` calls cause crash on Windows.
       final args = [
@@ -494,7 +495,7 @@ class Player extends PlatformPlayer {
         (duration.inMilliseconds / 1000).toStringAsFixed(4),
         'absolute',
       ].join(' ').toNativeUtf8();
-      _libmpv?.mpv_command_string(
+      _mpv.mpv_command_string(
         ctx,
         args.cast(),
       );
@@ -514,7 +515,7 @@ class Player extends PlatformPlayer {
     PlaylistMode playlistMode, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       final ctx = await _handle.future;
       final file = 'loop-file'.toNativeUtf8();
       final playlist = 'loop-playlist'.toNativeUtf8();
@@ -523,12 +524,12 @@ class Player extends PlatformPlayer {
       switch (playlistMode) {
         case PlaylistMode.none:
           {
-            _libmpv?.mpv_set_property_string(
+            _mpv.mpv_set_property_string(
               ctx,
               file.cast(),
               no.cast(),
             );
-            _libmpv?.mpv_set_property_string(
+            _mpv.mpv_set_property_string(
               ctx,
               playlist.cast(),
               no.cast(),
@@ -537,12 +538,12 @@ class Player extends PlatformPlayer {
           }
         case PlaylistMode.single:
           {
-            _libmpv?.mpv_set_property_string(
+            _mpv.mpv_set_property_string(
               ctx,
               file.cast(),
               yes.cast(),
             );
-            _libmpv?.mpv_set_property_string(
+            _mpv.mpv_set_property_string(
               ctx,
               playlist.cast(),
               no.cast(),
@@ -551,12 +552,12 @@ class Player extends PlatformPlayer {
           }
         case PlaylistMode.loop:
           {
-            _libmpv?.mpv_set_property_string(
+            _mpv.mpv_set_property_string(
               ctx,
               file.cast(),
               no.cast(),
             );
-            _libmpv?.mpv_set_property_string(
+            _mpv.mpv_set_property_string(
               ctx,
               playlist.cast(),
               yes.cast(),
@@ -585,12 +586,12 @@ class Player extends PlatformPlayer {
     double volume, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       final ctx = await _handle.future;
       final name = 'volume'.toNativeUtf8();
       final value = calloc<Double>();
       value.value = volume;
-      _libmpv?.mpv_set_property(
+      _mpv.mpv_set_property(
         ctx,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_DOUBLE,
@@ -613,7 +614,7 @@ class Player extends PlatformPlayer {
     double rate, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       if (configuration.pitch) {
         // Pitch shift control is enabled.
         final ctx = await _handle.future;
@@ -631,7 +632,7 @@ class Player extends PlatformPlayer {
         // speed change.
         var name = 'audio-pitch-correction'.toNativeUtf8();
         final no = 'no'.toNativeUtf8();
-        _libmpv?.mpv_set_property_string(
+        _mpv.mpv_set_property_string(
           ctx,
           name.cast(),
           no.cast(),
@@ -643,7 +644,7 @@ class Player extends PlatformPlayer {
         final value =
             'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
                 .toNativeUtf8();
-        _libmpv?.mpv_set_property_string(
+        _mpv.mpv_set_property_string(
           ctx,
           name.cast(),
           value.cast(),
@@ -662,7 +663,7 @@ class Player extends PlatformPlayer {
         final name = 'speed'.toNativeUtf8();
         final value = calloc<Double>();
         value.value = rate;
-        _libmpv?.mpv_set_property(
+        _mpv.mpv_set_property(
           ctx,
           name.cast(),
           generated.mpv_format.MPV_FORMAT_DOUBLE,
@@ -686,7 +687,7 @@ class Player extends PlatformPlayer {
     double pitch, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       if (configuration.pitch) {
         // Pitch shift control is enabled.
         final ctx = await _handle.future;
@@ -704,7 +705,7 @@ class Player extends PlatformPlayer {
         // speed change.
         var name = 'audio-pitch-correction'.toNativeUtf8();
         final no = 'no'.toNativeUtf8();
-        _libmpv?.mpv_set_property_string(
+        _mpv.mpv_set_property_string(
           ctx,
           name.cast(),
           no.cast(),
@@ -713,7 +714,7 @@ class Player extends PlatformPlayer {
         calloc.free(no);
         name = 'speed'.toNativeUtf8();
         final speed = calloc<Double>()..value = pitch;
-        _libmpv?.mpv_set_property(
+        _mpv.mpv_set_property(
           ctx,
           name.cast(),
           generated.mpv_format.MPV_FORMAT_DOUBLE,
@@ -726,7 +727,7 @@ class Player extends PlatformPlayer {
         final value =
             'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}'
                 .toNativeUtf8();
-        _libmpv?.mpv_set_property_string(
+        _mpv.mpv_set_property_string(
           ctx,
           name.cast(),
           value.cast(),
@@ -752,7 +753,7 @@ class Player extends PlatformPlayer {
     bool shuffle, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       await _command(
         [
           shuffle ? 'playlist-shuffle' : 'playlist-unshuffle',
@@ -776,11 +777,11 @@ class Player extends PlatformPlayer {
     AudioDevice audioDevice, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       final ctx = await _handle.future;
       final name = 'audio-device'.toNativeUtf8();
       final value = audioDevice.name.toNativeUtf8();
-      _libmpv?.mpv_set_property(
+      _mpv.mpv_set_property(
         ctx,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_STRING,
@@ -806,11 +807,11 @@ class Player extends PlatformPlayer {
     VideoTrack track, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       final ctx = await _handle.future;
       final name = 'vid'.toNativeUtf8();
       final value = track.id.toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
+      _mpv.mpv_set_property_string(
         ctx,
         name.cast(),
         value.cast(),
@@ -843,11 +844,11 @@ class Player extends PlatformPlayer {
     AudioTrack track, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       final ctx = await _handle.future;
       final name = 'aid'.toNativeUtf8();
       final value = track.id.toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
+      _mpv.mpv_set_property_string(
         ctx,
         name.cast(),
         value.cast(),
@@ -880,11 +881,11 @@ class Player extends PlatformPlayer {
     SubtitleTrack track, {
     bool synchronized = true,
   }) {
-    function() async {
+    Future<void> function() async {
       final ctx = await _handle.future;
       final name = 'sid'.toNativeUtf8();
       final value = track.id.toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
+      _mpv.mpv_set_property_string(
         ctx,
         name.cast(),
         value.cast(),
@@ -926,7 +927,7 @@ class Player extends PlatformPlayer {
     final ctx = await _handle.future;
     final name = property.toNativeUtf8();
     final data = value.toNativeUtf8();
-    _libmpv?.mpv_set_property_string(
+    _mpv.mpv_set_property_string(
       ctx,
       name.cast(),
       data.cast(),
@@ -955,8 +956,7 @@ class Player extends PlatformPlayer {
     // NOTE: Now, --keep-open=yes is used. Thus, eof-reached property is used instead of this.
     // if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
     //   // Check for mpv_end_file_reason.MPV_END_FILE_REASON_EOF before modifying state.completed.
-    //   if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason ==
-    //       generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
+    //   if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason == generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
     //     if (_allowPlayingStateChange) {
     //       state = state.copyWith(
     //         playing: false,
@@ -1366,8 +1366,6 @@ class Player extends PlatformPlayer {
   }
 
   Future<void> _create() async {
-    _libmpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
-
     // The libmpv options which must be set before [MPV.mpv_initialize].
     final options = <String, String>{};
 
@@ -1420,7 +1418,7 @@ class Player extends PlatformPlayer {
       final name = 'idle'.toNativeUtf8();
       final value = calloc<Int32>();
       value.value = 1;
-      _libmpv?.mpv_set_property(
+      _mpv.mpv_set_property(
         result,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_FLAG,
@@ -1433,7 +1431,7 @@ class Player extends PlatformPlayer {
       final name = 'pause'.toNativeUtf8();
       final value = calloc<Int32>();
       value.value = 1;
-      _libmpv?.mpv_set_property(
+      _mpv.mpv_set_property(
         result,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_FLAG,
@@ -1446,7 +1444,7 @@ class Player extends PlatformPlayer {
       final name = 'keep-open'.toNativeUtf8();
       final value = calloc<Int32>();
       value.value = 1;
-      _libmpv?.mpv_set_property(
+      _mpv.mpv_set_property(
         result,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_FLAG,
@@ -1458,7 +1456,7 @@ class Player extends PlatformPlayer {
     {
       final name = 'demuxer-max-bytes'.toNativeUtf8();
       final value = configuration.bufferSize.toString().toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
+      _mpv.mpv_set_property_string(
         result,
         name.cast(),
         value.cast(),
@@ -1469,7 +1467,7 @@ class Player extends PlatformPlayer {
     {
       final name = 'demuxer-max-back-bytes'.toNativeUtf8();
       final value = (32 * 1024 * 1024).toString().toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
+      _mpv.mpv_set_property_string(
         result,
         name.cast(),
         value.cast(),
@@ -1481,7 +1479,7 @@ class Player extends PlatformPlayer {
       if (Platform.isAndroid) {
         final name = 'ao'.toNativeUtf8();
         final value = 'opensles'.toNativeUtf8();
-        _libmpv?.mpv_set_property_string(
+        _mpv.mpv_set_property_string(
           result,
           name.cast(),
           value.cast(),
@@ -1494,7 +1492,7 @@ class Player extends PlatformPlayer {
       final whitelist = configuration.protocolWhitelist.join(',');
       final name = 'demuxer-lavf-o'.toNativeUtf8();
       final data = 'protocol_whitelist=[$whitelist]'.toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
+      _mpv.mpv_set_property_string(
         result,
         name.cast(),
         data.cast(),
@@ -1524,7 +1522,7 @@ class Player extends PlatformPlayer {
     }.forEach(
       (property, format) {
         final name = property.toNativeUtf8();
-        _libmpv?.mpv_observe_property(
+        _mpv.mpv_observe_property(
           result,
           0,
           name.cast(),
@@ -1538,7 +1536,7 @@ class Player extends PlatformPlayer {
       {
         final name = 'osc'.toNativeUtf8();
         final value = 'no'.toNativeUtf8();
-        _libmpv?.mpv_set_property_string(
+        _mpv.mpv_set_property_string(
           result,
           name.cast(),
           value.cast(),
@@ -1549,7 +1547,7 @@ class Player extends PlatformPlayer {
       {
         final name = 'osd-level'.toNativeUtf8();
         final value = '0'.toNativeUtf8();
-        _libmpv?.mpv_set_property_string(
+        _mpv.mpv_set_property_string(
           result,
           name.cast(),
           value.cast(),
@@ -1562,7 +1560,7 @@ class Player extends PlatformPlayer {
       final name = 'vid'.toNativeUtf8();
       final flag = calloc<Int8>();
       flag.value = configuration.vid! ? 1 : 0;
-      _libmpv?.mpv_set_property(
+      _mpv.mpv_set_property(
         result,
         name.cast(),
         generated.mpv_format.MPV_FORMAT_FLAG,
@@ -1574,7 +1572,7 @@ class Player extends PlatformPlayer {
     if (configuration.vo != null) {
       final name = 'vo'.toNativeUtf8();
       final value = configuration.vo!.toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
+      _mpv.mpv_set_property_string(
         result,
         name.cast(),
         value.cast(),
@@ -1585,7 +1583,7 @@ class Player extends PlatformPlayer {
     if (configuration.title != null) {
       final name = 'title'.toNativeUtf8();
       final value = configuration.title!.toNativeUtf8();
-      _libmpv?.mpv_set_property_string(
+      _mpv.mpv_set_property_string(
         result,
         name.cast(),
         value.cast(),
@@ -1609,7 +1607,7 @@ class Player extends PlatformPlayer {
       final level = levels[configuration.logLevel];
       if (level != null) {
         final minLevel = level.toNativeUtf8();
-        _libmpv?.mpv_request_log_messages(
+        _mpv.mpv_request_log_messages(
           result,
           minLevel.cast(),
         );
@@ -1624,8 +1622,7 @@ class Player extends PlatformPlayer {
   /// Adds an error to the [Player.stream.error].
   void _error(int code) {
     if (code < 0 && !errorController.isClosed) {
-      final message =
-          _libmpv?.mpv_error_string(code).cast<Utf8>().toDartString();
+      final message = _mpv.mpv_error_string(code).cast<Utf8>().toDartString();
       if (message != null) {
         errorController.add(
           PlayerError(
@@ -1648,7 +1645,7 @@ class Player extends PlatformPlayer {
     for (int i = 0; i < args.length; i++) {
       arr[i] = pointers[i];
     }
-    _libmpv?.mpv_command(
+    _mpv.mpv_command(
       ctx,
       arr.cast(),
     );
@@ -1657,7 +1654,7 @@ class Player extends PlatformPlayer {
   }
 
   /// Internal generated libmpv C API bindings.
-  generated.MPV? _libmpv;
+  final generated.MPV _mpv;
 
   /// Synchronization & mutual exclusion between methods of this class.
   final Lock _lock = Lock();
