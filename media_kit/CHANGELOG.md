@@ -1,6 +1,11 @@
 ## 0.0.8
 
-- perf: make `Player.dispose` release event loop effectively
+- fix: `Player.dispose` event loop clean-up
+- refactor: `Player` implementation clean-up
+- feat: `Initializer.dispose`
+  - feat: `InitializerIsolate.dispose`
+  - feat: `InitializerNativeEventLoop.dispose`
+- feat: `PlatformPlayer.waitForVideoControllerInitializationIfAttached`
 
 ## 0.0.7+1
 
