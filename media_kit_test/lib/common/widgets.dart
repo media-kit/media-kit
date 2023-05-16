@@ -184,6 +184,7 @@ class _SeekBarState extends State<SeekBar> {
               const Spacer(),
             ],
           ),
+        TracksSelector(player: widget.player),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
