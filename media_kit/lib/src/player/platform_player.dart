@@ -441,9 +441,3 @@ enum MPVLogLevel {
   /// Extremely noisy.
   trace,
 }
-
-// A stub implementation of PlatformPlayer for conditionally importing/avoiding the supported platform-specific implementation.
-
-class Player extends PlatformPlayer {
-  Player({required super.configuration});
-}

@@ -11,8 +11,8 @@ import 'package:ffi/ffi.dart';
 import 'package:path/path.dart';
 import 'package:test/test.dart';
 
-import 'package:media_kit/src/libmpv/core/initializer.dart';
-import 'package:media_kit/src/libmpv/core/native_library.dart';
+import 'package:media_kit/src/player/libmpv/core/initializer.dart';
+import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
 

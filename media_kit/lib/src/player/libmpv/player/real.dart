@@ -3,6 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// ignore_for_file: camel_case_types
 import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
@@ -10,13 +11,14 @@ import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
 import 'package:synchronized/synchronized.dart';
 
-import 'package:media_kit/src/platform_player.dart';
-import 'package:media_kit/src/libmpv/core/task_queue.dart';
-import 'package:media_kit/src/libmpv/core/initializer.dart';
-import 'package:media_kit/src/libmpv/core/native_library.dart';
-import 'package:media_kit/src/libmpv/core/fallback_bitrate_handler.dart';
+import 'package:media_kit/src/player/platform_player.dart';
+import 'package:media_kit/src/player/libmpv/core/task_queue.dart';
+import 'package:media_kit/src/player/libmpv/core/initializer.dart';
+import 'package:media_kit/src/player/libmpv/core/native_library.dart';
+import 'package:media_kit/src/player/libmpv/core/fallback_bitrate_handler.dart';
+import 'package:media_kit/src/player/libmpv/core/initializer_native_event_loop.dart';
 
-import 'package:media_kit/src/android_asset_loader.dart';
+import 'package:media_kit/src/utils/android_asset_loader.dart';
 
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
@@ -30,18 +32,23 @@ import 'package:media_kit/src/models/playlist_mode.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 
+/// Initializes the libmpv backend for package:media_kit.
+void libmpvEnsureInitialized({String? libmpv}) {
+  NativeLibrary.ensureInitialized(libmpv: libmpv);
+  InitializerNativeEventLoop.ensureInitialized();
+}
+
 /// {@template libmpv_player}
 ///
-/// Player
-/// ------
+/// libmpvPlayer
+/// ------------
 ///
-/// Compatibility has been tested with libmpv 0.28.0 & higher.
-/// Recommended libmpv version is 0.33.0 & higher.
+/// libmpv based implementation of [PlatformPlayer].
 ///
 /// {@endtemplate}
-class Player extends PlatformPlayer {
+class libmpvPlayer extends PlatformPlayer {
   /// {@macro libmpv_player}
-  Player({required super.configuration})
+  libmpvPlayer({required super.configuration})
       : mpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path)) {
     _create().then((_) {
       configuration.ready?.call();

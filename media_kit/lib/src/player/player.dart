@@ -15,11 +15,10 @@ import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_streams.dart';
 
-import 'package:media_kit/src/utils.dart';
-import 'package:media_kit/src/platform_player.dart';
-import 'package:media_kit/src/libmpv/player.dart'
-    if (dart.library.html) 'package:media_kit/src/platform_player.dart'
-    as _libmpv show Player;
+import 'package:media_kit/src/utils/web.dart';
+
+import 'package:media_kit/src/player/platform_player.dart';
+import 'package:media_kit/src/player/libmpv/player/player.dart';
 
 /// {@template player}
 ///
@@ -110,15 +109,15 @@ class Player {
     if (kIsWeb) {
       // TODO(@alexmercerind): Missing implementation.
     } else if (Platform.isWindows) {
-      platform = _libmpv.Player(configuration: configuration);
+      platform = libmpvPlayer(configuration: configuration);
     } else if (Platform.isLinux) {
-      platform = _libmpv.Player(configuration: configuration);
+      platform = libmpvPlayer(configuration: configuration);
     } else if (Platform.isMacOS) {
-      platform = _libmpv.Player(configuration: configuration);
+      platform = libmpvPlayer(configuration: configuration);
     } else if (Platform.isIOS) {
-      platform = _libmpv.Player(configuration: configuration);
+      platform = libmpvPlayer(configuration: configuration);
     } else if (Platform.isAndroid) {
-      platform = _libmpv.Player(configuration: configuration);
+      platform = libmpvPlayer(configuration: configuration);
     }
   }
 

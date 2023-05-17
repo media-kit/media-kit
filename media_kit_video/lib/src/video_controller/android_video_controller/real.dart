@@ -20,7 +20,7 @@ import 'package:synchronized/synchronized.dart';
 // Only downside I can see is that we are now depending package:media_kit_video on package:ffi & package:media_kit. However, it's absolutely fine because package:media_kit_video is crafted for package:media_kit.
 // Also... now the API is also improved, now [VideoController.create] consumes [Player] directly instead of [Player.handle] which as an [int].
 import 'package:media_kit/generated/libmpv/bindings.dart';
-import 'package:media_kit/src/libmpv/core/native_library.dart';
+import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 

@@ -3,12 +3,12 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-
+// ignore_for_file: camel_case_types
 import 'dart:async';
 import 'dart:js' as js;
 import 'dart:html' as html;
 
-import 'package:media_kit/src/platform_player.dart';
+import 'package:media_kit/src/player/platform_player.dart';
 
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
@@ -16,17 +16,20 @@ import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 
+/// Initializes the web backend for package:media_kit.
+void webEnsureInitialized({String? libmpv}) {}
+
 /// {@template web_player}
 ///
-/// Player
-/// ------
+/// webPlayer
+/// ---------
 ///
-/// HTML [html.VideoElement] based implementation of [PlatformPlayer].
+/// HTML `<video>` based implementation of [PlatformPlayer].
 ///
 /// {@endtemplate}
-class Player extends PlatformPlayer {
+class webPlayer extends PlatformPlayer {
   /// {@macro web_player}
-  Player({required super.configuration})
+  webPlayer({required super.configuration})
       : _handle = js.context[_kInstanceCount] ?? 0,
         _element = html.VideoElement() {
     _element
