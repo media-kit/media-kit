@@ -83,11 +83,12 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
   #
   # For building a `libmedia_kit_native_event_loop.so` using this CMake:
   # 1. Generate the plugin_ffi template project for Android using:
-  # * flutter create --org com.alexmercerind --template plugin_ffi --platforms=android -a java .
+  # * flutter create --org com.alexmercerind --template plugin_ffi --platforms=android .
   # 2. Add the libmpv/FFmpeg & other dependencies to which this target will link at:
   # * ../android/libs/lib/arm64-v8a/*
   # * ../android/libs/lib/armeabi-v7a/*
   # * ../android/libs/lib/x86_64/*
+  # * ../android/libs/lib/x66/*
   # 3. Add the libmpv headers at include/*
   # 4. Generate the APK file:
   # * flutter build apk --release

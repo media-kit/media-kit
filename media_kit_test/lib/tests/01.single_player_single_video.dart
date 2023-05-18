@@ -5,8 +5,8 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../common/globals.dart';
-import '../common/sources.dart';
 import '../common/widgets.dart';
+import '../common/sources/sources.dart';
 
 class SinglePlayerSingleVideoScreen extends StatefulWidget {
   const SinglePlayerSingleVideoScreen({Key? key}) : super(key: key);
@@ -18,28 +18,15 @@ class SinglePlayerSingleVideoScreen extends StatefulWidget {
 
 class _SinglePlayerSingleVideoScreenState
     extends State<SinglePlayerSingleVideoScreen> {
-  final Player player = Player();
-  VideoController? controller;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() async {
-      controller = await VideoController.create(
-        player,
-        enableHardwareAcceleration: enableHardwareAcceleration.value,
-      );
-      setState(() {});
-    });
-  }
+  late final Player player = Player();
+  late final VideoController controller = VideoController(
+    player,
+    enableHardwareAcceleration: enableHardwareAcceleration.value,
+  );
 
   @override
   void dispose() {
-    Future.microtask(() async {
-      debugPrint('Disposing [Player] and [VideoController]...');
-      await controller?.dispose();
-      await player.dispose();
-    });
+    player.dispose();
     super.dispose();
   }
 

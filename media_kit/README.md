@@ -38,13 +38,13 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.7                              # Primary package.
+  media_kit: ^0.0.8                              # Primary package.
   
-  media_kit_video: ^0.0.9                        # For video rendering.
+  media_kit_video: ^0.0.10                       # For video rendering.
   
-  media_kit_native_event_loop: ^1.0.3            # Support for higher number of concurrent instances & better performance.
+  media_kit_native_event_loop: ^1.0.4            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_android_video: ^1.0.3           # Android package for video native libraries.
+  media_kit_libs_android_video: ^1.0.4           # Android package for video native libraries.
   media_kit_libs_ios_video: ^1.0.4               # iOS package for video native libraries.
   media_kit_libs_macos_video: ^1.0.5             # macOS package for video native libraries.
   media_kit_libs_windows_video: ^1.0.2           # Windows package for video native libraries.
@@ -55,11 +55,11 @@ dependencies:
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.7                              # Primary package.
+  media_kit: ^0.0.8                              # Primary package.
   
-  media_kit_native_event_loop: ^1.0.3            # Support for higher number of concurrent instances & better performance.
+  media_kit_native_event_loop: ^1.0.4            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_android_audio: ^1.0.3           # Android package for audio native libraries.
+  media_kit_libs_android_audio: ^1.0.4           # Android package for audio native libraries.
   media_kit_libs_ios_audio: ^1.0.4               # iOS package for audio native libraries.
   media_kit_libs_macos_audio: ^1.0.5             # macOS package for audio native libraries.
   media_kit_libs_windows_audio: ^1.0.3           # Windows package for audio native libraries.
@@ -69,17 +69,18 @@ dependencies:
 **Notes:**
 
 - If app needs both video & audio playback, select video playback libraries.
+- [Enable --split-per-abi](https://docs.flutter.dev/deployment/android#what-is-a-fat-apk) or [use app bundle (instead of APK)](https://docs.flutter.dev/deployment/android#when-should-i-build-app-bundles-versus-apks) on Android.
 - media_kit_libs_*** packages may be omitted depending upon the platform your app targets.
 
 ## Platforms
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 13 or above.                     | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.7/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.8/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 13 or above.                     | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.8/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.8/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.8/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.8/media_kit_test_linux_x64.7z)          |
 | Web         | 🚧    | 🚧    | [WIP](https://github.com/alexmercerind/media_kit/pull/128)                                 | [WIP](https://github.com/alexmercerind/media_kit/pull/128)               |
 
 <table>
@@ -229,7 +230,7 @@ void main() {
   MediaKit.ensureInitialized();
   runApp(
     const MaterialApp(
-      home: MyScreen()
+      home: MyScreen(),
     ),
   );
 }
@@ -241,39 +242,27 @@ class MyScreen extends StatefulWidget {
 }
 
 class MyScreenState extends State<MyScreen> {
-  /// Create a [Player].
-  final Player player = Player();
-  /// Store reference to the [VideoController].
-  VideoController? controller;
+  late final player = Player();
+  late final controller = VideoController(player);
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() async {
-      /// Create a [VideoController] to show video output of the [Player].
-      controller = await VideoController.create(player);
-      /// Play any media source.
-      await player.open(Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4'));
-      setState(() {});
-    });
+    player.open(Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4'));
   }
 
   @override
   void dispose() {
-    Future.microtask(() async {
-      /// Release allocated resources back to the system.
-      await controller?.dispose();
-      await player.dispose();
-    });
+    player.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    /// Use [Video] widget to display the output.
-    return Video(
-      /// Pass the [controller].
-      controller: controller,
+    return Scaffold(
+      body: Video(
+        controller: controller,
+      ),
     );
   }
 }

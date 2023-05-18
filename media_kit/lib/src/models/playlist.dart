@@ -4,8 +4,8 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-import 'package:media_kit/src/models/media.dart';
 import 'package:media_kit/src/models/playable.dart';
+import 'package:media_kit/src/models/media/media.dart';
 
 /// {@template playlist}
 ///

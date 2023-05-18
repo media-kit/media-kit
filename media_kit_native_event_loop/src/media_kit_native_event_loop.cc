@@ -1,10 +1,7 @@
-// This file is a part of media_kit
-// (https://github.com/alexmercerind/media_kit).
+// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
 //
-// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-// All rights reserved.
-// Use of this source code is governed by MIT license that can be found in the
-// LICENSE file.
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>. All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 #include "media_kit_native_event_loop.h"
 
@@ -13,98 +10,169 @@ MediaKitEventLoopHandler& MediaKitEventLoopHandler::GetInstance() {
   return instance;
 }
 
-void MediaKitEventLoopHandler::Initialize() {
-  std::lock_guard<std::mutex> l(mutex_);
-  if (mutexes_.size() > 0 && promises_.size() > 0) {
-    // Destroy already running |mpv_handle|(s).
-    std::cout << "media_kit: "
-              << "Destroying " << mutexes_.size() << " [Player] instances..."
-              << std::endl;
-    for (auto& [handle, _] : mutexes_) {
-      mpv_command_string(handle, "quit 0");
-    }
-    std::cout << "media_kit: Done." << std::endl;
-    mutexes_.clear();
-    promises_.clear();
+void MediaKitEventLoopHandler::Register(int64_t handle, void* post_c_object, int64_t send_port) {
+  if (!IsRegistered(handle)) {
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    auto context = reinterpret_cast<mpv_handle*>(handle);
+
+    mutexes_.emplace(std::make_pair(context, std::make_unique<std::mutex>()));
+    condition_variables_.emplace(std::make_pair(context, std::make_unique<std::condition_variable>()));
+
+    auto thread = std::make_unique<std::thread>([&, context, post_c_object, send_port]() {
+      for (;;) {
+        mutex_.lock();
+
+        std::unique_lock<std::mutex> l(*mutexes_[context]);
+
+        auto condition_variable = condition_variables_[context].get();
+
+        mutex_.unlock();
+
+        auto event = mpv_wait_event(context, -1);
+
+        // [mpv_handle*, mpv_event*]
+        Dart_CObject mpv_handle_object;
+        mpv_handle_object.type = Dart_CObject_kInt64;
+        mpv_handle_object.value.as_int64 = reinterpret_cast<int64_t>(context);
+        Dart_CObject mpv_event_object;
+        mpv_event_object.type = Dart_CObject_kInt64;
+        mpv_event_object.value.as_int64 = reinterpret_cast<int64_t>(event);
+        Dart_CObject* value_objects[] = {&mpv_handle_object, &mpv_event_object};
+        Dart_CObject event_object;
+        event_object.type = Dart_CObject_kArray;
+        event_object.value.as_array.length = 2;
+        event_object.value.as_array.values = value_objects;
+
+        // Post to Dart.
+        auto fn = reinterpret_cast<bool (*)(Dart_Port, Dart_CObject*)>(post_c_object);
+        fn(send_port, &event_object);
+
+        // Interpret the posted event in Dart. Wait for |Notify| to be called.
+        condition_variable->wait(l);
+
+        // Check if this |handle| has been marked to exit.
+        mutex_.lock();
+        auto exit = exit_handles_.find(context) != exit_handles_.end();
+        mutex_.unlock();
+        if (exit) {
+          std::cout << "MediaKitEventLoopHandler::Register: std::thread exit: " << reinterpret_cast<int64_t>(context)
+                    << std::endl;
+          break;
+        }
+      }
+    });
+
+    threads_.emplace(std::make_pair(context, std::move(thread)));
   }
 }
 
-void MediaKitEventLoopHandler::Register(int64_t handle,
-                                        void* post_c_object,
-                                        int64_t send_port) {
-  std::thread([&, handle, post_c_object, send_port]() {
+void MediaKitEventLoopHandler::Notify(int64_t handle) {
+  if (IsRegistered(handle)) {
+    std::lock_guard<std::mutex> lock(mutex_);
+
     auto context = reinterpret_cast<mpv_handle*>(handle);
 
-    for (;;) {
-      {
-        std::lock_guard<std::mutex> l(mutex_);
-        std::lock_guard<std::mutex> lock(mutexes_[context]);
-        promises_[context] = std::promise<void>();
-      }
-
-      auto event = mpv_wait_event(context, -1);
-
-      // [mpv_handle*, mpv_event*]
-      Dart_CObject mpv_handle_object;
-      mpv_handle_object.type = Dart_CObject_kInt64;
-      mpv_handle_object.value.as_int64 = reinterpret_cast<int64_t>(context);
-      Dart_CObject mpv_event_object;
-      mpv_event_object.type = Dart_CObject_kInt64;
-      mpv_event_object.value.as_int64 = reinterpret_cast<int64_t>(event);
-      Dart_CObject* value_objects[] = {&mpv_handle_object, &mpv_event_object};
-      Dart_CObject event_object;
-      event_object.type = Dart_CObject_kArray;
-      event_object.value.as_array.length = 2;
-      event_object.value.as_array.values = value_objects;
-
-      // Post to Dart.
-      auto fn =
-          reinterpret_cast<bool (*)(Dart_Port, Dart_CObject*)>(post_c_object);
-      fn(send_port, &event_object);
-
-      if (event->event_id == MPV_EVENT_SHUTDOWN) {
-        std::cout << "media_kit: " << reinterpret_cast<int64_t>(context) << " "
-                  << "MPV_EVENT_SHUTDOWN" << std::endl;
-        std::lock_guard<std::mutex> l(mutex_);
-        mutexes_.erase(context);
-        promises_.erase(context);
-        break;
-      }
-
-      // Interpret the event inside Dart.
-      // Wait for |MediaKitEventLoopHandler::Notify| to be called.
-      promises_[context].get_future().wait();
-    }
-  }).detach();
+    std::unique_lock<std::mutex> l(*mutexes_[context]);
+    condition_variables_[context]->notify_all();
+  }
 }
 
-void MediaKitEventLoopHandler::Notify(int64_t handle) {
+void MediaKitEventLoopHandler::Dispose(int64_t handle) {
   auto context = reinterpret_cast<mpv_handle*>(handle);
-  std::lock_guard<std::mutex> l(mutex_);
-  std::lock_guard<std::mutex> lock(mutexes_[context]);
-  // Allow next |mpv_wait_event| to be called.
-  promises_[context].set_value();
+  if (IsRegistered(handle)) {
+    mutex_.lock();
+    // Mark this |handle| to exit.
+    exit_handles_.insert(context);
+    mutex_.unlock();
+
+    // Break out of previous possible |mpv_wait_event|.
+    mpv_wakeup(context);
+    // Break out of possible |std::condition_variable| wait.
+    Notify(handle);
+
+    // Wait for the |std::thread| to exit.
+    try {
+      mutex_.lock();
+      auto thread = threads_[context].get();
+      mutex_.unlock();
+      thread->join();
+    } catch (std::system_error& e) {
+      std::cout << "MediaKitEventLoopHandler::Dispose: " << e.code() << " " << e.what() << std::endl;
+    }
+
+    std::thread([&, context]() {
+      // In extreme usage, |std::thread::join| does not stop the |std::mutex| from being released upon exit, resulting
+      // in "mutex destroyed while busy" on Windows. Destroying resources after a voluntary delay of 1 second.
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+
+      std::lock_guard<std::mutex> lock(mutex_);
+
+      mutexes_.erase(context);
+      threads_.erase(context);
+      condition_variables_.erase(context);
+
+      exit_handles_.erase(context);
+    }).detach();
+  }
+
+  std::cout << "MediaKitEventLoopHandler::Dispose: " << handle << std::endl;
+}
+
+void MediaKitEventLoopHandler::Initialize() {
+  auto contexts = std::vector<mpv_handle*>();
+
+  mutex_.lock();
+  for (auto& [context, _] : mutexes_) {
+    contexts.push_back(context);
+  }
+  mutex_.unlock();
+
+  for (auto& context : contexts) {
+    Dispose(reinterpret_cast<int64_t>(context));
+    mpv_command_string(context, "quit");
+  }
+}
+
+bool MediaKitEventLoopHandler::IsRegistered(int64_t handle) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  return mutexes_.find(reinterpret_cast<mpv_handle*>(handle)) != mutexes_.end() &&
+         threads_.find(reinterpret_cast<mpv_handle*>(handle)) != threads_.end() &&
+         condition_variables_.find(reinterpret_cast<mpv_handle*>(handle)) != condition_variables_.end();
 }
 
 MediaKitEventLoopHandler::MediaKitEventLoopHandler() {}
 
-MediaKitEventLoopHandler::~MediaKitEventLoopHandler() {}
+MediaKitEventLoopHandler::~MediaKitEventLoopHandler() {
+  auto contexts = std::vector<mpv_handle*>();
+
+  mutex_.lock();
+  for (auto& [context, _] : mutexes_) {
+    contexts.push_back(context);
+  }
+  mutex_.unlock();
+
+  for (auto& context : contexts) {
+    Dispose(reinterpret_cast<int64_t>(context));
+  }
+}
 
 // ---------------------------------------------------------------------------
 // C API for access using dart:ffi
 // ---------------------------------------------------------------------------
 
-void MediaKitEventLoopHandlerInitialize() {
-  MediaKitEventLoopHandler::GetInstance().Initialize();
-}
-
-void MediaKitEventLoopHandlerRegister(int64_t handle,
-                                      void* post_c_object,
-                                      int64_t send_port) {
-  MediaKitEventLoopHandler::GetInstance().Register(handle, post_c_object,
-                                                   send_port);
+void MediaKitEventLoopHandlerRegister(int64_t handle, void* post_c_object, int64_t send_port) {
+  MediaKitEventLoopHandler::GetInstance().Register(handle, post_c_object, send_port);
 }
 
 void MediaKitEventLoopHandlerNotify(int64_t handle) {
   MediaKitEventLoopHandler::GetInstance().Notify(handle);
+}
+
+void MediaKitEventLoopHandlerDispose(int64_t handle) {
+  MediaKitEventLoopHandler::GetInstance().Dispose(handle);
+}
+
+void MediaKitEventLoopHandlerInitialize() {
+  MediaKitEventLoopHandler::GetInstance().Initialize();
 }
