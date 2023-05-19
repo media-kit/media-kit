@@ -7,6 +7,7 @@
 import 'dart:io';
 import 'dart:collection';
 import 'package:path/path.dart' as path;
+import 'package:collection/collection.dart';
 import 'package:uri_parser/uri_parser.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
 
@@ -148,18 +149,21 @@ class Media extends Playable {
   @override
   bool operator ==(Object other) {
     if (other is Media) {
-      return other.uri == uri;
+      return other.uri == uri &&
+          MapEquality().equals(other.extras, extras) &&
+          MapEquality().equals(other.httpHeaders, httpHeaders);
     }
     return false;
   }
 
   /// For comparing with other [Media] instances.
   @override
-  int get hashCode => uri.hashCode;
+  int get hashCode => uri.hashCode ^ extras.hashCode ^ httpHeaders.hashCode;
 
   /// Prettier [print] logging.
   @override
-  String toString() => 'Media($uri, extras: $extras)';
+  String toString() =>
+      'Media($uri, extras: $extras, httpHeaders: $httpHeaders)';
 
   /// URI scheme used to identify Flutter assets.
   static const _kAssetScheme = 'asset://';
