@@ -1,0 +1,270 @@
+/// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+///
+/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+/// All rights reserved.
+/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'dart:io';
+import 'dart:ffi';
+import 'dart:async';
+import 'dart:collection';
+import 'package:ffi/ffi.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:synchronized/synchronized.dart';
+
+// ignore_for_file: unused_import, implementation_imports
+// It's absolutely crazy that C/C++ interop in Dart is so much easier & less tedious (possibly more performant as well) than in Java/Kotlin.
+// I don't want to add some additional code to make it accessible through JNI & additionally bundle it with the app. We can directly use the native library & it's bindings instead to make our life easier & bundle size smaller.
+//
+// Only downside I can see is that we are now depending package:media_kit_video on package:ffi & package:media_kit. However, it's absolutely fine because package:media_kit_video is crafted for package:media_kit.
+// Also... now the API is also improved, now [VideoController.create] consumes [Player] directly instead of [Player.handle] which as an [int].
+import 'package:media_kit/generated/libmpv/bindings.dart';
+import 'package:media_kit/src/player/libmpv/core/native_library.dart';
+
+import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
+
+/// {@template android_video_controller}
+///
+/// AndroidVideoController
+/// ----------------------
+///
+/// The [PlatformVideoController] implementation based on native JNI & C/C++ used on Android.
+///
+/// {@endtemplate}
+class AndroidVideoController extends PlatformVideoController {
+  /// Whether [AndroidVideoController] is supported on the current platform or not.
+  static bool get supported => Platform.isAndroid;
+
+  /// {@macro android_video_controller}
+  AndroidVideoController._(
+    super.player,
+    super.width,
+    super.height,
+    super.enableHardwareAcceleration,
+  ) {
+    // Notify about the first frame being rendered.
+    // Case: If some [Media] is already playing when [VideoController] is created.
+    if (player.state.width != null && player.state.height != null) {
+      if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+        waitUntilFirstFrameRenderedCompleter.complete();
+      }
+    }
+
+    // Merge the width & height [Stream]s into a single [Stream] of [Rect]s.
+    int w = -1;
+    int h = -1;
+    _widthStreamSubscription = player.streams.width.listen(
+      (event) => _lock.synchronized(() {
+        w = event;
+        if (w != -1 && h != -1) {
+          _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
+          // Notify about the first frame being rendered.
+          if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+            waitUntilFirstFrameRenderedCompleter.complete();
+          }
+          w = -1;
+          h = -1;
+        }
+      }),
+    );
+    _heightStreamSubscription = player.streams.height.listen(
+      (event) => _lock.synchronized(() {
+        h = event;
+        if (w != -1 && h != -1) {
+          _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
+          // Notify about the first frame being rendered.
+          if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+            waitUntilFirstFrameRenderedCompleter.complete();
+          }
+          w = -1;
+          h = -1;
+        }
+      }),
+    );
+    final lock = Lock();
+    _rectStreamSubscription = _controller.stream.listen(
+      (event) => lock.synchronized(() async {
+        rect.value = Rect.zero;
+        // ----------------------------------------------
+        // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
+        // In native Android, this kind of rendering is done with `android.view.SurfaceView` + `android.view.SurfaceHolder`, which offers `onSurfaceChanged` callback to handle this.
+        //
+        // NOTE: Not needed with --vo=mediacodec_embed.
+        final handle = await player.handle;
+        await _channel.invokeMethod(
+          'VideoOutputManager.SetSurfaceTextureSize',
+          {
+            'handle': handle.toString(),
+            'width': event.width.toInt().toString(),
+            'height': event.height.toInt().toString(),
+          },
+        );
+        NativeLibrary.ensureInitialized();
+        final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+        final name = 'android-surface-size'.toNativeUtf8();
+        final value =
+            '${event.width.toInt()}x${event.height.toInt()}'.toNativeUtf8();
+        mpv.mpv_set_option_string(
+          Pointer.fromAddress(handle),
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+        // ----------------------------------------------
+        rect.value = event;
+      }),
+    );
+  }
+
+  /// {@macro android_video_controller}
+  static Future<PlatformVideoController> create(
+    Player player,
+    bool enableHardwareAcceleration,
+  ) async {
+    // Retrieve the native handle of the [Player].
+    final handle = await player.handle;
+    // Return the existing [VideoController] if it's already created.
+    if (_controllers.containsKey(handle)) {
+      return _controllers[handle]!;
+    }
+
+    // Enforce software rendering in emulators.
+    final bool isEmulator = await _channel.invokeMethod('Utils.IsEmulator');
+    if (isEmulator) {
+      debugPrint('media_kit: AndroidVideoController: Emulator detected.');
+      debugPrint('media_kit: AndroidVideoController: Enforcing S/W rendering.');
+      enableHardwareAcceleration = false;
+    }
+
+    // Creation:
+    final controller = AndroidVideoController._(
+      player,
+      null,
+      null,
+      enableHardwareAcceleration,
+    );
+    // Register [_dispose] for execution upon [Player.dispose].
+    player.platform?.release.add(controller._dispose);
+
+    // Store the [VideoController] in the [_controllers].
+    _controllers[handle] = controller;
+
+    final data = await _channel.invokeMethod(
+      'VideoOutputManager.Create',
+      {
+        'handle': handle.toString(),
+      },
+    );
+    final int id = data['id'];
+    final int wid = data['wid'];
+    debugPrint(data.toString());
+
+    // ----------------------------------------------
+    NativeLibrary.ensureInitialized();
+    final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+    final values = enableHardwareAcceleration
+        ? {
+            // H/W decoding & rendering with --vo=gpu + --hwdec=mediacodec-copy.
+            'opengl-es': 'yes',
+            'force-window': 'yes',
+            'hwdec': 'mediacodec-copy',
+            'gpu-context': 'android',
+            'vo': 'gpu',
+            'wid': wid.toString(),
+          }
+        : {
+            // S/W decoding & rendering with --vo=gpu + --hwdec=no.
+            'opengl-es': 'yes',
+            'force-window': 'yes',
+            'hwdec': 'no',
+            'gpu-context': 'android',
+            'vo': 'gpu',
+            'wid': wid.toString(),
+          };
+    // TODO(@alexmercerind): Few other rendering options might be worth exposing to clients in the future.
+    values.addAll(
+      {
+        'sub-use-margins': 'no',
+        'sub-font-provider': 'none',
+        'sub-scale-with-window': 'yes',
+        'hwdec-codecs': 'h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1',
+      },
+    );
+
+    for (final entry in values.entries) {
+      final name = entry.key.toNativeUtf8();
+      final value = entry.value.toNativeUtf8();
+      mpv.mpv_set_option_string(
+        Pointer.fromAddress(handle),
+        name.cast(),
+        value.cast(),
+      );
+      calloc.free(name);
+      calloc.free(value);
+    }
+    // ----------------------------------------------
+
+    controller.id.value = id;
+
+    // Return the [PlatformVideoController].
+    return controller;
+  }
+
+  /// Sets the required size of the video output.
+  /// This may yield substantial performance improvements if a small [width] & [height] is specified.
+  ///
+  /// Remember:
+  /// * “Premature optimization is the root of all evil”
+  /// * “With great power comes great responsibility”
+  @override
+  Future<void> setSize({
+    int? width,
+    int? height,
+  }) {
+    throw UnimplementedError(
+      '[AndroidVideoController.setSize] is not available on Android.',
+    );
+  }
+
+  /// Disposes the instance. Releases allocated resources back to the system.
+  Future<void> _dispose() async {
+    // Dispose the [StreamSubscription]s.
+    await _widthStreamSubscription?.cancel();
+    await _heightStreamSubscription?.cancel();
+    await _rectStreamSubscription?.cancel();
+    // Close the [StreamController]s.
+    await _controller.close();
+    // Release the native resources.
+    final handle = await player.handle;
+    _controllers.remove(handle);
+    await _channel.invokeMethod(
+      'VideoOutputManager.Dispose',
+      {
+        'handle': handle.toString(),
+      },
+    );
+  }
+
+  /// [Lock] used to synchronize the [_widthStreamSubscription] & [_heightStreamSubscription].
+  final _lock = Lock();
+
+  /// [StreamController] for merging the [_widthStreamSubscription] & [_heightStreamSubscription] into a single [Stream<Rect>].
+  final _controller = StreamController<Rect>();
+
+  /// [StreamSubscription] for listening to video width.
+  StreamSubscription<int>? _widthStreamSubscription;
+
+  /// [StreamSubscription] for listening to video height.
+  StreamSubscription<int>? _heightStreamSubscription;
+
+  /// [StreamSubscription] for listening to video [Rect] from [_controller].
+  StreamSubscription<Rect>? _rectStreamSubscription;
+
+  /// Currently created [AndroidVideoController]s.
+  static final _controllers = HashMap<int, AndroidVideoController>();
+
+  /// [MethodChannel] for invoking platform specific native implementation.
+  static const _channel = MethodChannel('com.alexmercerind/media_kit_video');
+}

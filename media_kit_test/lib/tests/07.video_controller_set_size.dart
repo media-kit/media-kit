@@ -3,7 +3,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../common/globals.dart';
-import '../common/sources.dart';
+import '../common/sources/sources.dart';
 
 class VideoControllerSetSizeScreen extends StatefulWidget {
   const VideoControllerSetSizeScreen({Key? key}) : super(key: key);
@@ -15,30 +15,23 @@ class VideoControllerSetSizeScreen extends StatefulWidget {
 
 class _VideoControllerSetSizeScreenState
     extends State<VideoControllerSetSizeScreen> {
-  final Player player = Player();
-  VideoController? controller;
+  late final Player player = Player();
+  late final VideoController controller = VideoController(
+    player,
+    enableHardwareAcceleration: enableHardwareAcceleration.value,
+  );
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() async {
-      controller = await VideoController.create(
-        player,
-        enableHardwareAcceleration: enableHardwareAcceleration.value,
-      );
-      await player.open(Media(sources[0]));
-      await player.setPlaylistMode(PlaylistMode.loop);
-      await player.setVolume(0.0);
-      setState(() {});
-    });
+    player.setVolume(0.0);
+    player.setPlaylistMode(PlaylistMode.loop);
+    player.open(Media(sources[0]));
   }
 
   @override
   void dispose() {
-    Future.microtask(() async {
-      await controller?.dispose();
-      await player.dispose();
-    });
+    player.dispose();
     super.dispose();
   }
 
@@ -61,7 +54,7 @@ class _VideoControllerSetSizeScreenState
               child: ListView(
                 children: [
                   ListTile(
-                    onTap: () => controller?.setSize(
+                    onTap: () => controller.setSize(
                       width: 16 / 9 * 2160 ~/ 1,
                       height: 2160,
                     ),
@@ -73,7 +66,7 @@ class _VideoControllerSetSizeScreenState
                     ),
                   ),
                   ListTile(
-                    onTap: () => controller?.setSize(
+                    onTap: () => controller.setSize(
                       width: 16 / 9 * 1440 ~/ 1,
                       height: 1440,
                     ),
@@ -85,7 +78,7 @@ class _VideoControllerSetSizeScreenState
                     ),
                   ),
                   ListTile(
-                    onTap: () => controller?.setSize(
+                    onTap: () => controller.setSize(
                       width: 16 / 9 * 1080 ~/ 1,
                       height: 1080,
                     ),
@@ -97,7 +90,7 @@ class _VideoControllerSetSizeScreenState
                     ),
                   ),
                   ListTile(
-                    onTap: () => controller?.setSize(
+                    onTap: () => controller.setSize(
                       width: 16 / 9 * 720 ~/ 1,
                       height: 720,
                     ),
@@ -109,7 +102,7 @@ class _VideoControllerSetSizeScreenState
                     ),
                   ),
                   ListTile(
-                    onTap: () => controller?.setSize(
+                    onTap: () => controller.setSize(
                       width: 16 / 9 * 480 ~/ 1,
                       height: 480,
                     ),
@@ -121,7 +114,7 @@ class _VideoControllerSetSizeScreenState
                     ),
                   ),
                   ListTile(
-                    onTap: () => controller?.setSize(
+                    onTap: () => controller.setSize(
                       width: 16 / 9 * 360 ~/ 1,
                       height: 360,
                     ),
@@ -133,7 +126,7 @@ class _VideoControllerSetSizeScreenState
                     ),
                   ),
                   ListTile(
-                    onTap: () => controller?.setSize(
+                    onTap: () => controller.setSize(
                       width: 16 / 9 * 240 ~/ 1,
                       height: 240,
                     ),
@@ -145,7 +138,7 @@ class _VideoControllerSetSizeScreenState
                     ),
                   ),
                   ListTile(
-                    onTap: () => controller?.setSize(
+                    onTap: () => controller.setSize(
                       width: 16 / 9 * 144 ~/ 1,
                       height: 144,
                     ),

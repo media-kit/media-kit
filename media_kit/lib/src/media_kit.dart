@@ -6,7 +6,10 @@
 
 import 'dart:io';
 
-import 'package:media_kit/src/libmpv/entry_point.dart' as implementation;
+import 'package:media_kit/src/utils/web.dart';
+
+import 'package:media_kit/src/player/libmpv/player/player.dart';
+import 'package:media_kit/src/player/web/player/player.dart';
 
 /// {@template media_kit}
 ///
@@ -26,20 +29,18 @@ import 'package:media_kit/src/libmpv/entry_point.dart' as implementation;
 abstract class MediaKit {
   /// {@macro media_kit}
   static void ensureInitialized({String? libmpv}) {
-    if (Platform.isWindows) {
-      implementation.ensureInitialized(libmpv: libmpv);
-    }
-    if (Platform.isLinux) {
-      implementation.ensureInitialized(libmpv: libmpv);
-    }
-    if (Platform.isMacOS) {
-      implementation.ensureInitialized(libmpv: libmpv);
-    }
-    if (Platform.isIOS) {
-      implementation.ensureInitialized(libmpv: libmpv);
-    }
-    if (Platform.isAndroid) {
-      implementation.ensureInitialized(libmpv: libmpv);
+    if (kIsWeb) {
+      webEnsureInitialized(libmpv: libmpv);
+    } else if (Platform.isWindows) {
+      libmpvEnsureInitialized(libmpv: libmpv);
+    } else if (Platform.isLinux) {
+      libmpvEnsureInitialized(libmpv: libmpv);
+    } else if (Platform.isMacOS) {
+      libmpvEnsureInitialized(libmpv: libmpv);
+    } else if (Platform.isIOS) {
+      libmpvEnsureInitialized(libmpv: libmpv);
+    } else if (Platform.isAndroid) {
+      libmpvEnsureInitialized(libmpv: libmpv);
     }
   }
 }

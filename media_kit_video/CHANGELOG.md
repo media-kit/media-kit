@@ -1,3 +1,12 @@
+## 0.0.10
+
+- feat: `VideoController.waitUntilFirstFrameRendered`
+- refactor: clean-up package structure
+- refactor: remove `VideoController.dispose`
+- refactor: `VideoController.create` -> `VideoController` constructor
+- fix(android): add `av1` to `hwdec-codecs`
+- fix(android): use `--vo=gpu` + `--hwdec=mediacodec-copy` /w `enableHardwareAcceleration`
+
 ## 0.0.9
 
 - fix(android): revert to `--vo=mediacodec_embed` in `enableHardwareAcceleration`

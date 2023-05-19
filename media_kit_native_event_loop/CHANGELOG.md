@@ -1,3 +1,8 @@
+## 1.0.4
+
+- feat: `MediaKitEventLoopHandler::Dispose`
+- perf: switch to `std::condition_variable`(s) for synchronization
+
 ## 1.0.3
 
 - feat: make package optional during build

@@ -1,3 +1,16 @@
+## 0.0.8
+
+- fix: `Player.dispose` event loop clean-up
+- refactor: `Player` implementation clean-up
+- feat: `Initializer.dispose`
+  - feat: `InitializerIsolate.dispose`
+  - feat: `InitializerNativeEventLoop.dispose`
+- feat: `PlatformPlayer.waitForVideoControllerInitializationIfAttached`
+
+## 0.0.7+1
+
+- docs: document updated `media_kit_libs_android_video` and `media_kit_libs_android_audio`
+
 ## 0.0.7
 
 - fix: `MediaKit.ensureInitialized` not passing optional `libmpv` argument

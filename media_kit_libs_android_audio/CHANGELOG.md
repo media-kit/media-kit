@@ -1,3 +1,11 @@
+## 1.0.4
+
+- build: bump dependencies
+
+## 1.0.3
+
+- build: bump dependencies
+
 ## 1.0.2
 
 - perf: enable `extractNativeLibs`
