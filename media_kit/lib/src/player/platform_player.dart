@@ -315,12 +315,12 @@ abstract class PlatformPlayer {
   bool isVideoControllerAttached = false;
 
   /// [Completer] for signaling [VideoController] (from `package:media_kit_video`) initialization.
-  final Completer<void> videoPlayerCompleter = Completer<void>();
+  final Completer<void> videoControllerCompleter = Completer<void>();
 
   /// [Future<void>] to wait for [VideoController] (from `package:media_kit_video`) initialization.
   Future<void> get waitForVideoControllerInitializationIfAttached {
     if (isVideoControllerAttached) {
-      return videoPlayerCompleter.future;
+      return videoControllerCompleter.future;
     }
     return Future.value(null);
   }
