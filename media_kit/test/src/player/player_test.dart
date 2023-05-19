@@ -142,6 +142,10 @@ void main() {
         },
       );
 
+      player.streams.playlist.listen((e) {
+        expectExtras(e.medias.first.extras);
+      });
+
       await player.open(
         Media(
           sources.file[0],
@@ -151,10 +155,6 @@ void main() {
           },
         ),
       );
-
-      player.streams.playlist.listen((e) {
-        expectExtras(e.medias.first.extras);
-      });
     },
   );
   test(
