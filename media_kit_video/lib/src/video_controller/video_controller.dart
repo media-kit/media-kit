@@ -9,9 +9,9 @@ import 'package:media_kit/media_kit.dart';
 
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 
-import 'package:media_kit_video/src/video_controller/web_video_controller/web_video_controller.dart';
 import 'package:media_kit_video/src/video_controller/native_video_controller/native_video_controller.dart';
 import 'package:media_kit_video/src/video_controller/android_video_controller/android_video_controller.dart';
+import 'package:media_kit_video/src/video_controller/web_video_controller/web_video_controller.dart';
 
 /// {@template video_controller}
 ///
@@ -35,7 +35,7 @@ import 'package:media_kit_video/src/video_controller/android_video_controller/an
 ///
 /// **Platform specific differences:**
 ///
-/// 1. [width] & [height] arguments have no effect on Android.
+/// 1. [width] & [height] arguments have no effect on Android & Flutter Web.
 /// 2. The [enableHardwareAcceleration] argument is ignored on Flutter Web i.e. GPU usage is dependent on the client's web browser.
 ///
 /// {@endtemplate}
@@ -88,7 +88,7 @@ class VideoController {
         );
       }
 
-      player.platform?.videoPlayerCompleter.complete();
+      player.platform?.videoControllerCompleter.complete();
     }();
   }
 

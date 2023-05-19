@@ -94,7 +94,6 @@ static void media_kit_video_plugin_handle_method_call(
       width_value = g_ascii_strtoll(fl_value_get_string(width), NULL, 10);
       height_value = g_ascii_strtoll(fl_value_get_string(height), NULL, 10);
     }
-    g_print("%ld %ld\n", width_value, height_value);
     video_output_manager_set_size(self->video_output_manager, handle_value,
                                   width_value, height_value);
     FlValue* result = fl_value_new_null();

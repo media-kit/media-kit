@@ -80,19 +80,7 @@ class libmpvPlayer extends PlatformPlayer {
       }
       TaskQueue.instance.add(() {
         print('media_kit: mpv_terminate_destroy: ${ctx.address}');
-        if (Platform.isWindows ||
-            Platform.isMacOS ||
-            Platform.isIOS ||
-            Platform.isAndroid) {
-          mpv.mpv_terminate_destroy(ctx);
-        }
-        if (Platform.isLinux) {
-          _command(
-            [
-              'quit',
-            ],
-          );
-        }
+        mpv.mpv_terminate_destroy(ctx);
       });
     }
 

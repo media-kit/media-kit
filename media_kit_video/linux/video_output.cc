@@ -91,7 +91,15 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   self->handle = (mpv_handle*)handle;
   self->width = width;
   self->height = height;
+#ifdef MPV_RENDER_API_TYPE_SW
   self->enable_hardware_acceleration = enable_hardware_acceleration;
+#else
+  // Can't use S/W rendering if MPV_RENDER_API_TYPE_SW is not defined.
+  self->enable_hardware_acceleration = TRUE;
+  if (!enable_hardware_acceleration) {
+    g_printerr("media_kit: VideoOutput: S/W rendering is not supported.\n");
+  }
+#endif
   mpv_set_option_string(self->handle, "vo", "libmpv");
   mpv_set_option_string(self->handle, "video-sync", "audio");
   mpv_set_option_string(self->handle, "video-timing-offset", "0");
@@ -106,8 +114,10 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
       if (error == NULL) {
         // Create |FlTextureGL| and register it.
         self->texture_gl = texture_gl_new(self);
-        if (fl_texture_registrar_register_texture(
-                texture_registrar, FL_TEXTURE(self->texture_gl))) {
+        gboolean result = fl_texture_registrar_register_texture(
+            texture_registrar, FL_TEXTURE(self->texture_gl));
+        g_print("fl_texture_registrar_register_texture: %d\n", result);
+        if (result) {
           // Request H/W decoding.
           mpv_set_option_string(self->handle, "hwdec", "auto");
           mpv_opengl_init_params gl_init_params{
@@ -128,21 +138,21 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
               {MPV_RENDER_PARAM_API_TYPE, (void*)MPV_RENDER_API_TYPE_OPENGL},
               {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, (void*)&gl_init_params},
               {MPV_RENDER_PARAM_INVALID, (void*)0},
-              {MPV_RENDER_PARAM_INVALID, (void*)0}
+              {MPV_RENDER_PARAM_INVALID, (void*)0},
           };
-          // VAAPI acceleration requires passing X11/Wayland display
-          // to the render context.
+          // VAAPI acceleration requires passing X11/Wayland display.
           GdkDisplay* display = gdk_display_get_default();
           if (GDK_IS_WAYLAND_DISPLAY(display)) {
             params[2].type = MPV_RENDER_PARAM_WL_DISPLAY;
             params[2].data = gdk_wayland_display_get_wl_display(display);
-          }
-          else if (GDK_IS_X11_DISPLAY(display)) {
+          } else if (GDK_IS_X11_DISPLAY(display)) {
             params[2].type = MPV_RENDER_PARAM_X11_DISPLAY;
             params[2].data = gdk_x11_display_get_xdisplay(display);
           }
-          if (mpv_render_context_create(&self->render_context, self->handle,
-                                        params) == 0) {
+          gint result = mpv_render_context_create(&self->render_context,
+                                                  self->handle, params);
+          g_print("mpv_render_context_create: %d\n", result);
+          if (result == 0) {
             mpv_render_context_set_update_callback(
                 self->render_context,
                 [](void* data) {
@@ -254,11 +264,19 @@ void video_output_set_texture_update_callback(
 void video_output_set_size(VideoOutput* self, gint64 width, gint64 height) {
   // Ideally, a mutex should be used here & |video_output_get_width| +
   // |video_output_get_height|. However, that is throwing everything into a
-  // deadlock.
-  // Flutter itself seems to have some synchronization mechanism in rendering &
-  // platform channels AFAIK.
-  self->width = width;
-  self->height = height;
+  // deadlock. Flutter itself seems to have some synchronization mechanism in
+  // rendering & platform channels AFAIK.
+
+  // H/W
+  if (self->texture_gl) {
+    self->width = width;
+    self->height = height;
+  }
+  // S/W
+  if (self->texture_sw) {
+    self->width = CLAMP(width, 0, SW_RENDERING_MAX_WIDTH);
+    self->height = CLAMP(height, 0, SW_RENDERING_MAX_HEIGHT);
+  }
 }
 
 mpv_render_context* video_output_get_render_context(VideoOutput* self) {
