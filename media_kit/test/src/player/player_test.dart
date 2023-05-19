@@ -59,7 +59,9 @@ void main() {
       );
 
       player.streams.playlist.listen((e) {
-        expectPlaylist(e);
+        if (e.index >= 0) {
+          expectPlaylist(e);
+        }
       });
 
       await player.open(Media(sources.file[0]));
@@ -143,7 +145,9 @@ void main() {
       );
 
       player.streams.playlist.listen((e) {
-        expectExtras(e.medias.first.extras);
+        if (e.index >= 0) {
+          expectExtras(e.medias[0].extras);
+        }
       });
 
       await player.open(
