@@ -26,12 +26,13 @@ dependencies:
   path: ^1.8.0
   http: ^0.13.4
   uri_parser: ^2.0.2
+  collection: ^1.17.2
   synchronized: ^3.1.0
   safe_local_storage: ^1.0.2
 
 dev_dependencies:
-  lints: ^1.0.0
   test: ^1.24.1
+  lints: ^1.0.0
 
 ffigen:
   name: MPV
