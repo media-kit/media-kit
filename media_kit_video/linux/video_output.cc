@@ -81,6 +81,7 @@ static void video_output_init(VideoOutput* self) {
 }
 
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
+                              FlView* view,
                               gint64 handle,
                               gint64 width,
                               gint64 height,
@@ -106,8 +107,9 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   gboolean hardware_acceleration_supported = FALSE;
   if (self->enable_hardware_acceleration) {
     GError* error = NULL;
+    GdkWindow* window = gtk_widget_get_window(GTK_WIDGET(view));
     self->gdk_gl_context =
-        gdk_window_create_gl_context(gdk_get_default_root_window(), &error);
+        gdk_window_create_gl_context(window, &error);
     if (error == NULL) {
       // OpenGL context must be made current before creating mpv render context.
       gdk_gl_context_realize(self->gdk_gl_context, &error);

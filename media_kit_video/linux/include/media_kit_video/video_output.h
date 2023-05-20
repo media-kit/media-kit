@@ -45,6 +45,7 @@ G_DECLARE_FINAL_TYPE(VideoOutput,
  * @return VideoOutput*
  */
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
+                              FlView* view,
                               gint64 handle,
                               gint64 width,
                               gint64 height,

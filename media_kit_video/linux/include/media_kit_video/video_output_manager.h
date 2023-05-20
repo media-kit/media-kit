@@ -25,7 +25,7 @@ G_DECLARE_FINAL_TYPE(VideoOutputManager,
                               VideoOutputManager))
 
 VideoOutputManager* video_output_manager_new(
-    FlTextureRegistrar* texture_registrar);
+    FlTextureRegistrar* texture_registrar, FlView* view);
 
 /**
  * @brief Creates a new |VideoOutput| instance for given |handle|.
