@@ -145,9 +145,10 @@ static MediaKitVideoPlugin* media_kit_video_plugin_new(
                                             g_object_unref);
   FlTextureRegistrar* texture_registrar =
       fl_plugin_registrar_get_texture_registrar(registrar);
+  FlView* view =  fl_plugin_registrar_get_view(registrar);
   // Create new |VideoOutputManager| instance. Pass |texture_registrar| as
   // reference.
-  self->video_output_manager = video_output_manager_new(texture_registrar);
+  self->video_output_manager = video_output_manager_new(texture_registrar, view);
   return self;
 }
 
