@@ -19,7 +19,13 @@ class SinglePlayerMultipleVideoScreen extends StatefulWidget {
 class _SinglePlayerMultipleVideoScreenState
     extends State<SinglePlayerMultipleVideoScreen> {
   late final Player player = Player();
-  late final VideoController controller = VideoController(
+  // NOTE: A single [VideoController] is enough for multiple [Video] widgets (& more efficient).
+  //       Here, two [VideoController]s are created for testing.
+  late final VideoController controller0 = VideoController(
+    player,
+    enableHardwareAcceleration: enableHardwareAcceleration.value,
+  );
+  late final VideoController controller1 = VideoController(
     player,
     enableHardwareAcceleration: enableHardwareAcceleration.value,
   );
@@ -105,9 +111,11 @@ class _SinglePlayerMultipleVideoScreenState
                                   child: Row(
                                     children: [
                                       Expanded(
-                                          child: Video(controller: controller)),
+                                          child:
+                                              Video(controller: controller0)),
                                       Expanded(
-                                          child: Video(controller: controller)),
+                                          child:
+                                              Video(controller: controller0)),
                                     ],
                                   ),
                                 ),
@@ -115,9 +123,11 @@ class _SinglePlayerMultipleVideoScreenState
                                   child: Row(
                                     children: [
                                       Expanded(
-                                          child: Video(controller: controller)),
+                                          child:
+                                              Video(controller: controller1)),
                                       Expanded(
-                                          child: Video(controller: controller)),
+                                          child:
+                                              Video(controller: controller1)),
                                     ],
                                   ),
                                 ),
@@ -151,16 +161,16 @@ class _SinglePlayerMultipleVideoScreenState
                         Expanded(
                           child: Row(
                             children: [
-                              Expanded(child: Video(controller: controller)),
-                              Expanded(child: Video(controller: controller)),
+                              Expanded(child: Video(controller: controller0)),
+                              Expanded(child: Video(controller: controller0)),
                             ],
                           ),
                         ),
                         Expanded(
                           child: Row(
                             children: [
-                              Expanded(child: Video(controller: controller)),
-                              Expanded(child: Video(controller: controller)),
+                              Expanded(child: Video(controller: controller1)),
+                              Expanded(child: Video(controller: controller1)),
                             ],
                           ),
                         ),

@@ -110,7 +110,9 @@ class VideoController {
         );
       }
 
-      player.platform?.videoControllerCompleter.complete();
+      if (!(player.platform?.videoControllerCompleter.isCompleted ?? true)) {
+        player.platform?.videoControllerCompleter.complete();
+      }
     }();
   }
 
