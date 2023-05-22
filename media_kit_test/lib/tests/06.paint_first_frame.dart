@@ -37,6 +37,13 @@ Future<void> paintFirstFrame(BuildContext context) async {
       enableHardwareAcceleration: enableHardwareAcceleration.value,
     ),
   ];
+
+  for (final controller in controllers) {
+    controller.rect.addListener(
+      () => debugPrint(controller.rect.value.toString()),
+    );
+  }
+
   // Open some [Playable]s. Do not start playback i.e. play: false.
   for (int i = 0; i < 5; i++) {
     await players[i].open(

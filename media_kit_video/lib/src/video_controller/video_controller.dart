@@ -4,6 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:async';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 
@@ -46,6 +47,12 @@ class VideoController {
   /// Platform specific internal implementation initialized depending upon the current platform.
   final notifier = ValueNotifier<PlatformVideoController?>(null);
 
+  /// Texture ID of the video output, registered with Flutter engine by the native implementation.
+  final ValueNotifier<int?> id = ValueNotifier<int?>(null);
+
+  /// [Rect] of the video output, received from the native implementation.
+  final ValueNotifier<Rect?> rect = ValueNotifier<Rect?>(null);
+
   /// {@macro platform_video_controller}
   VideoController(
     Player player, {
@@ -80,7 +87,22 @@ class VideoController {
         debugPrint(exception.toString());
         debugPrint(stacktrace.toString());
       }
-      if (!platform.isCompleted) {
+      if (platform.isCompleted) {
+        // Populate [id] & [rect] [ValueNotifier]s with the values from [platform] implementation of [PlatformVideoController].
+        final controller = await platform.future;
+        // Add listeners.
+        void fn0() => id.value = controller.id.value;
+        void fn1() => rect.value = controller.rect.value;
+        fn0();
+        fn1();
+        controller.id.addListener(fn0);
+        controller.rect.addListener(fn1);
+        // Remove listeners upon [Player.dispose].
+        player.platform?.release.add(() async {
+          controller.id.removeListener(fn0);
+          controller.rect.removeListener(fn1);
+        });
+      } else {
         platform.completeError(
           UnimplementedError(
             '[VideoController] is unavailable for this platform.',
