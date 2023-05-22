@@ -5,7 +5,10 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:async';
 import 'package:flutter/widgets.dart';
+
 import 'package:media_kit/media_kit.dart';
+
+import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
 /// {@template platform_video_controller}
 ///
@@ -31,6 +34,9 @@ abstract class PlatformVideoController {
   /// Whether hardware acceleration should be enabled or not.
   final bool enableHardwareAcceleration;
 
+  /// User defined configuration for [VideoController].
+  final VideoControllerConfiguration configuration;
+
   /// Texture ID of the video output, registered with Flutter engine by the native implementation.
   final ValueNotifier<int?> id = ValueNotifier<int?>(null);
 
@@ -43,6 +49,7 @@ abstract class PlatformVideoController {
     this.width,
     this.height,
     this.enableHardwareAcceleration,
+    this.configuration,
   );
 
   /// Sets the required size of the video output.

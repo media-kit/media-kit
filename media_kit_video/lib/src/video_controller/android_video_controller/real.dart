@@ -10,18 +10,19 @@ import 'dart:collection';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:synchronized/synchronized.dart';
 
-// ignore_for_file: unused_import, implementation_imports
+import 'package:media_kit/media_kit.dart';
 // It's absolutely crazy that C/C++ interop in Dart is so much easier & less tedious (possibly more performant as well) than in Java/Kotlin.
 // I don't want to add some additional code to make it accessible through JNI & additionally bundle it with the app. We can directly use the native library & it's bindings instead to make our life easier & bundle size smaller.
 //
 // Only downside I can see is that we are now depending package:media_kit_video on package:ffi & package:media_kit. However, it's absolutely fine because package:media_kit_video is crafted for package:media_kit.
 // Also... now the API is also improved, now [VideoController.create] consumes [Player] directly instead of [Player.handle] which as an [int].
+// ignore_for_file: unused_import, implementation_imports
 import 'package:media_kit/generated/libmpv/bindings.dart';
 import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 
+import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 
 /// {@template android_video_controller}
@@ -42,6 +43,7 @@ class AndroidVideoController extends PlatformVideoController {
     super.width,
     super.height,
     super.enableHardwareAcceleration,
+    super.configuration,
   ) {
     // Notify about the first frame being rendered.
     // Case: If some [Media] is already playing when [VideoController] is created.
@@ -87,31 +89,39 @@ class AndroidVideoController extends PlatformVideoController {
       (event) => lock.synchronized(() async {
         rect.value = Rect.zero;
         // ----------------------------------------------
-        // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
-        // In native Android, this kind of rendering is done with `android.view.SurfaceView` + `android.view.SurfaceHolder`, which offers `onSurfaceChanged` callback to handle this.
-        //
-        // NOTE: Not needed with --vo=mediacodec_embed.
         final handle = await player.handle;
-        await _channel.invokeMethod(
-          'VideoOutputManager.SetSurfaceTextureSize',
-          {
-            'handle': handle.toString(),
-            'width': event.width.toInt().toString(),
-            'height': event.height.toInt().toString(),
-          },
-        );
         NativeLibrary.ensureInitialized();
         final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-        final name = 'android-surface-size'.toNativeUtf8();
-        final value =
-            '${event.width.toInt()}x${event.height.toInt()}'.toNativeUtf8();
-        mpv.mpv_set_option_string(
+        final property = 'vo'.toNativeUtf8();
+        final vo = mpv.mpv_get_property_string(
           Pointer.fromAddress(handle),
-          name.cast(),
-          value.cast(),
+          property.cast(),
         );
-        calloc.free(name);
-        calloc.free(value);
+        if (property.toDartString() == 'gpu') {
+          // NOTE: Only required for --vo=gpu
+          // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
+          // In native Android, this kind of rendering is done with `android.view.SurfaceView` + `android.view.SurfaceHolder`, which offers `onSurfaceChanged` callback to handle this
+          await _channel.invokeMethod(
+            'VideoOutputManager.SetSurfaceTextureSize',
+            {
+              'handle': handle.toString(),
+              'width': event.width.toInt().toString(),
+              'height': event.height.toInt().toString(),
+            },
+          );
+          final name = 'android-surface-size'.toNativeUtf8();
+          final value =
+              '${event.width.toInt()}x${event.height.toInt()}'.toNativeUtf8();
+          mpv.mpv_set_option_string(
+            Pointer.fromAddress(handle),
+            name.cast(),
+            value.cast(),
+          );
+          calloc.free(name);
+          calloc.free(value);
+        }
+        calloc.free(property);
+        mpv.mpv_free(vo.cast());
         // ----------------------------------------------
         rect.value = event;
       }),
@@ -122,6 +132,7 @@ class AndroidVideoController extends PlatformVideoController {
   static Future<PlatformVideoController> create(
     Player player,
     bool enableHardwareAcceleration,
+    VideoControllerConfiguration configuration,
   ) async {
     // Retrieve the native handle of the [Player].
     final handle = await player.handle;
@@ -144,6 +155,7 @@ class AndroidVideoController extends PlatformVideoController {
       null,
       null,
       enableHardwareAcceleration,
+      configuration,
     );
     // Register [_dispose] for execution upon [Player.dispose].
     player.platform?.release.add(controller._dispose);
@@ -164,23 +176,33 @@ class AndroidVideoController extends PlatformVideoController {
     // ----------------------------------------------
     NativeLibrary.ensureInitialized();
     final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-    final values = enableHardwareAcceleration
-        ? {
-            // H/W decoding & rendering with --vo=gpu + --hwdec=mediacodec-copy.
-            'opengl-es': 'yes',
-            'force-window': 'yes',
-            'hwdec': 'mediacodec-copy',
-            'gpu-context': 'android',
-            'vo': 'gpu',
-            'wid': wid.toString(),
-          }
+
+    final values = configuration.vo == null && configuration.hwdec == null
+        ? enableHardwareAcceleration
+            ? {
+                // H/W decoding & rendering with --vo=gpu + --hwdec=mediacodec-copy.
+                'vo': 'gpu',
+                'hwdec': 'mediacodec-copy',
+                'opengl-es': 'yes',
+                'force-window': 'yes',
+                'gpu-context': 'android',
+                'wid': wid.toString(),
+              }
+            : {
+                // S/W decoding & rendering with --vo=gpu + --hwdec=no.
+                'vo': 'gpu',
+                'hwdec': 'no',
+                'opengl-es': 'yes',
+                'force-window': 'yes',
+                'gpu-context': 'android',
+                'wid': wid.toString(),
+              }
         : {
-            // S/W decoding & rendering with --vo=gpu + --hwdec=no.
+            'vo': configuration.vo!,
+            'hwdec': configuration.hwdec!,
             'opengl-es': 'yes',
             'force-window': 'yes',
-            'hwdec': 'no',
             'gpu-context': 'android',
-            'vo': 'gpu',
             'wid': wid.toString(),
           };
     // TODO(@alexmercerind): Few other rendering options might be worth exposing to clients in the future.

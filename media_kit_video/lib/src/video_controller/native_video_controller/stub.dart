@@ -17,6 +17,7 @@ class NativeVideoController extends PlatformVideoController {
     super.width,
     super.height,
     super.enableHardwareAcceleration,
+    super.configuration,
   );
 
   static Future<PlatformVideoController> create(
@@ -24,6 +25,7 @@ class NativeVideoController extends PlatformVideoController {
     int? width,
     int? height,
     bool enableHardwareAcceleration,
+    PlayerConfiguration configuration,
   ) =>
       throw UnimplementedError();
 

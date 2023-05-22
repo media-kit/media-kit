@@ -59,6 +59,8 @@ class VideoController {
     int? width,
     int? height,
     bool enableHardwareAcceleration = true,
+    VideoControllerConfiguration configuration =
+        const VideoControllerConfiguration(),
   }) {
     player.platform?.isVideoControllerAttached = true;
 
@@ -72,6 +74,7 @@ class VideoController {
             width,
             height,
             enableHardwareAcceleration,
+            configuration,
           );
           platform.complete(result);
           notifier.value = result;
@@ -79,6 +82,7 @@ class VideoController {
           final result = await AndroidVideoController.create(
             player,
             enableHardwareAcceleration,
+            configuration,
           );
           platform.complete(result);
           notifier.value = result;
@@ -138,4 +142,33 @@ class VideoController {
     final instance = await platform.future;
     return instance.waitUntilFirstFrameRendered;
   }
+}
+
+/// {@template video_controller_configuration}
+///
+/// VideoControllerConfiguration
+/// ----------------------------
+/// Configurable options for customizing the [VideoController] behavior.
+///
+/// {@endtemplate}
+class VideoControllerConfiguration {
+  /// Sets the [`--vo`](https://mpv.io/manual/stable/#options-vo) property on libmpv backend.
+  ///
+  /// Default: Platform specific.
+  /// * Windows, GNU/Linux, macOS & iOS: `libmpv`
+  /// * Android: `gpu`
+  final String? vo;
+
+  /// Sets the [`--hwdec`](https://mpv.io/manual/stable/#options-hwdec) property on libmpv backend.
+  ///
+  /// Default: Platform specific.
+  /// * Windows, GNU/Linux, macOS & iOS : `auto`
+  /// * Android: `mediacodec-copy`
+  final String? hwdec;
+
+  /// {@macro video_controller_configuration}
+  const VideoControllerConfiguration({
+    this.vo,
+    this.hwdec,
+  });
 }

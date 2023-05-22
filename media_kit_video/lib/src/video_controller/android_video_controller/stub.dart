@@ -17,11 +17,13 @@ class AndroidVideoController extends PlatformVideoController {
     super.width,
     super.height,
     super.enableHardwareAcceleration,
+    super.configuration,
   );
 
   static Future<PlatformVideoController> create(
     Player player,
     bool enableHardwareAcceleration,
+    PlayerConfiguration configuration,
   ) =>
       throw UnimplementedError();
 

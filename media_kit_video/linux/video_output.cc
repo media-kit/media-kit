@@ -101,7 +101,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
     g_printerr("media_kit: VideoOutput: S/W rendering is not supported.\n");
   }
 #endif
-  mpv_set_option_string(self->handle, "vo", "libmpv");
   mpv_set_option_string(self->handle, "video-sync", "audio");
   mpv_set_option_string(self->handle, "video-timing-offset", "0");
   gboolean hardware_acceleration_supported = FALSE;
@@ -121,7 +120,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
         g_print("fl_texture_registrar_register_texture: %d\n", result);
         if (result) {
           // Request H/W decoding.
-          mpv_set_option_string(self->handle, "hwdec", "auto");
           mpv_opengl_init_params gl_init_params{
               [](auto, auto name) {
                 GdkDisplay* display = gdk_display_get_default();

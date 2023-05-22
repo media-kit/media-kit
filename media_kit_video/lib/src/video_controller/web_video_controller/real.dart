@@ -7,11 +7,13 @@
 import 'dart:async';
 import 'dart:js' as js;
 import 'dart:html' as html;
+
 import 'dart_ui/dart_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 
+import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 
 /// {@template web_video_controller}
@@ -32,10 +34,14 @@ class WebVideoController extends PlatformVideoController {
     super.width,
     super.height,
     super.enableHardwareAcceleration,
+    super.configuration,
   );
 
   /// {@macro web_video_controller}
-  static Future<PlatformVideoController> create(Player player) async {
+  static Future<PlatformVideoController> create(
+    Player player,
+    VideoControllerConfiguration configuration,
+  ) async {
     // Retrieve the native handle of the [Player].
     final handle = await player.handle;
 
@@ -44,6 +50,7 @@ class WebVideoController extends PlatformVideoController {
       null,
       null,
       true,
+      configuration,
     );
     // Register [_dispose] for execution upon [Player.dispose].
     player.platform?.release.add(controller._dispose);
