@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_test/common/globals.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
 import 'tests/01.single_player_single_video.dart';
 import 'tests/02.single_player_multiple_video.dart';
@@ -10,6 +10,7 @@ import 'tests/05.stress_test.dart';
 import 'tests/06.paint_first_frame.dart';
 import 'tests/07.video_controller_set_size.dart';
 
+import 'common/globals.dart';
 import 'common/sources/sources.dart';
 
 Future<void> main() async {
@@ -52,15 +53,16 @@ class PrimaryScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('package:media_kit'),
         actions: [
-          ValueListenableBuilder<bool>(
-            valueListenable: enableHardwareAcceleration,
+          ValueListenableBuilder<VideoControllerConfiguration>(
+            valueListenable: configuration,
             builder: (context, value, _) => TextButton(
               onPressed: () {
-                enableHardwareAcceleration.value =
-                    !enableHardwareAcceleration.value;
+                configuration.value = VideoControllerConfiguration(
+                  enableHardwareAcceleration: !value.enableHardwareAcceleration,
+                );
               },
               child: Text(
-                value ? 'H/W' : 'S/W',
+                value.enableHardwareAcceleration ? 'H/W' : 'S/W',
                 style: const TextStyle(
                   color: Colors.white,
                 ),

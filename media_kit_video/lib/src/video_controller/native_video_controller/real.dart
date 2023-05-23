@@ -39,21 +39,21 @@ class NativeVideoController extends PlatformVideoController {
       Platform.isMacOS ||
       Platform.isIOS;
 
+  /// Fixed width of the video output.
+  int? width;
+
+  /// Fixed height of the video output.
+  int? height;
+
   /// {@macro native_video_controller}
   NativeVideoController._(
     super.player,
-    super.width,
-    super.height,
-    super.enableHardwareAcceleration,
     super.configuration,
   );
 
   /// {@macro native_video_controller}
   static Future<PlatformVideoController> create(
     Player player,
-    int? width,
-    int? height,
-    bool enableHardwareAcceleration,
     VideoControllerConfiguration configuration,
   ) async {
     // Retrieve the native handle of the [Player].
@@ -66,11 +66,11 @@ class NativeVideoController extends PlatformVideoController {
     // Creation:
     final controller = NativeVideoController._(
       player,
-      width,
-      height,
-      enableHardwareAcceleration,
       configuration,
     );
+
+    controller.width = configuration.width;
+    controller.height = configuration.height;
 
     // ----------------------------------------------
     NativeLibrary.ensureInitialized();
@@ -115,9 +115,9 @@ class NativeVideoController extends PlatformVideoController {
       'VideoOutputManager.Create',
       {
         'handle': handle.toString(),
-        'width': width.toString(),
-        'height': height.toString(),
-        'enableHardwareAcceleration': enableHardwareAcceleration,
+        'width': configuration.width.toString(),
+        'height': configuration.height.toString(),
+        'enableHardwareAcceleration': configuration.enableHardwareAcceleration,
       },
     );
 
@@ -169,7 +169,7 @@ class NativeVideoController extends PlatformVideoController {
   }
 
   /// Currently created [NativeVideoController]s.
-  /// This is used to notify about updated texture IDs & [Rect]s through [channel].
+  /// This is used to notify about updated texture IDs & [Rect]s through [_channel].
   static final _controllers = HashMap<int, NativeVideoController>();
 
   /// [MethodChannel] for invoking platform specific native implementation.

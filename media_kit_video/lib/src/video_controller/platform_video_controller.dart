@@ -25,15 +25,6 @@ abstract class PlatformVideoController {
   /// The [Player] instance associated with this instance.
   final Player player;
 
-  /// Fixed width of the video output.
-  int? width;
-
-  /// Fixed height of the video output.
-  int? height;
-
-  /// Whether hardware acceleration should be enabled or not.
-  final bool enableHardwareAcceleration;
-
   /// User defined configuration for [VideoController].
   final VideoControllerConfiguration configuration;
 
@@ -46,9 +37,6 @@ abstract class PlatformVideoController {
   /// {@macro platform_video_controller}
   PlatformVideoController(
     this.player,
-    this.width,
-    this.height,
-    this.enableHardwareAcceleration,
     this.configuration,
   );
 
@@ -62,16 +50,6 @@ abstract class PlatformVideoController {
     int? width,
     int? height,
   });
-
-  @override
-  String toString() => 'VideoController('
-      'player: $player, '
-      'width: $width, '
-      'height: $height, '
-      'enableHardwareAcceleration: $enableHardwareAcceleration, '
-      'id: $id, '
-      'rect: $rect'
-      ')';
 
   /// A [Future] that completes when the first video frame has been rendered.
   Future<void> get waitUntilFirstFrameRendered =>

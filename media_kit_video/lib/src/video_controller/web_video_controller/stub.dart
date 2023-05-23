@@ -15,9 +15,6 @@ class WebVideoController extends PlatformVideoController {
 
   WebVideoController._(
     super.player,
-    super.width,
-    super.height,
-    super.enableHardwareAcceleration,
     super.configuration,
   );
 

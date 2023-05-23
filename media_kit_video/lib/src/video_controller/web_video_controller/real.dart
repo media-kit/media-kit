@@ -31,9 +31,6 @@ class WebVideoController extends PlatformVideoController {
   /// {@macro web_video_controller}
   WebVideoController._(
     super.player,
-    super.width,
-    super.height,
-    super.enableHardwareAcceleration,
     super.configuration,
   );
 
@@ -47,9 +44,6 @@ class WebVideoController extends PlatformVideoController {
 
     final controller = WebVideoController._(
       player,
-      null,
-      null,
-      true,
       configuration,
     );
     // Register [_dispose] for execution upon [Player.dispose].

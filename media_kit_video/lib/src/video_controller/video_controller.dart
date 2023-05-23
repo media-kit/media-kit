@@ -22,22 +22,32 @@ import 'package:media_kit_video/src/video_controller/web_video_controller/web_vi
 /// [VideoController] is used to initialize & display video output.
 /// It takes reference to existing [Player] instance from `package:media_kit`.
 ///
+/// Passing [VideoController] to [Video] widget will cause the video output to be displayed.
+///
 /// ```dart
 /// late final player = Player();
 /// late final controller = VideoController(player);
 /// ```
 ///
-/// **Notes:**
+/// **Configurable options:**
 ///
-/// 1. You can limit size of the video output by specifying [width] & [height].
-///    * By default, both [height] & [width] are `null` i.e. output is based on video's resolution.
+/// 1. You can limit size of the video output by specifying [VideoControllerConfiguration.width] & [VideoControllerConfiguration.height].
+///    * A smaller width & height may yield substantial performance improvements.
+///    * By default, both [VideoControllerConfiguration.height] & [VideoControllerConfiguration.width] are `null` i.e. output is based on video's resolution.
 /// 2. You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
-///    * By default, [enableHardwareAcceleration] is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
+///    * Disabling the option may improve stability on certain devices.
+///    * By default, [VideoControllerConfiguration.enableHardwareAcceleration] is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 ///
 /// **Platform specific differences:**
 ///
-/// 1. [width] & [height] arguments have no effect on Android & Flutter Web.
-/// 2. The [enableHardwareAcceleration] argument is ignored on Flutter Web i.e. GPU usage is dependent on the client's web browser.
+/// **Android**
+/// * [VideoControllerConfiguration.width] & [VideoControllerConfiguration.height] arguments have no effect.
+///
+/// **Web**
+/// * [VideoControllerConfiguration.width] & [VideoControllerConfiguration.height] arguments have no effect.
+/// * Only single [Video] can be displayed at a time for a single [VideoController].
+///   Displaying [Video] widgets with same[VideoController]  will cause only last [Video] to be displayed.
+/// * [VideoControllerConfiguration.enableHardwareAcceleration] is ignored i.e. GPU usage is dependent on the client's web browser.
 ///
 /// {@endtemplate}
 class VideoController {
@@ -56,9 +66,6 @@ class VideoController {
   /// {@macro platform_video_controller}
   VideoController(
     Player player, {
-    int? width,
-    int? height,
-    bool enableHardwareAcceleration = true,
     VideoControllerConfiguration configuration =
         const VideoControllerConfiguration(),
   }) {
@@ -71,9 +78,6 @@ class VideoController {
         } else if (NativeVideoController.supported) {
           final result = await NativeVideoController.create(
             player,
-            width,
-            height,
-            enableHardwareAcceleration,
             configuration,
           );
           platform.complete(result);
@@ -81,7 +85,6 @@ class VideoController {
         } else if (AndroidVideoController.supported) {
           final result = await AndroidVideoController.create(
             player,
-            enableHardwareAcceleration,
             configuration,
           );
           platform.complete(result);
@@ -166,9 +169,27 @@ class VideoControllerConfiguration {
   /// * Android: `mediacodec-copy`
   final String? hwdec;
 
+  /// The fixed width of the [Video] output.
+  ///
+  /// Default: `null`
+  final int? width;
+
+  /// The fixed height of the [Video] output.
+  ///
+  /// Default: `null`
+  final int? height;
+
+  /// Whether to enable hardware acceleration.
+  ///
+  /// Default: `true`
+  final bool enableHardwareAcceleration;
+
   /// {@macro video_controller_configuration}
   const VideoControllerConfiguration({
     this.vo,
     this.hwdec,
+    this.width,
+    this.height,
+    this.enableHardwareAcceleration = true,
   });
 }

@@ -37,12 +37,15 @@ class AndroidVideoController extends PlatformVideoController {
   /// Whether [AndroidVideoController] is supported on the current platform or not.
   static bool get supported => Platform.isAndroid;
 
+  /// Fixed width of the video output.
+  int? width;
+
+  /// Fixed height of the video output.
+  int? height;
+
   /// {@macro android_video_controller}
   AndroidVideoController._(
     super.player,
-    super.width,
-    super.height,
-    super.enableHardwareAcceleration,
     super.configuration,
   ) {
     // Notify about the first frame being rendered.
@@ -131,7 +134,6 @@ class AndroidVideoController extends PlatformVideoController {
   /// {@macro android_video_controller}
   static Future<PlatformVideoController> create(
     Player player,
-    bool enableHardwareAcceleration,
     VideoControllerConfiguration configuration,
   ) async {
     // Retrieve the native handle of the [Player].
@@ -140,6 +142,8 @@ class AndroidVideoController extends PlatformVideoController {
     if (_controllers.containsKey(handle)) {
       return _controllers[handle]!;
     }
+
+    bool enableHardwareAcceleration = configuration.enableHardwareAcceleration;
 
     // Enforce software rendering in emulators.
     final bool isEmulator = await _channel.invokeMethod('Utils.IsEmulator');
@@ -152,9 +156,6 @@ class AndroidVideoController extends PlatformVideoController {
     // Creation:
     final controller = AndroidVideoController._(
       player,
-      null,
-      null,
-      enableHardwareAcceleration,
       configuration,
     );
     // Register [_dispose] for execution upon [Player.dispose].
