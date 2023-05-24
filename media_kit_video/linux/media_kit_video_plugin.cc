@@ -34,21 +34,30 @@ static void media_kit_video_plugin_handle_method_call(
   if (g_strcmp0(method, "VideoOutputManager.Create") == 0) {
     FlValue* arguments = fl_method_call_get_args(method_call);
     FlValue* handle = fl_value_lookup_string(arguments, "handle");
-    FlValue* width = fl_value_lookup_string(arguments, "width");
-    FlValue* height = fl_value_lookup_string(arguments, "height");
-    FlValue* enable_hardware_acceleration =
-        fl_value_lookup_string(arguments, "enableHardwareAcceleration");
+    FlValue* configuration = fl_value_lookup_string(arguments, "configuration");
+
     gint64 handle_value =
         g_ascii_strtoll(fl_value_get_string(handle), NULL, 10);
-    gint64 width_value = 0;
-    gint64 height_value = 0;
-    gboolean enable_hardware_acceleration_value =
-        fl_value_get_bool(enable_hardware_acceleration);
-    if (g_strcmp0(fl_value_get_string(width), "null") != 0 &&
-        g_strcmp0(fl_value_get_string(height), "null") != 0) {
-      width_value = g_ascii_strtoll(fl_value_get_string(width), NULL, 10);
-      height_value = g_ascii_strtoll(fl_value_get_string(height), NULL, 10);
+    VideoOutputConfiguration configuration_value = {};
+
+    const gchar* configuration_width =
+        fl_value_get_string(fl_value_lookup_string(configuration, "width"));
+    const gchar* configuration_height =
+        fl_value_get_string(fl_value_lookup_string(configuration, "height"));
+    const bool configuration_enable_hardware_acceleration = fl_value_get_bool(
+        fl_value_lookup_string(configuration, "enableHardwareAcceleration"));
+
+    if (g_strcmp0(configuration_width, "null") != 0) {
+      configuration_value.width =
+          g_ascii_strtoll(configuration_width, NULL, 10);
     }
+    if (g_strcmp0(configuration_height, "null") != 0) {
+      configuration_value.height =
+          g_ascii_strtoll(configuration_height, NULL, 10);
+    }
+    configuration_value.enable_hardware_acceleration =
+        configuration_enable_hardware_acceleration;
+
     typedef struct _VideoOutputTextureUpdateCallbackData {
       FlMethodChannel* channel;
       gint64 handle;
@@ -59,8 +68,7 @@ static void media_kit_video_plugin_handle_method_call(
     data->channel = self->channel;
     data->handle = handle_value;
     video_output_manager_create(
-        self->video_output_manager, handle_value, width_value, height_value,
-        enable_hardware_acceleration_value,
+        self->video_output_manager, handle_value, configuration_value,
         [](gint64 id, gint64 width, gint64 height, gpointer context) {
           auto data = (VideoOutputTextureUpdateCallbackData*)context;
           FlMethodChannel* channel = data->channel;
@@ -89,9 +97,10 @@ static void media_kit_video_plugin_handle_method_call(
         g_ascii_strtoll(fl_value_get_string(handle), NULL, 10);
     gint64 width_value = 0;
     gint64 height_value = 0;
-    if (g_strcmp0(fl_value_get_string(width), "null") != 0 &&
-        g_strcmp0(fl_value_get_string(height), "null") != 0) {
+    if (g_strcmp0(fl_value_get_string(width), "null") != 0) {
       width_value = g_ascii_strtoll(fl_value_get_string(width), NULL, 10);
+    }
+    if (g_strcmp0(fl_value_get_string(height), "null") != 0) {
       height_value = g_ascii_strtoll(fl_value_get_string(height), NULL, 10);
     }
     video_output_manager_set_size(self->video_output_manager, handle_value,
@@ -145,10 +154,11 @@ static MediaKitVideoPlugin* media_kit_video_plugin_new(
                                             g_object_unref);
   FlTextureRegistrar* texture_registrar =
       fl_plugin_registrar_get_texture_registrar(registrar);
-  FlView* view =  fl_plugin_registrar_get_view(registrar);
+  FlView* view = fl_plugin_registrar_get_view(registrar);
   // Create new |VideoOutputManager| instance. Pass |texture_registrar| as
   // reference.
-  self->video_output_manager = video_output_manager_new(texture_registrar, view);
+  self->video_output_manager =
+      video_output_manager_new(texture_registrar, view);
   return self;
 }
 
