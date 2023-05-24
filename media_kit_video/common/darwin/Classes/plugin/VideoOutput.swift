@@ -325,22 +325,18 @@ public class VideoOutputWithPIP: VideoOutput, AVPictureInPictureSampleBufferPlay
   }
   
   override public func enableAutoPictureInPicture() -> Bool {
-#if os(iOS)
     if enablePictureInPicture() {
       pipController?.canStartPictureInPictureAutomaticallyFromInline = true
       return true
     }
-#endif
     
     return false
   }
   
   override public func disableAutoPictureInPicture() {
-#if os(iOS)
     if pipController != nil {
       pipController?.canStartPictureInPictureAutomaticallyFromInline = false
     }
-#endif
   }
   
   override public func enterPictureInPicture() -> Bool {
