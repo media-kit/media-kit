@@ -30,7 +30,7 @@ public class VideoOutputManager: NSObject {
   ) {
     #if os(iOS)
     if #available(iOS 15.0, *) {
-      let videoOutput = VideoOutputWithPIP(
+      let videoOutput = VideoOutputPIP(
         handle: handle,
         configuration: configuration,
         registry: self.registry,
