@@ -26,15 +26,13 @@
   (SW_RENDERING_MAX_WIDTH) * (SW_RENDERING_MAX_HEIGHT) * (4)
 
 VideoOutput::VideoOutput(int64_t handle,
-                         std::optional<int64_t> width,
-                         std::optional<int64_t> height,
-                         bool enable_hardware_acceleration,
+                         VideoOutputConfiguration configuration,
                          flutter::PluginRegistrarWindows* registrar,
                          ThreadPool* thread_pool_ref)
     : handle_(reinterpret_cast<mpv_handle*>(handle)),
-      width_(width),
-      height_(height),
-      enable_hardware_acceleration_(enable_hardware_acceleration),
+      width_(configuration.width),
+      height_(configuration.height),
+      configuration_(configuration),
       registrar_(registrar),
       thread_pool_ref_(thread_pool_ref) {
   // The constructor must be invoked through the thread pool, because
@@ -48,7 +46,7 @@ VideoOutput::VideoOutput(int64_t handle,
     // |ANGLESurfaceManager|, use S/W API as fallback.
     auto is_hardware_acceleration_enabled = false;
     // Attempt to use H/W rendering.
-    if (enable_hardware_acceleration_) {
+    if (configuration.enable_hardware_acceleration) {
       try {
         // OpenGL context needs to be set before |mpv_render_context_create|.
         surface_manager_ = std::make_unique<ANGLESurfaceManager>(

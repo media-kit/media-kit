@@ -25,6 +25,19 @@
 #include "angle_surface_manager.h"
 #include "thread_pool.h"
 
+typedef struct _VideoOutputConfiguration {
+  std::optional<int64_t> width;
+  std::optional<int64_t> height;
+  bool enable_hardware_acceleration;
+
+  _VideoOutputConfiguration(std::optional<int64_t> width = std::nullopt,
+                            std::optional<int64_t> height = std::nullopt,
+                            bool enable_hardware_acceleration = true)
+      : width(width),
+        height(height),
+        enable_hardware_acceleration(enable_hardware_acceleration) {}
+} VideoOutputConfiguration;
+
 class VideoOutput {
  public:
   int64_t texture_id() const { return texture_id_; }
@@ -52,9 +65,7 @@ class VideoOutput {
   }
 
   VideoOutput(int64_t handle,
-              std::optional<int64_t> width,
-              std::optional<int64_t> height,
-              bool enable_hardware_acceleration,
+              VideoOutputConfiguration configuration,
               flutter::PluginRegistrarWindows* registrar,
               ThreadPool* thread_pool_ref);
 
@@ -78,11 +89,12 @@ class VideoOutput {
 
   int64_t GetVideoHeight();
 
-  mpv_handle* handle_ = nullptr;
-  mpv_render_context* render_context_ = nullptr;
   std::optional<int64_t> height_ = std::nullopt;
   std::optional<int64_t> width_ = std::nullopt;
-  bool enable_hardware_acceleration_ = true;
+  VideoOutputConfiguration configuration_ = VideoOutputConfiguration{};
+
+  mpv_handle* handle_ = nullptr;
+  mpv_render_context* render_context_ = nullptr;
   int64_t texture_id_ = 0;
   flutter::PluginRegistrarWindows* registrar_ = nullptr;
   ThreadPool* thread_pool_ref_ = nullptr;

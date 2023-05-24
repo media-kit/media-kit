@@ -30,9 +30,7 @@ class VideoOutputManager {
   // notified via the |texture_update_callback|.
   void Create(
       int64_t handle,
-      std::optional<int64_t> width,
-      std::optional<int64_t> height,
-      bool enable_hardware_acceleration,
+      VideoOutputConfiguration configuration,
       std::function<void(int64_t, int64_t, int64_t)> texture_update_callback);
 
   // Sets the required video output size.
