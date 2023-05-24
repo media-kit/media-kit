@@ -4,12 +4,19 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:io';
+import 'dart:ffi';
 import 'dart:async';
 import 'dart:collection';
+import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
-import 'package:media_kit/media_kit.dart';
 
+import 'package:media_kit/media_kit.dart';
+// ignore_for_file: unused_import, implementation_imports
+import 'package:media_kit/generated/libmpv/bindings.dart';
+import 'package:media_kit/src/player/libmpv/core/native_library.dart';
+
+import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 
 /// {@template native_video_controller}
@@ -32,20 +39,22 @@ class NativeVideoController extends PlatformVideoController {
       Platform.isMacOS ||
       Platform.isIOS;
 
+  /// Fixed width of the video output.
+  int? width;
+
+  /// Fixed height of the video output.
+  int? height;
+
   /// {@macro native_video_controller}
   NativeVideoController._(
     super.player,
-    super.width,
-    super.height,
-    super.enableHardwareAcceleration,
+    super.configuration,
   );
 
   /// {@macro native_video_controller}
   static Future<PlatformVideoController> create(
     Player player,
-    int? width,
-    int? height,
-    bool enableHardwareAcceleration,
+    VideoControllerConfiguration configuration,
   ) async {
     // Retrieve the native handle of the [Player].
     final handle = await player.handle;
@@ -57,10 +66,32 @@ class NativeVideoController extends PlatformVideoController {
     // Creation:
     final controller = NativeVideoController._(
       player,
-      width,
-      height,
-      enableHardwareAcceleration,
+      configuration,
     );
+
+    controller.width = configuration.width;
+    controller.height = configuration.height;
+
+    // ----------------------------------------------
+    NativeLibrary.ensureInitialized();
+    final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+    final values = {
+      'vo': configuration.vo ?? 'libmpv',
+      'hwdec': configuration.hwdec ?? 'auto',
+    };
+    for (final entry in values.entries) {
+      final property = entry.key.toNativeUtf8();
+      final value = entry.value.toNativeUtf8();
+      mpv.mpv_set_property_string(
+        Pointer.fromAddress(handle),
+        property.cast(),
+        value.cast(),
+      );
+      calloc.free(property);
+      calloc.free(value);
+    }
+    // ----------------------------------------------
+
     // Register [_dispose] for execution upon [Player.dispose].
     player.platform?.release.add(controller._dispose);
 
@@ -84,9 +115,12 @@ class NativeVideoController extends PlatformVideoController {
       'VideoOutputManager.Create',
       {
         'handle': handle.toString(),
-        'width': width.toString(),
-        'height': height.toString(),
-        'enableHardwareAcceleration': enableHardwareAcceleration,
+        'configuration': {
+          'width': configuration.width.toString(),
+          'height': configuration.height.toString(),
+          'enableHardwareAcceleration':
+              configuration.enableHardwareAcceleration,
+        },
       },
     );
 
@@ -138,7 +172,7 @@ class NativeVideoController extends PlatformVideoController {
   }
 
   /// Currently created [NativeVideoController]s.
-  /// This is used to notify about updated texture IDs & [Rect]s through [channel].
+  /// This is used to notify about updated texture IDs & [Rect]s through [_channel].
   static final _controllers = HashMap<int, NativeVideoController>();
 
   /// [MethodChannel] for invoking platform specific native implementation.

@@ -6,6 +6,7 @@
   - feat: `InitializerIsolate.dispose`
   - feat: `InitializerNativeEventLoop.dispose`
 - feat: `PlatformPlayer.waitForVideoControllerInitializationIfAttached`
+- feat: HTTP headers support in `Media`
 
 ## 0.0.7+1
 

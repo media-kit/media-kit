@@ -111,11 +111,20 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     mpv_render_context_render(render_context, params);
   }
   *target = GL_TEXTURE_2D;
-  *name = TEXTURE_GL(texture)->name;
-  *width = TEXTURE_GL(texture)->current_width;
-  *height = TEXTURE_GL(texture)->current_height;
-  if (self->name == 0 || self->fbo == 0) {
-    g_print("media_kit: TextureGL: THIS IS NOT AN ERROR. DO NOT REPORT!\n");
+  *name = self->name;
+  *width = self->current_width;
+  *height = self->current_height;
+  if (self->name == 0 && self->fbo == 0) {
+    // This means that required_width > 0 && required_height > 0 code-path
+    // hasn't been executed yet (because first frame isn't available yet).
+    // Just creating a dummy texture & FBO; prevent Flutter from complaining.
+    glGenFramebuffers(1, &self->fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, self->fbo);
+    glGenTextures(1, &self->name);
+    glBindTexture(GL_TEXTURE_2D, self->name);
+    *name = self->name;
+    *width = 1;
+    *height = 1;
   }
   return TRUE;
 }

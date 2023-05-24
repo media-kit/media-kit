@@ -33,7 +33,8 @@ static void video_output_manager_class_init(VideoOutputManagerClass* klass) {
 }
 
 VideoOutputManager* video_output_manager_new(
-    FlTextureRegistrar* texture_registrar, FlView* view) {
+    FlTextureRegistrar* texture_registrar,
+    FlView* view) {
   VideoOutputManager* video_output_manager = VIDEO_OUTPUT_MANAGER(
       g_object_new(video_output_manager_get_type(), nullptr));
   video_output_manager->texture_registrar = texture_registrar;
@@ -43,15 +44,12 @@ VideoOutputManager* video_output_manager_new(
 
 void video_output_manager_create(VideoOutputManager* self,
                                  gint64 handle,
-                                 gint64 width,
-                                 gint64 height,
-                                 gboolean enable_hardware_acceleration,
+                                 VideoOutputConfiguration configuration,
                                  TextureUpdateCallback texture_update_callback,
                                  gpointer texture_update_callback_context) {
   if (!g_hash_table_contains(self->video_outputs, GINT_TO_POINTER(handle))) {
-    g_autoptr(VideoOutput) video_output =
-        video_output_new(self->texture_registrar, self->view, handle, width, height,
-                         enable_hardware_acceleration);
+    g_autoptr(VideoOutput) video_output = video_output_new(
+        self->texture_registrar, self->view, handle, configuration);
     video_output_set_texture_update_callback(
         video_output, texture_update_callback, texture_update_callback_context);
     g_hash_table_insert(self->video_outputs, GINT_TO_POINTER(handle),

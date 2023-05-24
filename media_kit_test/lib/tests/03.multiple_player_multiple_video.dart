@@ -24,11 +24,11 @@ class _MultiplePlayerMultipleVideoScreenState
   late final List<VideoController> controllers = [
     VideoController(
       players[0],
-      enableHardwareAcceleration: enableHardwareAcceleration.value,
+      configuration: configuration.value,
     ),
     VideoController(
       players[1],
-      enableHardwareAcceleration: enableHardwareAcceleration.value,
+      configuration: configuration.value,
     ),
   ];
 

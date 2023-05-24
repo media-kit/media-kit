@@ -26,7 +26,7 @@ class _StressTestScreenState extends State<StressTestScreen> {
       final player = Player();
       final controller = VideoController(
         player,
-        enableHardwareAcceleration: enableHardwareAcceleration.value,
+        configuration: configuration.value,
       );
       players.add(player);
       controllers.add(controller);

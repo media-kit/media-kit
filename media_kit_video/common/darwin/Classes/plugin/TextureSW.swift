@@ -44,9 +44,6 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   private func initMPV() {
-    MPVHelpers.checkError(mpv_set_option_string(handle, "vo", "libmpv"))
-    MPVHelpers.checkError(mpv_set_option_string(handle, "hwdec", "auto"))
-
     let api = UnsafeMutableRawPointer(
       mutating: (MPV_RENDER_API_TYPE_SW as NSString).utf8String
     )

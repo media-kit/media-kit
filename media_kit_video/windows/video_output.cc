@@ -26,15 +26,13 @@
   (SW_RENDERING_MAX_WIDTH) * (SW_RENDERING_MAX_HEIGHT) * (4)
 
 VideoOutput::VideoOutput(int64_t handle,
-                         std::optional<int64_t> width,
-                         std::optional<int64_t> height,
-                         bool enable_hardware_acceleration,
+                         VideoOutputConfiguration configuration,
                          flutter::PluginRegistrarWindows* registrar,
                          ThreadPool* thread_pool_ref)
     : handle_(reinterpret_cast<mpv_handle*>(handle)),
-      width_(width),
-      height_(height),
-      enable_hardware_acceleration_(enable_hardware_acceleration),
+      width_(configuration.width),
+      height_(configuration.height),
+      configuration_(configuration),
       registrar_(registrar),
       thread_pool_ref_(thread_pool_ref) {
   // The constructor must be invoked through the thread pool, because
@@ -42,14 +40,13 @@ VideoOutput::VideoOutput(int64_t handle,
   // the existing |Render| or |Resize| calls from another |VideoOutput|
   // instances (which will result in access violation).
   auto future = thread_pool_ref_->Post([&]() {
-    mpv_set_option_string(handle_, "vo", "libmpv");
     mpv_set_option_string(handle_, "video-sync", "audio");
     mpv_set_option_string(handle_, "video-timing-offset", "0");
     // First try to initialize video playback with hardware acceleration &
     // |ANGLESurfaceManager|, use S/W API as fallback.
     auto is_hardware_acceleration_enabled = false;
     // Attempt to use H/W rendering.
-    if (enable_hardware_acceleration_) {
+    if (configuration.enable_hardware_acceleration) {
       try {
         // OpenGL context needs to be set before |mpv_render_context_create|.
         surface_manager_ = std::make_unique<ANGLESurfaceManager>(
@@ -67,8 +64,6 @@ VideoOutput::VideoOutput(int64_t handle,
             {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, &gl_init_params},
             {MPV_RENDER_PARAM_INVALID, nullptr},
         };
-        // Request H/W decoding.
-        mpv_set_option_string(handle_, "hwdec", "auto");
         // Create render context.
         if (mpv_render_context_create(&render_context_, handle_, params) == 0) {
           mpv_render_context_set_update_callback(
