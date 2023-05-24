@@ -38,9 +38,7 @@ public class VideoOutput: NSObject {
 
   init(
     handle: Int64,
-    width: Int64?,
-    height: Int64?,
-    enableHardwareAcceleration: Bool,
+    configuration: VideoOutputConfiguration,
     registry: FlutterTextureRegistry,
     textureUpdateCallback: @escaping TextureUpdateCallback
   ) {
@@ -48,9 +46,9 @@ public class VideoOutput: NSObject {
     assert(handle != nil, "handle casting")
 
     self.handle = handle!
-    self.width = width
-    self.height = height
-    self.enableHardwareAcceleration = enableHardwareAcceleration
+    self.width = configuration.width
+    self.height = configuration.height
+    self.enableHardwareAcceleration = configuration.enableHardwareAcceleration
     self.registry = registry
     self.textureUpdateCallback = textureUpdateCallback
 

@@ -14,16 +14,12 @@ public class VideoOutputManager: NSObject {
 
   public func create(
     handle: Int64,
-    width: Int64?,
-    height: Int64?,
-    enableHardwareAcceleration: Bool,
+    configuration: VideoOutputConfiguration,
     textureUpdateCallback: @escaping VideoOutput.TextureUpdateCallback
   ) {
     let videoOutput = VideoOutput(
       handle: handle,
-      width: width,
-      height: height,
-      enableHardwareAcceleration: enableHardwareAcceleration,
+      configuration: configuration,
       registry: self.registry,
       textureUpdateCallback: textureUpdateCallback
     )
