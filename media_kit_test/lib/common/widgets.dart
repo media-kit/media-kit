@@ -168,13 +168,15 @@ class _SeekBarState extends State<SeekBar> {
 
   @override
   Widget build(BuildContext context) {
-    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal =
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Column(
       children: [
         const SizedBox(height: 16.0),
         if (!horizontal)
           Row(
             children: [
+              const SizedBox(width: 36),
               const Spacer(),
               IconButton(
                 onPressed: widget.player.playOrPause,
@@ -186,8 +188,9 @@ class _SeekBarState extends State<SeekBar> {
               ),
               const Spacer(),
               IconButton(
-                onPressed:
-                    widget.controller.isPictureInPictureAvailable() ? widget.controller.enterPictureInPicture : null,
+                onPressed: widget.controller.isPictureInPictureAvailable()
+                    ? widget.controller.enterPictureInPicture
+                    : null,
                 icon: const Icon(
                   Icons.picture_in_picture,
                 ),

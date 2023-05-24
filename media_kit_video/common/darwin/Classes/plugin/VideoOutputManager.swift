@@ -4,10 +4,6 @@
   import FlutterMacOS
 #endif
 
-import AVKit
-import AVFoundation
-import UIKit
-
 public class VideoOutputManager: NSObject {
   private let registry: FlutterTextureRegistry
   private var videoOutputs = [Int64: VideoOutput]()
@@ -34,14 +30,29 @@ public class VideoOutputManager: NSObject {
     enableHardwareAcceleration: Bool,
     textureUpdateCallback: @escaping VideoOutput.TextureUpdateCallback
   ) {
+    #if os(iOS)
+    if #available(iOS 15.0, *) {
+      let videoOutput = VideoOutputWithPIP(
+        handle: handle,
+        width: width,
+        height: height,
+        enableHardwareAcceleration: enableHardwareAcceleration,
+        registry: self.registry,
+        textureUpdateCallback: textureUpdateCallback
+      )
+      self.videoOutputs[handle] = videoOutput
+      
+      return
+    }
+    #endif
+
     let videoOutput = VideoOutput(
       handle: handle,
       width: width,
       height: height,
       enableHardwareAcceleration: enableHardwareAcceleration,
       registry: self.registry,
-      textureUpdateCallback: textureUpdateCallback,
-      pipAvailable: pipAvailable
+      textureUpdateCallback: textureUpdateCallback
     )
 
     self.videoOutputs[handle] = videoOutput
