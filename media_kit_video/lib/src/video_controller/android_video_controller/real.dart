@@ -100,7 +100,8 @@ class AndroidVideoController extends PlatformVideoController {
           Pointer.fromAddress(handle),
           property.cast(),
         );
-        if (property.toDartString() == 'gpu') {
+        debugPrint(vo.cast<Utf8>().toDartString());
+        if (vo.cast<Utf8>().toDartString() == 'gpu') {
           // NOTE: Only required for --vo=gpu
           // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
           // In native Android, this kind of rendering is done with `android.view.SurfaceView` + `android.view.SurfaceHolder`, which offers `onSurfaceChanged` callback to handle this
@@ -178,7 +179,7 @@ class AndroidVideoController extends PlatformVideoController {
     NativeLibrary.ensureInitialized();
     final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
 
-    final values = configuration.vo == null && configuration.hwdec == null
+    final values = configuration.vo == null || configuration.hwdec == null
         ? enableHardwareAcceleration
             ? {
                 // H/W decoding & rendering with --vo=gpu + --hwdec=mediacodec-copy.
