@@ -176,6 +176,10 @@ class NativeVideoController extends PlatformVideoController {
   /// Used to invalidate Picture in Picture view data.
   @override
   Future<void> refreshPlaybackState() async {
+    if (!Platform.isIOS) {
+      return;
+    }
+
     final handle = await player.handle;
     await _channel.invokeMethod(
       'VideoOutputManager.RefreshPlaybackState',
@@ -188,6 +192,10 @@ class NativeVideoController extends PlatformVideoController {
   /// Checks whether Picture in Picture is available on current platform.
   @override
   Future<bool> isPictureInPictureAvailable() async {
+    if (!Platform.isIOS) {
+      return false;
+    }
+
     final handle = await player.handle;
     return await _channel.invokeMethod(
       'VideoOutputManager.IsPictureInPictureAvailable',
@@ -198,6 +206,10 @@ class NativeVideoController extends PlatformVideoController {
   /// Enable Picture in Picture.
   /// Returns true if this is supported on current platofrm.
   Future<bool> enablePictureInPicture() async {
+    if (!Platform.isIOS) {
+      return false;
+    }
+
     final handle = await player.handle;
     return await _channel.invokeMethod(
       'VideoOutputManager.EnablePictureInPicture',
@@ -209,6 +221,10 @@ class NativeVideoController extends PlatformVideoController {
 
   /// Disable Picture in Picture.
   Future<void> disablePictureInPicture() async {
+    if (!Platform.isIOS) {
+      return;
+    }
+
     final handle = await player.handle;
     return await _channel.invokeMethod(
       'VideoOutputManager.DisablePictureInPicture',
@@ -222,6 +238,10 @@ class NativeVideoController extends PlatformVideoController {
   /// Returns true if this is supported on current platofrm.
   @override
   Future<bool> enableAutoPictureInPicture() async {
+    if (!Platform.isIOS) {
+      return false;
+    }
+
     final handle = await player.handle;
     return await _channel.invokeMethod(
       'VideoOutputManager.EnableAutoPictureInPicture',
@@ -234,6 +254,10 @@ class NativeVideoController extends PlatformVideoController {
   /// Disables automatically entering Picture in Picture when app goes into background.
   @override
   Future<void> disableAutoPictureInPicture() async {
+    if (!Platform.isIOS) {
+      return;
+    }
+
     final handle = await player.handle;
     await _channel.invokeMethod(
       'VideoOutputManager.DisableAutoPictureInPicture',
@@ -246,6 +270,10 @@ class NativeVideoController extends PlatformVideoController {
   /// Enters Picture in Picture view for current video.
   @override
   Future<bool> enterPictureInPicture() async {
+    if (!Platform.isIOS) {
+      return false;
+    }
+
     final handle = await player.handle;
     return await _channel.invokeMethod(
       'VideoOutputManager.EnterPictureInPicture',
