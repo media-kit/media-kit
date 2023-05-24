@@ -11,7 +11,7 @@ import 'dart:async';
 /// A simple class where multiple tasks can be queued for sequential execution with specified refractory duration between each task.
 class TaskQueue {
   /// [TaskQueue] singleton instance.
-  static final instance = TaskQueue._(const Duration(seconds: 2));
+  static final instance = TaskQueue._(const Duration(seconds: 10));
 
   /// The refractory duration between each task's execution.
   final Duration refractoryDuration;

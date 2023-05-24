@@ -57,10 +57,12 @@ abstract class InitializerNativeEventLoop {
         'MediaKitEventLoopHandlerInitialize',
       );
       _initialize?.call();
-    } catch (exception) {
+    } catch (exception, stacktrace) {
       print(
         'media_kit: WARNING: package:media_kit_native_event_loop not found.',
       );
+      print(exception);
+      print(stacktrace);
     }
   }
 
