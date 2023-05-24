@@ -115,9 +115,12 @@ class NativeVideoController extends PlatformVideoController {
       'VideoOutputManager.Create',
       {
         'handle': handle.toString(),
-        'width': configuration.width.toString(),
-        'height': configuration.height.toString(),
-        'enableHardwareAcceleration': configuration.enableHardwareAcceleration,
+        'configuration': {
+          'width': configuration.width.toString(),
+          'height': configuration.height.toString(),
+          'enableHardwareAcceleration':
+              configuration.enableHardwareAcceleration,
+        },
       },
     );
 
