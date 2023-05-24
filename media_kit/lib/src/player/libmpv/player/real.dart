@@ -59,12 +59,18 @@ class libmpvPlayer extends PlatformPlayer {
   @override
   Future<void> dispose({bool synchronized = true}) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      disposed = true;
 
       await super.dispose();
 
       Initializer.dispose(ctx);
+
       final commands = [
         'set vid no',
         'set aid no',
@@ -78,6 +84,7 @@ class libmpvPlayer extends PlatformPlayer {
         );
         calloc.free(data);
       }
+
       TaskQueue.instance.add(() {
         print('media_kit: mpv_terminate_destroy: ${ctx.address}');
         mpv.mpv_terminate_destroy(ctx);
@@ -116,6 +123,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -236,6 +246,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -273,6 +286,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -310,6 +326,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -350,6 +369,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -377,6 +399,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -401,6 +426,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -426,6 +454,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -452,6 +483,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -483,6 +517,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -509,6 +546,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -539,6 +579,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -612,6 +655,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -642,6 +688,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -718,6 +767,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -787,6 +839,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -814,6 +869,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -846,6 +904,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -885,6 +946,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -924,6 +988,9 @@ class libmpvPlayer extends PlatformPlayer {
     bool synchronized = true,
   }) {
     Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed.');
+      }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
@@ -968,6 +1035,9 @@ class libmpvPlayer extends PlatformPlayer {
   /// * https://mpv.io/manual/master/#properties
   ///
   Future<void> setProperty(String property, String value) async {
+    if (disposed) {
+      throw AssertionError('[Player] has been disposed.');
+    }
     await waitForPlayerInitialization;
     await waitForVideoControllerInitializationIfAttached;
 
@@ -1787,11 +1857,11 @@ class libmpvPlayer extends PlatformPlayer {
   /// Internal generated libmpv C API bindings.
   final generated.MPV mpv;
 
-  /// Synchronization & mutual exclusion between methods of this class.
-  final Lock lock = Lock();
-
   /// [Pointer] to [generated.mpv_handle] of this instance.
   Pointer<generated.mpv_handle> ctx = nullptr;
+
+  /// Whether the [Player] has been disposed. This is used to prevent accessing dangling [ctx] after [dispose].
+  bool disposed = false;
 
   /// A flag to prevent changes to [state.playing] due to `loadfile` commands in [open].
   ///
@@ -1809,4 +1879,7 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// [Future<void>] to wait for initialization of this instance.
   Future<void> get waitForPlayerInitialization => completer.future;
+
+  /// Synchronization & mutual exclusion between methods of this class.
+  static final Lock lock = Lock();
 }
