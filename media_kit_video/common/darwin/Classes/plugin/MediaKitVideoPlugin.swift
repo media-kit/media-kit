@@ -59,22 +59,15 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
   ) {
     let args = arguments as? [String: Any]
     let handleStr = args?["handle"] as! String
-    let widthStr = args?["width"] as! String
-    let heightStr = args?["height"] as! String
-    let enableHardwareAcceleration =
-      args?["enableHardwareAcceleration"] as! Bool
-
     let handle: Int64? = Int64(handleStr)
-    let width: Int64? = Int64(widthStr)
-    let height: Int64? = Int64(heightStr)
+    let configDict = args?["configuration"] as! [String: Any]
+    let configuration = VideoOutputConfiguration.fromDict(configDict)
 
     assert(handle != nil, "handle must be an Int64")
 
     videoOutputManager.create(
       handle: handle!,
-      width: width,
-      height: height,
-      enableHardwareAcceleration: enableHardwareAcceleration,
+      configuration: configuration,
       textureUpdateCallback: { (_ textureId: Int64, _ size: CGSize) in
         self.channel.invokeMethod(
           "VideoOutput.Resize",
