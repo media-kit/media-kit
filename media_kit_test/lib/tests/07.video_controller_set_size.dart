@@ -18,7 +18,7 @@ class _VideoControllerSetSizeScreenState
   late final Player player = Player();
   late final VideoController controller = VideoController(
     player,
-    enableHardwareAcceleration: enableHardwareAcceleration.value,
+    configuration: configuration.value,
   );
 
   @override

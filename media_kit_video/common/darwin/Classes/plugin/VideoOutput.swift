@@ -1,7 +1,7 @@
 #if canImport(Flutter)
-  import Flutter
+import Flutter
 #elseif canImport(FlutterMacOS)
-  import FlutterMacOS
+import FlutterMacOS
 #endif
 
 import AVKit
@@ -18,17 +18,17 @@ import UIKit
 // dedicated thread.
 public class VideoOutput: NSObject {
   public typealias TextureUpdateCallback = (Int64, CGSize) -> Void
-
+  
   private static let isSimulator: Bool = {
     let isSim: Bool
-    #if targetEnvironment(simulator)
-      isSim = true
-    #else
-      isSim = false
-    #endif
+#if targetEnvironment(simulator)
+    isSim = true
+#else
+    isSim = false
+#endif
     return isSim
   }()
-
+  
   fileprivate let handle: OpaquePointer
   private let enableHardwareAcceleration: Bool
   private var usingHardwareAcceleration: Bool
@@ -44,28 +44,26 @@ public class VideoOutput: NSObject {
   private var currentWidth: Int64 = 0
   private var currentHeight: Int64 = 0
   private var disposed: Bool = false
-
+  
   init(
     handle: Int64,
-    width: Int64?,
-    height: Int64?,
-    enableHardwareAcceleration: Bool,
+    configuration: VideoOutputConfiguration,
     registry: FlutterTextureRegistry,
     textureUpdateCallback: @escaping TextureUpdateCallback
   ) {
     let handle = OpaquePointer(bitPattern: Int(handle))
     assert(handle != nil, "handle casting")
-
+    
     self.handle = handle!
-    self.width = width
-    self.height = height
-    self.enableHardwareAcceleration = VideoOutput.isSimulator ? false : enableHardwareAcceleration
+    self.width = configuration.width
+    self.height = configuration.height
+    self.enableHardwareAcceleration = VideoOutput.isSimulator ? false : configuration.enableHardwareAcceleration
     self.usingHardwareAcceleration = self.enableHardwareAcceleration
     self.registry = registry
     self.textureUpdateCallback = textureUpdateCallback
-
+    
     super.init()
-  
+    
     worker.enqueue {
       self._init()
     }
@@ -78,27 +76,27 @@ public class VideoOutput: NSObject {
   public func switchToHardwareRendering() {
     switchRendering(allowHardwareAcceleration: true)
   }
-
+  
   public func switchRendering(allowHardwareAcceleration: Bool) {
     if !enableHardwareAcceleration || allowHardwareAcceleration == usingHardwareAcceleration {
       return
     }
     
     usingHardwareAcceleration = allowHardwareAcceleration
-
+    
     NSLog("switchRendering allowHardwareAcceleration: \(allowHardwareAcceleration)")
     let vid = mpv_get_property_string(handle, "vid")
     mpv_set_property_string(handle, "vid", "no")
-
+    
     texture.dispose()
     disposeTextureId()
     currentWidth = 0
     currentHeight = 0
     _init(allowHardwareAcceleration: allowHardwareAcceleration)
-
+    
     mpv_set_property_string(handle, "vid", vid)
   }
-
+  
   public func setSize(width: Int64?, height: Int64?) {
     worker.enqueue {
       self.userSetWidth = width
@@ -106,55 +104,55 @@ public class VideoOutput: NSObject {
       self._setTextureSize(width: width, height: height)
     }
   }
-
+  
   public func _setTextureSize(width: Int64?, height: Int64?) {
     self.width = width
     self.height = height
   }
   
   public func refreshPlaybackState() {}
-
+  
   func enablePictureInPicture() -> Bool {
     return false
   }
   
   public func disablePictureInPicture() {}
-
+  
   public func enableAutoPictureInPicture() -> Bool {
     return false
   }
-
+  
   public func disableAutoPictureInPicture() {}
   
   public func enterPictureInPicture() -> Bool {
     return false
   }
   
-
+  
   public func dispose() {
     worker.enqueue {
       self._dispose()
     }
   }
-
+  
   private func _dispose() {
     disposed = true
-
+    
     disposeTextureId()
     texture.dispose()
   }
-
+  
   private func _init(allowHardwareAcceleration: Bool = true) {
     NSLog(
       "VideoOutput: enableHardwareAcceleration: \(enableHardwareAcceleration) allowHardwareAcceleration: \(allowHardwareAcceleration)"
     )
-
+    
     if VideoOutput.isSimulator {
       NSLog(
         "VideoOutput: warning: hardware rendering is disabled in the iOS simulator, due to an incompatibility with OpenGL ES"
       )
     }
-
+    
     if enableHardwareAcceleration && allowHardwareAcceleration {
       texture = SafeResizableTexture(
         TextureHW(
@@ -170,73 +168,73 @@ public class VideoOutput: NSObject {
         )
       )
     }
-
+    
     textureId = registry.register(texture)
     textureUpdateCallback(textureId, CGSize(width: 0, height: 0))
   }
-
+  
   private func disposeTextureId() {
     registry.unregisterTexture(textureId)
     textureId = -1
   }
-
+  
   public func updateCallback() {
     worker.enqueue {
       self._updateCallback()
     }
   }
-
+  
   fileprivate func _updateCallback() {
     let width = videoWidth
     let height = videoHeight
-
+    
     let size = CGSize(
       width: Double(width),
       height: Double(height)
     )
-
+    
     if currentWidth != width || currentHeight != height {
       currentWidth = width
       currentHeight = height
-
+      
       texture.resize(size)
       textureUpdateCallback(textureId, size)
     }
-
+    
     if width == 0 || height == 0 {
       return
     }
-
+    
     if disposed {
       return
     }
-
+    
     texture.render(size)
-
+    
     registry.textureFrameAvailable(textureId)
   }
-
+  
   private var videoWidth: Int64 {
     // fixed width
     if self.width != nil {
       return self.width!
     }
-
+    
     var width: Int64 = 0
     mpv_get_property(handle, "width", MPV_FORMAT_INT64, &width)
-
+    
     return width
   }
-
+  
   private var videoHeight: Int64 {
     // fixed height
     if self.height != nil {
       return self.height!
     }
-
+    
     var height: Int64 = 0
     mpv_get_property(handle, "height", MPV_FORMAT_INT64, &height)
-
+    
     return height
   }
 }
@@ -248,11 +246,11 @@ public class VideoOutputWithPIP: VideoOutput, AVPictureInPictureSampleBufferPlay
   private var pipController: AVPictureInPictureController? = nil
   private var videoFormat: CMVideoFormatDescription? = nil
   private var notificationCenter: NotificationCenter {
-      return .default
+    return .default
   }
   
-  override init(handle: Int64, width: Int64?, height: Int64?, enableHardwareAcceleration: Bool, registry: FlutterTextureRegistry, textureUpdateCallback: @escaping VideoOutput.TextureUpdateCallback) {
-    super.init(handle: handle, width: width, height: height, enableHardwareAcceleration: enableHardwareAcceleration, registry: registry, textureUpdateCallback: textureUpdateCallback)
+  override init(handle: Int64, configuration: VideoOutputConfiguration, registry: FlutterTextureRegistry, textureUpdateCallback: @escaping VideoOutput.TextureUpdateCallback) {
+    super.init(handle: handle, configuration: configuration, registry: registry, textureUpdateCallback: textureUpdateCallback)
     
     notificationCenter.addObserver(self, selector: #selector(appWillResignActive(_:)), name: UIApplication.willResignActiveNotification, object: nil)
     notificationCenter.addObserver(self, selector: #selector(appWillEnterForeground(_:)), name: UIApplication.willEnterForegroundNotification, object: nil)
@@ -383,7 +381,7 @@ public class VideoOutputWithPIP: VideoOutput, AVPictureInPictureSampleBufferPlay
     super.dispose()
     disablePictureInPicture()
   }
-
+  
   public func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController, setPlaying playing: Bool) {
     var isPaused: Int8 = 0
     mpv_get_property(handle, "pause", MPV_FORMAT_FLAG, &isPaused)
@@ -391,14 +389,14 @@ public class VideoOutputWithPIP: VideoOutput, AVPictureInPictureSampleBufferPlay
     if playing == (isPaused == 0) {
       return
     }
-
+    
     mpv_command_string(handle, "cycle pause")
   }
-
+  
   public func pictureInPictureControllerTimeRangeForPlayback(_ pictureInPictureController: AVPictureInPictureController) -> CMTimeRange {
     var position: Double = 0
     mpv_get_property(handle, "time-pos", MPV_FORMAT_DOUBLE, &position)
-
+    
     var duration: Double = 0
     mpv_get_property(handle, "duration", MPV_FORMAT_DOUBLE, &duration)
     
@@ -413,17 +411,17 @@ public class VideoOutputWithPIP: VideoOutput, AVPictureInPictureSampleBufferPlay
       )
     )
   }
-
+  
   public func pictureInPictureControllerIsPlaybackPaused(_ pictureInPictureController: AVPictureInPictureController) -> Bool {
     var isPaused: Int8 = 0
     mpv_get_property(handle, "pause", MPV_FORMAT_FLAG, &isPaused)
     
     return isPaused == 1
   }
-
+  
   public func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController, didTransitionToRenderSize newRenderSize: CMVideoDimensions) {
     NSLog("Resize texture due to PIP new size: \(newRenderSize)")
-
+    
     worker.enqueue {
       if newRenderSize.width == 0 || newRenderSize.height == 0 {
         self._setTextureSize(width: nil, height: nil)
@@ -433,12 +431,12 @@ public class VideoOutputWithPIP: VideoOutput, AVPictureInPictureSampleBufferPlay
       }
     }
   }
-
+  
   public func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController, skipByInterval skipInterval: CMTime, completion completionHandler: @escaping () -> Void) {
     mpv_command_string(handle, "seek \(skipInterval.seconds)")
     completionHandler()
   }
-
+  
   public func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController, failedToStartPictureInPictureWithError error: Error) {
     NSLog("pictureInPictureController error: \(error)")
   }

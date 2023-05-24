@@ -38,22 +38,31 @@ void MediaKitVideoPlugin::HandleMethodCall(
     auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
     auto handle =
         std::get<std::string>(arguments[flutter::EncodableValue("handle")]);
-    auto width =
-        std::get<std::string>(arguments[flutter::EncodableValue("width")]);
-    auto height =
-        std::get<std::string>(arguments[flutter::EncodableValue("height")]);
-    auto enable_hardware_acceleration = std::get<bool>(
-        arguments[flutter::EncodableValue("enableHardwareAcceleration")]);
-    auto handle_value =
-        static_cast<int64_t>(strtoll(handle.c_str(), nullptr, 10));
-    auto width_value = std::optional<int64_t>{};
-    auto height_value = std::optional<int64_t>{};
-    if (height.compare("null") != 0 && width.compare("null") != 0) {
-      width_value = static_cast<int64_t>(strtoll(width.c_str(), nullptr, 10));
-      height_value = static_cast<int64_t>(strtoll(height.c_str(), nullptr, 10));
+    auto configuration = std::get<flutter::EncodableMap>(
+        arguments[flutter::EncodableValue("configuration")]);
+
+    auto handle_value = std::stoll(handle);
+    auto configuration_value = VideoOutputConfiguration{};
+
+    auto configuration_width =
+        std::get<std::string>(configuration[flutter::EncodableValue("width")]);
+    auto configuration_height =
+        std::get<std::string>(configuration[flutter::EncodableValue("height")]);
+    auto configuration_enable_hardware_acceleration = std::get<bool>(
+        configuration[flutter::EncodableValue("enableHardwareAcceleration")]);
+    if (configuration_width.compare("null") != 0) {
+      configuration_value.width =
+          static_cast<int64_t>(std::stoll(configuration_width.c_str()));
     }
+    if (configuration_height.compare("null") != 0) {
+      configuration_value.height =
+          static_cast<int64_t>(std::stoll(configuration_height.c_str()));
+    }
+    configuration_value.enable_hardware_acceleration =
+        configuration_enable_hardware_acceleration;
+
     video_output_manager_->Create(
-        handle_value, width_value, height_value, enable_hardware_acceleration,
+        handle_value, configuration_value,
         [channel_ptr = channel_.get(), handle = handle_value](
             auto id, auto width, auto height) {
           channel_ptr->InvokeMethod(
@@ -97,8 +106,7 @@ void MediaKitVideoPlugin::HandleMethodCall(
     auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
     auto handle =
         std::get<std::string>(arguments[flutter::EncodableValue("handle")]);
-    auto handle_value =
-        static_cast<int64_t>(strtoll(handle.c_str(), nullptr, 10));
+    auto handle_value = static_cast<int64_t>(std::stoll(handle.c_str()));
     video_output_manager_->Dispose(handle_value);
     result->Success(flutter::EncodableValue(std::monostate{}));
   } else if (method_call.method_name().compare("VideoOutputManager.SetSize") ==
@@ -110,13 +118,14 @@ void MediaKitVideoPlugin::HandleMethodCall(
         std::get<std::string>(arguments[flutter::EncodableValue("width")]);
     auto height =
         std::get<std::string>(arguments[flutter::EncodableValue("height")]);
-    auto handle_value =
-        static_cast<int64_t>(strtoll(handle.c_str(), nullptr, 10));
+    auto handle_value = static_cast<int64_t>(std::stoll(handle.c_str()));
     auto width_value = std::optional<int64_t>{};
     auto height_value = std::optional<int64_t>{};
-    if (height.compare("null") != 0 && width.compare("null") != 0) {
-      width_value = static_cast<int64_t>(strtoll(width.c_str(), nullptr, 10));
-      height_value = static_cast<int64_t>(strtoll(height.c_str(), nullptr, 10));
+    if (width.compare("null") != 0) {
+      width_value = static_cast<int64_t>(std::stoll(width.c_str()));
+    }
+    if (height.compare("null") != 0) {
+      height_value = static_cast<int64_t>(std::stoll(height.c_str()));
     }
     video_output_manager_->SetSize(handle_value, width_value, height_value);
     result->Success(flutter::EncodableValue(std::monostate{}));

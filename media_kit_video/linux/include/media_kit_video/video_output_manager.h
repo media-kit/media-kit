@@ -25,7 +25,8 @@ G_DECLARE_FINAL_TYPE(VideoOutputManager,
                               VideoOutputManager))
 
 VideoOutputManager* video_output_manager_new(
-    FlTextureRegistrar* texture_registrar, FlView* view);
+    FlTextureRegistrar* texture_registrar,
+    FlView* view);
 
 /**
  * @brief Creates a new |VideoOutput| instance for given |handle|.
@@ -44,9 +45,7 @@ VideoOutputManager* video_output_manager_new(
  */
 void video_output_manager_create(VideoOutputManager* self,
                                  gint64 handle,
-                                 gint64 width,
-                                 gint64 height,
-                                 gboolean enable_hardware_acceleration,
+                                 VideoOutputConfiguration configuration,
                                  TextureUpdateCallback texture_update_callback,
                                  gpointer texture_update_callback_context);
 

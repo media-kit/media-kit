@@ -18,23 +18,23 @@ Future<void> paintFirstFrame(BuildContext context) async {
   final controllers = [
     VideoController(
       players[0],
-      enableHardwareAcceleration: enableHardwareAcceleration.value,
+      configuration: configuration.value,
     ),
     VideoController(
       players[1],
-      enableHardwareAcceleration: enableHardwareAcceleration.value,
+      configuration: configuration.value,
     ),
     VideoController(
       players[2],
-      enableHardwareAcceleration: enableHardwareAcceleration.value,
+      configuration: configuration.value,
     ),
     VideoController(
       players[3],
-      enableHardwareAcceleration: enableHardwareAcceleration.value,
+      configuration: configuration.value,
     ),
     VideoController(
       players[4],
-      enableHardwareAcceleration: enableHardwareAcceleration.value,
+      configuration: configuration.value,
     ),
   ];
 

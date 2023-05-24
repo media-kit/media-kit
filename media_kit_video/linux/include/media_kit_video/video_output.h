@@ -15,6 +15,19 @@
 #include <mpv/render.h>
 #include <mpv/render_gl.h>
 
+typedef struct _VideoOutputConfiguration {
+  gint64 width;
+  gint64 height;
+  bool enable_hardware_acceleration;
+
+  _VideoOutputConfiguration(gint64 width = NULL,
+                            gint64 height = NULL,
+                            bool enable_hardware_acceleration = true)
+      : width(width),
+        height(height),
+        enable_hardware_acceleration(enable_hardware_acceleration) {}
+} VideoOutputConfiguration;
+
 // Callback invoked when the texture ID updates i.e. video dimensions changes.
 typedef void (*TextureUpdateCallback)(gint64 id,
                                       gint64 width,
@@ -47,9 +60,7 @@ G_DECLARE_FINAL_TYPE(VideoOutput,
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                               FlView* view,
                               gint64 handle,
-                              gint64 width,
-                              gint64 height,
-                              gboolean enable_hardware_acceleration);
+                              VideoOutputConfiguration configuration);
 
 /**
  * @brief Sets the callback invoked when the texture ID updates i.e. video

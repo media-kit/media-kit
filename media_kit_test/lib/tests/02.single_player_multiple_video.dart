@@ -21,11 +21,11 @@ class _SinglePlayerMultipleVideoScreenState extends State<SinglePlayerMultipleVi
   //       Here, two [VideoController]s are created for testing.
   late final VideoController controller0 = VideoController(
     player,
-    enableHardwareAcceleration: enableHardwareAcceleration.value,
+    configuration: configuration.value,
   );
   late final VideoController controller1 = VideoController(
     player,
-    enableHardwareAcceleration: enableHardwareAcceleration.value,
+    configuration: configuration.value,
   );
 
   @override

@@ -1,5 +1,6 @@
 ## 0.0.10
 
+- feat: `VideoControllerConfiguration`
 - feat: `VideoController.waitUntilFirstFrameRendered`
 - refactor: clean-up package structure
 - refactor: remove `VideoController.dispose`
