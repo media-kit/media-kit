@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
 class TracksSelector extends StatefulWidget {
   final Player player;
@@ -97,9 +98,12 @@ class _TracksSelectorState extends State<TracksSelector> {
 
 class SeekBar extends StatefulWidget {
   final Player player;
+  final VideoController controller;
+
   const SeekBar({
     Key? key,
     required this.player,
+    required this.controller,
   }) : super(key: key);
 
   @override
@@ -164,8 +168,7 @@ class _SeekBarState extends State<SeekBar> {
 
   @override
   Widget build(BuildContext context) {
-    final horizontal =
-        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Column(
       children: [
         const SizedBox(height: 16.0),
@@ -182,6 +185,15 @@ class _SeekBarState extends State<SeekBar> {
                 iconSize: 36.0,
               ),
               const Spacer(),
+              IconButton(
+                onPressed:
+                    widget.controller.isPictureInPictureAvailable() ? widget.controller.enterPictureInPicture : null,
+                icon: const Icon(
+                  Icons.picture_in_picture,
+                ),
+                color: Theme.of(context).primaryColor,
+                iconSize: 36.0,
+              ),
             ],
           ),
         Row(

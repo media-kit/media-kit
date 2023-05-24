@@ -11,12 +11,10 @@ class MultiplePlayerMultipleVideoScreen extends StatefulWidget {
   const MultiplePlayerMultipleVideoScreen({Key? key}) : super(key: key);
 
   @override
-  State<MultiplePlayerMultipleVideoScreen> createState() =>
-      _MultiplePlayerMultipleVideoScreenState();
+  State<MultiplePlayerMultipleVideoScreen> createState() => _MultiplePlayerMultipleVideoScreenState();
 }
 
-class _MultiplePlayerMultipleVideoScreenState
-    extends State<MultiplePlayerMultipleVideoScreen> {
+class _MultiplePlayerMultipleVideoScreenState extends State<MultiplePlayerMultipleVideoScreen> {
   late final List<Player> players = [
     Player(),
     Player(),
@@ -72,7 +70,7 @@ class _MultiplePlayerMultipleVideoScreenState
                     ),
                   ),
                 ),
-                SeekBar(player: players[i]),
+                SeekBar(player: players[i], controller: controllers[i]),
                 const SizedBox(height: 32.0),
               ],
             )
@@ -84,8 +82,7 @@ class _MultiplePlayerMultipleVideoScreenState
 
   @override
   Widget build(BuildContext context) {
-    final horizontal =
-        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
@@ -100,10 +97,7 @@ class _MultiplePlayerMultipleVideoScreenState
                         Container(
                           alignment: Alignment.center,
                           width: MediaQuery.of(context).size.width / 2,
-                          height: MediaQuery.of(context).size.width /
-                              2 *
-                              12.0 /
-                              16.0,
+                          height: MediaQuery.of(context).size.width / 2 * 12.0 / 16.0,
                           child: getVideoForIndex(context, i),
                         ),
                         const Divider(height: 1.0, thickness: 1.0),

@@ -53,6 +53,8 @@ class VideoController {
   /// [Rect] of the video output, received from the native implementation.
   final ValueNotifier<Rect?> rect = ValueNotifier<Rect?>(null);
 
+  bool _isPictureInPictureAvailable = false;
+
   /// {@macro platform_video_controller}
   VideoController(
     Player player, {
@@ -102,18 +104,60 @@ class VideoController {
           controller.id.removeListener(fn0);
           controller.rect.removeListener(fn1);
         });
+
+        _isPictureInPictureAvailable =
+            await controller.isPictureInPictureAvailable();
       } else {
         platform.completeError(
           UnimplementedError(
             '[VideoController] is unavailable for this platform.',
           ),
         );
+
+        _isPictureInPictureAvailable = false;
       }
 
       if (!(player.platform?.videoControllerCompleter.isCompleted ?? true)) {
         player.platform?.videoControllerCompleter.complete();
       }
     }();
+  }
+
+  /// Checks whether Picture in Picture is available on current platform.
+  bool isPictureInPictureAvailable() {
+    return _isPictureInPictureAvailable;
+  }
+
+  /// Enable Picture in Picture.
+  /// Returns true if this is supported on current platofrm.
+  Future<bool> enablePictureInPicture() async {
+    final instance = await platform.future;
+    return instance.enablePictureInPicture();
+  }
+
+  /// Disable Picture in Picture.
+  Future<void> disablePictureInPicture() async {
+    final instance = await platform.future;
+    return instance.disablePictureInPicture();
+  }
+
+  /// Enable automatically entering Picture in Picture when app goes into background.
+  /// Returns true if this is supported on current platofrm.
+  Future<bool> enableAutoPictureInPicture() async {
+    final instance = await platform.future;
+    return instance.enableAutoPictureInPicture();
+  }
+
+  /// Disables automatically entering Picture in Picture when app goes into background.
+  Future<void> disableAutoPictureInPicture() async {
+    final instance = await platform.future;
+    return instance.disableAutoPictureInPicture();
+  }
+
+  /// Enters Picture in Picture view for current video.
+  Future<bool> enterPictureInPicture() async {
+    final instance = await platform.future;
+    return instance.enterPictureInPicture();
   }
 
   /// Sets the required size of the video output.

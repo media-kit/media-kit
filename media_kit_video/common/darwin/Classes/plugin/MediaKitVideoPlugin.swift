@@ -8,13 +8,13 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
   private static let CHANNEL_NAME = "com.alexmercerind/media_kit_video"
 
   public static func register(with registrar: FlutterPluginRegistrar) {
-    #if canImport(Flutter)
-      let binaryMessenger = registrar.messenger()
-      let registry = registrar.textures()
-    #elseif canImport(FlutterMacOS)
-      let binaryMessenger = registrar.messenger
-      let registry = registrar.textures
-    #endif
+#if canImport(Flutter)
+    let binaryMessenger = registrar.messenger()
+    let registry = registrar.textures()
+#elseif canImport(FlutterMacOS)
+    let binaryMessenger = registrar.messenger
+    let registry = registrar.textures
+#endif
 
     let channel = FlutterMethodChannel(
       name: CHANNEL_NAME,
@@ -46,6 +46,20 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
       handleCreateMethodCall(call.arguments, result)
     case "VideoOutputManager.SetSize":
       handleSetSizeMethodCall(call.arguments, result)
+    case "VideoOutputManager.IsPictureInPictureAvailable":
+      handleIsPictureInPictureAvailableMethodCall(call.arguments, result)
+    case "VideoOutputManager.EnablePictureInPicture":
+      handleEnablePictureInPictureMethodCall(call.arguments, result)
+    case "VideoOutputManager.DisablePictureInPicture":
+      handleDisablePictureInPictureMethodCall(call.arguments, result)
+    case "VideoOutputManager.EnableAutoPictureInPicture":
+      handleEnableAutoPictureInPictureMethodCall(call.arguments, result)
+    case "VideoOutputManager.DisableAutoPictureInPicture":
+      handleDisableAutoPictureInPictureMethodCall(call.arguments, result)
+    case "VideoOutputManager.EnterPictureInPicture":
+      handleEnterPictureInPictureMethodCall(call.arguments, result)
+    case "VideoOutputManager.RefreshPlaybackState":
+      handleRefreshPlaybackStateMethodCall(call.arguments, result)
     case "VideoOutputManager.Dispose":
       handleDisposeMethodCall(call.arguments, result)
     default:
@@ -62,7 +76,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
     let widthStr = args?["width"] as! String
     let heightStr = args?["height"] as! String
     let enableHardwareAcceleration =
-      args?["enableHardwareAcceleration"] as! Bool
+    args?["enableHardwareAcceleration"] as! Bool
 
     let handle: Int64? = Int64(handleStr)
     let width: Int64? = Int64(widthStr)
@@ -114,6 +128,116 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
       handle: handle!,
       width: width,
       height: height
+    )
+
+    result(nil)
+  }
+
+  private func handleIsPictureInPictureAvailableMethodCall(
+    _ arguments: Any?,
+    _ result: FlutterResult
+  ) {
+    let ret = videoOutputManager.isPictureInPictureAvailable()
+
+    result(ret)
+  }
+  private func handleEnableAutoPictureInPictureMethodCall(
+    _ arguments: Any?,
+    _ result: FlutterResult
+  ) {
+    let args = arguments as? [String: Any]
+    let handleStr = args?["handle"] as! String
+    let handle: Int64? = Int64(handleStr)
+
+    assert(handle != nil, "handle must be an Int64")
+
+    let ret = videoOutputManager.enableAutoPictureInPicture(
+      handle: handle!
+    )
+
+    result(ret)
+  }
+
+  private func handleEnablePictureInPictureMethodCall(
+    _ arguments: Any?,
+    _ result: FlutterResult
+  ) {
+    let args = arguments as? [String: Any]
+    let handleStr = args?["handle"] as! String
+    let handle: Int64? = Int64(handleStr)
+
+    assert(handle != nil, "handle must be an Int64")
+
+    let ret = videoOutputManager.enablePictureInPicture(
+      handle: handle!
+    )
+
+    result(ret)
+  }
+
+  private func handleDisablePictureInPictureMethodCall(
+    _ arguments: Any?,
+    _ result: FlutterResult
+  ) {
+    let args = arguments as? [String: Any]
+    let handleStr = args?["handle"] as! String
+    let handle: Int64? = Int64(handleStr)
+
+    assert(handle != nil, "handle must be an Int64")
+
+    videoOutputManager.disablePictureInPicture(
+      handle: handle!
+    )
+
+    result(nil)
+  }
+
+  private func handleDisableAutoPictureInPictureMethodCall(
+    _ arguments: Any?,
+    _ result: FlutterResult
+  ) {
+    let args = arguments as? [String: Any]
+    let handleStr = args?["handle"] as! String
+    let handle: Int64? = Int64(handleStr)
+
+    assert(handle != nil, "handle must be an Int64")
+
+    videoOutputManager.disableAutoPictureInPicture(
+      handle: handle!
+    )
+
+    result(nil)
+  }
+
+  private func handleEnterPictureInPictureMethodCall(
+    _ arguments: Any?,
+    _ result: FlutterResult
+  ) {
+    let args = arguments as? [String: Any]
+    let handleStr = args?["handle"] as! String
+    let handle: Int64? = Int64(handleStr)
+
+    assert(handle != nil, "handle must be an Int64")
+
+    let ret = videoOutputManager.enterPictureInPicture(
+      handle: handle!
+    )
+
+    result(ret)
+  }
+
+  private func handleRefreshPlaybackStateMethodCall(
+    _ arguments: Any?,
+    _ result: FlutterResult
+  ) {
+    let args = arguments as? [String: Any]
+    let handleStr = args?["handle"] as! String
+    let handle: Int64? = Int64(handleStr)
+
+    assert(handle != nil, "handle must be an Int64")
+
+    videoOutputManager.refreshPlaybackState(
+      handle: handle!
     )
 
     result(nil)

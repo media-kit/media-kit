@@ -43,6 +43,7 @@ class _SinglePlayerSingleVideoScreenState
             ),
             onTap: () {
               player.open(Media(sources[i]));
+              controller.enableAutoPictureInPicture();
             },
           ),
       ];
@@ -104,7 +105,7 @@ class _SinglePlayerSingleVideoScreenState
                               ),
                             ),
                           ),
-                          SeekBar(player: player),
+                          SeekBar(player: player, controller: controller),
                           const SizedBox(height: 32.0),
                         ],
                       ),
@@ -127,7 +128,7 @@ class _SinglePlayerSingleVideoScreenState
                     height: MediaQuery.of(context).size.width * 9.0 / 16.0,
                   ),
                   const SizedBox(height: 16.0),
-                  SeekBar(player: player),
+                  SeekBar(player: player, controller: controller),
                   const SizedBox(height: 32.0),
                   const Divider(height: 1.0, thickness: 1.0),
                   ...items,

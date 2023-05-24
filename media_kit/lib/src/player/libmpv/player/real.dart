@@ -523,6 +523,8 @@ class libmpvPlayer extends PlatformPlayer {
         args.cast(),
       );
       calloc.free(args);
+
+      seekController.add(duration);
     }
 
     if (synchronized) {

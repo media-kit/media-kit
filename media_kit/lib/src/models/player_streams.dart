@@ -83,6 +83,9 @@ class PlayerStreams {
   /// Currently playing video's height.
   final Stream<int> height;
 
+  /// Fired on video position seek.
+  final Stream<Duration> seek;
+
   /// {@macro player_streams}
   const PlayerStreams(
     this.playlist,
@@ -105,5 +108,6 @@ class PlayerStreams {
     this.tracks,
     this.width,
     this.height,
+    this.seek,
   );
 }

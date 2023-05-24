@@ -31,6 +31,7 @@ class NativeVideoController extends PlatformVideoController {
       Platform.isLinux ||
       Platform.isMacOS ||
       Platform.isIOS;
+  bool playing = false;
 
   /// {@macro native_video_controller}
   NativeVideoController._(
@@ -38,7 +39,19 @@ class NativeVideoController extends PlatformVideoController {
     super.width,
     super.height,
     super.enableHardwareAcceleration,
-  );
+  ) {
+    player.streams.playing.listen((e) async {
+      refreshPlaybackState();
+    });
+
+    player.streams.duration.listen((e) async {
+      refreshPlaybackState();
+    });
+
+    player.streams.seek.listen((e) async {
+      refreshPlaybackState();
+    });
+  }
 
   /// {@macro native_video_controller}
   static Future<PlatformVideoController> create(
@@ -121,6 +134,89 @@ class NativeVideoController extends PlatformVideoController {
         'handle': handle.toString(),
         'width': width.toString(),
         'height': height.toString(),
+      },
+    );
+  }
+
+  /// Refreshes playback state (on play/pause, seek or duration change).
+  /// Used to invalidate Picture in Picture view data.
+  @override
+  Future<void> refreshPlaybackState() async {
+    final handle = await player.handle;
+    await _channel.invokeMethod(
+      'VideoOutputManager.RefreshPlaybackState',
+      {
+        'handle': handle.toString(),
+      },
+    );
+  }
+
+  /// Checks whether Picture in Picture is available on current platform.
+  @override
+  Future<bool> isPictureInPictureAvailable() async {
+    final handle = await player.handle;
+    return await _channel.invokeMethod(
+      'VideoOutputManager.IsPictureInPictureAvailable',
+      {},
+    );
+  }
+
+  /// Enable Picture in Picture.
+  /// Returns true if this is supported on current platofrm.
+  Future<bool> enablePictureInPicture() async {
+    final handle = await player.handle;
+    return await _channel.invokeMethod(
+      'VideoOutputManager.EnablePictureInPicture',
+      {
+        'handle': handle.toString(),
+      },
+    );
+  }
+
+  /// Disable Picture in Picture.
+  Future<void> disablePictureInPicture() async {
+    final handle = await player.handle;
+    return await _channel.invokeMethod(
+      'VideoOutputManager.DisablePictureInPicture',
+      {
+        'handle': handle.toString(),
+      },
+    );
+  }
+
+  /// Enable automatically entering Picture in Picture when app goes into background.
+  /// Returns true if this is supported on current platofrm.
+  @override
+  Future<bool> enableAutoPictureInPicture() async {
+    final handle = await player.handle;
+    return await _channel.invokeMethod(
+      'VideoOutputManager.EnableAutoPictureInPicture',
+      {
+        'handle': handle.toString(),
+      },
+    );
+  }
+
+  /// Disables automatically entering Picture in Picture when app goes into background.
+  @override
+  Future<void> disableAutoPictureInPicture() async {
+    final handle = await player.handle;
+    await _channel.invokeMethod(
+      'VideoOutputManager.DisableAutoPictureInPicture',
+      {
+        'handle': handle.toString(),
+      },
+    );
+  }
+
+  /// Enters Picture in Picture view for current video.
+  @override
+  Future<bool> enterPictureInPicture() async {
+    final handle = await player.handle;
+    return await _channel.invokeMethod(
+      'VideoOutputManager.EnterPictureInPicture',
+      {
+        'handle': handle.toString(),
       },
     );
   }
