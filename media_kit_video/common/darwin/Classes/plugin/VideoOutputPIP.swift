@@ -69,6 +69,12 @@ public class VideoOutputPIP: VideoOutput, AVPictureInPictureSampleBufferPlayback
       return true
     }
     
+    do {
+      try AVAudioSession.sharedInstance().setCategory(.playback)
+    } catch {
+      NSLog("AVAudioSession set category failed")
+    }
+    
     bufferDisplayLayer.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
     bufferDisplayLayer.opacity = 0
     bufferDisplayLayer.videoGravity = .resizeAspect
@@ -192,16 +198,7 @@ public class VideoOutputPIP: VideoOutput, AVPictureInPictureSampleBufferPlayback
   }
   
   public func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController, didTransitionToRenderSize newRenderSize: CMVideoDimensions) {
-    NSLog("Resize texture due to PIP new size: \(newRenderSize)")
-    
-    worker.enqueue {
-      if newRenderSize.width == 0 || newRenderSize.height == 0 {
-        self._setTextureSize(width: nil, height: nil)
-      } else {
-        self._setTextureSize(width: Int64(CGFloat(newRenderSize.width) * UIScreen.main.scale),
-                             height: Int64(CGFloat(newRenderSize.height) * UIScreen.main.scale))
-      }
-    }
+    // Downscaling texture actually causes more performance issues here on SW renderer.
   }
   
   public func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController, skipByInterval skipInterval: CMTime, completion completionHandler: @escaping () -> Void) {
@@ -214,7 +211,6 @@ public class VideoOutputPIP: VideoOutput, AVPictureInPictureSampleBufferPlayback
   }
   
   public func pictureInPictureControllerWillStopPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
-    self.setSize(width: userSetWidth, height: userSetHeight)
   }
 }
 #endif

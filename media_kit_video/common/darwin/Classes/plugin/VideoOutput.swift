@@ -31,8 +31,6 @@ public class VideoOutput: NSObject {
   internal let worker: Worker = .init()
   private var width: Int64?
   private var height: Int64?
-  internal var userSetWidth: Int64?
-  internal var userSetHeight: Int64?
   internal var texture: ResizableTextureProtocol!
   private var textureId: Int64 = -1
   private var currentWidth: Int64 = 0
@@ -93,15 +91,9 @@ public class VideoOutput: NSObject {
   
   public func setSize(width: Int64?, height: Int64?) {
     worker.enqueue {
-      self.userSetWidth = width
-      self.userSetHeight = height
-      self._setTextureSize(width: width, height: height)
+      self.width = width
+      self.height = height
     }
-  }
-  
-  public func _setTextureSize(width: Int64?, height: Int64?) {
-    self.width = width
-    self.height = height
   }
   
   public func refreshPlaybackState() {}
