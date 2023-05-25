@@ -85,10 +85,14 @@ class libmpvPlayer extends PlatformPlayer {
         calloc.free(data);
       }
 
-      TaskQueue.instance.add(() {
-        print('media_kit: mpv_terminate_destroy: ${ctx.address}');
-        mpv.mpv_terminate_destroy(ctx);
-      });
+      TaskQueue.instance.add(
+        () => lock.synchronized(
+          () {
+            print('media_kit: mpv_terminate_destroy: ${ctx.address}');
+            mpv.mpv_terminate_destroy(ctx);
+          },
+        ),
+      );
     }
 
     if (synchronized) {
@@ -1594,63 +1598,38 @@ class libmpvPlayer extends PlatformPlayer {
       options: options,
     );
 
-    // Set:
-    //
     // ALL:
-    //
     // idle = yes
     // pause = yes
     // keep-open = yes
     // demuxer-max-bytes = 32 * 1024 * 1024
     // demuxer-max-back-bytes = 32 * 1024 * 1024
-    //
     // ANDROID:
-    //
     // ao = opensles
-    //
-    // We are using opensles on Android because default JNI based audiotrack output driver seems to crash randomly.
-    {
-      final name = 'idle'.toNativeUtf8();
-      final value = calloc<Int32>();
-      value.value = 1;
-      mpv.mpv_set_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_FLAG,
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
-    }
-    {
-      final name = 'pause'.toNativeUtf8();
-      final value = calloc<Int32>();
-      value.value = 1;
-      mpv.mpv_set_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_FLAG,
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
-    }
-    {
-      final name = 'keep-open'.toNativeUtf8();
-      final value = calloc<Int32>();
-      value.value = 1;
-      mpv.mpv_set_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_FLAG,
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
-    }
-    {
-      final name = 'demuxer-max-bytes'.toNativeUtf8();
-      final value = configuration.bufferSize.toString().toNativeUtf8();
+    final properties = <String, String>{
+      'idle': 'yes',
+      'pause': 'yes',
+      'keep-open': 'yes',
+      'demuxer-max-bytes': (32 * 1024 * 1024).toString(),
+      'demuxer-max-back-bytes': (32 * 1024 * 1024).toString(),
+      if (Platform.isAndroid) 'ao': 'opensles',
+    };
+    // Other properties based on [PlayerConfiguration].
+    properties.addAll(
+      {
+        if (!configuration.osc) ...{
+          'osc': 'no',
+          'osd-level': '0',
+        },
+        if (configuration.vo != null) 'vo': '${configuration.vo}',
+        if (configuration.title != null) 'title': '${configuration.title}',
+        'demuxer-lavf-o':
+            'protocol_whitelist=[${configuration.protocolWhitelist.join(',')}]',
+      },
+    );
+    for (final property in properties.entries) {
+      final name = property.key.toNativeUtf8();
+      final value = property.value.toNativeUtf8();
       mpv.mpv_set_property_string(
         ctx,
         name.cast(),
@@ -1658,42 +1637,6 @@ class libmpvPlayer extends PlatformPlayer {
       );
       calloc.free(name);
       calloc.free(value);
-    }
-    {
-      final name = 'demuxer-max-back-bytes'.toNativeUtf8();
-      final value = (32 * 1024 * 1024).toString().toNativeUtf8();
-      mpv.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
-    }
-    {
-      if (Platform.isAndroid) {
-        final name = 'ao'.toNativeUtf8();
-        final value = 'opensles'.toNativeUtf8();
-        mpv.mpv_set_property_string(
-          ctx,
-          name.cast(),
-          value.cast(),
-        );
-        calloc.free(name);
-        calloc.free(value);
-      }
-    }
-    {
-      final whitelist = configuration.protocolWhitelist.join(',');
-      final name = 'demuxer-lavf-o'.toNativeUtf8();
-      final data = 'protocol_whitelist=[$whitelist]'.toNativeUtf8();
-      mpv.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        data.cast(),
-      );
-      calloc.free(name);
-      calloc.free(data);
     }
 
     // Observe the properties to update the state & feed event streams.
@@ -1726,66 +1669,7 @@ class libmpvPlayer extends PlatformPlayer {
         calloc.free(name);
       },
     );
-    // Set other properties based on [PlayerConfiguration].
-    if (!configuration.osc) {
-      {
-        final name = 'osc'.toNativeUtf8();
-        final value = 'no'.toNativeUtf8();
-        mpv.mpv_set_property_string(
-          ctx,
-          name.cast(),
-          value.cast(),
-        );
-        calloc.free(name);
-        calloc.free(value);
-      }
-      {
-        final name = 'osd-level'.toNativeUtf8();
-        final value = '0'.toNativeUtf8();
-        mpv.mpv_set_property_string(
-          ctx,
-          name.cast(),
-          value.cast(),
-        );
-        calloc.free(name);
-        calloc.free(value);
-      }
-    }
-    if (configuration.vid != null) {
-      final name = 'vid'.toNativeUtf8();
-      final flag = calloc<Int8>();
-      flag.value = configuration.vid! ? 1 : 0;
-      mpv.mpv_set_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_FLAG,
-        flag.cast(),
-      );
-      calloc.free(name);
-      calloc.free(flag);
-    }
-    if (configuration.vo != null) {
-      final name = 'vo'.toNativeUtf8();
-      final value = configuration.vo!.toNativeUtf8();
-      mpv.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
-    }
-    if (configuration.title != null) {
-      final name = 'title'.toNativeUtf8();
-      final value = configuration.title!.toNativeUtf8();
-      mpv.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
-    }
+
     if (configuration.logLevel != MPVLogLevel.none) {
       // https://github.com/mpv-player/mpv/blob/e1727553f164181265f71a20106fbd5e34fa08b0/libmpv/client.h#L1410-L1419
       final levels = {
@@ -1811,14 +1695,12 @@ class libmpvPlayer extends PlatformPlayer {
     }
 
     // Add libmpv hooks for supporting custom HTTP headers in [Media].
-    {
-      final load = 'on_load'.toNativeUtf8();
-      final unload = 'on_unload'.toNativeUtf8();
-      mpv.mpv_hook_add(ctx, 0, load.cast(), 0);
-      mpv.mpv_hook_add(ctx, 0, unload.cast(), 0);
-      calloc.free(load);
-      calloc.free(unload);
-    }
+    final load = 'on_load'.toNativeUtf8();
+    final unload = 'on_unload'.toNativeUtf8();
+    mpv.mpv_hook_add(ctx, 0, load.cast(), 0);
+    mpv.mpv_hook_add(ctx, 0, unload.cast(), 0);
+    calloc.free(load);
+    calloc.free(unload);
 
     completer.complete();
   }

@@ -334,24 +334,15 @@ abstract class PlatformPlayer {
 ///
 /// {@endtemplate}
 class PlayerConfiguration {
-  /// Sets the log level on libmpv backend.
-  /// Default: `none`.
-  final MPVLogLevel logLevel;
+  /// Sets the video output driver for libmpv backend.
+  ///
+  /// Default: `null`.
+  final String? vo;
 
   /// Enables on-screen controls for libmpv backend.
   ///
   /// Default: `false`.
   final bool osc;
-
-  /// Enables or disables video output for libmpv backend.
-  ///
-  /// Default: `null`.
-  final bool? vid;
-
-  /// Sets the video output driver for libmpv backend.
-  ///
-  /// Default: `null`.
-  final String? vo;
 
   /// Enables or disables pitch shift control for libmpv backend.
   ///
@@ -370,6 +361,15 @@ class PlayerConfiguration {
   /// Default: `null`.
   final String? title;
 
+  /// Optional callback invoked when the internals of the [Player] are initialized & ready for playback.
+  ///
+  /// Default: `null`.
+  final void Function()? ready;
+
+  /// Sets the log level on libmpv backend.
+  /// Default: `none`.
+  final MPVLogLevel logLevel;
+
   /// Sets the demuxer cache size (in bytes) for libmpv backend.
   ///
   /// Default: `32` MB or `32 * 1024 * 1024` bytes.
@@ -382,21 +382,15 @@ class PlayerConfiguration {
   /// Learn more: https://ffmpeg.org/ffmpeg-protocols.html#Protocol-Options
   final List<String> protocolWhitelist;
 
-  /// Optional callback invoked when the internals of the [Player] are initialized & ready for playback.
-  ///
-  /// Default: `null`.
-  final void Function()? ready;
-
   /// {@macro player_configuration}
   const PlayerConfiguration({
-    this.logLevel = MPVLogLevel.none,
-    this.osc = false,
-    this.vid,
     this.vo = 'null',
+    this.osc = false,
     this.pitch = false,
     this.title,
-    this.bufferSize = 32 * 1024 * 1024,
     this.ready,
+    this.logLevel = MPVLogLevel.none,
+    this.bufferSize = 32 * 1024 * 1024,
     this.protocolWhitelist = const [
       'file',
       'tcp',
