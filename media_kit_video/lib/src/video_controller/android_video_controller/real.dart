@@ -61,36 +61,39 @@ class AndroidVideoController extends PlatformVideoController {
     int h = -1;
     _widthStreamSubscription = player.streams.width.listen(
       (event) => _lock.synchronized(() {
-        w = event;
-        if (w != -1 && h != -1) {
-          _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
-          // Notify about the first frame being rendered.
-          if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
-            waitUntilFirstFrameRenderedCompleter.complete();
+        if (event > 0) {
+          w = event;
+          if (w != -1 && h != -1) {
+            _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
+            // Notify about the first frame being rendered.
+            if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+              waitUntilFirstFrameRenderedCompleter.complete();
+            }
+            w = -1;
+            h = -1;
           }
-          w = -1;
-          h = -1;
         }
       }),
     );
     _heightStreamSubscription = player.streams.height.listen(
       (event) => _lock.synchronized(() {
-        h = event;
-        if (w != -1 && h != -1) {
-          _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
-          // Notify about the first frame being rendered.
-          if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
-            waitUntilFirstFrameRenderedCompleter.complete();
+        if (event > 0) {
+          h = event;
+          if (w != -1 && h != -1) {
+            _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
+            // Notify about the first frame being rendered.
+            if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+              waitUntilFirstFrameRenderedCompleter.complete();
+            }
+            w = -1;
+            h = -1;
           }
-          w = -1;
-          h = -1;
         }
       }),
     );
 
-    final lock = Lock();
     _rectStreamSubscription = _controller.stream.listen(
-      (event) => lock.synchronized(() async {
+      (event) => _lock.synchronized(() async {
         rect.value = Rect.zero;
         try {
           // ----------------------------------------------
@@ -130,7 +133,6 @@ class AndroidVideoController extends PlatformVideoController {
           mpv.mpv_free(vo.cast());
 
           await player.seek(player.state.position);
-          await player.streams.position.first;
 
           // ----------------------------------------------
         } catch (exception, stacktrace) {
