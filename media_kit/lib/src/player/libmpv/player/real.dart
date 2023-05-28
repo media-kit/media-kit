@@ -1575,7 +1575,7 @@ class libmpvPlayer extends PlatformPlayer {
         try {
           // On Android, the system fonts cannot be picked up by libass/fontconfig. This makes subtitles not work.
           // We manually save `subfont.ttf` to the application's cache directory and set `config` & `config-dir` to use it.
-          final subfont = AndroidAssetLoader.loadSync('subfont.ttf');
+          final subfont = await AndroidAssetLoader.load('subfont.ttf');
           if (subfont.isNotEmpty) {
             final directory = path.dirname(subfont);
             // This asset is bundled as part of `package:media_kit_libs_android_video`.
