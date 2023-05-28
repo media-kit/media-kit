@@ -51,6 +51,42 @@ abstract class PlatformVideoController {
     int? height,
   });
 
+  /// Refreshes playback state (on play/pause, seek or duration change).
+  /// Used to invalidate Picture in Picture view data.
+  Future<void> refreshPlaybackState() async {
+    return;
+  }
+
+  /// Checks whether Picture in Picture is available on current platform.
+  Future<bool> isPictureInPictureAvailable() async {
+    return false;
+  }
+
+  /// Enable Picture in Picture.
+  /// Returns true if this is supported on current platofrm.
+  Future<bool> enablePictureInPicture() async {
+    return false;
+  }
+
+  /// Disable Picture in Picture.
+  Future<void> disablePictureInPicture() async {}
+
+  /// Enable automatically entering Picture in Picture when app goes into background.
+  /// Returns true if this is supported on current platofrm.
+  Future<bool> enableAutoPictureInPicture() async {
+    return false;
+  }
+
+  /// Disables automatically entering Picture in Picture when app goes into background.
+  Future<void> disableAutoPictureInPicture() async {
+    return;
+  }
+
+  /// Enters Picture in Picture view for current video.
+  Future<bool> enterPictureInPicture() async {
+    return false;
+  }
+
   /// A [Future] that completes when the first video frame has been rendered.
   Future<void> get waitUntilFirstFrameRendered =>
       waitUntilFirstFrameRenderedCompleter.future;

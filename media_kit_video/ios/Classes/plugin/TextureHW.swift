@@ -98,6 +98,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   private func disposeMPV() {
+    mpv_render_context_set_update_callback(handle, nil, nil)
     mpv_render_context_free(renderContext)
   }
 

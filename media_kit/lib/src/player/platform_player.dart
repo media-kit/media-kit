@@ -61,6 +61,7 @@ abstract class PlatformPlayer {
     tracksController.stream,
     widthController.stream,
     heightController.stream,
+    seekController.stream,
   );
 
   @mustCallSuper
@@ -87,6 +88,7 @@ abstract class PlatformPlayer {
         tracksController.close(),
         widthController.close(),
         heightController.close(),
+        seekController.close(),
       ],
     );
     for (final callback in release) {
@@ -307,6 +309,10 @@ abstract class PlatformPlayer {
   @protected
   final StreamController<int> heightController =
       StreamController<int>.broadcast();
+
+  @protected
+  final StreamController<Duration> seekController =
+      StreamController<Duration>.broadcast();
 
   /// Publicly defined clean-up [Function]s which must be called before [dispose].
   final List<Future<void> Function()> release = [];

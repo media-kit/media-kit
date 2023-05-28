@@ -12,12 +12,10 @@ class SinglePlayerMultipleVideoScreen extends StatefulWidget {
   const SinglePlayerMultipleVideoScreen({Key? key}) : super(key: key);
 
   @override
-  State<SinglePlayerMultipleVideoScreen> createState() =>
-      _SinglePlayerMultipleVideoScreenState();
+  State<SinglePlayerMultipleVideoScreen> createState() => _SinglePlayerMultipleVideoScreenState();
 }
 
-class _SinglePlayerMultipleVideoScreenState
-    extends State<SinglePlayerMultipleVideoScreen> {
+class _SinglePlayerMultipleVideoScreenState extends State<SinglePlayerMultipleVideoScreen> {
   late final Player player = Player();
   // NOTE: A single [VideoController] is enough for multiple [Video] widgets (& more efficient).
   //       Here, two [VideoController]s are created for testing.
@@ -55,8 +53,7 @@ class _SinglePlayerMultipleVideoScreenState
 
   @override
   Widget build(BuildContext context) {
-    final horizontal =
-        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
@@ -110,24 +107,16 @@ class _SinglePlayerMultipleVideoScreenState
                                 Expanded(
                                   child: Row(
                                     children: [
-                                      Expanded(
-                                          child:
-                                              Video(controller: controller0)),
-                                      Expanded(
-                                          child:
-                                              Video(controller: controller0)),
+                                      Expanded(child: Video(controller: controller0)),
+                                      Expanded(child: Video(controller: controller0)),
                                     ],
                                   ),
                                 ),
                                 Expanded(
                                   child: Row(
                                     children: [
-                                      Expanded(
-                                          child:
-                                              Video(controller: controller1)),
-                                      Expanded(
-                                          child:
-                                              Video(controller: controller1)),
+                                      Expanded(child: Video(controller: controller1)),
+                                      Expanded(child: Video(controller: controller1)),
                                     ],
                                   ),
                                 ),
@@ -135,7 +124,7 @@ class _SinglePlayerMultipleVideoScreenState
                             ),
                           ),
                         ),
-                        SeekBar(player: player),
+                        SeekBar(player: player, controller: controller0),
                         const SizedBox(height: 32.0),
                       ],
                     ),
@@ -177,7 +166,7 @@ class _SinglePlayerMultipleVideoScreenState
                       ],
                     ),
                   ),
-                  SeekBar(player: player),
+                  SeekBar(player: player, controller: controller0),
                   const SizedBox(height: 32.0),
                   const Divider(height: 1.0, thickness: 1.0),
                   ...items,
