@@ -76,7 +76,7 @@ abstract class AndroidHelper {
 
   static bool get isPhysicalDevice {
     if (Platform.isAndroid) {
-      return _MediaKitAndroidHelperIsEmulator?.call() == 0;
+      return !isEmulator;
     }
     return false;
   }

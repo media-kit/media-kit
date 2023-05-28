@@ -87,28 +87,7 @@ class AndroidVideoController extends PlatformVideoController {
         }
       }),
     );
-    _positionStreamSubscription = player.streams.position.listen(
-      (event) => _lock.synchronized(
-        () {
-          // In some very-very rare cases, width & height stream subscriptions to sync & update [Rect] may not work.
-          // Subscribing to position stream & checking if the width & height are updated or not. Correcting it if not.
-          if (rect.value?.width != 0 && rect.value?.height != 0) {
-            if (rect.value?.width != player.state.width ||
-                rect.value?.height != player.state.height) {
-              final correction = Rect.fromLTWH(
-                0,
-                0,
-                player.state.width!.toDouble(),
-                player.state.height!.toDouble(),
-              );
-              _controller.add(correction);
-              debugPrint(
-                  'AndroidVideoController: Rect correction: $correction');
-            }
-          }
-        },
-      ),
-    );
+
     final lock = Lock();
     _rectStreamSubscription = _controller.stream.listen(
       (event) => lock.synchronized(() async {
@@ -309,9 +288,6 @@ class AndroidVideoController extends PlatformVideoController {
 
   /// [StreamSubscription] for listening to video height.
   StreamSubscription<int>? _heightStreamSubscription;
-
-  /// [StreamSubscription] for listening to position changes.
-  StreamSubscription<Duration>? _positionStreamSubscription;
 
   /// [StreamSubscription] for listening to video [Rect] from [_controller].
   StreamSubscription<Rect>? _rectStreamSubscription;
