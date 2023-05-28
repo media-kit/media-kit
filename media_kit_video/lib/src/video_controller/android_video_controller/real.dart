@@ -128,6 +128,10 @@ class AndroidVideoController extends PlatformVideoController {
           }
           calloc.free(property);
           mpv.mpv_free(vo.cast());
+
+          await player.seek(player.state.position);
+          await player.streams.position.first;
+
           // ----------------------------------------------
         } catch (exception, stacktrace) {
           debugPrint(exception.toString());

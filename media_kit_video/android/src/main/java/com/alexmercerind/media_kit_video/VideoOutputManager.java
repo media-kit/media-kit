@@ -9,8 +9,8 @@ package com.alexmercerind.media_kit_video;
 
 import android.util.Log;
 
-import java.util.HashMap;
 import java.util.Locale;
+import java.util.HashMap;
 import java.util.Objects;
 
 import io.flutter.view.TextureRegistry;

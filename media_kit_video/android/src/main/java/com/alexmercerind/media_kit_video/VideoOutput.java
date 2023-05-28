@@ -1,6 +1,6 @@
 /**
  * This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
- * <p>
+ *
  * Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
  * All rights reserved.
  * Use of this source code is governed by MIT license that can be found in the LICENSE file.
@@ -8,8 +8,11 @@
 package com.alexmercerind.media_kit_video;
 
 import android.util.Log;
+import android.os.Looper;
+import android.os.Handler;
 import android.view.Surface;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
 import java.lang.reflect.Method;
 
@@ -71,7 +74,16 @@ public class VideoOutput {
             e.printStackTrace();
         }
         try {
-            deleteGlobalObjectRef.invoke(null, wid);
+            final Handler handler = new Handler(Looper.getMainLooper());
+            handler.postDelayed(() -> {
+                try {
+                    // Invoke DeleteGlobalRef after a voluntary delay to eliminate possibility of libmpv referencing it sometime in the near future.
+                    deleteGlobalObjectRef.invoke(null, wid);
+                    Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.deleteGlobalObjectRef: %d", wid));
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            }, 5000);
         } catch (Throwable e) {
             e.printStackTrace();
         }
