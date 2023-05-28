@@ -18,6 +18,7 @@ import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 import 'package:media_kit/src/player/libmpv/core/fallback_bitrate_handler.dart';
 import 'package:media_kit/src/player/libmpv/core/initializer_native_event_loop.dart';
 
+import 'package:media_kit/src/utils/android_helper.dart';
 import 'package:media_kit/src/utils/android_asset_loader.dart';
 
 import 'package:media_kit/src/models/track.dart';
@@ -34,6 +35,7 @@ import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 
 /// Initializes the libmpv backend for package:media_kit.
 void libmpvEnsureInitialized({String? libmpv}) {
+  AndroidHelper.ensureInitialized();
   NativeLibrary.ensureInitialized(libmpv: libmpv);
   InitializerNativeEventLoop.ensureInitialized();
 }
@@ -1564,145 +1566,162 @@ class libmpvPlayer extends PlatformPlayer {
     }
   }
 
-  Future<void> _create() async {
-    // The libmpv options which must be set before [MPV.mpv_initialize].
-    final options = <String, String>{};
+  Future<void> _create() {
+    return lock.synchronized(() async {
+      // The libmpv options which must be set before [MPV.mpv_initialize].
+      final options = <String, String>{};
 
-    if (Platform.isAndroid) {
-      try {
-        // On Android, the system fonts cannot be picked up by libass/fontconfig. This makes subtitles not work.
-        // We manually save `subfont.ttf` to the application's cache directory and set `config` & `config-dir` to use it.
-        final subfont = await AndroidAssetLoader.load('subfont.ttf');
-        if (subfont.isNotEmpty) {
-          final directory = path.dirname(subfont);
-          // This asset is bundled as part of `package:media_kit_libs_android_video`.
-          // Use it if located inside the application bundle, otherwise no worries.
-          options.addAll(
-            {
-              'config': 'yes',
-              'config-dir': directory,
-            },
-          );
-          print(subfont);
-          print(directory);
+      if (Platform.isAndroid) {
+        try {
+          // On Android, the system fonts cannot be picked up by libass/fontconfig. This makes subtitles not work.
+          // We manually save `subfont.ttf` to the application's cache directory and set `config` & `config-dir` to use it.
+          final subfont = AndroidAssetLoader.loadSync('subfont.ttf');
+          if (subfont.isNotEmpty) {
+            final directory = path.dirname(subfont);
+            // This asset is bundled as part of `package:media_kit_libs_android_video`.
+            // Use it if located inside the application bundle, otherwise no worries.
+            options.addAll(
+              {
+                'config': 'yes',
+                'config-dir': directory,
+              },
+            );
+            print(subfont);
+            print(directory);
+          }
+        } catch (exception, stacktrace) {
+          print(exception);
+          print(stacktrace);
         }
-      } catch (exception, stacktrace) {
-        print(exception);
-        print(stacktrace);
       }
-    }
 
-    ctx = await Initializer.create(
-      NativeLibrary.path,
-      _handler,
-      options: options,
-    );
-
-    // ALL:
-    // idle = yes
-    // pause = yes
-    // keep-open = yes
-    // demuxer-max-bytes = 32 * 1024 * 1024
-    // demuxer-max-back-bytes = 32 * 1024 * 1024
-    // ANDROID:
-    // ao = opensles
-    final properties = <String, String>{
-      'idle': 'yes',
-      'pause': 'yes',
-      'keep-open': 'yes',
-      'demuxer-max-bytes': (32 * 1024 * 1024).toString(),
-      'demuxer-max-back-bytes': (32 * 1024 * 1024).toString(),
-      if (Platform.isAndroid) 'ao': 'opensles',
-    };
-    // Other properties based on [PlayerConfiguration].
-    properties.addAll(
-      {
-        if (!configuration.osc) ...{
-          'osc': 'no',
-          'osd-level': '0',
-        },
-        if (configuration.vo != null) 'vo': '${configuration.vo}',
-        if (configuration.title != null) 'title': '${configuration.title}',
-        'demuxer-lavf-o':
-            'protocol_whitelist=[${configuration.protocolWhitelist.join(',')}]',
-      },
-    );
-    for (final property in properties.entries) {
-      final name = property.key.toNativeUtf8();
-      final value = property.value.toNativeUtf8();
-      mpv.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        value.cast(),
+      ctx = await Initializer.create(
+        NativeLibrary.path,
+        _handler,
+        options: options,
       );
-      calloc.free(name);
-      calloc.free(value);
-    }
 
-    // Observe the properties to update the state & feed event streams.
-    <String, int>{
-      'pause': generated.mpv_format.MPV_FORMAT_FLAG,
-      'time-pos': generated.mpv_format.MPV_FORMAT_DOUBLE,
-      'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
-      'playlist': generated.mpv_format.MPV_FORMAT_NODE,
-      'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
-      'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
-      'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
-      'demuxer-cache-time': generated.mpv_format.MPV_FORMAT_DOUBLE,
-      'audio-params': generated.mpv_format.MPV_FORMAT_NODE,
-      'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
-      'audio-device': generated.mpv_format.MPV_FORMAT_NODE,
-      'audio-device-list': generated.mpv_format.MPV_FORMAT_NODE,
-      'track-list': generated.mpv_format.MPV_FORMAT_NODE,
-      'width': generated.mpv_format.MPV_FORMAT_INT64,
-      'height': generated.mpv_format.MPV_FORMAT_INT64,
-      'eof-reached': generated.mpv_format.MPV_FORMAT_FLAG,
-    }.forEach(
-      (property, format) {
-        final name = property.toNativeUtf8();
-        mpv.mpv_observe_property(
+      // ALL:
+      //
+      // idle = yes
+      // pause = yes
+      // keep-open = yes
+      // demuxer-max-bytes = 32 * 1024 * 1024
+      // demuxer-max-back-bytes = 32 * 1024 * 1024
+      //
+      // ANDROID (Physical Device):
+      //
+      // ao = opensles
+      //
+      // ANDROID (Emulator & API Level < 25):
+      //
+      // ao = null
+      //
+      final properties = <String, String>{
+        'idle': 'yes',
+        'pause': 'yes',
+        'keep-open': 'yes',
+        'demuxer-max-bytes': (32 * 1024 * 1024).toString(),
+        'demuxer-max-back-bytes': (32 * 1024 * 1024).toString(),
+        // On Android, prefer OpenSL ES audio output.
+        // AudioTrack audio output is prone to crashes in some rare cases.
+        if (AndroidHelper.isPhysicalDevice)
+          'ao': 'opensles'
+        // Disable audio output on older Android emulators with API Level < 25.
+        // OpenSL ES audio output seems to be broken on some of these.
+        else if (AndroidHelper.isEmulator && AndroidHelper.APILevel < 25)
+          'ao': 'null'
+      };
+      // Other properties based on [PlayerConfiguration].
+      properties.addAll(
+        {
+          if (!configuration.osc) ...{
+            'osc': 'no',
+            'osd-level': '0',
+          },
+          if (configuration.vo != null) 'vo': '${configuration.vo}',
+          if (configuration.title != null) 'title': '${configuration.title}',
+          'demuxer-lavf-o':
+              'protocol_whitelist=[${configuration.protocolWhitelist.join(',')}]',
+        },
+      );
+      for (final property in properties.entries) {
+        final name = property.key.toNativeUtf8();
+        final value = property.value.toNativeUtf8();
+        mpv.mpv_set_property_string(
           ctx,
-          0,
           name.cast(),
-          format,
+          value.cast(),
         );
         calloc.free(name);
-      },
-    );
-
-    if (configuration.logLevel != MPVLogLevel.none) {
-      // https://github.com/mpv-player/mpv/blob/e1727553f164181265f71a20106fbd5e34fa08b0/libmpv/client.h#L1410-L1419
-      final levels = {
-        MPVLogLevel.none: 'no',
-        MPVLogLevel.fatal: 'fatal',
-        MPVLogLevel.error: 'error',
-        MPVLogLevel.warn: 'warn',
-        MPVLogLevel.info: 'info',
-        MPVLogLevel.v: 'v',
-        MPVLogLevel.debug: 'debug',
-        MPVLogLevel.trace: 'trace',
-      };
-
-      final level = levels[configuration.logLevel];
-      if (level != null) {
-        final minLevel = level.toNativeUtf8();
-        mpv.mpv_request_log_messages(
-          ctx,
-          minLevel.cast(),
-        );
-        calloc.free(minLevel);
+        calloc.free(value);
       }
-    }
 
-    // Add libmpv hooks for supporting custom HTTP headers in [Media].
-    final load = 'on_load'.toNativeUtf8();
-    final unload = 'on_unload'.toNativeUtf8();
-    mpv.mpv_hook_add(ctx, 0, load.cast(), 0);
-    mpv.mpv_hook_add(ctx, 0, unload.cast(), 0);
-    calloc.free(load);
-    calloc.free(unload);
+      // Observe the properties to update the state & feed event streams.
+      <String, int>{
+        'pause': generated.mpv_format.MPV_FORMAT_FLAG,
+        'time-pos': generated.mpv_format.MPV_FORMAT_DOUBLE,
+        'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
+        'playlist': generated.mpv_format.MPV_FORMAT_NODE,
+        'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
+        'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
+        'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
+        'demuxer-cache-time': generated.mpv_format.MPV_FORMAT_DOUBLE,
+        'audio-params': generated.mpv_format.MPV_FORMAT_NODE,
+        'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
+        'audio-device': generated.mpv_format.MPV_FORMAT_NODE,
+        'audio-device-list': generated.mpv_format.MPV_FORMAT_NODE,
+        'track-list': generated.mpv_format.MPV_FORMAT_NODE,
+        'width': generated.mpv_format.MPV_FORMAT_INT64,
+        'height': generated.mpv_format.MPV_FORMAT_INT64,
+        'eof-reached': generated.mpv_format.MPV_FORMAT_FLAG,
+      }.forEach(
+        (property, format) {
+          final name = property.toNativeUtf8();
+          mpv.mpv_observe_property(
+            ctx,
+            0,
+            name.cast(),
+            format,
+          );
+          calloc.free(name);
+        },
+      );
 
-    completer.complete();
+      if (configuration.logLevel != MPVLogLevel.none) {
+        // https://github.com/mpv-player/mpv/blob/e1727553f164181265f71a20106fbd5e34fa08b0/libmpv/client.h#L1410-L1419
+        final levels = {
+          MPVLogLevel.none: 'no',
+          MPVLogLevel.fatal: 'fatal',
+          MPVLogLevel.error: 'error',
+          MPVLogLevel.warn: 'warn',
+          MPVLogLevel.info: 'info',
+          MPVLogLevel.v: 'v',
+          MPVLogLevel.debug: 'debug',
+          MPVLogLevel.trace: 'trace',
+        };
+
+        final level = levels[configuration.logLevel];
+        if (level != null) {
+          final minLevel = level.toNativeUtf8();
+          mpv.mpv_request_log_messages(
+            ctx,
+            minLevel.cast(),
+          );
+          calloc.free(minLevel);
+        }
+      }
+
+      // Add libmpv hooks for supporting custom HTTP headers in [Media].
+      final load = 'on_load'.toNativeUtf8();
+      final unload = 'on_unload'.toNativeUtf8();
+      mpv.mpv_hook_add(ctx, 0, load.cast(), 0);
+      mpv.mpv_hook_add(ctx, 0, unload.cast(), 0);
+      calloc.free(load);
+      calloc.free(unload);
+
+      completer.complete();
+    });
   }
 
   /// Adds an error to the [Player.stream.error].
