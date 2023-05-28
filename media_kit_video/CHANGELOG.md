@@ -1,3 +1,7 @@
+## 0.0.11
+
+- fix(android): improve `Texture` resize handling
+
 ## 0.0.10
 
 - feat: `VideoControllerConfiguration`

@@ -1,3 +1,7 @@
+## 0.0.9
+
+- fix(android): crash on Android 6.0 or lower
+
 ## 0.0.8
 
 - fix: `Player.dispose` event loop clean-up

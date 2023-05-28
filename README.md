@@ -46,13 +46,13 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.8                              # Primary package.
+  media_kit: ^0.0.9                              # Primary package.
   
-  media_kit_video: ^0.0.10                       # For video rendering.
+  media_kit_video: ^0.0.11                       # For video rendering.
   
   media_kit_native_event_loop: ^1.0.4            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_android_video: ^1.0.4           # Android package for video native libraries.
+  media_kit_libs_android_video: ^1.0.5           # Android package for video native libraries.
   media_kit_libs_ios_video: ^1.0.4               # iOS package for video native libraries.
   media_kit_libs_macos_video: ^1.0.5             # macOS package for video native libraries.
   media_kit_libs_windows_video: ^1.0.2           # Windows package for video native libraries.
@@ -63,11 +63,11 @@ dependencies:
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.8                              # Primary package.
+  media_kit: ^0.0.9                              # Primary package.
   
   media_kit_native_event_loop: ^1.0.4            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_android_audio: ^1.0.4           # Android package for audio native libraries.
+  media_kit_libs_android_audio: ^1.0.5           # Android package for audio native libraries.
   media_kit_libs_ios_audio: ^1.0.4               # iOS package for audio native libraries.
   media_kit_libs_macos_audio: ^1.0.5             # macOS package for audio native libraries.
   media_kit_libs_windows_audio: ^1.0.3           # Windows package for audio native libraries.
@@ -84,11 +84,11 @@ dependencies:
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.8/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 13 or above.                     | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.8/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.8/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.8/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.8/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.9/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 13 or above.                     | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.9/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.9/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.9/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.9/media_kit_test_linux_x64.7z)          |
 | Web         | 🚧    | 🚧    | [WIP](https://github.com/alexmercerind/media_kit/pull/128)                                 | [WIP](https://github.com/alexmercerind/media_kit/pull/128)               |
 
 <table>
@@ -973,7 +973,6 @@ classDiagram
   MediaKitVideoPlugin "1" *-- "1" VideoOutputManager: Create VideoOutput(s) with VideoOutputManager for handle passed through platform channel
   VideoOutputManager "1" *-- "*" VideoOutput: Create VideoOutput(s) to send back id & wid for render. Dispose to release.
   VideoOutput <.. MediaKitAndroidHelper: Create & dispose JNI global object reference to android.view.Surface (for --wid)
-  MediaKitVideoPlugin <.. MPVLib: Initialize libmpv for usage on Android. Taken from mpv for Android.
   
   class MediaKitVideoPlugin {
     -MethodChannel channel
@@ -1004,10 +1003,6 @@ classDiagram
     +deleteGlobalObjectRef(ref: long): void
     +setApplicationContext(context: Context): void
     +copyAssetToExternalFilesDir(assetName: String): String
-  }
-  
-  class MPVLib {
-    +create(context: Context): context
   }
   
 ```
