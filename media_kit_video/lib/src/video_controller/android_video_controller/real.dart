@@ -87,46 +87,73 @@ class AndroidVideoController extends PlatformVideoController {
         }
       }),
     );
+    _positionStreamSubscription = player.streams.position.listen(
+      (event) => _lock.synchronized(
+        () {
+          // In some very-very rare cases, width & height stream subscriptions to sync & update [Rect] may not work.
+          // Subscribing to position stream & checking if the width & height are updated or not. Correcting it if not.
+          if (rect.value?.width != 0 && rect.value?.height != 0) {
+            if (rect.value?.width != player.state.width ||
+                rect.value?.height != player.state.height) {
+              final correction = Rect.fromLTWH(
+                0,
+                0,
+                player.state.width!.toDouble(),
+                player.state.height!.toDouble(),
+              );
+              _controller.add(correction);
+              debugPrint(
+                  'AndroidVideoController: Rect correction: $correction');
+            }
+          }
+        },
+      ),
+    );
     final lock = Lock();
     _rectStreamSubscription = _controller.stream.listen(
       (event) => lock.synchronized(() async {
         rect.value = Rect.zero;
-        // ----------------------------------------------
-        final handle = await player.handle;
-        NativeLibrary.ensureInitialized();
-        final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-        final property = 'vo'.toNativeUtf8();
-        final vo = mpv.mpv_get_property_string(
-          Pointer.fromAddress(handle),
-          property.cast(),
-        );
-        debugPrint(vo.cast<Utf8>().toDartString());
-        if (vo.cast<Utf8>().toDartString() == 'gpu') {
-          // NOTE: Only required for --vo=gpu
-          // With --vo=gpu, we need to update the `android.graphics.SurfaceTexture` size & notify libmpv to re-create vo.
-          // In native Android, this kind of rendering is done with `android.view.SurfaceView` + `android.view.SurfaceHolder`, which offers `onSurfaceChanged` callback to handle this
-          await _channel.invokeMethod(
-            'VideoOutputManager.SetSurfaceTextureSize',
-            {
-              'handle': handle.toString(),
-              'width': event.width.toInt().toString(),
-              'height': event.height.toInt().toString(),
-            },
-          );
-          final name = 'android-surface-size'.toNativeUtf8();
-          final value =
-              '${event.width.toInt()}x${event.height.toInt()}'.toNativeUtf8();
-          mpv.mpv_set_option_string(
+        try {
+          // ----------------------------------------------
+          final handle = await player.handle;
+          NativeLibrary.ensureInitialized();
+          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+          final property = 'vo'.toNativeUtf8();
+          final vo = mpv.mpv_get_property_string(
             Pointer.fromAddress(handle),
-            name.cast(),
-            value.cast(),
+            property.cast(),
           );
-          calloc.free(name);
-          calloc.free(value);
+          debugPrint(vo.cast<Utf8>().toDartString());
+          if (vo.cast<Utf8>().toDartString() == 'gpu') {
+            // NOTE: Only required for --vo=gpu
+            // With --vo=gpu, we need to update the android.graphics.SurfaceTexture size & notify libmpv to re-create vo.
+            // In native Android, this kind of rendering is done with android.view.SurfaceView + android.view.SurfaceHolder, which offers onSurfaceChanged to handle this.
+            await _channel.invokeMethod(
+              'VideoOutputManager.SetSurfaceTextureSize',
+              {
+                'handle': handle.toString(),
+                'width': event.width.toInt().toString(),
+                'height': event.height.toInt().toString(),
+              },
+            );
+            final name = 'android-surface-size'.toNativeUtf8();
+            final value =
+                '${event.width.toInt()}x${event.height.toInt()}'.toNativeUtf8();
+            mpv.mpv_set_option_string(
+              Pointer.fromAddress(handle),
+              name.cast(),
+              value.cast(),
+            );
+            calloc.free(name);
+            calloc.free(value);
+          }
+          calloc.free(property);
+          mpv.mpv_free(vo.cast());
+          // ----------------------------------------------
+        } catch (exception, stacktrace) {
+          debugPrint(exception.toString());
+          debugPrint(stacktrace.toString());
         }
-        calloc.free(property);
-        mpv.mpv_free(vo.cast());
-        // ----------------------------------------------
         rect.value = event;
       }),
     );
@@ -282,6 +309,9 @@ class AndroidVideoController extends PlatformVideoController {
 
   /// [StreamSubscription] for listening to video height.
   StreamSubscription<int>? _heightStreamSubscription;
+
+  /// [StreamSubscription] for listening to position changes.
+  StreamSubscription<Duration>? _positionStreamSubscription;
 
   /// [StreamSubscription] for listening to video [Rect] from [_controller].
   StreamSubscription<Rect>? _rectStreamSubscription;

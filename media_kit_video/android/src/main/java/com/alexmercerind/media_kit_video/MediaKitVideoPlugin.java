@@ -12,8 +12,6 @@ import androidx.annotation.NonNull;
 import java.util.HashMap;
 import java.util.Objects;
 
-import com.alexmercerind.mpv.MPVLib;
-
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.Result;
@@ -30,19 +28,8 @@ public class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler {
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
         channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "com.alexmercerind/media_kit_video");
+        videoOutputManager = new VideoOutputManager(flutterPluginBinding.getTextureRegistry());
         channel.setMethodCallHandler(this);
-        try {
-            if (videoOutputManager == null) {
-                videoOutputManager = new VideoOutputManager(flutterPluginBinding.getTextureRegistry());
-                // It seems that it is necessary to do some JNI initialization for using the libmpv native shared library from mpv for Android.
-                // Since we are not using MPVLib JNI binding for any implementation, destroying it right away. Also, it only allows singleton usage.
-                // We have our own abstraction & more capable implementation in package:media_kit.
-                MPVLib.create(flutterPluginBinding.getApplicationContext());
-                MPVLib.destroy();
-            }
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
