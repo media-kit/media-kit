@@ -5,7 +5,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:media_kit_video_controls/widgets/widgets.dart';
 
-import '../common/sources.dart';
+import '../common/sources/sources.dart';
 import '../common/widgets.dart';
 
 class SinglePlayerWithControls extends StatefulWidget {
@@ -34,10 +34,9 @@ class _SinglePlayerWithControlsState extends State<SinglePlayerWithControls> {
       looping: true,
     );
 
-    Future.microtask(() async {
-      videoController = await VideoController.create(player);
-      setState(() {});
-    });
+  
+      videoController =  VideoController(player);
+
   }
 
   @override
@@ -45,7 +44,6 @@ class _SinglePlayerWithControlsState extends State<SinglePlayerWithControls> {
     Future.microtask(() async {
       debugPrint('Disposing [Player] and [VideoController]...');
       await player.dispose();
-      await videoController?.dispose();
       mediaKitController?.dispose();
     });
     super.dispose();
@@ -120,7 +118,7 @@ class _SinglePlayerWithControlsState extends State<SinglePlayerWithControls> {
                                 margin: const EdgeInsets.all(32.0),
                                 child: MediaKitControls(
                                   controller: mediaKitController!,
-                                  video: Video(controller: videoController),
+                                  video: Video(controller: videoController!),
                                 )),
                           ),
                           const SizedBox(height: 32.0),

@@ -1,4 +1,3 @@
-import 'package:media_kit_video/src/video.dart';
 import 'package:media_kit_video_controls/widgets/media_kit_player.dart';
 import 'package:media_kit_video_controls/widgets/helpers/adaptive_controls.dart';
 import 'package:media_kit_video_controls/widgets/notifiers/index.dart';
