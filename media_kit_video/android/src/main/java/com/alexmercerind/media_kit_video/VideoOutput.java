@@ -8,8 +8,11 @@
 package com.alexmercerind.media_kit_video;
 
 import android.util.Log;
+import android.os.Looper;
+import android.os.Handler;
 import android.view.Surface;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
 import java.lang.reflect.Method;
 
@@ -41,12 +44,19 @@ public class VideoOutput {
 
         surfaceTextureEntry = textureRegistryReference.createSurfaceTexture();
         surface = new Surface(surfaceTextureEntry.surfaceTexture());
-
         try {
             id = surfaceTextureEntry.id();
             wid = (long) newGlobalObjectRef.invoke(null, surface);
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutput: id = %d", id));
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutput: wid = %d", wid));
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setSurfaceTextureSize(int width, int height) {
+        try {
+            surfaceTextureEntry.surfaceTexture().setDefaultBufferSize(width, height);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -64,7 +74,16 @@ public class VideoOutput {
             e.printStackTrace();
         }
         try {
-            deleteGlobalObjectRef.invoke(null, wid);
+            final Handler handler = new Handler(Looper.getMainLooper());
+            handler.postDelayed(() -> {
+                try {
+                    // Invoke DeleteGlobalRef after a voluntary delay to eliminate possibility of libmpv referencing it sometime in the near future.
+                    deleteGlobalObjectRef.invoke(null, wid);
+                    Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.deleteGlobalObjectRef: %d", wid));
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            }, 5000);
         } catch (Throwable e) {
             e.printStackTrace();
         }

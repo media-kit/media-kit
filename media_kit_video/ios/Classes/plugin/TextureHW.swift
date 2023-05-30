@@ -56,9 +56,6 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
       EAGLContext.setCurrent(nil)
     }
 
-    MPVHelpers.checkError(mpv_set_option_string(handle, "vo", "libmpv"))
-    MPVHelpers.checkError(mpv_set_option_string(handle, "hwdec", "auto"))
-
     let api = UnsafeMutableRawPointer(
       mutating: (MPV_RENDER_API_TYPE_OPENGL as NSString).utf8String
     )

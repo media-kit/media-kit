@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
 import 'tests/01.single_player_single_video.dart';
 import 'tests/02.single_player_multiple_video.dart';
@@ -10,7 +11,8 @@ import 'tests/06.paint_first_frame.dart';
 import 'tests/07.video_controller_set_size.dart';
 import 'tests/08.single_player_with_controls.dart';
 
-import 'common/sources.dart';
+import 'common/globals.dart';
+import 'common/sources/sources.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +53,25 @@ class PrimaryScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
+        actions: [
+          ValueListenableBuilder<VideoControllerConfiguration>(
+            valueListenable: configuration,
+            builder: (context, value, _) => TextButton(
+              onPressed: () {
+                configuration.value = VideoControllerConfiguration(
+                  enableHardwareAcceleration: !value.enableHardwareAcceleration,
+                );
+              },
+              child: Text(
+                value.enableHardwareAcceleration ? 'H/W' : 'S/W',
+                style: const TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16.0),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

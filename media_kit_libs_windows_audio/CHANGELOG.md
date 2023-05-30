@@ -1,7 +1,14 @@
+## 1.0.3
+
+- [mpv-player/mpv@`68b3239`](https://github.com/mpv-player/mpv/commit/68b3239b523cd75ba0a12f680ac7bc77e5647d40)
+- fix: build
+
 ## 1.0.2
 
 - [mpv-player/mpv@`68b3239`](https://github.com/mpv-player/mpv/commit/68b3239b523cd75ba0a12f680ac7bc77e5647d40)
-- fix: migrate to the plugin template
+- feat: migrate to the plugin template
+- feat: make package optional during build
+- feat: add MEDIA_KIT_LIBS_AVAILABLE option
 
 ## 1.0.1
 

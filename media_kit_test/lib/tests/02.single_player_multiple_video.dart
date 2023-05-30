@@ -4,8 +4,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import '../common/sources.dart';
+import '../common/globals.dart';
 import '../common/widgets.dart';
+import '../common/sources/sources.dart';
 
 class SinglePlayerMultipleVideoScreen extends StatefulWidget {
   const SinglePlayerMultipleVideoScreen({Key? key}) : super(key: key);
@@ -17,25 +18,21 @@ class SinglePlayerMultipleVideoScreen extends StatefulWidget {
 
 class _SinglePlayerMultipleVideoScreenState
     extends State<SinglePlayerMultipleVideoScreen> {
-  final Player player = Player();
-  VideoController? controller;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() async {
-      controller = await VideoController.create(player);
-      setState(() {});
-    });
-  }
+  late final Player player = Player();
+  // NOTE: A single [VideoController] is enough for multiple [Video] widgets (& more efficient).
+  //       Here, two [VideoController]s are created for testing.
+  late final VideoController controller0 = VideoController(
+    player,
+    configuration: configuration.value,
+  );
+  late final VideoController controller1 = VideoController(
+    player,
+    configuration: configuration.value,
+  );
 
   @override
   void dispose() {
-    Future.microtask(() async {
-      debugPrint('Disposing [Player] and [VideoController]...');
-      await controller?.dispose();
-      await player.dispose();
-    });
+    player.dispose();
     super.dispose();
   }
 
@@ -114,9 +111,11 @@ class _SinglePlayerMultipleVideoScreenState
                                   child: Row(
                                     children: [
                                       Expanded(
-                                          child: Video(controller: controller)),
+                                          child:
+                                              Video(controller: controller0)),
                                       Expanded(
-                                          child: Video(controller: controller)),
+                                          child:
+                                              Video(controller: controller0)),
                                     ],
                                   ),
                                 ),
@@ -124,9 +123,11 @@ class _SinglePlayerMultipleVideoScreenState
                                   child: Row(
                                     children: [
                                       Expanded(
-                                          child: Video(controller: controller)),
+                                          child:
+                                              Video(controller: controller1)),
                                       Expanded(
-                                          child: Video(controller: controller)),
+                                          child:
+                                              Video(controller: controller1)),
                                     ],
                                   ),
                                 ),
@@ -160,16 +161,16 @@ class _SinglePlayerMultipleVideoScreenState
                         Expanded(
                           child: Row(
                             children: [
-                              Expanded(child: Video(controller: controller)),
-                              Expanded(child: Video(controller: controller)),
+                              Expanded(child: Video(controller: controller0)),
+                              Expanded(child: Video(controller: controller0)),
                             ],
                           ),
                         ),
                         Expanded(
                           child: Row(
                             children: [
-                              Expanded(child: Video(controller: controller)),
-                              Expanded(child: Video(controller: controller)),
+                              Expanded(child: Video(controller: controller1)),
+                              Expanded(child: Video(controller: controller1)),
                             ],
                           ),
                         ),

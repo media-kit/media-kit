@@ -26,7 +26,7 @@ struct _VideoOutput {
   mpv_render_context* render_context;
   gint64 width;
   gint64 height;
-  gboolean enable_hardware_acceleration;
+  VideoOutputConfiguration configuration;
   TextureUpdateCallback texture_update_callback;
   gpointer texture_update_callback_context;
   FlTextureRegistrar* texture_registrar;
@@ -72,7 +72,7 @@ static void video_output_init(VideoOutput* self) {
   self->render_context = NULL;
   self->width = 0;
   self->height = 0;
-  self->enable_hardware_acceleration = TRUE;
+  self->configuration = VideoOutputConfiguration{};
   self->texture_update_callback = NULL;
   self->texture_update_callback_context = NULL;
   self->texture_registrar = NULL;
@@ -81,25 +81,30 @@ static void video_output_init(VideoOutput* self) {
 }
 
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
+                              FlView* view,
                               gint64 handle,
-                              gint64 width,
-                              gint64 height,
-                              gboolean enable_hardware_acceleration) {
+                              VideoOutputConfiguration configuration) {
   g_print("media_kit: VideoOutput: video_output_new: %ld\n", handle);
   VideoOutput* self = VIDEO_OUTPUT(g_object_new(video_output_get_type(), NULL));
   self->texture_registrar = texture_registrar;
   self->handle = (mpv_handle*)handle;
-  self->width = width;
-  self->height = height;
-  self->enable_hardware_acceleration = enable_hardware_acceleration;
-  mpv_set_option_string(self->handle, "vo", "libmpv");
+  self->width = configuration.width;
+  self->height = configuration.height;
+  self->configuration = configuration;
+#ifndef MPV_RENDER_API_TYPE_SW
+  // MPV_RENDER_API_TYPE_SW must be available for S/W rendering.
+  if (!self->configuration.enable_hardware_acceleration) {
+    g_printerr("media_kit: VideoOutput: S/W rendering is not supported.\n");
+  }
+  self->configuration.enable_hardware_acceleration = TRUE;
+#endif
   mpv_set_option_string(self->handle, "video-sync", "audio");
   mpv_set_option_string(self->handle, "video-timing-offset", "0");
   gboolean hardware_acceleration_supported = FALSE;
-  if (self->enable_hardware_acceleration) {
+  if (self->configuration.enable_hardware_acceleration) {
     GError* error = NULL;
-    self->gdk_gl_context =
-        gdk_window_create_gl_context(gdk_get_default_root_window(), &error);
+    GdkWindow* window = gtk_widget_get_window(GTK_WIDGET(view));
+    self->gdk_gl_context = gdk_window_create_gl_context(window, &error);
     if (error == NULL) {
       // OpenGL context must be made current before creating mpv render context.
       gdk_gl_context_realize(self->gdk_gl_context, &error);
@@ -109,7 +114,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
         if (fl_texture_registrar_register_texture(
                 texture_registrar, FL_TEXTURE(self->texture_gl))) {
           // Request H/W decoding.
-          mpv_set_option_string(self->handle, "hwdec", "auto");
           mpv_opengl_init_params gl_init_params{
               [](auto, auto name) {
                 GdkDisplay* display = gdk_display_get_default();
@@ -128,7 +132,17 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
               {MPV_RENDER_PARAM_API_TYPE, (void*)MPV_RENDER_API_TYPE_OPENGL},
               {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, (void*)&gl_init_params},
               {MPV_RENDER_PARAM_INVALID, (void*)0},
+              {MPV_RENDER_PARAM_INVALID, (void*)0},
           };
+          // VAAPI acceleration requires passing X11/Wayland display.
+          GdkDisplay* display = gdk_display_get_default();
+          if (GDK_IS_WAYLAND_DISPLAY(display)) {
+            params[2].type = MPV_RENDER_PARAM_WL_DISPLAY;
+            params[2].data = gdk_wayland_display_get_wl_display(display);
+          } else if (GDK_IS_X11_DISPLAY(display)) {
+            params[2].type = MPV_RENDER_PARAM_X11_DISPLAY;
+            params[2].data = gdk_x11_display_get_xdisplay(display);
+          }
           if (mpv_render_context_create(&self->render_context, self->handle,
                                         params) == 0) {
             mpv_render_context_set_update_callback(
@@ -242,11 +256,19 @@ void video_output_set_texture_update_callback(
 void video_output_set_size(VideoOutput* self, gint64 width, gint64 height) {
   // Ideally, a mutex should be used here & |video_output_get_width| +
   // |video_output_get_height|. However, that is throwing everything into a
-  // deadlock.
-  // Flutter itself seems to have some synchronization mechanism in rendering &
-  // platform channels AFAIK.
-  self->width = width;
-  self->height = height;
+  // deadlock. Flutter itself seems to have some synchronization mechanism in
+  // rendering & platform channels AFAIK.
+
+  // H/W
+  if (self->texture_gl) {
+    self->width = width;
+    self->height = height;
+  }
+  // S/W
+  if (self->texture_sw) {
+    self->width = CLAMP(width, 0, SW_RENDERING_MAX_WIDTH);
+    self->height = CLAMP(height, 0, SW_RENDERING_MAX_HEIGHT);
+  }
 }
 
 mpv_render_context* video_output_get_render_context(VideoOutput* self) {

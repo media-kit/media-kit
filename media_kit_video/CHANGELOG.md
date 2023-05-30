@@ -1,3 +1,47 @@
+## 0.0.12
+
+- fix(android): improve `Texture` resize handling
+
+## 0.0.11
+
+- fix(android): improve `Texture` resize handling
+
+## 0.0.10
+
+- feat: `VideoControllerConfiguration`
+- feat: `VideoController.waitUntilFirstFrameRendered`
+- refactor: clean-up package structure
+- refactor: remove `VideoController.dispose`
+- refactor: `VideoController.create` -> `VideoController` constructor
+- fix(android): add `av1` to `hwdec-codecs`
+- fix(android): use `--vo=gpu` + `--hwdec=mediacodec-copy` /w `enableHardwareAcceleration`
+
+## 0.0.9
+
+- fix(android): revert to `--vo=mediacodec_embed` in `enableHardwareAcceleration`
+
+## 0.0.8
+
+- fix(android): subtitle rendering
+- fix(android): video rendering inside emulators (#149)
+- fix(android): video rendering with `enableHardwareAcceleration: false`
+
+## 0.0.7
+
+- fix(linux): VAAPI hardware acceleration
+- perf(windows): `VideoOutput::Resize`: delete texture objects in background
+
+## 0.0.6
+
+- fix(windows): synchronize texture object deletion in on unregister _v.i.z_ `VideoOutput::Resize` or `VideoOutput::~VideoOutput`
+
+## 0.0.5
+
+- Android support
+- feat: `VideoController.setSize`
+- fix: set `vo` to `libmpv` before creating render context
+- refactor: `VideoController.create` takes `Player` reference instead of `handle`
+
 ## 0.0.4
 
 - fix: use `mkdir` instead of `.gitkeep`
@@ -16,11 +60,11 @@
   - Software: MPV_RENDER_API_TYPE_SW + pixel buffer
 - fix(windows): use `TextureRegistrar::UnregisterTexture` release callback to free texture resources
 - fix(windows): synchronize texture unregister & release on frame dimensions change
-- feat: `aspectRatio` parameter for `Video` widget.
+- feat: `aspectRatio` parameter for `Video` widget
 
 ## 0.0.1
 
-- Initial release.
+- Initial release
 - Windows support:
   - Hardware: MPV_RENDER_API_TYPE_OPENGL + ANGLE + DirectX 11
   - Software: MPV_RENDER_API_TYPE_SW + pixel buffer

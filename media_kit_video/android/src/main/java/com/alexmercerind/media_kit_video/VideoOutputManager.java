@@ -9,8 +9,8 @@ package com.alexmercerind.media_kit_video;
 
 import android.util.Log;
 
-import java.util.HashMap;
 import java.util.Locale;
+import java.util.HashMap;
 import java.util.Objects;
 
 import io.flutter.view.TextureRegistry;
@@ -32,6 +32,15 @@ public class VideoOutputManager {
                 videoOutputs.put(handle, videoOutput);
             }
             return videoOutputs.get(handle);
+        }
+    }
+
+    public void setSurfaceTextureSize(long handle, int width, int height) {
+        synchronized (lock) {
+            Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.setSurfaceTextureSize: %d %d %d", handle, width, height));
+            if (videoOutputs.containsKey(handle)) {
+                Objects.requireNonNull(videoOutputs.get(handle)).setSurfaceTextureSize(width, height);
+            }
         }
     }
 

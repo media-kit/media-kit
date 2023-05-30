@@ -3,52 +3,74 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import '../common/sources.dart';
-
-// ignore_for_file: use_build_context_synchronously
+import '../common/globals.dart';
+import '../common/sources/sources.dart';
 
 Future<void> paintFirstFrame(BuildContext context) async {
   // Create [Player] and [VideoController] instances.
-  List<Player> players = [
+  final players = [
     Player(),
     Player(),
     Player(),
     Player(),
     Player(),
   ];
-  List<VideoController> controllers = [
-    await VideoController.create(players[0]),
-    await VideoController.create(players[1]),
-    await VideoController.create(players[2]),
-    await VideoController.create(players[3]),
-    await VideoController.create(players[4]),
+  final controllers = [
+    VideoController(
+      players[0],
+      configuration: configuration.value,
+    ),
+    VideoController(
+      players[1],
+      configuration: configuration.value,
+    ),
+    VideoController(
+      players[2],
+      configuration: configuration.value,
+    ),
+    VideoController(
+      players[3],
+      configuration: configuration.value,
+    ),
+    VideoController(
+      players[4],
+      configuration: configuration.value,
+    ),
   ];
-  // Open some [Playable]s.
-  // Do not start playback i.e. play: false.
+
+  for (final controller in controllers) {
+    controller.rect.addListener(
+      () => debugPrint(controller.rect.value.toString()),
+    );
+  }
+
+  // Open some [Playable]s. Do not start playback i.e. play: false.
   for (int i = 0; i < 5; i++) {
     await players[i].open(
-      Media(sources[i % sources.length]),
+      Playlist(
+        sources.map((e) => Media(e)).toList(),
+        index: i,
+      ),
       play: false,
     );
   }
 
-  // Some voluntary delay.
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.wait(controllers.map((e) => e.waitUntilFirstFrameRendered));
 
-  // The first frame should be painted!
-  await Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (context) => PaintFirstFrameScreen(
-        players: players,
-        controllers: controllers,
+  // The first frame should be drawn.
+  if (context.mounted) {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PaintFirstFrameScreen(
+          players: players,
+          controllers: controllers,
+        ),
       ),
-    ),
-  );
-  for (final e in controllers) {
-    await e.dispose();
+    );
   }
-  for (final e in players) {
-    await e.dispose();
+
+  for (final player in players) {
+    await player.dispose();
   }
 }
 

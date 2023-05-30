@@ -12,12 +12,13 @@ struct _VideoOutputManager {
   GObject parent_instance;
   GHashTable* video_outputs;
   FlTextureRegistrar* texture_registrar;
+  FlView* view;
 };
 
 G_DEFINE_TYPE(VideoOutputManager, video_output_manager, G_TYPE_OBJECT)
 
 static void video_output_manager_init(VideoOutputManager* self) {
-  self->video_outputs = g_hash_table_new_full(g_int64_hash, g_int64_equal,
+  self->video_outputs = g_hash_table_new_full(g_direct_hash, g_direct_equal,
                                               nullptr, g_object_unref);
 }
 
@@ -32,27 +33,26 @@ static void video_output_manager_class_init(VideoOutputManagerClass* klass) {
 }
 
 VideoOutputManager* video_output_manager_new(
-    FlTextureRegistrar* texture_registrar) {
+    FlTextureRegistrar* texture_registrar,
+    FlView* view) {
   VideoOutputManager* video_output_manager = VIDEO_OUTPUT_MANAGER(
       g_object_new(video_output_manager_get_type(), nullptr));
   video_output_manager->texture_registrar = texture_registrar;
+  video_output_manager->view = view;
   return video_output_manager;
 }
 
 void video_output_manager_create(VideoOutputManager* self,
                                  gint64 handle,
-                                 gint64 width,
-                                 gint64 height,
-                                 gboolean enable_hardware_acceleration,
+                                 VideoOutputConfiguration configuration,
                                  TextureUpdateCallback texture_update_callback,
                                  gpointer texture_update_callback_context) {
-  if (!g_hash_table_contains(self->video_outputs, &handle)) {
-    g_autoptr(VideoOutput) video_output =
-        video_output_new(self->texture_registrar, handle, width, height,
-                         enable_hardware_acceleration);
+  if (!g_hash_table_contains(self->video_outputs, GINT_TO_POINTER(handle))) {
+    g_autoptr(VideoOutput) video_output = video_output_new(
+        self->texture_registrar, self->view, handle, configuration);
     video_output_set_texture_update_callback(
         video_output, texture_update_callback, texture_update_callback_context);
-    g_hash_table_insert(self->video_outputs, &handle,
+    g_hash_table_insert(self->video_outputs, GINT_TO_POINTER(handle),
                         g_object_ref(video_output));
   }
 }
@@ -61,15 +61,15 @@ void video_output_manager_set_size(VideoOutputManager* self,
                                    gint64 handle,
                                    gint64 width,
                                    gint64 height) {
-  if (g_hash_table_contains(self->video_outputs, &handle)) {
-    VideoOutput* video_output =
-        VIDEO_OUTPUT(g_hash_table_lookup(self->video_outputs, &handle));
+  if (g_hash_table_contains(self->video_outputs, GINT_TO_POINTER(handle))) {
+    VideoOutput* video_output = VIDEO_OUTPUT(
+        g_hash_table_lookup(self->video_outputs, GINT_TO_POINTER(handle)));
     video_output_set_size(video_output, width, height);
   }
 }
 
 void video_output_manager_dispose(VideoOutputManager* self, gint64 handle) {
-  if (g_hash_table_contains(self->video_outputs, &handle)) {
-    g_hash_table_remove(self->video_outputs, &handle);
+  if (g_hash_table_contains(self->video_outputs, GINT_TO_POINTER(handle))) {
+    g_hash_table_remove(self->video_outputs, GINT_TO_POINTER(handle));
   }
 }

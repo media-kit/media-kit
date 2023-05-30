@@ -9,6 +9,20 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin;
 
 /** MediaKitLibsAndroidAudioPlugin */
 public class MediaKitLibsAndroidAudioPlugin implements FlutterPlugin {
+    static {
+        // DynamicLibrary.open on Dart side may not work on some ancient devices unless System.loadLibrary is called first.
+        try {
+            System.loadLibrary("mpv");
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        try {
+            System.loadLibrary("avcodec");
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
         Log.i("media_kit", "package:media_kit_libs_android_audio attached.");

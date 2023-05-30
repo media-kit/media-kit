@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import '../common/sources.dart';
+import '../common/globals.dart';
+import '../common/sources/sources.dart';
 
 class StressTestScreen extends StatefulWidget {
   const StressTestScreen({Key? key}) : super(key: key);
@@ -14,43 +15,34 @@ class StressTestScreen extends StatefulWidget {
 
 class _StressTestScreenState extends State<StressTestScreen> {
   static const int count = 8;
-  List<Player> players = [];
-  List<VideoController> controllers = [];
+
+  final List<Player> players = [];
+  final List<VideoController> controllers = [];
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () async {
-        for (int i = 0; i < count; i++) {
-          final player = Player();
-          final controller = await VideoController.create(player);
-          players.add(player);
-          controllers.add(controller);
-        }
-        for (int i = 0; i < count; i++) {
-          await players[i].open(
-            Media(sources[i % sources.length]),
-            play: true,
-          );
-          await players[i].setPlaylistMode(PlaylistMode.loop);
-          await players[i].setVolume(0.0);
-        }
-        setState(() {});
-      },
-    );
+    for (int i = 0; i < count; i++) {
+      final player = Player();
+      final controller = VideoController(
+        player,
+        configuration: configuration.value,
+      );
+      players.add(player);
+      controllers.add(controller);
+    }
+    for (int i = 0; i < count; i++) {
+      players[i].setVolume(0.0);
+      players[i].setPlaylistMode(PlaylistMode.loop);
+      players[i].open(Media(sources[i % sources.length]));
+    }
   }
 
   @override
   void dispose() {
-    Future.microtask(() async {
-      for (final e in controllers) {
-        await e.dispose();
-      }
-      for (final e in players) {
-        await e.dispose();
-      }
-    });
+    for (final player in players) {
+      player.dispose();
+    }
     super.dispose();
   }
 
