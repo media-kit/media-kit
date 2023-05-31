@@ -35,7 +35,7 @@ abstract class AndroidAssetLoader {
     return path;
   }
 
-  /// Copies an asset bundled with the application to the external files directory & returns it absolute path.
+  /// Copies an asset bundled with the application to the files directory & returns it absolute path.
   static String loadSync(String asset) {
     if (_loaded.containsKey(asset)) {
       return _loaded[asset]!;
@@ -43,7 +43,7 @@ abstract class AndroidAssetLoader {
 
     final lib = DynamicLibrary.open('libmediakitandroidhelper.so');
     final fn = lib.lookupFunction<FnCXX, FnDart>(
-      'MediaKitAndroidHelperCopyAssetToExternalFilesDir',
+      'MediaKitAndroidHelperCopyAssetToFilesDir',
     );
 
     final name = asset.toNativeUtf8();
