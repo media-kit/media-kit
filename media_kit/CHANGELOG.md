@@ -1,6 +1,7 @@
-## 0.0.9
+## 0.0.10
 
 - perf: emit distinct events in `Player.streams`
+- fix: `Player.setAudioDevice` not working
 - fix(android): crash on some devices
 
 ## 0.0.9+1
