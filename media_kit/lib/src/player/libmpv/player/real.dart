@@ -136,7 +136,7 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
 
       final int index;
-      final playlist = <Media>[];
+      final List<Media> playlist = <Media>[];
       if (playable is Media) {
         index = 0;
         playlist.add(playable);
@@ -883,10 +883,9 @@ class libmpvPlayer extends PlatformPlayer {
 
       final name = 'audio-device'.toNativeUtf8();
       final value = audioDevice.name.toNativeUtf8();
-      mpv.mpv_set_property(
+      mpv.mpv_set_property_string(
         ctx,
         name.cast(),
-        generated.mpv_format.MPV_FORMAT_STRING,
         value.cast(),
       );
       calloc.free(name);
@@ -1059,6 +1058,22 @@ class libmpvPlayer extends PlatformPlayer {
   }
 
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
+    if (event.ref.event_id ==
+        generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
+      final prop = event.ref.data.cast<generated.mpv_event_property>();
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'idle-active' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+        // The [Player] has entered the idle state; initialization is complete.
+        if (!completer.isCompleted) {
+          completer.complete();
+        }
+      }
+    }
+    if (!completer.isCompleted) {
+      // Ignore the events which are fired before the [Player]'s initialization.
+      return;
+    }
+
     _error(event.ref.error);
 
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
@@ -1195,19 +1210,21 @@ class libmpvPlayer extends PlatformPlayer {
             }
           }
         }
-        state = state.copyWith(
-          playlist: Playlist(
-            playlist,
-            index: index,
-          ),
-        );
-        if (!playlistController.isClosed) {
-          playlistController.add(
-            Playlist(
+        if (index >= 0) {
+          state = state.copyWith(
+            playlist: Playlist(
               playlist,
               index: index,
             ),
           );
+          if (!playlistController.isClosed) {
+            playlistController.add(
+              Playlist(
+                playlist,
+                index: index,
+              ),
+            );
+          }
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'volume' &&
@@ -1675,6 +1692,7 @@ class libmpvPlayer extends PlatformPlayer {
         'width': generated.mpv_format.MPV_FORMAT_INT64,
         'height': generated.mpv_format.MPV_FORMAT_INT64,
         'eof-reached': generated.mpv_format.MPV_FORMAT_FLAG,
+        'idle-active': generated.mpv_format.MPV_FORMAT_FLAG,
       }.forEach(
         (property, format) {
           final name = property.toNativeUtf8();
@@ -1719,8 +1737,6 @@ class libmpvPlayer extends PlatformPlayer {
       mpv.mpv_hook_add(ctx, 0, unload.cast(), 0);
       calloc.free(load);
       calloc.free(unload);
-
-      completer.complete();
     });
   }
 
@@ -1776,6 +1792,7 @@ class libmpvPlayer extends PlatformPlayer {
   /// While [isPlayingStateChangeAllowed] is `false`, any change to [state.playing] & [streams.playing] is ignored.
   bool isPlayingStateChangeAllowed = false;
 
+  /// [Completer] to wait for initialization of this instance (in [_create]).
   final Completer<void> completer = Completer<void>();
 
   /// [Future<void>] to wait for initialization of this instance.
