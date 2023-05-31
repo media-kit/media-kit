@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:async';
 import 'dart:collection';
 import 'package:test/test.dart';
 import 'package:collection/collection.dart';
@@ -343,6 +344,7 @@ void main() {
         ),
       );
     },
+    timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
     'player-open-playable-playlist-extras',
@@ -470,6 +472,7 @@ void main() {
         ),
       );
     },
+    timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
     'player-open-playable-playlist-http-headers',
@@ -552,6 +555,116 @@ void main() {
           ],
         ),
       );
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-play-after-completed',
+    () async {
+      final completer = Completer();
+
+      final player = Player();
+
+      player.streams.completed.listen((event) {
+        if (!completer.isCompleted) {
+          completer.complete();
+        }
+      });
+
+      await player.open(Media(sources.file[0]));
+
+      await completer.future;
+
+      final expectPosition = expectAsync1(
+        (value) {
+          print(value);
+          expect(value, isA<Duration>());
+        },
+        count: 1,
+        max: -1,
+      );
+
+      player.streams.position.listen((event) async {
+        await player.dispose();
+        expectPosition(event);
+      });
+
+      await player.play();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-open-while-playing',
+    () async {
+      final player = Player();
+
+      expect(
+        player.streams.playlist,
+        emitsInOrder(
+          [
+            Playlist(
+              [
+                Media(sources.file[0]),
+              ],
+              index: 0,
+            ),
+            Playlist(
+              [
+                Media(sources.file[1]),
+              ],
+              index: 0,
+            ),
+          ],
+        ),
+      );
+      expect(
+        player.streams.playing,
+        emitsInOrder(
+          [
+            false,
+            true,
+            false,
+            true,
+          ],
+        ),
+      );
+      // NOTE: Not emitted when the playable is changed mid-playback. Only upon end of file.
+      expect(
+        player.streams.completed,
+        emitsInOrder(
+          [
+            false,
+            true,
+          ],
+        ),
+      );
+
+      await player.open(Media(sources.file[0]));
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.open(Media(sources.file[1]));
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-open-playable-playlist-non-zero-index',
+    () async {
+      final player = Player();
+
+      final playlist = Playlist(
+        [
+          for (int i = 0; i < sources.file.length; i++) Media(sources.file[i]),
+        ],
+        index: sources.file.length - 1,
+      );
+
+      expect(
+        player.streams.playlist,
+        emits(playlist),
+      );
+
+      await player.open(playlist);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
