@@ -1,3 +1,8 @@
+## 0.0.9
+
+- perf: emit distinct events in `Player.streams`
+- fix(android): crash on some devices
+
 ## 0.0.9+1
 
 - docs: document updated `media_kit_video`
