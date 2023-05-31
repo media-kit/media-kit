@@ -63,7 +63,7 @@ class VideoController {
   /// [Rect] of the video output, received from the native implementation.
   final ValueNotifier<Rect?> rect = ValueNotifier<Rect?>(null);
 
-  /// {@macro platform_video_controller}
+  /// {@macro video_controller}
   VideoController(
     Player player, {
     VideoControllerConfiguration configuration =

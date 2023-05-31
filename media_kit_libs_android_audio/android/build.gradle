@@ -52,25 +52,25 @@ task downloadDependencies(type: Exec) {
     
     // Download all *.jar dependencies & verify their MD5 checksums.
 
-    def urlARM64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.7/audio-arm64-v8a.jar"
-    def urlARMEABI = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.7/audio-armeabi-v7a.jar"
-    def urlX86_64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.7/audio-x86_64.jar"
-    def urlX86 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.7/audio-x86.jar"
+    def urlARM64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.8/audio-arm64-v8a.jar"
+    def urlARMEABI = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.8/audio-armeabi-v7a.jar"
+    def urlX86_64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.8/audio-x86_64.jar"
+    def urlX86 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.8/audio-x86.jar"
 
-    def urlNoFFmpegARM64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.7/no-ffmpeg-audio-arm64-v8a.jar"
-    def urlNoFFmpegARMEABI = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.7/no-ffmpeg-audio-armeabi-v7a.jar"
-    def urlNoFFmpegX86_64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.7/no-ffmpeg-audio-x86_64.jar"
-    def urlNoFFmpegX86 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.7/no-ffmpeg-audio-x86.jar"
+    def urlNoFFmpegARM64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.8/no-ffmpeg-audio-arm64-v8a.jar"
+    def urlNoFFmpegARMEABI = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.8/no-ffmpeg-audio-armeabi-v7a.jar"
+    def urlNoFFmpegX86_64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.8/no-ffmpeg-audio-x86_64.jar"
+    def urlNoFFmpegX86 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.8/no-ffmpeg-audio-x86.jar"
 
-    def destARM64 = file("$buildDir/v0.0.7/audio-arm64-v8a.jar")
-    def destARMEABI = file("$buildDir/v0.0.7/audio-armeabi-v7a.jar")
-    def destX86_64 = file("$buildDir/v0.0.7/audio-x86_64.jar")
-    def destX86 = file("$buildDir/v0.0.7/audio-x86.jar")
+    def destARM64 = file("$buildDir/v0.0.8/audio-arm64-v8a.jar")
+    def destARMEABI = file("$buildDir/v0.0.8/audio-armeabi-v7a.jar")
+    def destX86_64 = file("$buildDir/v0.0.8/audio-x86_64.jar")
+    def destX86 = file("$buildDir/v0.0.8/audio-x86.jar")
     
-    def destNoFFmpegARM64 = file("$buildDir/v0.0.7/no-ffmpeg-audio-arm64-v8a.jar")
-    def destNoFFmpegARMEABI = file("$buildDir/v0.0.7/no-ffmpeg-audio-armeabi-v7a.jar")
-    def destNoFFmpegX86_64 = file("$buildDir/v0.0.7/no-ffmpeg-audio-x86_64.jar")
-    def destNoFFmpegX86 = file("$buildDir/v0.0.7/no-ffmpeg-audio-x86.jar")
+    def destNoFFmpegARM64 = file("$buildDir/v0.0.8/no-ffmpeg-audio-arm64-v8a.jar")
+    def destNoFFmpegARMEABI = file("$buildDir/v0.0.8/no-ffmpeg-audio-armeabi-v7a.jar")
+    def destNoFFmpegX86_64 = file("$buildDir/v0.0.8/no-ffmpeg-audio-x86_64.jar")
+    def destNoFFmpegX86 = file("$buildDir/v0.0.8/no-ffmpeg-audio-x86.jar")
 
     if (!destARM64.exists()) {
         destARM64.parentFile.mkdirs()
@@ -135,29 +135,29 @@ task downloadDependencies(type: Exec) {
     def md5NoFFmpegX86_64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegX86_64.toPath())).encodeHex().toString().toUpperCase()
     def md5NoFFmpegX86 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegX86.toPath())).encodeHex().toString().toUpperCase()
 
-    if (md5ARM64 != "F8CB746D4EFA1DD034DFB4ADECB0CFF0") {
+    if (md5ARM64 != "FC8D0B731A7EEC65EE2BCB7183C8441A") {
         throw new GradleException("media_kit: arm64-v8a JAR verification failed.")
     }
-    if (md5ARMEABI != "020EDD1827D968B63DC731B2AB050102") {
+    if (md5ARMEABI != "746B9B1C15ACE5075F8C8CFDE4D74353") {
         throw new GradleException("media_kit: armeabi-v7a JAR verification failed.")
     }
-    if (md5X86_64 != "765506FB8D857D608E8905AED4217B74") {
+    if (md5X86_64 != "181511415B333B07EE18C47FB2F7A331") {
         throw new GradleException("media_kit: x86_64 JAR verification failed.")
     }
-    if (md5X86 != "07AD9C84A316385FE4E87431AD68E78A") {
+    if (md5X86 != "97082A282828F359AC5C3339709A806D") {
         throw new GradleException("media_kit: x86 JAR verification failed.")
     }
 
-    if (md5NoFFmpegARM64 != "23D94BB19FA7FCA862918396A3CF5E43") {
+    if (md5NoFFmpegARM64 != "700B0A93066C173A3A3857615FF1EF0B") {
         throw new GradleException("media_kit: arm64-v8a JAR verification failed.")
     }
-    if (md5NoFFmpegARMEABI != "77EFEDD792D0FAA472E7A5437F1517B7") {
+    if (md5NoFFmpegARMEABI != "9FBC45C86FAF08AE777ACA614566CB5F") {
         throw new GradleException("media_kit: armeabi-v7a JAR verification failed.")
     }
-    if (md5NoFFmpegX86_64 != "4872A09709E799D2F73CA698B1F78F04") {
+    if (md5NoFFmpegX86_64 != "9F1D795DB2737FDD8138BB1D2286B84F") {
         throw new GradleException("media_kit: x86_64 JAR verification failed.")
     }
-    if (md5NoFFmpegX86 != "CEEDF2665F820331697BEBC5EA59A0D2") {
+    if (md5NoFFmpegX86 != "7A282F28E587A40205DF33E4E352BCC2") {
         throw new GradleException("media_kit: x86 JAR verification failed.")
     }
 

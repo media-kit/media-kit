@@ -4,6 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
+import 'package:collection/collection.dart';
 import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/media/media.dart';
 
@@ -40,9 +41,6 @@ class Playlist extends Playable {
     this.index = 0,
   });
 
-  @override
-  String toString() => 'Playlist(index: $index, medias: $medias)';
-
   Playlist copyWith({
     List<Media>? medias,
     int? index,
@@ -52,4 +50,18 @@ class Playlist extends Playable {
       index: index ?? this.index,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Playlist &&
+          ListEquality().equals(medias, other.medias) &&
+          index == other.index;
+
+  @override
+  // TODO: implement hashCode
+  int get hashCode => medias.hashCode ^ index.hashCode;
+
+  @override
+  String toString() => 'Playlist(medias: $medias, index: $index)';
 }
