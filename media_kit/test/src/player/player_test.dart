@@ -661,7 +661,11 @@ void main() {
 
       expect(
         player.streams.playlist,
-        emits(playlist),
+        emitsInAnyOrder(
+          [
+            playlist,
+          ],
+        ),
       );
 
       await player.open(playlist);
