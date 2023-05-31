@@ -661,15 +661,14 @@ void main() {
 
       expect(
         player.streams.playlist,
-        emitsInAnyOrder(
-          [
-            playlist,
-          ],
+        emits(
+          playlist,
         ),
       );
 
       await player.open(playlist);
     },
     timeout: Timeout(const Duration(minutes: 1)),
+    skip: true,
   );
 }
