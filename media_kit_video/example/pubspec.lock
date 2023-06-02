@@ -98,10 +98,10 @@ packages:
     dependency: transitive
     description:
       name: media_kit
-      sha256: "7e1acdc3584805ed9870c8276834baef89293239faf479cc8b878b3c68183af8"
+      sha256: e14ab68b0ee29a164dd200311e1b8f1fc2bf3564d700aa640a49ab679943ec49
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.9"
+    version: "0.0.10"
   media_kit_video:
     dependency: "direct main"
     description:

@@ -15,7 +15,7 @@ dependencies:
     sdk: flutter
   ffi: ^2.0.1
   # NOTE: Bump before publishing to pub.dev
-  media_kit: ^0.0.9
+  media_kit: ^0.0.10
   synchronized: ^3.1.0
   plugin_platform_interface: ^2.0.2
 

@@ -1,8 +1,9 @@
 ## 0.0.10
 
 - perf: emit distinct events in `Player.streams`
-- fix: `Player.setAudioDevice` not working
 - fix(android): crash on some devices
+- fix: `Player.setAudioDevice` not working
+- fix: set/emit `completed` as `false` upon `Player.seek`
 
 ## 0.0.9+1
 
