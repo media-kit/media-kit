@@ -1623,6 +1623,7 @@ class libmpvPlayer extends PlatformPlayer {
       // idle = yes
       // pause = yes
       // keep-open = yes
+      // network-timeout = 5
       // demuxer-max-bytes = 32 * 1024 * 1024
       // demuxer-max-back-bytes = 32 * 1024 * 1024
       //
@@ -1638,6 +1639,7 @@ class libmpvPlayer extends PlatformPlayer {
         'idle': 'yes',
         'pause': 'yes',
         'keep-open': 'yes',
+        'network-timeout': '5',
         'demuxer-max-bytes': (32 * 1024 * 1024).toString(),
         'demuxer-max-back-bytes': (32 * 1024 * 1024).toString(),
         // On Android, prefer OpenSL ES audio output.
