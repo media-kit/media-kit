@@ -1,3 +1,7 @@
+## 0.0.10+1
+
+- docs: update demo application links
+
 ## 0.0.10
 
 - perf: emit distinct events in `Player.streams`

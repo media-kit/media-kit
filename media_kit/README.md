@@ -76,11 +76,11 @@ dependencies:
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.9/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 13 or above.                     | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.9/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.9/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.9/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.9/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.10/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 13 or above.                     | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.10/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.10/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.10/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.10/media_kit_test_linux_x64.7z)          |
 | Web         | 🚧    | 🚧    | [WIP](https://github.com/alexmercerind/media_kit/pull/128)                                 | [WIP](https://github.com/alexmercerind/media_kit/pull/128)               |
 
 <table>
