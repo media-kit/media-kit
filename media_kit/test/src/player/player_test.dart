@@ -9,6 +9,7 @@ import 'package:media_kit/src/media_kit.dart';
 import 'package:media_kit/src/player/player.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/media/media.dart';
+import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/player/libmpv/player/player.dart';
 
 import '../../common/sources.dart';
@@ -843,4 +844,42 @@ void main() {
     // TODO(@alexmercerind): Flaky on GNU/Linux CI.
     skip: true,
   );
+  test('player-audio-devices', () async {
+    final player = Player();
+
+    final expectAudioDevices = expectAsync1(
+      (value) {
+        print(value);
+        expect(value, isA<List<AudioDevice>>());
+        final devices = value as List<AudioDevice>;
+        expect(devices, isNotEmpty);
+        expect(devices.first, equals(AudioDevice.auto()));
+      },
+      count: 1,
+      max: -1,
+    );
+
+    player.streams.audioDevices.listen((event) async {
+      expectAudioDevices(event);
+    });
+  });
+  test('player-set-audio-device', () async {
+    final player = Player();
+
+    final expectAudioDevices = expectAsync1(
+      (value) {
+        final devices = value as List<AudioDevice>;
+        expect(
+          player.setAudioDevice(devices.first),
+          completes,
+        );
+      },
+      count: 1,
+      max: -1,
+    );
+
+    player.streams.audioDevices.listen((event) async {
+      expectAudioDevices(event);
+    });
+  });
 }

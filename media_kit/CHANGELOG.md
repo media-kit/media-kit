@@ -1,3 +1,7 @@
+## 0.0.11
+
+- fix: `audioDevices` state/stream not being set/emit
+
 ## 0.0.10+1
 
 - docs: update demo application links
