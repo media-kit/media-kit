@@ -60,8 +60,11 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
+            // Player::open
             false,
             true,
+            // EOF
+            false,
           ],
         ),
       );
@@ -69,12 +72,17 @@ void main() {
         player.streams.completed,
         emitsInOrder(
           [
+            // Player::open
             false,
+            // EOF
+            true,
           ],
         ),
       );
 
       await player.open(Media(sources.file[0]));
+
+      await Future.delayed(const Duration(seconds: 30));
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -103,14 +111,20 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
+            // Player::open
             false,
             true,
+            // -> 1
             false,
             true,
+            // -> 2
             false,
             true,
+            // -> 3
             false,
             true,
+            // EOF
+            false,
           ],
         ),
       );
@@ -118,20 +132,28 @@ void main() {
         player.streams.completed,
         emitsInOrder(
           [
+            // Player::open
             false,
+            // -> 1
             true,
             false,
+            // -> 2
             true,
             false,
+            // -> 3
             true,
             false,
+            // EOF
+            true,
           ],
         ),
       );
 
       await player.open(playlist);
+
+      await Future.delayed(const Duration(minutes: 1));
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
   );
   test(
     'player-open-playable-media-play-false',
@@ -155,6 +177,7 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
+            // Player::open
             false,
           ],
         ),
@@ -190,6 +213,7 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
+            // Player::open
             false,
           ],
         ),
@@ -224,8 +248,12 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
+            // Player::open
             false,
+            // Player::play
             true,
+            // EOF
+            false,
           ],
         ),
       );
@@ -233,7 +261,11 @@ void main() {
         player.streams.completed,
         emitsInOrder(
           [
+            // Player::open
+            // Player::play
             false,
+            // EOF
+            true,
           ],
         ),
       );
@@ -243,6 +275,8 @@ void main() {
         play: false,
       );
       await player.play();
+
+      await Future.delayed(const Duration(seconds: 30));
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -271,14 +305,20 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
+            // Player::open
             false,
             true,
+            // -> 1
             false,
             true,
+            // -> 2
             false,
             true,
+            // -> 3
             false,
             true,
+            // EOF
+            false,
           ],
         ),
       );
@@ -286,13 +326,19 @@ void main() {
         player.streams.completed,
         emitsInOrder(
           [
+            // Player::open
             false,
+            // -> 1
             true,
             false,
+            // -> 2
             true,
             false,
+            // -> 3
             true,
             false,
+            // EOF
+            true,
           ],
         ),
       );
@@ -302,8 +348,10 @@ void main() {
         play: false,
       );
       await player.play();
+
+      await Future.delayed(const Duration(minutes: 1));
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
   );
   test(
     'player-open-playable-media-extras',
@@ -565,14 +613,45 @@ void main() {
 
       final player = Player();
 
+      expect(
+        player.streams.playing,
+        emitsInOrder(
+          [
+            // Player.open
+            false,
+            true,
+            // EOF
+            false,
+            // Player.play
+            true,
+          ],
+        ),
+      );
+      expect(
+        player.streams.completed,
+        emitsInOrder(
+          [
+            // Player.open
+            false,
+            // EOF
+            true,
+            // Player.play
+            false,
+          ],
+        ),
+      );
+
       player.streams.completed.listen((event) {
         if (!completer.isCompleted) {
-          completer.complete();
+          if (event) {
+            completer.complete();
+          }
         }
       });
 
       await player.open(Media(sources.file[0]));
 
+      // Wait for EOF.
       await completer.future;
 
       final expectPosition = expectAsync1(
@@ -585,11 +664,103 @@ void main() {
       );
 
       player.streams.position.listen((event) async {
-        await player.dispose();
         expectPosition(event);
       });
 
+      // Internal Player.play/Player.playOrPause logic depends upon the value of PlayerState::completed.
+      // Thus, if EOF is reached with PlaylistMode.none, then re-start playback instead of cycling between play/pause.
+      // So, we need this voluntary delay.
+      await Future.delayed(const Duration(seconds: 5));
+
+      // Begin test.
+
       await player.play();
+
+      // End test.
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-seek-after-completed',
+    () async {
+      final completer = Completer();
+
+      final player = Player();
+
+      expect(
+        player.streams.playing,
+        emitsInOrder(
+          [
+            // Player.open
+            false,
+            true,
+            // EOF
+            false,
+            // Player.seek
+            // ---------
+          ],
+        ),
+      );
+      expect(
+        player.streams.completed,
+        emitsInOrder(
+          [
+            // Player.open
+            false,
+            // EOF
+            true,
+            // Player.seek
+            false,
+          ],
+        ),
+      );
+
+      player.streams.completed.listen((event) {
+        if (!completer.isCompleted) {
+          if (event) {
+            completer.complete();
+          }
+        }
+      });
+
+      await player.open(Media(sources.file[0]));
+
+      // Wait for EOF.
+      await completer.future;
+
+      final expectPosition = expectAsync1(
+        (value) {
+          print(value);
+          expect(value, isA<Duration>());
+          final position = value as Duration;
+          expect(position, Duration.zero);
+        },
+        count: 1,
+        max: -1,
+      );
+
+      player.streams.position.listen((event) async {
+        expectPosition(event);
+      });
+
+      // Internal Player.play/Player.playOrPause logic depends upon the value of PlayerState::completed.
+      // Thus, if EOF is reached with PlaylistMode.none, then re-start playback instead of cycling between play/pause.
+      // So, we need this voluntary delay.
+      await Future.delayed(const Duration(seconds: 5));
+
+      // Begin test.
+
+      await player.seek(Duration.zero);
+
+      // End test.
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -669,6 +840,7 @@ void main() {
       await player.open(playlist);
     },
     timeout: Timeout(const Duration(minutes: 1)),
+    // TODO(@alexmercerind): Flaky on GNU/Linux CI.
     skip: true,
   );
 }
