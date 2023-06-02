@@ -569,6 +569,13 @@ class libmpvPlayer extends PlatformPlayer {
         args.cast(),
       );
       calloc.free(args);
+
+      // It is self explanatory that PlayerState.completed & PlayerStreams.completed must enter the false state if seek is called. Typically after EOF.
+      // https://github.com/alexmercerind/media_kit/issues/221
+      state = state.copyWith(completed: false);
+      if (!completedController.isClosed) {
+        completedController.add(false);
+      }
     }
 
     if (synchronized) {
