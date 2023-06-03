@@ -54,6 +54,8 @@ void main() {
               ],
               index: 0,
             ),
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -61,11 +63,13 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
             true,
             // EOF
             false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -73,10 +77,12 @@ void main() {
         player.streams.completed,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
             // EOF
             true,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -84,6 +90,8 @@ void main() {
       await player.open(Media(sources.file[0]));
 
       await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -102,8 +110,11 @@ void main() {
         player.streams.playlist,
         emitsInOrder(
           [
+            // Player.open
             for (int i = 0; i < sources.file.length; i++)
               playlist.copyWith(index: i),
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -112,7 +123,7 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
             true,
             // -> 1
@@ -126,6 +137,8 @@ void main() {
             true,
             // EOF
             false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -133,7 +146,7 @@ void main() {
         player.streams.completed,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
             // -> 1
             true,
@@ -146,15 +159,19 @@ void main() {
             false,
             // EOF
             true,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
 
       await player.open(playlist);
 
-      await Future.delayed(const Duration(minutes: 1));
+      await Future.delayed(const Duration(minutes: 1, seconds: 30));
+
+      await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
+    timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
     'player-open-playable-media-play-false',
@@ -165,12 +182,15 @@ void main() {
         player.streams.playlist,
         emitsInOrder(
           [
+            // Player.open
             Playlist(
               [
                 Media(sources.file[0]),
               ],
               index: 0,
             ),
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -178,8 +198,10 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -188,6 +210,10 @@ void main() {
         Media(sources.file[0]),
         play: false,
       );
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -207,6 +233,8 @@ void main() {
         emitsInOrder(
           [
             playlist,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -214,8 +242,10 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -224,6 +254,10 @@ void main() {
         playlist,
         play: false,
       );
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -242,6 +276,8 @@ void main() {
               ],
               index: 0,
             ),
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -249,12 +285,14 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
-            // Player::play
+            // Player.play
             true,
             // EOF
             false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -262,11 +300,13 @@ void main() {
         player.streams.completed,
         emitsInOrder(
           [
-            // Player::open
-            // Player::play
+            // Player.open
+            // Player.play
             false,
             // EOF
             true,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -278,6 +318,8 @@ void main() {
       await player.play();
 
       await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -298,6 +340,8 @@ void main() {
           [
             for (int i = 0; i < sources.file.length; i++)
               playlist.copyWith(index: i),
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -306,7 +350,7 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
             true,
             // -> 1
@@ -320,6 +364,8 @@ void main() {
             true,
             // EOF
             false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -327,7 +373,7 @@ void main() {
         player.streams.completed,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
             // -> 1
             true,
@@ -340,6 +386,8 @@ void main() {
             false,
             // EOF
             true,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -350,9 +398,11 @@ void main() {
       );
       await player.play();
 
-      await Future.delayed(const Duration(minutes: 1));
+      await Future.delayed(const Duration(minutes: 1, seconds: 30));
+
+      await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
+    timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
     'player-open-playable-media-extras',
@@ -668,7 +718,7 @@ void main() {
         expectPosition(event);
       });
 
-      // Internal Player.play/Player.playOrPause logic depends upon the value of PlayerState::completed.
+      // Internal Player.play/Player.playOrPause logic depends upon the value of PlayerState.completed.
       // Thus, if EOF is reached with PlaylistMode.none, then re-start playback instead of cycling between play/pause.
       // So, we need this voluntary delay.
       await Future.delayed(const Duration(seconds: 5));
@@ -748,7 +798,7 @@ void main() {
         expectPosition(event);
       });
 
-      // Internal Player.play/Player.playOrPause logic depends upon the value of PlayerState::completed.
+      // Internal Player.play/Player.playOrPause logic depends upon the value of PlayerState.completed.
       // Thus, if EOF is reached with PlaylistMode.none, then re-start playback instead of cycling between play/pause.
       // So, we need this voluntary delay.
       await Future.delayed(const Duration(seconds: 5));
