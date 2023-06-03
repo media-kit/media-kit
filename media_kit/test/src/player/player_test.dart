@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:async';
 import 'dart:collection';
+import 'package:media_kit/media_kit.dart';
 import 'package:test/test.dart';
 import 'package:collection/collection.dart';
 
@@ -36,6 +37,20 @@ void main() {
       expect(
         player.handle,
         completes,
+      );
+    },
+  );
+  test(
+    'player-configuration-ready-callback',
+    () {
+      final expectReady = expectAsync0(() {});
+
+      Player(
+        configuration: PlayerConfiguration(
+          ready: () {
+            expectReady();
+          },
+        ),
       );
     },
   );
@@ -894,42 +909,59 @@ void main() {
     // TODO(@alexmercerind): Flaky on GNU/Linux CI.
     skip: true,
   );
-  test('player-audio-devices', () async {
-    final player = Player();
+  test(
+    'player-audio-devices',
+    () async {
+      final player = Player();
 
-    final expectAudioDevices = expectAsync1(
-      (value) {
-        print(value);
-        expect(value, isA<List<AudioDevice>>());
-        final devices = value as List<AudioDevice>;
-        expect(devices, isNotEmpty);
-        expect(devices.first, equals(AudioDevice.auto()));
-      },
-      count: 1,
-      max: -1,
-    );
+      final expectAudioDevices = expectAsync1(
+        (value) {
+          print(value);
+          expect(value, isA<List<AudioDevice>>());
+          final devices = value as List<AudioDevice>;
+          expect(devices, isNotEmpty);
+          expect(devices.first, equals(AudioDevice.auto()));
+        },
+        count: 1,
+        max: -1,
+      );
 
-    player.streams.audioDevices.listen((event) async {
-      expectAudioDevices(event);
-    });
-  });
-  test('player-set-audio-device', () async {
-    final player = Player();
+      player.streams.audioDevices.listen((event) async {
+        expectAudioDevices(event);
+      });
+    },
+  );
+  test(
+    'player-set-audio-device',
+    () async {
+      final player = Player();
 
-    final expectAudioDevices = expectAsync1(
-      (value) {
-        final devices = value as List<AudioDevice>;
-        expect(
-          player.setAudioDevice(devices.first),
-          completes,
-        );
-      },
-      count: 1,
-      max: -1,
-    );
+      // Fetch AudioDevice(s).
 
-    player.streams.audioDevices.listen((event) async {
-      expectAudioDevices(event);
-    });
-  });
+      final devices = await player.streams.audioDevices.first;
+
+      expect(devices, isNotEmpty);
+      expect(devices.first, equals(AudioDevice.auto()));
+
+      final expectAudioDevice = expectAsync2(
+        (device, i) {
+          print(device);
+          expect(device, isA<AudioDevice>());
+          expect(device, equals(devices[i as int]));
+        },
+        count: devices.length,
+      );
+
+      for (int i = 0; i < devices.length; i++) {
+        // Invoke Player.setAudioDevice.
+        await player.setAudioDevice(devices[i]);
+        // Expect Player.streams.audioDevices to emit the same [AudioDevice].
+        expectAudioDevice(devices[i], i);
+
+        // Seems to work even without the delay.
+        // However, the event streams are asynchronous, so you never know. It's not really a problem eitherway.
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    },
+  );
 }
