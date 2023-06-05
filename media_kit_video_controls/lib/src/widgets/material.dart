@@ -712,50 +712,56 @@ class _VolumeButtonState extends State<_VolumeButton>
             iconSize: widget.data.bottomButtonBarButtonSize * 0.8,
             color: widget.data.bottomButtonBarButtonColor,
             icon: Icon(
-              mute
+              mute || volume == 0.0
                   ? Icons.volume_off
                   : volume < 0.5
                       ? Icons.volume_down
                       : Icons.volume_up,
             ),
           ),
-          AnimatedContainer(
-            width: hover ? (12.0 + 52.0 + 18.0) : 12.0,
+          AnimatedOpacity(
+            opacity: hover ? 1.0 : 0.0,
             duration: widget.data.volumeBarTransitionDuration,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  const SizedBox(width: 12.0),
-                  SizedBox(
-                    width: 52.0,
-                    child: SliderTheme(
-                      data: SliderThemeData(
-                        trackHeight: 1.2,
-                        inactiveTrackColor: widget.data.volumeBarColor,
-                        activeTrackColor: widget.data.volumeBarActiveColor,
-                        thumbColor: widget.data.volumeBarThumbColor,
-                        thumbShape: RoundSliderThumbShape(
-                          enabledThumbRadius:
-                              widget.data.volumeBarThumbSize / 2,
-                          elevation: 0.0,
-                          pressedElevation: 0.0,
+            child: AnimatedContainer(
+              width: hover ? (12.0 + 52.0 + 18.0) : 12.0,
+              duration: widget.data.volumeBarTransitionDuration,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    const SizedBox(width: 12.0),
+                    SizedBox(
+                      width: 52.0,
+                      child: SliderTheme(
+                        data: SliderThemeData(
+                          trackHeight: 1.2,
+                          inactiveTrackColor: widget.data.volumeBarColor,
+                          activeTrackColor: widget.data.volumeBarActiveColor,
+                          thumbColor: widget.data.volumeBarThumbColor,
+                          thumbShape: RoundSliderThumbShape(
+                            enabledThumbRadius:
+                                widget.data.volumeBarThumbSize / 2,
+                            elevation: 0.0,
+                            pressedElevation: 0.0,
+                          ),
+                          trackShape: _CustomTrackShape(),
+                          overlayColor: const Color(0x00000000),
                         ),
-                        trackShape: _CustomTrackShape(),
-                        overlayColor: const Color(0x00000000),
-                      ),
-                      child: Slider(
-                        value: volume.clamp(0.0, 100.0),
-                        min: 0.0,
-                        max: 100.0,
-                        onChanged: (value) {
-                          widget.controller.player.setVolume(value);
-                        },
+                        child: Slider(
+                          value: volume.clamp(0.0, 100.0),
+                          min: 0.0,
+                          max: 100.0,
+                          onChanged: (value) async {
+                            await widget.controller.player.setVolume(value);
+                            mute = false;
+                            setState(() {});
+                          },
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 18.0),
-                ],
+                    const SizedBox(width: 18.0),
+                  ],
+                ),
               ),
             ),
           ),
@@ -773,10 +779,10 @@ class _PositionIndicator extends StatefulWidget {
       : super(key: key);
 
   @override
-  State<_PositionIndicator> createState() => __PositionIndicatorState();
+  State<_PositionIndicator> createState() => _PositionIndicatorState();
 }
 
-class __PositionIndicatorState extends State<_PositionIndicator> {
+class _PositionIndicatorState extends State<_PositionIndicator> {
   late Duration position = widget.controller.player.state.position;
   late Duration duration = widget.controller.player.state.duration;
 
