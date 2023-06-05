@@ -4,6 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'package:flutter/widgets.dart';
+import 'package:media_kit_video_controls/media_kit_video_controls.dart';
 
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
@@ -79,7 +80,7 @@ class Video extends StatefulWidget {
   final FilterQuality filterQuality;
 
   /// Video controls builder.
-  final Widget Function(BuildContext, VideoController)? controls;
+  final VideoControlsBuilder? controls;
 
   /// {@macro video}
   const Video({
@@ -92,7 +93,7 @@ class Video extends StatefulWidget {
     this.alignment = Alignment.center,
     this.aspectRatio,
     this.filterQuality = FilterQuality.low,
-    this.controls,
+    this.controls = AdaptiveVideoControls,
   }) : super(key: key);
 
   @override
@@ -166,3 +167,8 @@ class _VideoState extends State<Video> {
     );
   }
 }
+
+typedef VideoControlsBuilder = Widget Function(
+  BuildContext context,
+  VideoController controller,
+);
