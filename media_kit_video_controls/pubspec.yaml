@@ -1,0 +1,22 @@
+name: media_kit_video_controls
+description: UI video controls for package:media_kit. Pre-built & customizable.
+homepage: https://github.com/alexmercerind/media_kit
+repository: https://github.com/alexmercerind/media_kit
+version: 1.0.0
+funding:
+  - https://www.github.com/sponsors/alexmercerind
+
+environment:
+  sdk: ">=2.19.6 <3.0.0"
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
