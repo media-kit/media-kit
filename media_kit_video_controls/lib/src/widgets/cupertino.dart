@@ -18,7 +18,7 @@ Widget CupertinoVideoControls(
 ) {
   final data = CupertinoVideoControlsTheme.maybeOf(context)?.data ??
       const CupertinoVideoControlsThemeData();
-  throw UnimplementedError();
+  return _CupertinoVideoControls(controller: controller, data: data);
 }
 
 /// {@template cupertino_video_controls_theme_data}
@@ -57,4 +57,29 @@ class CupertinoVideoControlsTheme extends InheritedWidget {
   @override
   bool updateShouldNotify(CupertinoVideoControlsTheme oldWidget) =>
       data != oldWidget.data;
+}
+
+/// {@macro cupertino_video_controls}
+class _CupertinoVideoControls extends StatefulWidget {
+  final VideoController controller;
+  final CupertinoVideoControlsThemeData data;
+  const _CupertinoVideoControls({
+    Key? key,
+    required this.controller,
+    required this.data,
+  }) : super(key: key);
+
+  @override
+  State<_CupertinoVideoControls> createState() =>
+      _CupertinoVideoControlsState();
+}
+
+/// {@macro cupertino_video_controls}
+class _CupertinoVideoControlsState extends State<_CupertinoVideoControls> {
+  @override
+  Widget build(BuildContext context) {
+    final data = CupertinoVideoControlsTheme.maybeOf(context)?.data ??
+        const CupertinoVideoControlsThemeData();
+    return Container();
+  }
 }

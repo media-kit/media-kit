@@ -4,15 +4,6 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-export 'package:media_kit_video_controls/src/widgets/material.dart'
-    show
-        MaterialVideoControls,
-        MaterialVideoControlsTheme,
-        MaterialVideoControlsThemeData;
-export 'package:media_kit_video_controls/src/widgets/cupertino.dart'
-    show
-        CupertinoVideoControls,
-        CupertinoVideoControlsTheme,
-        CupertinoVideoControlsThemeData;
-export 'package:media_kit_video_controls/src/widgets/adaptive.dart'
-    show AdaptiveVideoControls;
+export 'package:media_kit_video_controls/src/widgets/material.dart';
+export 'package:media_kit_video_controls/src/widgets/cupertino.dart';
+export 'package:media_kit_video_controls/src/widgets/adaptive.dart';

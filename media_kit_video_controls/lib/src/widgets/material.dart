@@ -4,6 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: non_constant_identifier_names
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -16,9 +17,9 @@ Widget MaterialVideoControls(
   BuildContext context,
   VideoController controller,
 ) {
-  final data = MaterialVideoControlsTheme.maybeOf(context) ??
+  final data = MaterialVideoControlsTheme.maybeOf(context)?.data ??
       const MaterialVideoControlsThemeData();
-  throw UnimplementedError();
+  return _MaterialVideoControls(controller: controller, data: data);
 }
 
 /// {@template material_video_controls_theme_data}
@@ -29,6 +30,9 @@ Widget MaterialVideoControls(
 class MaterialVideoControlsThemeData {
   const MaterialVideoControlsThemeData();
 }
+
+const kVideoControlsMouseHoverDuration = Duration(seconds: 3);
+const kVideoControlsTransitionDuration = Duration(milliseconds: 150);
 
 /// {@template material_video_controls_theme}
 ///
@@ -57,4 +61,93 @@ class MaterialVideoControlsTheme extends InheritedWidget {
   @override
   bool updateShouldNotify(MaterialVideoControlsTheme oldWidget) =>
       data != oldWidget.data;
+}
+
+/// {@macro material_video_controls}
+class _MaterialVideoControls extends StatefulWidget {
+  final VideoController controller;
+  final MaterialVideoControlsThemeData data;
+  const _MaterialVideoControls({
+    Key? key,
+    required this.controller,
+    required this.data,
+  }) : super(key: key);
+
+  @override
+  State<_MaterialVideoControls> createState() => _MaterialVideoControlsState();
+}
+
+/// {@macro material_video_controls}
+class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
+  bool visible = false;
+
+  Timer? _timer;
+
+  void onEnter() {
+    setState(() {
+      visible = true;
+    });
+    _timer?.cancel();
+    _timer = Timer(kVideoControlsMouseHoverDuration, () {
+      setState(() {
+        visible = false;
+      });
+    });
+  }
+
+  void onHover() {
+    setState(() {
+      visible = true;
+    });
+    _timer?.cancel();
+    _timer = Timer(kVideoControlsMouseHoverDuration, () {
+      setState(() {
+        visible = false;
+      });
+    });
+  }
+
+  void onExit() {
+    setState(() {
+      visible = false;
+    });
+    _timer?.cancel();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onHover: (_) => onHover(),
+      onExit: (_) => onExit(),
+      child: Stack(
+        children: [
+          AnimatedOpacity(
+            opacity: visible ? 1.0 : 0.0,
+            duration: kVideoControlsTransitionDuration,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: [
+                    0.5,
+                    1.0,
+                  ],
+                  colors: [
+                    Colors.transparent,
+                    Colors.black38,
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
