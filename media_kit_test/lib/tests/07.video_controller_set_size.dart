@@ -44,7 +44,10 @@ class _VideoControllerSetSizeScreenState
       body: Stack(
         alignment: Alignment.bottomRight,
         children: [
-          Video(controller: controller),
+          Video(
+            controller: controller,
+            controls: NoVideoControls,
+          ),
           Card(
             elevation: 4.0,
             margin: const EdgeInsets.all(16.0),

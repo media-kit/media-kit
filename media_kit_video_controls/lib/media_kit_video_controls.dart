@@ -7,3 +7,4 @@
 export 'package:media_kit_video_controls/src/widgets/material.dart';
 export 'package:media_kit_video_controls/src/widgets/cupertino.dart';
 export 'package:media_kit_video_controls/src/widgets/adaptive.dart';
+export 'package:media_kit_video_controls/src/widgets/no.dart';

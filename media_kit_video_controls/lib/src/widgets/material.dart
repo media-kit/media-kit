@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:media_kit_video_controls/src/utils.dart';
 
 /// {@template material_video_controls}
 ///
@@ -29,17 +30,24 @@ Widget MaterialVideoControls(
 ///
 /// {@endtemplate}
 class MaterialVideoControlsThemeData {
+  // GENERIC
+
   /// [Duration] after which the controls will be hidden when there is no mouse movement.
   final Duration controlsHoverDuration;
 
   /// [Duration] for which the controls will be animated when shown or hidden.
   final Duration controlsTransitionDuration;
 
+  // SEEK BAR
+
   /// [Duration] for which the seek bar will be animated when the user seeks.
   final Duration seekBarTransitionDuration;
 
   /// [Duration] for which the seek bar thumb will be animated when the user seeks.
   final Duration seekBarThumbTransitionDuration;
+
+  /// Margin around the seek bar.
+  final EdgeInsets seekBarMargin;
 
   /// Height of the seek bar.
   final double seekBarHeight;
@@ -49,9 +57,6 @@ class MaterialVideoControlsThemeData {
 
   /// Height of the seek bar [Container].
   final double seekBarContainerHeight;
-
-  /// Margin around the seek bar.
-  final EdgeInsets seekBarMargin;
 
   /// [Color] of the seek bar.
   final Color seekBarColor;
@@ -71,21 +76,93 @@ class MaterialVideoControlsThemeData {
   /// [Color] of the seek bar thumb.
   final Color seekBarThumbColor;
 
+  // BOTTOM BUTTON BAR
+
+  /// Margin around the bottom button bar.
+  final EdgeInsets bottomButtonBarMargin;
+
+  /// Height of the bottom button bar.
+  final double bottomButtonBarHeight;
+
+  /// Size of the bottom button bar buttons.
+  final double bottomButtonBarButtonSize;
+
+  /// Color of the bottom button bar buttons.
+  final Color bottomButtonBarButtonColor;
+
+  /// Custom bottom button bar builder.
+  /// This will override the default bottom button bar.
+  final List<Widget> Function(BuildContext context, VideoController controller)?
+      bottomButtonBarBuilder;
+
+  // VOLUME BAR
+
+  /// [Color] of the volume bar.
+  final Color volumeBarColor;
+
+  /// [Color] of the active region in the volume bar.
+  final Color volumeBarActiveColor;
+
+  /// Size of the volume bar thumb.
+  final double volumeBarThumbSize;
+
+  /// [Color] of the volume bar thumb.
+  final Color volumeBarThumbColor;
+
+  /// [Duration] for which the volume bar will be animated when the user hovers.
+  final Duration volumeBarTransitionDuration;
+
+  // VISIBILITY
+
+  /// Whether a skip next button should be displayed if there are more than one videos in the playlist.
+  final bool automaticallyImplySkipNextButton;
+
+  /// Whether a skip previous button should be displayed if there are more than one videos in the playlist.
+  final bool automaticallyImplySkipPreviousButton;
+
+  /// Whether to show skip next button.
+  final bool showSkipNextButton;
+
+  /// Whether to show skip previous button.
+  final bool showSkipPreviousButton;
+
+  /// Whether to show volume button.
+  final bool showVolumeButton;
+
+  /// Whether to show position indicator.
+  final bool showPositionIndicator;
+
   const MaterialVideoControlsThemeData({
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 150),
     this.seekBarTransitionDuration = const Duration(milliseconds: 300),
     this.seekBarThumbTransitionDuration = const Duration(milliseconds: 150),
+    this.seekBarMargin = const EdgeInsets.symmetric(horizontal: 16.0),
     this.seekBarHeight = 3.2,
     this.seekBarHoverHeight = 5.6,
     this.seekBarContainerHeight = 36.0,
-    this.seekBarMargin = const EdgeInsets.symmetric(horizontal: 16.0),
     this.seekBarColor = const Color(0x3DFFFFFF),
     this.seekBarHoverColor = const Color(0x3DFFFFFF),
     this.seekBarPositionColor = const Color(0xFFFF0000),
     this.seekBarBufferColor = const Color(0x3DFFFFFF),
     this.seekBarThumbSize = 12.0,
     this.seekBarThumbColor = const Color(0xFFFF0000),
+    this.bottomButtonBarMargin = const EdgeInsets.symmetric(horizontal: 16.0),
+    this.bottomButtonBarHeight = 56.0,
+    this.bottomButtonBarButtonSize = 28.0,
+    this.bottomButtonBarButtonColor = const Color(0xFFFFFFFF),
+    this.bottomButtonBarBuilder,
+    this.volumeBarColor = const Color(0x3DFFFFFF),
+    this.volumeBarActiveColor = const Color(0xFFFFFFFF),
+    this.volumeBarThumbSize = 12.0,
+    this.volumeBarThumbColor = const Color(0xFFFFFFFF),
+    this.volumeBarTransitionDuration = const Duration(milliseconds: 150),
+    this.automaticallyImplySkipNextButton = true,
+    this.automaticallyImplySkipPreviousButton = true,
+    this.showSkipNextButton = false,
+    this.showSkipPreviousButton = false,
+    this.showVolumeButton = true,
+    this.showPositionIndicator = true,
   });
 }
 
@@ -138,6 +215,34 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   Timer? _timer;
 
+  late var playlist = widget.controller.player.state.playlist;
+
+  final List<StreamSubscription> subscriptions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    subscriptions.addAll(
+      [
+        widget.controller.player.streams.playlist.listen(
+          (event) {
+            setState(() {
+              playlist = event;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    for (final subscription in subscriptions) {
+      subscription.cancel();
+    }
+    super.dispose();
+  }
+
   void onHover() {
     setState(() {
       visible = true;
@@ -167,11 +272,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       visible = false;
     });
     _timer?.cancel();
-  }
-
-  @override
-  void initState() {
-    super.initState();
   }
 
   @override
@@ -207,11 +307,58 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _MaterialSeekBar(
-                  data: widget.data,
-                  controller: widget.controller,
+                Transform.translate(
+                  offset: const Offset(0.0, 16.0),
+                  child: _MaterialSeekBar(
+                    data: widget.data,
+                    controller: widget.controller,
+                  ),
                 ),
-                const SizedBox(height: 48.0),
+                Container(
+                  height: widget.data.bottomButtonBarHeight,
+                  margin: widget.data.bottomButtonBarMargin,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: widget.data.bottomButtonBarBuilder
+                            ?.call(context, widget.controller) ??
+                        [
+                          if ((widget.data
+                                      .automaticallyImplySkipPreviousButton &&
+                                  playlist.medias.length > 1) ||
+                              widget.data.showSkipPreviousButton)
+                            IconButton(
+                              onPressed: widget.controller.player.previous,
+                              iconSize: widget.data.bottomButtonBarButtonSize,
+                              icon: const Icon(Icons.skip_previous),
+                              color: Colors.white,
+                            ),
+                          _PlayOrPauseButton(
+                            data: widget.data,
+                            controller: widget.controller,
+                          ),
+                          if ((widget.data.automaticallyImplySkipNextButton &&
+                                  playlist.medias.length > 1) ||
+                              widget.data.showSkipPreviousButton)
+                            IconButton(
+                              onPressed: widget.controller.player.next,
+                              iconSize: widget.data.bottomButtonBarButtonSize,
+                              icon: const Icon(Icons.skip_next),
+                              color: Colors.white,
+                            ),
+                          _VolumeButton(
+                            data: widget.data,
+                            controller: widget.controller,
+                          ),
+                          _PositionIndicator(
+                            data: widget.data,
+                            controller: widget.controller,
+                          ),
+                          const Spacer(),
+                        ],
+                  ),
+                ),
               ],
             )
           ],
@@ -220,6 +367,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     );
   }
 }
+
+// SEEK BAR
 
 class _MaterialSeekBar extends StatefulWidget {
   final MaterialVideoControlsThemeData data;
@@ -359,6 +508,7 @@ class _MaterialSeekBarState extends State<_MaterialSeekBar> {
       margin: widget.data.seekBarMargin,
       child: LayoutBuilder(
         builder: (context, constraints) => MouseRegion(
+          cursor: SystemMouseCursors.click,
           onHover: (e) => onHover(e, constraints),
           onEnter: (e) => onEnter(e, constraints),
           onExit: (e) => onExit(e, constraints),
@@ -429,6 +579,267 @@ class _MaterialSeekBarState extends State<_MaterialSeekBar> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// BUTTONS
+
+class _PlayOrPauseButton extends StatefulWidget {
+  final MaterialVideoControlsThemeData data;
+  final VideoController controller;
+  const _PlayOrPauseButton({
+    required this.data,
+    required this.controller,
+  });
+
+  @override
+  State<StatefulWidget> createState() => _PlayOrPauseButtonState();
+}
+
+class _PlayOrPauseButtonState extends State<_PlayOrPauseButton>
+    with SingleTickerProviderStateMixin {
+  late final controller = AnimationController(
+    vsync: this,
+    value: widget.controller.player.state.playing ? 1 : 0,
+    duration: const Duration(milliseconds: 200),
+  );
+
+  StreamSubscription<bool>? subscription;
+
+  @override
+  void initState() {
+    super.initState();
+    subscription = widget.controller.player.streams.playing.listen((event) {
+      if (event) {
+        controller.forward();
+      } else {
+        controller.reverse();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    subscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: widget.controller.player.playOrPause,
+      iconSize: widget.data.bottomButtonBarButtonSize,
+      color: widget.data.bottomButtonBarButtonColor,
+      icon: AnimatedIcon(
+        progress: controller,
+        icon: AnimatedIcons.play_pause,
+        size: widget.data.bottomButtonBarButtonSize,
+        color: widget.data.bottomButtonBarButtonColor,
+      ),
+    );
+  }
+}
+
+class _VolumeButton extends StatefulWidget {
+  final MaterialVideoControlsThemeData data;
+  final VideoController controller;
+  const _VolumeButton({
+    Key? key,
+    required this.data,
+    required this.controller,
+  }) : super(key: key);
+
+  @override
+  State<_VolumeButton> createState() => _VolumeButtonState();
+}
+
+class _VolumeButtonState extends State<_VolumeButton>
+    with SingleTickerProviderStateMixin {
+  late double volume = widget.controller.player.state.volume;
+
+  StreamSubscription<double>? subscription;
+
+  bool hover = false;
+
+  bool mute = false;
+  double _volume = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    subscription = widget.controller.player.streams.volume.listen((event) {
+      setState(() {
+        volume = event;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    subscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (e) {
+        setState(() {
+          hover = true;
+        });
+      },
+      onExit: (e) {
+        setState(() {
+          hover = false;
+        });
+      },
+      child: Row(
+        children: [
+          const SizedBox(width: 4.0),
+          IconButton(
+            onPressed: () async {
+              if (mute) {
+                await widget.controller.player.setVolume(_volume);
+              } else {
+                _volume = volume;
+                await widget.controller.player.setVolume(0.0);
+              }
+              mute = !mute;
+              setState(() {});
+            },
+            iconSize: widget.data.bottomButtonBarButtonSize * 0.8,
+            color: widget.data.bottomButtonBarButtonColor,
+            icon: Icon(
+              mute
+                  ? Icons.volume_off
+                  : volume < 0.5
+                      ? Icons.volume_down
+                      : Icons.volume_up,
+            ),
+          ),
+          AnimatedContainer(
+            width: hover ? (12.0 + 52.0 + 18.0) : 12.0,
+            duration: widget.data.volumeBarTransitionDuration,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  const SizedBox(width: 12.0),
+                  SizedBox(
+                    width: 52.0,
+                    child: SliderTheme(
+                      data: SliderThemeData(
+                        trackHeight: 1.2,
+                        inactiveTrackColor: widget.data.volumeBarColor,
+                        activeTrackColor: widget.data.volumeBarActiveColor,
+                        thumbColor: widget.data.volumeBarThumbColor,
+                        thumbShape: RoundSliderThumbShape(
+                          enabledThumbRadius:
+                              widget.data.volumeBarThumbSize / 2,
+                          elevation: 0.0,
+                          pressedElevation: 0.0,
+                        ),
+                        trackShape: _CustomTrackShape(),
+                        overlayColor: const Color(0x00000000),
+                      ),
+                      child: Slider(
+                        value: volume.clamp(0.0, 100.0),
+                        min: 0.0,
+                        max: 100.0,
+                        onChanged: (value) {
+                          widget.controller.player.setVolume(value);
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 18.0),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PositionIndicator extends StatefulWidget {
+  final MaterialVideoControlsThemeData data;
+  final VideoController controller;
+  const _PositionIndicator(
+      {Key? key, required this.data, required this.controller})
+      : super(key: key);
+
+  @override
+  State<_PositionIndicator> createState() => __PositionIndicatorState();
+}
+
+class __PositionIndicatorState extends State<_PositionIndicator> {
+  late Duration position = widget.controller.player.state.position;
+  late Duration duration = widget.controller.player.state.duration;
+
+  final List<StreamSubscription> subscriptions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    subscriptions.addAll(
+      [
+        widget.controller.player.streams.position.listen((event) {
+          setState(() {
+            position = event;
+          });
+        }),
+        widget.controller.player.streams.duration.listen((event) {
+          setState(() {
+            duration = event;
+          });
+        }),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    for (final subscription in subscriptions) {
+      subscription.cancel();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      '${formatDuration(position, duration)} / ${formatDuration(duration, duration)}',
+      style: TextStyle(
+        height: 1.0,
+        fontSize: 12.0,
+        color: widget.data.bottomButtonBarButtonColor,
+      ),
+    );
+  }
+}
+
+class _CustomTrackShape extends RoundedRectSliderTrackShape {
+  @override
+  Rect getPreferredRect({
+    required RenderBox parentBox,
+    Offset offset = Offset.zero,
+    required SliderThemeData sliderTheme,
+    bool isEnabled = false,
+    bool isDiscrete = false,
+  }) {
+    final height = sliderTheme.trackHeight;
+    final left = offset.dx;
+    final top = offset.dy + (parentBox.size.height - height!) / 2;
+    final width = parentBox.size.width;
+    return Rect.fromLTWH(
+      left,
+      top,
+      width,
+      height,
     );
   }
 }
