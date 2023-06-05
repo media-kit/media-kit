@@ -7,9 +7,15 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+class MaterialVideoControlsThemeData {
+  const MaterialVideoControlsThemeData();
+}
+
 class MaterialVideoControlsTheme extends InheritedWidget {
+  final MaterialVideoControlsThemeData data;
   const MaterialVideoControlsTheme({
     super.key,
+    required this.data,
     required super.child,
   });
 
@@ -25,13 +31,15 @@ class MaterialVideoControlsTheme extends InheritedWidget {
   }
 
   @override
-  bool updateShouldNotify(MaterialVideoControlsTheme oldWidget) => false;
+  bool updateShouldNotify(MaterialVideoControlsTheme oldWidget) =>
+      data != oldWidget.data;
 }
 
 Widget MaterialVideoControls(
   BuildContext context,
   VideoController controller,
 ) {
-  final theme = MaterialVideoControlsTheme.maybeOf(context);
+  final data = MaterialVideoControlsTheme.maybeOf(context) ??
+      const MaterialVideoControlsThemeData();
   throw UnimplementedError();
 }

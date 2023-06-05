@@ -7,9 +7,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+class CupertinoVideoControlsThemeData {
+  const CupertinoVideoControlsThemeData();
+}
+
 class CupertinoVideoControlsTheme extends InheritedWidget {
+  final CupertinoVideoControlsThemeData data;
   const CupertinoVideoControlsTheme({
     super.key,
+    required this.data,
     required super.child,
   });
 
@@ -25,13 +31,15 @@ class CupertinoVideoControlsTheme extends InheritedWidget {
   }
 
   @override
-  bool updateShouldNotify(CupertinoVideoControlsTheme oldWidget) => false;
+  bool updateShouldNotify(CupertinoVideoControlsTheme oldWidget) =>
+      data != oldWidget.data;
 }
 
 Widget CupertinoVideoControls(
   BuildContext context,
   VideoController controller,
 ) {
-  final theme = CupertinoVideoControlsTheme.maybeOf(context);
+  final data = CupertinoVideoControlsTheme.maybeOf(context)?.data ??
+      const CupertinoVideoControlsThemeData();
   throw UnimplementedError();
 }
