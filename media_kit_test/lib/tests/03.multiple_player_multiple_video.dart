@@ -4,7 +4,6 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../common/globals.dart';
-import '../common/widgets.dart';
 import '../common/sources/sources.dart';
 
 class MultiplePlayerMultipleVideoScreen extends StatefulWidget {
@@ -72,7 +71,6 @@ class _MultiplePlayerMultipleVideoScreenState
                     ),
                   ),
                 ),
-                SeekBar(player: players[i]),
                 const SizedBox(height: 32.0),
               ],
             )

@@ -164,41 +164,22 @@ class _SeekBarState extends State<SeekBar> {
 
   @override
   Widget build(BuildContext context) {
-    final horizontal =
-        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Column(
       children: [
         const SizedBox(height: 16.0),
-        if (!horizontal)
-          Row(
-            children: [
-              const Spacer(),
-              IconButton(
-                onPressed: widget.player.playOrPause,
-                icon: Icon(
-                  playing ? Icons.pause : Icons.play_arrow,
-                ),
-                color: Theme.of(context).primaryColor,
-                iconSize: 36.0,
-              ),
-              const Spacer(),
-            ],
-          ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(width: 48.0),
-            if (horizontal) ...[
-              IconButton(
-                onPressed: widget.player.playOrPause,
-                icon: Icon(
-                  playing ? Icons.pause : Icons.play_arrow,
-                ),
-                color: Theme.of(context).primaryColor,
-                iconSize: 36.0,
+            IconButton(
+              onPressed: widget.player.playOrPause,
+              icon: Icon(
+                playing ? Icons.pause : Icons.play_arrow,
               ),
-              const SizedBox(width: 24.0),
-            ],
+              color: Theme.of(context).primaryColor,
+              iconSize: 36.0,
+            ),
+            const SizedBox(width: 24.0),
             Text(position.toString().substring(2, 7)),
             Expanded(
               child: Slider(

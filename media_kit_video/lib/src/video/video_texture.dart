@@ -109,6 +109,7 @@ class _VideoState extends State<Video> {
     return Stack(
       children: [
         Container(
+          clipBehavior: Clip.none,
           width: widget.width ?? double.infinity,
           height: widget.height ?? double.infinity,
           color: widget.fill,
