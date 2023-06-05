@@ -7,6 +7,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import 'package:media_kit_video_controls/src/utils.dart';
+
 /// {@template cupertino_video_controls}
 ///
 /// [Video] controls which use Cupertino design.
@@ -16,9 +18,17 @@ Widget CupertinoVideoControls(
   BuildContext context,
   VideoController controller,
 ) {
-  final data = CupertinoVideoControlsTheme.maybeOf(context)?.data ??
-      const CupertinoVideoControlsThemeData();
-  return _CupertinoVideoControls(controller: controller, data: data);
+  final data = CupertinoVideoControlsTheme.maybeOf(context)?.data;
+  final Widget child;
+  if (data == null) {
+    child = const CupertinoVideoControlsTheme(
+      data: CupertinoVideoControlsThemeData(),
+      child: _CupertinoVideoControls(),
+    );
+  } else {
+    child = const _CupertinoVideoControls();
+  }
+  return VideoControllerInheritedWidget(controller: controller, child: child);
 }
 
 /// {@template cupertino_video_controls_theme_data}
@@ -56,18 +66,12 @@ class CupertinoVideoControlsTheme extends InheritedWidget {
 
   @override
   bool updateShouldNotify(CupertinoVideoControlsTheme oldWidget) =>
-      data != oldWidget.data;
+      identical(data, oldWidget.data);
 }
 
 /// {@macro cupertino_video_controls}
 class _CupertinoVideoControls extends StatefulWidget {
-  final VideoController controller;
-  final CupertinoVideoControlsThemeData data;
-  const _CupertinoVideoControls({
-    Key? key,
-    required this.controller,
-    required this.data,
-  }) : super(key: key);
+  const _CupertinoVideoControls({Key? key}) : super(key: key);
 
   @override
   State<_CupertinoVideoControls> createState() =>
@@ -78,8 +82,6 @@ class _CupertinoVideoControls extends StatefulWidget {
 class _CupertinoVideoControlsState extends State<_CupertinoVideoControls> {
   @override
   Widget build(BuildContext context) {
-    final data = CupertinoVideoControlsTheme.maybeOf(context)?.data ??
-        const CupertinoVideoControlsThemeData();
     return Container();
   }
 }

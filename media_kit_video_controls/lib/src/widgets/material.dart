@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+
 import 'package:media_kit_video_controls/src/utils.dart';
 
 /// {@template material_video_controls}
@@ -19,12 +20,24 @@ Widget MaterialVideoControls(
   BuildContext context,
   VideoController controller,
 ) {
-  final data = MaterialVideoControlsTheme.maybeOf(context)?.data ??
-      const MaterialVideoControlsThemeData();
-  return _MaterialVideoControls(controller: controller, data: data);
+  final data = MaterialVideoControlsTheme.maybeOf(context)?.data;
+  final Widget child;
+  if (data == null) {
+    child = const MaterialVideoControlsTheme(
+      data: MaterialVideoControlsThemeData(),
+      child: _MaterialVideoControls(),
+    );
+  } else {
+    child = const _MaterialVideoControls();
+  }
+  return VideoControllerInheritedWidget(controller: controller, child: child);
 }
 
-/// {@template material_video_controls_theme_data}
+/// [MaterialVideoControlsThemeData] available in this [context].
+MaterialVideoControlsThemeData theme(BuildContext context) =>
+    MaterialVideoControlsTheme.of(context).data;
+
+/// {@template material_video_controlstheme_data}
 ///
 /// Theming related data for [MaterialVideoControls]. These values are used to theme the descendant [MaterialVideoControls].
 ///
@@ -78,6 +91,9 @@ class MaterialVideoControlsThemeData {
 
   // BOTTOM BUTTON BAR
 
+  /// Buttons to be displayed in the bottom button bar.
+  final List<Widget> bottombuttonBar;
+
   /// Margin around the bottom button bar.
   final EdgeInsets bottomButtonBarMargin;
 
@@ -89,11 +105,6 @@ class MaterialVideoControlsThemeData {
 
   /// Color of the bottom button bar buttons.
   final Color bottomButtonBarButtonColor;
-
-  /// Custom bottom button bar builder.
-  /// This will override the default bottom button bar.
-  final List<Widget> Function(BuildContext context, VideoController controller)?
-      bottomButtonBarBuilder;
 
   // VOLUME BAR
 
@@ -120,18 +131,6 @@ class MaterialVideoControlsThemeData {
   /// Whether a skip previous button should be displayed if there are more than one videos in the playlist.
   final bool automaticallyImplySkipPreviousButton;
 
-  /// Whether to show skip next button.
-  final bool showSkipNextButton;
-
-  /// Whether to show skip previous button.
-  final bool showSkipPreviousButton;
-
-  /// Whether to show volume button.
-  final bool showVolumeButton;
-
-  /// Whether to show position indicator.
-  final bool showPositionIndicator;
-
   const MaterialVideoControlsThemeData({
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 150),
@@ -147,11 +146,18 @@ class MaterialVideoControlsThemeData {
     this.seekBarBufferColor = const Color(0x3DFFFFFF),
     this.seekBarThumbSize = 12.0,
     this.seekBarThumbColor = const Color(0xFFFF0000),
+    this.bottombuttonBar = const [
+      MaterialSkipPreviousButton(),
+      MaterialPlayOrPauseButton(),
+      MaterialSkipNextButton(),
+      MaterialVolumeButton(),
+      MaterialPositionIndicator(),
+      Spacer(),
+    ],
     this.bottomButtonBarMargin = const EdgeInsets.symmetric(horizontal: 16.0),
     this.bottomButtonBarHeight = 56.0,
     this.bottomButtonBarButtonSize = 28.0,
     this.bottomButtonBarButtonColor = const Color(0xFFFFFFFF),
-    this.bottomButtonBarBuilder,
     this.volumeBarColor = const Color(0x3DFFFFFF),
     this.volumeBarActiveColor = const Color(0xFFFFFFFF),
     this.volumeBarThumbSize = 12.0,
@@ -159,14 +165,10 @@ class MaterialVideoControlsThemeData {
     this.volumeBarTransitionDuration = const Duration(milliseconds: 150),
     this.automaticallyImplySkipNextButton = true,
     this.automaticallyImplySkipPreviousButton = true,
-    this.showSkipNextButton = false,
-    this.showSkipPreviousButton = false,
-    this.showVolumeButton = true,
-    this.showPositionIndicator = true,
   });
 }
 
-/// {@template material_video_controls_theme}
+/// {@template material_video_controlstheme}
 ///
 /// Inherited widget which provides [MaterialVideoControlsThemeData] to descendant widgets.
 ///
@@ -192,18 +194,12 @@ class MaterialVideoControlsTheme extends InheritedWidget {
 
   @override
   bool updateShouldNotify(MaterialVideoControlsTheme oldWidget) =>
-      data != oldWidget.data;
+      identical(data, oldWidget.data);
 }
 
 /// {@macro material_video_controls}
 class _MaterialVideoControls extends StatefulWidget {
-  final VideoController controller;
-  final MaterialVideoControlsThemeData data;
-  const _MaterialVideoControls({
-    Key? key,
-    required this.controller,
-    required this.data,
-  }) : super(key: key);
+  const _MaterialVideoControls();
 
   @override
   State<_MaterialVideoControls> createState() => _MaterialVideoControlsState();
@@ -215,24 +211,26 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   Timer? _timer;
 
-  late var playlist = widget.controller.player.state.playlist;
+  late var playlist = controller(context).player.state.playlist;
 
   final List<StreamSubscription> subscriptions = [];
 
   @override
-  void initState() {
-    super.initState();
-    subscriptions.addAll(
-      [
-        widget.controller.player.streams.playlist.listen(
-          (event) {
-            setState(() {
-              playlist = event;
-            });
-          },
-        ),
-      ],
-    );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (subscriptions.isEmpty) {
+      subscriptions.addAll(
+        [
+          controller(context).player.streams.playlist.listen(
+            (event) {
+              setState(() {
+                playlist = event;
+              });
+            },
+          ),
+        ],
+      );
+    }
   }
 
   @override
@@ -248,7 +246,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       visible = true;
     });
     _timer?.cancel();
-    _timer = Timer(widget.data.controlsHoverDuration, () {
+    _timer = Timer(theme(context).controlsHoverDuration, () {
       setState(() {
         visible = false;
       });
@@ -260,7 +258,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       visible = true;
     });
     _timer?.cancel();
-    _timer = Timer(widget.data.controlsHoverDuration, () {
+    _timer = Timer(theme(context).controlsHoverDuration, () {
       setState(() {
         visible = false;
       });
@@ -282,7 +280,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       onExit: (_) => onExit(),
       child: AnimatedOpacity(
         opacity: visible ? 1.0 : 0.0,
-        duration: widget.data.controlsTransitionDuration,
+        duration: theme(context).controlsTransitionDuration,
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: [
@@ -309,54 +307,16 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
               children: [
                 Transform.translate(
                   offset: const Offset(0.0, 16.0),
-                  child: _MaterialSeekBar(
-                    data: widget.data,
-                    controller: widget.controller,
-                  ),
+                  child: const MaterialSeekBar(),
                 ),
                 Container(
-                  height: widget.data.bottomButtonBarHeight,
-                  margin: widget.data.bottomButtonBarMargin,
+                  height: theme(context).bottomButtonBarHeight,
+                  margin: theme(context).bottomButtonBarMargin,
                   child: Row(
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: widget.data.bottomButtonBarBuilder
-                            ?.call(context, widget.controller) ??
-                        [
-                          if ((widget.data
-                                      .automaticallyImplySkipPreviousButton &&
-                                  playlist.medias.length > 1) ||
-                              widget.data.showSkipPreviousButton)
-                            IconButton(
-                              onPressed: widget.controller.player.previous,
-                              iconSize: widget.data.bottomButtonBarButtonSize,
-                              icon: const Icon(Icons.skip_previous),
-                              color: Colors.white,
-                            ),
-                          _PlayOrPauseButton(
-                            data: widget.data,
-                            controller: widget.controller,
-                          ),
-                          if ((widget.data.automaticallyImplySkipNextButton &&
-                                  playlist.medias.length > 1) ||
-                              widget.data.showSkipPreviousButton)
-                            IconButton(
-                              onPressed: widget.controller.player.next,
-                              iconSize: widget.data.bottomButtonBarButtonSize,
-                              icon: const Icon(Icons.skip_next),
-                              color: Colors.white,
-                            ),
-                          _VolumeButton(
-                            data: widget.data,
-                            controller: widget.controller,
-                          ),
-                          _PositionIndicator(
-                            data: widget.data,
-                            controller: widget.controller,
-                          ),
-                          const Spacer(),
-                        ],
+                    children: theme(context).bottombuttonBar,
                   ),
                 ),
               ],
@@ -370,63 +330,61 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
 // SEEK BAR
 
-class _MaterialSeekBar extends StatefulWidget {
-  final MaterialVideoControlsThemeData data;
-  final VideoController controller;
-  const _MaterialSeekBar({
+class MaterialSeekBar extends StatefulWidget {
+  const MaterialSeekBar({
     Key? key,
-    required this.data,
-    required this.controller,
   }) : super(key: key);
 
   @override
-  State<_MaterialSeekBar> createState() => _MaterialSeekBarState();
+  MaterialSeekBarState createState() => MaterialSeekBarState();
 }
 
-class _MaterialSeekBarState extends State<_MaterialSeekBar> {
+class MaterialSeekBarState extends State<MaterialSeekBar> {
   bool hover = false;
   bool click = false;
   double slider = 0.0;
 
-  late bool playing = widget.controller.player.state.playing;
-  late Duration position = widget.controller.player.state.position;
-  late Duration duration = widget.controller.player.state.duration;
-  late Duration buffer = widget.controller.player.state.buffer;
+  late bool playing = controller(context).player.state.playing;
+  late Duration position = controller(context).player.state.position;
+  late Duration duration = controller(context).player.state.duration;
+  late Duration buffer = controller(context).player.state.buffer;
 
   final List<StreamSubscription> subscriptions = [];
 
   @override
-  void initState() {
-    super.initState();
-    subscriptions.addAll(
-      [
-        widget.controller.player.streams.playing.listen((event) {
-          setState(() {
-            playing = event;
-          });
-        }),
-        widget.controller.player.streams.completed.listen((event) {
-          setState(() {
-            position = Duration.zero;
-          });
-        }),
-        widget.controller.player.streams.position.listen((event) {
-          setState(() {
-            if (!click) position = event;
-          });
-        }),
-        widget.controller.player.streams.duration.listen((event) {
-          setState(() {
-            duration = event;
-          });
-        }),
-        widget.controller.player.streams.buffer.listen((event) {
-          setState(() {
-            buffer = event;
-          });
-        }),
-      ],
-    );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (subscriptions.isEmpty) {
+      subscriptions.addAll(
+        [
+          controller(context).player.streams.playing.listen((event) {
+            setState(() {
+              playing = event;
+            });
+          }),
+          controller(context).player.streams.completed.listen((event) {
+            setState(() {
+              position = Duration.zero;
+            });
+          }),
+          controller(context).player.streams.position.listen((event) {
+            setState(() {
+              if (!click) position = event;
+            });
+          }),
+          controller(context).player.streams.duration.listen((event) {
+            setState(() {
+              duration = event;
+            });
+          }),
+          controller(context).player.streams.buffer.listen((event) {
+            setState(() {
+              buffer = event;
+            });
+          }),
+        ],
+      );
+    }
   }
 
   @override
@@ -455,7 +413,7 @@ class _MaterialSeekBarState extends State<_MaterialSeekBar> {
     setState(() {
       click = false;
     });
-    widget.controller.player.seek(duration * slider);
+    controller(context).player.seek(duration * slider);
   }
 
   void onHover(PointerHoverEvent e, BoxConstraints constraints) {
@@ -505,7 +463,7 @@ class _MaterialSeekBarState extends State<_MaterialSeekBar> {
   Widget build(BuildContext context) {
     return Container(
       clipBehavior: Clip.none,
-      margin: widget.data.seekBarMargin,
+      margin: theme(context).seekBarMargin,
       child: LayoutBuilder(
         builder: (context, constraints) => MouseRegion(
           cursor: SystemMouseCursors.click,
@@ -519,34 +477,34 @@ class _MaterialSeekBarState extends State<_MaterialSeekBar> {
             child: Container(
               color: Colors.transparent,
               width: constraints.maxWidth,
-              height: widget.data.seekBarContainerHeight,
+              height: theme(context).seekBarContainerHeight,
               child: Stack(
                 alignment: Alignment.centerLeft,
                 children: [
                   AnimatedContainer(
                     width: constraints.maxWidth,
                     height: hover
-                        ? widget.data.seekBarHoverHeight
-                        : widget.data.seekBarHeight,
+                        ? theme(context).seekBarHoverHeight
+                        : theme(context).seekBarHeight,
                     alignment: Alignment.centerLeft,
-                    duration: widget.data.seekBarThumbTransitionDuration,
-                    color: widget.data.seekBarColor,
+                    duration: theme(context).seekBarThumbTransitionDuration,
+                    color: theme(context).seekBarColor,
                     child: Stack(
                       alignment: Alignment.centerLeft,
                       children: [
                         Container(
                           width: constraints.maxWidth * slider,
-                          color: widget.data.seekBarHoverColor,
+                          color: theme(context).seekBarHoverColor,
                         ),
                         Container(
                           width: constraints.maxWidth * bufferPercent,
-                          color: widget.data.seekBarBufferColor,
+                          color: theme(context).seekBarBufferColor,
                         ),
                         Container(
                           width: click
                               ? constraints.maxWidth * slider
                               : constraints.maxWidth * positionPercent,
-                          color: widget.data.seekBarPositionColor,
+                          color: theme(context).seekBarPositionColor,
                         ),
                       ],
                     ),
@@ -554,21 +512,23 @@ class _MaterialSeekBarState extends State<_MaterialSeekBar> {
                   Positioned(
                     left: click
                         ? (constraints.maxWidth -
-                                widget.data.seekBarThumbSize / 2) *
+                                theme(context).seekBarThumbSize / 2) *
                             slider
                         : (constraints.maxWidth -
-                                widget.data.seekBarThumbSize / 2) *
+                                theme(context).seekBarThumbSize / 2) *
                             positionPercent,
                     child: AnimatedContainer(
-                      width:
-                          hover || click ? widget.data.seekBarThumbSize : 0.0,
-                      height:
-                          hover || click ? widget.data.seekBarThumbSize : 0.0,
-                      duration: widget.data.seekBarThumbTransitionDuration,
+                      width: hover || click
+                          ? theme(context).seekBarThumbSize
+                          : 0.0,
+                      height: hover || click
+                          ? theme(context).seekBarThumbSize
+                          : 0.0,
+                      duration: theme(context).seekBarThumbTransitionDuration,
                       decoration: BoxDecoration(
-                        color: widget.data.seekBarThumbColor,
+                        color: theme(context).seekBarThumbColor,
                         borderRadius: BorderRadius.circular(
-                          widget.data.seekBarThumbSize / 2,
+                          theme(context).seekBarThumbSize / 2,
                         ),
                       ),
                     ),
@@ -583,45 +543,41 @@ class _MaterialSeekBarState extends State<_MaterialSeekBar> {
   }
 }
 
-// BUTTONS
+// BUTTON: PLAY/PAUSE
 
-class _PlayOrPauseButton extends StatefulWidget {
-  final MaterialVideoControlsThemeData data;
-  final VideoController controller;
-  const _PlayOrPauseButton({
-    required this.data,
-    required this.controller,
-  });
+class MaterialPlayOrPauseButton extends StatefulWidget {
+  const MaterialPlayOrPauseButton({super.key});
 
   @override
-  State<StatefulWidget> createState() => _PlayOrPauseButtonState();
+  MaterialPlayOrPauseButtonState createState() =>
+      MaterialPlayOrPauseButtonState();
 }
 
-class _PlayOrPauseButtonState extends State<_PlayOrPauseButton>
+class MaterialPlayOrPauseButtonState extends State<MaterialPlayOrPauseButton>
     with SingleTickerProviderStateMixin {
-  late final controller = AnimationController(
+  late final animation = AnimationController(
     vsync: this,
-    value: widget.controller.player.state.playing ? 1 : 0,
+    value: controller(context).player.state.playing ? 1 : 0,
     duration: const Duration(milliseconds: 200),
   );
 
   StreamSubscription<bool>? subscription;
 
   @override
-  void initState() {
-    super.initState();
-    subscription = widget.controller.player.streams.playing.listen((event) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    subscription ??= controller(context).player.streams.playing.listen((event) {
       if (event) {
-        controller.forward();
+        animation.forward();
       } else {
-        controller.reverse();
+        animation.reverse();
       }
     });
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    animation.dispose();
     subscription?.cancel();
     super.dispose();
   }
@@ -629,35 +585,73 @@ class _PlayOrPauseButtonState extends State<_PlayOrPauseButton>
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: widget.controller.player.playOrPause,
-      iconSize: widget.data.bottomButtonBarButtonSize,
-      color: widget.data.bottomButtonBarButtonColor,
+      onPressed: controller(context).player.playOrPause,
+      iconSize: theme(context).bottomButtonBarButtonSize,
+      color: theme(context).bottomButtonBarButtonColor,
       icon: AnimatedIcon(
-        progress: controller,
+        progress: animation,
         icon: AnimatedIcons.play_pause,
-        size: widget.data.bottomButtonBarButtonSize,
-        color: widget.data.bottomButtonBarButtonColor,
+        size: theme(context).bottomButtonBarButtonSize,
+        color: theme(context).bottomButtonBarButtonColor,
       ),
     );
   }
 }
 
-class _VolumeButton extends StatefulWidget {
-  final MaterialVideoControlsThemeData data;
-  final VideoController controller;
-  const _VolumeButton({
-    Key? key,
-    required this.data,
-    required this.controller,
-  }) : super(key: key);
+// BUTTON: SKIP NEXT
+
+class MaterialSkipNextButton extends StatelessWidget {
+  const MaterialSkipNextButton({Key? key}) : super(key: key);
 
   @override
-  State<_VolumeButton> createState() => _VolumeButtonState();
+  Widget build(BuildContext context) {
+    if (!theme(context).automaticallyImplySkipNextButton ||
+        (controller(context).player.state.playlist.medias.length > 1 &&
+            theme(context).automaticallyImplySkipNextButton)) {
+      return IconButton(
+        onPressed: controller(context).player.next,
+        iconSize: theme(context).bottomButtonBarButtonSize,
+        color: theme(context).bottomButtonBarButtonColor,
+        icon: const Icon(Icons.skip_previous),
+      );
+    }
+    return const SizedBox.shrink();
+  }
 }
 
-class _VolumeButtonState extends State<_VolumeButton>
+// BUTTON: SKIP PREVIOUS
+
+class MaterialSkipPreviousButton extends StatelessWidget {
+  const MaterialSkipPreviousButton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    if (!theme(context).automaticallyImplySkipPreviousButton ||
+        (controller(context).player.state.playlist.medias.length > 1 &&
+            theme(context).automaticallyImplySkipPreviousButton)) {
+      return IconButton(
+        onPressed: controller(context).player.previous,
+        iconSize: theme(context).bottomButtonBarButtonSize,
+        color: theme(context).bottomButtonBarButtonColor,
+        icon: const Icon(Icons.skip_previous),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+}
+
+// BUTTON: VOLUME
+
+class MaterialVolumeButton extends StatefulWidget {
+  const MaterialVolumeButton({super.key});
+
+  @override
+  MaterialVolumeButtonState createState() => MaterialVolumeButtonState();
+}
+
+class MaterialVolumeButtonState extends State<MaterialVolumeButton>
     with SingleTickerProviderStateMixin {
-  late double volume = widget.controller.player.state.volume;
+  late double volume = controller(context).player.state.volume;
 
   StreamSubscription<double>? subscription;
 
@@ -667,9 +661,9 @@ class _VolumeButtonState extends State<_VolumeButton>
   double _volume = 0.0;
 
   @override
-  void initState() {
-    super.initState();
-    subscription = widget.controller.player.streams.volume.listen((event) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    subscription ??= controller(context).player.streams.volume.listen((event) {
       setState(() {
         volume = event;
       });
@@ -701,16 +695,16 @@ class _VolumeButtonState extends State<_VolumeButton>
           IconButton(
             onPressed: () async {
               if (mute) {
-                await widget.controller.player.setVolume(_volume);
+                await controller(context).player.setVolume(_volume);
               } else {
                 _volume = volume;
-                await widget.controller.player.setVolume(0.0);
+                await controller(context).player.setVolume(0.0);
               }
               mute = !mute;
               setState(() {});
             },
-            iconSize: widget.data.bottomButtonBarButtonSize * 0.8,
-            color: widget.data.bottomButtonBarButtonColor,
+            iconSize: theme(context).bottomButtonBarButtonSize * 0.8,
+            color: theme(context).bottomButtonBarButtonColor,
             icon: Icon(
               mute || volume == 0.0
                   ? Icons.volume_off
@@ -721,10 +715,10 @@ class _VolumeButtonState extends State<_VolumeButton>
           ),
           AnimatedOpacity(
             opacity: hover ? 1.0 : 0.0,
-            duration: widget.data.volumeBarTransitionDuration,
+            duration: theme(context).volumeBarTransitionDuration,
             child: AnimatedContainer(
               width: hover ? (12.0 + 52.0 + 18.0) : 12.0,
-              duration: widget.data.volumeBarTransitionDuration,
+              duration: theme(context).volumeBarTransitionDuration,
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -735,12 +729,12 @@ class _VolumeButtonState extends State<_VolumeButton>
                       child: SliderTheme(
                         data: SliderThemeData(
                           trackHeight: 1.2,
-                          inactiveTrackColor: widget.data.volumeBarColor,
-                          activeTrackColor: widget.data.volumeBarActiveColor,
-                          thumbColor: widget.data.volumeBarThumbColor,
+                          inactiveTrackColor: theme(context).volumeBarColor,
+                          activeTrackColor: theme(context).volumeBarActiveColor,
+                          thumbColor: theme(context).volumeBarThumbColor,
                           thumbShape: RoundSliderThumbShape(
                             enabledThumbRadius:
-                                widget.data.volumeBarThumbSize / 2,
+                                theme(context).volumeBarThumbSize / 2,
                             elevation: 0.0,
                             pressedElevation: 0.0,
                           ),
@@ -752,7 +746,7 @@ class _VolumeButtonState extends State<_VolumeButton>
                           min: 0.0,
                           max: 100.0,
                           onChanged: (value) async {
-                            await widget.controller.player.setVolume(value);
+                            await controller(context).player.setVolume(value);
                             mute = false;
                             setState(() {});
                           },
@@ -771,40 +765,41 @@ class _VolumeButtonState extends State<_VolumeButton>
   }
 }
 
-class _PositionIndicator extends StatefulWidget {
-  final MaterialVideoControlsThemeData data;
-  final VideoController controller;
-  const _PositionIndicator(
-      {Key? key, required this.data, required this.controller})
-      : super(key: key);
+// POSITION INDICATOR
+
+class MaterialPositionIndicator extends StatefulWidget {
+  const MaterialPositionIndicator({super.key});
 
   @override
-  State<_PositionIndicator> createState() => _PositionIndicatorState();
+  MaterialPositionIndicatorState createState() =>
+      MaterialPositionIndicatorState();
 }
 
-class _PositionIndicatorState extends State<_PositionIndicator> {
-  late Duration position = widget.controller.player.state.position;
-  late Duration duration = widget.controller.player.state.duration;
+class MaterialPositionIndicatorState extends State<MaterialPositionIndicator> {
+  late Duration position = controller(context).player.state.position;
+  late Duration duration = controller(context).player.state.duration;
 
   final List<StreamSubscription> subscriptions = [];
 
   @override
-  void initState() {
-    super.initState();
-    subscriptions.addAll(
-      [
-        widget.controller.player.streams.position.listen((event) {
-          setState(() {
-            position = event;
-          });
-        }),
-        widget.controller.player.streams.duration.listen((event) {
-          setState(() {
-            duration = event;
-          });
-        }),
-      ],
-    );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (subscriptions.isEmpty) {
+      subscriptions.addAll(
+        [
+          controller(context).player.streams.position.listen((event) {
+            setState(() {
+              position = event;
+            });
+          }),
+          controller(context).player.streams.duration.listen((event) {
+            setState(() {
+              duration = event;
+            });
+          }),
+        ],
+      );
+    }
   }
 
   @override
@@ -818,11 +813,11 @@ class _PositionIndicatorState extends State<_PositionIndicator> {
   @override
   Widget build(BuildContext context) {
     return Text(
-      '${formatDuration(position, duration)} / ${formatDuration(duration, duration)}',
+      '${position.label(reference: duration)} / ${duration.label(reference: duration)}',
       style: TextStyle(
         height: 1.0,
         fontSize: 12.0,
-        color: widget.data.bottomButtonBarButtonColor,
+        color: theme(context).bottomButtonBarButtonColor,
       ),
     );
   }
