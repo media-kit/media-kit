@@ -54,7 +54,7 @@ import 'package:media_kit_video/src/video_controller/platform_video_controller.d
 ///
 /// {@endtemplate}
 class Video extends StatefulWidget {
-  /// The [VideoController] reference to control this [Video] output & connect with [Player] from `package:media_kit`.
+  /// The [VideoController] reference to control this [Video] output.
   final VideoController controller;
 
   /// Height of this viewport.
@@ -63,20 +63,23 @@ class Video extends StatefulWidget {
   /// Width of this viewport.
   final double? height;
 
-  /// Alignment of the viewport.
-  final Alignment alignment;
-
   /// Fit of the viewport.
   final BoxFit fit;
-
-  /// Preferred aspect ratio of the viewport.
-  final double? aspectRatio;
 
   /// Background color to fill the video background.
   final Color fill;
 
+  /// Alignment of the viewport.
+  final Alignment alignment;
+
+  /// Preferred aspect ratio of the viewport.
+  final double? aspectRatio;
+
   /// Filter quality of the [Texture] widget displaying the video output.
   final FilterQuality filterQuality;
+
+  /// Video controls builder.
+  final Widget Function(BuildContext, VideoController)? controls;
 
   /// {@macro video}
   const Video({
@@ -84,11 +87,12 @@ class Video extends StatefulWidget {
     required this.controller,
     this.width,
     this.height,
-    this.alignment = Alignment.center,
     this.fit = BoxFit.contain,
-    this.aspectRatio,
     this.fill = const Color(0xFF000000),
+    this.alignment = Alignment.center,
+    this.aspectRatio,
     this.filterQuality = FilterQuality.low,
+    this.controls,
   }) : super(key: key);
 
   @override
@@ -98,67 +102,77 @@ class Video extends StatefulWidget {
 class _VideoState extends State<Video> {
   @override
   Widget build(BuildContext context) {
+    final controls = widget.controls;
     final controller = widget.controller;
     final aspectRatio = widget.aspectRatio;
-    return Container(
-      width: widget.width ?? double.infinity,
-      height: widget.height ?? double.infinity,
-      color: widget.fill,
-      child: ClipRect(
-        child: FittedBox(
-          alignment: widget.alignment,
-          fit: widget.fit,
-          child: ValueListenableBuilder<PlatformVideoController?>(
-            valueListenable: controller.notifier,
-            builder: (context, notifier, _) => notifier == null
-                ? const SizedBox.shrink()
-                : ValueListenableBuilder<int?>(
-                    valueListenable: notifier.id,
-                    builder: (context, id, _) {
-                      return ValueListenableBuilder<Rect?>(
-                        valueListenable: notifier.rect,
-                        builder: (context, rect, _) {
-                          if (id != null && rect != null) {
-                            return SizedBox(
-                              // Apply aspect ratio if provided.
-                              width: aspectRatio == null
-                                  ? rect.width
-                                  : rect.height * aspectRatio,
-                              height: rect.height,
-                              child: Stack(
-                                children: [
-                                  const SizedBox(),
-                                  Positioned.fill(
-                                    child: Texture(
-                                      textureId: id,
-                                      filterQuality: widget.filterQuality,
-                                    ),
-                                  ),
-                                  // Keep the |Texture| hidden before the first frame renders. In native implementation, if
-                                  // no default frame size is passed (through VideoController), a starting 1 pixel sized
-                                  // texture/surface is created to initialize the render context & check for H/W support.
-                                  // This is then resized based on the video dimensions & accordingly texture ID, texture,
-                                  // EGLDisplay, EGLSurface etc. (depending upon platform) are also changed.
-                                  // Just don't show that 1 pixel texture to the UI.
-                                  // NOTE: Unmounting |Texture| causes the |MarkTextureFrameAvailable| to not do anything.
-                                  if (rect.width <= 1.0 && rect.height <= 1.0)
-                                    Positioned.fill(
-                                      child: Container(
-                                        color: widget.fill,
+    return Stack(
+      children: [
+        Container(
+          width: widget.width ?? double.infinity,
+          height: widget.height ?? double.infinity,
+          color: widget.fill,
+          child: ClipRect(
+            child: FittedBox(
+              alignment: widget.alignment,
+              fit: widget.fit,
+              child: ValueListenableBuilder<PlatformVideoController?>(
+                valueListenable: controller.notifier,
+                builder: (context, notifier, _) => notifier == null
+                    ? const SizedBox.shrink()
+                    : ValueListenableBuilder<int?>(
+                        valueListenable: notifier.id,
+                        builder: (context, id, _) {
+                          return ValueListenableBuilder<Rect?>(
+                            valueListenable: notifier.rect,
+                            builder: (context, rect, _) {
+                              if (id != null && rect != null) {
+                                return SizedBox(
+                                  // Apply aspect ratio if provided.
+                                  width: aspectRatio == null
+                                      ? rect.width
+                                      : rect.height * aspectRatio,
+                                  height: rect.height,
+                                  child: Stack(
+                                    children: [
+                                      const SizedBox(),
+                                      Positioned.fill(
+                                        child: Texture(
+                                          textureId: id,
+                                          filterQuality: widget.filterQuality,
+                                        ),
                                       ),
-                                    ),
-                                ],
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
+                                      // Keep the |Texture| hidden before the first frame renders. In native implementation, if
+                                      // no default frame size is passed (through VideoController), a starting 1 pixel sized
+                                      // texture/surface is created to initialize the render context & check for H/W support.
+                                      // This is then resized based on the video dimensions & accordingly texture ID, texture,
+                                      // EGLDisplay, EGLSurface etc. (depending upon platform) are also changed.
+                                      // Just don't show that 1 pixel texture to the UI.
+                                      // NOTE: Unmounting |Texture| causes the |MarkTextureFrameAvailable| to not do anything.
+                                      if (rect.width <= 1.0 &&
+                                          rect.height <= 1.0)
+                                        Positioned.fill(
+                                          child: Container(
+                                            color: widget.fill,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          );
                         },
-                      );
-                    },
-                  ),
+                      ),
+              ),
+            ),
           ),
         ),
-      ),
+        if (controls != null)
+          Positioned.fill(
+            child: controls.call(context, controller),
+          ),
+      ],
     );
   }
 }

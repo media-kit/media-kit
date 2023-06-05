@@ -54,7 +54,7 @@ import 'package:media_kit_video/src/video_controller/platform_video_controller.d
 ///
 /// {@endtemplate}
 class Video extends StatefulWidget {
-  /// The [VideoController] reference to control this [Video] output & connect with [Player] from `package:media_kit`.
+  /// The [VideoController] reference to control this [Video] output.
   final VideoController controller;
 
   /// Height of this viewport.
@@ -63,20 +63,23 @@ class Video extends StatefulWidget {
   /// Width of this viewport.
   final double? height;
 
-  /// Alignment of the viewport.
-  final Alignment alignment;
-
   /// Fit of the viewport.
   final BoxFit fit;
-
-  /// Preferred aspect ratio of the viewport.
-  final double? aspectRatio;
 
   /// Background color to fill the video background.
   final Color fill;
 
+  /// Alignment of the viewport.
+  final Alignment alignment;
+
+  /// Preferred aspect ratio of the viewport.
+  final double? aspectRatio;
+
   /// Filter quality of the [Texture] widget displaying the video output.
   final FilterQuality filterQuality;
+
+  /// Video controls builder.
+  final Widget Function(BuildContext, VideoController)? controls;
 
   /// {@macro video}
   const Video({
@@ -84,11 +87,12 @@ class Video extends StatefulWidget {
     required this.controller,
     this.width,
     this.height,
-    this.alignment = Alignment.center,
     this.fit = BoxFit.contain,
-    this.aspectRatio,
     this.fill = const Color(0xFF000000),
+    this.alignment = Alignment.center,
+    this.aspectRatio,
     this.filterQuality = FilterQuality.low,
+    this.controls,
   }) : super(key: key);
 
   @override
@@ -98,58 +102,67 @@ class Video extends StatefulWidget {
 class _VideoState extends State<Video> {
   @override
   Widget build(BuildContext context) {
+    final controls = widget.controls;
     final controller = widget.controller;
     final aspectRatio = widget.aspectRatio;
-    return Container(
-      width: widget.width ?? double.infinity,
-      height: widget.height ?? double.infinity,
-      color: widget.fill,
-      child: ClipRect(
-        child: FittedBox(
-          alignment: widget.alignment,
-          fit: widget.fit,
-          child: ValueListenableBuilder<PlatformVideoController?>(
-            valueListenable: controller.notifier,
-            builder: (context, notifier, _) => notifier == null
-                ? const SizedBox.shrink()
-                : ValueListenableBuilder<int?>(
-                    valueListenable: notifier.id,
-                    builder: (context, id, _) {
-                      return ValueListenableBuilder<Rect?>(
-                        valueListenable: notifier.rect,
-                        builder: (context, rect, _) {
-                          if (id != null && rect != null) {
-                            return SizedBox(
-                              // Apply aspect ratio if provided.
-                              width: aspectRatio == null
-                                  ? rect.width
-                                  : rect.height * aspectRatio,
-                              height: rect.height,
-                              child: Stack(
-                                children: [
-                                  const SizedBox(),
-                                  Positioned.fill(
-                                    child: Texture(
-                                      textureId: id,
-                                      filterQuality: widget.filterQuality,
-                                    ),
+    return Stack(
+      children: [
+        Container(
+          width: widget.width ?? double.infinity,
+          height: widget.height ?? double.infinity,
+          color: widget.fill,
+          child: ClipRect(
+            child: FittedBox(
+              alignment: widget.alignment,
+              fit: widget.fit,
+              child: ValueListenableBuilder<PlatformVideoController?>(
+                valueListenable: controller.notifier,
+                builder: (context, notifier, _) => notifier == null
+                    ? const SizedBox.shrink()
+                    : ValueListenableBuilder<int?>(
+                        valueListenable: notifier.id,
+                        builder: (context, id, _) {
+                          return ValueListenableBuilder<Rect?>(
+                            valueListenable: notifier.rect,
+                            builder: (context, rect, _) {
+                              if (id != null && rect != null) {
+                                return SizedBox(
+                                  // Apply aspect ratio if provided.
+                                  width: aspectRatio == null
+                                      ? rect.width
+                                      : rect.height * aspectRatio,
+                                  height: rect.height,
+                                  child: Stack(
+                                    children: [
+                                      const SizedBox(),
+                                      Positioned.fill(
+                                        child: Texture(
+                                          textureId: id,
+                                          filterQuality: widget.filterQuality,
+                                        ),
+                                      ),
+                                      HtmlElementView(
+                                        viewType:
+                                            'com.alexmercerind.media_kit_video.$id',
+                                      )
+                                    ],
                                   ),
-                                  HtmlElementView(
-                                    viewType:
-                                        'com.alexmercerind.media_kit_video.$id',
-                                  )
-                                ],
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          );
                         },
-                      );
-                    },
-                  ),
+                      ),
+              ),
+            ),
           ),
         ),
-      ),
+        if (controls != null)
+          Positioned.fill(
+            child: controls.call(context, controller),
+          ),
+      ],
     );
   }
 }

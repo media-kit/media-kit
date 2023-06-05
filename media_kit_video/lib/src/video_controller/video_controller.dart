@@ -51,6 +51,9 @@ import 'package:media_kit_video/src/video_controller/web_video_controller/web_vi
 ///
 /// {@endtemplate}
 class VideoController {
+  /// The [Player] instance associated with this [VideoController].
+  final Player player;
+
   /// Platform specific internal implementation initialized depending upon the current platform.
   final platform = Completer<PlatformVideoController>();
 
@@ -65,7 +68,7 @@ class VideoController {
 
   /// {@macro video_controller}
   VideoController(
-    Player player, {
+    this.player, {
     VideoControllerConfiguration configuration =
         const VideoControllerConfiguration(),
   }) {
