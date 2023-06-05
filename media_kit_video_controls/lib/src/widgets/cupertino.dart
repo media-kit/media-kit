@@ -7,10 +7,34 @@
 import 'package:flutter/cupertino.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+/// {@template cupertino_video_controls}
+///
+/// [Video] controls which use Cupertino design.
+///
+/// {@endtemplate}
+Widget CupertinoVideoControls(
+  BuildContext context,
+  VideoController controller,
+) {
+  final data = CupertinoVideoControlsTheme.maybeOf(context)?.data ??
+      const CupertinoVideoControlsThemeData();
+  throw UnimplementedError();
+}
+
+/// {@template cupertino_video_controls_theme_data}
+///
+/// Theming related data for [CupertinoVideoControls]. These values are used to theme the descendant [CupertinoVideoControls].
+///
+/// {@endtemplate}
 class CupertinoVideoControlsThemeData {
   const CupertinoVideoControlsThemeData();
 }
 
+/// {@template cupertino_video_controls_theme}
+///
+/// Inherited widget which provides [CupertinoVideoControlsThemeData] to descendant widgets.
+///
+/// {@endtemplate}
 class CupertinoVideoControlsTheme extends InheritedWidget {
   final CupertinoVideoControlsThemeData data;
   const CupertinoVideoControlsTheme({
@@ -33,13 +57,4 @@ class CupertinoVideoControlsTheme extends InheritedWidget {
   @override
   bool updateShouldNotify(CupertinoVideoControlsTheme oldWidget) =>
       data != oldWidget.data;
-}
-
-Widget CupertinoVideoControls(
-  BuildContext context,
-  VideoController controller,
-) {
-  final data = CupertinoVideoControlsTheme.maybeOf(context)?.data ??
-      const CupertinoVideoControlsThemeData();
-  throw UnimplementedError();
 }

@@ -7,10 +7,34 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+/// {@template material_video_controls}
+///
+/// [Video] controls which use Material design.
+///
+/// {@endtemplate}
+Widget MaterialVideoControls(
+  BuildContext context,
+  VideoController controller,
+) {
+  final data = MaterialVideoControlsTheme.maybeOf(context) ??
+      const MaterialVideoControlsThemeData();
+  throw UnimplementedError();
+}
+
+/// {@template material_video_controls_theme_data}
+///
+/// Theming related data for [MaterialVideoControls]. These values are used to theme the descendant [MaterialVideoControls].
+///
+/// {@endtemplate}
 class MaterialVideoControlsThemeData {
   const MaterialVideoControlsThemeData();
 }
 
+/// {@template material_video_controls_theme}
+///
+/// Inherited widget which provides [MaterialVideoControlsThemeData] to descendant widgets.
+///
+/// {@endtemplate}
 class MaterialVideoControlsTheme extends InheritedWidget {
   final MaterialVideoControlsThemeData data;
   const MaterialVideoControlsTheme({
@@ -33,13 +57,4 @@ class MaterialVideoControlsTheme extends InheritedWidget {
   @override
   bool updateShouldNotify(MaterialVideoControlsTheme oldWidget) =>
       data != oldWidget.data;
-}
-
-Widget MaterialVideoControls(
-  BuildContext context,
-  VideoController controller,
-) {
-  final data = MaterialVideoControlsTheme.maybeOf(context) ??
-      const MaterialVideoControlsThemeData();
-  throw UnimplementedError();
 }
