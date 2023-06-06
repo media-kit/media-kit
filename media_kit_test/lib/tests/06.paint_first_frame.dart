@@ -89,14 +89,6 @@ class PaintFirstFrameScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('package:media_kit'),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          for (final player in players) {
-            player.playOrPause();
-          }
-        },
-        child: const Icon(Icons.play_arrow),
-      ),
       body: ListView.separated(
         itemCount: 5,
         itemBuilder: (context, i) => Video(

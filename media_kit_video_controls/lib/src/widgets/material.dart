@@ -51,6 +51,34 @@ class MaterialVideoControlsThemeData {
   /// [Duration] for which the controls will be animated when shown or hidden.
   final Duration controlsTransitionDuration;
 
+  // VISIBILITY
+
+  /// Whether to display seek bar.
+  final bool displaySeekBar;
+
+  /// Whether a skip next button should be displayed if there are more than one videos in the playlist.
+  final bool automaticallyImplySkipNextButton;
+
+  /// Whether a skip previous button should be displayed if there are more than one videos in the playlist.
+  final bool automaticallyImplySkipPreviousButton;
+
+  // BOTTOM BUTTON BAR
+
+  /// Buttons to be displayed in the bottom button bar.
+  final List<Widget> bottombuttonBar;
+
+  /// Margin around the bottom button bar.
+  final EdgeInsets bottomButtonBarMargin;
+
+  /// Height of the bottom button bar.
+  final double bottomButtonBarHeight;
+
+  /// Size of the bottom button bar buttons.
+  final double bottomButtonBarButtonSize;
+
+  /// Color of the bottom button bar buttons.
+  final Color bottomButtonBarButtonColor;
+
   // SEEK BAR
 
   /// [Duration] for which the seek bar will be animated when the user seeks.
@@ -89,23 +117,6 @@ class MaterialVideoControlsThemeData {
   /// [Color] of the seek bar thumb.
   final Color seekBarThumbColor;
 
-  // BOTTOM BUTTON BAR
-
-  /// Buttons to be displayed in the bottom button bar.
-  final List<Widget> bottombuttonBar;
-
-  /// Margin around the bottom button bar.
-  final EdgeInsets bottomButtonBarMargin;
-
-  /// Height of the bottom button bar.
-  final double bottomButtonBarHeight;
-
-  /// Size of the bottom button bar buttons.
-  final double bottomButtonBarButtonSize;
-
-  /// Color of the bottom button bar buttons.
-  final Color bottomButtonBarButtonColor;
-
   // VOLUME BAR
 
   /// [Color] of the volume bar.
@@ -123,29 +134,13 @@ class MaterialVideoControlsThemeData {
   /// [Duration] for which the volume bar will be animated when the user hovers.
   final Duration volumeBarTransitionDuration;
 
-  // VISIBILITY
-
-  /// Whether a skip next button should be displayed if there are more than one videos in the playlist.
-  final bool automaticallyImplySkipNextButton;
-
-  /// Whether a skip previous button should be displayed if there are more than one videos in the playlist.
-  final bool automaticallyImplySkipPreviousButton;
-
+  /// {@macro material_video_controlstheme_data}
   const MaterialVideoControlsThemeData({
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 150),
-    this.seekBarTransitionDuration = const Duration(milliseconds: 300),
-    this.seekBarThumbTransitionDuration = const Duration(milliseconds: 150),
-    this.seekBarMargin = const EdgeInsets.symmetric(horizontal: 16.0),
-    this.seekBarHeight = 3.2,
-    this.seekBarHoverHeight = 5.6,
-    this.seekBarContainerHeight = 36.0,
-    this.seekBarColor = const Color(0x3DFFFFFF),
-    this.seekBarHoverColor = const Color(0x3DFFFFFF),
-    this.seekBarPositionColor = const Color(0xFFFF0000),
-    this.seekBarBufferColor = const Color(0x3DFFFFFF),
-    this.seekBarThumbSize = 12.0,
-    this.seekBarThumbColor = const Color(0xFFFF0000),
+    this.displaySeekBar = true,
+    this.automaticallyImplySkipNextButton = true,
+    this.automaticallyImplySkipPreviousButton = true,
     this.bottombuttonBar = const [
       MaterialSkipPreviousButton(),
       MaterialPlayOrPauseButton(),
@@ -158,13 +153,23 @@ class MaterialVideoControlsThemeData {
     this.bottomButtonBarHeight = 56.0,
     this.bottomButtonBarButtonSize = 28.0,
     this.bottomButtonBarButtonColor = const Color(0xFFFFFFFF),
+    this.seekBarTransitionDuration = const Duration(milliseconds: 300),
+    this.seekBarThumbTransitionDuration = const Duration(milliseconds: 150),
+    this.seekBarMargin = const EdgeInsets.symmetric(horizontal: 16.0),
+    this.seekBarHeight = 3.2,
+    this.seekBarHoverHeight = 5.6,
+    this.seekBarContainerHeight = 36.0,
+    this.seekBarColor = const Color(0x3DFFFFFF),
+    this.seekBarHoverColor = const Color(0x3DFFFFFF),
+    this.seekBarPositionColor = const Color(0xFFFF0000),
+    this.seekBarBufferColor = const Color(0x3DFFFFFF),
+    this.seekBarThumbSize = 12.0,
+    this.seekBarThumbColor = const Color(0xFFFF0000),
     this.volumeBarColor = const Color(0x3DFFFFFF),
     this.volumeBarActiveColor = const Color(0xFFFFFFFF),
     this.volumeBarThumbSize = 12.0,
     this.volumeBarThumbColor = const Color(0xFFFFFFFF),
     this.volumeBarTransitionDuration = const Duration(milliseconds: 150),
-    this.automaticallyImplySkipNextButton = true,
-    this.automaticallyImplySkipPreviousButton = true,
   });
 }
 
@@ -305,10 +310,11 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Transform.translate(
-                  offset: const Offset(0.0, 16.0),
-                  child: const MaterialSeekBar(),
-                ),
+                if (theme(context).displaySeekBar)
+                  Transform.translate(
+                    offset: const Offset(0.0, 16.0),
+                    child: const MaterialSeekBar(),
+                  ),
                 Container(
                   height: theme(context).bottomButtonBarHeight,
                   margin: theme(context).bottomButtonBarMargin,
@@ -330,6 +336,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
 // SEEK BAR
 
+/// Material design seek bar.
 class MaterialSeekBar extends StatefulWidget {
   const MaterialSeekBar({
     Key? key,
@@ -545,8 +552,19 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
 
 // BUTTON: PLAY/PAUSE
 
+/// A material design play/pause button.
 class MaterialPlayOrPauseButton extends StatefulWidget {
-  const MaterialPlayOrPauseButton({super.key});
+  /// Overriden icon size for [MaterialSkipPreviousButton].
+  final double? iconSize;
+
+  /// Overriden icon color for [MaterialSkipPreviousButton].
+  final Color? iconColor;
+
+  const MaterialPlayOrPauseButton({
+    super.key,
+    this.iconSize,
+    this.iconColor,
+  });
 
   @override
   MaterialPlayOrPauseButtonState createState() =>
@@ -586,13 +604,13 @@ class MaterialPlayOrPauseButtonState extends State<MaterialPlayOrPauseButton>
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: controller(context).player.playOrPause,
-      iconSize: theme(context).bottomButtonBarButtonSize,
-      color: theme(context).bottomButtonBarButtonColor,
+      iconSize: widget.iconSize ?? theme(context).bottomButtonBarButtonSize,
+      color: widget.iconColor ?? theme(context).bottomButtonBarButtonColor,
       icon: AnimatedIcon(
         progress: animation,
         icon: AnimatedIcons.play_pause,
-        size: theme(context).bottomButtonBarButtonSize,
-        color: theme(context).bottomButtonBarButtonColor,
+        size: widget.iconSize ?? theme(context).bottomButtonBarButtonSize,
+        color: widget.iconColor ?? theme(context).bottomButtonBarButtonColor,
       ),
     );
   }
@@ -600,8 +618,19 @@ class MaterialPlayOrPauseButtonState extends State<MaterialPlayOrPauseButton>
 
 // BUTTON: SKIP NEXT
 
+/// Material design skip next button.
 class MaterialSkipNextButton extends StatelessWidget {
-  const MaterialSkipNextButton({Key? key}) : super(key: key);
+  /// Overriden icon size for [MaterialSkipPreviousButton].
+  final double? iconSize;
+
+  /// Overriden icon color for [MaterialSkipPreviousButton].
+  final Color? iconColor;
+
+  const MaterialSkipNextButton({
+    Key? key,
+    this.iconSize,
+    this.iconColor,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -610,8 +639,8 @@ class MaterialSkipNextButton extends StatelessWidget {
             theme(context).automaticallyImplySkipNextButton)) {
       return IconButton(
         onPressed: controller(context).player.next,
-        iconSize: theme(context).bottomButtonBarButtonSize,
-        color: theme(context).bottomButtonBarButtonColor,
+        iconSize: iconSize ?? theme(context).bottomButtonBarButtonSize,
+        color: iconColor ?? theme(context).bottomButtonBarButtonColor,
         icon: const Icon(Icons.skip_previous),
       );
     }
@@ -621,8 +650,19 @@ class MaterialSkipNextButton extends StatelessWidget {
 
 // BUTTON: SKIP PREVIOUS
 
+/// Material design skip previous button.
 class MaterialSkipPreviousButton extends StatelessWidget {
-  const MaterialSkipPreviousButton({Key? key}) : super(key: key);
+  /// Overriden icon size for [MaterialSkipPreviousButton].
+  final double? iconSize;
+
+  /// Overriden icon color for [MaterialSkipPreviousButton].
+  final Color? iconColor;
+
+  const MaterialSkipPreviousButton({
+    Key? key,
+    this.iconSize,
+    this.iconColor,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -631,8 +671,8 @@ class MaterialSkipPreviousButton extends StatelessWidget {
             theme(context).automaticallyImplySkipPreviousButton)) {
       return IconButton(
         onPressed: controller(context).player.previous,
-        iconSize: theme(context).bottomButtonBarButtonSize,
-        color: theme(context).bottomButtonBarButtonColor,
+        iconSize: iconSize ?? theme(context).bottomButtonBarButtonSize,
+        color: iconColor ?? theme(context).bottomButtonBarButtonColor,
         icon: const Icon(Icons.skip_previous),
       );
     }
@@ -642,8 +682,35 @@ class MaterialSkipPreviousButton extends StatelessWidget {
 
 // BUTTON: VOLUME
 
+/// Material design volume button & slider.
 class MaterialVolumeButton extends StatefulWidget {
-  const MaterialVolumeButton({super.key});
+  /// Overriden icon size for the volume button.
+  final double? iconSize;
+
+  /// Overriden icon color for the volume button.
+  final Color? iconColor;
+
+  /// Overriden mute icon.
+  final Widget? volumeMuteIcon;
+
+  /// Overriden low volume icon.
+  final Widget? volumeLowIcon;
+
+  /// Overriden high volume icon.
+  final Widget? volumeHighIcon;
+
+  /// Overriden width for the volume slider.
+  final double? sliderWidth;
+
+  const MaterialVolumeButton({
+    super.key,
+    this.iconSize,
+    this.iconColor,
+    this.volumeMuteIcon,
+    this.volumeLowIcon,
+    this.volumeHighIcon,
+    this.sliderWidth,
+  });
 
   @override
   MaterialVolumeButtonState createState() => MaterialVolumeButtonState();
@@ -703,21 +770,37 @@ class MaterialVolumeButtonState extends State<MaterialVolumeButton>
               mute = !mute;
               setState(() {});
             },
-            iconSize: theme(context).bottomButtonBarButtonSize * 0.8,
-            color: theme(context).bottomButtonBarButtonColor,
-            icon: Icon(
-              mute || volume == 0.0
-                  ? Icons.volume_off
-                  : volume < 0.5
-                      ? Icons.volume_down
-                      : Icons.volume_up,
+            iconSize: widget.iconSize ??
+                (theme(context).bottomButtonBarButtonSize * 0.8),
+            color:
+                widget.iconColor ?? theme(context).bottomButtonBarButtonColor,
+            icon: AnimatedSwitcher(
+              duration: theme(context).volumeBarTransitionDuration,
+              child: mute || volume == 0.0
+                  ? (widget.volumeMuteIcon ??
+                      const Icon(
+                        Icons.volume_off,
+                        key: ValueKey(Icons.volume_off),
+                      ))
+                  : volume < 50.0
+                      ? (widget.volumeLowIcon ??
+                          const Icon(
+                            Icons.volume_down,
+                            key: ValueKey(Icons.volume_down),
+                          ))
+                      : (widget.volumeHighIcon ??
+                          const Icon(
+                            Icons.volume_up,
+                            key: ValueKey(Icons.volume_up),
+                          )),
             ),
           ),
           AnimatedOpacity(
             opacity: hover ? 1.0 : 0.0,
             duration: theme(context).volumeBarTransitionDuration,
             child: AnimatedContainer(
-              width: hover ? (12.0 + 52.0 + 18.0) : 12.0,
+              width:
+                  hover ? (12.0 + (widget.sliderWidth ?? 52.0) + 18.0) : 12.0,
               duration: theme(context).volumeBarTransitionDuration,
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -725,7 +808,7 @@ class MaterialVolumeButtonState extends State<MaterialVolumeButton>
                   children: [
                     const SizedBox(width: 12.0),
                     SizedBox(
-                      width: 52.0,
+                      width: widget.sliderWidth ?? 52.0,
                       child: SliderTheme(
                         data: SliderThemeData(
                           trackHeight: 1.2,
@@ -767,8 +850,11 @@ class MaterialVolumeButtonState extends State<MaterialVolumeButton>
 
 // POSITION INDICATOR
 
+/// Material design position indicator.
 class MaterialPositionIndicator extends StatefulWidget {
-  const MaterialPositionIndicator({super.key});
+  /// Overriden [TextStyle] for the [MaterialPositionIndicator].
+  final TextStyle? style;
+  const MaterialPositionIndicator({super.key, this.style});
 
   @override
   MaterialPositionIndicatorState createState() =>
@@ -814,11 +900,12 @@ class MaterialPositionIndicatorState extends State<MaterialPositionIndicator> {
   Widget build(BuildContext context) {
     return Text(
       '${position.label(reference: duration)} / ${duration.label(reference: duration)}',
-      style: TextStyle(
-        height: 1.0,
-        fontSize: 12.0,
-        color: theme(context).bottomButtonBarButtonColor,
-      ),
+      style: widget.style ??
+          TextStyle(
+            height: 1.0,
+            fontSize: 12.0,
+            color: theme(context).bottomButtonBarButtonColor,
+          ),
     );
   }
 }
