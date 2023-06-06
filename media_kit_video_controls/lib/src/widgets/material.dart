@@ -5,6 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: non_constant_identifier_names
 import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -62,22 +63,22 @@ class MaterialVideoControlsThemeData {
   /// Whether a skip previous button should be displayed if there are more than one videos in the playlist.
   final bool automaticallyImplySkipPreviousButton;
 
-  // BOTTOM BUTTON BAR
+  // BUTTON BAR
 
-  /// Buttons to be displayed in the bottom button bar.
-  final List<Widget> bottombuttonBar;
+  /// Buttons to be displayed in the button bar.
+  final List<Widget> buttonBar;
 
-  /// Margin around the bottom button bar.
-  final EdgeInsets bottomButtonBarMargin;
+  /// Margin around the button bar.
+  final EdgeInsets buttonBarMargin;
 
-  /// Height of the bottom button bar.
-  final double bottomButtonBarHeight;
+  /// Height of the button bar.
+  final double buttonBarHeight;
 
-  /// Size of the bottom button bar buttons.
-  final double bottomButtonBarButtonSize;
+  /// Size of the button bar buttons.
+  final double buttonBarButtonSize;
 
-  /// Color of the bottom button bar buttons.
-  final Color bottomButtonBarButtonColor;
+  /// Color of the button bar buttons.
+  final Color buttonBarButtonColor;
 
   // SEEK BAR
 
@@ -141,18 +142,19 @@ class MaterialVideoControlsThemeData {
     this.displaySeekBar = true,
     this.automaticallyImplySkipNextButton = true,
     this.automaticallyImplySkipPreviousButton = true,
-    this.bottombuttonBar = const [
+    this.buttonBar = const [
       MaterialSkipPreviousButton(),
       MaterialPlayOrPauseButton(),
       MaterialSkipNextButton(),
       MaterialVolumeButton(),
       MaterialPositionIndicator(),
       Spacer(),
+      MaterialFullscreenButton(),
     ],
-    this.bottomButtonBarMargin = const EdgeInsets.symmetric(horizontal: 16.0),
-    this.bottomButtonBarHeight = 56.0,
-    this.bottomButtonBarButtonSize = 28.0,
-    this.bottomButtonBarButtonColor = const Color(0xFFFFFFFF),
+    this.buttonBarMargin = const EdgeInsets.symmetric(horizontal: 16.0),
+    this.buttonBarHeight = 56.0,
+    this.buttonBarButtonSize = 28.0,
+    this.buttonBarButtonColor = const Color(0xFFFFFFFF),
     this.seekBarTransitionDuration = const Duration(milliseconds: 300),
     this.seekBarThumbTransitionDuration = const Duration(milliseconds: 150),
     this.seekBarMargin = const EdgeInsets.symmetric(horizontal: 16.0),
@@ -252,9 +254,11 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     });
     _timer?.cancel();
     _timer = Timer(theme(context).controlsHoverDuration, () {
-      setState(() {
-        visible = false;
-      });
+      if (mounted) {
+        setState(() {
+          visible = false;
+        });
+      }
     });
   }
 
@@ -264,9 +268,11 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     });
     _timer?.cancel();
     _timer = Timer(theme(context).controlsHoverDuration, () {
-      setState(() {
-        visible = false;
-      });
+      if (mounted) {
+        setState(() {
+          visible = false;
+        });
+      }
     });
   }
 
@@ -279,55 +285,71 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onHover: (_) => onHover(),
-      onEnter: (_) => onEnter(),
-      onExit: (_) => onExit(),
-      child: AnimatedOpacity(
-        opacity: visible ? 1.0 : 0.0,
-        duration: theme(context).controlsTransitionDuration,
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  stops: [
-                    0.5,
-                    1.0,
-                  ],
-                  colors: [
-                    Colors.transparent,
-                    Colors.black38,
-                  ],
-                ),
-              ),
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.end,
+    return Theme(
+      data: ThemeData(
+        focusColor: const Color(0x00000000),
+        hoverColor: const Color(0x00000000),
+        splashColor: const Color(0x00000000),
+        highlightColor: const Color(0x00000000),
+      ),
+      child: Material(
+        elevation: 0.0,
+        borderOnForeground: false,
+        animationDuration: Duration.zero,
+        color: const Color(0x00000000),
+        shadowColor: const Color(0x00000000),
+        surfaceTintColor: const Color(0x00000000),
+        child: MouseRegion(
+          onHover: (_) => onHover(),
+          onEnter: (_) => onEnter(),
+          onExit: (_) => onExit(),
+          child: AnimatedOpacity(
+            opacity: visible ? 1.0 : 0.0,
+            duration: theme(context).controlsTransitionDuration,
+            child: Stack(
+              alignment: Alignment.bottomCenter,
               children: [
-                if (theme(context).displaySeekBar)
-                  Transform.translate(
-                    offset: const Offset(0.0, 16.0),
-                    child: const MaterialSeekBar(),
-                  ),
                 Container(
-                  height: theme(context).bottomButtonBarHeight,
-                  margin: theme(context).bottomButtonBarMargin,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: theme(context).bottombuttonBar,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      stops: [
+                        0.5,
+                        1.0,
+                      ],
+                      colors: [
+                        Colors.transparent,
+                        Colors.black38,
+                      ],
+                    ),
                   ),
                 ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (theme(context).displaySeekBar)
+                      Transform.translate(
+                        offset: const Offset(0.0, 16.0),
+                        child: const MaterialSeekBar(),
+                      ),
+                    Container(
+                      height: theme(context).buttonBarHeight,
+                      margin: theme(context).buttonBarMargin,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.max,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: theme(context).buttonBar,
+                      ),
+                    ),
+                  ],
+                )
               ],
-            )
-          ],
+            ),
+          ),
         ),
       ),
     );
@@ -604,13 +626,13 @@ class MaterialPlayOrPauseButtonState extends State<MaterialPlayOrPauseButton>
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: controller(context).player.playOrPause,
-      iconSize: widget.iconSize ?? theme(context).bottomButtonBarButtonSize,
-      color: widget.iconColor ?? theme(context).bottomButtonBarButtonColor,
+      iconSize: widget.iconSize ?? theme(context).buttonBarButtonSize,
+      color: widget.iconColor ?? theme(context).buttonBarButtonColor,
       icon: AnimatedIcon(
         progress: animation,
         icon: AnimatedIcons.play_pause,
-        size: widget.iconSize ?? theme(context).bottomButtonBarButtonSize,
-        color: widget.iconColor ?? theme(context).bottomButtonBarButtonColor,
+        size: widget.iconSize ?? theme(context).buttonBarButtonSize,
+        color: widget.iconColor ?? theme(context).buttonBarButtonColor,
       ),
     );
   }
@@ -620,14 +642,18 @@ class MaterialPlayOrPauseButtonState extends State<MaterialPlayOrPauseButton>
 
 /// Material design skip next button.
 class MaterialSkipNextButton extends StatelessWidget {
-  /// Overriden icon size for [MaterialSkipPreviousButton].
+  /// Icon for [MaterialSkipNextButton].
+  final Widget? icon;
+
+  /// Overriden icon size for [MaterialSkipNextButton].
   final double? iconSize;
 
-  /// Overriden icon color for [MaterialSkipPreviousButton].
+  /// Overriden icon color for [MaterialSkipNextButton].
   final Color? iconColor;
 
   const MaterialSkipNextButton({
     Key? key,
+    this.icon,
     this.iconSize,
     this.iconColor,
   }) : super(key: key);
@@ -639,9 +665,9 @@ class MaterialSkipNextButton extends StatelessWidget {
             theme(context).automaticallyImplySkipNextButton)) {
       return IconButton(
         onPressed: controller(context).player.next,
-        iconSize: iconSize ?? theme(context).bottomButtonBarButtonSize,
-        color: iconColor ?? theme(context).bottomButtonBarButtonColor,
-        icon: const Icon(Icons.skip_previous),
+        icon: icon ?? const Icon(Icons.skip_previous),
+        iconSize: iconSize ?? theme(context).buttonBarButtonSize,
+        color: iconColor ?? theme(context).buttonBarButtonColor,
       );
     }
     return const SizedBox.shrink();
@@ -652,6 +678,9 @@ class MaterialSkipNextButton extends StatelessWidget {
 
 /// Material design skip previous button.
 class MaterialSkipPreviousButton extends StatelessWidget {
+  /// Icon for [MaterialSkipPreviousButton].
+  final Widget? icon;
+
   /// Overriden icon size for [MaterialSkipPreviousButton].
   final double? iconSize;
 
@@ -660,6 +689,7 @@ class MaterialSkipPreviousButton extends StatelessWidget {
 
   const MaterialSkipPreviousButton({
     Key? key,
+    this.icon,
     this.iconSize,
     this.iconColor,
   }) : super(key: key);
@@ -671,12 +701,81 @@ class MaterialSkipPreviousButton extends StatelessWidget {
             theme(context).automaticallyImplySkipPreviousButton)) {
       return IconButton(
         onPressed: controller(context).player.previous,
-        iconSize: iconSize ?? theme(context).bottomButtonBarButtonSize,
-        color: iconColor ?? theme(context).bottomButtonBarButtonColor,
-        icon: const Icon(Icons.skip_previous),
+        icon: icon ?? const Icon(Icons.skip_previous),
+        iconSize: iconSize ?? theme(context).buttonBarButtonSize,
+        color: iconColor ?? theme(context).buttonBarButtonColor,
       );
     }
     return const SizedBox.shrink();
+  }
+}
+
+// BUTTON: FULL SCREEN
+
+/// Material design fullscreen button.
+class MaterialFullscreenButton extends StatelessWidget {
+  /// Icon for [MaterialFullscreenButton].
+  final Widget? icon;
+
+  /// Overriden icon size for [MaterialFullscreenButton].
+  final double? iconSize;
+
+  /// Overriden icon color for [MaterialFullscreenButton].
+  final Color? iconColor;
+
+  const MaterialFullscreenButton({
+    Key? key,
+    this.icon,
+    this.iconSize,
+    this.iconColor,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: () => toggleFullScreen(context),
+      icon: icon ??
+          (isFullScreen(context)
+              ? const Icon(Icons.fullscreen_exit)
+              : const Icon(Icons.fullscreen)),
+      iconSize: iconSize ?? theme(context).buttonBarButtonSize,
+      color: iconColor ?? theme(context).buttonBarButtonColor,
+    );
+  }
+}
+
+// BUTTON: CUSTOM
+
+/// Material design fullscreen button.
+class MaterialCustomButton extends StatelessWidget {
+  /// Icon for [MaterialCustomButton].
+  final Widget? icon;
+
+  /// Icon size for [MaterialCustomButton].
+  final double? iconSize;
+
+  /// Icon color for [MaterialCustomButton].
+  final Color? iconColor;
+
+  /// The callback that is called when the button is tapped or otherwise activated.
+  final VoidCallback onPressed;
+
+  const MaterialCustomButton({
+    Key? key,
+    this.icon,
+    this.iconSize,
+    this.iconColor,
+    required this.onPressed,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed,
+      icon: icon ?? const Icon(Icons.fullscreen),
+      iconSize: iconSize ?? theme(context).buttonBarButtonSize,
+      color: iconColor ?? theme(context).buttonBarButtonColor,
+    );
   }
 }
 
@@ -684,22 +783,22 @@ class MaterialSkipPreviousButton extends StatelessWidget {
 
 /// Material design volume button & slider.
 class MaterialVolumeButton extends StatefulWidget {
-  /// Overriden icon size for the volume button.
+  /// Icon size for the volume button.
   final double? iconSize;
 
-  /// Overriden icon color for the volume button.
+  /// Icon color for the volume button.
   final Color? iconColor;
 
-  /// Overriden mute icon.
+  /// Mute icon.
   final Widget? volumeMuteIcon;
 
-  /// Overriden low volume icon.
+  /// Low volume icon.
   final Widget? volumeLowIcon;
 
-  /// Overriden high volume icon.
+  /// High volume icon.
   final Widget? volumeHighIcon;
 
-  /// Overriden width for the volume slider.
+  /// Width for the volume slider.
   final double? sliderWidth;
 
   const MaterialVolumeButton({
@@ -756,93 +855,109 @@ class MaterialVolumeButtonState extends State<MaterialVolumeButton>
           hover = false;
         });
       },
-      child: Row(
-        children: [
-          const SizedBox(width: 4.0),
-          IconButton(
-            onPressed: () async {
-              if (mute) {
-                await controller(context).player.setVolume(_volume);
-              } else {
-                _volume = volume;
-                await controller(context).player.setVolume(0.0);
-              }
-              mute = !mute;
-              setState(() {});
-            },
-            iconSize: widget.iconSize ??
-                (theme(context).bottomButtonBarButtonSize * 0.8),
-            color:
-                widget.iconColor ?? theme(context).bottomButtonBarButtonColor,
-            icon: AnimatedSwitcher(
-              duration: theme(context).volumeBarTransitionDuration,
-              child: mute || volume == 0.0
-                  ? (widget.volumeMuteIcon ??
-                      const Icon(
-                        Icons.volume_off,
-                        key: ValueKey(Icons.volume_off),
-                      ))
-                  : volume < 50.0
-                      ? (widget.volumeLowIcon ??
-                          const Icon(
-                            Icons.volume_down,
-                            key: ValueKey(Icons.volume_down),
-                          ))
-                      : (widget.volumeHighIcon ??
-                          const Icon(
-                            Icons.volume_up,
-                            key: ValueKey(Icons.volume_up),
-                          )),
+      child: Listener(
+        onPointerSignal: (event) {
+          if (event is PointerScrollEvent) {
+            if (event.scrollDelta.dy < 0) {
+              controller(context).player.setVolume(
+                    (volume + 5.0).clamp(0.0, 100.0),
+                  );
+            }
+            if (event.scrollDelta.dy > 0) {
+              controller(context).player.setVolume(
+                    (volume - 5.0).clamp(0.0, 100.0),
+                  );
+            }
+          }
+        },
+        child: Row(
+          children: [
+            const SizedBox(width: 4.0),
+            IconButton(
+              onPressed: () async {
+                if (mute) {
+                  await controller(context).player.setVolume(_volume);
+                } else {
+                  _volume = volume;
+                  await controller(context).player.setVolume(0.0);
+                }
+                mute = !mute;
+                setState(() {});
+              },
+              iconSize:
+                  widget.iconSize ?? (theme(context).buttonBarButtonSize * 0.8),
+              color: widget.iconColor ?? theme(context).buttonBarButtonColor,
+              icon: AnimatedSwitcher(
+                duration: theme(context).volumeBarTransitionDuration,
+                child: mute || volume == 0.0
+                    ? (widget.volumeMuteIcon ??
+                        const Icon(
+                          Icons.volume_off,
+                          key: ValueKey(Icons.volume_off),
+                        ))
+                    : volume < 50.0
+                        ? (widget.volumeLowIcon ??
+                            const Icon(
+                              Icons.volume_down,
+                              key: ValueKey(Icons.volume_down),
+                            ))
+                        : (widget.volumeHighIcon ??
+                            const Icon(
+                              Icons.volume_up,
+                              key: ValueKey(Icons.volume_up),
+                            )),
+              ),
             ),
-          ),
-          AnimatedOpacity(
-            opacity: hover ? 1.0 : 0.0,
-            duration: theme(context).volumeBarTransitionDuration,
-            child: AnimatedContainer(
-              width:
-                  hover ? (12.0 + (widget.sliderWidth ?? 52.0) + 18.0) : 12.0,
+            AnimatedOpacity(
+              opacity: hover ? 1.0 : 0.0,
               duration: theme(context).volumeBarTransitionDuration,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    const SizedBox(width: 12.0),
-                    SizedBox(
-                      width: widget.sliderWidth ?? 52.0,
-                      child: SliderTheme(
-                        data: SliderThemeData(
-                          trackHeight: 1.2,
-                          inactiveTrackColor: theme(context).volumeBarColor,
-                          activeTrackColor: theme(context).volumeBarActiveColor,
-                          thumbColor: theme(context).volumeBarThumbColor,
-                          thumbShape: RoundSliderThumbShape(
-                            enabledThumbRadius:
-                                theme(context).volumeBarThumbSize / 2,
-                            elevation: 0.0,
-                            pressedElevation: 0.0,
+              child: AnimatedContainer(
+                width:
+                    hover ? (12.0 + (widget.sliderWidth ?? 52.0) + 18.0) : 12.0,
+                duration: theme(context).volumeBarTransitionDuration,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 12.0),
+                      SizedBox(
+                        width: widget.sliderWidth ?? 52.0,
+                        child: SliderTheme(
+                          data: SliderThemeData(
+                            trackHeight: 1.2,
+                            inactiveTrackColor: theme(context).volumeBarColor,
+                            activeTrackColor:
+                                theme(context).volumeBarActiveColor,
+                            thumbColor: theme(context).volumeBarThumbColor,
+                            thumbShape: RoundSliderThumbShape(
+                              enabledThumbRadius:
+                                  theme(context).volumeBarThumbSize / 2,
+                              elevation: 0.0,
+                              pressedElevation: 0.0,
+                            ),
+                            trackShape: _CustomTrackShape(),
+                            overlayColor: const Color(0x00000000),
                           ),
-                          trackShape: _CustomTrackShape(),
-                          overlayColor: const Color(0x00000000),
-                        ),
-                        child: Slider(
-                          value: volume.clamp(0.0, 100.0),
-                          min: 0.0,
-                          max: 100.0,
-                          onChanged: (value) async {
-                            await controller(context).player.setVolume(value);
-                            mute = false;
-                            setState(() {});
-                          },
+                          child: Slider(
+                            value: volume.clamp(0.0, 100.0),
+                            min: 0.0,
+                            max: 100.0,
+                            onChanged: (value) async {
+                              await controller(context).player.setVolume(value);
+                              mute = false;
+                              setState(() {});
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 18.0),
-                  ],
+                      const SizedBox(width: 18.0),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -904,7 +1019,7 @@ class MaterialPositionIndicatorState extends State<MaterialPositionIndicator> {
           TextStyle(
             height: 1.0,
             fontSize: 12.0,
-            color: theme(context).bottomButtonBarButtonColor,
+            color: theme(context).buttonBarButtonColor,
           ),
     );
   }
