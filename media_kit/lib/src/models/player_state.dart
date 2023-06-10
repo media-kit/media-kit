@@ -82,7 +82,7 @@ class PlayerState {
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.buffer = Duration.zero,
-    this.volume = 1.0,
+    this.volume = 100.0,
     this.rate = 1.0,
     this.pitch = 1.0,
     this.buffering = false,
