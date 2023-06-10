@@ -1638,11 +1638,11 @@ class libmpvPlayer extends PlatformPlayer {
       // demuxer-max-bytes = 32 * 1024 * 1024
       // demuxer-max-back-bytes = 32 * 1024 * 1024
       //
-      // ANDROID (Physical Device):
+      // ANDROID (Physical Device OR API Level > 25):
       //
       // ao = opensles
       //
-      // ANDROID (Emulator & API Level < 25):
+      // ANDROID (Emulator AND API Level <= 25):
       //
       // ao = null
       //
@@ -1655,11 +1655,11 @@ class libmpvPlayer extends PlatformPlayer {
         'demuxer-max-back-bytes': (32 * 1024 * 1024).toString(),
         // On Android, prefer OpenSL ES audio output.
         // AudioTrack audio output is prone to crashes in some rare cases.
-        if (AndroidHelper.isPhysicalDevice)
+        if (AndroidHelper.isPhysicalDevice || AndroidHelper.APILevel > 25)
           'ao': 'opensles'
         // Disable audio output on older Android emulators with API Level < 25.
         // OpenSL ES audio output seems to be broken on some of these.
-        else if (AndroidHelper.isEmulator && AndroidHelper.APILevel < 25)
+        else if (AndroidHelper.isEmulator && AndroidHelper.APILevel <= 25)
           'ao': 'null'
       };
       // Other properties based on [PlayerConfiguration].
