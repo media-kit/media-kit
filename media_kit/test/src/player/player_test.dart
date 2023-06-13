@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:async';
 import 'dart:collection';
-import 'package:media_kit/media_kit.dart';
 import 'package:test/test.dart';
 import 'package:collection/collection.dart';
 
@@ -11,6 +10,7 @@ import 'package:media_kit/src/player/player.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
+import 'package:media_kit/src/player/platform_player.dart';
 import 'package:media_kit/src/player/libmpv/player/player.dart';
 
 import '../../common/sources.dart';
