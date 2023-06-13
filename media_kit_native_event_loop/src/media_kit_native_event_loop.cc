@@ -6,7 +6,7 @@
 #include "media_kit_native_event_loop.h"
 
 #if defined(__APPLE__)
-#include "signal_recovery/signal_recovery.h"
+#include "signal_recovery.h"
 #endif
 
 MediaKitEventLoopHandler& MediaKitEventLoopHandler::GetInstance() {
