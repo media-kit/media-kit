@@ -41,7 +41,8 @@ Pod::Spec.new do |s|
       'GCC_WARN_INHIBIT_ALL_WARNINGS'       => 'YES',
       'HEADER_SEARCH_PATHS'                 => '"$(inherited)" "$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/media_kit_native_event_loop/common/darwin/Headers"',
       'FRAMEWORK_SEARCH_PATHS[sdk=macosx*]' => sprintf('"$(inherited)" "%s"', framework_search_paths_macosx),
-      'OTHER_LDFLAGS'                       => '"$(inherited)" -framework Mpv',
+      'OTHER_LDFLAGS'                       => '"$(inherited)" -framework Mpv -lpthread',
+      'GCC_PREPROCESSOR_DEFINITIONS'        => '"$(inherited)" _POSIX_C_SOURCE=199309L',
     }
   end
 end
