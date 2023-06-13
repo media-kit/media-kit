@@ -5,6 +5,10 @@
 
 #include "media_kit_native_event_loop.h"
 
+#if defined(__APPLE__)
+#include "signal_recovery/signal_recovery.h"
+#endif
+
 MediaKitEventLoopHandler& MediaKitEventLoopHandler::GetInstance() {
   static MediaKitEventLoopHandler instance;
   return instance;
@@ -46,7 +50,17 @@ void MediaKitEventLoopHandler::Register(int64_t handle, void* post_c_object, int
 
         // Post to Dart.
         auto fn = reinterpret_cast<bool (*)(Dart_Port, Dart_CObject*)>(post_c_object);
-        fn(send_port, &event_object);
+        if (event->event_id != MPV_EVENT_NONE) {
+#if defined(__APPLE__)
+          signal_try(label) {
+            fn(send_port, &event_object);
+          }
+          signal_catch(label) {}
+          signal_end(label)
+#else
+          fn(send_port, &event_object);
+#endif
+        }
 
         // Interpret the posted event in Dart. Wait for |Notify| to be called.
         condition_variable->wait(l);
@@ -103,8 +117,8 @@ void MediaKitEventLoopHandler::Dispose(int64_t handle) {
 
     std::thread([&, context]() {
       // In extreme usage, |std::thread::join| does not stop the |std::mutex| from being released upon exit, resulting
-      // in "mutex destroyed while busy" on Windows. Destroying resources after a voluntary delay of 1 second.
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+      // in "mutex destroyed while busy" on Windows. Destroying resources after a voluntary delay of 5 seconds.
+      std::this_thread::sleep_for(std::chrono::seconds(5));
 
       std::lock_guard<std::mutex> lock(mutex_);
 
@@ -141,7 +155,11 @@ bool MediaKitEventLoopHandler::IsRegistered(int64_t handle) {
          condition_variables_.find(reinterpret_cast<mpv_handle*>(handle)) != condition_variables_.end();
 }
 
-MediaKitEventLoopHandler::MediaKitEventLoopHandler() {}
+MediaKitEventLoopHandler::MediaKitEventLoopHandler() {
+#if defined(__APPLE__)
+  signal_catch_init();
+#endif
+}
 
 MediaKitEventLoopHandler::~MediaKitEventLoopHandler() {
   auto contexts = std::vector<mpv_handle*>();
