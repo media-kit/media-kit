@@ -106,14 +106,15 @@ class _VideoState extends State<Video> {
     final controls = widget.controls;
     final controller = widget.controller;
     final aspectRatio = widget.aspectRatio;
-    return Stack(
-      children: [
-        Container(
-          clipBehavior: Clip.none,
-          width: widget.width ?? double.infinity,
-          height: widget.height ?? double.infinity,
-          color: widget.fill,
-          child: ClipRect(
+    return Container(
+      clipBehavior: Clip.none,
+      width: widget.width ?? double.infinity,
+      height: widget.height ?? double.infinity,
+      color: widget.fill,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRect(
             child: FittedBox(
               alignment: widget.alignment,
               fit: widget.fit,
@@ -159,12 +160,12 @@ class _VideoState extends State<Video> {
               ),
             ),
           ),
-        ),
-        if (controls != null)
-          Positioned.fill(
-            child: controls.call(context, controller),
-          ),
-      ],
+          if (controls != null)
+            Positioned.fill(
+              child: controls.call(context, controller),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -63,10 +63,16 @@ class MaterialVideoControlsThemeData {
   /// Whether a skip previous button should be displayed if there are more than one videos in the playlist.
   final bool automaticallyImplySkipPreviousButton;
 
+  /// Whether to toggle fullscreen on double press.
+  final bool toggleFullScreenOnDoublePress;
+
   // BUTTON BAR
 
-  /// Buttons to be displayed in the button bar.
-  final List<Widget> buttonBar;
+  /// Buttons to be displayed in the top button bar.
+  final List<Widget> topButtonBar;
+
+  /// Buttons to be displayed in the bottom button bar.
+  final List<Widget> bottomButtonBar;
 
   /// Margin around the button bar.
   final EdgeInsets buttonBarMargin;
@@ -142,7 +148,9 @@ class MaterialVideoControlsThemeData {
     this.displaySeekBar = true,
     this.automaticallyImplySkipNextButton = true,
     this.automaticallyImplySkipPreviousButton = true,
-    this.buttonBar = const [
+    this.toggleFullScreenOnDoublePress = true,
+    this.topButtonBar = const [],
+    this.bottomButtonBar = const [
       MaterialSkipPreviousButton(),
       MaterialPlayOrPauseButton(),
       MaterialSkipNextButton(),
@@ -215,6 +223,8 @@ class _MaterialVideoControls extends StatefulWidget {
 /// {@macro material_video_controls}
 class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   bool visible = false;
+
+  DateTime last = DateTime.now();
 
   Timer? _timer;
 
@@ -299,55 +309,98 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
         color: const Color(0x00000000),
         shadowColor: const Color(0x00000000),
         surfaceTintColor: const Color(0x00000000),
-        child: MouseRegion(
-          onHover: (_) => onHover(),
-          onEnter: (_) => onEnter(),
-          onExit: (_) => onExit(),
-          child: AnimatedOpacity(
-            opacity: visible ? 1.0 : 0.0,
-            duration: theme(context).controlsTransitionDuration,
-            child: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      stops: [
-                        0.5,
-                        1.0,
-                      ],
-                      colors: [
-                        Colors.transparent,
-                        Colors.black38,
-                      ],
-                    ),
-                  ),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (theme(context).displaySeekBar)
-                      Transform.translate(
-                        offset: const Offset(0.0, 16.0),
-                        child: const MaterialSeekBar(),
-                      ),
+        child: GestureDetector(
+          onTapUp: (e) {
+            if (theme(context).toggleFullScreenOnDoublePress) {
+              final now = DateTime.now();
+              final difference = now.difference(last);
+              last = now;
+              if (difference < const Duration(milliseconds: 400)) {
+                toggleFullScreen(context);
+              }
+            }
+          },
+          child: MouseRegion(
+            onHover: (_) => onHover(),
+            onEnter: (_) => onEnter(),
+            onExit: (_) => onExit(),
+            child: AnimatedOpacity(
+              opacity: visible ? 1.0 : 0.0,
+              duration: theme(context).controlsTransitionDuration,
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  // Top gradient.
+                  if (theme(context).topButtonBar.isNotEmpty)
                     Container(
-                      height: theme(context).buttonBarHeight,
-                      margin: theme(context).buttonBarMargin,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: theme(context).buttonBar,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          stops: [
+                            0.0,
+                            0.2,
+                          ],
+                          colors: [
+                            Colors.black38,
+                            Colors.transparent,
+                          ],
+                        ),
                       ),
                     ),
-                  ],
-                )
-              ],
+                  // Bottom gradient.
+                  if (theme(context).bottomButtonBar.isNotEmpty)
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          stops: [
+                            0.5,
+                            1.0,
+                          ],
+                          colors: [
+                            Colors.transparent,
+                            Colors.black38,
+                          ],
+                        ),
+                      ),
+                    ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        height: theme(context).buttonBarHeight,
+                        margin: theme(context).buttonBarMargin,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: theme(context).topButtonBar,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (theme(context).displaySeekBar)
+                        Transform.translate(
+                          offset: const Offset(0.0, 16.0),
+                          child: const MaterialSeekBar(),
+                        ),
+                      Container(
+                        height: theme(context).buttonBarHeight,
+                        margin: theme(context).buttonBarMargin,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: theme(context).bottomButtonBar,
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
             ),
           ),
         ),
@@ -665,7 +718,7 @@ class MaterialSkipNextButton extends StatelessWidget {
             theme(context).automaticallyImplySkipNextButton)) {
       return IconButton(
         onPressed: controller(context).player.next,
-        icon: icon ?? const Icon(Icons.skip_previous),
+        icon: icon ?? const Icon(Icons.skip_next),
         iconSize: iconSize ?? theme(context).buttonBarButtonSize,
         color: iconColor ?? theme(context).buttonBarButtonColor,
       );

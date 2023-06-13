@@ -106,14 +106,15 @@ class _VideoState extends State<Video> {
     final controls = widget.controls;
     final controller = widget.controller;
     final aspectRatio = widget.aspectRatio;
-    return Stack(
-      children: [
-        Container(
-          clipBehavior: Clip.none,
-          width: widget.width ?? double.infinity,
-          height: widget.height ?? double.infinity,
-          color: widget.fill,
-          child: ClipRect(
+    return Container(
+      clipBehavior: Clip.none,
+      width: widget.width ?? double.infinity,
+      height: widget.height ?? double.infinity,
+      color: widget.fill,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRect(
             child: FittedBox(
               alignment: widget.alignment,
               fit: widget.fit,
@@ -143,13 +144,9 @@ class _VideoState extends State<Video> {
                                           filterQuality: widget.filterQuality,
                                         ),
                                       ),
-                                      // Keep the |Texture| hidden before the first frame renders. In native implementation, if
-                                      // no default frame size is passed (through VideoController), a starting 1 pixel sized
-                                      // texture/surface is created to initialize the render context & check for H/W support.
-                                      // This is then resized based on the video dimensions & accordingly texture ID, texture,
-                                      // EGLDisplay, EGLSurface etc. (depending upon platform) are also changed.
-                                      // Just don't show that 1 pixel texture to the UI.
-                                      // NOTE: Unmounting |Texture| causes the |MarkTextureFrameAvailable| to not do anything.
+                                      // Keep the |Texture| hidden before the first frame renders. In native implementation, if no default frame size is passed (through VideoController), a starting 1 pixel sized texture/surface is created to initialize the render context & check for H/W support.
+                                      // This is then resized based on the video dimensions & accordingly texture ID, texture, EGLDisplay, EGLSurface etc. (depending upon platform) are also changed. Just don't show that 1 pixel texture to the UI.
+                                      // NOTE: Unmounting |Texture| causes the |MarkTextureFrameAvailable| to not do anything on GNU/Linux.
                                       if (rect.width <= 1.0 &&
                                           rect.height <= 1.0)
                                         Positioned.fill(
@@ -169,12 +166,12 @@ class _VideoState extends State<Video> {
               ),
             ),
           ),
-        ),
-        if (controls != null)
-          Positioned.fill(
-            child: controls.call(context, controller),
-          ),
-      ],
+          if (controls != null)
+            Positioned.fill(
+              child: controls.call(context, controller),
+            ),
+        ],
+      ),
     );
   }
 }
