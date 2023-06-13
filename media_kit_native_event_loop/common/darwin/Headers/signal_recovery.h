@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef SIGNAL_RECOVERY_H
-#define SIGNAL_RECOVERY_H
+#ifndef SIGNAL_RECOVERY_H_
+#define SIGNAL_RECOVERY_H_
 
 #include <setjmp.h>
 #include <signal.h>
@@ -95,4 +95,4 @@ void env_buf_pop(void);
 }
 #endif
 
-#endif  // SIGNAL_RECOVERY_H
+#endif  // SIGNAL_RECOVERY_H_

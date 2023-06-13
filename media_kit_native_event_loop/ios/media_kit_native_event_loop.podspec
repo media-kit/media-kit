@@ -44,7 +44,6 @@ Pod::Spec.new do |s|
       'FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]'        => sprintf('"$(inherited)" "%s"', framework_search_paths_iphoneos),
       'FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]' => sprintf('"$(inherited)" "%s"', framework_search_paths_iphonesimulator),
       'OTHER_LDFLAGS'                                => '"$(inherited)" -framework Mpv -lpthread',
-      'GCC_PREPROCESSOR_DEFINITIONS'                 => '"$(inherited)" _POSIX_C_SOURCE=199309L _DARWIN_C_SOURCE',
       # Flutter.framework does not contain a i386 slice.
       'EXCLUDED_ARCHS[sdk=iphonesimulator*]'         => 'i386',
     }
