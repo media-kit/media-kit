@@ -43,9 +43,9 @@ Pod::Spec.new do |s|
       'HEADER_SEARCH_PATHS'                          => '"$(inherited)" "$(PROJECT_DIR)/../.symlinks/plugins/media_kit_native_event_loop/common/darwin/Headers"',
       'FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]'        => sprintf('"$(inherited)" "%s"', framework_search_paths_iphoneos),
       'FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]' => sprintf('"$(inherited)" "%s"', framework_search_paths_iphonesimulator),
-      'OTHER_LDFLAGS'                                => '"$(inherited)" -framework Mpv',
+      'OTHER_LDFLAGS'                                => '"$(inherited)" -framework Mpv -lpthread',
       # Flutter.framework does not contain a i386 slice.
-      'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
+      'EXCLUDED_ARCHS[sdk=iphonesimulator*]'         => 'i386',
     }
   end
 end
