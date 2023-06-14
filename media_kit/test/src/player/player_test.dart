@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:async';
 import 'dart:collection';
+import 'package:media_kit/media_kit.dart';
 import 'package:test/test.dart';
 import 'package:collection/collection.dart';
 
@@ -40,6 +41,20 @@ void main() {
     },
   );
   test(
+    'player-configuration-ready-callback',
+    () {
+      final expectReady = expectAsync0(() {});
+
+      Player(
+        configuration: PlayerConfiguration(
+          ready: () {
+            expectReady();
+          },
+        ),
+      );
+    },
+  );
+  test(
     'player-open-playable-media',
     () async {
       final player = Player();
@@ -54,6 +69,8 @@ void main() {
               ],
               index: 0,
             ),
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -61,11 +78,13 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
             true,
             // EOF
             false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -73,10 +92,12 @@ void main() {
         player.streams.completed,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
             // EOF
             true,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -84,6 +105,8 @@ void main() {
       await player.open(Media(sources.file[0]));
 
       await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -102,8 +125,11 @@ void main() {
         player.streams.playlist,
         emitsInOrder(
           [
+            // Player.open
             for (int i = 0; i < sources.file.length; i++)
               playlist.copyWith(index: i),
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -112,7 +138,7 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
             true,
             // -> 1
@@ -126,6 +152,8 @@ void main() {
             true,
             // EOF
             false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -133,7 +161,7 @@ void main() {
         player.streams.completed,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
             // -> 1
             true,
@@ -146,15 +174,19 @@ void main() {
             false,
             // EOF
             true,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
 
       await player.open(playlist);
 
-      await Future.delayed(const Duration(minutes: 1));
+      await Future.delayed(const Duration(minutes: 1, seconds: 30));
+
+      await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
+    timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
     'player-open-playable-media-play-false',
@@ -165,12 +197,15 @@ void main() {
         player.streams.playlist,
         emitsInOrder(
           [
+            // Player.open
             Playlist(
               [
                 Media(sources.file[0]),
               ],
               index: 0,
             ),
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -178,8 +213,10 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -188,6 +225,10 @@ void main() {
         Media(sources.file[0]),
         play: false,
       );
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -207,6 +248,8 @@ void main() {
         emitsInOrder(
           [
             playlist,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -214,8 +257,10 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -224,6 +269,10 @@ void main() {
         playlist,
         play: false,
       );
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -242,6 +291,8 @@ void main() {
               ],
               index: 0,
             ),
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -249,12 +300,14 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
-            // Player::play
+            // Player.play
             true,
             // EOF
             false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -262,11 +315,13 @@ void main() {
         player.streams.completed,
         emitsInOrder(
           [
-            // Player::open
-            // Player::play
+            // Player.open
+            // Player.play
             false,
             // EOF
             true,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -278,6 +333,8 @@ void main() {
       await player.play();
 
       await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -298,6 +355,8 @@ void main() {
           [
             for (int i = 0; i < sources.file.length; i++)
               playlist.copyWith(index: i),
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -306,7 +365,7 @@ void main() {
         player.streams.playing,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
             true,
             // -> 1
@@ -320,6 +379,8 @@ void main() {
             true,
             // EOF
             false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -327,7 +388,7 @@ void main() {
         player.streams.completed,
         emitsInOrder(
           [
-            // Player::open
+            // Player.open
             false,
             // -> 1
             true,
@@ -340,6 +401,8 @@ void main() {
             false,
             // EOF
             true,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -350,9 +413,11 @@ void main() {
       );
       await player.play();
 
-      await Future.delayed(const Duration(minutes: 1));
+      await Future.delayed(const Duration(minutes: 1, seconds: 30));
+
+      await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
+    timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
     'player-open-playable-media-extras',
@@ -668,7 +733,7 @@ void main() {
         expectPosition(event);
       });
 
-      // Internal Player.play/Player.playOrPause logic depends upon the value of PlayerState::completed.
+      // Internal Player.play/Player.playOrPause logic depends upon the value of PlayerState.completed.
       // Thus, if EOF is reached with PlaylistMode.none, then re-start playback instead of cycling between play/pause.
       // So, we need this voluntary delay.
       await Future.delayed(const Duration(seconds: 5));
@@ -748,7 +813,7 @@ void main() {
         expectPosition(event);
       });
 
-      // Internal Player.play/Player.playOrPause logic depends upon the value of PlayerState::completed.
+      // Internal Player.play/Player.playOrPause logic depends upon the value of PlayerState.completed.
       // Thus, if EOF is reached with PlaylistMode.none, then re-start playback instead of cycling between play/pause.
       // So, we need this voluntary delay.
       await Future.delayed(const Duration(seconds: 5));
@@ -844,42 +909,59 @@ void main() {
     // TODO(@alexmercerind): Flaky on GNU/Linux CI.
     skip: true,
   );
-  test('player-audio-devices', () async {
-    final player = Player();
+  test(
+    'player-audio-devices',
+    () async {
+      final player = Player();
 
-    final expectAudioDevices = expectAsync1(
-      (value) {
-        print(value);
-        expect(value, isA<List<AudioDevice>>());
-        final devices = value as List<AudioDevice>;
-        expect(devices, isNotEmpty);
-        expect(devices.first, equals(AudioDevice.auto()));
-      },
-      count: 1,
-      max: -1,
-    );
+      final expectAudioDevices = expectAsync1(
+        (value) {
+          print(value);
+          expect(value, isA<List<AudioDevice>>());
+          final devices = value as List<AudioDevice>;
+          expect(devices, isNotEmpty);
+          expect(devices.first, equals(AudioDevice.auto()));
+        },
+        count: 1,
+        max: -1,
+      );
 
-    player.streams.audioDevices.listen((event) async {
-      expectAudioDevices(event);
-    });
-  });
-  test('player-set-audio-device', () async {
-    final player = Player();
+      player.streams.audioDevices.listen((event) async {
+        expectAudioDevices(event);
+      });
+    },
+  );
+  test(
+    'player-set-audio-device',
+    () async {
+      final player = Player();
 
-    final expectAudioDevices = expectAsync1(
-      (value) {
-        final devices = value as List<AudioDevice>;
-        expect(
-          player.setAudioDevice(devices.first),
-          completes,
-        );
-      },
-      count: 1,
-      max: -1,
-    );
+      // Fetch AudioDevice(s).
 
-    player.streams.audioDevices.listen((event) async {
-      expectAudioDevices(event);
-    });
-  });
+      final devices = await player.streams.audioDevices.first;
+
+      expect(devices, isNotEmpty);
+      expect(devices.first, equals(AudioDevice.auto()));
+
+      final expectAudioDevice = expectAsync2(
+        (device, i) {
+          print(device);
+          expect(device, isA<AudioDevice>());
+          expect(device, equals(devices[i as int]));
+        },
+        count: devices.length,
+      );
+
+      for (int i = 0; i < devices.length; i++) {
+        // Invoke Player.setAudioDevice.
+        await player.setAudioDevice(devices[i]);
+        // Expect Player.streams.audioDevices to emit the same [AudioDevice].
+        expectAudioDevice(devices[i], i);
+
+        // Seems to work even without the delay.
+        // However, the event streams are asynchronous, so you never know. It's not really a problem eitherway.
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    },
+  );
 }
