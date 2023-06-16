@@ -668,7 +668,7 @@ if (/* Android 13 or higher. */) {
 
 ### iOS
 
-Edit `ios/Runner/Info-Release.plist`, `ios/Runner/Info-Profile.plist`, `ios/Runner/Info-Debug.plist` to declare relevant permissions:
+Edit `ios/Runner/Info-Release.plist`, `ios/Runner/Info-Profile.plist`, `ios/Runner/Info-Debug.plist`:
 
 **Enable internet access**
 
@@ -686,7 +686,7 @@ N/A
 
 ### macOS
 
-Edit `macos/Runner/Release.entitlements` & `macos/Runner/DebugProfile.entitlements` to declare relevant permissions:
+Edit `macos/Runner/Release.entitlements` & `macos/Runner/DebugProfile.entitlements`:
 
 **Enable internet access**
 
