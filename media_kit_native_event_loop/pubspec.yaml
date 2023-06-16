@@ -2,7 +2,7 @@ name: media_kit_native_event_loop
 description: Platform specific threaded event handling for media_kit. Enables support for higher number of concurrent instances.
 homepage: https://github.com/alexmercerind/media_kit
 repository: https://github.com/alexmercerind/media_kit
-version: 1.0.4
+version: 1.0.5
 funding:
   - https://www.github.com/sponsors/alexmercerind
 
@@ -29,7 +29,7 @@ flutter:
       ios:
         ffiPlugin: true
 
-      # NOTE: package:media_kit ships pre-built media_kit_native_event_loop shared libraries on Android within package:media_kit_libs_android_audio & package:media_kit_libs_android_video packages along side libmpv/FFmpeg shared libraries.
+      # NOTE: package:media_kit ships pre-built package:media_kit_native_event_loop shared libraries on Android within package:media_kit_libs_android_audio & package:media_kit_libs_android_video packages along side libmpv/FFmpeg shared libraries.
       # We do not build on dependent's machine because it requires setting up NDK etc. & build process is rather complex.
       #
       # For building a `libmedia_kit_native_event_loop.so` using this CMake:
