@@ -83,7 +83,7 @@ SPEC CHECKSUMS:
   file_picker: ce3938a0df3cc1ef404671531facef740d03f920
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   media_kit_libs_ios_video: 96259eccffaa309b63a7ee610c2c7786a3b335e5
-  media_kit_native_event_loop: 9f9eb778d0d806ab9486eff7513f7f90f07d50f8
+  media_kit_native_event_loop: 1eac6db2378101404392c80606103b42f7c2c491
   media_kit_video: c6ae801433b484912087b519b45f1beac97b960b
   path_provider_foundation: eaf5b3e458fc0e5fbb9940fb09980e853fe058b8
   SDWebImage: fd7e1a22f00303e058058278639bf6196ee431fe

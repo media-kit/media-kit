@@ -34,20 +34,20 @@ import 'package:media_kit_video/src/video_controller/web_video_controller/web_vi
 /// 1. You can limit size of the video output by specifying [VideoControllerConfiguration.width] & [VideoControllerConfiguration.height].
 ///    * A smaller width & height may yield substantial performance improvements.
 ///    * By default, both [VideoControllerConfiguration.height] & [VideoControllerConfiguration.width] are `null` i.e. output is based on video's resolution.
-/// 2. You can switch between GPU & CPU rendering by specifying `enableHardwareAcceleration`.
+/// 2. You can switch between GPU & CPU rendering by specifying [VideoControllerConfiguration.enableHardwareAcceleration].
 ///    * Disabling the option may improve stability on certain devices.
 ///    * By default, [VideoControllerConfiguration.enableHardwareAcceleration] is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 ///
-/// **Platform specific differences:**
+/// **Platform specific limitations & differences:**
 ///
 /// **Android**
 /// * [VideoControllerConfiguration.width] & [VideoControllerConfiguration.height] arguments have no effect.
 ///
 /// **Web**
 /// * [VideoControllerConfiguration.width] & [VideoControllerConfiguration.height] arguments have no effect.
-/// * Only single [Video] can be displayed at a time for a single [VideoController].
-///   Displaying [Video] widgets with same[VideoController]  will cause only last [Video] to be displayed.
-/// * [VideoControllerConfiguration.enableHardwareAcceleration] is ignored i.e. GPU usage is dependent on the client's web browser.
+/// * Only single [Video] output can be displayed for a [VideoController].
+///   Displaying multiple [Video] widgets with same [VideoController] will cause only last mounted [Video] to be displayed.
+/// * [VideoControllerConfiguration.enableHardwareAcceleration] is ignored i.e. GPU usage is dependent upon the web browser.
 ///
 /// {@endtemplate}
 class VideoController {

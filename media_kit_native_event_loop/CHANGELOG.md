@@ -1,3 +1,7 @@
+## 1.0.5
+
+- fix(macos): occasional EXC_BAD_ACCESS on application terminate
+
 ## 1.0.4
 
 - feat: `MediaKitEventLoopHandler::Dispose`
