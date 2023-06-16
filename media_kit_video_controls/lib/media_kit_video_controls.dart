@@ -4,7 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-export 'package:media_kit_video_controls/src/widgets/material.dart';
-export 'package:media_kit_video_controls/src/widgets/cupertino.dart';
-export 'package:media_kit_video_controls/src/widgets/adaptive.dart';
-export 'package:media_kit_video_controls/src/widgets/no.dart';
+export 'package:media_kit_video_controls/src/controls/no.dart';
+export 'package:media_kit_video_controls/src/controls/adaptive.dart';
+export 'package:media_kit_video_controls/src/controls/material.dart';
+export 'package:media_kit_video_controls/src/controls/cupertino.dart';

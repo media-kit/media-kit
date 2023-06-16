@@ -10,7 +10,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:media_kit_video_controls/src/utils.dart';
+import 'package:media_kit_video_controls/src/controls/extensions/duration.dart';
+import 'package:media_kit_video_controls/src/controls/methods/fullscreen.dart';
+import 'package:media_kit_video_controls/src/controls/methods/video_controller.dart';
+import 'package:media_kit_video_controls/src/controls/widgets/video_controller_inherited_widget.dart';
 
 /// {@template material_video_controls}
 ///
@@ -228,7 +231,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   Timer? _timer;
 
-  late var playlist = controller(context).player.state.playlist;
+  late /* private */ var playlist = controller(context).player.state.playlist;
 
   final List<StreamSubscription> subscriptions = [];
 

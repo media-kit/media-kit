@@ -7,7 +7,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:media_kit_video_controls/src/utils.dart';
+import 'package:media_kit_video_controls/src/controls/widgets/video_controller_inherited_widget.dart';
 
 /// {@template cupertino_video_controls}
 ///
@@ -82,6 +82,7 @@ class _CupertinoVideoControls extends StatefulWidget {
 class _CupertinoVideoControlsState extends State<_CupertinoVideoControls> {
   @override
   Widget build(BuildContext context) {
+    // TODO: Missing implementation.
     return Container();
   }
 }
