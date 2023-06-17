@@ -98,10 +98,8 @@ class _SinglePlayerMultipleVideoScreenState
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Expanded(
-                          child: Card(
-                            elevation: 8.0,
+                          child: Container(
                             color: Colors.black,
-                            clipBehavior: Clip.antiAlias,
                             margin: const EdgeInsets.all(32.0),
                             child: Column(
                               mainAxisSize: MainAxisSize.max,

@@ -48,8 +48,7 @@ class _VideoControllerSetSizeScreenState
             controller: controller,
             controls: NoVideoControls,
           ),
-          Card(
-            elevation: 4.0,
+          Container(
             margin: const EdgeInsets.all(16.0),
             child: SizedBox(
               width: 120.0,

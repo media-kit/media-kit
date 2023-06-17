@@ -50,12 +50,7 @@ class _StressTestScreenState extends State<StressTestScreen> {
   Widget build(BuildContext context) {
     final children = controllers
         .map(
-          (e) => Card(
-            elevation: 4.0,
-            margin: EdgeInsets.zero,
-            clipBehavior: Clip.antiAlias,
-            child: Video(controller: e),
-          ),
+          (e) => Video(controller: e),
         )
         .toList();
     return Scaffold(

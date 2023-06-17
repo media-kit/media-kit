@@ -62,9 +62,7 @@ class _MultiplePlayerMultipleVideoScreenState
               mainAxisSize: MainAxisSize.min,
               children: [
                 Expanded(
-                  child: Card(
-                    elevation: 8.0,
-                    clipBehavior: Clip.antiAlias,
+                  child: Container(
                     margin: const EdgeInsets.all(32.0),
                     child: Video(
                       controller: controllers[i],

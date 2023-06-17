@@ -76,6 +76,9 @@ class TabViewState extends State<TabView> {
 
   @override
   Widget build(BuildContext context) {
-    return Video(controller: controller);
+    return Video(
+      controller: controller,
+      controls: NoVideoControls,
+    );
   }
 }
