@@ -320,41 +320,70 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
         highlightColor: const Color(0x00000000),
       ),
       child: Focus(
-          autofocus: true,
-          child: wrapInSafeAreaIfRequired(
-            child: Material(
-              elevation: 0.0,
-              borderOnForeground: false,
-              animationDuration: Duration.zero,
-              color: const Color(0x00000000),
-              shadowColor: const Color(0x00000000),
-              surfaceTintColor: const Color(0x00000000),
-              child: GestureDetector(
-                onTap: onTap,
-                child: AnimatedOpacity(
-                  curve: Curves.easeInOut,
-                  opacity: visible ? 1.0 : 0.0,
-                  duration: _theme(context).controlsTransitionDuration,
-                  onEnd: () {
-                    setState(() {
-                      if (!visible) {
-                        mount = false;
-                      }
-                    });
-                  },
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.bottomCenter,
-                    children: [
-                      Positioned.fill(
-                        child: Container(color: Colors.black26),
-                      ),
-                      if (mount) ...[
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.end,
+        autofocus: true,
+        child: wrapInSafeAreaIfRequired(
+          child: Material(
+            elevation: 0.0,
+            borderOnForeground: false,
+            animationDuration: Duration.zero,
+            color: const Color(0x00000000),
+            shadowColor: const Color(0x00000000),
+            surfaceTintColor: const Color(0x00000000),
+            child: AnimatedOpacity(
+              curve: Curves.easeInOut,
+              opacity: visible ? 1.0 : 0.0,
+              duration: _theme(context).controlsTransitionDuration,
+              onEnd: () {
+                setState(() {
+                  if (!visible) {
+                    mount = false;
+                  }
+                });
+              },
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.bottomCenter,
+                children: [
+                  Positioned.fill(
+                    child: GestureDetector(
+                      onTap: onTap,
+                      child: Container(color: Colors.black26),
+                    ),
+                  ),
+                  if (mount) ...[
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          height: _theme(context).buttonBarHeight,
+                          margin: _theme(context).buttonBarMargin,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: _theme(context).topButtonBar,
+                          ),
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: _theme(context).primaryButtonBar,
+                            ),
+                          ),
+                        ),
+                        Stack(
+                          alignment: Alignment.bottomCenter,
                           children: [
+                            if (_theme(context).displaySeekBar)
+                              Transform.translate(
+                                offset: Offset.zero,
+                                child: const MaterialSeekBar(),
+                              ),
                             Container(
                               height: _theme(context).buttonBarHeight,
                               margin: _theme(context).buttonBarMargin,
@@ -362,49 +391,20 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 mainAxisSize: MainAxisSize.max,
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.center,
-                                children: _theme(context).topButtonBar,
+                                children: _theme(context).bottomButtonBar,
                               ),
-                            ),
-                            Expanded(
-                              child: Center(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: _theme(context).primaryButtonBar,
-                                ),
-                              ),
-                            ),
-                            Stack(
-                              alignment: Alignment.bottomCenter,
-                              children: [
-                                if (_theme(context).displaySeekBar)
-                                  Transform.translate(
-                                    offset: Offset.zero,
-                                    child: const MaterialSeekBar(),
-                                  ),
-                                Container(
-                                  height: _theme(context).buttonBarHeight,
-                                  margin: _theme(context).buttonBarMargin,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: _theme(context).bottomButtonBar,
-                                  ),
-                                ),
-                              ],
                             ),
                           ],
                         ),
                       ],
-                    ],
-                  ),
-                ),
+                    ),
+                  ],
+                ],
               ),
             ),
-          )),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -762,7 +762,7 @@ class MaterialFullscreenButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: () => toggleFullscreen(context),
+      onPressed: () => toggleFullscreen(controller(context), context),
       icon: icon ??
           (isFullscreen(context)
               ? const Icon(Icons.fullscreen_exit)

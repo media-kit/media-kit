@@ -468,7 +468,7 @@ class _MaterialDesktopVideoControlsState
                 controller(context).player.setVolume(volume.clamp(0.0, 100.0));
               },
               const SingleActivator(LogicalKeyboardKey.keyF): () =>
-                  toggleFullscreen(context),
+                  toggleFullscreen(controller(context), context),
               const SingleActivator(LogicalKeyboardKey.escape): () =>
                   exitFullscreen(context),
             },
@@ -510,7 +510,7 @@ class _MaterialDesktopVideoControlsState
                       final difference = now.difference(last);
                       last = now;
                       if (difference < const Duration(milliseconds: 400)) {
-                        toggleFullscreen(context);
+                        toggleFullscreen(controller(context), context);
                       }
                     }
                   },
@@ -1035,7 +1035,7 @@ class MaterialDesktopFullscreenButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: () => toggleFullscreen(context),
+      onPressed: () => toggleFullscreen(controller(context), context),
       icon: icon ??
           (isFullscreen(context)
               ? const Icon(Icons.fullscreen_exit)

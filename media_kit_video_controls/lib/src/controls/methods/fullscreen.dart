@@ -9,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:media_kit_video_controls/src/controls/methods/video_controller.dart';
 import 'package:media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
 
 /// Whether a [Video] present in the current [BuildContext] is in fullscreen or not.
@@ -17,7 +16,10 @@ bool isFullscreen(BuildContext context) =>
     FullscreenInheritedWidget.maybeOf(context) != null;
 
 /// Makes the [Video] present in the current [BuildContext] enter fullscreen.
-Future<void> enterFullscreen(BuildContext context) {
+Future<void> enterFullscreen(
+  VideoController controller,
+  BuildContext context,
+) {
   return lock.synchronized(() async {
     if (!isFullscreen(context)) {
       if (context.mounted) {
@@ -25,7 +27,7 @@ Future<void> enterFullscreen(BuildContext context) {
           PageRouteBuilder(
             pageBuilder: (_, __, ___) => FullscreenInheritedWidget(
               child: Video(
-                controller: controller(context),
+                controller: controller,
               ),
             ),
             transitionDuration: Duration.zero,
@@ -51,11 +53,14 @@ Future<void> exitFullscreen(BuildContext context) {
 }
 
 /// Toggles fullscreen for the [Video] present in the current [BuildContext].
-Future<void> toggleFullscreen(BuildContext context) {
+Future<void> toggleFullscreen(
+  VideoController controller,
+  BuildContext context,
+) {
   if (isFullscreen(context)) {
     return exitFullscreen(context);
   } else {
-    return enterFullscreen(context);
+    return enterFullscreen(controller, context);
   }
 }
 

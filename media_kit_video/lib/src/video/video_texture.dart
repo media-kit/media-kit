@@ -4,7 +4,8 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'package:flutter/widgets.dart';
-import 'package:media_kit_video_controls/media_kit_video_controls.dart';
+import 'package:media_kit_video_controls/media_kit_video_controls.dart'
+    as media_kit_video_controls;
 
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
@@ -93,14 +94,22 @@ class Video extends StatefulWidget {
     this.alignment = Alignment.center,
     this.aspectRatio,
     this.filterQuality = FilterQuality.low,
-    this.controls = AdaptiveVideoControls,
+    this.controls = media_kit_video_controls.AdaptiveVideoControls,
   }) : super(key: key);
 
   @override
-  State<Video> createState() => _VideoState();
+  State<Video> createState() => VideoState();
 }
 
-class _VideoState extends State<Video> {
+class VideoState extends State<Video> {
+  bool isFullscreen() => media_kit_video_controls.isFullscreen(context);
+  Future<void> enterFullscreen() =>
+      media_kit_video_controls.enterFullscreen(widget.controller, context);
+  Future<void> exitFullscreen() =>
+      media_kit_video_controls.exitFullscreen(context);
+  Future<void> toggleFullscreen() =>
+      media_kit_video_controls.toggleFullscreen(widget.controller, context);
+
   @override
   Widget build(BuildContext context) {
     final controls = widget.controls;
