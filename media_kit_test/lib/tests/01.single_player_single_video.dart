@@ -119,7 +119,14 @@ class _SinglePlayerSingleVideoScreenState
                 ],
               )
             : ListView(
-                children: items,
+                children: [
+                  Video(
+                    controller: controller,
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.width * 9.0 / 16.0,
+                  ),
+                  ...items,
+                ],
               ),
       ),
     );
