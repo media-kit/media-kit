@@ -7,6 +7,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import 'package:media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
 import 'package:media_kit_video_controls/src/controls/widgets/video_controller_inherited_widget.dart';
 
 /// {@template cupertino_video_controls}
@@ -18,11 +19,12 @@ Widget CupertinoVideoControls(
   BuildContext context,
   VideoController controller,
 ) {
-  final data = CupertinoVideoControlsTheme.maybeOf(context)?.data;
+  final theme = CupertinoVideoControlsTheme.maybeOf(context);
   final Widget child;
-  if (data == null) {
+  if (theme == null) {
     child = const CupertinoVideoControlsTheme(
-      data: CupertinoVideoControlsThemeData(),
+      normal: kDefaultCupertinoVideoControlsThemeData,
+      fullscreen: kDefaultCupertinoVideoControlsThemeDataFullscreen,
       child: _CupertinoVideoControls(),
     );
   } else {
@@ -30,6 +32,20 @@ Widget CupertinoVideoControls(
   }
   return VideoControllerInheritedWidget(controller: controller, child: child);
 }
+
+/// [MaterialDesktopVideoControlsThemeData] available in this [context].
+CupertinoVideoControlsThemeData _theme(BuildContext context) =>
+    FullscreenInheritedWidget.maybeOf(context) == null
+        ? CupertinoVideoControlsTheme.of(context).normal
+        : CupertinoVideoControlsTheme.of(context).fullscreen;
+
+/// Default [CupertinoVideoControlsThemeData].
+const kDefaultCupertinoVideoControlsThemeData =
+    CupertinoVideoControlsThemeData();
+
+/// Default [CupertinoVideoControlsThemeData] for fullscreen.
+const kDefaultCupertinoVideoControlsThemeDataFullscreen =
+    CupertinoVideoControlsThemeData();
 
 /// {@template cupertino_video_controls_theme_data}
 ///
@@ -46,10 +62,12 @@ class CupertinoVideoControlsThemeData {
 ///
 /// {@endtemplate}
 class CupertinoVideoControlsTheme extends InheritedWidget {
-  final CupertinoVideoControlsThemeData data;
+  final CupertinoVideoControlsThemeData normal;
+  final CupertinoVideoControlsThemeData fullscreen;
   const CupertinoVideoControlsTheme({
     super.key,
-    required this.data,
+    required this.normal,
+    required this.fullscreen,
     required super.child,
   });
 
@@ -60,13 +78,17 @@ class CupertinoVideoControlsTheme extends InheritedWidget {
 
   static CupertinoVideoControlsTheme of(BuildContext context) {
     final CupertinoVideoControlsTheme? result = maybeOf(context);
-    assert(result != null, 'No CupertinoVideoControlsTheme found in context');
+    assert(
+      result != null,
+      'No [CupertinoVideoControlsTheme] found in [context]',
+    );
     return result!;
   }
 
   @override
   bool updateShouldNotify(CupertinoVideoControlsTheme oldWidget) =>
-      identical(data, oldWidget.data);
+      identical(normal, oldWidget.normal) &&
+      identical(fullscreen, oldWidget.fullscreen);
 }
 
 /// {@macro cupertino_video_controls}
