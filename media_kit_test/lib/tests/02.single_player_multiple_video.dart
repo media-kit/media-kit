@@ -19,8 +19,7 @@ class SinglePlayerMultipleVideoScreen extends StatefulWidget {
 class _SinglePlayerMultipleVideoScreenState
     extends State<SinglePlayerMultipleVideoScreen> {
   late final Player player = Player();
-  // NOTE: A single [VideoController] is enough for multiple [Video] widgets (& more efficient).
-  //       Here, two [VideoController]s are created for testing.
+  // A single [VideoController] is sufficient for multiple [Video] widgets (& more efficient). Here, two instances are created for testing purposes.
   late final VideoController controller0 = VideoController(
     player,
     configuration: configuration.value,
@@ -160,24 +159,42 @@ class _SinglePlayerMultipleVideoScreenState
                         Expanded(
                           child: Row(
                             children: [
-                              Expanded(child: Video(controller: controller0)),
-                              Expanded(child: Video(controller: controller0)),
+                              Expanded(
+                                child: Video(
+                                  controller: controller0,
+                                  controls: NoVideoControls,
+                                ),
+                              ),
+                              Expanded(
+                                child: Video(
+                                  controller: controller0,
+                                  controls: NoVideoControls,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                         Expanded(
                           child: Row(
                             children: [
-                              Expanded(child: Video(controller: controller1)),
-                              Expanded(child: Video(controller: controller1)),
+                              Expanded(
+                                child: Video(
+                                  controller: controller1,
+                                  controls: NoVideoControls,
+                                ),
+                              ),
+                              Expanded(
+                                child: Video(
+                                  controller: controller1,
+                                  controls: NoVideoControls,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32.0),
-                  const Divider(height: 1.0, thickness: 1.0),
                   ...items,
                 ],
               ),

@@ -119,17 +119,7 @@ class _SinglePlayerSingleVideoScreenState
                 ],
               )
             : ListView(
-                children: [
-                  Video(
-                    controller: controller,
-                    width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.width * 9.0 / 16.0,
-                  ),
-                  const SizedBox(height: 16.0),
-                  const SizedBox(height: 32.0),
-                  const Divider(height: 1.0, thickness: 1.0),
-                  ...items,
-                ],
+                children: items,
               ),
       ),
     );
