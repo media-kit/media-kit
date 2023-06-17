@@ -3,47 +3,116 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'dart:io';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart';
+import 'package:synchronized/synchronized.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import 'package:media_kit_video_controls/src/controls/methods/video_controller.dart';
 import 'package:media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
 
 /// Whether a [Video] present in the current [BuildContext] is in fullscreen or not.
-bool isFullScreen(BuildContext context) =>
-    FullScreenInheritedWidget.maybeOf(context) != null;
+bool isFullscreen(BuildContext context) =>
+    FullscreenInheritedWidget.maybeOf(context) != null;
 
 /// Makes the [Video] present in the current [BuildContext] enter fullscreen.
-Future<void> enterFullScreen(BuildContext context) {
-  if (!isFullScreen(context)) {
-    return Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => FullScreenInheritedWidget(
-          child: Video(
-            controller: controller(context),
+Future<void> enterFullscreen(BuildContext context) {
+  return lock.synchronized(() async {
+    if (!isFullscreen(context)) {
+      if (context.mounted) {
+        Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => FullscreenInheritedWidget(
+              child: Video(
+                controller: controller(context),
+              ),
+            ),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
           ),
-        ),
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
-  }
-  return Future.value();
+        );
+        await enterNativeFullscreen();
+      }
+    }
+  });
 }
 
 /// Makes the [Video] present in the current [BuildContext] exit fullscreen.
-Future<void> exitFullScreen(BuildContext context) {
-  if (isFullScreen(context)) {
-    return Navigator.of(context).maybePop();
-  }
-  return Future.value();
+Future<void> exitFullscreen(BuildContext context) {
+  return lock.synchronized(() async {
+    if (isFullscreen(context)) {
+      if (context.mounted) {
+        Navigator.of(context).maybePop();
+      }
+      await exitNativeFullscreen();
+    }
+  });
 }
 
 /// Toggles fullscreen for the [Video] present in the current [BuildContext].
-Future<void> toggleFullScreen(BuildContext context) {
-  if (isFullScreen(context)) {
-    return exitFullScreen(context);
+Future<void> toggleFullscreen(BuildContext context) {
+  if (isFullscreen(context)) {
+    return exitFullscreen(context);
   } else {
-    return enterFullScreen(context);
+    return enterFullscreen(context);
   }
 }
+
+/// Makes the native window enter fullscreen.
+Future<void> enterNativeFullscreen() async {
+  if (Platform.isAndroid) {
+    await Future.wait(
+      [
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+        SystemChrome.setPreferredOrientations(
+          [
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ],
+        ),
+      ],
+    );
+  }
+  if (Platform.isIOS) {
+    await Future.wait(
+      [
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+        SystemChrome.setPreferredOrientations(
+          [
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Makes the native window exit fullscreen.
+Future<void> exitNativeFullscreen() async {
+  if (Platform.isAndroid) {
+    await Future.wait(
+      [
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge),
+        SystemChrome.setPreferredOrientations([]),
+      ],
+    );
+  }
+  if (Platform.isIOS) {
+    await Future.wait(
+      [
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+        SystemChrome.setPreferredOrientations(
+          [
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// For synchronizing [enterFullscreen] & [exitFullscreen] operations.
+final Lock lock = Lock();

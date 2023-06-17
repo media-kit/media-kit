@@ -11,27 +11,27 @@ import 'package:media_kit_video/media_kit_video.dart';
 /// Inherited widget used to identify whether parent [Video] is in fullscreen or not.
 ///
 /// {@endtemplate}
-class FullScreenInheritedWidget extends InheritedWidget {
-  const FullScreenInheritedWidget({
+class FullscreenInheritedWidget extends InheritedWidget {
+  const FullscreenInheritedWidget({
     super.key,
     required super.child,
   });
 
-  static FullScreenInheritedWidget? maybeOf(BuildContext context) {
+  static FullscreenInheritedWidget? maybeOf(BuildContext context) {
     return context
-        .dependOnInheritedWidgetOfExactType<FullScreenInheritedWidget>();
+        .dependOnInheritedWidgetOfExactType<FullscreenInheritedWidget>();
   }
 
-  static FullScreenInheritedWidget of(BuildContext context) {
-    final FullScreenInheritedWidget? result = maybeOf(context);
+  static FullscreenInheritedWidget of(BuildContext context) {
+    final FullscreenInheritedWidget? result = maybeOf(context);
     assert(
       result != null,
-      'No [FullScreenInheritedWidget] found in [context]',
+      'No [FullscreenInheritedWidget] found in [context]',
     );
     return result!;
   }
 
   @override
-  bool updateShouldNotify(FullScreenInheritedWidget oldWidget) =>
+  bool updateShouldNotify(FullscreenInheritedWidget oldWidget) =>
       identical(this, oldWidget);
 }
