@@ -50,7 +50,50 @@ const kDefaultMaterialVideoControlsThemeData = MaterialVideoControlsThemeData();
 
 /// Default [MaterialVideoControlsThemeData] for fullscreen.
 const kDefaultMaterialVideoControlsThemeDataFullscreen =
-    MaterialVideoControlsThemeData();
+    MaterialVideoControlsThemeData(
+  displaySeekBar: true,
+  automaticallyImplySkipNextButton: true,
+  automaticallyImplySkipPreviousButton: true,
+  controlsHoverDuration: Duration(seconds: 3),
+  controlsTransitionDuration: Duration(milliseconds: 300),
+  primaryButtonBar: [
+    Spacer(flex: 2),
+    MaterialSkipPreviousButton(),
+    Spacer(),
+    MaterialPlayOrPauseButton(iconSize: 56.0),
+    Spacer(),
+    MaterialSkipNextButton(),
+    Spacer(flex: 2),
+  ],
+  topButtonBar: [],
+  bottomButtonBar: [
+    MaterialPositionIndicator(),
+    Spacer(),
+    MaterialFullscreenButton(),
+  ],
+  buttonBarMargin: EdgeInsets.only(
+    // Don't ask me why "left" & "right" are not equal.
+    // Yeah... It's driving me crazy too.
+    left: 16.0,
+    right: 8.0,
+    bottom: 36.0,
+  ),
+  buttonBarHeight: 56.0,
+  buttonBarButtonSize: 24.0,
+  buttonBarButtonColor: Color(0xFFFFFFFF),
+  seekBarMargin: EdgeInsets.only(
+    left: 16.0,
+    right: 16.0,
+    bottom: 36.0,
+  ),
+  seekBarHeight: 2.4,
+  seekBarContainerHeight: 36.0,
+  seekBarColor: Color(0x3DFFFFFF),
+  seekBarPositionColor: Color(0xFFFF0000),
+  seekBarBufferColor: Color(0x3DFFFFFF),
+  seekBarThumbSize: 12.8,
+  seekBarThumbColor: Color(0xFFFF0000),
+);
 
 /// {@template material_video_controlstheme_data}
 ///
@@ -129,18 +172,18 @@ class MaterialVideoControlsThemeData {
   /// {@macro material_video_controlstheme_data}
   const MaterialVideoControlsThemeData({
     this.displaySeekBar = true,
-    this.automaticallyImplySkipNextButton = false,
-    this.automaticallyImplySkipPreviousButton = false,
+    this.automaticallyImplySkipNextButton = true,
+    this.automaticallyImplySkipPreviousButton = true,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 300),
     this.primaryButtonBar = const [
-      Spacer(),
+      Spacer(flex: 2),
       MaterialSkipPreviousButton(),
       Spacer(),
       MaterialPlayOrPauseButton(iconSize: 56.0),
       Spacer(),
       MaterialSkipNextButton(),
-      Spacer(),
+      Spacer(flex: 2),
     ],
     this.topButtonBar = const [],
     this.bottomButtonBar = const [
@@ -153,7 +196,7 @@ class MaterialVideoControlsThemeData {
     this.buttonBarButtonSize = 24.0,
     this.buttonBarButtonColor = const Color(0xFFFFFFFF),
     this.seekBarMargin = EdgeInsets.zero,
-    this.seekBarHeight = 2.8,
+    this.seekBarHeight = 2.4,
     this.seekBarContainerHeight = 36.0,
     this.seekBarColor = const Color(0x3DFFFFFF),
     this.seekBarPositionColor = const Color(0xFFFF0000),
@@ -267,6 +310,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   @override
   Widget build(BuildContext context) {
+    Widget wrapInSafeAreaIfRequired({required Widget child}) =>
+        isFullscreen(context) ? SafeArea(child: child) : child;
     return Theme(
       data: ThemeData(
         focusColor: const Color(0x00000000),
@@ -274,85 +319,92 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
         splashColor: const Color(0x00000000),
         highlightColor: const Color(0x00000000),
       ),
-      child: SafeArea(
-        child: Material(
-          elevation: 0.0,
-          borderOnForeground: false,
-          animationDuration: Duration.zero,
-          color: const Color(0x00000000),
-          shadowColor: const Color(0x00000000),
-          surfaceTintColor: const Color(0x00000000),
-          child: GestureDetector(
-            onTap: onTap,
-            child: AnimatedOpacity(
-              curve: Curves.easeInOut,
-              opacity: visible ? 1.0 : 0.0,
-              duration: _theme(context).controlsTransitionDuration,
-              onEnd: () {
-                setState(() {
-                  if (!visible) {
-                    mount = false;
-                  }
-                });
-              },
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Positioned.fill(
-                    child: Container(color: Colors.black26),
-                  ),
-                  if (mount) ...[
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Container(
-                          height: _theme(context).buttonBarHeight,
-                          margin: _theme(context).buttonBarMargin,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: _theme(context).topButtonBar,
-                          ),
-                        ),
-                        Expanded(
-                          child: Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: _theme(context).primaryButtonBar,
+      child: Focus(
+          autofocus: true,
+          child: wrapInSafeAreaIfRequired(
+            child: Material(
+              elevation: 0.0,
+              borderOnForeground: false,
+              animationDuration: Duration.zero,
+              color: const Color(0x00000000),
+              shadowColor: const Color(0x00000000),
+              surfaceTintColor: const Color(0x00000000),
+              child: GestureDetector(
+                onTap: onTap,
+                child: AnimatedOpacity(
+                  curve: Curves.easeInOut,
+                  opacity: visible ? 1.0 : 0.0,
+                  duration: _theme(context).controlsTransitionDuration,
+                  onEnd: () {
+                    setState(() {
+                      if (!visible) {
+                        mount = false;
+                      }
+                    });
+                  },
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      Positioned.fill(
+                        child: Container(color: Colors.black26),
+                      ),
+                      if (mount) ...[
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Container(
+                              height: _theme(context).buttonBarHeight,
+                              margin: _theme(context).buttonBarMargin,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: _theme(context).topButtonBar,
+                              ),
                             ),
-                          ),
+                            Expanded(
+                              child: Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: _theme(context).primaryButtonBar,
+                                ),
+                              ),
+                            ),
+                            Stack(
+                              alignment: Alignment.bottomCenter,
+                              children: [
+                                if (_theme(context).displaySeekBar)
+                                  Transform.translate(
+                                    offset: Offset.zero,
+                                    child: const MaterialSeekBar(),
+                                  ),
+                                Container(
+                                  height: _theme(context).buttonBarHeight,
+                                  margin: _theme(context).buttonBarMargin,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: _theme(context).bottomButtonBar,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                        Container(height: _theme(context).buttonBarHeight),
                       ],
-                    ),
-                    if (_theme(context).displaySeekBar)
-                      Transform.translate(
-                        offset: Offset.zero,
-                        child: const MaterialSeekBar(),
-                      ),
-                    Container(
-                      height: _theme(context).buttonBarHeight,
-                      margin: _theme(context).buttonBarMargin,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: _theme(context).bottomButtonBar,
-                      ),
-                    ),
-                  ],
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-      ),
+          )),
     );
   }
 }
@@ -455,21 +507,6 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
     });
   }
 
-  void onEnter(PointerEnterEvent e, BoxConstraints constraints) {
-    final percent = e.localPosition.dx / constraints.maxWidth;
-    setState(() {
-      tapped = true;
-      slider = percent.clamp(0.0, 1.0);
-    });
-  }
-
-  void onExit(PointerExitEvent e, BoxConstraints constraints) {
-    setState(() {
-      tapped = false;
-      slider = 0.0;
-    });
-  }
-
   /// Returns the current playback position in percentage.
   double get positionPercent {
     if (position == Duration.zero || duration == Duration.zero) {
@@ -499,8 +536,6 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
         builder: (context, constraints) => MouseRegion(
           cursor: SystemMouseCursors.click,
           onHover: (e) => onHover(e, constraints),
-          onEnter: (e) => onEnter(e, constraints),
-          onExit: (e) => onExit(e, constraints),
           child: Listener(
             onPointerMove: (e) => onPointerMove(e, constraints),
             onPointerDown: (e) => onPointerDown(),

@@ -413,6 +413,8 @@ class _MaterialDesktopVideoControlsState
 
   @override
   Widget build(BuildContext context) {
+    Widget wrapInSafeAreaIfRequired({required Widget child}) =>
+        isFullscreen(context) ? SafeArea(child: child) : child;
     return Theme(
       data: ThemeData(
         focusColor: const Color(0x00000000),
@@ -472,7 +474,7 @@ class _MaterialDesktopVideoControlsState
             },
         child: Focus(
           autofocus: true,
-          child: SafeArea(
+          child: wrapInSafeAreaIfRequired(
             child: Material(
               elevation: 0.0,
               borderOnForeground: false,
