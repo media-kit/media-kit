@@ -15,38 +15,38 @@ import 'package:media_kit_video_controls/src/controls/methods/fullscreen.dart';
 import 'package:media_kit_video_controls/src/controls/methods/video_controller.dart';
 import 'package:media_kit_video_controls/src/controls/widgets/video_controller_inherited_widget.dart';
 
-/// {@template material_video_controls}
+/// {@template material_desktop_video_controls}
 ///
-/// [Video] controls which use Material design.
+/// [Video] controls which use MaterialDesktop design.
 ///
 /// {@endtemplate}
-Widget MaterialVideoControls(
+Widget MaterialDesktopVideoControls(
   BuildContext context,
   VideoController controller,
 ) {
-  final data = MaterialVideoControlsTheme.maybeOf(context)?.data;
+  final data = MaterialDesktopVideoControlsTheme.maybeOf(context)?.data;
   final Widget child;
   if (data == null) {
-    child = const MaterialVideoControlsTheme(
-      data: MaterialVideoControlsThemeData(),
-      child: _MaterialVideoControls(),
+    child = const MaterialDesktopVideoControlsTheme(
+      data: MaterialDesktopVideoControlsThemeData(),
+      child: _MaterialDesktopVideoControls(),
     );
   } else {
-    child = const _MaterialVideoControls();
+    child = const _MaterialDesktopVideoControls();
   }
   return VideoControllerInheritedWidget(controller: controller, child: child);
 }
 
-/// [MaterialVideoControlsThemeData] available in this [context].
-MaterialVideoControlsThemeData _theme(BuildContext context) =>
-    MaterialVideoControlsTheme.of(context).data;
+/// [MaterialDesktopVideoControlsThemeData] available in this [context].
+MaterialDesktopVideoControlsThemeData _theme(BuildContext context) =>
+    MaterialDesktopVideoControlsTheme.of(context).data;
 
-/// {@template material_video_controlstheme_data}
+/// {@template material_desktop_video_controlstheme_data}
 ///
-/// Theming related data for [MaterialVideoControls]. These values are used to theme the descendant [MaterialVideoControls].
+/// Theming related data for [MaterialDesktopVideoControls]. These values are used to theme the descendant [MaterialDesktopVideoControls].
 ///
 /// {@endtemplate}
-class MaterialVideoControlsThemeData {
+class MaterialDesktopVideoControlsThemeData {
   // BEHAVIOR
 
   /// Whether to display seek bar.
@@ -57,6 +57,15 @@ class MaterialVideoControlsThemeData {
 
   /// Whether a skip previous button should be displayed if there are more than one videos in the playlist.
   final bool automaticallyImplySkipPreviousButton;
+
+  /// Modify volume on mouse scroll.
+  final bool controlVolumeOnScroll;
+
+  /// Whether to toggle fullscreen on double press.
+  final bool toggleFullScreenOnDoublePress;
+
+  /// Keyboards shortcuts.
+  final Map<ShortcutActivator, VoidCallback>? keyboardShortcuts;
 
   // GENERIC
 
@@ -141,22 +150,25 @@ class MaterialVideoControlsThemeData {
   /// [Duration] for which the volume bar will be animated when the user hovers.
   final Duration volumeBarTransitionDuration;
 
-  /// {@macro material_video_controlstheme_data}
-  const MaterialVideoControlsThemeData({
+  /// {@macro material_desktop_video_controlstheme_data}
+  const MaterialDesktopVideoControlsThemeData({
     this.displaySeekBar = true,
     this.automaticallyImplySkipNextButton = true,
     this.automaticallyImplySkipPreviousButton = true,
+    this.toggleFullScreenOnDoublePress = true,
+    this.controlVolumeOnScroll = true,
+    this.keyboardShortcuts,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 150),
     this.topButtonBar = const [],
     this.bottomButtonBar = const [
-      MaterialSkipPreviousButton(),
-      MaterialPlayOrPauseButton(),
-      MaterialSkipNextButton(),
-      MaterialVolumeButton(),
-      MaterialPositionIndicator(),
+      MaterialDesktopSkipPreviousButton(),
+      MaterialDesktopPlayOrPauseButton(),
+      MaterialDesktopSkipNextButton(),
+      MaterialDesktopVolumeButton(),
+      MaterialDesktopPositionIndicator(),
       Spacer(),
-      MaterialFullscreenButton(),
+      MaterialDesktopFullscreenButton(),
     ],
     this.buttonBarMargin = const EdgeInsets.symmetric(horizontal: 16.0),
     this.buttonBarHeight = 56.0,
@@ -180,47 +192,130 @@ class MaterialVideoControlsThemeData {
     this.volumeBarThumbColor = const Color(0xFFFFFFFF),
     this.volumeBarTransitionDuration = const Duration(milliseconds: 150),
   });
+
+  /// Creates a copy of this [MaterialDesktopVideoControlsThemeData] with the given fields replaced by the non-null parameter values.
+  MaterialDesktopVideoControlsThemeData copyWith({
+    bool? displaySeekBar,
+    bool? automaticallyImplySkipNextButton,
+    bool? automaticallyImplySkipPreviousButton,
+    bool? toggleFullScreenOnDoublePress,
+    bool? controlVolumeOnScroll,
+    Map<ShortcutActivator, VoidCallback>? keyboardShortcuts,
+    Duration? controlsHoverDuration,
+    Duration? controlsTransitionDuration,
+    List<Widget>? topButtonBar,
+    List<Widget>? bottomButtonBar,
+    EdgeInsets? buttonBarMargin,
+    double? buttonBarHeight,
+    double? buttonBarButtonSize,
+    Color? buttonBarButtonColor,
+    Duration? seekBarTransitionDuration,
+    Duration? seekBarThumbTransitionDuration,
+    EdgeInsets? seekBarMargin,
+    double? seekBarHeight,
+    double? seekBarHoverHeight,
+    double? seekBarContainerHeight,
+    Color? seekBarColor,
+    Color? seekBarHoverColor,
+    Color? seekBarPositionColor,
+    Color? seekBarBufferColor,
+    double? seekBarThumbSize,
+    Color? seekBarThumbColor,
+    Color? volumeBarColor,
+    Color? volumeBarActiveColor,
+    double? volumeBarThumbSize,
+    Color? volumeBarThumbColor,
+    Duration? volumeBarTransitionDuration,
+  }) {
+    return MaterialDesktopVideoControlsThemeData(
+      displaySeekBar: displaySeekBar ?? this.displaySeekBar,
+      automaticallyImplySkipNextButton: automaticallyImplySkipNextButton ??
+          this.automaticallyImplySkipNextButton,
+      automaticallyImplySkipPreviousButton:
+          automaticallyImplySkipPreviousButton ??
+              this.automaticallyImplySkipPreviousButton,
+      toggleFullScreenOnDoublePress:
+          toggleFullScreenOnDoublePress ?? this.toggleFullScreenOnDoublePress,
+      controlVolumeOnScroll:
+          controlVolumeOnScroll ?? this.controlVolumeOnScroll,
+      keyboardShortcuts: keyboardShortcuts ?? this.keyboardShortcuts,
+      controlsHoverDuration:
+          controlsHoverDuration ?? this.controlsHoverDuration,
+      controlsTransitionDuration:
+          controlsTransitionDuration ?? this.controlsTransitionDuration,
+      topButtonBar: topButtonBar ?? this.topButtonBar,
+      bottomButtonBar: bottomButtonBar ?? this.bottomButtonBar,
+      buttonBarMargin: buttonBarMargin ?? this.buttonBarMargin,
+      buttonBarHeight: buttonBarHeight ?? this.buttonBarHeight,
+      buttonBarButtonSize: buttonBarButtonSize ?? this.buttonBarButtonSize,
+      buttonBarButtonColor: buttonBarButtonColor ?? this.buttonBarButtonColor,
+      seekBarTransitionDuration:
+          seekBarTransitionDuration ?? this.seekBarTransitionDuration,
+      seekBarThumbTransitionDuration:
+          seekBarThumbTransitionDuration ?? this.seekBarThumbTransitionDuration,
+      seekBarMargin: seekBarMargin ?? this.seekBarMargin,
+      seekBarHeight: seekBarHeight ?? this.seekBarHeight,
+      seekBarHoverHeight: seekBarHoverHeight ?? this.seekBarHoverHeight,
+      seekBarContainerHeight:
+          seekBarContainerHeight ?? this.seekBarContainerHeight,
+      seekBarColor: seekBarColor ?? this.seekBarColor,
+      seekBarHoverColor: seekBarHoverColor ?? this.seekBarHoverColor,
+      seekBarPositionColor: seekBarPositionColor ?? this.seekBarPositionColor,
+      seekBarBufferColor: seekBarBufferColor ?? this.seekBarBufferColor,
+      seekBarThumbSize: seekBarThumbSize ?? this.seekBarThumbSize,
+      seekBarThumbColor: seekBarThumbColor ?? this.seekBarThumbColor,
+      volumeBarColor: volumeBarColor ?? this.volumeBarColor,
+      volumeBarActiveColor: volumeBarActiveColor ?? this.volumeBarActiveColor,
+      volumeBarThumbSize: volumeBarThumbSize ?? this.volumeBarThumbSize,
+      volumeBarThumbColor: volumeBarThumbColor ?? this.volumeBarThumbColor,
+      volumeBarTransitionDuration:
+          volumeBarTransitionDuration ?? this.volumeBarTransitionDuration,
+    );
+  }
 }
 
-/// {@template material_video_controls_theme}
+/// {@template material_desktop_video_controls_theme}
 ///
-/// Inherited widget which provides [MaterialVideoControlsThemeData] to descendant widgets.
+/// Inherited widget which provides [MaterialDesktopVideoControlsThemeData] to descendant widgets.
 ///
 /// {@endtemplate}
-class MaterialVideoControlsTheme extends InheritedWidget {
-  final MaterialVideoControlsThemeData data;
-  const MaterialVideoControlsTheme({
+class MaterialDesktopVideoControlsTheme extends InheritedWidget {
+  final MaterialDesktopVideoControlsThemeData data;
+  const MaterialDesktopVideoControlsTheme({
     super.key,
     required this.data,
     required super.child,
   });
 
-  static MaterialVideoControlsTheme? maybeOf(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<MaterialVideoControlsTheme>();
+  static MaterialDesktopVideoControlsTheme? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<
+        MaterialDesktopVideoControlsTheme>();
   }
 
-  static MaterialVideoControlsTheme of(BuildContext context) {
-    final MaterialVideoControlsTheme? result = maybeOf(context);
-    assert(result != null, 'No MaterialVideoControlsTheme found in context');
+  static MaterialDesktopVideoControlsTheme of(BuildContext context) {
+    final MaterialDesktopVideoControlsTheme? result = maybeOf(context);
+    assert(result != null,
+        'No MaterialDesktopVideoControlsTheme found in context');
     return result!;
   }
 
   @override
-  bool updateShouldNotify(MaterialVideoControlsTheme oldWidget) =>
+  bool updateShouldNotify(MaterialDesktopVideoControlsTheme oldWidget) =>
       identical(data, oldWidget.data);
 }
 
-/// {@macro material_video_controls}
-class _MaterialVideoControls extends StatefulWidget {
-  const _MaterialVideoControls();
+/// {@macro material_desktop_video_controls}
+class _MaterialDesktopVideoControls extends StatefulWidget {
+  const _MaterialDesktopVideoControls();
 
   @override
-  State<_MaterialVideoControls> createState() => _MaterialVideoControlsState();
+  State<_MaterialDesktopVideoControls> createState() =>
+      _MaterialDesktopVideoControlsState();
 }
 
-/// {@macro material_video_controls}
-class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
+/// {@macro material_desktop_video_controls}
+class _MaterialDesktopVideoControlsState
+    extends State<_MaterialDesktopVideoControls> {
   bool visible = false;
 
   DateTime last = DateTime.now();
@@ -301,99 +396,203 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
         splashColor: const Color(0x00000000),
         highlightColor: const Color(0x00000000),
       ),
-      child: Material(
-        elevation: 0.0,
-        borderOnForeground: false,
-        animationDuration: Duration.zero,
-        color: const Color(0x00000000),
-        shadowColor: const Color(0x00000000),
-        surfaceTintColor: const Color(0x00000000),
-        child: GestureDetector(
-          onTapUp: (e) {},
-          child: MouseRegion(
-            onHover: (_) => onHover(),
-            onEnter: (_) => onEnter(),
-            onExit: (_) => onExit(),
-            child: AnimatedOpacity(
-              curve: Curves.easeInOut,
-              opacity: visible ? 1.0 : 0.0,
-              duration: _theme(context).controlsTransitionDuration,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  // Top gradient.
-                  if (_theme(context).topButtonBar.isNotEmpty)
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          stops: [
-                            0.0,
-                            0.2,
-                          ],
-                          colors: [
-                            Colors.black38,
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  // Bottom gradient.
-                  if (_theme(context).bottomButtonBar.isNotEmpty)
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          stops: [
-                            0.5,
-                            1.0,
-                          ],
-                          colors: [
-                            Colors.transparent,
-                            Colors.black38,
-                          ],
-                        ),
-                      ),
-                    ),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Container(
-                        height: _theme(context).buttonBarHeight,
-                        margin: _theme(context).buttonBarMargin,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: _theme(context).topButtonBar,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (_theme(context).displaySeekBar)
-                        Transform.translate(
-                          offset: _theme(context).bottomButtonBar.isNotEmpty
-                              ? const Offset(0.0, 16.0)
-                              : Offset.zero,
-                          child: const MaterialSeekBar(),
-                        ),
-                      if (_theme(context).bottomButtonBar.isNotEmpty)
-                        Container(
-                          height: _theme(context).buttonBarHeight,
-                          margin: _theme(context).buttonBarMargin,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: _theme(context).bottomButtonBar,
+      child: CallbackShortcuts(
+        bindings: _theme(context).keyboardShortcuts ??
+            {
+              // Default key-board shortcuts.
+              // https://support.google.com/youtube/answer/7631406
+              const SingleActivator(LogicalKeyboardKey.mediaPlay): () =>
+                  controller(context).player.play(),
+              const SingleActivator(LogicalKeyboardKey.mediaPause): () =>
+                  controller(context).player.pause(),
+              const SingleActivator(LogicalKeyboardKey.mediaPlayPause): () =>
+                  controller(context).player.playOrPause(),
+              const SingleActivator(LogicalKeyboardKey.mediaTrackNext): () =>
+                  controller(context).player.next(),
+              const SingleActivator(LogicalKeyboardKey.mediaTrackPrevious):
+                  () => controller(context).player.previous(),
+              const SingleActivator(LogicalKeyboardKey.space): () =>
+                  controller(context).player.playOrPause(),
+              const SingleActivator(LogicalKeyboardKey.keyJ): () {
+                final rate = controller(context).player.state.position -
+                    const Duration(seconds: 10);
+                controller(context).player.seek(rate);
+              },
+              const SingleActivator(LogicalKeyboardKey.keyI): () {
+                final rate = controller(context).player.state.position +
+                    const Duration(seconds: 10);
+                controller(context).player.seek(rate);
+              },
+              const SingleActivator(LogicalKeyboardKey.arrowLeft): () {
+                final rate = controller(context).player.state.position -
+                    const Duration(seconds: 2);
+                controller(context).player.seek(rate);
+              },
+              const SingleActivator(LogicalKeyboardKey.arrowRight): () {
+                final rate = controller(context).player.state.position +
+                    const Duration(seconds: 2);
+                controller(context).player.seek(rate);
+              },
+              const SingleActivator(LogicalKeyboardKey.arrowUp): () {
+                final volume = controller(context).player.state.volume + 5.0;
+                controller(context).player.setVolume(volume.clamp(0.0, 100.0));
+              },
+              const SingleActivator(LogicalKeyboardKey.arrowDown): () {
+                final volume = controller(context).player.state.volume - 5.0;
+                controller(context).player.setVolume(volume.clamp(0.0, 100.0));
+              },
+              const SingleActivator(LogicalKeyboardKey.keyF): () =>
+                  toggleFullScreen(context),
+              const SingleActivator(LogicalKeyboardKey.escape): () =>
+                  exitFullScreen(context),
+            },
+        child: Focus(
+          autofocus: true,
+          child: Material(
+            elevation: 0.0,
+            borderOnForeground: false,
+            animationDuration: Duration.zero,
+            color: const Color(0x00000000),
+            shadowColor: const Color(0x00000000),
+            surfaceTintColor: const Color(0x00000000),
+            child: Listener(
+              onPointerSignal: _theme(context).controlVolumeOnScroll
+                  ? (e) {
+                      if (e is PointerScrollEvent) {
+                        if (e.delta.dy > 0) {
+                          final volume =
+                              controller(context).player.state.volume - 5.0;
+                          controller(context)
+                              .player
+                              .setVolume(volume.clamp(0.0, 100.0));
+                        }
+                        if (e.delta.dy < 0) {
+                          final volume =
+                              controller(context).player.state.volume + 5.0;
+                          controller(context)
+                              .player
+                              .setVolume(volume.clamp(0.0, 100.0));
+                        }
+                      }
+                    }
+                  : null,
+              child: GestureDetector(
+                onTapUp: (e) {
+                  if (_theme(context).toggleFullScreenOnDoublePress) {
+                    final now = DateTime.now();
+                    final difference = now.difference(last);
+                    last = now;
+                    if (difference < const Duration(milliseconds: 400)) {
+                      toggleFullScreen(context);
+                    }
+                  }
+                },
+                onPanUpdate: _theme(context).controlVolumeOnScroll
+                    ? (e) {
+                        if (e.delta.dy > 0) {
+                          final volume =
+                              controller(context).player.state.volume - 5.0;
+                          controller(context)
+                              .player
+                              .setVolume(volume.clamp(0.0, 100.0));
+                        }
+                        if (e.delta.dy < 0) {
+                          final volume =
+                              controller(context).player.state.volume + 5.0;
+                          controller(context)
+                              .player
+                              .setVolume(volume.clamp(0.0, 100.0));
+                        }
+                      }
+                    : null,
+                child: MouseRegion(
+                  onHover: (_) => onHover(),
+                  onEnter: (_) => onEnter(),
+                  onExit: (_) => onExit(),
+                  child: AnimatedOpacity(
+                    curve: Curves.easeInOut,
+                    opacity: visible ? 1.0 : 0.0,
+                    duration: _theme(context).controlsTransitionDuration,
+                    child: Stack(
+                      alignment: Alignment.bottomCenter,
+                      children: [
+                        // Top gradient.
+                        if (_theme(context).topButtonBar.isNotEmpty)
+                          Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                stops: [
+                                  0.0,
+                                  0.2,
+                                ],
+                                colors: [
+                                  Colors.black38,
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                    ],
-                  )
-                ],
+                        // Bottom gradient.
+                        if (_theme(context).bottomButtonBar.isNotEmpty)
+                          Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                stops: [
+                                  0.5,
+                                  1.0,
+                                ],
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black38,
+                                ],
+                              ),
+                            ),
+                          ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Container(
+                              height: _theme(context).buttonBarHeight,
+                              margin: _theme(context).buttonBarMargin,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: _theme(context).topButtonBar,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (_theme(context).displaySeekBar)
+                              Transform.translate(
+                                offset:
+                                    _theme(context).bottomButtonBar.isNotEmpty
+                                        ? const Offset(0.0, 16.0)
+                                        : Offset.zero,
+                                child: const MaterialDesktopSeekBar(),
+                              ),
+                            if (_theme(context).bottomButtonBar.isNotEmpty)
+                              Container(
+                                height: _theme(context).buttonBarHeight,
+                                margin: _theme(context).buttonBarMargin,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.max,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: _theme(context).bottomButtonBar,
+                                ),
+                              ),
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -405,17 +604,17 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
 // SEEK BAR
 
-/// Material design seek bar.
-class MaterialSeekBar extends StatefulWidget {
-  const MaterialSeekBar({
+/// MaterialDesktop design seek bar.
+class MaterialDesktopSeekBar extends StatefulWidget {
+  const MaterialDesktopSeekBar({
     Key? key,
   }) : super(key: key);
 
   @override
-  MaterialSeekBarState createState() => MaterialSeekBarState();
+  MaterialDesktopSeekBarState createState() => MaterialDesktopSeekBarState();
 }
 
-class MaterialSeekBarState extends State<MaterialSeekBar> {
+class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
   bool hover = false;
   bool click = false;
   double slider = 0.0;
@@ -622,25 +821,26 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
 // BUTTON: PLAY/PAUSE
 
 /// A material design play/pause button.
-class MaterialPlayOrPauseButton extends StatefulWidget {
-  /// Overriden icon size for [MaterialSkipPreviousButton].
+class MaterialDesktopPlayOrPauseButton extends StatefulWidget {
+  /// Overriden icon size for [MaterialDesktopSkipPreviousButton].
   final double? iconSize;
 
-  /// Overriden icon color for [MaterialSkipPreviousButton].
+  /// Overriden icon color for [MaterialDesktopSkipPreviousButton].
   final Color? iconColor;
 
-  const MaterialPlayOrPauseButton({
+  const MaterialDesktopPlayOrPauseButton({
     super.key,
     this.iconSize,
     this.iconColor,
   });
 
   @override
-  MaterialPlayOrPauseButtonState createState() =>
-      MaterialPlayOrPauseButtonState();
+  MaterialDesktopPlayOrPauseButtonState createState() =>
+      MaterialDesktopPlayOrPauseButtonState();
 }
 
-class MaterialPlayOrPauseButtonState extends State<MaterialPlayOrPauseButton>
+class MaterialDesktopPlayOrPauseButtonState
+    extends State<MaterialDesktopPlayOrPauseButton>
     with SingleTickerProviderStateMixin {
   late final animation = AnimationController(
     vsync: this,
@@ -687,18 +887,18 @@ class MaterialPlayOrPauseButtonState extends State<MaterialPlayOrPauseButton>
 
 // BUTTON: SKIP NEXT
 
-/// Material design skip next button.
-class MaterialSkipNextButton extends StatelessWidget {
-  /// Icon for [MaterialSkipNextButton].
+/// MaterialDesktop design skip next button.
+class MaterialDesktopSkipNextButton extends StatelessWidget {
+  /// Icon for [MaterialDesktopSkipNextButton].
   final Widget? icon;
 
-  /// Overriden icon size for [MaterialSkipNextButton].
+  /// Overriden icon size for [MaterialDesktopSkipNextButton].
   final double? iconSize;
 
-  /// Overriden icon color for [MaterialSkipNextButton].
+  /// Overriden icon color for [MaterialDesktopSkipNextButton].
   final Color? iconColor;
 
-  const MaterialSkipNextButton({
+  const MaterialDesktopSkipNextButton({
     Key? key,
     this.icon,
     this.iconSize,
@@ -723,18 +923,18 @@ class MaterialSkipNextButton extends StatelessWidget {
 
 // BUTTON: SKIP PREVIOUS
 
-/// Material design skip previous button.
-class MaterialSkipPreviousButton extends StatelessWidget {
-  /// Icon for [MaterialSkipPreviousButton].
+/// MaterialDesktop design skip previous button.
+class MaterialDesktopSkipPreviousButton extends StatelessWidget {
+  /// Icon for [MaterialDesktopSkipPreviousButton].
   final Widget? icon;
 
-  /// Overriden icon size for [MaterialSkipPreviousButton].
+  /// Overriden icon size for [MaterialDesktopSkipPreviousButton].
   final double? iconSize;
 
-  /// Overriden icon color for [MaterialSkipPreviousButton].
+  /// Overriden icon color for [MaterialDesktopSkipPreviousButton].
   final Color? iconColor;
 
-  const MaterialSkipPreviousButton({
+  const MaterialDesktopSkipPreviousButton({
     Key? key,
     this.icon,
     this.iconSize,
@@ -759,18 +959,18 @@ class MaterialSkipPreviousButton extends StatelessWidget {
 
 // BUTTON: FULL SCREEN
 
-/// Material design fullscreen button.
-class MaterialFullscreenButton extends StatelessWidget {
-  /// Icon for [MaterialFullscreenButton].
+/// MaterialDesktop design fullscreen button.
+class MaterialDesktopFullscreenButton extends StatelessWidget {
+  /// Icon for [MaterialDesktopFullscreenButton].
   final Widget? icon;
 
-  /// Overriden icon size for [MaterialFullscreenButton].
+  /// Overriden icon size for [MaterialDesktopFullscreenButton].
   final double? iconSize;
 
-  /// Overriden icon color for [MaterialFullscreenButton].
+  /// Overriden icon color for [MaterialDesktopFullscreenButton].
   final Color? iconColor;
 
-  const MaterialFullscreenButton({
+  const MaterialDesktopFullscreenButton({
     Key? key,
     this.icon,
     this.iconSize,
@@ -793,21 +993,21 @@ class MaterialFullscreenButton extends StatelessWidget {
 
 // BUTTON: CUSTOM
 
-/// Material design fullscreen button.
-class MaterialCustomButton extends StatelessWidget {
-  /// Icon for [MaterialCustomButton].
+/// MaterialDesktop design fullscreen button.
+class MaterialDesktopCustomButton extends StatelessWidget {
+  /// Icon for [MaterialDesktopCustomButton].
   final Widget? icon;
 
-  /// Icon size for [MaterialCustomButton].
+  /// Icon size for [MaterialDesktopCustomButton].
   final double? iconSize;
 
-  /// Icon color for [MaterialCustomButton].
+  /// Icon color for [MaterialDesktopCustomButton].
   final Color? iconColor;
 
   /// The callback that is called when the button is tapped or otherwise activated.
   final VoidCallback onPressed;
 
-  const MaterialCustomButton({
+  const MaterialDesktopCustomButton({
     Key? key,
     this.icon,
     this.iconSize,
@@ -828,8 +1028,8 @@ class MaterialCustomButton extends StatelessWidget {
 
 // BUTTON: VOLUME
 
-/// Material design volume button & slider.
-class MaterialVolumeButton extends StatefulWidget {
+/// MaterialDesktop design volume button & slider.
+class MaterialDesktopVolumeButton extends StatefulWidget {
   /// Icon size for the volume button.
   final double? iconSize;
 
@@ -848,7 +1048,7 @@ class MaterialVolumeButton extends StatefulWidget {
   /// Width for the volume slider.
   final double? sliderWidth;
 
-  const MaterialVolumeButton({
+  const MaterialDesktopVolumeButton({
     super.key,
     this.iconSize,
     this.iconColor,
@@ -859,10 +1059,12 @@ class MaterialVolumeButton extends StatefulWidget {
   });
 
   @override
-  MaterialVolumeButtonState createState() => MaterialVolumeButtonState();
+  MaterialDesktopVolumeButtonState createState() =>
+      MaterialDesktopVolumeButtonState();
 }
 
-class MaterialVolumeButtonState extends State<MaterialVolumeButton>
+class MaterialDesktopVolumeButtonState
+    extends State<MaterialDesktopVolumeButton>
     with SingleTickerProviderStateMixin {
   late double volume = controller(context).player.state.volume;
 
@@ -1012,18 +1214,19 @@ class MaterialVolumeButtonState extends State<MaterialVolumeButton>
 
 // POSITION INDICATOR
 
-/// Material design position indicator.
-class MaterialPositionIndicator extends StatefulWidget {
-  /// Overriden [TextStyle] for the [MaterialPositionIndicator].
+/// MaterialDesktop design position indicator.
+class MaterialDesktopPositionIndicator extends StatefulWidget {
+  /// Overriden [TextStyle] for the [MaterialDesktopPositionIndicator].
   final TextStyle? style;
-  const MaterialPositionIndicator({super.key, this.style});
+  const MaterialDesktopPositionIndicator({super.key, this.style});
 
   @override
-  MaterialPositionIndicatorState createState() =>
-      MaterialPositionIndicatorState();
+  MaterialDesktopPositionIndicatorState createState() =>
+      MaterialDesktopPositionIndicatorState();
 }
 
-class MaterialPositionIndicatorState extends State<MaterialPositionIndicator> {
+class MaterialDesktopPositionIndicatorState
+    extends State<MaterialDesktopPositionIndicator> {
   late Duration position = controller(context).player.state.position;
   late Duration duration = controller(context).player.state.duration;
 

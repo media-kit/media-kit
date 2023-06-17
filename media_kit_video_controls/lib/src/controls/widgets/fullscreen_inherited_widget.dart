@@ -8,7 +8,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 /// {@template fullscreen_inherited_widget}
 ///
-/// Inherited widget used to identify whether some [Video] is in fullscreen or not.
+/// Inherited widget used to identify whether parent [Video] is in fullscreen or not.
 ///
 /// {@endtemplate}
 class FullScreenInheritedWidget extends InheritedWidget {
