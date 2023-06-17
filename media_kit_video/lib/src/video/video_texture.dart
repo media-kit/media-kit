@@ -4,6 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'package:flutter/widgets.dart';
+import 'package:wakelock/wakelock.dart';
 import 'package:media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
 
@@ -83,6 +84,9 @@ class Video extends StatefulWidget {
   /// Video controls builder.
   final VideoControlsBuilder? controls;
 
+  /// Whether to acquire wake lock while playing the video.
+  final bool wakelock;
+
   /// {@macro video}
   const Video({
     Key? key,
@@ -95,6 +99,7 @@ class Video extends StatefulWidget {
     this.aspectRatio,
     this.filterQuality = FilterQuality.low,
     this.controls = media_kit_video_controls.AdaptiveVideoControls,
+    this.wakelock = true,
   }) : super(key: key);
 
   @override
@@ -109,6 +114,26 @@ class VideoState extends State<Video> {
       media_kit_video_controls.exitFullscreen(context);
   Future<void> toggleFullscreen() =>
       media_kit_video_controls.toggleFullscreen(widget.controller, context);
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.wakelock) {
+      try {
+        Wakelock.enable();
+      } catch (_) {}
+    }
+  }
+
+  @override
+  void dispose() {
+    if (widget.wakelock) {
+      try {
+        Wakelock.disable();
+      } catch (_) {}
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

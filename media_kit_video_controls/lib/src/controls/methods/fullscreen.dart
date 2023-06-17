@@ -6,6 +6,7 @@
 import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -66,7 +67,9 @@ Future<void> toggleFullscreen(
 
 /// Makes the native window enter fullscreen.
 Future<void> enterNativeFullscreen() async {
-  if (Platform.isAndroid) {
+  if (kIsWeb) {
+    // TODO: Missing implementation.
+  } else if (Platform.isAndroid) {
     await Future.wait(
       [
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
@@ -78,8 +81,7 @@ Future<void> enterNativeFullscreen() async {
         ),
       ],
     );
-  }
-  if (Platform.isIOS) {
+  } else if (Platform.isIOS) {
     await Future.wait(
       [
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
@@ -96,15 +98,16 @@ Future<void> enterNativeFullscreen() async {
 
 /// Makes the native window exit fullscreen.
 Future<void> exitNativeFullscreen() async {
-  if (Platform.isAndroid) {
+  if (kIsWeb) {
+    // TODO: Missing implementation.
+  } else if (Platform.isAndroid) {
     await Future.wait(
       [
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge),
         SystemChrome.setPreferredOrientations([]),
       ],
     );
-  }
-  if (Platform.isIOS) {
+  } else if (Platform.isIOS) {
     await Future.wait(
       [
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),

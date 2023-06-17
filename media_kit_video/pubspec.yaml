@@ -15,6 +15,7 @@ dependencies:
     sdk: flutter
   ffi: ^2.0.1
   synchronized: ^3.1.0
+  wakelock: ^0.6.2
   plugin_platform_interface: ^2.0.2
 
   # NOTE: Bump before publishing to pub.dev
