@@ -13,9 +13,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  synchronized: ^3.1.0
+  screen_brightness: ^0.2.2
+  volume_controller: ^2.0.7
   # NOTE: Bump before publishing to pub.dev
   media_kit_video: ^0.0.12
-  synchronized: ^3.1.0
 
 # NOTE: Remove before publishing to pub.dev
 dependency_overrides:

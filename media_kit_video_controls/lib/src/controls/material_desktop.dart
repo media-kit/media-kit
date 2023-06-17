@@ -11,7 +11,6 @@ import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import 'package:media_kit_video_controls/src/controls/extensions/duration.dart';
-import 'package:media_kit_video_controls/src/controls/methods/fullscreen.dart';
 import 'package:media_kit_video_controls/src/controls/methods/video_controller.dart';
 import 'package:media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
 import 'package:media_kit_video_controls/src/controls/widgets/video_controller_inherited_widget.dart';
@@ -71,7 +70,7 @@ class MaterialDesktopVideoControlsThemeData {
   final bool automaticallyImplySkipPreviousButton;
 
   /// Modify volume on mouse scroll.
-  final bool controlVolumeOnScroll;
+  final bool modifyVolumeOnScroll;
 
   /// Whether to toggle fullscreen on double press.
   final bool toggleFullscreenOnDoublePress;
@@ -171,7 +170,7 @@ class MaterialDesktopVideoControlsThemeData {
     this.automaticallyImplySkipNextButton = true,
     this.automaticallyImplySkipPreviousButton = true,
     this.toggleFullscreenOnDoublePress = true,
-    this.controlVolumeOnScroll = true,
+    this.modifyVolumeOnScroll = true,
     this.keyboardShortcuts,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 150),
@@ -215,7 +214,7 @@ class MaterialDesktopVideoControlsThemeData {
     bool? automaticallyImplySkipNextButton,
     bool? automaticallyImplySkipPreviousButton,
     bool? toggleFullscreenOnDoublePress,
-    bool? controlVolumeOnScroll,
+    bool? modifyVolumeOnScroll,
     Map<ShortcutActivator, VoidCallback>? keyboardShortcuts,
     Duration? controlsHoverDuration,
     Duration? controlsTransitionDuration,
@@ -252,8 +251,7 @@ class MaterialDesktopVideoControlsThemeData {
               this.automaticallyImplySkipPreviousButton,
       toggleFullscreenOnDoublePress:
           toggleFullscreenOnDoublePress ?? this.toggleFullscreenOnDoublePress,
-      controlVolumeOnScroll:
-          controlVolumeOnScroll ?? this.controlVolumeOnScroll,
+      modifyVolumeOnScroll: modifyVolumeOnScroll ?? this.modifyVolumeOnScroll,
       keyboardShortcuts: keyboardShortcuts ?? this.keyboardShortcuts,
       controlsHoverDuration:
           controlsHoverDuration ?? this.controlsHoverDuration,
@@ -483,7 +481,7 @@ class _MaterialDesktopVideoControlsState
               shadowColor: const Color(0x00000000),
               surfaceTintColor: const Color(0x00000000),
               child: Listener(
-                onPointerSignal: _theme(context).controlVolumeOnScroll
+                onPointerSignal: _theme(context).modifyVolumeOnScroll
                     ? (e) {
                         if (e is PointerScrollEvent) {
                           if (e.delta.dy > 0) {
@@ -514,7 +512,7 @@ class _MaterialDesktopVideoControlsState
                       }
                     }
                   },
-                  onPanUpdate: _theme(context).controlVolumeOnScroll
+                  onPanUpdate: _theme(context).modifyVolumeOnScroll
                       ? (e) {
                           if (e.delta.dy > 0) {
                             final volume =

@@ -9,9 +9,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:volume_controller/volume_controller.dart';
+import 'package:screen_brightness/screen_brightness.dart';
 
 import 'package:media_kit_video_controls/src/controls/extensions/duration.dart';
-import 'package:media_kit_video_controls/src/controls/methods/fullscreen.dart';
 import 'package:media_kit_video_controls/src/controls/methods/video_controller.dart';
 import 'package:media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
 import 'package:media_kit_video_controls/src/controls/widgets/video_controller_inherited_widget.dart';
@@ -54,6 +55,10 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   displaySeekBar: true,
   automaticallyImplySkipNextButton: true,
   automaticallyImplySkipPreviousButton: true,
+  brightnessGesture: true,
+  volumeGesture: true,
+  seekGesture: true,
+  seekOnDoubleTap: true,
   controlsHoverDuration: Duration(seconds: 3),
   controlsTransitionDuration: Duration(milliseconds: 300),
   primaryButtonBar: [
@@ -111,6 +116,18 @@ class MaterialVideoControlsThemeData {
 
   /// Whether a skip previous button should be displayed if there are more than one videos in the playlist.
   final bool automaticallyImplySkipPreviousButton;
+
+  /// Whether to modify screen brightness on vertical drag gesture on the left side of the screen.
+  final bool brightnessGesture;
+
+  /// Whether to modify volume on vertical drag gesture on the right side of the screen.
+  final bool volumeGesture;
+
+  /// Whether to modify playback position on horizontal drag gesture on the screen.
+  final bool seekGesture;
+
+  /// Whether to enable double tap to seek on left or right side of the screen.
+  final bool seekOnDoubleTap;
 
   // GENERIC
 
@@ -174,6 +191,10 @@ class MaterialVideoControlsThemeData {
     this.displaySeekBar = true,
     this.automaticallyImplySkipNextButton = true,
     this.automaticallyImplySkipPreviousButton = true,
+    this.brightnessGesture = false,
+    this.volumeGesture = false,
+    this.seekGesture = false,
+    this.seekOnDoubleTap = false,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 300),
     this.primaryButtonBar = const [
@@ -256,6 +277,15 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   Timer? _timer;
 
+  double _brightnessValue = 0.0;
+  bool _brightnessIndicator = false;
+  Timer? _brightnessTimer;
+
+  double _volumeValue = 0.0;
+  bool _volumeIndicator = false;
+  Timer? _volumeTimer;
+  bool _volumeInterceptEventChannel = false;
+
   late /* private */ var playlist = controller(context).player.state.playlist;
 
   final List<StreamSubscription> subscriptions = [];
@@ -283,6 +313,14 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     for (final subscription in subscriptions) {
       subscription.cancel();
     }
+    // --------------------------------------------------
+    // package:screen_brightness
+    Future.microtask(() async {
+      try {
+        ScreenBrightness().resetScreenBrightness();
+      } catch (_) {}
+    });
+    // --------------------------------------------------
     super.dispose();
   }
 
@@ -309,6 +347,81 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // --------------------------------------------------
+    // package:volume_controller
+    Future.microtask(() async {
+      try {
+        VolumeController().showSystemUI = false;
+        _volumeValue = await VolumeController().getVolume();
+        VolumeController().listener((value) {
+          if (mounted && !_volumeInterceptEventChannel) {
+            setState(() {
+              _volumeValue = value;
+            });
+          }
+        });
+      } catch (_) {}
+    });
+    // --------------------------------------------------
+    // --------------------------------------------------
+    // package:screen_brightness
+    Future.microtask(() async {
+      try {
+        _brightnessValue = await ScreenBrightness().current;
+        ScreenBrightness().onCurrentBrightnessChanged.listen((value) {
+          if (mounted) {
+            setState(() {
+              _brightnessValue = value;
+            });
+          }
+        });
+      } catch (_) {}
+    });
+    // --------------------------------------------------
+  }
+
+  void setVolume(double value) {
+    // --------------------------------------------------
+    // package:volume_controller
+    VolumeController().setVolume(value);
+    setState(() {
+      _volumeValue = value;
+      _volumeIndicator = true;
+      _volumeInterceptEventChannel = true;
+    });
+    _volumeTimer?.cancel();
+    _volumeTimer = Timer(const Duration(milliseconds: 200), () {
+      if (mounted) {
+        setState(() {
+          _volumeIndicator = false;
+          _volumeInterceptEventChannel = false;
+        });
+      }
+    });
+    // --------------------------------------------------
+  }
+
+  void setBrightness(double value) {
+    // --------------------------------------------------
+    // package:screen_brightness
+    ScreenBrightness().setScreenBrightness(value);
+    setState(() {
+      _brightnessIndicator = true;
+    });
+    _brightnessTimer?.cancel();
+    _brightnessTimer = Timer(const Duration(milliseconds: 200), () {
+      if (mounted) {
+        setState(() {
+          _brightnessIndicator = false;
+        });
+      }
+    });
+    // --------------------------------------------------
+  }
+
+  @override
   Widget build(BuildContext context) {
     Widget wrapInSafeAreaIfRequired({required Widget child}) =>
         isFullscreen(context) ? SafeArea(child: child) : child;
@@ -329,61 +442,184 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
             color: const Color(0x00000000),
             shadowColor: const Color(0x00000000),
             surfaceTintColor: const Color(0x00000000),
-            child: AnimatedOpacity(
-              curve: Curves.easeInOut,
-              opacity: visible ? 1.0 : 0.0,
-              duration: _theme(context).controlsTransitionDuration,
-              onEnd: () {
-                setState(() {
-                  if (!visible) {
-                    mount = false;
-                  }
-                });
-              },
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Positioned.fill(
-                    child: GestureDetector(
-                      onTap: onTap,
-                      child: Container(color: Colors.black26),
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                // Volume Indicator.
+                AnimatedOpacity(
+                  curve: Curves.easeInOut,
+                  opacity: !mount && _volumeIndicator ? 1.0 : 0.0,
+                  duration: _theme(context).controlsTransitionDuration,
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0x88000000),
+                      borderRadius: BorderRadius.circular(64.0),
                     ),
-                  ),
-                  if (mount) ...[
-                    Column(
+                    height: 52.0,
+                    width: 108.0,
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Container(
-                          height: _theme(context).buttonBarHeight,
-                          margin: _theme(context).buttonBarMargin,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: _theme(context).topButtonBar,
+                          height: 52.0,
+                          width: 42.0,
+                          alignment: Alignment.centerRight,
+                          child: Icon(
+                            _volumeValue == 0.0
+                                ? Icons.volume_off
+                                : _volumeValue < 0.5
+                                    ? Icons.volume_down
+                                    : Icons.volume_up,
+                            color: const Color(0xFFFFFFFF),
+                            size: 24.0,
                           ),
                         ),
+                        const SizedBox(width: 12.0),
                         Expanded(
-                          child: Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: _theme(context).primaryButtonBar,
+                          child: Text(
+                            '${(_volumeValue * 100.0).round()}%',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 14.0,
+                              color: Color(0xFFFFFFFF),
                             ),
                           ),
                         ),
-                        Stack(
-                          alignment: Alignment.bottomCenter,
+                        const SizedBox(width: 16.0),
+                      ],
+                    ),
+                  ),
+                ),
+                // Brightness Indicator.
+                AnimatedOpacity(
+                  curve: Curves.easeInOut,
+                  opacity: !mount && _brightnessIndicator ? 1.0 : 0.0,
+                  duration: _theme(context).controlsTransitionDuration,
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0x88000000),
+                      borderRadius: BorderRadius.circular(64.0),
+                    ),
+                    height: 52.0,
+                    width: 108.0,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          height: 52.0,
+                          width: 42.0,
+                          alignment: Alignment.centerRight,
+                          child: Icon(
+                            _brightnessValue < 1.0 / 3.0
+                                ? Icons.brightness_low
+                                : _brightnessValue < 2.0 / 3.0
+                                    ? Icons.brightness_medium
+                                    : Icons.brightness_high,
+                            color: const Color(0xFFFFFFFF),
+                            size: 24.0,
+                          ),
+                        ),
+                        const SizedBox(width: 12.0),
+                        Expanded(
+                          child: Text(
+                            '${(_brightnessValue * 100.0).round()}%',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 14.0,
+                              color: Color(0xFFFFFFFF),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16.0),
+                      ],
+                    ),
+                  ),
+                ),
+                // Controls:
+                AnimatedOpacity(
+                  curve: Curves.easeInOut,
+                  opacity: visible ? 1.0 : 0.0,
+                  duration: _theme(context).controlsTransitionDuration,
+                  onEnd: () {
+                    setState(() {
+                      if (!visible) {
+                        mount = false;
+                      }
+                    });
+                  },
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      Positioned.fill(
+                        child: Container(
+                          color: const Color(0x66000000),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: Row(
                           children: [
-                            if (_theme(context).displaySeekBar)
-                              Transform.translate(
-                                offset: Offset.zero,
-                                child: const MaterialSeekBar(),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: onTap,
+                                onVerticalDragUpdate: !mount &&
+                                        _theme(context).brightnessGesture
+                                    ? (e) async {
+                                        final delta = e.primaryDelta ?? 0.0;
+                                        final brightness =
+                                            _brightnessValue - delta / 100.0;
+                                        final result =
+                                            brightness.clamp(0.0, 1.0);
+                                        setBrightness(result);
+                                      }
+                                    : null,
+                                child: Container(
+                                  color: const Color(0x00000000),
+                                ),
                               ),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: onTap,
+                                child: Container(
+                                  color: const Color(0x00000000),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: onTap,
+                                onVerticalDragUpdate: !mount &&
+                                        _theme(context).volumeGesture
+                                    ? (e) async {
+                                        final delta = e.primaryDelta ?? 0.0;
+                                        final volume =
+                                            _volumeValue - delta / 100.0;
+                                        final result = volume.clamp(0.0, 1.0);
+                                        setVolume(result);
+                                      }
+                                    : null,
+                                child: Container(
+                                  color: const Color(0x00000000),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (mount) ...[
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
                             Container(
                               height: _theme(context).buttonBarHeight,
                               margin: _theme(context).buttonBarMargin,
@@ -391,16 +627,47 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 mainAxisSize: MainAxisSize.max,
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.center,
-                                children: _theme(context).bottomButtonBar,
+                                children: _theme(context).topButtonBar,
                               ),
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: _theme(context).primaryButtonBar,
+                                ),
+                              ),
+                            ),
+                            Stack(
+                              alignment: Alignment.bottomCenter,
+                              children: [
+                                if (_theme(context).displaySeekBar)
+                                  Transform.translate(
+                                    offset: Offset.zero,
+                                    child: const MaterialSeekBar(),
+                                  ),
+                                Container(
+                                  height: _theme(context).buttonBarHeight,
+                                  margin: _theme(context).buttonBarMargin,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: _theme(context).bottomButtonBar,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
+                      ]
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
