@@ -119,18 +119,14 @@ class VideoState extends State<Video> {
   void initState() {
     super.initState();
     if (widget.wakelock) {
-      try {
-        Wakelock.enable();
-      } catch (_) {}
+      Wakelock.enable().catchError((_) {});
     }
   }
 
   @override
   void dispose() {
     if (widget.wakelock) {
-      try {
-        Wakelock.disable();
-      } catch (_) {}
+      Wakelock.disable().catchError((_) {});
     }
     super.dispose();
   }
