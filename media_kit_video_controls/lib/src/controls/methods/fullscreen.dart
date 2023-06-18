@@ -77,59 +77,41 @@ Future<void> toggleFullscreen(BuildContext context) {
 /// Makes the native window enter fullscreen.
 Future<void> enterNativeFullscreen() async {
   if (kIsWeb) {
-  } else if (Platform.isAndroid) {
-    await Future.wait(
-      [
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
-        SystemChrome.setPreferredOrientations(
-          [
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-          ],
-        ),
-      ],
-    );
-  } else if (Platform.isIOS) {
-    await Future.wait(
-      [
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
-        SystemChrome.setPreferredOrientations(
-          [
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-          ],
-        ),
-      ],
-    );
-  } else {
     // TODO: Missing implementation.
+  } else if (Platform.isAndroid || Platform.isIOS) {
+    await Future.wait(
+      [
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+        SystemChrome.setPreferredOrientations(
+          [
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ],
+        ),
+      ],
+    );
+  } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+    await const MethodChannel('com.alexmercerind/media_kit_video').invokeMethod(
+      'Utils.EnterNativeFullscreen',
+    );
   }
 }
 
 /// Makes the native window exit fullscreen.
 Future<void> exitNativeFullscreen() async {
   if (kIsWeb) {
-  } else if (Platform.isAndroid) {
+    // TODO: Missing implementation.
+  } else if (Platform.isAndroid || Platform.isIOS) {
     await Future.wait(
       [
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge),
         SystemChrome.setPreferredOrientations([]),
       ],
     );
-  } else if (Platform.isIOS) {
-    await Future.wait(
-      [
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
-        SystemChrome.setPreferredOrientations(
-          [
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-          ],
-        ),
-      ],
+  } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+    await const MethodChannel('com.alexmercerind/media_kit_video').invokeMethod(
+      'Utils.ExitNativeFullscreen',
     );
-  } else {
-    // TODO: Missing implementation.
   }
 }
 
