@@ -125,27 +125,27 @@ class _SeekBarState extends State<SeekBar> {
     buffer = widget.player.state.buffer;
     subscriptions.addAll(
       [
-        widget.player.streams.playing.listen((event) {
+        widget.player.stream.playing.listen((event) {
           setState(() {
             playing = event;
           });
         }),
-        widget.player.streams.completed.listen((event) {
+        widget.player.stream.completed.listen((event) {
           setState(() {
             position = Duration.zero;
           });
         }),
-        widget.player.streams.position.listen((event) {
+        widget.player.stream.position.listen((event) {
           setState(() {
             if (!seeking) position = event;
           });
         }),
-        widget.player.streams.duration.listen((event) {
+        widget.player.stream.duration.listen((event) {
           setState(() {
             duration = event;
           });
         }),
-        widget.player.streams.buffer.listen((event) {
+        widget.player.stream.buffer.listen((event) {
           setState(() {
             buffer = event;
           });

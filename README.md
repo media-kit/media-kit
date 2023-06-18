@@ -857,7 +857,7 @@ classDiagram
     +PlatformPlayer? platform
 
     +«get» PlayerState state
-    +«get» PlayerStreams streams
+    +«get» PlayerStreams stream
 
     +dispose()
     +open(playable: Playable)
@@ -883,7 +883,7 @@ classDiagram
 
   class PlatformPlayer {
     +PlayerState state
-    +PlayerStreams streams
+    +PlayerStreams stream
     +PlayerConfiguration configuration
     
     +dispose()*

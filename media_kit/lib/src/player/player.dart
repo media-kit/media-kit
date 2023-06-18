@@ -13,7 +13,7 @@ import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
-import 'package:media_kit/src/models/player_streams.dart';
+import 'package:media_kit/src/models/player_stream.dart';
 
 import 'package:media_kit/src/utils/web.dart';
 
@@ -28,7 +28,7 @@ import 'package:media_kit/src/player/libmpv/player/player.dart';
 /// [Player] class provides high-level abstraction for media playback.
 /// Large number of features have been exposed as class methods & properties.
 ///
-/// The instantaneous state may be accessed using the [state] getter & subscription to the them may be made using the [streams] available.
+/// The instantaneous state may be accessed using the [state] getter & subscription to the them may be made using the [stream] available.
 ///
 /// Call [dispose] to free the allocated resources back to the system.
 ///
@@ -41,17 +41,17 @@ import 'package:media_kit/src/player/libmpv/player/player.dart';
 ///
 /// final player = Player();
 ///
-/// // Subscribe to event streams & listen to updates.
+/// // Subscribe to event stream & listen to updates.
 ///
-/// player.streams.playlist.listen((e) => print(e));
-/// player.streams.playing.listen((e) => print(e));
-/// player.streams.completed.listen((e) => print(e));
-/// player.streams.position.listen((e) => print(e));
-/// player.streams.duration.listen((e) => print(e));
-/// player.streams.volume.listen((e) => print(e));
-/// player.streams.rate.listen((e) => print(e));
-/// player.streams.pitch.listen((e) => print(e));
-/// player.streams.buffering.listen((e) => print(e));
+/// player.stream.playlist.listen((e) => print(e));
+/// player.stream.playing.listen((e) => print(e));
+/// player.stream.completed.listen((e) => print(e));
+/// player.stream.position.listen((e) => print(e));
+/// player.stream.duration.listen((e) => print(e));
+/// player.stream.volume.listen((e) => print(e));
+/// player.stream.rate.listen((e) => print(e));
+/// player.stream.pitch.listen((e) => print(e));
+/// player.stream.buffering.listen((e) => print(e));
 ///
 /// // Open a playable [Media] or [Playlist].
 ///
@@ -126,7 +126,11 @@ class Player {
   PlayerState get state => platform!.state;
 
   /// Current state of the [Player] available as listenable [Stream]s.
-  PlayerStreams get streams => platform!.streams;
+  PlayerStream get stream => platform!.stream;
+
+  /// Current state of the [Player] available as listenable [Stream]s.
+  @Deprecated('Use [stream] instead')
+  PlayerStream get streams => stream;
 
   /// Disposes the [Player] instance & releases the resources.
   Future<void> dispose() async {
@@ -242,32 +246,32 @@ class Player {
 
   /// Sets the current [AudioDevice] for audio output.
   ///
-  /// * Currently selected [AudioDevice] can be accessed using [state.audioDevice] or [streams.audioDevice].
-  /// * The list of currently available [AudioDevice]s can be obtained accessed using [state.audioDevices] or [streams.audioDevices].
+  /// * Currently selected [AudioDevice] can be accessed using [state.audioDevice] or [stream.audioDevice].
+  /// * The list of currently available [AudioDevice]s can be obtained accessed using [state.audioDevices] or [stream.audioDevices].
   Future<void> setAudioDevice(AudioDevice audioDevice) async {
     return platform?.setAudioDevice(audioDevice);
   }
 
   /// Sets the current [VideoTrack] for video output.
   ///
-  /// * Currently selected [VideoTrack] can be accessed using [state.track.video] or [streams.track.video].
-  /// * The list of currently available [VideoTrack]s can be obtained accessed using [state.tracks.video] or [streams.tracks.video].
+  /// * Currently selected [VideoTrack] can be accessed using [state.track.video] or [stream.track.video].
+  /// * The list of currently available [VideoTrack]s can be obtained accessed using [state.tracks.video] or [stream.tracks.video].
   Future<void> setVideoTrack(VideoTrack track) async {
     return platform?.setVideoTrack(track);
   }
 
   /// Sets the current [AudioTrack] for audio output.
   ///
-  /// * Currently selected [AudioTrack] can be accessed using [state.track.audio] or [streams.track.audio].
-  /// * The list of currently available [AudioTrack]s can be obtained accessed using [state.tracks.audio] or [streams.tracks.audio].
+  /// * Currently selected [AudioTrack] can be accessed using [state.track.audio] or [stream.track.audio].
+  /// * The list of currently available [AudioTrack]s can be obtained accessed using [state.tracks.audio] or [stream.tracks.audio].
   Future<void> setAudioTrack(AudioTrack track) async {
     return platform?.setAudioTrack(track);
   }
 
   /// Sets the current [SubtitleTrack] for subtitle output.
   ///
-  /// * Currently selected [SubtitleTrack] can be accessed using [state.track.subtitle] or [streams.track.subtitle].
-  /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [streams.tracks.subtitle].
+  /// * Currently selected [SubtitleTrack] can be accessed using [state.track.subtitle] or [stream.track.subtitle].
+  /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [stream.tracks.subtitle].
   Future<void> setSubtitleTrack(SubtitleTrack track) async {
     return platform?.setSubtitleTrack(track);
   }

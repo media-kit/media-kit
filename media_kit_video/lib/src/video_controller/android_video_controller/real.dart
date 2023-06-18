@@ -59,7 +59,7 @@ class AndroidVideoController extends PlatformVideoController {
     // Merge the width & height [Stream]s into a single [Stream] of [Rect]s.
     int w = -1;
     int h = -1;
-    _widthStreamSubscription = player.streams.width.listen(
+    _widthStreamSubscription = player.stream.width.listen(
       (event) => _lock.synchronized(() {
         if (event > 0) {
           w = event;
@@ -75,7 +75,7 @@ class AndroidVideoController extends PlatformVideoController {
         }
       }),
     );
-    _heightStreamSubscription = player.streams.height.listen(
+    _heightStreamSubscription = player.stream.height.listen(
       (event) => _lock.synchronized(() {
         if (event > 0) {
           h = event;

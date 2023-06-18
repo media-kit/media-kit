@@ -21,17 +21,17 @@ import 'package:media_kit/media_kit.dart';
 
 final Player player = Player();
 
-/// Subscribe to event streams & listen to updates.
+/// Subscribe to event stream & listen to updates.
 
-player.streams.playlist.listen((e) => print(e));
-player.streams.playing.listen((e) => print(e));
-player.streams.completed.listen((e) => print(e));
-player.streams.position.listen((e) => print(e));
-player.streams.duration.listen((e) => print(e));
-player.streams.volume.listen((e) => print(e));
-player.streams.rate.listen((e) => print(e));
-player.streams.pitch.listen((e) => print(e));
-player.streams.buffering.listen((e) => print(e));
+player.stream.playlist.listen((e) => print(e));
+player.stream.playing.listen((e) => print(e));
+player.stream.completed.listen((e) => print(e));
+player.stream.position.listen((e) => print(e));
+player.stream.duration.listen((e) => print(e));
+player.stream.volume.listen((e) => print(e));
+player.stream.rate.listen((e) => print(e));
+player.stream.pitch.listen((e) => print(e));
+player.stream.buffering.listen((e) => print(e));
 
 /// Open a playable [Media] or [Playlist].
 

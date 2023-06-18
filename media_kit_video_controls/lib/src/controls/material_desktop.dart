@@ -349,7 +349,7 @@ class _MaterialDesktopVideoControlsState
     if (subscriptions.isEmpty) {
       subscriptions.addAll(
         [
-          controller(context).player.streams.playlist.listen(
+          controller(context).player.stream.playlist.listen(
             (event) {
               setState(() {
                 playlist = event;
@@ -682,27 +682,27 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
     if (subscriptions.isEmpty) {
       subscriptions.addAll(
         [
-          controller(context).player.streams.playing.listen((event) {
+          controller(context).player.stream.playing.listen((event) {
             setState(() {
               playing = event;
             });
           }),
-          controller(context).player.streams.completed.listen((event) {
+          controller(context).player.stream.completed.listen((event) {
             setState(() {
               position = Duration.zero;
             });
           }),
-          controller(context).player.streams.position.listen((event) {
+          controller(context).player.stream.position.listen((event) {
             setState(() {
               if (!click) position = event;
             });
           }),
-          controller(context).player.streams.duration.listen((event) {
+          controller(context).player.stream.duration.listen((event) {
             setState(() {
               duration = event;
             });
           }),
-          controller(context).player.streams.buffer.listen((event) {
+          controller(context).player.stream.buffer.listen((event) {
             setState(() {
               buffer = event;
             });
@@ -905,7 +905,7 @@ class MaterialDesktopPlayOrPauseButtonState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    subscription ??= controller(context).player.streams.playing.listen((event) {
+    subscription ??= controller(context).player.stream.playing.listen((event) {
       if (event) {
         animation.forward();
       } else {
@@ -1130,7 +1130,7 @@ class MaterialDesktopVolumeButtonState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    subscription ??= controller(context).player.streams.volume.listen((event) {
+    subscription ??= controller(context).player.stream.volume.listen((event) {
       setState(() {
         volume = event;
       });
@@ -1290,12 +1290,12 @@ class MaterialDesktopPositionIndicatorState
     if (subscriptions.isEmpty) {
       subscriptions.addAll(
         [
-          controller(context).player.streams.position.listen((event) {
+          controller(context).player.stream.position.listen((event) {
             setState(() {
               position = event;
             });
           }),
-          controller(context).player.streams.duration.listen((event) {
+          controller(context).player.stream.duration.listen((event) {
             setState(() {
               duration = event;
             });

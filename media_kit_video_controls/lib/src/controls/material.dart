@@ -303,7 +303,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     if (subscriptions.isEmpty) {
       subscriptions.addAll(
         [
-          controller(context).player.streams.playlist.listen(
+          controller(context).player.stream.playlist.listen(
             (event) {
               setState(() {
                 playlist = event;
@@ -878,29 +878,29 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
     if (subscriptions.isEmpty && widget.delta == null) {
       subscriptions.addAll(
         [
-          controller(context).player.streams.playing.listen((event) {
+          controller(context).player.stream.playing.listen((event) {
             setState(() {
               playing = event;
             });
           }),
-          controller(context).player.streams.completed.listen((event) {
+          controller(context).player.stream.completed.listen((event) {
             setState(() {
               position = Duration.zero;
             });
           }),
-          controller(context).player.streams.position.listen((event) {
+          controller(context).player.stream.position.listen((event) {
             setState(() {
               if (!tapped) {
                 position = event;
               }
             });
           }),
-          controller(context).player.streams.duration.listen((event) {
+          controller(context).player.stream.duration.listen((event) {
             setState(() {
               duration = event;
             });
           }),
-          controller(context).player.streams.buffer.listen((event) {
+          controller(context).player.stream.buffer.listen((event) {
             setState(() {
               buffer = event;
             });
@@ -1076,7 +1076,7 @@ class MaterialPlayOrPauseButtonState extends State<MaterialPlayOrPauseButton>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    subscription ??= controller(context).player.streams.playing.listen((event) {
+    subscription ??= controller(context).player.stream.playing.listen((event) {
       if (event) {
         animation.forward();
       } else {
@@ -1275,12 +1275,12 @@ class MaterialPositionIndicatorState extends State<MaterialPositionIndicator> {
     if (subscriptions.isEmpty) {
       subscriptions.addAll(
         [
-          controller(context).player.streams.position.listen((event) {
+          controller(context).player.stream.position.listen((event) {
             setState(() {
               position = event;
             });
           }),
-          controller(context).player.streams.duration.listen((event) {
+          controller(context).player.stream.duration.listen((event) {
             setState(() {
               duration = event;
             });

@@ -60,7 +60,7 @@ void main() {
       final player = Player();
 
       expect(
-        player.streams.playlist,
+        player.stream.playlist,
         emitsInOrder(
           [
             Playlist(
@@ -75,7 +75,7 @@ void main() {
         ),
       );
       expect(
-        player.streams.playing,
+        player.stream.playing,
         emitsInOrder(
           [
             // Player.open
@@ -89,7 +89,7 @@ void main() {
         ),
       );
       expect(
-        player.streams.completed,
+        player.stream.completed,
         emitsInOrder(
           [
             // Player.open
@@ -122,7 +122,7 @@ void main() {
       );
 
       expect(
-        player.streams.playlist,
+        player.stream.playlist,
         emitsInOrder(
           [
             // Player.open
@@ -135,7 +135,7 @@ void main() {
       );
 
       expect(
-        player.streams.playing,
+        player.stream.playing,
         emitsInOrder(
           [
             // Player.open
@@ -158,7 +158,7 @@ void main() {
         ),
       );
       expect(
-        player.streams.completed,
+        player.stream.completed,
         emitsInOrder(
           [
             // Player.open
@@ -194,7 +194,7 @@ void main() {
       final player = Player();
 
       expect(
-        player.streams.playlist,
+        player.stream.playlist,
         emitsInOrder(
           [
             // Player.open
@@ -210,7 +210,7 @@ void main() {
         ),
       );
       expect(
-        player.streams.playing,
+        player.stream.playing,
         emitsInOrder(
           [
             // Player.open
@@ -244,7 +244,7 @@ void main() {
       );
 
       expect(
-        player.streams.playlist,
+        player.stream.playlist,
         emitsInOrder(
           [
             playlist,
@@ -254,7 +254,7 @@ void main() {
         ),
       );
       expect(
-        player.streams.playing,
+        player.stream.playing,
         emitsInOrder(
           [
             // Player.open
@@ -282,7 +282,7 @@ void main() {
       final player = Player();
 
       expect(
-        player.streams.playlist,
+        player.stream.playlist,
         emitsInOrder(
           [
             Playlist(
@@ -297,7 +297,7 @@ void main() {
         ),
       );
       expect(
-        player.streams.playing,
+        player.stream.playing,
         emitsInOrder(
           [
             // Player.open
@@ -312,7 +312,7 @@ void main() {
         ),
       );
       expect(
-        player.streams.completed,
+        player.stream.completed,
         emitsInOrder(
           [
             // Player.open
@@ -350,7 +350,7 @@ void main() {
       );
 
       expect(
-        player.streams.playlist,
+        player.stream.playlist,
         emitsInOrder(
           [
             for (int i = 0; i < sources.file.length; i++)
@@ -362,7 +362,7 @@ void main() {
       );
 
       expect(
-        player.streams.playing,
+        player.stream.playing,
         emitsInOrder(
           [
             // Player.open
@@ -385,7 +385,7 @@ void main() {
         ),
       );
       expect(
-        player.streams.completed,
+        player.stream.completed,
         emitsInOrder(
           [
             // Player.open
@@ -442,7 +442,7 @@ void main() {
         },
       );
 
-      player.streams.playlist.listen((e) {
+      player.stream.playlist.listen((e) {
         if (e.index >= 0) {
           expectExtras(e.medias[0].extras);
         }
@@ -483,7 +483,7 @@ void main() {
         count: sources.file.length,
       );
 
-      player.streams.playlist.listen(
+      player.stream.playlist.listen(
         (e) {
           if (e.index >= 0) {
             expectExtras(
@@ -570,7 +570,7 @@ void main() {
         },
       );
 
-      player.streams.playlist.listen((e) {
+      player.stream.playlist.listen((e) {
         if (e.index >= 0) {
           expectPlaylist(e);
         }
@@ -650,7 +650,7 @@ void main() {
         },
       );
 
-      player.streams.playlist.listen((e) {
+      player.stream.playlist.listen((e) {
         if (e.index >= 0) {
           expectPlaylist(e, e.index);
         }
@@ -680,7 +680,7 @@ void main() {
       final player = Player();
 
       expect(
-        player.streams.playing,
+        player.stream.playing,
         emitsInOrder(
           [
             // Player.open
@@ -694,7 +694,7 @@ void main() {
         ),
       );
       expect(
-        player.streams.completed,
+        player.stream.completed,
         emitsInOrder(
           [
             // Player.open
@@ -707,7 +707,7 @@ void main() {
         ),
       );
 
-      player.streams.completed.listen((event) {
+      player.stream.completed.listen((event) {
         if (!completer.isCompleted) {
           if (event) {
             completer.complete();
@@ -729,7 +729,7 @@ void main() {
         max: -1,
       );
 
-      player.streams.position.listen((event) async {
+      player.stream.position.listen((event) async {
         expectPosition(event);
       });
 
@@ -758,7 +758,7 @@ void main() {
       final player = Player();
 
       expect(
-        player.streams.playing,
+        player.stream.playing,
         emitsInOrder(
           [
             // Player.open
@@ -772,7 +772,7 @@ void main() {
         ),
       );
       expect(
-        player.streams.completed,
+        player.stream.completed,
         emitsInOrder(
           [
             // Player.open
@@ -785,7 +785,7 @@ void main() {
         ),
       );
 
-      player.streams.completed.listen((event) {
+      player.stream.completed.listen((event) {
         if (!completer.isCompleted) {
           if (event) {
             completer.complete();
@@ -809,7 +809,7 @@ void main() {
         max: -1,
       );
 
-      player.streams.position.listen((event) async {
+      player.stream.position.listen((event) async {
         expectPosition(event);
       });
 
@@ -836,7 +836,7 @@ void main() {
       final player = Player();
 
       expect(
-        player.streams.playlist,
+        player.stream.playlist,
         emitsInOrder(
           [
             Playlist(
@@ -855,7 +855,7 @@ void main() {
         ),
       );
       expect(
-        player.streams.playing,
+        player.stream.playing,
         emitsInOrder(
           [
             false,
@@ -867,7 +867,7 @@ void main() {
       );
       // NOTE: Not emitted when the playable is changed mid-playback. Only upon end of file.
       expect(
-        player.streams.completed,
+        player.stream.completed,
         emitsInOrder(
           [
             false,
@@ -897,7 +897,7 @@ void main() {
       );
 
       expect(
-        player.streams.playlist,
+        player.stream.playlist,
         emits(
           playlist,
         ),
@@ -926,7 +926,7 @@ void main() {
         max: -1,
       );
 
-      player.streams.audioDevices.listen((event) async {
+      player.stream.audioDevices.listen((event) async {
         expectAudioDevices(event);
       });
     },
@@ -936,7 +936,7 @@ void main() {
     () async {
       final player = Player();
 
-      final devices = await player.streams.audioDevices.first;
+      final devices = await player.stream.audioDevices.first;
 
       expect(devices, isNotEmpty);
       expect(devices.first, equals(AudioDevice.auto()));
@@ -952,7 +952,7 @@ void main() {
 
       int? index;
 
-      player.streams.audioDevice.listen((event) async {
+      player.stream.audioDevice.listen((event) async {
         expectAudioDevice(event, index);
       });
 
@@ -982,7 +982,7 @@ void main() {
 
       int? index;
 
-      player.streams.volume.listen((event) {
+      player.stream.volume.listen((event) {
         expectVolume(event, index);
       });
 
@@ -1014,7 +1014,7 @@ void main() {
 
       int? index;
 
-      player.streams.rate.listen((event) {
+      player.stream.rate.listen((event) {
         expectRate(event, index);
       });
 
@@ -1054,7 +1054,7 @@ void main() {
 
       int? index;
 
-      player.streams.pitch.listen((event) {
+      player.stream.pitch.listen((event) {
         expectPitch(event, index);
       });
 

@@ -26,6 +26,7 @@ class _SinglePlayerSingleVideoScreenState
 
   @override
   void dispose() {
+    player.stream.error.listen((error) => debugPrint(error));
     player.dispose();
     super.dispose();
   }

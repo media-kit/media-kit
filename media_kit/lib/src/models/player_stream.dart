@@ -9,17 +9,16 @@ import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
-import 'package:media_kit/src/models/player_error.dart';
 
-/// {@template player_streams}
+/// {@template player_stream}
 ///
-/// PlayerStreams
-/// -------------
+/// PlayerStream
+/// ------------
 ///
 /// Event [Stream]s for subscribing to [Player] events.
 ///
 /// {@endtemplate}
-class PlayerStreams {
+class PlayerStream {
   /// [List] of currently opened [Media]s.
   final Stream<Playlist> playlist;
 
@@ -54,12 +53,10 @@ class PlayerStreams {
   /// [Stream] emitting [PlayerLog]s.
   final Stream<PlayerLog> log;
 
-  /// [Stream] raising [PlayerError]s.
-  /// This may be used to catch errors raised by [Player].
-  final Stream<PlayerError> error;
+  /// [Stream] emitting error messages. This may be used to handle & display errors to the user.
+  final Stream<String> error;
 
-  /// Audio parameters of the currently playing [Media].
-  /// e.g. sample rate, channels, etc.
+  /// Audio parameters of the currently playing [Media]. e.g. sample rate, channels, etc.
   final Stream<AudioParams> audioParams;
 
   /// Audio bitrate of the currently playing [Media] in the [Player].
@@ -83,8 +80,8 @@ class PlayerStreams {
   /// Currently playing video's height.
   final Stream<int> height;
 
-  /// {@macro player_streams}
-  const PlayerStreams(
+  /// {@macro player_stream}
+  const PlayerStream(
     this.playlist,
     this.playing,
     this.completed,

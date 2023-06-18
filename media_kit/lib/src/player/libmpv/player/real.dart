@@ -26,7 +26,6 @@ import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/media/media.dart';
-import 'package:media_kit/src/models/player_error.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
@@ -868,8 +867,8 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Sets the current [AudioDevice] for audio output.
   ///
-  /// * Currently selected [AudioDevice] can be accessed using [state.audioDevice] or [streams.audioDevice].
-  /// * The list of currently available [AudioDevice]s can be obtained accessed using [state.audioDevices] or [streams.audioDevices].
+  /// * Currently selected [AudioDevice] can be accessed using [state.audioDevice] or [stream.audioDevice].
+  /// * The list of currently available [AudioDevice]s can be obtained accessed using [state.audioDevices] or [stream.audioDevices].
   @override
   Future<void> setAudioDevice(
     AudioDevice audioDevice, {
@@ -902,8 +901,8 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Sets the current [VideoTrack] for video output.
   ///
-  /// * Currently selected [VideoTrack] can be accessed using [state.track.video] or [streams.track.video].
-  /// * The list of currently available [VideoTrack]s can be obtained accessed using [state.tracks.video] or [streams.tracks.video].
+  /// * Currently selected [VideoTrack] can be accessed using [state.track.video] or [stream.track.video].
+  /// * The list of currently available [VideoTrack]s can be obtained accessed using [state.tracks.video] or [stream.tracks.video].
   @override
   Future<void> setVideoTrack(
     VideoTrack track, {
@@ -944,8 +943,8 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Sets the current [AudioTrack] for audio output.
   ///
-  /// * Currently selected [AudioTrack] can be accessed using [state.track.audio] or [streams.track.audio].
-  /// * The list of currently available [AudioTrack]s can be obtained accessed using [state.tracks.audio] or [streams.tracks.audio].
+  /// * Currently selected [AudioTrack] can be accessed using [state.track.audio] or [stream.track.audio].
+  /// * The list of currently available [AudioTrack]s can be obtained accessed using [state.tracks.audio] or [stream.tracks.audio].
   @override
   Future<void> setAudioTrack(
     AudioTrack track, {
@@ -986,8 +985,8 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Sets the current [SubtitleTrack] for subtitle output.
   ///
-  /// * Currently selected [SubtitleTrack] can be accessed using [state.track.subtitle] or [streams.track.subtitle].
-  /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [streams.tracks.subtitle].
+  /// * Currently selected [SubtitleTrack] can be accessed using [state.track.subtitle] or [stream.track.subtitle].
+  /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [stream.tracks.subtitle].
   @override
   Future<void> setSubtitleTrack(
     SubtitleTrack track, {
@@ -1504,6 +1503,27 @@ class libmpvPlayer extends PlatformPlayer {
             text: text,
           ),
         );
+        // --------------------------------------------------
+        // Emit error(s) based on the log messages.
+        if (level == 'error') {
+          if (prefix == 'file') {
+            // file:// not found.
+            if (!errorController.isClosed) {
+              errorController.add(text);
+            }
+          }
+        }
+        if (level == 'error') {
+          if (prefix == 'ffmpeg') {
+            if (text.startsWith('tcp:')) {
+              // http:// error of any kind.
+              if (!errorController.isClosed) {
+                errorController.add(text);
+              }
+            }
+          }
+        }
+        // --------------------------------------------------
       }
     }
     // Handle HTTP headers specified in the [Media].
@@ -1681,7 +1701,7 @@ class libmpvPlayer extends PlatformPlayer {
         calloc.free(value);
       }
 
-      // Observe the properties to update the state & feed event streams.
+      // Observe the properties to update the state & feed event stream.
       <String, int>{
         'pause': generated.mpv_format.MPV_FORMAT_FLAG,
         'time-pos': generated.mpv_format.MPV_FORMAT_DOUBLE,
@@ -1713,28 +1733,20 @@ class libmpvPlayer extends PlatformPlayer {
         },
       );
 
-      if (configuration.logLevel != MPVLogLevel.none) {
-        // https://github.com/mpv-player/mpv/blob/e1727553f164181265f71a20106fbd5e34fa08b0/libmpv/client.h#L1410-L1419
-        final levels = {
-          MPVLogLevel.none: 'no',
-          MPVLogLevel.fatal: 'fatal',
-          MPVLogLevel.error: 'error',
-          MPVLogLevel.warn: 'warn',
-          MPVLogLevel.info: 'info',
-          MPVLogLevel.v: 'v',
-          MPVLogLevel.debug: 'debug',
-          MPVLogLevel.trace: 'trace',
-        };
-
-        final level = levels[configuration.logLevel];
-        if (level != null) {
-          final minLevel = level.toNativeUtf8();
-          mpv.mpv_request_log_messages(
-            ctx,
-            minLevel.cast(),
-          );
-          calloc.free(minLevel);
-        }
+      // https://github.com/mpv-player/mpv/blob/e1727553f164181265f71a20106fbd5e34fa08b0/libmpv/client.h#L1410-L1419
+      final levels = {
+        MPVLogLevel.error: 'error',
+        MPVLogLevel.warn: 'warn',
+        MPVLogLevel.info: 'info',
+        MPVLogLevel.v: 'v',
+        MPVLogLevel.debug: 'debug',
+        MPVLogLevel.trace: 'trace',
+      };
+      final level = levels[configuration.logLevel];
+      if (level != null) {
+        final min = level.toNativeUtf8();
+        mpv.mpv_request_log_messages(ctx, min.cast());
+        calloc.free(min);
       }
 
       // Add libmpv hooks for supporting custom HTTP headers in [Media].
@@ -1751,12 +1763,7 @@ class libmpvPlayer extends PlatformPlayer {
   void _error(int code) {
     if (code < 0 && !errorController.isClosed) {
       final message = mpv.mpv_error_string(code).cast<Utf8>().toDartString();
-      errorController.add(
-        PlayerError(
-          code,
-          message,
-        ),
-      );
+      errorController.add(message);
     }
   }
 
@@ -1790,13 +1797,13 @@ class libmpvPlayer extends PlatformPlayer {
   /// A flag to prevent changes to [state.playing] due to `loadfile` commands in [open].
   ///
   /// By default, `MPV_EVENT_START_FILE` is fired when a new media source is loaded.
-  /// This event modifies the [state.playing] & [streams.playing] to `true`.
+  /// This event modifies the [state.playing] & [stream.playing] to `true`.
   ///
   /// However, the [Player] is in paused state before the media source is loaded.
   /// Thus, [state.playing] should not be changed, unless the user explicitly calls [play] or [playOrPause].
   ///
   /// We set [isPlayingStateChangeAllowed] to `false` at the start of [open] to prevent this unwanted change & set it to `true` at the end of [open].
-  /// While [isPlayingStateChangeAllowed] is `false`, any change to [state.playing] & [streams.playing] is ignored.
+  /// While [isPlayingStateChangeAllowed] is `false`, any change to [state.playing] & [stream.playing] is ignored.
   bool isPlayingStateChangeAllowed = false;
 
   /// [Completer] to wait for initialization of this instance (in [_create]).

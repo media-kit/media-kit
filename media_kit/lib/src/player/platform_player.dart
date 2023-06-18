@@ -14,10 +14,9 @@ import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
-import 'package:media_kit/src/models/player_error.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
-import 'package:media_kit/src/models/player_streams.dart';
+import 'package:media_kit/src/models/player_stream.dart';
 
 /// {@template platform_player}
 /// PlatformPlayer
@@ -40,7 +39,7 @@ abstract class PlatformPlayer {
   late PlayerState state = PlayerState();
 
   /// Current state of the player available as listenable [Stream]s.
-  late PlayerStreams streams = PlayerStreams(
+  late PlayerStream stream = PlayerStream(
     playlistController.stream.distinct(),
     playingController.stream.distinct(),
     completedController.stream.distinct(),
@@ -52,7 +51,7 @@ abstract class PlatformPlayer {
     pitchController.stream.distinct(),
     bufferingController.stream.distinct(),
     logController.stream.distinct(),
-    errorController.stream.distinct(),
+    errorController.stream /* ERROR STREAM SHOULD NOT BE DISTINCT */,
     audioParamsController.stream.distinct(),
     audioBitrateController.stream.distinct(),
     audioDeviceController.stream.distinct(),
@@ -273,8 +272,8 @@ abstract class PlatformPlayer {
       StreamController<PlayerLog>.broadcast();
 
   @protected
-  final StreamController<PlayerError> errorController =
-      StreamController<PlayerError>.broadcast();
+  final StreamController<String> errorController =
+      StreamController<String>.broadcast();
 
   @protected
   final StreamController<AudioParams> audioParamsController =
@@ -389,7 +388,7 @@ class PlayerConfiguration {
     this.pitch = false,
     this.title,
     this.ready,
-    this.logLevel = MPVLogLevel.none,
+    this.logLevel = MPVLogLevel.error,
     this.bufferSize = 32 * 1024 * 1024,
     this.protocolWhitelist = const [
       'file',
@@ -412,10 +411,12 @@ class PlayerConfiguration {
 /// {@endtemplate}
 enum MPVLogLevel {
   /// Disable absolutely all messages.
-  none,
+  /* none, */
 
   /// Critical/aborting errors.
-  fatal,
+  /* fatal, */
+
+  // package:media_kit internally consumes logs of level error.
 
   /// Simple errors.
   error,
