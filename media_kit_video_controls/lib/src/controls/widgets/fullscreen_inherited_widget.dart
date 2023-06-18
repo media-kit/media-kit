@@ -12,10 +12,10 @@ import 'package:media_kit_video/media_kit_video.dart';
 ///
 /// {@endtemplate}
 class FullscreenInheritedWidget extends InheritedWidget {
-  const FullscreenInheritedWidget({
+  FullscreenInheritedWidget({
     super.key,
-    required super.child,
-  });
+    required Widget child,
+  }) : super(child: _FullscreenInheritedWidgetPopScope(child: child));
 
   static FullscreenInheritedWidget? maybeOf(BuildContext context) {
     return context
@@ -34,4 +34,36 @@ class FullscreenInheritedWidget extends InheritedWidget {
   @override
   bool updateShouldNotify(FullscreenInheritedWidget oldWidget) =>
       identical(this, oldWidget);
+}
+
+/// {@template fullscreen_inherited_widget_pop_scope}
+///
+/// This widget is used to exit native fullscreen when this route is popped from the navigator.
+///
+/// {@endtemplate}
+class _FullscreenInheritedWidgetPopScope extends StatefulWidget {
+  final Widget child;
+  const _FullscreenInheritedWidgetPopScope({
+    Key? key,
+    required this.child,
+  }) : super(key: key);
+
+  @override
+  State<_FullscreenInheritedWidgetPopScope> createState() =>
+      _FullscreenInheritedWidgetPopScopeState();
+}
+
+class _FullscreenInheritedWidgetPopScopeState
+    extends State<_FullscreenInheritedWidgetPopScope> {
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        // Make sure to exit native fullscreen when this route is popped from the navigator.
+        await exitNativeFullscreen();
+        return true;
+      },
+      child: widget.child,
+    );
+  }
 }
