@@ -936,8 +936,6 @@ void main() {
     () async {
       final player = Player();
 
-      // Fetch AudioDevice(s).
-
       final devices = await player.streams.audioDevices.first;
 
       expect(devices, isNotEmpty);
@@ -952,15 +950,120 @@ void main() {
         count: devices.length,
       );
 
-      for (int i = 0; i < devices.length; i++) {
-        // Invoke Player.setAudioDevice.
-        await player.setAudioDevice(devices[i]);
-        // Expect Player.streams.audioDevices to emit the same [AudioDevice].
-        expectAudioDevice(devices[i], i);
+      int? index;
 
-        // Seems to work even without the delay.
-        // However, the event streams are asynchronous, so you never know. It's not really a problem eitherway.
+      player.streams.audioDevice.listen((event) async {
+        expectAudioDevice(event, index);
+      });
+
+      for (int i = devices.length - 1; i >= 0; i--) {
+        index = i;
+
+        await player.setAudioDevice(devices[i]);
+
         await Future.delayed(const Duration(seconds: 1));
+      }
+    },
+  );
+  test(
+    'player-set-volume',
+    () async {
+      final player = Player();
+
+      final expectVolume = expectAsync2(
+        (volume, i) {
+          print(volume);
+          expect(volume, isA<double>());
+          expect(i, isA<int>());
+          expect(volume, equals(i));
+        },
+        count: 100,
+      );
+
+      int? index;
+
+      player.streams.volume.listen((event) {
+        expectVolume(event, index);
+      });
+
+      for (int i = 0; i < 100; i++) {
+        index = i;
+
+        await player.setVolume(i.toDouble());
+
+        await Future.delayed(const Duration(milliseconds: 20));
+      }
+    },
+  );
+  test(
+    'player-set-rate',
+    () async {
+      final player = Player();
+
+      final test = List.generate(10, (index) => 0.25 * index);
+
+      final expectRate = expectAsync2(
+        (rate, i) {
+          print(rate);
+          expect(rate, isA<double>());
+          expect(i, isA<int>());
+          expect(rate, equals(test[i as int]));
+        },
+        count: test.length,
+      );
+
+      int? index;
+
+      player.streams.rate.listen((event) {
+        expectRate(event, index);
+      });
+
+      for (int i = 0; i < test.length; i++) {
+        index = i;
+
+        await player.setRate(test[i]);
+
+        await Future.delayed(const Duration(milliseconds: 20));
+      }
+    },
+  );
+  test(
+    'player-set-pitch-disabled',
+    () async {
+      final player = Player();
+
+      expect(player.setPitch(1.0), throwsArgumentError);
+    },
+  );
+  test(
+    'player-set-pitch-enabled',
+    () async {
+      final player = Player(configuration: PlayerConfiguration(pitch: true));
+
+      final test = List.generate(10, (index) => 0.25 * index);
+
+      final expectPitch = expectAsync2(
+        (pitch, i) {
+          print(pitch);
+          expect(pitch, isA<double>());
+          expect(i, isA<int>());
+          expect(pitch, equals(test[i as int]));
+        },
+        count: test.length,
+      );
+
+      int? index;
+
+      player.streams.pitch.listen((event) {
+        expectPitch(event, index);
+      });
+
+      for (int i = 0; i < test.length; i++) {
+        index = i;
+
+        await player.setPitch(test[i]);
+
+        await Future.delayed(const Duration(milliseconds: 20));
       }
     },
   );
