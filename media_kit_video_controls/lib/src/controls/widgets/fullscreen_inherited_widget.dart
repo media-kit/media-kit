@@ -12,8 +12,11 @@ import 'package:media_kit_video/media_kit_video.dart';
 ///
 /// {@endtemplate}
 class FullscreenInheritedWidget extends InheritedWidget {
+  final VideoState parent;
+
   FullscreenInheritedWidget({
     super.key,
+    required this.parent,
     required Widget child,
   }) : super(child: _FullscreenInheritedWidgetPopScope(child: child));
 
@@ -33,7 +36,7 @@ class FullscreenInheritedWidget extends InheritedWidget {
 
   @override
   bool updateShouldNotify(FullscreenInheritedWidget oldWidget) =>
-      identical(this, oldWidget);
+      identical(parent, oldWidget.parent);
 }
 
 /// {@template fullscreen_inherited_widget_pop_scope}

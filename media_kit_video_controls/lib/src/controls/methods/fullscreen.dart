@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import 'package:media_kit_video_controls/utils/dart_html/dart_html.dart';
 import 'package:media_kit_video_controls/src/controls/methods/video_controller.dart';
 import 'package:media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
 
@@ -25,6 +26,7 @@ Future<void> enterFullscreen(BuildContext context) {
         Navigator.of(context).push(
           PageRouteBuilder(
             pageBuilder: (_, __, ___) => FullscreenInheritedWidget(
+              parent: state(context),
               child: Video(
                 controller: controller(context),
                 // Not required in fullscreen mode:
@@ -57,6 +59,8 @@ Future<void> exitFullscreen(BuildContext context) {
     if (isFullscreen(context)) {
       if (context.mounted) {
         Navigator.of(context).maybePop();
+        // It is known that this [context] will have a [FullscreenInheritedWidget] above it.
+        FullscreenInheritedWidget.of(context).parent.refreshView();
       }
       // [exitNativeFullscreen] is moved to [WillPopScope] in [FullscreenInheritedWidget].
       // This is because [exitNativeFullscreen] needs to be called when the user presses the back button.
@@ -78,7 +82,7 @@ Future<void> toggleFullscreen(BuildContext context) {
 Future<void> enterNativeFullscreen() async {
   try {
     if (kIsWeb) {
-      // TODO: Missing implementation.
+      await document.documentElement?.requestFullscreen();
     } else if (Platform.isAndroid || Platform.isIOS) {
       await Future.wait(
         [
@@ -107,7 +111,7 @@ Future<void> enterNativeFullscreen() async {
 Future<void> exitNativeFullscreen() async {
   try {
     if (kIsWeb) {
-      // TODO: Missing implementation.
+      document.exitFullscreen();
     } else if (Platform.isAndroid || Platform.isIOS) {
       await Future.wait(
         [

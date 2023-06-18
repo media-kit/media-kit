@@ -1,3 +1,7 @@
 ## 1.0.0
 
-- Initial release
+- feat: `AdaptiveVideoControls`
+- feat: `MaterialVideoControls`
+- feat: `MaterialDesktopVideoControls`
+- feat: `CupertinoVideoControls`
+- feat: `NoVideoControls`
