@@ -3,6 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'dart:math';
 import 'package:flutter/widgets.dart';
 import 'package:wakelock/wakelock.dart';
 import 'package:media_kit_video_controls/media_kit_video_controls.dart'
@@ -108,6 +109,8 @@ class Video extends StatefulWidget {
 }
 
 class VideoState extends State<Video> {
+  ValueKey _key = const ValueKey(0);
+
   // Public API:
 
   bool isFullscreen() {
@@ -140,6 +143,13 @@ class VideoState extends State<Video> {
       Wakelock.disable().catchError((_) {});
     }
     super.dispose();
+  }
+
+  /// Web specific API to re-draw [HtmlElementView].
+  void refreshView() {
+    setState(() {
+      _key = ValueKey(Random().nextInt(1 << 8));
+    });
   }
 
   @override
@@ -186,6 +196,7 @@ class VideoState extends State<Video> {
                                         ),
                                       ),
                                       HtmlElementView(
+                                        key: _key,
                                         viewType:
                                             'com.alexmercerind.media_kit_video.$id',
                                       )

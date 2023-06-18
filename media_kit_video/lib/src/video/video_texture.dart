@@ -141,6 +141,9 @@ class VideoState extends State<Video> {
     super.dispose();
   }
 
+  /// Web specific API to re-draw [HtmlElementView].
+  void refreshView() {}
+
   @override
   Widget build(BuildContext context) {
     final controls = widget.controls;
