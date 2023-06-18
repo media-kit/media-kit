@@ -18,6 +18,7 @@ import 'package:media_kit/src/models/player_stream.dart';
 import 'package:media_kit/src/utils/web.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
+import 'package:media_kit/src/player/web/player/player.dart';
 import 'package:media_kit/src/player/libmpv/player/player.dart';
 
 /// {@template player}
@@ -105,7 +106,7 @@ class Player {
     PlayerConfiguration configuration = const PlayerConfiguration(),
   }) {
     if (kIsWeb) {
-      // TODO(@alexmercerind): Missing implementation.
+      platform = webPlayer(configuration: configuration);
     } else if (Platform.isWindows) {
       platform = libmpvPlayer(configuration: configuration);
     } else if (Platform.isLinux) {
