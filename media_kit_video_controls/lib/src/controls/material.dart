@@ -55,9 +55,8 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   displaySeekBar: true,
   automaticallyImplySkipNextButton: true,
   automaticallyImplySkipPreviousButton: true,
-  brightnessGesture: true,
   volumeGesture: true,
-  seekGesture: true,
+  brightnessGesture: true,
   seekOnDoubleTap: true,
   controlsHoverDuration: Duration(seconds: 3),
   controlsTransitionDuration: Duration(milliseconds: 300),
@@ -100,7 +99,7 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   seekBarThumbColor: Color(0xFFFF0000),
 );
 
-/// {@template material_video_controlstheme_data}
+/// {@template material_video_controls_theme_data}
 ///
 /// Theming related data for [MaterialVideoControls]. These values are used to theme the descendant [MaterialVideoControls].
 ///
@@ -117,14 +116,11 @@ class MaterialVideoControlsThemeData {
   /// Whether a skip previous button should be displayed if there are more than one videos in the playlist.
   final bool automaticallyImplySkipPreviousButton;
 
-  /// Whether to modify screen brightness on vertical drag gesture on the left side of the screen.
-  final bool brightnessGesture;
-
   /// Whether to modify volume on vertical drag gesture on the right side of the screen.
   final bool volumeGesture;
 
-  /// Whether to modify playback position on horizontal drag gesture on the screen.
-  final bool seekGesture;
+  /// Whether to modify screen brightness on vertical drag gesture on the left side of the screen.
+  final bool brightnessGesture;
 
   /// Whether to enable double tap to seek on left or right side of the screen.
   final bool seekOnDoubleTap;
@@ -136,6 +132,12 @@ class MaterialVideoControlsThemeData {
 
   /// [Duration] for which the controls will be animated when shown or hidden.
   final Duration controlsTransitionDuration;
+
+  /// Custom builder for volume indicator.
+  final Widget Function(BuildContext, double)? volumeIndicatorBuilder;
+
+  /// Custom builder for brightness indicator.
+  final Widget Function(BuildContext, double)? brightnessIndicatorBuilder;
 
   // BUTTON BAR
 
@@ -186,22 +188,23 @@ class MaterialVideoControlsThemeData {
   /// [Color] of the seek bar thumb.
   final Color seekBarThumbColor;
 
-  /// {@macro material_video_controlstheme_data}
+  /// {@macro material_video_controls_theme_data}
   const MaterialVideoControlsThemeData({
     this.displaySeekBar = true,
     this.automaticallyImplySkipNextButton = true,
     this.automaticallyImplySkipPreviousButton = true,
-    this.brightnessGesture = false,
     this.volumeGesture = false,
-    this.seekGesture = false,
+    this.brightnessGesture = false,
     this.seekOnDoubleTap = false,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 300),
+    this.volumeIndicatorBuilder,
+    this.brightnessIndicatorBuilder,
     this.primaryButtonBar = const [
       Spacer(flex: 2),
       MaterialSkipPreviousButton(),
       Spacer(),
-      MaterialPlayOrPauseButton(iconSize: 56.0),
+      MaterialPlayOrPauseButton(iconSize: 48.0),
       Spacer(),
       MaterialSkipNextButton(),
       Spacer(flex: 2),
@@ -451,96 +454,102 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                   curve: Curves.easeInOut,
                   opacity: !mount && _volumeIndicator ? 1.0 : 0.0,
                   duration: _theme(context).controlsTransitionDuration,
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: const Color(0x88000000),
-                      borderRadius: BorderRadius.circular(64.0),
-                    ),
-                    height: 52.0,
-                    width: 108.0,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          height: 52.0,
-                          width: 42.0,
-                          alignment: Alignment.centerRight,
-                          child: Icon(
-                            _volumeValue == 0.0
-                                ? Icons.volume_off
-                                : _volumeValue < 0.5
-                                    ? Icons.volume_down
-                                    : Icons.volume_up,
-                            color: const Color(0xFFFFFFFF),
-                            size: 24.0,
-                          ),
+                  child: _theme(context)
+                          .volumeIndicatorBuilder
+                          ?.call(context, _volumeValue) ??
+                      Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0x88000000),
+                          borderRadius: BorderRadius.circular(64.0),
                         ),
-                        const SizedBox(width: 12.0),
-                        Expanded(
-                          child: Text(
-                            '${(_volumeValue * 100.0).round()}%',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 14.0,
-                              color: Color(0xFFFFFFFF),
+                        height: 52.0,
+                        width: 108.0,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              height: 52.0,
+                              width: 42.0,
+                              alignment: Alignment.centerRight,
+                              child: Icon(
+                                _volumeValue == 0.0
+                                    ? Icons.volume_off
+                                    : _volumeValue < 0.5
+                                        ? Icons.volume_down
+                                        : Icons.volume_up,
+                                color: const Color(0xFFFFFFFF),
+                                size: 24.0,
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 8.0),
+                            Expanded(
+                              child: Text(
+                                '${(_volumeValue * 100.0).round()}%',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 14.0,
+                                  color: Color(0xFFFFFFFF),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16.0),
+                          ],
                         ),
-                        const SizedBox(width: 16.0),
-                      ],
-                    ),
-                  ),
+                      ),
                 ),
                 // Brightness Indicator.
                 AnimatedOpacity(
                   curve: Curves.easeInOut,
                   opacity: !mount && _brightnessIndicator ? 1.0 : 0.0,
                   duration: _theme(context).controlsTransitionDuration,
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: const Color(0x88000000),
-                      borderRadius: BorderRadius.circular(64.0),
-                    ),
-                    height: 52.0,
-                    width: 108.0,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          height: 52.0,
-                          width: 42.0,
-                          alignment: Alignment.centerRight,
-                          child: Icon(
-                            _brightnessValue < 1.0 / 3.0
-                                ? Icons.brightness_low
-                                : _brightnessValue < 2.0 / 3.0
-                                    ? Icons.brightness_medium
-                                    : Icons.brightness_high,
-                            color: const Color(0xFFFFFFFF),
-                            size: 24.0,
-                          ),
+                  child: _theme(context)
+                          .brightnessIndicatorBuilder
+                          ?.call(context, _volumeValue) ??
+                      Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0x88000000),
+                          borderRadius: BorderRadius.circular(64.0),
                         ),
-                        const SizedBox(width: 12.0),
-                        Expanded(
-                          child: Text(
-                            '${(_brightnessValue * 100.0).round()}%',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 14.0,
-                              color: Color(0xFFFFFFFF),
+                        height: 52.0,
+                        width: 108.0,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              height: 52.0,
+                              width: 42.0,
+                              alignment: Alignment.centerRight,
+                              child: Icon(
+                                _brightnessValue < 1.0 / 3.0
+                                    ? Icons.brightness_low
+                                    : _brightnessValue < 2.0 / 3.0
+                                        ? Icons.brightness_medium
+                                        : Icons.brightness_high,
+                                color: const Color(0xFFFFFFFF),
+                                size: 24.0,
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 8.0),
+                            Expanded(
+                              child: Text(
+                                '${(_brightnessValue * 100.0).round()}%',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 14.0,
+                                  color: Color(0xFFFFFFFF),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16.0),
+                          ],
                         ),
-                        const SizedBox(width: 16.0),
-                      ],
-                    ),
-                  ),
+                      ),
                 ),
                 // Controls:
                 AnimatedOpacity(

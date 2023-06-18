@@ -52,7 +52,7 @@ const kDefaultMaterialDesktopVideoControlsThemeData =
 const kDefaultMaterialDesktopVideoControlsThemeDataFullscreen =
     MaterialDesktopVideoControlsThemeData();
 
-/// {@template material_desktop_video_controlstheme_data}
+/// {@template material_desktop_video_controls_theme_data}
 ///
 /// Theming related data for [MaterialDesktopVideoControls]. These values are used to theme the descendant [MaterialDesktopVideoControls].
 ///
@@ -164,7 +164,7 @@ class MaterialDesktopVideoControlsThemeData {
   /// [Duration] for which the volume bar will be animated when the user hovers.
   final Duration volumeBarTransitionDuration;
 
-  /// {@macro material_desktop_video_controlstheme_data}
+  /// {@macro material_desktop_video_controls_theme_data}
   const MaterialDesktopVideoControlsThemeData({
     this.displaySeekBar = true,
     this.automaticallyImplySkipNextButton = true,
@@ -561,8 +561,8 @@ class _MaterialDesktopVideoControlsState
                                     0.2,
                                   ],
                                   colors: [
-                                    Colors.black38,
-                                    Colors.transparent,
+                                    Color(0x61000000),
+                                    Color(0x00000000),
                                   ],
                                 ),
                               ),
@@ -579,8 +579,8 @@ class _MaterialDesktopVideoControlsState
                                     1.0,
                                   ],
                                   colors: [
-                                    Colors.transparent,
-                                    Colors.black38,
+                                    Color(0x00000000),
+                                    Color(0x61000000),
                                   ],
                                 ),
                               ),
@@ -801,7 +801,7 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
             onPointerDown: (e) => onPointerDown(),
             onPointerUp: (e) => onPointerUp(),
             child: Container(
-              color: Colors.transparent,
+              color: const Color(0x00000000),
               width: constraints.maxWidth,
               height: _theme(context).seekBarContainerHeight,
               child: Stack(
