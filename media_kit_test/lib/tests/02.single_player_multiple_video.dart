@@ -30,6 +30,12 @@ class _SinglePlayerMultipleVideoScreenState
   );
 
   @override
+  void initState() {
+    super.initState();
+    player.stream.error.listen((error) => debugPrint(error));
+  }
+
+  @override
   void dispose() {
     player.dispose();
     super.dispose();

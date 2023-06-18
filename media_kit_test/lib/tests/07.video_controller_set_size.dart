@@ -27,6 +27,7 @@ class _VideoControllerSetSizeScreenState
     player.setVolume(0.0);
     player.setPlaylistMode(PlaylistMode.loop);
     player.open(Media(sources[0]));
+    player.stream.error.listen((error) => debugPrint(error));
   }
 
   @override

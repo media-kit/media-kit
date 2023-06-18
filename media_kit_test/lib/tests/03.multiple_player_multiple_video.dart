@@ -32,6 +32,14 @@ class _MultiplePlayerMultipleVideoScreenState
   ];
 
   @override
+  void initState() {
+    super.initState();
+    for (final player in players) {
+      player.stream.error.listen((error) => debugPrint(error));
+    }
+  }
+
+  @override
   void dispose() {
     for (final player in players) {
       player.dispose();

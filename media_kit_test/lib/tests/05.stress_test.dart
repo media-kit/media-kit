@@ -35,6 +35,7 @@ class _StressTestScreenState extends State<StressTestScreen> {
       players[i].setVolume(0.0);
       players[i].setPlaylistMode(PlaylistMode.loop);
       players[i].open(Media(sources[i % sources.length]));
+      players[i].stream.error.listen((error) => debugPrint(error));
     }
   }
 

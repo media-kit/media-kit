@@ -76,42 +76,54 @@ Future<void> toggleFullscreen(BuildContext context) {
 
 /// Makes the native window enter fullscreen.
 Future<void> enterNativeFullscreen() async {
-  if (kIsWeb) {
-    // TODO: Missing implementation.
-  } else if (Platform.isAndroid || Platform.isIOS) {
-    await Future.wait(
-      [
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
-        SystemChrome.setPreferredOrientations(
-          [
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-          ],
-        ),
-      ],
-    );
-  } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-    await const MethodChannel('com.alexmercerind/media_kit_video').invokeMethod(
-      'Utils.EnterNativeFullscreen',
-    );
+  try {
+    if (kIsWeb) {
+      // TODO: Missing implementation.
+    } else if (Platform.isAndroid || Platform.isIOS) {
+      await Future.wait(
+        [
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+          SystemChrome.setPreferredOrientations(
+            [
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ],
+          ),
+        ],
+      );
+    } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      await const MethodChannel('com.alexmercerind/media_kit_video')
+          .invokeMethod(
+        'Utils.EnterNativeFullscreen',
+      );
+    }
+  } catch (exception, stacktrace) {
+    debugPrint(exception.toString());
+    debugPrint(stacktrace.toString());
   }
 }
 
 /// Makes the native window exit fullscreen.
 Future<void> exitNativeFullscreen() async {
-  if (kIsWeb) {
-    // TODO: Missing implementation.
-  } else if (Platform.isAndroid || Platform.isIOS) {
-    await Future.wait(
-      [
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge),
-        SystemChrome.setPreferredOrientations([]),
-      ],
-    );
-  } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-    await const MethodChannel('com.alexmercerind/media_kit_video').invokeMethod(
-      'Utils.ExitNativeFullscreen',
-    );
+  try {
+    if (kIsWeb) {
+      // TODO: Missing implementation.
+    } else if (Platform.isAndroid || Platform.isIOS) {
+      await Future.wait(
+        [
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge),
+          SystemChrome.setPreferredOrientations([]),
+        ],
+      );
+    } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      await const MethodChannel('com.alexmercerind/media_kit_video')
+          .invokeMethod(
+        'Utils.ExitNativeFullscreen',
+      );
+    }
+  } catch (exception, stacktrace) {
+    debugPrint(exception.toString());
+    debugPrint(stacktrace.toString());
   }
 }
 
