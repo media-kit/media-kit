@@ -76,11 +76,9 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
     MaterialFullscreenButton(),
   ],
   buttonBarMargin: EdgeInsets.only(
-    // Don't ask me why "left" & "right" are not equal.
-    // Yeah... It's driving me crazy too.
     left: 16.0,
     right: 8.0,
-    bottom: 36.0,
+    bottom: 42.0,
   ),
   buttonBarHeight: 56.0,
   buttonBarButtonSize: 24.0,
@@ -88,7 +86,7 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   seekBarMargin: EdgeInsets.only(
     left: 16.0,
     right: 16.0,
-    bottom: 36.0,
+    bottom: 42.0,
   ),
   seekBarHeight: 2.4,
   seekBarContainerHeight: 36.0,
@@ -195,7 +193,7 @@ class MaterialVideoControlsThemeData {
     this.automaticallyImplySkipPreviousButton = true,
     this.volumeGesture = false,
     this.brightnessGesture = false,
-    this.seekOnDoubleTap = false,
+    this.seekOnDoubleTap = true,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 300),
     this.volumeIndicatorBuilder,
@@ -287,9 +285,18 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   double _volumeValue = 0.0;
   bool _volumeIndicator = false;
   Timer? _volumeTimer;
-  bool _volumeInterceptEventChannel = false;
+  // The default event stream in package:volume_controller is buggy.
+  bool _volumeInterceptEventStream = false;
 
   late /* private */ var playlist = controller(context).player.state.playlist;
+
+  bool _mountSeekBackwardButton = false;
+  bool _mountSeekForwardButton = false;
+  bool _hideSeekBackwardButton = false;
+  bool _hideSeekForwardButton = false;
+
+  final ValueNotifier<Duration> _seekBarDeltaValueNotifier =
+      ValueNotifier<Duration>(Duration.zero);
 
   final List<StreamSubscription> subscriptions = [];
 
@@ -349,6 +356,18 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     }
   }
 
+  void onDoubleTapSeekBackward() {
+    setState(() {
+      _mountSeekBackwardButton = true;
+    });
+  }
+
+  void onDoubleTapSeekForward() {
+    setState(() {
+      _mountSeekForwardButton = true;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -359,7 +378,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
         VolumeController().showSystemUI = false;
         _volumeValue = await VolumeController().getVolume();
         VolumeController().listener((value) {
-          if (mounted && !_volumeInterceptEventChannel) {
+          if (mounted && !_volumeInterceptEventStream) {
             setState(() {
               _volumeValue = value;
             });
@@ -392,14 +411,14 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     setState(() {
       _volumeValue = value;
       _volumeIndicator = true;
-      _volumeInterceptEventChannel = true;
+      _volumeInterceptEventStream = true;
     });
     _volumeTimer?.cancel();
     _volumeTimer = Timer(const Duration(milliseconds: 200), () {
       if (mounted) {
         setState(() {
           _volumeIndicator = false;
-          _volumeInterceptEventChannel = false;
+          _volumeInterceptEventStream = false;
         });
       }
     });
@@ -568,20 +587,36 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                     alignment: Alignment.center,
                     children: [
                       Positioned.fill(
-                        child: Container(
-                          color: const Color(0x66000000),
+                        child: GestureDetector(
+                          onVerticalDragUpdate: (e) {
+                            onTap();
+                          },
+                          onHorizontalDragUpdate: (e) {
+                            onTap();
+                          },
+                          child: Container(
+                            color: const Color(0x66000000),
+                          ),
                         ),
                       ),
                       Positioned.fill(
+                        left: 16.0,
+                        top: 16.0,
+                        right: 16.0,
+                        bottom: 16.0,
                         child: Row(
                           children: [
                             Expanded(
                               child: GestureDetector(
                                 onTap: onTap,
+                                onDoubleTap:
+                                    !mount && _theme(context).seekOnDoubleTap
+                                        ? onDoubleTapSeekBackward
+                                        : () {},
                                 onVerticalDragUpdate: !mount &&
                                         _theme(context).brightnessGesture
                                     ? (e) async {
-                                        final delta = e.primaryDelta ?? 0.0;
+                                        final delta = e.delta.dy;
                                         final brightness =
                                             _brightnessValue - delta / 100.0;
                                         final result =
@@ -594,21 +629,29 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 ),
                               ),
                             ),
+                            // Expanded(
+                            //   child: GestureDetector(
+                            //     onTap: onTap,
+                            //     // Adding [onDoubleTap] callback causes [onTap] to be called after some delay (for double tap detection).
+                            //     // We need [onDoubleTap] to be present for seek gestures to work.
+                            //     // Passing empty callback to match the delay of the adjacent [GestureDetector]s.
+                            //     onDoubleTap: () {},
+                            //     child: Container(
+                            //       color: const Color(0x00000000),
+                            //     ),
+                            //   ),
+                            // ),
                             Expanded(
                               child: GestureDetector(
                                 onTap: onTap,
-                                child: Container(
-                                  color: const Color(0x00000000),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: onTap,
+                                onDoubleTap:
+                                    !mount && _theme(context).seekOnDoubleTap
+                                        ? onDoubleTapSeekForward
+                                        : () {},
                                 onVerticalDragUpdate: !mount &&
                                         _theme(context).volumeGesture
                                     ? (e) async {
-                                        final delta = e.primaryDelta ?? 0.0;
+                                        final delta = e.delta.dy;
                                         final volume =
                                             _volumeValue - delta / 100.0;
                                         final result = volume.clamp(0.0, 1.0);
@@ -653,10 +696,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                               alignment: Alignment.bottomCenter,
                               children: [
                                 if (_theme(context).displaySeekBar)
-                                  Transform.translate(
-                                    offset: Offset.zero,
-                                    child: const MaterialSeekBar(),
-                                  ),
+                                  const MaterialSeekBar(),
                                 Container(
                                   height: _theme(context).buttonBarHeight,
                                   margin: _theme(context).buttonBarMargin,
@@ -676,6 +716,130 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                     ],
                   ),
                 ),
+                // Double-Tap Seek Seek-Bar:
+                if (!mount)
+                  if (_mountSeekBackwardButton || _mountSeekForwardButton)
+                    Column(
+                      children: [
+                        const Spacer(),
+                        Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            if (_theme(context).displaySeekBar)
+                              MaterialSeekBar(
+                                delta: _seekBarDeltaValueNotifier,
+                              ),
+                            Container(
+                              height: _theme(context).buttonBarHeight,
+                              margin: _theme(context).buttonBarMargin,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                // Double-Tap Seek Button(s):
+                if (!mount)
+                  if (_mountSeekBackwardButton || _mountSeekForwardButton)
+                    Positioned.fill(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _mountSeekBackwardButton
+                                ? TweenAnimationBuilder<double>(
+                                    tween: Tween<double>(
+                                      begin: 0.0,
+                                      end: _hideSeekBackwardButton ? 0.0 : 1.0,
+                                    ),
+                                    duration: const Duration(milliseconds: 200),
+                                    builder: (context, value, child) => Opacity(
+                                      opacity: value,
+                                      child: child,
+                                    ),
+                                    onEnd: () {
+                                      if (_hideSeekBackwardButton) {
+                                        setState(() {
+                                          _hideSeekBackwardButton = false;
+                                          _mountSeekBackwardButton = false;
+                                        });
+                                      }
+                                    },
+                                    child: _BackwardSeekIndicator(
+                                      onChanged: (value) {
+                                        _seekBarDeltaValueNotifier.value =
+                                            -value;
+                                      },
+                                      onSubmitted: (value) {
+                                        setState(() {
+                                          _hideSeekBackwardButton = true;
+                                        });
+                                        var result = controller(context)
+                                                .player
+                                                .state
+                                                .position -
+                                            value;
+                                        result = result.clamp(
+                                          Duration.zero,
+                                          controller(context)
+                                              .player
+                                              .state
+                                              .duration,
+                                        );
+                                        controller(context).player.seek(result);
+                                      },
+                                    ),
+                                  )
+                                : const SizedBox(),
+                          ),
+                          Expanded(
+                            child: _mountSeekForwardButton
+                                ? TweenAnimationBuilder<double>(
+                                    tween: Tween<double>(
+                                      begin: 0.0,
+                                      end: _hideSeekForwardButton ? 0.0 : 1.0,
+                                    ),
+                                    duration: const Duration(milliseconds: 200),
+                                    builder: (context, value, child) => Opacity(
+                                      opacity: value,
+                                      child: child,
+                                    ),
+                                    onEnd: () {
+                                      if (_hideSeekForwardButton) {
+                                        setState(() {
+                                          _hideSeekForwardButton = false;
+                                          _mountSeekForwardButton = false;
+                                        });
+                                      }
+                                    },
+                                    child: _ForwardSeekIndicator(
+                                      onChanged: (value) {
+                                        _seekBarDeltaValueNotifier.value =
+                                            value;
+                                      },
+                                      onSubmitted: (value) {
+                                        setState(() {
+                                          _hideSeekForwardButton = true;
+                                        });
+                                        var result = controller(context)
+                                                .player
+                                                .state
+                                                .position +
+                                            value;
+                                        result = result.clamp(
+                                          Duration.zero,
+                                          controller(context)
+                                              .player
+                                              .state
+                                              .duration,
+                                        );
+                                        controller(context).player.seek(result);
+                                      },
+                                    ),
+                                  )
+                                : const SizedBox(),
+                          ),
+                        ],
+                      ),
+                    ),
               ],
             ),
           ),
@@ -689,9 +853,9 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
 /// Material design seek bar.
 class MaterialSeekBar extends StatefulWidget {
-  const MaterialSeekBar({
-    Key? key,
-  }) : super(key: key);
+  final ValueNotifier<Duration>? delta;
+
+  const MaterialSeekBar({Key? key, this.delta}) : super(key: key);
 
   @override
   MaterialSeekBarState createState() => MaterialSeekBarState();
@@ -708,10 +872,23 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
 
   final List<StreamSubscription> subscriptions = [];
 
+  void listener() {
+    setState(() {
+      final delta = widget.delta?.value ?? Duration.zero;
+      position = controller(context).player.state.position + delta;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.delta?.addListener(listener);
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (subscriptions.isEmpty) {
+    if (subscriptions.isEmpty && widget.delta == null) {
       subscriptions.addAll(
         [
           controller(context).player.streams.playing.listen((event) {
@@ -748,6 +925,7 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
 
   @override
   void dispose() {
+    widget.delta?.removeListener(listener);
     for (final subscription in subscriptions) {
       subscription.cancel();
     }
@@ -1143,6 +1321,166 @@ class MaterialPositionIndicatorState extends State<MaterialPositionIndicator> {
             fontSize: 12.0,
             color: _theme(context).buttonBarButtonColor,
           ),
+    );
+  }
+}
+
+class _BackwardSeekIndicator extends StatefulWidget {
+  final void Function(Duration) onChanged;
+  final void Function(Duration) onSubmitted;
+  const _BackwardSeekIndicator({
+    Key? key,
+    required this.onChanged,
+    required this.onSubmitted,
+  }) : super(key: key);
+
+  @override
+  State<_BackwardSeekIndicator> createState() => _BackwardSeekIndicatorState();
+}
+
+class _BackwardSeekIndicatorState extends State<_BackwardSeekIndicator> {
+  Duration value = const Duration(seconds: 10);
+
+  Timer? timer;
+
+  @override
+  void initState() {
+    super.initState();
+    timer = Timer(const Duration(milliseconds: 400), () {
+      widget.onSubmitted.call(value);
+    });
+  }
+
+  void increment() {
+    timer?.cancel();
+    timer = Timer(const Duration(milliseconds: 400), () {
+      widget.onSubmitted.call(value);
+    });
+    widget.onChanged.call(value);
+    setState(() {
+      value += const Duration(seconds: 10);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0x88767676),
+            Color(0x00767676),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+      ),
+      child: InkWell(
+        splashColor: const Color(0x44767676),
+        onTap: increment,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.fast_rewind,
+                size: 24.0,
+                color: Color(0xFFFFFFFF),
+              ),
+              const SizedBox(height: 8.0),
+              Text(
+                '${value.inSeconds} seconds',
+                style: const TextStyle(
+                  fontSize: 12.0,
+                  color: Color(0xFFFFFFFF),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ForwardSeekIndicator extends StatefulWidget {
+  final void Function(Duration) onChanged;
+  final void Function(Duration) onSubmitted;
+  const _ForwardSeekIndicator({
+    Key? key,
+    required this.onChanged,
+    required this.onSubmitted,
+  }) : super(key: key);
+
+  @override
+  State<_ForwardSeekIndicator> createState() => _ForwardSeekIndicatorState();
+}
+
+class _ForwardSeekIndicatorState extends State<_ForwardSeekIndicator> {
+  Duration value = const Duration(seconds: 10);
+
+  Timer? timer;
+
+  @override
+  void initState() {
+    super.initState();
+    timer = Timer(const Duration(milliseconds: 400), () {
+      widget.onSubmitted.call(value);
+    });
+  }
+
+  void increment() {
+    timer?.cancel();
+    timer = Timer(const Duration(milliseconds: 400), () {
+      widget.onSubmitted.call(value);
+    });
+    widget.onChanged.call(value);
+    setState(() {
+      value += const Duration(seconds: 10);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0x00767676),
+            Color(0x88767676),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+      ),
+      child: InkWell(
+        splashColor: const Color(0x44767676),
+        onTap: increment,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.fast_forward,
+                size: 24.0,
+                color: Color(0xFFFFFFFF),
+              ),
+              const SizedBox(height: 8.0),
+              Text(
+                '${value.inSeconds} seconds',
+                style: const TextStyle(
+                  fontSize: 12.0,
+                  color: Color(0xFFFFFFFF),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
