@@ -12,20 +12,17 @@ import 'package:media_kit_video/media_kit_video.dart';
 /// [Video] controls based on the running platform.
 ///
 /// {@endtemplate}
-Widget AdaptiveVideoControls(
-  BuildContext context,
-  VideoController controller,
-) {
-  switch (Theme.of(context).platform) {
+Widget AdaptiveVideoControls(VideoState state) {
+  switch (Theme.of(state.context).platform) {
     case TargetPlatform.android:
-      return MaterialVideoControls(context, controller);
+      return MaterialVideoControls(state);
     case TargetPlatform.iOS:
-      return CupertinoVideoControls(context, controller);
+      return CupertinoVideoControls(state);
     case TargetPlatform.macOS:
     case TargetPlatform.windows:
     case TargetPlatform.linux:
-      return MaterialDesktopVideoControls(context, controller);
+      return MaterialDesktopVideoControls(state);
     default:
-      return NoVideoControls(context, controller);
+      return NoVideoControls(state);
   }
 }
