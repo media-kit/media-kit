@@ -15,18 +15,15 @@ import 'package:screen_brightness/screen_brightness.dart';
 import 'package:media_kit_video_controls/src/controls/extensions/duration.dart';
 import 'package:media_kit_video_controls/src/controls/methods/video_controller.dart';
 import 'package:media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
-import 'package:media_kit_video_controls/src/controls/widgets/video_controller_inherited_widget.dart';
+import 'package:media_kit_video_controls/src/controls/widgets/video_state_inherited_widget.dart';
 
 /// {@template material_video_controls}
 ///
 /// [Video] controls which use Material design.
 ///
 /// {@endtemplate}
-Widget MaterialVideoControls(
-  BuildContext context,
-  VideoController controller,
-) {
-  final theme = MaterialVideoControlsTheme.maybeOf(context);
+Widget MaterialVideoControls(VideoState state) {
+  final theme = MaterialVideoControlsTheme.maybeOf(state.context);
   final Widget child;
   if (theme == null) {
     child = const MaterialVideoControlsTheme(
@@ -37,7 +34,7 @@ Widget MaterialVideoControls(
   } else {
     child = const _MaterialVideoControls();
   }
-  return VideoControllerInheritedWidget(controller: controller, child: child);
+  return VideoStateInheritedWidget(state: state, child: child);
 }
 
 /// [MaterialVideoControlsThemeData] available in this [context].
@@ -445,8 +442,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   @override
   Widget build(BuildContext context) {
-    Widget wrapInSafeAreaIfRequired({required Widget child}) =>
-        isFullscreen(context) ? SafeArea(child: child) : child;
     return Theme(
       data: ThemeData(
         focusColor: const Color(0x00000000),
@@ -456,218 +451,212 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       ),
       child: Focus(
         autofocus: true,
-        child: wrapInSafeAreaIfRequired(
-          child: Material(
-            elevation: 0.0,
-            borderOnForeground: false,
-            animationDuration: Duration.zero,
-            color: const Color(0x00000000),
-            shadowColor: const Color(0x00000000),
-            surfaceTintColor: const Color(0x00000000),
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                // Volume Indicator.
-                AnimatedOpacity(
-                  curve: Curves.easeInOut,
-                  opacity: !mount && _volumeIndicator ? 1.0 : 0.0,
-                  duration: _theme(context).controlsTransitionDuration,
-                  child: _theme(context)
-                          .volumeIndicatorBuilder
-                          ?.call(context, _volumeValue) ??
-                      Container(
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: const Color(0x88000000),
-                          borderRadius: BorderRadius.circular(64.0),
-                        ),
-                        height: 52.0,
-                        width: 108.0,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              height: 52.0,
-                              width: 42.0,
-                              alignment: Alignment.centerRight,
-                              child: Icon(
-                                _volumeValue == 0.0
-                                    ? Icons.volume_off
-                                    : _volumeValue < 0.5
-                                        ? Icons.volume_down
-                                        : Icons.volume_up,
-                                color: const Color(0xFFFFFFFF),
-                                size: 24.0,
-                              ),
-                            ),
-                            const SizedBox(width: 8.0),
-                            Expanded(
-                              child: Text(
-                                '${(_volumeValue * 100.0).round()}%',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 14.0,
-                                  color: Color(0xFFFFFFFF),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16.0),
-                          ],
-                        ),
+        child: Material(
+          elevation: 0.0,
+          borderOnForeground: false,
+          animationDuration: Duration.zero,
+          color: const Color(0x00000000),
+          shadowColor: const Color(0x00000000),
+          surfaceTintColor: const Color(0x00000000),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              // Volume Indicator.
+              AnimatedOpacity(
+                curve: Curves.easeInOut,
+                opacity: !mount && _volumeIndicator ? 1.0 : 0.0,
+                duration: _theme(context).controlsTransitionDuration,
+                child: _theme(context)
+                        .volumeIndicatorBuilder
+                        ?.call(context, _volumeValue) ??
+                    Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: const Color(0x88000000),
+                        borderRadius: BorderRadius.circular(64.0),
                       ),
-                ),
-                // Brightness Indicator.
-                AnimatedOpacity(
-                  curve: Curves.easeInOut,
-                  opacity: !mount && _brightnessIndicator ? 1.0 : 0.0,
-                  duration: _theme(context).controlsTransitionDuration,
-                  child: _theme(context)
-                          .brightnessIndicatorBuilder
-                          ?.call(context, _volumeValue) ??
-                      Container(
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: const Color(0x88000000),
-                          borderRadius: BorderRadius.circular(64.0),
-                        ),
-                        height: 52.0,
-                        width: 108.0,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              height: 52.0,
-                              width: 42.0,
-                              alignment: Alignment.centerRight,
-                              child: Icon(
-                                _brightnessValue < 1.0 / 3.0
-                                    ? Icons.brightness_low
-                                    : _brightnessValue < 2.0 / 3.0
-                                        ? Icons.brightness_medium
-                                        : Icons.brightness_high,
-                                color: const Color(0xFFFFFFFF),
-                                size: 24.0,
-                              ),
+                      height: 52.0,
+                      width: 108.0,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            height: 52.0,
+                            width: 42.0,
+                            alignment: Alignment.centerRight,
+                            child: Icon(
+                              _volumeValue == 0.0
+                                  ? Icons.volume_off
+                                  : _volumeValue < 0.5
+                                      ? Icons.volume_down
+                                      : Icons.volume_up,
+                              color: const Color(0xFFFFFFFF),
+                              size: 24.0,
                             ),
-                            const SizedBox(width: 8.0),
-                            Expanded(
-                              child: Text(
-                                '${(_brightnessValue * 100.0).round()}%',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 14.0,
-                                  color: Color(0xFFFFFFFF),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16.0),
-                          ],
-                        ),
-                      ),
-                ),
-                // Controls:
-                AnimatedOpacity(
-                  curve: Curves.easeInOut,
-                  opacity: visible ? 1.0 : 0.0,
-                  duration: _theme(context).controlsTransitionDuration,
-                  onEnd: () {
-                    setState(() {
-                      if (!visible) {
-                        mount = false;
-                      }
-                    });
-                  },
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.center,
-                    children: [
-                      Positioned.fill(
-                        child: GestureDetector(
-                          onVerticalDragUpdate: (e) {
-                            onTap();
-                          },
-                          onHorizontalDragUpdate: (e) {
-                            onTap();
-                          },
-                          child: Container(
-                            color: const Color(0x66000000),
                           ),
-                        ),
-                      ),
-                      Positioned.fill(
-                        left: 16.0,
-                        top: 16.0,
-                        right: 16.0,
-                        bottom: 16.0,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: onTap,
-                                onDoubleTap:
-                                    !mount && _theme(context).seekOnDoubleTap
-                                        ? onDoubleTapSeekBackward
-                                        : () {},
-                                onVerticalDragUpdate: !mount &&
-                                        _theme(context).brightnessGesture
-                                    ? (e) async {
-                                        final delta = e.delta.dy;
-                                        final brightness =
-                                            _brightnessValue - delta / 100.0;
-                                        final result =
-                                            brightness.clamp(0.0, 1.0);
-                                        setBrightness(result);
-                                      }
-                                    : null,
-                                child: Container(
-                                  color: const Color(0x00000000),
-                                ),
+                          const SizedBox(width: 8.0),
+                          Expanded(
+                            child: Text(
+                              '${(_volumeValue * 100.0).round()}%',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 14.0,
+                                color: Color(0xFFFFFFFF),
                               ),
                             ),
-                            // Expanded(
-                            //   child: GestureDetector(
-                            //     onTap: onTap,
-                            //     // Adding [onDoubleTap] callback causes [onTap] to be called after some delay (for double tap detection).
-                            //     // We need [onDoubleTap] to be present for seek gestures to work.
-                            //     // Passing empty callback to match the delay of the adjacent [GestureDetector]s.
-                            //     onDoubleTap: () {},
-                            //     child: Container(
-                            //       color: const Color(0x00000000),
-                            //     ),
-                            //   ),
-                            // ),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: onTap,
-                                onDoubleTap:
-                                    !mount && _theme(context).seekOnDoubleTap
-                                        ? onDoubleTapSeekForward
-                                        : () {},
-                                onVerticalDragUpdate: !mount &&
-                                        _theme(context).volumeGesture
-                                    ? (e) async {
-                                        final delta = e.delta.dy;
-                                        final volume =
-                                            _volumeValue - delta / 100.0;
-                                        final result = volume.clamp(0.0, 1.0);
-                                        setVolume(result);
-                                      }
-                                    : null,
-                                child: Container(
-                                  color: const Color(0x00000000),
-                                ),
+                          ),
+                          const SizedBox(width: 16.0),
+                        ],
+                      ),
+                    ),
+              ),
+              // Brightness Indicator.
+              AnimatedOpacity(
+                curve: Curves.easeInOut,
+                opacity: !mount && _brightnessIndicator ? 1.0 : 0.0,
+                duration: _theme(context).controlsTransitionDuration,
+                child: _theme(context)
+                        .brightnessIndicatorBuilder
+                        ?.call(context, _volumeValue) ??
+                    Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: const Color(0x88000000),
+                        borderRadius: BorderRadius.circular(64.0),
+                      ),
+                      height: 52.0,
+                      width: 108.0,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            height: 52.0,
+                            width: 42.0,
+                            alignment: Alignment.centerRight,
+                            child: Icon(
+                              _brightnessValue < 1.0 / 3.0
+                                  ? Icons.brightness_low
+                                  : _brightnessValue < 2.0 / 3.0
+                                      ? Icons.brightness_medium
+                                      : Icons.brightness_high,
+                              color: const Color(0xFFFFFFFF),
+                              size: 24.0,
+                            ),
+                          ),
+                          const SizedBox(width: 8.0),
+                          Expanded(
+                            child: Text(
+                              '${(_brightnessValue * 100.0).round()}%',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 14.0,
+                                color: Color(0xFFFFFFFF),
                               ),
                             ),
-                          ],
+                          ),
+                          const SizedBox(width: 16.0),
+                        ],
+                      ),
+                    ),
+              ),
+              // Controls:
+              AnimatedOpacity(
+                curve: Curves.easeInOut,
+                opacity: visible ? 1.0 : 0.0,
+                duration: _theme(context).controlsTransitionDuration,
+                onEnd: () {
+                  setState(() {
+                    if (!visible) {
+                      mount = false;
+                    }
+                  });
+                },
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    // Fallback from the controls to the video & show/hide controls on tap.
+                    Positioned.fill(
+                      child: GestureDetector(
+                        onVerticalDragUpdate: (e) {
+                          onTap();
+                        },
+                        onHorizontalDragUpdate: (e) {
+                          onTap();
+                        },
+                        child: Container(
+                          color: const Color(0x66000000),
                         ),
                       ),
-                      if (mount) ...[
-                        Column(
+                    ),
+                    // We are adding 16.0 boundary around the actual controls (which contain the vertical drag gesture detectors).
+                    // This will make the hit-test on edges (e.g. swiping to: show status-bar, show navigation-bar, go back in navigation) not activate the swipe gesture annoyingly.
+                    Positioned.fill(
+                      left: 16.0,
+                      top: 16.0,
+                      right: 16.0,
+                      bottom: 16.0,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: onTap,
+                              onDoubleTap:
+                                  !mount && _theme(context).seekOnDoubleTap
+                                      ? onDoubleTapSeekBackward
+                                      : () {},
+                              onVerticalDragUpdate: !mount &&
+                                      _theme(context).brightnessGesture
+                                  ? (e) async {
+                                      final delta = e.delta.dy;
+                                      final brightness =
+                                          _brightnessValue - delta / 100.0;
+                                      final result = brightness.clamp(0.0, 1.0);
+                                      setBrightness(result);
+                                    }
+                                  : null,
+                              child: Container(
+                                color: const Color(0x00000000),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: onTap,
+                              onDoubleTap:
+                                  !mount && _theme(context).seekOnDoubleTap
+                                      ? onDoubleTapSeekForward
+                                      : () {},
+                              onVerticalDragUpdate:
+                                  !mount && _theme(context).volumeGesture
+                                      ? (e) async {
+                                          final delta = e.delta.dy;
+                                          final volume =
+                                              _volumeValue - delta / 100.0;
+                                          final result = volume.clamp(0.0, 1.0);
+                                          setVolume(result);
+                                        }
+                                      : null,
+                              child: Container(
+                                color: const Color(0x00000000),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (mount)
+                      Padding(
+                        // Add padding in fullscreen!
+                        padding: isFullscreen(context)
+                            ? MediaQuery.of(context).padding
+                            : EdgeInsets.zero,
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -712,136 +701,134 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                             ),
                           ],
                         ),
-                      ]
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
-                // Double-Tap Seek Seek-Bar:
-                if (!mount)
-                  if (_mountSeekBackwardButton || _mountSeekForwardButton)
-                    Column(
-                      children: [
-                        const Spacer(),
-                        Stack(
-                          alignment: Alignment.bottomCenter,
-                          children: [
-                            if (_theme(context).displaySeekBar)
-                              MaterialSeekBar(
-                                delta: _seekBarDeltaValueNotifier,
-                              ),
-                            Container(
-                              height: _theme(context).buttonBarHeight,
-                              margin: _theme(context).buttonBarMargin,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                // Double-Tap Seek Button(s):
-                if (!mount)
-                  if (_mountSeekBackwardButton || _mountSeekForwardButton)
-                    Positioned.fill(
-                      child: Row(
+              ),
+
+              // Double-Tap Seek Seek-Bar:
+              if (!mount)
+                if (_mountSeekBackwardButton || _mountSeekForwardButton)
+                  Column(
+                    children: [
+                      const Spacer(),
+                      Stack(
+                        alignment: Alignment.bottomCenter,
                         children: [
-                          Expanded(
-                            child: _mountSeekBackwardButton
-                                ? TweenAnimationBuilder<double>(
-                                    tween: Tween<double>(
-                                      begin: 0.0,
-                                      end: _hideSeekBackwardButton ? 0.0 : 1.0,
-                                    ),
-                                    duration: const Duration(milliseconds: 200),
-                                    builder: (context, value, child) => Opacity(
-                                      opacity: value,
-                                      child: child,
-                                    ),
-                                    onEnd: () {
-                                      if (_hideSeekBackwardButton) {
-                                        setState(() {
-                                          _hideSeekBackwardButton = false;
-                                          _mountSeekBackwardButton = false;
-                                        });
-                                      }
-                                    },
-                                    child: _BackwardSeekIndicator(
-                                      onChanged: (value) {
-                                        _seekBarDeltaValueNotifier.value =
-                                            -value;
-                                      },
-                                      onSubmitted: (value) {
-                                        setState(() {
-                                          _hideSeekBackwardButton = true;
-                                        });
-                                        var result = controller(context)
-                                                .player
-                                                .state
-                                                .position -
-                                            value;
-                                        result = result.clamp(
-                                          Duration.zero,
-                                          controller(context)
-                                              .player
-                                              .state
-                                              .duration,
-                                        );
-                                        controller(context).player.seek(result);
-                                      },
-                                    ),
-                                  )
-                                : const SizedBox(),
-                          ),
-                          Expanded(
-                            child: _mountSeekForwardButton
-                                ? TweenAnimationBuilder<double>(
-                                    tween: Tween<double>(
-                                      begin: 0.0,
-                                      end: _hideSeekForwardButton ? 0.0 : 1.0,
-                                    ),
-                                    duration: const Duration(milliseconds: 200),
-                                    builder: (context, value, child) => Opacity(
-                                      opacity: value,
-                                      child: child,
-                                    ),
-                                    onEnd: () {
-                                      if (_hideSeekForwardButton) {
-                                        setState(() {
-                                          _hideSeekForwardButton = false;
-                                          _mountSeekForwardButton = false;
-                                        });
-                                      }
-                                    },
-                                    child: _ForwardSeekIndicator(
-                                      onChanged: (value) {
-                                        _seekBarDeltaValueNotifier.value =
-                                            value;
-                                      },
-                                      onSubmitted: (value) {
-                                        setState(() {
-                                          _hideSeekForwardButton = true;
-                                        });
-                                        var result = controller(context)
-                                                .player
-                                                .state
-                                                .position +
-                                            value;
-                                        result = result.clamp(
-                                          Duration.zero,
-                                          controller(context)
-                                              .player
-                                              .state
-                                              .duration,
-                                        );
-                                        controller(context).player.seek(result);
-                                      },
-                                    ),
-                                  )
-                                : const SizedBox(),
+                          if (_theme(context).displaySeekBar)
+                            MaterialSeekBar(
+                              delta: _seekBarDeltaValueNotifier,
+                            ),
+                          Container(
+                            height: _theme(context).buttonBarHeight,
+                            margin: _theme(context).buttonBarMargin,
                           ),
                         ],
                       ),
+                    ],
+                  ),
+              // Double-Tap Seek Button(s):
+              if (!mount)
+                if (_mountSeekBackwardButton || _mountSeekForwardButton)
+                  Positioned.fill(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _mountSeekBackwardButton
+                              ? TweenAnimationBuilder<double>(
+                                  tween: Tween<double>(
+                                    begin: 0.0,
+                                    end: _hideSeekBackwardButton ? 0.0 : 1.0,
+                                  ),
+                                  duration: const Duration(milliseconds: 200),
+                                  builder: (context, value, child) => Opacity(
+                                    opacity: value,
+                                    child: child,
+                                  ),
+                                  onEnd: () {
+                                    if (_hideSeekBackwardButton) {
+                                      setState(() {
+                                        _hideSeekBackwardButton = false;
+                                        _mountSeekBackwardButton = false;
+                                      });
+                                    }
+                                  },
+                                  child: _BackwardSeekIndicator(
+                                    onChanged: (value) {
+                                      _seekBarDeltaValueNotifier.value = -value;
+                                    },
+                                    onSubmitted: (value) {
+                                      setState(() {
+                                        _hideSeekBackwardButton = true;
+                                      });
+                                      var result = controller(context)
+                                              .player
+                                              .state
+                                              .position -
+                                          value;
+                                      result = result.clamp(
+                                        Duration.zero,
+                                        controller(context)
+                                            .player
+                                            .state
+                                            .duration,
+                                      );
+                                      controller(context).player.seek(result);
+                                    },
+                                  ),
+                                )
+                              : const SizedBox(),
+                        ),
+                        Expanded(
+                          child: _mountSeekForwardButton
+                              ? TweenAnimationBuilder<double>(
+                                  tween: Tween<double>(
+                                    begin: 0.0,
+                                    end: _hideSeekForwardButton ? 0.0 : 1.0,
+                                  ),
+                                  duration: const Duration(milliseconds: 200),
+                                  builder: (context, value, child) => Opacity(
+                                    opacity: value,
+                                    child: child,
+                                  ),
+                                  onEnd: () {
+                                    if (_hideSeekForwardButton) {
+                                      setState(() {
+                                        _hideSeekForwardButton = false;
+                                        _mountSeekForwardButton = false;
+                                      });
+                                    }
+                                  },
+                                  child: _ForwardSeekIndicator(
+                                    onChanged: (value) {
+                                      _seekBarDeltaValueNotifier.value = value;
+                                    },
+                                    onSubmitted: (value) {
+                                      setState(() {
+                                        _hideSeekForwardButton = true;
+                                      });
+                                      var result = controller(context)
+                                              .player
+                                              .state
+                                              .position +
+                                          value;
+                                      result = result.clamp(
+                                        Duration.zero,
+                                        controller(context)
+                                            .player
+                                            .state
+                                            .duration,
+                                      );
+                                      controller(context).player.seek(result);
+                                    },
+                                  ),
+                                )
+                              : const SizedBox(),
+                        ),
+                      ],
                     ),
-              ],
-            ),
+                  ),
+            ],
           ),
         ),
       ),
@@ -1216,7 +1203,7 @@ class MaterialFullscreenButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: () => toggleFullscreen(controller(context), context),
+      onPressed: () => toggleFullscreen(context),
       icon: icon ??
           (isFullscreen(context)
               ? const Icon(Icons.fullscreen_exit)
