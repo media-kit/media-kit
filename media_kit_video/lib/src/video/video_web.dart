@@ -82,7 +82,8 @@ class Video extends StatefulWidget {
   final FilterQuality filterQuality;
 
   /// Video controls builder.
-  final VideoControlsBuilder? controls;
+  final dynamic /* VideoControlsBuilder? */ /* All my homies hate Flutter for Web. */
+      controls;
 
   /// Whether to acquire wake lock while playing the video.
   final bool wakelock;
@@ -107,13 +108,23 @@ class Video extends StatefulWidget {
 }
 
 class VideoState extends State<Video> {
-  bool isFullscreen() => media_kit_video_controls.isFullscreen(context);
-  Future<void> enterFullscreen() =>
-      media_kit_video_controls.enterFullscreen(widget.controller, context);
-  Future<void> exitFullscreen() =>
-      media_kit_video_controls.exitFullscreen(context);
-  Future<void> toggleFullscreen() =>
-      media_kit_video_controls.toggleFullscreen(widget.controller, context);
+  // Public API:
+
+  bool isFullscreen() {
+    return media_kit_video_controls.isFullscreen(context);
+  }
+
+  Future<void> enterFullscreen() {
+    return media_kit_video_controls.enterFullscreen(context);
+  }
+
+  Future<void> exitFullscreen() {
+    return media_kit_video_controls.exitFullscreen(context);
+  }
+
+  Future<void> toggleFullscreen() {
+    return media_kit_video_controls.toggleFullscreen(context);
+  }
 
   @override
   void initState() {
@@ -192,15 +203,10 @@ class VideoState extends State<Video> {
           ),
           if (controls != null)
             Positioned.fill(
-              child: controls.call(context, controller),
+              child: controls.call(this),
             ),
         ],
       ),
     );
   }
 }
-
-typedef VideoControlsBuilder = Widget Function(
-  BuildContext context,
-  VideoController controller,
-);
