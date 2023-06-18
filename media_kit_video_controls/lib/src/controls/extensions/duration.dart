@@ -6,6 +6,13 @@
 
 /// Extension methods for [Duration].
 extension DurationExtension on Duration {
+  /// Returns clamp of [Duration] between [min] and [max].
+  Duration clamp(Duration min, Duration max) {
+    if (this < min) return min;
+    if (this > max) return max;
+    return this;
+  }
+
   /// Returns a [String] representation of [Duration].
   String label({Duration? reference}) {
     reference ??= this;
