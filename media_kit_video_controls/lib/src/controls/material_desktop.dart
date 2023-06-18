@@ -13,18 +13,15 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:media_kit_video_controls/src/controls/extensions/duration.dart';
 import 'package:media_kit_video_controls/src/controls/methods/video_controller.dart';
 import 'package:media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
-import 'package:media_kit_video_controls/src/controls/widgets/video_controller_inherited_widget.dart';
+import 'package:media_kit_video_controls/src/controls/widgets/video_state_inherited_widget.dart';
 
 /// {@template material_desktop_video_controls}
 ///
 /// [Video] controls which use MaterialDesktop design.
 ///
 /// {@endtemplate}
-Widget MaterialDesktopVideoControls(
-  BuildContext context,
-  VideoController controller,
-) {
-  final theme = MaterialDesktopVideoControlsTheme.maybeOf(context);
+Widget MaterialDesktopVideoControls(VideoState state) {
+  final theme = MaterialDesktopVideoControlsTheme.maybeOf(state.context);
   final Widget child;
   if (theme == null) {
     child = const MaterialDesktopVideoControlsTheme(
@@ -35,7 +32,7 @@ Widget MaterialDesktopVideoControls(
   } else {
     child = const _MaterialDesktopVideoControls();
   }
-  return VideoControllerInheritedWidget(controller: controller, child: child);
+  return VideoStateInheritedWidget(state: state, child: child);
 }
 
 /// [MaterialDesktopVideoControlsThemeData] available in this [context].
@@ -411,8 +408,6 @@ class _MaterialDesktopVideoControlsState
 
   @override
   Widget build(BuildContext context) {
-    Widget wrapInSafeAreaIfRequired({required Widget child}) =>
-        isFullscreen(context) ? SafeArea(child: child) : child;
     return Theme(
       data: ThemeData(
         focusColor: const Color(0x00000000),
@@ -466,127 +461,131 @@ class _MaterialDesktopVideoControlsState
                 controller(context).player.setVolume(volume.clamp(0.0, 100.0));
               },
               const SingleActivator(LogicalKeyboardKey.keyF): () =>
-                  toggleFullscreen(controller(context), context),
+                  toggleFullscreen(context),
               const SingleActivator(LogicalKeyboardKey.escape): () =>
                   exitFullscreen(context),
             },
         child: Focus(
           autofocus: true,
-          child: wrapInSafeAreaIfRequired(
-            child: Material(
-              elevation: 0.0,
-              borderOnForeground: false,
-              animationDuration: Duration.zero,
-              color: const Color(0x00000000),
-              shadowColor: const Color(0x00000000),
-              surfaceTintColor: const Color(0x00000000),
-              child: Listener(
-                onPointerSignal: _theme(context).modifyVolumeOnScroll
+          child: Material(
+            elevation: 0.0,
+            borderOnForeground: false,
+            animationDuration: Duration.zero,
+            color: const Color(0x00000000),
+            shadowColor: const Color(0x00000000),
+            surfaceTintColor: const Color(0x00000000),
+            child: Listener(
+              onPointerSignal: _theme(context).modifyVolumeOnScroll
+                  ? (e) {
+                      if (e is PointerScrollEvent) {
+                        if (e.delta.dy > 0) {
+                          final volume =
+                              controller(context).player.state.volume - 5.0;
+                          controller(context)
+                              .player
+                              .setVolume(volume.clamp(0.0, 100.0));
+                        }
+                        if (e.delta.dy < 0) {
+                          final volume =
+                              controller(context).player.state.volume + 5.0;
+                          controller(context)
+                              .player
+                              .setVolume(volume.clamp(0.0, 100.0));
+                        }
+                      }
+                    }
+                  : null,
+              child: GestureDetector(
+                onTapUp: (e) {
+                  if (_theme(context).toggleFullscreenOnDoublePress) {
+                    final now = DateTime.now();
+                    final difference = now.difference(last);
+                    last = now;
+                    if (difference < const Duration(milliseconds: 400)) {
+                      toggleFullscreen(context);
+                    }
+                  }
+                },
+                onPanUpdate: _theme(context).modifyVolumeOnScroll
                     ? (e) {
-                        if (e is PointerScrollEvent) {
-                          if (e.delta.dy > 0) {
-                            final volume =
-                                controller(context).player.state.volume - 5.0;
-                            controller(context)
-                                .player
-                                .setVolume(volume.clamp(0.0, 100.0));
-                          }
-                          if (e.delta.dy < 0) {
-                            final volume =
-                                controller(context).player.state.volume + 5.0;
-                            controller(context)
-                                .player
-                                .setVolume(volume.clamp(0.0, 100.0));
-                          }
+                        if (e.delta.dy > 0) {
+                          final volume =
+                              controller(context).player.state.volume - 5.0;
+                          controller(context)
+                              .player
+                              .setVolume(volume.clamp(0.0, 100.0));
+                        }
+                        if (e.delta.dy < 0) {
+                          final volume =
+                              controller(context).player.state.volume + 5.0;
+                          controller(context)
+                              .player
+                              .setVolume(volume.clamp(0.0, 100.0));
                         }
                       }
                     : null,
-                child: GestureDetector(
-                  onTapUp: (e) {
-                    if (_theme(context).toggleFullscreenOnDoublePress) {
-                      final now = DateTime.now();
-                      final difference = now.difference(last);
-                      last = now;
-                      if (difference < const Duration(milliseconds: 400)) {
-                        toggleFullscreen(controller(context), context);
+                child: MouseRegion(
+                  onHover: (_) => onHover(),
+                  onEnter: (_) => onEnter(),
+                  onExit: (_) => onExit(),
+                  child: AnimatedOpacity(
+                    curve: Curves.easeInOut,
+                    opacity: visible ? 1.0 : 0.0,
+                    duration: _theme(context).controlsTransitionDuration,
+                    onEnd: () {
+                      if (!visible) {
+                        setState(() {
+                          mount = false;
+                        });
                       }
-                    }
-                  },
-                  onPanUpdate: _theme(context).modifyVolumeOnScroll
-                      ? (e) {
-                          if (e.delta.dy > 0) {
-                            final volume =
-                                controller(context).player.state.volume - 5.0;
-                            controller(context)
-                                .player
-                                .setVolume(volume.clamp(0.0, 100.0));
-                          }
-                          if (e.delta.dy < 0) {
-                            final volume =
-                                controller(context).player.state.volume + 5.0;
-                            controller(context)
-                                .player
-                                .setVolume(volume.clamp(0.0, 100.0));
-                          }
-                        }
-                      : null,
-                  child: MouseRegion(
-                    onHover: (_) => onHover(),
-                    onEnter: (_) => onEnter(),
-                    onExit: (_) => onExit(),
-                    child: AnimatedOpacity(
-                      curve: Curves.easeInOut,
-                      opacity: visible ? 1.0 : 0.0,
-                      duration: _theme(context).controlsTransitionDuration,
-                      onEnd: () {
-                        if (!visible) {
-                          setState(() {
-                            mount = false;
-                          });
-                        }
-                      },
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        alignment: Alignment.bottomCenter,
-                        children: [
-                          // Top gradient.
-                          if (_theme(context).topButtonBar.isNotEmpty)
-                            Container(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  stops: [
-                                    0.0,
-                                    0.2,
-                                  ],
-                                  colors: [
-                                    Color(0x61000000),
-                                    Color(0x00000000),
-                                  ],
-                                ),
+                    },
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.bottomCenter,
+                      children: [
+                        // Top gradient.
+                        if (_theme(context).topButtonBar.isNotEmpty)
+                          Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                stops: [
+                                  0.0,
+                                  0.2,
+                                ],
+                                colors: [
+                                  Color(0x61000000),
+                                  Color(0x00000000),
+                                ],
                               ),
                             ),
-                          // Bottom gradient.
-                          if (_theme(context).bottomButtonBar.isNotEmpty)
-                            Container(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  stops: [
-                                    0.5,
-                                    1.0,
-                                  ],
-                                  colors: [
-                                    Color(0x00000000),
-                                    Color(0x61000000),
-                                  ],
-                                ),
+                          ),
+                        // Bottom gradient.
+                        if (_theme(context).bottomButtonBar.isNotEmpty)
+                          Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                stops: [
+                                  0.5,
+                                  1.0,
+                                ],
+                                colors: [
+                                  Color(0x00000000),
+                                  Color(0x61000000),
+                                ],
                               ),
                             ),
-                          if (mount)
-                            Column(
+                          ),
+                        if (mount)
+                          Padding(
+                            // Add padding in fullscreen!
+                            padding: isFullscreen(context)
+                                ? MediaQuery.of(context).padding
+                                : EdgeInsets.zero,
+                            child: Column(
                               mainAxisSize: MainAxisSize.min,
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.end,
@@ -638,9 +637,9 @@ class _MaterialDesktopVideoControlsState
                                     ),
                                   ),
                               ],
-                            )
-                        ],
-                      ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -1033,7 +1032,7 @@ class MaterialDesktopFullscreenButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: () => toggleFullscreen(controller(context), context),
+      onPressed: () => toggleFullscreen(context),
       icon: icon ??
           (isFullscreen(context)
               ? const Icon(Icons.fullscreen_exit)
