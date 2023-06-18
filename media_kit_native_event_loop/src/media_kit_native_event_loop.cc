@@ -122,7 +122,12 @@ void MediaKitEventLoopHandler::Dispose(int64_t handle) {
 
       std::lock_guard<std::mutex> lock(mutex_);
 
+#ifndef _WIN32
+      // Apparently destroying |std::mutex| from Windows' MSVC is a mess. I rather just leak it.
+      // https://github.com/alexmercerind/media_kit/issues/9#issuecomment-1596120224
       mutexes_.erase(context);
+#endif
+
       threads_.erase(context);
       condition_variables_.erase(context);
 
