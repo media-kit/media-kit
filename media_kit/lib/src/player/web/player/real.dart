@@ -13,6 +13,7 @@ import 'package:media_kit/src/player/platform_player.dart';
 
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
+import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
@@ -104,6 +105,47 @@ class webPlayer extends PlatformPlayer {
           }
           if (!bufferingController.isClosed) {
             bufferingController.add(false);
+          }
+          // PlayerState.state.playlist.index & PlayerState.stream.playlist.index
+          if (Media.normalizeURI(element.src) == _playlist[_index].uri) {
+            switch (_playlistMode) {
+              case PlaylistMode.none:
+                {
+                  if (_index < _playlist.length - 1) {
+                    _index = _index + 1;
+                    final current = _playlist[_index];
+                    element.src = current.uri;
+                    element.play();
+                  } else {
+                    // Playback must end.
+                  }
+                  break;
+                }
+              case PlaylistMode.single:
+                {
+                  final current = _playlist[_index];
+                  element.src = current.uri;
+                  element.play();
+                  break;
+                }
+              case PlaylistMode.loop:
+                {
+                  _index = (_index + 1) % _playlist.length;
+                  final current = _playlist[_index];
+                  element.src = current.uri;
+                  element.play();
+                  break;
+                }
+            }
+            // Update:
+            state = state.copyWith(
+              playlist: state.playlist.copyWith(
+                index: _index,
+              ),
+            );
+            if (!playlistController.isClosed) {
+              playlistController.add(state.playlist);
+            }
           }
         });
       });
@@ -271,18 +313,52 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      final int index;
+      final List<Media> playlist = <Media>[];
       if (playable is Media) {
-        try {
-          element.src = playable.uri;
-        } catch (exception) {
-          // PlayerStream.error
-          final e = exception as html.DomException;
-          if (!errorController.isClosed) {
-            errorController.add(e.message ?? '');
-          }
+        index = 0;
+        playlist.add(playable);
+      } else if (playable is Playlist) {
+        index = playable.index;
+        playlist.addAll(playable.medias);
+      } else {
+        index = -1;
+      }
+
+      state = state.copyWith(playing: false);
+      if (!playingController.isClosed) {
+        playingController.add(false);
+      }
+
+      _index = index;
+      _playlist = playlist;
+
+      state = state.copyWith(
+        playlist: Playlist(
+          playlist,
+          index: index,
+        ),
+      );
+      if (!playlistController.isClosed) {
+        playlistController.add(
+          Playlist(
+            playlist,
+            index: index,
+          ),
+        );
+      }
+
+      try {
+        element.src = _playlist[_index].uri;
+      } catch (exception) {
+        // PlayerStream.error
+        final e = exception as html.DomException;
+        if (!errorController.isClosed) {
+          errorController.add(e.message ?? '');
         }
       }
-      // TODO: Missing implementation.
+
       if (play) {
         await element.play();
       }
@@ -413,7 +489,51 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      // TODO: Missing implementation.
+
+      Future<void> start() async {
+        state = state.copyWith(
+          playlist: state.playlist.copyWith(
+            index: _index,
+          ),
+        );
+
+        element.src = _playlist[_index].uri;
+        await play(synchronized: false);
+
+        state = state.copyWith(playing: true);
+        if (!playingController.isClosed) {
+          playingController.add(true);
+        }
+      }
+
+      switch (_playlistMode) {
+        case PlaylistMode.none:
+          {
+            if (_index < _playlist.length - 1) {
+              _index++;
+              await start();
+            } else {
+              // No transition.
+            }
+            break;
+          }
+        case PlaylistMode.single:
+          {
+            if (_index < _playlist.length - 1) {
+              _index++;
+              await start();
+            } else {
+              // No transition.
+            }
+            break;
+          }
+        case PlaylistMode.loop:
+          {
+            _index = (_index + 1) % _playlist.length;
+            await start();
+            break;
+          }
+      }
     }
 
     if (synchronized) {
@@ -433,7 +553,51 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      // TODO: Missing implementation.
+
+      Future<void> start() async {
+        state = state.copyWith(
+          playlist: state.playlist.copyWith(
+            index: _index,
+          ),
+        );
+
+        element.src = _playlist[_index].uri;
+        await play(synchronized: false);
+
+        state = state.copyWith(playing: true);
+        if (!playingController.isClosed) {
+          playingController.add(true);
+        }
+      }
+
+      switch (_playlistMode) {
+        case PlaylistMode.none:
+          {
+            if (_index > 0) {
+              _index--;
+              await start();
+            } else {
+              // No transition.
+            }
+            break;
+          }
+        case PlaylistMode.single:
+          {
+            if (_index > 0) {
+              _index--;
+              await start();
+            } else {
+              // No transition.
+            }
+            break;
+          }
+        case PlaylistMode.loop:
+          {
+            _index = (_index - 1) % _playlist.length;
+            await start();
+            break;
+          }
+      }
     }
 
     if (synchronized) {
@@ -454,7 +618,16 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      // TODO: Missing implementation.
+
+      _index = index;
+
+      element.src = _playlist[_index].uri;
+      await element.play();
+
+      state = state.copyWith(playing: true);
+      if (!playingController.isClosed) {
+        playingController.add(true);
+      }
     }
 
     if (synchronized) {
@@ -518,7 +691,7 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      // TODO: Missing implementation.
+      _playlistMode = playlistMode;
     }
 
     if (synchronized) {
@@ -602,7 +775,7 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      // TODO: Missing implementation.
+      _shuffle = shuffle;
     }
 
     if (synchronized) {
@@ -695,6 +868,22 @@ class webPlayer extends PlatformPlayer {
       return function();
     }
   }
+
+  // --------------------------------------------------
+
+  /// Whether shuffle is enabled.
+  bool _shuffle = false;
+
+  /// Current index of the [Media] in the queue.
+  int _index = 0;
+
+  /// Current loaded [Media]s queue.
+  List<Media> _playlist = <Media>[];
+
+  /// Current playlist mode.
+  PlaylistMode _playlistMode = PlaylistMode.none;
+
+  // --------------------------------------------------
 
   @override
   Future<int> get handle => Future.value(id);
