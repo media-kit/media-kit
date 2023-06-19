@@ -6,6 +6,7 @@
 
 import 'dart:io';
 import 'package:test/test.dart';
+import 'package:collection/collection.dart';
 import 'package:media_kit/src/models/media/media.dart';
 
 import '../../../common/sources.dart';
@@ -139,6 +140,81 @@ void main() {
       expect(
         Media.encodeAssetKey('asset:///audios/う.wav'),
         equals('audios/%E3%81%86.wav'),
+      );
+    },
+  );
+  test(
+    'media-extras-propagate',
+    () {
+      final extras = {
+        'foo': 'bar',
+        'baz': 'qux',
+      };
+
+      final a = Media(sources.file.first, extras: extras);
+
+      // Must have previously defined pre-defined extras.
+      final b = Media(sources.file.first);
+      // Must have newly defined extras.
+      final c = Media(
+        sources.file.first,
+        extras: {
+          'x': 'y',
+        },
+      );
+
+      expect(
+        MapEquality().equals(
+          a.extras,
+          b.extras,
+        ),
+        equals(true),
+      );
+      expect(
+        MapEquality().equals(
+          c.extras,
+          {
+            'x': 'y',
+          },
+        ),
+        equals(true),
+      );
+    },
+  );
+  test(
+    'media-http-headers-propagate',
+    () {
+      final headers = {
+        for (int i = 0; i < 10; i++) 'key_$i': 'value_$i',
+      };
+
+      final a = Media(sources.file.first, httpHeaders: headers);
+
+      // Must have previously defined pre-defined headers.
+      final b = Media(sources.file.first);
+      // Must have newly defined headers.
+      final c = Media(
+        sources.file.first,
+        httpHeaders: {
+          'x': 'y',
+        },
+      );
+
+      expect(
+        MapEquality().equals(
+          a.httpHeaders,
+          b.httpHeaders,
+        ),
+        equals(true),
+      );
+      expect(
+        MapEquality().equals(
+          c.httpHeaders,
+          {
+            'x': 'y',
+          },
+        ),
+        equals(true),
       );
     },
   );
