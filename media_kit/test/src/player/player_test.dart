@@ -965,11 +965,7 @@ void main() {
       }
     },
   );
-}
-    player.streams.audioDevices.listen((event) async {
-      expectAudioDevices(event);
-    });
-  });
+
 
   test(
     'player-buffering-open-file',
