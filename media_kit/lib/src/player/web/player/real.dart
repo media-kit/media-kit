@@ -7,6 +7,7 @@
 import 'dart:async';
 import 'dart:js' as js;
 import 'dart:html' as html;
+import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
 
@@ -30,159 +31,693 @@ void webEnsureInitialized({String? libmpv}) {}
 class webPlayer extends PlatformPlayer {
   /// {@macro web_player}
   webPlayer({required super.configuration})
-      : _handle = js.context[_kInstanceCount] ?? 0,
-        _element = html.VideoElement() {
-    _element
-      ..autoplay = false
-      ..controls = false
-      ..style.width = '100%'
-      ..style.height = '100%'
-      ..style.border = 'none'
-      ..setAttribute('autoplay', 'false')
-      ..setAttribute('playsinline', 'true')
-      ..pause();
-    // Initialize or increment the instance count.
-    js.context[_kInstanceCount] ??= 0;
-    js.context[_kInstanceCount]++;
-    // Store the [html.VideoElement] instance in global [js.context].
-    js.context[_kInstances] ??= js.JsObject.jsify({});
-    js.context[_kInstances][_handle] = _element;
+      : id = js.context[kInstanceCount] ?? 0,
+        element = html.VideoElement() {
+    lock.synchronized(() async {
+      element
+        // Do not add autoplay=false attribute: https://stackoverflow.com/a/19664804/12825435
+        /* ..autoplay = false */
+        ..controls = false
+        ..style.width = '100%'
+        ..style.height = '100%'
+        ..style.border = 'none'
+        /* ..setAttribute('autoplay', 'false') */
+        ..setAttribute('playsinline', 'true')
+        ..pause();
+      // Initialize or increment the instance count.
+      js.context[kInstanceCount] ??= 0;
+      js.context[kInstanceCount]++;
+      // Store the [html.VideoElement] instance in global [js.context].
+      js.context[kInstances] ??= js.JsObject.jsify({});
+      js.context[kInstances][id] = element;
+      // --------------------------------------------------
+      // Event streams handling:
+      element.onPlay.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.playing & PlayerState.stream.playing
+          state = state.copyWith(playing: true);
+          if (!playingController.isClosed) {
+            playingController.add(true);
+          }
+        });
+      });
+      element.onPause.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.playing & PlayerState.stream.playing
+          state = state.copyWith(playing: false);
+          if (!playingController.isClosed) {
+            playingController.add(false);
+          }
+        });
+      });
+      element.onPlaying.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.playing & PlayerState.stream.playing
+          // PlayerState.state.buffering & PlayerState.stream.buffering
+          state = state.copyWith(
+            playing: true,
+            completed: false,
+          );
+          if (!playingController.isClosed) {
+            playingController.add(true);
+          }
+          if (!completedController.isClosed) {
+            completedController.add(false);
+          }
+        });
+      });
+      element.onEnded.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.playing & PlayerState.stream.playing
+          // PlayerState.state.completed & PlayerState.stream.completed
+          // PlayerState.state.buffering & PlayerState.stream.buffering
+          state = state.copyWith(
+            playing: false,
+            completed: true,
+            buffering: false,
+          );
+          if (!playingController.isClosed) {
+            playingController.add(false);
+          }
+          if (!completedController.isClosed) {
+            completedController.add(true);
+          }
+          if (!bufferingController.isClosed) {
+            bufferingController.add(false);
+          }
+        });
+      });
+      element.onTimeUpdate.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.position & PlayerState.stream.position
+          final value = element.currentTime * 1000 ~/ 1;
+          final position = Duration(milliseconds: value);
+          state = state.copyWith(position: position);
+          if (!positionController.isClosed) {
+            positionController.add(position);
+          }
+          // PlayerState.state.buffer & PlayerState.stream.buffer
+          final i = element.buffered.length - 1;
+          if (i >= 0) {
+            final value = element.buffered.end(i) * 1000 ~/ 1;
+            final buffer = Duration(milliseconds: value);
+            if (!bufferController.isClosed) {
+              bufferController.add(buffer);
+            }
+          }
+        });
+      });
+      element.onDurationChange.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.duration & PlayerState.stream.duration
+          final value = element.duration * 1000 ~/ 1;
+          final duration = Duration(milliseconds: value);
+          state = state.copyWith(duration: duration);
+          if (!durationController.isClosed) {
+            durationController.add(duration);
+          }
+        });
+      });
+      element.onWaiting.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.buffering & PlayerState.stream.buffering
+          state = state.copyWith(buffering: true);
+          if (!bufferingController.isClosed) {
+            bufferingController.add(true);
+          }
+          // PlayerState.state.buffer & PlayerState.stream.buffer
+          final i = element.buffered.length - 1;
+          if (i >= 0) {
+            final value = element.buffered.end(i) * 1000 ~/ 1;
+            final buffer = Duration(milliseconds: value);
+            if (!bufferController.isClosed) {
+              bufferController.add(buffer);
+            }
+          }
+        });
+      });
+      element.onCanPlay.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.buffering & PlayerState.stream.buffering
+          state = state.copyWith(buffering: false);
+          if (!bufferingController.isClosed) {
+            bufferingController.add(false);
+          }
+        });
+      });
+      element.onCanPlayThrough.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.buffering & PlayerState.stream.buffering
+          state = state.copyWith(buffering: false);
+          if (!bufferingController.isClosed) {
+            bufferingController.add(false);
+          }
+        });
+      });
+      element.onVolumeChange.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.volume & PlayerState.stream.volume
+          final volume = element.volume * 100.0;
+          state = state.copyWith(volume: volume);
+          if (!volumeController.isClosed) {
+            volumeController.add(volume);
+          }
+        });
+      });
+      element.onRateChange.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.speed & PlayerState.stream.speed
+          final rate = element.playbackRate * 1.0;
+          state = state.copyWith(rate: rate);
+          if (!rateController.isClosed) {
+            rateController.add(rate);
+          }
+        });
+      });
+      element.onError.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.buffering & PlayerState.stream.buffering
+          state = state.copyWith(buffering: false);
+          if (!bufferingController.isClosed) {
+            bufferingController.add(false);
+          }
+          // PlayerStream.error
+          final error = element.error!;
+          if (!errorController.isClosed) {
+            errorController.addError(error.message ?? '');
+          }
+        });
+      });
+      element.onResize.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.width & PlayerState.stream.width
+          // PlayerState.state.height & PlayerState.stream.height
+          final width = element.videoWidth;
+          final height = element.videoHeight;
+          state = state.copyWith(
+            width: width,
+            height: height,
+          );
+          if (!widthController.isClosed) {
+            widthController.add(width);
+          }
+          if (!heightController.isClosed) {
+            heightController.add(height);
+          }
+        });
+      });
+      // --------------------------------------------------
+    });
   }
 
   @override
-  Future<void> dispose() async {
-    _element
-      ..src = ''
-      ..load()
-      ..remove();
-    // Remove the [html.VideoElement] instance from global [js.context].
-    js.context[_kInstances].deleteProperty(_handle);
-    await super.dispose();
+  Future<void> dispose({bool synchronized = true}) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      disposed = true;
+
+      element
+        ..src = ''
+        ..load()
+        ..remove();
+
+      // Remove the [html.VideoElement] instance from global [js.context].
+      js.context[kInstances].deleteProperty(id);
+
+      await super.dispose();
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
   Future<void> open(
     Playable playable, {
     bool play = true,
-    bool evictExtrasCache = true,
+    bool synchronized = true,
   }) async {
-    if (playable is Media) {
-      _element.src = playable.uri;
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      if (playable is Media) {
+        try {
+          element.src = playable.uri;
+        } catch (exception) {
+          // PlayerStream.error
+          final e = exception as html.DomException;
+          if (!errorController.isClosed) {
+            errorController.add(e.message ?? '');
+          }
+        }
+      }
+      // TODO: Missing implementation.
+      if (play) {
+        await element.play();
+      }
     }
-    // TODO(@alexmercerind): Missing implementation.
-  }
 
-  @override
-  Future<void> play() async {
-    await _element.play();
-  }
-
-  @override
-  Future<void> pause() async {
-    _element.pause();
-  }
-
-  @override
-  Future<void> playOrPause() async {
-    if (_element.paused) {
-      await _element.play();
+    if (synchronized) {
+      return lock.synchronized(function);
     } else {
-      _element.pause();
+      return function();
     }
   }
 
   @override
-  Future<void> add(Media media) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> play({bool synchronized = true}) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      try {
+        await element.play();
+      } catch (exception) {
+        // PlayerStream.error
+        final e = exception as html.DomException;
+        if (!errorController.isClosed) {
+          errorController.add(e.message ?? '');
+        }
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> remove(int index) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> pause({bool synchronized = true}) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      element.pause();
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> next() async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> playOrPause({bool synchronized = true}) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      if (element.paused) {
+        await play(synchronized: false);
+      } else {
+        await pause(synchronized: false);
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> previous() async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> add(
+    Media media, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      // TODO: Missing implementation.
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> jump(int index) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> remove(
+    int index, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      // TODO: Missing implementation.
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> move(int from, int to) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> next({
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      // TODO: Missing implementation.
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> seek(Duration duration) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> previous({
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      // TODO: Missing implementation.
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> setPlaylistMode(PlaylistMode playlistMode) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> jump(
+    int index, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      // TODO: Missing implementation.
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> setVolume(double volume) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> move(
+    int from,
+    int to, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      // TODO: Missing implementation.
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> setRate(double rate) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> seek(
+    Duration duration, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      element.currentTime = duration.inMilliseconds.toDouble() / 1000;
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> setPitch(double pitch) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> setPlaylistMode(
+    PlaylistMode playlistMode, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      // TODO: Missing implementation.
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> setShuffle(bool shuffle) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> setVolume(
+    double volume, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      element.volume = volume / 100.0;
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> setAudioDevice(AudioDevice audioDevice) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> setRate(
+    double rate, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      element.playbackRate = rate;
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> setVideoTrack(VideoTrack track) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> setPitch(
+    double pitch, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      throw UnsupportedError('[Player.setPitch] is not supported on web');
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> setAudioTrack(AudioTrack track) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> setShuffle(
+    bool shuffle, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      // TODO: Missing implementation.
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<void> setSubtitleTrack(SubtitleTrack track) async {
-    // TODO(@alexmercerind): Missing implementation.
+  Future<void> setAudioDevice(
+    AudioDevice audioDevice, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      throw UnsupportedError('[Player.setAudioDevice] is not supported on web');
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
   }
 
   @override
-  Future<int> get handle => Future.value(_handle);
+  Future<void> setVideoTrack(
+    VideoTrack track, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      // TODO: Missing implementation.
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> setAudioTrack(
+    AudioTrack track, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      // TODO: Missing implementation.
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> setSubtitleTrack(
+    SubtitleTrack track, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      // TODO: Missing implementation.
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<int> get handle => Future.value(id);
 
   /// Unique handle of this [Player] instance.
-  final int _handle;
+  final int id;
 
   /// [html.VideoElement] instance reference.
-  final html.VideoElement _element;
+  final html.VideoElement element;
+
+  /// Whether the [Player] has been disposed.
+  bool disposed = false;
+
+  /// [Future<void>] to wait for initialization of this instance.
+  Future<void> get waitForPlayerInitialization =>
+      Future.value() /* Not required. */;
+
+  /// Synchronization & mutual exclusion between methods of this class.
+  final Lock lock = Lock();
 
   /// JavaScript object attribute used to store various [VideoElement] instances in [js.context].
-  static const _kInstances = '\$com.alexmercerind.media_kit.instances';
+  static const kInstances = '\$com.alexmercerind.media_kit.instances';
 
   /// JavaScript object attribute used to store the instance count of [Player] in [js.context].
-  static const _kInstanceCount = '\$com.alexmercerind.media_kit.instance_count';
+  static const kInstanceCount = '\$com.alexmercerind.media_kit.instance_count';
 }
