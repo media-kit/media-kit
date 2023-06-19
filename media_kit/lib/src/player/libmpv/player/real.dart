@@ -7,6 +7,7 @@
 import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
+import 'dart:collection';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
 import 'package:synchronized/synchronized.dart';
@@ -1212,14 +1213,14 @@ class libmpvPlayer extends PlatformPlayer {
             state.playlist.index < state.playlist.medias.length) {
           final uri = state.playlist.medias[state.playlist.index].uri;
           if (FallbackBitrateHandler.supported(uri)) {
-            if (!bitrates.containsKey(uri) ||
-                !bitrates.containsKey(Media.normalizeURI(uri))) {
-              bitrates[uri] = await FallbackBitrateHandler.calculateBitrate(
+            if (!audioBitrateCache.containsKey(Media.normalizeURI(uri))) {
+              audioBitrateCache[uri] =
+                  await FallbackBitrateHandler.calculateBitrate(
                 uri,
                 duration,
               );
             }
-            final bitrate = bitrates[uri];
+            final bitrate = audioBitrateCache[uri];
             if (bitrate != null) {
               state = state.copyWith(audioBitrate: bitrate);
               if (!audioBitrateController.isClosed) {
@@ -1253,9 +1254,8 @@ class libmpvPlayer extends PlatformPlayer {
               if (map.values[j].format ==
                   generated.mpv_format.MPV_FORMAT_STRING) {
                 if (property == 'filename') {
-                  final value =
-                      map.values[j].u.string.cast<Utf8>().toDartString();
-                  playlist.add(medias[value] ?? Media(value));
+                  final v = map.values[j].u.string.cast<Utf8>().toDartString();
+                  playlist.add(Media(v));
                 }
               }
             }
@@ -1350,12 +1350,10 @@ class libmpvPlayer extends PlatformPlayer {
           final uri = state.playlist.medias[state.playlist.index].uri;
           // NOTE: Using manual bitrate calculation for some local files.
           if (!FallbackBitrateHandler.supported(uri)) {
-            if (!bitrates.containsKey(uri) ||
-                !bitrates.containsKey(Media.normalizeURI(uri))) {
-              bitrates[uri] = data;
-              bitrates[Media.normalizeURI(uri)] = data;
+            if (!audioBitrateCache.containsKey(Media.normalizeURI(uri))) {
+              audioBitrateCache[Media.normalizeURI(uri)] = data;
             }
-            final bitrate = bitrates[uri] ?? bitrates[Media.normalizeURI(uri)];
+            final bitrate = audioBitrateCache[Media.normalizeURI(uri)];
             if (!audioBitrateController.isClosed &&
                 bitrate != state.audioBitrate) {
               audioBitrateController.add(bitrate);
@@ -1537,7 +1535,7 @@ class libmpvPlayer extends PlatformPlayer {
             name.cast(),
           );
           // Get the headers for current [Media] by looking up [uri] in the [HashMap].
-          final headers = medias[uri.cast<Utf8>().toDartString()]?.httpHeaders;
+          final headers = Media(uri.cast<Utf8>().toDartString()).httpHeaders;
           if (headers != null) {
             final property = 'http-header-fields'.toNativeUtf8();
             // Allocate & fill the [mpv_node] with the headers.
@@ -1791,7 +1789,7 @@ class libmpvPlayer extends PlatformPlayer {
   /// [Pointer] to [generated.mpv_handle] of this instance.
   Pointer<generated.mpv_handle> ctx = nullptr;
 
-  /// Whether the [Player] has been disposed This is used to prevent accessing dangling [ctx] after [dispose].
+  /// Whether the [Player] has been disposed. This is used to prevent accessing dangling [ctx] after [dispose].
   bool disposed = false;
 
   /// A flag to prevent changes to [state.playing] due to `loadfile` commands in [open].
@@ -1814,4 +1812,8 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Synchronization & mutual exclusion between methods of this class.
   static final Lock lock = Lock();
+
+  /// [HashMap] for retrieving previously fetched audio-bitrate(s).
+  static final HashMap<String, double> audioBitrateCache =
+      HashMap<String, double>();
 }
