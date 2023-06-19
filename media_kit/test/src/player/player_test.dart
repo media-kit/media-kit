@@ -23,7 +23,7 @@ void main() {
     await sources.prepare();
     if (UniversalPlatform.isWeb) {
       // For preventing "DOMException: play() failed because the user didn't interact with the document first." in unit-tests running on web.
-      webPlayer.muted = false;
+      webPlayer.muted = true;
     }
   });
   test(

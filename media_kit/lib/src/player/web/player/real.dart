@@ -795,7 +795,41 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      _shuffle = shuffle;
+      // Currently playing [Media].
+      final current = _playlist[_index];
+      if (shuffle) {
+        // Save original playlist.
+        _original.clear();
+        _original.addAll(_playlist);
+        // Shuffle playlist & update index.
+        _playlist.shuffle();
+        _index = _playlist.indexOf(current);
+
+        state = state.copyWith(
+          playlist: Playlist(
+            _playlist,
+            index: _index,
+          ),
+        );
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+      } else {
+        // Restore original playlist & update index.
+        _playlist.clear();
+        _playlist.addAll(_original);
+        _index = _playlist.indexOf(current);
+
+        state = state.copyWith(
+          playlist: Playlist(
+            _playlist,
+            index: _index,
+          ),
+        );
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+      }
     }
 
     if (synchronized) {
@@ -891,13 +925,13 @@ class webPlayer extends PlatformPlayer {
 
   // --------------------------------------------------
 
-  /// Whether shuffle is enabled.
-  bool _shuffle = false;
+  /// Current loaded [Media] queue before shuffle.
+  final List<Media> _original = <Media>[];
 
   /// Current index of the [Media] in the queue.
   int _index = 0;
 
-  /// Current loaded [Media]s queue.
+  /// Current loaded [Media] queue.
   List<Media> _playlist = <Media>[];
 
   /// Current playlist mode.
