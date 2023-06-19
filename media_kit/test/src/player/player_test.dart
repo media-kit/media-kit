@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:test/test.dart';
 import 'package:collection/collection.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import 'package:media_kit/src/media_kit.dart';
 import 'package:media_kit/src/player/player.dart';
@@ -11,6 +12,7 @@ import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/player/platform_player.dart';
+import 'package:media_kit/src/player/web/player/player.dart';
 import 'package:media_kit/src/player/libmpv/player/player.dart';
 
 import '../../common/sources.dart';
@@ -29,6 +31,18 @@ void main() {
         isA<libmpvPlayer>(),
       );
     },
+    skip: UniversalPlatform.isWeb,
+  );
+  test(
+    'player-platform',
+    () {
+      final player = Player();
+      expect(
+        player.platform,
+        isA<webPlayer>(),
+      );
+    },
+    skip: !UniversalPlatform.isWeb,
   );
   test(
     'player-handle',
@@ -65,7 +79,7 @@ void main() {
           [
             Playlist(
               [
-                Media(sources.file[0]),
+                Media(sources.platform[0]),
               ],
               index: 0,
             ),
@@ -102,7 +116,7 @@ void main() {
         ),
       );
 
-      await player.open(Media(sources.file[0]));
+      await player.open(Media(sources.platform[0]));
 
       await Future.delayed(const Duration(seconds: 30));
 
@@ -117,7 +131,8 @@ void main() {
 
       final playlist = Playlist(
         [
-          for (int i = 0; i < sources.file.length; i++) Media(sources.file[i]),
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
         ],
       );
 
@@ -126,7 +141,7 @@ void main() {
         emitsInOrder(
           [
             // Player.open
-            for (int i = 0; i < sources.file.length; i++)
+            for (int i = 0; i < sources.platform.length; i++)
               playlist.copyWith(index: i),
             // Player.dispose
             emitsDone,
@@ -200,7 +215,7 @@ void main() {
             // Player.open
             Playlist(
               [
-                Media(sources.file[0]),
+                Media(sources.platform[0]),
               ],
               index: 0,
             ),
@@ -222,7 +237,7 @@ void main() {
       );
 
       await player.open(
-        Media(sources.file[0]),
+        Media(sources.platform[0]),
         play: false,
       );
 
@@ -239,7 +254,8 @@ void main() {
 
       final playlist = Playlist(
         [
-          for (int i = 0; i < sources.file.length; i++) Media(sources.file[i]),
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
         ],
       );
 
@@ -287,7 +303,7 @@ void main() {
           [
             Playlist(
               [
-                Media(sources.file[0]),
+                Media(sources.platform[0]),
               ],
               index: 0,
             ),
@@ -327,7 +343,7 @@ void main() {
       );
 
       await player.open(
-        Media(sources.file[0]),
+        Media(sources.platform[0]),
         play: false,
       );
       await player.play();
@@ -345,7 +361,8 @@ void main() {
 
       final playlist = Playlist(
         [
-          for (int i = 0; i < sources.file.length; i++) Media(sources.file[i]),
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
         ],
       );
 
@@ -353,7 +370,7 @@ void main() {
         player.stream.playlist,
         emitsInOrder(
           [
-            for (int i = 0; i < sources.file.length; i++)
+            for (int i = 0; i < sources.platform.length; i++)
               playlist.copyWith(index: i),
             // Player.dispose
             emitsDone,
@@ -450,7 +467,7 @@ void main() {
 
       await player.open(
         Media(
-          sources.file[0],
+          sources.platform[0],
           extras: {
             'foo': 'bar',
             'baz': 'qux',
@@ -480,7 +497,7 @@ void main() {
             true,
           );
         },
-        count: sources.file.length,
+        count: sources.platform.length,
       );
 
       player.stream.playlist.listen(
@@ -497,9 +514,9 @@ void main() {
       await player.open(
         Playlist(
           [
-            for (int i = 0; i < sources.file.length; i++)
+            for (int i = 0; i < sources.platform.length; i++)
               Media(
-                sources.file[i],
+                sources.platform[i],
                 extras: {
                   'i': i.toString(),
                 },
@@ -563,7 +580,7 @@ void main() {
             completed.add(i);
             expectHTTPHeaders(e.headers);
           }
-          final path = sources.file[i];
+          final path = sources.platform[i];
           e.response.headers.add('Content-Type', 'video/mp4');
           e.response.headers.add('Accept-Ranges', 'bytes');
           File(path).openRead().pipe(e.response);
@@ -587,6 +604,7 @@ void main() {
       );
     },
     timeout: Timeout(const Duration(minutes: 1)),
+    skip: UniversalPlatform.isWeb,
   );
   test(
     'player-open-playable-playlist-http-headers',
@@ -603,7 +621,7 @@ void main() {
           final headers = value as HttpHeaders;
           expect(headers.value('X-Foo'), '$i');
         },
-        count: sources.file.length,
+        count: sources.platform.length,
       );
       final expectPlaylist = expectAsync2(
         (value, i) {
@@ -615,7 +633,7 @@ void main() {
             ListEquality().equals(
               playlist.medias,
               [
-                for (int i = 0; i < sources.file.length; i++)
+                for (int i = 0; i < sources.platform.length; i++)
                   Media(
                     'http://$address:$port/$i',
                     httpHeaders: {
@@ -627,7 +645,7 @@ void main() {
             true,
           );
         },
-        count: sources.file.length,
+        count: sources.platform.length,
       );
 
       final completed = HashSet<int>();
@@ -659,7 +677,7 @@ void main() {
       await player.open(
         Playlist(
           [
-            for (int i = 0; i < sources.file.length; i++)
+            for (int i = 0; i < sources.platform.length; i++)
               Media(
                 'http://$address:$port/$i',
                 httpHeaders: {
@@ -671,6 +689,7 @@ void main() {
       );
     },
     timeout: Timeout(const Duration(minutes: 1)),
+    skip: UniversalPlatform.isWeb,
   );
   test(
     'player-play-after-completed',
@@ -715,7 +734,7 @@ void main() {
         }
       });
 
-      await player.open(Media(sources.file[0]));
+      await player.open(Media(sources.platform[0]));
 
       // Wait for EOF.
       await completer.future;
@@ -793,7 +812,7 @@ void main() {
         }
       });
 
-      await player.open(Media(sources.file[0]));
+      await player.open(Media(sources.platform[0]));
 
       // Wait for EOF.
       await completer.future;
@@ -841,13 +860,13 @@ void main() {
           [
             Playlist(
               [
-                Media(sources.file[0]),
+                Media(sources.platform[0]),
               ],
               index: 0,
             ),
             Playlist(
               [
-                Media(sources.file[1]),
+                Media(sources.platform[1]),
               ],
               index: 0,
             ),
@@ -876,11 +895,11 @@ void main() {
         ),
       );
 
-      await player.open(Media(sources.file[0]));
+      await player.open(Media(sources.platform[0]));
 
       await Future.delayed(const Duration(seconds: 5));
 
-      await player.open(Media(sources.file[1]));
+      await player.open(Media(sources.platform[1]));
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -891,9 +910,10 @@ void main() {
 
       final playlist = Playlist(
         [
-          for (int i = 0; i < sources.file.length; i++) Media(sources.file[i]),
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
         ],
-        index: sources.file.length - 1,
+        index: sources.platform.length - 1,
       );
 
       expect(
@@ -906,7 +926,7 @@ void main() {
       await player.open(playlist);
     },
     timeout: Timeout(const Duration(minutes: 1)),
-    // TODO(@alexmercerind): Flaky on GNU/Linux CI.
+    // TODO: Flaky on GNU/Linux CI.
     skip: true,
   );
   test(
@@ -930,6 +950,7 @@ void main() {
         expectAudioDevices(event);
       });
     },
+    skip: UniversalPlatform.isWeb,
   );
   test(
     'player-set-audio-device',
@@ -964,6 +985,19 @@ void main() {
         await Future.delayed(const Duration(seconds: 1));
       }
     },
+    skip: UniversalPlatform.isWeb,
+  );
+  test(
+    'player-set-audio-device',
+    () async {
+      final player = Player();
+
+      expect(
+        player.setAudioDevice(AudioDevice.auto()),
+        throwsUnsupportedError,
+      );
+    },
+    skip: !UniversalPlatform.isWeb,
   );
   test(
     'player-set-volume',
@@ -975,7 +1009,13 @@ void main() {
           print(volume);
           expect(volume, isA<double>());
           expect(i, isA<int>());
-          expect(volume, equals(i));
+          volume = volume as double;
+          i = i as int;
+          expect(
+            /* This round() is solely needed because floating-point arithmetic on JavaScript is retarded. */
+            volume.round(),
+            equals(i),
+          );
         },
         count: 100,
       );
@@ -1034,6 +1074,7 @@ void main() {
 
       expect(player.setPitch(1.0), throwsArgumentError);
     },
+    skip: UniversalPlatform.isWeb,
   );
   test(
     'player-set-pitch-enabled',
@@ -1066,5 +1107,18 @@ void main() {
         await Future.delayed(const Duration(milliseconds: 20));
       }
     },
+    skip: UniversalPlatform.isWeb,
+  );
+  test(
+    'player-set-pitch-enabled',
+    () async {
+      final player = Player(configuration: PlayerConfiguration(pitch: true));
+
+      expect(
+        player.setPitch(1.0),
+        throwsUnsupportedError,
+      );
+    },
+    skip: !UniversalPlatform.isWeb,
   );
 }
