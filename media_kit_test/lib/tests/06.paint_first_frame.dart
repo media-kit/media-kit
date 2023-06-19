@@ -91,13 +91,21 @@ class PaintFirstFrameScreen extends StatelessWidget {
       ),
       body: ListView.separated(
         itemCount: 5,
-        itemBuilder: (context, i) => Video(
-          controller: controllers[i],
-          width: MediaQuery.of(context).size.width.clamp(0, 480.0),
-          height:
-              MediaQuery.of(context).size.width.clamp(0, 480.0) * 9.0 / 16.0,
-          fill: Colors.transparent,
-        ),
+        itemBuilder: (context, i) {
+          final video = AspectRatio(
+            aspectRatio: 16.0 / 9.0,
+            child: Video(controller: controllers[i]),
+          );
+          if (Theme.of(context).platform == TargetPlatform.android) {
+            return video;
+          }
+          return Card(
+            elevation: 8.0,
+            margin: EdgeInsets.zero,
+            clipBehavior: Clip.antiAlias,
+            child: video,
+          );
+        },
         separatorBuilder: (context, i) => const SizedBox(height: 16.0),
         padding: const EdgeInsets.all(16.0),
       ),

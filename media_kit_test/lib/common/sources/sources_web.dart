@@ -1,3 +1,8 @@
+// ignore_for_file: avoid_web_libraries_in_flutter
+
+import 'dart:html' as html;
+import 'package:flutter/foundation.dart';
+
 /// List of sample videos available for playback.
 final sources = [
   'https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4',
@@ -8,5 +13,11 @@ final sources = [
 ];
 
 Future<void> prepareSources() async {
-  // Not really needed for web.
+  // N/A
+}
+
+String convertBytesToURL(Uint8List bytes) {
+  final blob = html.Blob([bytes]);
+  final object = html.Url.createObjectUrlFromBlob(blob);
+  return object;
 }

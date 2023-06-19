@@ -1,7 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:file_picker/file_picker.dart';
 
 import 'package:media_kit/media_kit.dart';
+
+import '../common/sources/sources.dart';
 
 class TracksSelector extends StatefulWidget {
   final Player player;
@@ -218,10 +222,21 @@ class _SeekBarState extends State<SeekBar> {
   }
 }
 
+Future<void> showFilePicker(BuildContext context, Player player) async {
+  final result = await FilePicker.platform.pickFiles(type: FileType.any);
+  if (result?.files.isNotEmpty ?? false) {
+    final file = result!.files.first;
+    if (kIsWeb) {
+      await player.open(Media(convertBytesToURL(file.bytes!)));
+    } else {
+      await player.open(Media(file.path!));
+    }
+  }
+}
+
 Future<void> showURIPicker(BuildContext context, Player player) async {
   final key = GlobalKey<FormState>();
-  final video = TextEditingController();
-  final audio = TextEditingController();
+  final src = TextEditingController();
   await showModalBottomSheet(
     context: context,
     builder: (context) => Container(
@@ -236,7 +251,7 @@ Future<void> showURIPicker(BuildContext context, Player player) async {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               TextFormField(
-                controller: video,
+                controller: src,
                 style: const TextStyle(fontSize: 14.0),
                 decoration: const InputDecoration(
                   border: UnderlineInputBorder(),
@@ -249,26 +264,12 @@ Future<void> showURIPicker(BuildContext context, Player player) async {
                   return null;
                 },
               ),
-              TextFormField(
-                controller: audio,
-                style: const TextStyle(fontSize: 14.0),
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(),
-                  labelText: 'Audio URI (Optional)',
-                ),
-              ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: ElevatedButton(
                   onPressed: () {
                     if (key.currentState!.validate()) {
-                      if (player.platform is libmpvPlayer) {
-                        (player.platform as dynamic).setProperty(
-                          "audio-files",
-                          audio.text,
-                        );
-                      }
-                      player.open(Media(video.text));
+                      player.open(Media(src.text));
                       Navigator.of(context).maybePop();
                     }
                   },

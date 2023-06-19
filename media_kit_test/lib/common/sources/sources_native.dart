@@ -34,3 +34,8 @@ Future<void> prepareSources() async {
     sources.add(file.path);
   }
 }
+
+String convertBytesToURL(Uint8List bytes) {
+  // N/A
+  throw UnimplementedError();
+}

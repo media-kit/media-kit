@@ -49,11 +49,20 @@ class _StressTestScreenState extends State<StressTestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final children = controllers
-        .map(
-          (e) => Video(controller: e),
-        )
-        .toList();
+    final children = controllers.map(
+      (e) {
+        final video = Video(controller: e);
+        if (Theme.of(context).platform == TargetPlatform.android) {
+          return video;
+        }
+        return Card(
+          elevation: 8.0,
+          margin: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
+          child: video,
+        );
+      },
+    ).toList();
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
