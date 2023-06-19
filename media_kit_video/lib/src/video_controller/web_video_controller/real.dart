@@ -77,6 +77,15 @@ class WebVideoController extends PlatformVideoController {
       },
     );
 
+    controller._element?.onCanPlayThrough.listen(
+      (_) {
+        // Notify about first frame being rendered.
+        if (!controller.waitUntilFirstFrameRenderedCompleter.isCompleted) {
+          controller.waitUntilFirstFrameRenderedCompleter.complete();
+        }
+      },
+    );
+
     // Return the [PlatformVideoController].
     return controller;
   }
