@@ -109,7 +109,7 @@ class Video extends StatefulWidget {
 }
 
 class VideoState extends State<Video> {
-  ValueKey _key = const ValueKey(0);
+  ValueKey _key = const ValueKey(true);
 
   // Public API:
 
@@ -148,7 +148,7 @@ class VideoState extends State<Video> {
   /// Web specific API to re-draw [HtmlElementView].
   void refreshView() {
     setState(() {
-      _key = ValueKey(Random().nextInt(1 << 8));
+      _key = ValueKey(!_key.value);
     });
   }
 
