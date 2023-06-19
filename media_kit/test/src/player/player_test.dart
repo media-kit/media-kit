@@ -281,6 +281,7 @@ void main() {
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
+
   test(
     'player-open-playable-playlist-play-false-play',
     () async {
@@ -882,4 +883,222 @@ void main() {
       expectAudioDevices(event);
     });
   });
+
+  test(
+    'player-buffering-open-file',
+    () async {
+      final player = Player();
+
+      expect(
+        player.streams.playlist,
+        emitsInOrder(
+          [
+            Playlist(
+              [
+                Media(sources.file[0]),
+              ],
+              index: 0,
+            ),
+          ],
+        ),
+      );
+      expect(
+        player.streams.buffering,
+        emitsInOrder(
+          [
+            // Player::open
+            true,
+            // Player::play
+            false,
+          ],
+        ),
+      );
+
+      await player.open(
+        Media(sources.file[0]),
+        play: false,
+      );
+      await player.play();
+
+      await Future.delayed(const Duration(seconds: 30));
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-buffering-open-file',
+    () async {
+      final player = Player();
+
+      expect(
+        player.streams.playlist,
+        emitsInOrder(
+          [
+            Playlist(
+              [
+                Media(sources.file[0]),
+              ],
+              index: 0,
+            ),
+          ],
+        ),
+      );
+      expect(
+        player.streams.buffering,
+        emitsInOrder(
+          [
+            // Player::open
+            true,
+            // Player::play and loaded
+            false,
+          ],
+        ),
+      );
+
+      await player.open(
+        Media(sources.file[0]),
+        play: false,
+      );
+      await player.play();
+
+      await Future.delayed(const Duration(seconds: 30));
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-buffering-open-network',
+    () async {
+      final player = Player();
+
+      final address = '127.0.0.1';
+      final port = Random().nextInt(1 << 16 - 1);
+
+      final completed = HashSet<int>();
+
+      final socket = await ServerSocket.bind(address, port);
+      final server = HttpServer.listenOn(socket);
+      server.listen(
+        (e) async {
+          final i = int.parse(e.uri.path.split('/').last);
+          if (!completed.contains(i)) {
+            completed.add(i);
+          }
+          final path = sources.file[i];
+          e.response.headers.add('Content-Type', 'video/mp4');
+          e.response.headers.add('Accept-Ranges', 'bytes');
+          File(path).openRead().pipe(e.response);
+        },
+      );
+
+      expect(
+        player.streams.buffering,
+        emitsInOrder(
+          [
+            // Player::open
+            true,
+            // Player::play and loaded
+            false,
+          ],
+        ),
+      );
+      await player.open(
+        Media(
+          'http://$address:$port/0',
+          httpHeaders: {
+            'X-Foo': 'Bar',
+            'X-Baz': 'Qux',
+          },
+        ),
+      );
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-buffering-false-upon-complete',
+    () async {
+      final player = Player();
+
+      expect(
+        player.streams.playlist,
+        emitsInOrder(
+          [
+            Playlist(
+              [
+                Media(sources.file[0]),
+              ],
+              index: 0,
+            ),
+          ],
+        ),
+      );
+      expect(
+        player.streams.buffering,
+        emitsInOrder(
+          [
+            // Player::open
+            true,
+            // Player::play and loaded
+            false,
+            // Completed
+            false
+          ],
+        ),
+      );
+
+      await player.open(
+        Media(sources.file[0]),
+        play: false,
+      );
+
+      await player.play();
+
+      await Future.delayed(const Duration(seconds: 30));
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+    test(
+    'player-buffering-upon-seek',
+    () async {
+      final player = Player();
+
+      expect(
+        player.streams.playlist,
+        emitsInOrder(
+          [
+            Playlist(
+              [
+                Media(sources.file[0]),
+              ],
+              index: 0,
+            ),
+          ],
+        ),
+      );
+      expect(
+        player.streams.buffering,
+        emitsInOrder(
+          [
+            // Player::open
+            true,
+            // Player::play and loaded
+            false,
+            // seek 
+            false,
+          ],
+        ),
+      );
+
+      await player.open(
+        Media(sources.file[0]),
+        play: false,
+      );
+      await player.play();
+      
+      await Future.delayed(const Duration(seconds: 1));
+      
+      await player.seek(Duration(seconds: 10));
+
+      await Future.delayed(const Duration(seconds: 30));
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
 }
