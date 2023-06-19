@@ -7,6 +7,7 @@
 import 'dart:async';
 import 'dart:js' as js;
 import 'dart:html' as html;
+import 'package:meta/meta.dart';
 import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
@@ -39,6 +40,7 @@ class webPlayer extends PlatformPlayer {
         // Do not add autoplay=false attribute: https://stackoverflow.com/a/19664804/12825435
         /* ..autoplay = false */
         ..controls = false
+        ..muted = muted
         ..style.width = '100%'
         ..style.height = '100%'
         ..style.border = 'none'
@@ -268,6 +270,7 @@ class webPlayer extends PlatformPlayer {
           }
         });
       });
+      configuration.ready?.call();
       // --------------------------------------------------
     });
   }
@@ -448,7 +451,17 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      // TODO: Missing implementation.
+
+      _playlist.add(media);
+
+      state = state.copyWith(
+        playlist: state.playlist.copyWith(
+          medias: _playlist,
+        ),
+      );
+      if (!playlistController.isClosed) {
+        playlistController.add(state.playlist);
+      }
     }
 
     if (synchronized) {
@@ -671,6 +684,13 @@ class webPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
       element.currentTime = duration.inMilliseconds.toDouble() / 1000;
+
+      // It is self explanatory that PlayerState.completed & PlayerStreams.completed must enter the false state if seek is called. Typically after EOF.
+      // https://github.com/alexmercerind/media_kit/issues/221
+      state = state.copyWith(completed: false);
+      if (!completedController.isClosed) {
+        completedController.add(false);
+      }
     }
 
     if (synchronized) {
@@ -909,4 +929,8 @@ class webPlayer extends PlatformPlayer {
 
   /// JavaScript object attribute used to store the instance count of [Player] in [js.context].
   static const kInstanceCount = '\$com.alexmercerind.media_kit.instance_count';
+
+  /// Whether the `<video>` element should have muted attribute or not.
+  @visibleForTesting
+  static bool muted = false;
 }
