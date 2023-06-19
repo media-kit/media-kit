@@ -33,6 +33,7 @@ dependencies:
 dev_dependencies:
   test: ^1.24.1
   lints: ^1.0.0
+  universal_platform: ^1.0.0+1
 
 ffigen:
   name: MPV

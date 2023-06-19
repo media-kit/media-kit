@@ -42,13 +42,13 @@ class Media extends Playable {
     dynamic extras,
     Map<String, String>? httpHeaders,
   })  : uri = normalizeURI(resource),
-        extras = extras ?? medias[normalizeURI(resource)]?.extras,
+        extras = extras ?? cache[normalizeURI(resource)]?.extras,
         httpHeaders =
-            httpHeaders ?? medias[normalizeURI(resource)]?.httpHeaders {
+            httpHeaders ?? cache[normalizeURI(resource)]?.httpHeaders {
     if (httpHeaders != null) {
       throw UnsupportedError('HTTP headers are not supported on web');
     }
-    medias[uri] ??= this;
+    cache[uri] ??= this;
   }
 
   /// Normalizes the passed URI.
@@ -92,5 +92,5 @@ class Media extends Playable {
 
   /// Previously created [Media] instances.
   /// This [HashMap] is used to retrieve previously set [extras] & [httpHeaders].
-  static final HashMap<String, Media> medias = HashMap<String, Media>();
+  static final HashMap<String, Media> cache = HashMap<String, Media>();
 }
