@@ -259,8 +259,8 @@ class AndroidVideoController extends PlatformVideoController {
     int? width,
     int? height,
   }) {
-    throw UnimplementedError(
-      '[AndroidVideoController.setSize] is not available on Android.',
+    throw UnsupportedError(
+      '[AndroidVideoController.setSize] is not available on Android',
     );
   }
 
