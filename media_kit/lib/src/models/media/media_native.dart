@@ -3,7 +3,6 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-
 import 'dart:io';
 import 'dart:collection';
 import 'package:path/path.dart' as path;
@@ -14,9 +13,6 @@ import 'package:safe_local_storage/safe_local_storage.dart';
 import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/utils/android_asset_loader.dart';
 
-HashMap<String, Media> medias = HashMap<String, Media>();
-HashMap<String, double> bitrates = HashMap<String, double>();
-
 /// {@template media}
 ///
 /// Media
@@ -26,7 +22,7 @@ HashMap<String, double> bitrates = HashMap<String, double>();
 ///
 /// ```dart
 /// final player = Player();
-/// final playable = Media('file:///C:/Users/Hitesh/Video/Sample.mkv');
+/// final playable = Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4');
 /// await player.open(playable);
 /// ```
 ///
@@ -48,10 +44,13 @@ class Media extends Playable {
   /// {@macro media}
   Media(
     String resource, {
-    this.extras,
-    this.httpHeaders,
-  }) : uri = normalizeURI(resource) {
-    medias[uri] = this;
+    dynamic extras,
+    Map<String, String>? httpHeaders,
+  })  : uri = normalizeURI(resource),
+        extras = extras ?? medias[normalizeURI(resource)]?.extras,
+        httpHeaders =
+            httpHeaders ?? medias[normalizeURI(resource)]?.httpHeaders {
+    medias[uri] ??= this;
   }
 
   /// Normalizes the passed URI.
@@ -160,11 +159,14 @@ class Media extends Playable {
   @override
   int get hashCode => uri.hashCode ^ extras.hashCode ^ httpHeaders.hashCode;
 
-  /// Prettier [print] logging.
   @override
   String toString() =>
       'Media($uri, extras: $extras, httpHeaders: $httpHeaders)';
 
   /// URI scheme used to identify Flutter assets.
-  static const _kAssetScheme = 'asset://';
+  static const String _kAssetScheme = 'asset://';
+
+  /// Previously created [Media] instances.
+  /// This [HashMap] is used to retrieve previously set [extras] & [httpHeaders].
+  static final HashMap<String, Media> medias = HashMap<String, Media>();
 }
