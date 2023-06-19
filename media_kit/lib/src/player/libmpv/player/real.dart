@@ -1179,9 +1179,10 @@ class libmpvPlayer extends PlatformPlayer {
           }
         }
       }
-      if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'core-idle' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-        final buffering = prop.ref.data.cast<Int8>().value != 0;
+        final buffering =
+            (prop.ref.data.cast<Int8>().value != 0 && state.playing);
         state = state.copyWith(buffering: buffering);
         if (!bufferingController.isClosed) {
           bufferingController.add(buffering);
@@ -1696,6 +1697,7 @@ class libmpvPlayer extends PlatformPlayer {
         'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
+        'core-idle': generated.mpv_format.MPV_FORMAT_FLAG,
         'demuxer-cache-time': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'audio-params': generated.mpv_format.MPV_FORMAT_NODE,
         'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
