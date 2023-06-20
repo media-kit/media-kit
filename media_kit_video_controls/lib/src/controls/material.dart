@@ -223,6 +223,71 @@ class MaterialVideoControlsThemeData {
     this.seekBarThumbSize = 12.8,
     this.seekBarThumbColor = const Color(0xFFFF0000),
   });
+
+  /// Creates a copy of this [MaterialVideoControlsThemeData] with the given fields replaced by the non-null parameter values.
+  MaterialVideoControlsThemeData copyWith({
+    bool? displaySeekBar,
+    bool? automaticallyImplySkipNextButton,
+    bool? automaticallyImplySkipPreviousButton,
+    bool? volumeGesture,
+    bool? brightnessGesture,
+    bool? seekOnDoubleTap,
+    Duration? controlsHoverDuration,
+    Duration? controlsTransitionDuration,
+    Widget Function(BuildContext, double)? volumeIndicatorBuilder,
+    Widget Function(BuildContext, double)? brightnessIndicatorBuilder,
+    List<Widget>? primaryButtonBar,
+    List<Widget>? topButtonBar,
+    List<Widget>? bottomButtonBar,
+    EdgeInsets? buttonBarMargin,
+    double? buttonBarHeight,
+    double? buttonBarButtonSize,
+    Color? buttonBarButtonColor,
+    EdgeInsets? seekBarMargin,
+    double? seekBarHeight,
+    double? seekBarContainerHeight,
+    Color? seekBarColor,
+    Color? seekBarPositionColor,
+    Color? seekBarBufferColor,
+    double? seekBarThumbSize,
+    Color? seekBarThumbColor,
+  }) {
+    return MaterialVideoControlsThemeData(
+      displaySeekBar: displaySeekBar ?? this.displaySeekBar,
+      automaticallyImplySkipNextButton: automaticallyImplySkipNextButton ??
+          this.automaticallyImplySkipNextButton,
+      automaticallyImplySkipPreviousButton:
+          automaticallyImplySkipPreviousButton ??
+              this.automaticallyImplySkipPreviousButton,
+      volumeGesture: volumeGesture ?? this.volumeGesture,
+      brightnessGesture: brightnessGesture ?? this.brightnessGesture,
+      seekOnDoubleTap: seekOnDoubleTap ?? this.seekOnDoubleTap,
+      controlsHoverDuration:
+          controlsHoverDuration ?? this.controlsHoverDuration,
+      controlsTransitionDuration:
+          controlsTransitionDuration ?? this.controlsTransitionDuration,
+      volumeIndicatorBuilder:
+          volumeIndicatorBuilder ?? this.volumeIndicatorBuilder,
+      brightnessIndicatorBuilder:
+          brightnessIndicatorBuilder ?? this.brightnessIndicatorBuilder,
+      primaryButtonBar: primaryButtonBar ?? this.primaryButtonBar,
+      topButtonBar: topButtonBar ?? this.topButtonBar,
+      bottomButtonBar: bottomButtonBar ?? this.bottomButtonBar,
+      buttonBarMargin: buttonBarMargin ?? this.buttonBarMargin,
+      buttonBarHeight: buttonBarHeight ?? this.buttonBarHeight,
+      buttonBarButtonSize: buttonBarButtonSize ?? this.buttonBarButtonSize,
+      buttonBarButtonColor: buttonBarButtonColor ?? this.buttonBarButtonColor,
+      seekBarMargin: seekBarMargin ?? this.seekBarMargin,
+      seekBarHeight: seekBarHeight ?? this.seekBarHeight,
+      seekBarContainerHeight:
+          seekBarContainerHeight ?? this.seekBarContainerHeight,
+      seekBarColor: seekBarColor ?? this.seekBarColor,
+      seekBarPositionColor: seekBarPositionColor ?? this.seekBarPositionColor,
+      seekBarBufferColor: seekBarBufferColor ?? this.seekBarBufferColor,
+      seekBarThumbSize: seekBarThumbSize ?? this.seekBarThumbSize,
+      seekBarThumbColor: seekBarThumbColor ?? this.seekBarThumbColor,
+    );
+  }
 }
 
 /// {@template material_video_controls_theme}
