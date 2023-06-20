@@ -756,6 +756,14 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
+      if (rate <= 0.0) {
+        throw ArgumentError.value(
+          rate,
+          'rate',
+          'Must be greater than 0.0',
+        );
+      }
+
       if (configuration.pitch) {
         // Pitch shift control is enabled.
 
@@ -833,6 +841,14 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
 
       if (configuration.pitch) {
+        if (pitch <= 0.0) {
+          throw ArgumentError.value(
+            pitch,
+            'pitch',
+            'Must be greater than 0.0',
+          );
+        }
+
         // Pitch shift control is enabled.
 
         state = state.copyWith(

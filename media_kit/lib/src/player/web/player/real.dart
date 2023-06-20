@@ -756,8 +756,17 @@ class webPlayer extends PlatformPlayer {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
       }
+
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      if (rate <= 0.0) {
+        throw ArgumentError.value(
+          rate,
+          'rate',
+          'Must be greater than 0.0',
+        );
+      }
       element.playbackRate = rate;
     }
 
@@ -777,9 +786,19 @@ class webPlayer extends PlatformPlayer {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
       }
+
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
       throw UnsupportedError('[Player.setPitch] is not supported on web');
+
+      // if (pitch <= 0.0) {
+      //   throw ArgumentError.value(
+      //     pitch,
+      //     'pitch',
+      //     'Must be greater than 0.0',
+      //   );
+      // }
     }
 
     if (synchronized) {
@@ -876,7 +895,7 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      // TODO: Missing implementation.
+      throw UnsupportedError('[Player.setVideoTrack] is not supported on web');
     }
 
     if (synchronized) {
@@ -897,7 +916,7 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      // TODO: Missing implementation.
+      throw UnsupportedError('[Player.setAudioTrack] is not supported on web');
     }
 
     if (synchronized) {
@@ -918,7 +937,8 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      // TODO: Missing implementation.
+      throw UnsupportedError(
+          '[Player.setSubtitleTrack] is not supported on web');
     }
 
     if (synchronized) {
