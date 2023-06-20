@@ -11,6 +11,7 @@ import 'package:media_kit/src/player/player.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
+import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/player/platform_player.dart';
 import 'package:media_kit/src/player/web/player/player.dart';
 import 'package:media_kit/src/player/libmpv/player/player.dart';
@@ -1124,5 +1125,107 @@ void main() {
       );
     },
     skip: !UniversalPlatform.isWeb,
+  );
+  test(
+    'player-index-transitions-playlist-mode-none',
+    () async {
+      final player = Player();
+
+      final playable = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // index: 0 -> sources.platform.length - 1
+            for (int i = 0; i < sources.platform.length; i++)
+              playable.copyWith(index: i),
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.setRate(5.0);
+      await player.setPlaylistMode(PlaylistMode.none);
+      await player.open(playable);
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-index-transitions-playlist-mode-single',
+    () async {
+      final player = Player();
+
+      final playable = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // index: 0 (does not change)
+            playable.copyWith(index: 0),
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.setRate(5.0);
+      await player.setPlaylistMode(PlaylistMode.single);
+      await player.open(playable);
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-index-transitions-playlist-mode-loop',
+    () async {
+      final player = Player();
+
+      final playable = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // index: 0 -> sources.platform.length - 1
+            for (int i = 0; i < sources.platform.length; i++)
+              playable.copyWith(index: i),
+
+            // must loop back to index: 0
+
+            // index: 0 -> sources.platform.length - 1
+            for (int i = 0; i < sources.platform.length; i++)
+              playable.copyWith(index: i),
+          ],
+        ),
+      );
+
+      await player.setRate(5.0);
+      await player.setPlaylistMode(PlaylistMode.loop);
+      await player.open(playable);
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
   );
 }
