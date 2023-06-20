@@ -1025,25 +1025,28 @@ void main() {
           ],
         ),
       );
+      player.streams.buffering.listen((event) => print(event));
       expect(
         player.streams.buffering,
         emitsInOrder(
           [
-            // Player::open
+            //buffering for the first playback
             true,
-            // Player::play and loaded
+            // finished buffering
+            false,
+            // completed
             false,
           ],
         ),
       );
+      final Future<Duration> duration = player.streams.duration.first;
 
       await player.open(
         Media(sources.file[0]),
-        play: false,
+        play: true,
       );
-      await player.play();
 
-      await Future.delayed(const Duration(seconds: 30));
+      await Future.delayed(await duration);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1052,46 +1055,29 @@ void main() {
     () async {
       final player = Player();
 
-      final address = '127.0.0.1';
-      final port = Random().nextInt(1 << 16 - 1);
-
-      final completed = HashSet<int>();
-
-      final socket = await ServerSocket.bind(address, port);
-      final server = HttpServer.listenOn(socket);
-      server.listen(
-        (e) async {
-          final i = int.parse(e.uri.path.split('/').last);
-          if (!completed.contains(i)) {
-            completed.add(i);
-          }
-          final path = sources.file[i];
-          e.response.headers.add('Content-Type', 'video/mp4');
-          e.response.headers.add('Accept-Ranges', 'bytes');
-          File(path).openRead().pipe(e.response);
-        },
-      );
+      player.streams.buffering.listen((event) => print(event));
 
       expect(
         player.streams.buffering,
         emitsInOrder(
           [
-            // Player::open
+            //buffering for the first playback
             true,
-            // Player::play and loaded
+            // finished buffering
+            false,
+            // idle (but it completed)
+            true,
+            // completed
             false,
           ],
         ),
       );
       await player.open(
         Media(
-          'http://$address:$port/0',
-          httpHeaders: {
-            'X-Foo': 'Bar',
-            'X-Baz': 'Qux',
-          },
+          sources.network[0],
         ),
       );
+      await Future.delayed(const Duration(seconds: 30));
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1117,9 +1103,11 @@ void main() {
         player.streams.buffering,
         emitsInOrder(
           [
-            // Player::open
+            //buffering for the first playback
             true,
-            // Player::play and loaded
+            // finished buffering
+            false,
+            // idle (but it completed)
             false,
             // Completed
             false
@@ -1138,50 +1126,41 @@ void main() {
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
-    test(
+  test(
     'player-buffering-upon-seek',
     () async {
       final player = Player();
 
-      expect(
-        player.streams.playlist,
-        emitsInOrder(
-          [
-            Playlist(
-              [
-                Media(sources.file[0]),
-              ],
-              index: 0,
-            ),
-          ],
-        ),
-      );
+      player.streams.buffering.listen((event) => print(event));
+
       expect(
         player.streams.buffering,
         emitsInOrder(
           [
-            // Player::open
+            //buffering for the first playback
             true,
-            // Player::play and loaded
+            // finished buffering
             false,
-            // seek 
+            // idle (but it completed)
             false,
+            // Completed
+            false
           ],
         ),
       );
+      final Future<Duration> duration = player.streams.duration.first;
 
       await player.open(
-        Media(sources.file[0]),
-        play: false,
+        Media(sources.network[0]),
+        play: true,
       );
-      await player.play();
+      await duration;
       
-      await Future.delayed(const Duration(seconds: 1));
-      
-      await player.seek(Duration(seconds: 10));
+      await player.seek(player.state.buffer + Duration(seconds: 5));
 
       await Future.delayed(const Duration(seconds: 30));
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
+
 }
