@@ -11,6 +11,7 @@ import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/player_state.dart';
+import 'package:media_kit/src/models/playlist_mode.dart';
 
 void main() {
   test(
@@ -26,6 +27,8 @@ void main() {
       expect(state.rate, equals(1.0));
       expect(state.pitch, equals(1.0));
       expect(state.buffering, equals(false));
+      expect(state.buffer, equals(Duration.zero));
+      expect(state.playlistMode, equals(PlaylistMode.none));
       expect(state.audioParams.format, isNull);
       expect(state.audioParams.sampleRate, isNull);
       expect(state.audioParams.channels, isNull);
