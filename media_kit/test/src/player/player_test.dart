@@ -699,6 +699,8 @@ void main() {
   test(
     'player-play-after-completed',
     () async {
+      // Only applicable for PlaylistMode.none.
+
       final completer = Completer();
 
       final player = Player();
@@ -1127,6 +1129,26 @@ void main() {
     skip: !UniversalPlatform.isWeb,
   );
   test(
+    'player-set-playlist-mode',
+    () async {
+      final player = Player();
+
+      expect(
+        player.stream.playlistMode,
+        emitsInOrder(
+          [
+            ...PlaylistMode.values,
+          ],
+        ),
+      );
+
+      for (final value in PlaylistMode.values) {
+        await player.setPlaylistMode(value);
+      }
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
     'player-index-transitions-playlist-mode-none',
     () async {
       final player = Player();
@@ -1225,6 +1247,241 @@ void main() {
       await player.setRate(5.0);
       await player.setPlaylistMode(PlaylistMode.loop);
       await player.open(playable);
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-next-playlist-mode-none',
+    () async {
+      final player = Player();
+
+      final playable = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // index: 0 -> sources.platform.length - 1
+            for (int i = 0; i < sources.platform.length; i++)
+              playable.copyWith(index: i),
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.setPlaylistMode(PlaylistMode.none);
+      await player.open(playable);
+
+      Timer.periodic(const Duration(seconds: 1), (_) {
+        player.next();
+      });
+
+      await Future.delayed(const Duration(seconds: 15));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-next-playlist-mode-single',
+    () async {
+      final player = Player();
+
+      final playable = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // index: 0 -> sources.platform.length - 1
+            for (int i = 0; i < sources.platform.length; i++)
+              playable.copyWith(index: i),
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.setPlaylistMode(PlaylistMode.single);
+      await player.open(playable);
+
+      Timer.periodic(const Duration(seconds: 1), (_) {
+        player.next();
+      });
+
+      await Future.delayed(const Duration(seconds: 15));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-next-playlist-mode-loop',
+    () async {
+      final player = Player();
+
+      final playable = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // index: 0 -> sources.platform.length - 1
+            for (int i = 0; i < sources.platform.length; i++)
+              playable.copyWith(index: i),
+
+            // must loop back to index: 0
+
+            // index: 0 -> sources.platform.length - 1
+            for (int i = 0; i < sources.platform.length; i++)
+              playable.copyWith(index: i),
+          ],
+        ),
+      );
+
+      await player.setPlaylistMode(PlaylistMode.loop);
+      await player.open(playable);
+
+      Timer.periodic(const Duration(seconds: 1), (_) {
+        player.next();
+      });
+
+      await Future.delayed(const Duration(seconds: 15));
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-previous-playlist-mode-none',
+    () async {
+      final player = Player();
+
+      final playable = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            playable,
+            // index: sources.platform.length - 1 -> 0
+            for (int i = sources.platform.length - 1; i >= 0; i--)
+              playable.copyWith(index: i),
+            // Cannot test (since index keeps transitioning):
+            // emitsDone,
+          ],
+        ),
+      );
+
+      await player.setPlaylistMode(PlaylistMode.none);
+      await player.open(playable);
+      await player.jump(sources.platform.length - 1);
+
+      Timer.periodic(const Duration(seconds: 1), (_) {
+        player.previous();
+      });
+
+      await Future.delayed(const Duration(seconds: 15));
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-previous-playlist-mode-single',
+    () async {
+      final player = Player();
+
+      final playable = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            playable,
+            // index: sources.platform.length - 1 -> 0
+            for (int i = sources.platform.length - 1; i >= 0; i--)
+              playable.copyWith(index: i),
+            // Cannot test (since index keeps transitioning):
+            // emitsDone,
+          ],
+        ),
+      );
+
+      await player.setPlaylistMode(PlaylistMode.single);
+      await player.open(playable);
+      await player.jump(sources.platform.length - 1);
+
+      Timer.periodic(const Duration(seconds: 1), (_) {
+        player.previous();
+      });
+
+      await Future.delayed(const Duration(seconds: 15));
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-previous-playlist-mode-loop',
+    () async {
+      final player = Player();
+
+      final playable = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      player.stream.playlist.listen((event) {
+        print(event.index);
+      });
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            playable,
+            // index: sources.platform.length - 1 -> 0
+            for (int i = sources.platform.length - 1; i >= 0; i--)
+              playable.copyWith(index: i),
+
+            // must loop back to index: sources.platform.length - 1
+
+            for (int i = sources.platform.length - 1; i >= 0; i--)
+              playable.copyWith(index: i),
+          ],
+        ),
+      );
+
+      await player.setPlaylistMode(PlaylistMode.loop);
+      await player.open(playable);
+      await player.jump(sources.platform.length - 1);
+
+      Timer.periodic(const Duration(seconds: 1), (_) {
+        player.previous();
+      });
+
+      await Future.delayed(const Duration(seconds: 15));
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
