@@ -35,6 +35,8 @@ void main() {
         player.platform,
         isA<libmpvPlayer>(),
       );
+
+      addTearDown(player.dispose);
     },
     skip: UniversalPlatform.isWeb,
   );
@@ -46,6 +48,8 @@ void main() {
         player.platform,
         isA<webPlayer>(),
       );
+
+      addTearDown(player.dispose);
     },
     skip: !UniversalPlatform.isWeb,
   );
@@ -57,6 +61,8 @@ void main() {
         player.handle,
         completes,
       );
+
+      addTearDown(player.dispose);
     },
   );
   test(
@@ -64,13 +70,15 @@ void main() {
     () {
       final expectReady = expectAsync0(() {});
 
-      Player(
+      final player = Player(
         configuration: PlayerConfiguration(
           ready: () {
             expectReady();
           },
         ),
       );
+
+      addTearDown(player.dispose);
     },
   );
   test(
@@ -479,6 +487,8 @@ void main() {
           },
         ),
       );
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -529,6 +539,8 @@ void main() {
           ],
         ),
       );
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -607,6 +619,8 @@ void main() {
           },
         ),
       );
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
     skip: UniversalPlatform.isWeb,
@@ -692,6 +706,8 @@ void main() {
           ],
         ),
       );
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
     skip: UniversalPlatform.isWeb,
@@ -759,9 +775,6 @@ void main() {
         expectPosition(event);
       });
 
-      // Internal Player.play/Player.playOrPause logic depends upon the value of PlayerState.completed.
-      // Thus, if EOF is reached with PlaylistMode.none, then re-start playback instead of cycling between play/pause.
-      // So, we need this voluntary delay.
       await Future.delayed(const Duration(seconds: 5));
 
       // Begin test.
@@ -839,9 +852,7 @@ void main() {
         expectPosition(event);
       });
 
-      // Internal Player.play/Player.playOrPause logic depends upon the value of PlayerState.completed.
-      // Thus, if EOF is reached with PlaylistMode.none, then re-start playback instead of cycling between play/pause.
-      // So, we need this voluntary delay.
+      // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
 
       // Begin test.
@@ -907,6 +918,8 @@ void main() {
       await Future.delayed(const Duration(seconds: 5));
 
       await player.open(Media(sources.platform[1]));
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -931,6 +944,8 @@ void main() {
       );
 
       await player.open(playlist);
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
     // TODO: Flaky on GNU/Linux CI.
@@ -956,6 +971,8 @@ void main() {
       player.stream.audioDevices.listen((event) async {
         expectAudioDevices(event);
       });
+
+      addTearDown(player.dispose);
     },
     skip: UniversalPlatform.isWeb,
   );
@@ -991,6 +1008,8 @@ void main() {
 
         await Future.delayed(const Duration(seconds: 1));
       }
+
+      addTearDown(player.dispose);
     },
     skip: UniversalPlatform.isWeb,
   );
@@ -1003,6 +1022,8 @@ void main() {
         player.setAudioDevice(AudioDevice.auto()),
         throwsUnsupportedError,
       );
+
+      addTearDown(player.dispose);
     },
     skip: !UniversalPlatform.isWeb,
   );
@@ -1040,6 +1061,8 @@ void main() {
 
         await Future.delayed(const Duration(milliseconds: 20));
       }
+
+      addTearDown(player.dispose);
     },
   );
   test(
@@ -1047,7 +1070,7 @@ void main() {
     () async {
       final player = Player();
 
-      final test = List.generate(10, (index) => 0.25 * index);
+      final test = List.generate(10, (index) => 0.25 * (index + 1));
 
       final expectRate = expectAsync2(
         (rate, i) {
@@ -1072,6 +1095,8 @@ void main() {
 
         await Future.delayed(const Duration(milliseconds: 20));
       }
+
+      addTearDown(player.dispose);
     },
   );
   test(
@@ -1080,6 +1105,8 @@ void main() {
       final player = Player();
 
       expect(player.setPitch(1.0), throwsArgumentError);
+
+      addTearDown(player.dispose);
     },
     skip: UniversalPlatform.isWeb,
   );
@@ -1088,7 +1115,7 @@ void main() {
     () async {
       final player = Player(configuration: PlayerConfiguration(pitch: true));
 
-      final test = List.generate(10, (index) => 0.25 * index);
+      final test = List.generate(10, (index) => 0.25 * (index + 1));
 
       final expectPitch = expectAsync2(
         (pitch, i) {
@@ -1113,6 +1140,8 @@ void main() {
 
         await Future.delayed(const Duration(milliseconds: 20));
       }
+
+      addTearDown(player.dispose);
     },
     skip: UniversalPlatform.isWeb,
   );
@@ -1125,6 +1154,8 @@ void main() {
         player.setPitch(1.0),
         throwsUnsupportedError,
       );
+
+      addTearDown(player.dispose);
     },
     skip: !UniversalPlatform.isWeb,
   );
@@ -1145,6 +1176,81 @@ void main() {
       for (final value in PlaylistMode.values) {
         await player.setPlaylistMode(value);
       }
+
+      addTearDown(player.dispose);
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-jump',
+    () async {
+      final player = Player();
+
+      final playlist = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // Player.open
+            TypeMatcher<Playlist>().having(
+              (playlist) => playlist.index,
+              'index',
+              0,
+            ),
+            // Player.jump
+            TypeMatcher<Playlist>().having(
+              (playlist) => playlist.index,
+              'index',
+              2,
+            ),
+          ],
+        ),
+      );
+
+      await player.open(playlist);
+      await player.jump(2);
+
+      addTearDown(player.dispose);
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-move',
+    () async {
+      final player = Player();
+
+      final playlist = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // Player.open
+            playlist,
+            // Player.move
+            Playlist(move(playlist.medias, 1, 3)),
+          ],
+        ),
+      );
+
+      await player.open(playlist);
+
+      // NOTE: VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.move(1, 3);
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1247,6 +1353,10 @@ void main() {
       await player.setRate(5.0);
       await player.setPlaylistMode(PlaylistMode.loop);
       await player.open(playable);
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1277,12 +1387,13 @@ void main() {
       await player.setPlaylistMode(PlaylistMode.none);
       await player.open(playable);
 
-      Timer.periodic(const Duration(seconds: 1), (_) {
+      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
         player.next();
       });
 
       await Future.delayed(const Duration(seconds: 15));
 
+      timer.cancel();
       await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
@@ -1314,12 +1425,13 @@ void main() {
       await player.setPlaylistMode(PlaylistMode.single);
       await player.open(playable);
 
-      Timer.periodic(const Duration(seconds: 1), (_) {
+      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
         player.next();
       });
 
       await Future.delayed(const Duration(seconds: 15));
 
+      timer.cancel();
       await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
@@ -1356,11 +1468,14 @@ void main() {
       await player.setPlaylistMode(PlaylistMode.loop);
       await player.open(playable);
 
-      Timer.periodic(const Duration(seconds: 1), (_) {
+      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
         player.next();
       });
 
       await Future.delayed(const Duration(seconds: 15));
+
+      timer.cancel();
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1394,11 +1509,14 @@ void main() {
       await player.open(playable);
       await player.jump(sources.platform.length - 1);
 
-      Timer.periodic(const Duration(seconds: 1), (_) {
+      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
         player.previous();
       });
 
       await Future.delayed(const Duration(seconds: 15));
+
+      timer.cancel();
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1432,11 +1550,14 @@ void main() {
       await player.open(playable);
       await player.jump(sources.platform.length - 1);
 
-      Timer.periodic(const Duration(seconds: 1), (_) {
+      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
         player.previous();
       });
 
       await Future.delayed(const Duration(seconds: 15));
+
+      timer.cancel();
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1451,11 +1572,6 @@ void main() {
             Media(sources.platform[i]),
         ],
       );
-
-      player.stream.playlist.listen((event) {
-        print(event.index);
-      });
-
       expect(
         player.stream.playlist,
         emitsInOrder(
@@ -1477,11 +1593,14 @@ void main() {
       await player.open(playable);
       await player.jump(sources.platform.length - 1);
 
-      Timer.periodic(const Duration(seconds: 1), (_) {
+      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
         player.previous();
       });
 
       await Future.delayed(const Duration(seconds: 15));
+
+      timer.cancel();
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1524,6 +1643,7 @@ void main() {
 
       await player.open(Media(sources.platform[0]));
 
+      // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
 
       await player.add(Media(sources.platform[1]));
@@ -1577,9 +1697,12 @@ void main() {
       await player.open(playlist);
       await player.jump(1);
 
+      // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
 
       await player.remove(0);
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1623,9 +1746,12 @@ void main() {
 
       await player.open(playlist);
 
+      // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
 
       await player.remove(1);
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1670,9 +1796,12 @@ void main() {
 
       await player.open(playlist);
 
+      // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
 
       await player.remove(0);
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1719,9 +1848,12 @@ void main() {
       await player.open(playlist);
       await player.jump(sources.platform.length - 1);
 
+      // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
 
       await player.remove(sources.platform.length - 1);
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1768,9 +1900,12 @@ void main() {
       await player.open(playlist);
       await player.jump(sources.platform.length - 1);
 
+      // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
 
       await player.remove(sources.platform.length - 1);
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1818,10 +1953,65 @@ void main() {
       await player.open(playlist);
       await player.jump(sources.platform.length - 1);
 
+      // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
 
       await player.remove(sources.platform.length - 1);
+
+      addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
+  test(
+    'player-set-rate-negative',
+    () async {
+      final player = Player();
+
+      expect(
+        () async => await player.setRate(-1.0),
+        throwsArgumentError,
+      );
+
+      addTearDown(player.dispose);
+    },
+  );
+  test(
+    'player-set-pitch-negative',
+    () async {
+      final player = Player(configuration: PlayerConfiguration(pitch: true));
+
+      expect(
+        () async => await player.setPitch(-1.0),
+        throwsArgumentError,
+      );
+
+      addTearDown(player.dispose);
+    },
+    skip: UniversalPlatform.isWeb,
+  );
+  test(
+    'player-set-pitch-negative',
+    () async {
+      final player = Player(configuration: PlayerConfiguration(pitch: true));
+
+      expect(
+        () async => await player.setPitch(-1.0),
+        throwsUnsupportedError,
+      );
+
+      addTearDown(player.dispose);
+    },
+    skip: !UniversalPlatform.isWeb,
+  );
+}
+
+List<T> move<T>(List<T> list, int from, int to) {
+  final map = SplayTreeMap<double, T>.from(
+    list.asMap().map((key, value) => MapEntry(key * 1.0, value)),
+  );
+  final item = map.remove(from * 1.0);
+  if (item != null) {
+    map[to - 0.5] = item;
+  }
+  return map.values.toList();
 }

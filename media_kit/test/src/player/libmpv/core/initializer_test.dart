@@ -21,10 +21,19 @@ void main() {
   test(
     'initializer-create',
     () async {
+      Pointer<mpv_handle>? result;
       expect(
-        Initializer.create(NativeLibrary.path, (_) async {}),
+        () async {
+          final handle = await Initializer.create(
+            NativeLibrary.path,
+            (_) async {},
+          );
+          result = handle;
+        },
         completes,
       );
+
+      addTearDown(() => Initializer.dispose(result!));
     },
   );
   test(
@@ -115,6 +124,8 @@ void main() {
         );
         calloc.free(command);
       }
+
+      addTearDown(() => Initializer.dispose(handle));
     },
   );
   test(
@@ -153,6 +164,8 @@ void main() {
           dirname(Platform.script.toFilePath()),
         );
       }
+
+      addTearDown(() => Initializer.dispose(handle));
     },
   );
   test(
@@ -191,6 +204,8 @@ void main() {
           dirname(Platform.script.toFilePath()),
         );
       }
+
+      addTearDown(() => Initializer.dispose(handle));
     },
   );
 }
