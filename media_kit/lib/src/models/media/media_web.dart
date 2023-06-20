@@ -48,7 +48,7 @@ class Media extends Playable {
     if (httpHeaders != null) {
       throw UnsupportedError('HTTP headers are not supported on web');
     }
-    cache[uri] ??= this;
+    cache[uri] = this;
   }
 
   /// Normalizes the passed URI.

@@ -50,7 +50,7 @@ class Media extends Playable {
         extras = extras ?? cache[normalizeURI(resource)]?.extras,
         httpHeaders =
             httpHeaders ?? cache[normalizeURI(resource)]?.httpHeaders {
-    cache[uri] ??= this;
+    cache[uri] = this;
   }
 
   /// Normalizes the passed URI.
