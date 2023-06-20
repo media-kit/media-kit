@@ -1485,4 +1485,343 @@ void main() {
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
+  test(
+    'player-add',
+    () async {
+      final player = Player();
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // Player.open
+            Playlist(
+              [
+                Media(sources.platform[0]),
+              ],
+              index: 0,
+            ),
+            // Player.add
+            Playlist(
+              [
+                Media(sources.platform[0]),
+                Media(sources.platform[1]),
+              ],
+              index: 0,
+            ),
+            // index transition
+            Playlist(
+              [
+                Media(sources.platform[0]),
+                Media(sources.platform[1]),
+              ],
+              index: 1,
+            ),
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.open(Media(sources.platform[0]));
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.add(Media(sources.platform[1]));
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-remove-before-current-index',
+    () async {
+      final player = Player();
+
+      final playlist = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // Player.open
+            playlist,
+            // Player.jump
+            playlist.copyWith(index: 1),
+            // Player.remove
+            Playlist(
+              [
+                for (int i = 0; i < sources.platform.length; i++)
+                  if (i != 0) Media(sources.platform[i]),
+              ],
+              index: 0,
+            ),
+            // index transition
+            Playlist(
+              [
+                for (int i = 0; i < sources.platform.length; i++)
+                  if (i != 0) Media(sources.platform[i]),
+              ],
+              index: 1,
+            ),
+          ],
+        ),
+      );
+
+      await player.open(playlist);
+      await player.jump(1);
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.remove(0);
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-remove-after-current-index',
+    () async {
+      final player = Player();
+
+      final playlist = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // Player.open
+            playlist,
+            // Player.remove
+            Playlist(
+              [
+                for (int i = 0; i < sources.platform.length; i++)
+                  if (i != 1) Media(sources.platform[i]),
+              ],
+              index: 0,
+            ),
+            // index transition
+            Playlist(
+              [
+                for (int i = 0; i < sources.platform.length; i++)
+                  if (i != 1) Media(sources.platform[i]),
+              ],
+              index: 1,
+            ),
+          ],
+        ),
+      );
+
+      await player.open(playlist);
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.remove(1);
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-remove-current-index',
+    () async {
+      final player = Player();
+
+      final playlist = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // Player.open
+            playlist,
+            // Player.remove
+            Playlist(
+              [
+                // The next item should start playing & index will not increment because the current index is removed.
+                for (int i = 0; i < sources.platform.length; i++)
+                  if (i != 0) Media(sources.platform[i]),
+              ],
+              index: 0,
+            ),
+            // index transition
+            Playlist(
+              [
+                for (int i = 0; i < sources.platform.length; i++)
+                  if (i != 0) Media(sources.platform[i]),
+              ],
+              index: 1,
+            ),
+          ],
+        ),
+      );
+
+      await player.open(playlist);
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.remove(0);
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-remove-current-index-stop-playlist-mode-none',
+    () async {
+      final player = Player();
+
+      final playlist = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // Player.open
+            playlist,
+            // Player.jump
+            Playlist(
+              [
+                for (int i = 0; i < sources.platform.length; i++)
+                  Media(sources.platform[i]),
+              ],
+              index: sources.platform.length - 1,
+            ),
+            // Player.remove
+            Playlist(
+              [
+                for (int i = 0; i < sources.platform.length; i++)
+                  if (i != sources.platform.length - 1)
+                    Media(sources.platform[i]),
+              ],
+              index: sources.platform.length - 2,
+            ),
+          ],
+        ),
+      );
+
+      await player.setPlaylistMode(PlaylistMode.none);
+      await player.open(playlist);
+      await player.jump(sources.platform.length - 1);
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.remove(sources.platform.length - 1);
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-remove-current-index-stop-playlist-mode-single',
+    () async {
+      final player = Player();
+
+      final playlist = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // Player.open
+            playlist,
+            // Player.jump
+            Playlist(
+              [
+                for (int i = 0; i < sources.platform.length; i++)
+                  Media(sources.platform[i]),
+              ],
+              index: sources.platform.length - 1,
+            ),
+            // Player.remove
+            Playlist(
+              [
+                for (int i = 0; i < sources.platform.length; i++)
+                  if (i != sources.platform.length - 1)
+                    Media(sources.platform[i]),
+              ],
+              index: sources.platform.length - 2,
+            ),
+          ],
+        ),
+      );
+
+      await player.setPlaylistMode(PlaylistMode.single);
+      await player.open(playlist);
+      await player.jump(sources.platform.length - 1);
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.remove(sources.platform.length - 1);
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-remove-current-index-stop-playlist-mode-loop',
+    () async {
+      final player = Player();
+
+      final playlist = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // Player.open
+            playlist,
+            // Player.jump
+            Playlist(
+              [
+                for (int i = 0; i < sources.platform.length; i++)
+                  Media(sources.platform[i]),
+              ],
+              index: sources.platform.length - 1,
+            ),
+            // Player.remove
+            Playlist(
+              [
+                for (int i = 0; i < sources.platform.length; i++)
+                  if (i != sources.platform.length - 1)
+                    Media(sources.platform[i]),
+              ],
+              // must loop back to index: 0
+              index: 0,
+            ),
+          ],
+        ),
+      );
+
+      await player.setPlaylistMode(PlaylistMode.loop);
+      await player.open(playlist);
+      await player.jump(sources.platform.length - 1);
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.remove(sources.platform.length - 1);
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
 }
