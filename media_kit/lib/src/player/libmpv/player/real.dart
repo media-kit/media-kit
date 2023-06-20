@@ -381,14 +381,12 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      await _command(
-        [
-          'loadfile',
-          media.uri,
-          'append',
-          null,
-        ],
+      final command = 'loadfile ${media.uri} append'.toNativeUtf8();
+      mpv.mpv_command_string(
+        ctx,
+        command.cast(),
       );
+      calloc.free(command.cast());
     }
 
     if (synchronized) {
@@ -411,12 +409,41 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      await _command(
-        [
-          'playlist-remove',
-          index.toString(),
-        ],
+      // If we remove the last item in the playlist while playlist mode is none or single, then playback will stop.
+      // In this situation, the playlist doesn't seem to be updated, so we manually update it.
+      if (state.playlist.index == index &&
+          state.playlist.medias.length - 1 == index &&
+          [
+            PlaylistMode.none,
+            PlaylistMode.single,
+          ].contains(state.playlistMode)) {
+        state = state.copyWith(
+          // Allow playOrPause /w state.completed code-path to play the playlist again.
+          completed: true,
+          playlist: state.playlist.copyWith(
+            medias: state.playlist.medias.sublist(
+              0,
+              state.playlist.medias.length - 1,
+            ),
+            index: state.playlist.medias.length - 2 < 0
+                ? 0
+                : state.playlist.medias.length - 2,
+          ),
+        );
+        if (!completedController.isClosed) {
+          completedController.add(true);
+        }
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+      }
+
+      final command = 'playlist-remove $index'.toNativeUtf8();
+      mpv.mpv_command_string(
+        ctx,
+        command.cast(),
       );
+      calloc.free(command.cast());
     }
 
     if (synchronized) {
@@ -547,13 +574,12 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      await _command(
-        [
-          'playlist-move',
-          from.toString(),
-          to.toString(),
-        ],
+      final command = 'playlist-move $from $to'.toNativeUtf8();
+      mpv.mpv_command_string(
+        ctx,
+        command.cast(),
       );
+      calloc.free(command.cast());
     }
 
     if (synchronized) {
