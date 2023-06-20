@@ -438,6 +438,15 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
+      // Do nothing if currently present at the first or last index & playlist mode is [PlaylistMode.none] or [PlaylistMode.single].
+      if ([
+            PlaylistMode.none,
+            PlaylistMode.single,
+          ].contains(state.playlistMode) &&
+          state.playlist.index == state.playlist.medias.length - 1) {
+        return;
+      }
+
       await play(synchronized: false);
       final command = 'playlist-next'.toNativeUtf8();
       mpv.mpv_command_string(
@@ -465,6 +474,15 @@ class libmpvPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      // Do nothing if currently present at the first or last index & playlist mode is [PlaylistMode.none] or [PlaylistMode.single].
+      if ([
+            PlaylistMode.none,
+            PlaylistMode.single,
+          ].contains(state.playlistMode) &&
+          state.playlist.index == 0) {
+        return;
+      }
 
       await play(synchronized: false);
       final command = 'playlist-prev'.toNativeUtf8();
@@ -652,6 +670,11 @@ class libmpvPlayer extends PlatformPlayer {
       calloc.free(playlist);
       calloc.free(yes);
       calloc.free(no);
+
+      state = state.copyWith(playlistMode: playlistMode);
+      if (!playlistModeController.isClosed) {
+        playlistModeController.add(playlistMode);
+      }
     }
 
     if (synchronized) {

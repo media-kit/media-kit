@@ -9,6 +9,7 @@ import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/playlist_mode.dart';
 
 /// {@template player_stream}
 ///
@@ -19,50 +20,48 @@ import 'package:media_kit/src/models/audio_params.dart';
 ///
 /// {@endtemplate}
 class PlayerStream {
-  /// [List] of currently opened [Media]s.
+  /// Currently opened [Media]s.
   final Stream<Playlist> playlist;
 
-  /// Whether [Player] is playing or not.
+  /// Whether playing or not.
   final Stream<bool> playing;
 
-  /// Whether currently playing [Media] in [Player] has ended or not.
+  /// Whether end of currently playing [Media] has been reached.
   final Stream<bool> completed;
 
-  /// Current playback position of the [Player].
+  /// Current playback position.
   final Stream<Duration> position;
 
-  /// Duration of the currently playing [Media] in the [Player].
+  /// Current playback duration.
   final Stream<Duration> duration;
 
-  /// The total buffered duration of the currently playing [Media] in the [Player].
+  /// Current volume.
+  final Stream<double> volume;
+
+  /// Current playback rate.
+  final Stream<double> rate;
+
+  /// Current pitch.
+  final Stream<double> pitch;
+
+  /// Whether buffering or not.
+  final Stream<bool> buffering;
+
+  /// Current buffer position.
   /// This indicates how much of the stream has been decoded & cached by the demuxer.
   final Stream<Duration> buffer;
 
-  /// Current volume of the [Player].
-  final Stream<double> volume;
+  /// Current playlist mode.
+  final Stream<PlaylistMode> playlistMode;
 
-  /// Current playback rate of the [Player].
-  final Stream<double> rate;
-
-  /// Current pitch of the [Player].
-  final Stream<double> pitch;
-
-  /// Whether the [Player] has stopped for buffering.
-  final Stream<bool> buffering;
-
-  /// [Stream] emitting [PlayerLog]s.
-  final Stream<PlayerLog> log;
-
-  /// [Stream] emitting error messages. This may be used to handle & display errors to the user.
-  final Stream<String> error;
-
-  /// Audio parameters of the currently playing [Media]. e.g. sample rate, channels, etc.
+  /// Audio parameters of the currently playing [Media].
+  /// e.g. sample rate, channels, etc.
   final Stream<AudioParams> audioParams;
 
-  /// Audio bitrate of the currently playing [Media] in the [Player].
+  /// Audio bitrate of the currently playing [Media].
   final Stream<double?> audioBitrate;
 
-  /// Currently selected [AudioDevice].
+  /// Currently available [AudioDevice]s.
   final Stream<AudioDevice> audioDevice;
 
   /// Currently available [AudioDevice]s.
@@ -80,6 +79,12 @@ class PlayerStream {
   /// Currently playing video's height.
   final Stream<int> height;
 
+  /// [Stream] emitting internal logs.
+  final Stream<PlayerLog> log;
+
+  /// [Stream] emitting error messages. This may be used to handle & display errors to the user.
+  final Stream<String> error;
+
   /// {@macro player_stream}
   const PlayerStream(
     this.playlist,
@@ -87,13 +92,12 @@ class PlayerStream {
     this.completed,
     this.position,
     this.duration,
-    this.buffer,
     this.volume,
     this.rate,
     this.pitch,
     this.buffering,
-    this.log,
-    this.error,
+    this.buffer,
+    this.playlistMode,
     this.audioParams,
     this.audioBitrate,
     this.audioDevice,
@@ -102,5 +106,7 @@ class PlayerStream {
     this.tracks,
     this.width,
     this.height,
+    this.log,
+    this.error,
   );
 }

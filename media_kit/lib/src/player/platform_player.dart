@@ -45,13 +45,12 @@ abstract class PlatformPlayer {
     completedController.stream.distinct(),
     positionController.stream.distinct(),
     durationController.stream.distinct(),
-    bufferController.stream.distinct(),
     volumeController.stream.distinct(),
     rateController.stream.distinct(),
     pitchController.stream.distinct(),
     bufferingController.stream.distinct(),
-    logController.stream.distinct(),
-    errorController.stream /* ERROR STREAM SHOULD NOT BE DISTINCT */,
+    bufferController.stream.distinct(),
+    playlistModeController.stream.distinct(),
     audioParamsController.stream.distinct(),
     audioBitrateController.stream.distinct(),
     audioDeviceController.stream.distinct(),
@@ -60,6 +59,8 @@ abstract class PlatformPlayer {
     tracksController.stream.distinct(),
     widthController.stream.distinct(),
     heightController.stream.distinct(),
+    logController.stream.distinct(),
+    errorController.stream /* ERROR STREAM SHOULD NOT BE DISTINCT */,
   );
 
   @mustCallSuper
@@ -248,10 +249,6 @@ abstract class PlatformPlayer {
       StreamController.broadcast();
 
   @protected
-  final StreamController<Duration> bufferController =
-      StreamController<Duration>.broadcast();
-
-  @protected
   final StreamController<double> volumeController =
       StreamController.broadcast();
 
@@ -266,6 +263,14 @@ abstract class PlatformPlayer {
   @protected
   final StreamController<bool> bufferingController =
       StreamController<bool>.broadcast();
+
+  @protected
+  final StreamController<Duration> bufferController =
+      StreamController<Duration>.broadcast();
+
+  @protected
+  final StreamController<PlaylistMode> playlistModeController =
+      StreamController<PlaylistMode>.broadcast();
 
   @protected
   final StreamController<PlayerLog> logController =

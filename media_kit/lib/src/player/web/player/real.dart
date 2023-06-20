@@ -712,6 +712,11 @@ class webPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
       _playlistMode = playlistMode;
+
+      state = state.copyWith(playlistMode: playlistMode);
+      if (!playlistModeController.isClosed) {
+        playlistModeController.add(playlistMode);
+      }
     }
 
     if (synchronized) {
