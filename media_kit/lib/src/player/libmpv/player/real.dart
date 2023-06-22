@@ -68,13 +68,13 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
+      await pause(synchronized: false);
+
       disposed = true;
 
       await super.dispose();
 
       Initializer.dispose(ctx);
-
-      await pause(synchronized: false);
 
       if (terminate) {
         TaskQueue.instance.add(

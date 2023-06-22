@@ -1394,8 +1394,10 @@ void main() {
       await player.setPlaylistMode(PlaylistMode.none);
       await player.open(playable);
 
-      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        player.next();
+      final timer = Timer.periodic(const Duration(seconds: 1), (_) async {
+        try {
+          await player.next();
+        } catch (_) {}
       });
 
       await Future.delayed(const Duration(seconds: 15));
@@ -1432,8 +1434,10 @@ void main() {
       await player.setPlaylistMode(PlaylistMode.single);
       await player.open(playable);
 
-      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        player.next();
+      final timer = Timer.periodic(const Duration(seconds: 1), (_) async {
+        try {
+          await player.next();
+        } catch (_) {}
       });
 
       await Future.delayed(const Duration(seconds: 15));
@@ -1475,8 +1479,10 @@ void main() {
       await player.setPlaylistMode(PlaylistMode.loop);
       await player.open(playable);
 
-      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        player.next();
+      final timer = Timer.periodic(const Duration(seconds: 1), (_) async {
+        try {
+          await player.next();
+        } catch (_) {}
       });
 
       await Future.delayed(const Duration(seconds: 15));
@@ -1516,8 +1522,10 @@ void main() {
       await player.open(playable);
       await player.jump(sources.platform.length - 1);
 
-      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        player.previous();
+      final timer = Timer.periodic(const Duration(seconds: 1), (_) async {
+        try {
+          await player.previous();
+        } catch (_) {}
       });
 
       await Future.delayed(const Duration(seconds: 45));
@@ -1557,8 +1565,10 @@ void main() {
       await player.open(playable);
       await player.jump(sources.platform.length - 1);
 
-      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        player.previous();
+      final timer = Timer.periodic(const Duration(seconds: 1), (_) async {
+        try {
+          await player.previous();
+        } catch (_) {}
       });
 
       await Future.delayed(const Duration(seconds: 45));
@@ -1600,8 +1610,10 @@ void main() {
       await player.open(playable);
       await player.jump(sources.platform.length - 1);
 
-      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        player.previous();
+      final timer = Timer.periodic(const Duration(seconds: 1), (_) async {
+        try {
+          await player.previous();
+        } catch (_) {}
       });
 
       await Future.delayed(const Duration(seconds: 45));
