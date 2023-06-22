@@ -76,8 +76,9 @@ dependencies:
 
 **Notes:**
 
-- If app needs both video & audio playback, select video playback libraries.
 - [Enable --split-per-abi](https://docs.flutter.dev/deployment/android#what-is-a-fat-apk) or [use app bundle (instead of APK)](https://docs.flutter.dev/deployment/android#when-should-i-build-app-bundles-versus-apks) on Android.
+- If app needs both video & audio playback, select video playback libraries.
+- Do not mix `media_kit_libs_*_video` & `media_kit_libs_*_audio` packages.
 - media_kit_libs_*** packages may be omitted depending upon the platform your app targets.
 
 ## Platforms
@@ -89,7 +90,7 @@ dependencies:
 | macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_macos_universal.7z)    |
 | Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_win32_x64.7z)          |
 | GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_linux_x64.7z)          |
-| Web         | 🚧    | 🚧    | [WIP](https://github.com/alexmercerind/media_kit/pull/128)                                 | [WIP](https://github.com/alexmercerind/media_kit/pull/128)               |
+| Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://github.com/alexmercerind/media_kit/pull/128)                                                                    |
 
 <table>
   <tr>
@@ -193,7 +194,7 @@ class MyScreenState extends State<MyScreen> {
 
 **Note:** You may need to add required [permissions](#permissions) to your project.
 
-## Documentation
+## Guide
 
 A usage guide for [package:media_kit](https://github.com/alexmercerind/media_kit).
 
