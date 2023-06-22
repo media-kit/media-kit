@@ -79,8 +79,7 @@ class PrimaryScreen extends StatelessWidget {
           const SizedBox(width: 16.0),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: ListView(
         children: [
           ListTile(
             title: const Text(
