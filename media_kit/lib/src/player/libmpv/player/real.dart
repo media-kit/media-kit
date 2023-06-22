@@ -74,19 +74,7 @@ class libmpvPlayer extends PlatformPlayer {
 
       Initializer.dispose(ctx);
 
-      final commands = [
-        'set vid no',
-        'set aid no',
-        'set sid no',
-      ];
-      for (final command in commands) {
-        final data = command.toNativeUtf8();
-        mpv.mpv_command_string(
-          ctx,
-          data.cast(),
-        );
-        calloc.free(data);
-      }
+      await pause(synchronized: false);
 
       if (terminate) {
         TaskQueue.instance.add(

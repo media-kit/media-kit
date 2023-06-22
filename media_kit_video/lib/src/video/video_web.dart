@@ -3,7 +3,6 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:math';
 import 'package:flutter/widgets.dart';
 import 'package:wakelock/wakelock.dart';
 import 'package:media_kit_video_controls/media_kit_video_controls.dart'
