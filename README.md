@@ -236,13 +236,13 @@ The method also has some optional arguments to customize the global behavior. To
 A `Player` instance is used to start & control the playback of a media source e.g. URL or file.
 
 ```dart
-final player = Player();
+final Player player = Player();
 ```
 
 Additional options may be provided using the `configuration` argument supplied in the constructor. In general situations, you will never require this.
 
 ```dart
-final player = Player(
+final Player player = Player(
     configuration: PlayerConfiguration(
       // Supply your options:
       title: 'My awesome package:media_kit application',
@@ -258,22 +258,193 @@ final player = Player(
 It is extremely important to release the allocated resources back to the system:
 
 ```dart
-player.dispose();
+await player.dispose();
 ```
 
 ### Open a Media or Playlist
 
-A `Playable` can be either a `Media` or a `Playlist`.
+A `Playable` can either be a `Media` or a `Playlist`.
+
+- `Media`: Single playback source (file or URL).
+- `Playlist`: Queue of playback sources (file or URL).
+
+Use the `Player.open` method to load & start playback.
+
+#### Media
+
+```dart
+final playable = Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4');
+await player.open(playable);
+```
+
+#### Playlist
+
+```dart
+final playable = Playlist(
+  [
+    Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373709-603a7a89-2105-4e1b-a5a5-a6c3567c9a59.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373716-76da0a4e-225a-44e4-9ee7-3e9006dbc3e3.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373718-86ce5e1d-d195-45d5-baa6-ef94041d0b90.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373720-14d69157-1a56-4a78-a2f4-d7a134d7c3e9.mp4'),
+  ],
+);
+await player.open(playable);
+```
+
+**Notes:**
+
+1. By default, this will automatically start playing the playable. This may be disabled as follows:
+
+```dart
+await player.open(
+  playable,
+  play: false,
+);
+```
+
+2. By default, the playlist will start at the index `0`. This may be changed as follows:
+
+```dart
+final playable = Playlist(
+  [
+    Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373709-603a7a89-2105-4e1b-a5a5-a6c3567c9a59.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373716-76da0a4e-225a-44e4-9ee7-3e9006dbc3e3.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373718-86ce5e1d-d195-45d5-baa6-ef94041d0b90.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373720-14d69157-1a56-4a78-a2f4-d7a134d7c3e9.mp4'),
+  ],
+  // Declare the starting position.
+  index: 0,
+);
+await player.open(playable);
+```
 
 ### Play, pause or play/pause
 
+The 3 methods are:
+
+```dart
+await player.play();
+```
+
+```dart
+await player.pause();
+```
+
+```dart
+await player.playOrPause();
+```
+
 ### Seek
+
+Supply the final position to `Player.seek` method as `Duration`:
+
+```dart
+await player.seek(
+  const Duration(
+    minutes: 6,
+    seconds: 9,
+  ),
+);
+```
 
 ### Loop or repeat
 
+Three `PlaylistMode`s are available:
+
+- `PlaylistMode.none`: End playback once end of the playlist is reached.
+- `PlaylistMode.single`: Indefinitely loop over the currently playing file in the playlist.
+- `PlaylistMode.loop`: Loop over the playlist & restart it from beginning once end is reached.
+
+```dart
+await player.setPlaylistMode(PlaylistMode.single);
+```
+
 ### Set volume, rate or pitch
 
+#### Set the volume
+
+This controls the loudness of audio output. The maximum volume is `100.0`.
+
+```dart
+await player.setVolume(50.0);
+```
+
+#### Set the rate
+
+This controls the playback speed.
+
+```dart
+await player.setRate(1.5);
+```
+
+#### Set the pitch
+
+This controls the pitch of the audio output.
+
+```dart
+await player.setPitch(1.2);
+```
+
+**Note:** This requires `pitch` argument to be `true` in `PlayerConfiguration`.
+
 ### Handle playback events
+
+You can access or subscribe to `Player`'s state changes.
+
+Event handling is an extremely important part of media playback. It is used to show changes in the UI, handle errors, detect the occurrence of play/pause, end-of-file, position updates etc.
+
+- `Player.stream.*`: Provides access to `Player`'s state as [`Stream`](https://dart.dev/tutorials/language/streams)(s).
+- `Player.state.*`: Provides access to `Player`'s state directly (for instantaneous access).
+
+A typical example will be:
+
+```dart
+player.stream.playing.listen(
+  (bool playing) {
+    if (playing) {
+      // Playing.
+    } else {
+      // Paused.
+    }
+  },
+);
+player.stream.position.listen(
+  (Duration position) {
+    setState(() {
+      // Update UI.
+    });
+  },
+);
+```
+
+Following state(s) are available as events:
+
+| Type                        | Name           | Description                                                                                              |
+| --------------------------- | -------------- | -------------------------------------------------------------------------------------------------------- |
+| `Stream<Playlist>`          | `playlist`     | Currently opened media sources.                                                                          |
+| `Stream<bool>`              | `playing`      | Whether playing or not.                                                                                  |
+| `Stream<bool>`              | `completed`    | Whether end of currently playing media source has been reached.                                          |
+| `Stream<Duration>`          | `position`     | Current playback position.                                                                               |
+| `Stream<Duration>`          | `duration`     | Current playback duration.                                                                               |
+| `Stream<double>`            | `volume`       | Current volume.                                                                                          |
+| `Stream<double>`            | `rate`         | Current playback rate.                                                                                   |
+| `Stream<double>`            | `pitch`        | Current pitch.                                                                                           |
+| `Stream<bool>`              | `buffering`    | Whether buffering or not.                                                                                |
+| `Stream<Duration>`          | `buffer`       | Current buffer position. This indicates how much of the stream has been decoded & cached by the demuxer. |
+| `Stream<PlaylistMode>`      | `playlistMode` | Current playlist mode.                                                                                   |
+| `Stream<AudioParams>`       | `audioParams`  | Audio parameters of the currently playing media source e.g. sample rate, channels, etc.                  |
+| `Stream<double?>`           | `audioBitrate` | Audio bitrate of the currently playing media source.                                                     |
+| `Stream<AudioDevice>`       | `audioDevice`  | Currently selected audio device.                                                                         |
+| `Stream<List<AudioDevice>>` | `audioDevices` | Currently available audio devices.                                                                       |
+| `Stream<Track>`             | `track`        | Currently selected video, audio and subtitle track.                                                      |
+| `Stream<Tracks>`            | `tracks`       | Currently available video, audio and subtitle tracks.                                                    |
+| `Stream<int>`               | `width`        | Currently playing video's width.                                                                         |
+| `Stream<int>`               | `height`       | Currently playing video's height.                                                                        |
+| `Stream<PlayerLog>`         | `log`          | Internal logs.                                                                                           |
+| `Stream<String>`            | `error`        | Error messages. This may be used to handle & display errors to the user.                                 |
+
 
 ### Shuffle the queue
 
