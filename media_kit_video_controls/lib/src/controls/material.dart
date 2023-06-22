@@ -5,9 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: non_constant_identifier_names
 import 'dart:async';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:volume_controller/volume_controller.dart';
 import 'package:screen_brightness/screen_brightness.dart';
@@ -1005,7 +1003,7 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
     controller(context).player.seek(duration * slider);
   }
 
-  void onHover(PointerHoverEvent e, BoxConstraints constraints) {
+  void onPanUpdate(DragUpdateDetails e, BoxConstraints constraints) {
     final percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       tapped = true;
@@ -1039,9 +1037,8 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
       clipBehavior: Clip.none,
       margin: _theme(context).seekBarMargin,
       child: LayoutBuilder(
-        builder: (context, constraints) => MouseRegion(
-          cursor: SystemMouseCursors.click,
-          onHover: (e) => onHover(e, constraints),
+        builder: (context, constraints) => GestureDetector(
+          onPanUpdate: (e) => onPanUpdate(e, constraints),
           child: Listener(
             onPointerMove: (e) => onPointerMove(e, constraints),
             onPointerDown: (e) => onPointerDown(),
