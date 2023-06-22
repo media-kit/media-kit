@@ -6,6 +6,7 @@
 // ignore_for_file: camel_case_types
 import 'dart:async';
 import 'dart:js' as js;
+import 'dart:collection';
 import 'dart:html' as html;
 import 'package:meta/meta.dart';
 import 'package:synchronized/synchronized.dart';
@@ -109,45 +110,43 @@ class webPlayer extends PlatformPlayer {
             bufferingController.add(false);
           }
           // PlayerState.state.playlist.index & PlayerState.stream.playlist.index
-          if (Media.normalizeURI(element.src) == _playlist[_index].uri) {
-            switch (_playlistMode) {
-              case PlaylistMode.none:
-                {
-                  if (_index < _playlist.length - 1) {
-                    _index = _index + 1;
-                    final current = _playlist[_index];
-                    element.src = current.uri;
-                    element.play();
-                  } else {
-                    // Playback must end.
-                  }
-                  break;
-                }
-              case PlaylistMode.single:
-                {
+          switch (_playlistMode) {
+            case PlaylistMode.none:
+              {
+                if (_index < _playlist.length - 1) {
+                  _index = _index + 1;
                   final current = _playlist[_index];
                   element.src = current.uri;
-                  element.play();
-                  break;
+                  await play(synchronized: false);
+                } else {
+                  // Playback must end.
                 }
-              case PlaylistMode.loop:
-                {
-                  _index = (_index + 1) % _playlist.length;
-                  final current = _playlist[_index];
-                  element.src = current.uri;
-                  element.play();
-                  break;
-                }
-            }
-            // Update:
-            state = state.copyWith(
-              playlist: state.playlist.copyWith(
-                index: _index,
-              ),
-            );
-            if (!playlistController.isClosed) {
-              playlistController.add(state.playlist);
-            }
+                break;
+              }
+            case PlaylistMode.single:
+              {
+                final current = _playlist[_index];
+                element.src = current.uri;
+                await play(synchronized: false);
+                break;
+              }
+            case PlaylistMode.loop:
+              {
+                _index = (_index + 1) % _playlist.length;
+                final current = _playlist[_index];
+                element.src = current.uri;
+                await play(synchronized: false);
+                break;
+              }
+          }
+          // Update:
+          state = state.copyWith(
+            playlist: state.playlist.copyWith(
+              index: _index,
+            ),
+          );
+          if (!playlistController.isClosed) {
+            playlistController.add(state.playlist);
           }
         });
       });
@@ -363,7 +362,15 @@ class webPlayer extends PlatformPlayer {
       }
 
       if (play) {
-        await element.play();
+        element.play().catchError(
+          (error) {
+            // PlayerStream.error
+            final e = error as html.DomException;
+            if (!errorController.isClosed) {
+              errorController.add(e.message ?? '');
+            }
+          },
+        );
       }
     }
 
@@ -382,15 +389,15 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      try {
-        await element.play();
-      } catch (exception) {
-        // PlayerStream.error
-        final e = exception as html.DomException;
-        if (!errorController.isClosed) {
-          errorController.add(e.message ?? '');
-        }
-      }
+      element.play().catchError(
+        (error) {
+          // PlayerStream.error
+          final e = error as html.DomException;
+          if (!errorController.isClosed) {
+            errorController.add(e.message ?? '');
+          }
+        },
+      );
     }
 
     if (synchronized) {
@@ -452,7 +459,7 @@ class webPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      _playlist.add(media);
+      _playlist = [..._playlist, media];
 
       state = state.copyWith(
         playlist: state.playlist.copyWith(
@@ -482,7 +489,77 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      // TODO: Missing implementation.
+
+      // If we remove the last item in the playlist while playlist mode is none or single, then playback will stop.
+      // In this situation, the playlist doesn't seem to be updated, so we manually update it.
+      if (_index == index &&
+          _playlist.length - 1 == index &&
+          [
+            PlaylistMode.none,
+            PlaylistMode.single,
+          ].contains(_playlistMode)) {
+        _index = _playlist.length - 2 < 0 ? 0 : _playlist.length - 2;
+
+        state = state.copyWith(
+          // Allow playOrPause /w state.completed code-path to play the playlist again.
+          completed: true,
+          playlist: state.playlist.copyWith(
+            medias: _playlist.sublist(0, _playlist.length - 1),
+            index: _index,
+          ),
+        );
+        if (!completedController.isClosed) {
+          completedController.add(true);
+        }
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+      }
+      // If we remove the last item in the playlist while playlist mode is loop, jump to the index 0.
+      else if (_index == index &&
+          _playlist.length - 1 == index &&
+          _playlistMode == PlaylistMode.loop) {
+        _index = 0;
+        element.src = _playlist[_index].uri;
+        await play(synchronized: false);
+
+        state = state.copyWith(
+          // Allow playOrPause /w state.completed code-path to play the playlist again.
+          completed: true,
+          playlist: state.playlist.copyWith(
+            medias: _playlist.sublist(0, _playlist.length - 1),
+            index: 0,
+          ),
+        );
+        if (!completedController.isClosed) {
+          completedController.add(true);
+        }
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+      }
+
+      // Default
+      else {
+        _playlist = [..._playlist];
+        _playlist.removeAt(index);
+
+        // If the current index is greater than the removed index, then the current index should be reduced by 1.
+        // If the current index is equal or less than the removed index, then the current index should not be changed.
+        if (_index > index) {
+          _index--;
+        }
+
+        state = state.copyWith(
+          playlist: state.playlist.copyWith(
+            medias: _playlist,
+            index: _index,
+          ),
+        );
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+      }
     }
 
     if (synchronized) {
@@ -509,6 +586,9 @@ class webPlayer extends PlatformPlayer {
             index: _index,
           ),
         );
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
 
         element.src = _playlist[_index].uri;
         await play(synchronized: false);
@@ -573,6 +653,9 @@ class webPlayer extends PlatformPlayer {
             index: _index,
           ),
         );
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
 
         element.src = _playlist[_index].uri;
         await play(synchronized: false);
@@ -635,11 +718,20 @@ class webPlayer extends PlatformPlayer {
       _index = index;
 
       element.src = _playlist[_index].uri;
-      await element.play();
+      await play(synchronized: false);
 
       state = state.copyWith(playing: true);
       if (!playingController.isClosed) {
         playingController.add(true);
+      }
+
+      state = state.copyWith(
+        playlist: state.playlist.copyWith(
+          index: _index,
+        ),
+      );
+      if (!playlistController.isClosed) {
+        playlistController.add(state.playlist);
       }
     }
 
@@ -662,7 +754,33 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      // TODO: Missing implementation.
+
+      final map = SplayTreeMap<double, Media>.from(
+        _playlist.asMap().map((key, value) => MapEntry(key * 1.0, value)),
+      );
+      final item = map.remove(from * 1.0);
+      if (item != null) {
+        map[to - 0.5] = item;
+      }
+      final keys = map.keys.toList();
+      final values = map.values.toList();
+
+      final current = _index;
+
+      _index = keys.contains(current * 1.0)
+          ? keys.indexOf(current * 1.0)
+          : keys.indexOf(to - 0.5);
+      _playlist = values;
+
+      state = state.copyWith(
+        playlist: Playlist(
+          _playlist,
+          index: _index,
+        ),
+      );
+      if (!playlistController.isClosed) {
+        playlistController.add(state.playlist);
+      }
     }
 
     if (synchronized) {
@@ -683,7 +801,8 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      element.currentTime = duration.inMilliseconds.toDouble() / 1000;
+
+      element.currentTime = duration.inMilliseconds.toDouble() / 1000.0;
 
       // It is self explanatory that PlayerState.completed & PlayerStreams.completed must enter the false state if seek is called. Typically after EOF.
       // https://github.com/alexmercerind/media_kit/issues/221
@@ -831,7 +950,7 @@ class webPlayer extends PlatformPlayer {
 
         state = state.copyWith(
           playlist: Playlist(
-            _playlist,
+            [..._playlist],
             index: _index,
           ),
         );
@@ -846,7 +965,7 @@ class webPlayer extends PlatformPlayer {
 
         state = state.copyWith(
           playlist: Playlist(
-            _playlist,
+            [..._playlist],
             index: _index,
           ),
         );
