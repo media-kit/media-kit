@@ -60,8 +60,7 @@ class Playlist extends Playable {
           index == other.index;
 
   @override
-  // TODO: implement hashCode
-  int get hashCode => medias.hashCode ^ index.hashCode;
+  int get hashCode => ListEquality().hash(medias) ^ index.hashCode;
 
   @override
   String toString() => 'Playlist(medias: $medias, index: $index)';
