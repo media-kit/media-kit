@@ -25,23 +25,21 @@ class LockExt {
   /// If [timeout] is specified, it will try to grab the lock and will not
   /// call the computation callback and throw a [TimeoutExpection] is the lock
   /// cannot be grabbed in the given duration.
-  Future<void> synchronized(
-    Future Function() computation, {
+  Future<T> synchronized<T>(
+    Future<T> Function() computation, {
     Duration? timeout,
   }) async {
     count++;
     try {
-      await instance.synchronized(
+      return instance.synchronized<T>(
         computation,
         timeout: timeout,
       );
-    } catch (exception, stacktrace) {
-      print(exception);
-      print(stacktrace);
-    }
-    count--;
-    if (count == 0) {
-      time = DateTime.now();
+    } finally {
+      count--;
+      if (count == 0) {
+        time = DateTime.now();
+      }
     }
   }
 
