@@ -10,15 +10,15 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
-import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
-import 'package:media_kit/src/player/libmpv/core/task_queue.dart';
 import 'package:media_kit/src/player/libmpv/core/initializer.dart';
 import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 import 'package:media_kit/src/player/libmpv/core/fallback_bitrate_handler.dart';
 import 'package:media_kit/src/player/libmpv/core/initializer_native_event_loop.dart';
 
+import 'package:media_kit/src/utils/lock_ext.dart';
+import 'package:media_kit/src/utils/task_queue.dart';
 import 'package:media_kit/src/utils/android_helper.dart';
 import 'package:media_kit/src/utils/android_asset_loader.dart';
 
@@ -88,12 +88,16 @@ class libmpvPlayer extends PlatformPlayer {
       }
 
       TaskQueue.instance.add(
-        () => lock.synchronized(
-          () {
+        () {
+          final safe = DateTime.now().difference(lock.time) >
+                  TaskQueue.instance.refractoryDuration &&
+              lock.count == 0;
+          if (safe) {
             print('media_kit: mpv_terminate_destroy: ${ctx.address}');
             mpv.mpv_terminate_destroy(ctx);
-          },
-        ),
+          }
+          return safe;
+        },
       );
     }
 
@@ -1876,7 +1880,7 @@ class libmpvPlayer extends PlatformPlayer {
   Future<void> get waitForPlayerInitialization => completer.future;
 
   /// Synchronization & mutual exclusion between methods of this class.
-  static final Lock lock = Lock();
+  static final LockExt lock = LockExt();
 
   /// [HashMap] for retrieving previously fetched audio-bitrate(s).
   static final HashMap<String, double> audioBitrateCache =
