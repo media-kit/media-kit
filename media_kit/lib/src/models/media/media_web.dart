@@ -4,7 +4,6 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:collection';
-import 'package:collection/collection.dart';
 
 import 'package:media_kit/src/models/playable.dart';
 
@@ -29,7 +28,7 @@ class Media extends Playable {
   /// Additional optional user data.
   ///
   /// Default: `null`.
-  final dynamic extras;
+  final Map<String, dynamic>? extras;
 
   /// HTTP headers.
   ///
@@ -39,7 +38,7 @@ class Media extends Playable {
   /// {@macro media}
   Media(
     String resource, {
-    dynamic extras,
+    Map<String, dynamic>? extras,
     Map<String, String>? httpHeaders,
   })  : uri = normalizeURI(resource),
         extras = extras ?? cache[normalizeURI(resource)]?.extras,
@@ -72,16 +71,14 @@ class Media extends Playable {
   @override
   bool operator ==(Object other) {
     if (other is Media) {
-      return other.uri == uri &&
-          MapEquality().equals(other.extras, extras) &&
-          MapEquality().equals(other.httpHeaders, httpHeaders);
+      return other.uri == uri;
     }
     return false;
   }
 
   /// For comparing with other [Media] instances.
   @override
-  int get hashCode => uri.hashCode ^ extras.hashCode ^ httpHeaders.hashCode;
+  int get hashCode => uri.hashCode;
 
   @override
   String toString() =>
