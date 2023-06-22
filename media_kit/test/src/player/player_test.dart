@@ -22,6 +22,9 @@ void main() {
   setUp(() async {
     MediaKit.ensureInitialized();
     await sources.prepare();
+    if (!UniversalPlatform.isWeb) {
+      libmpvPlayer.terminate = false;
+    }
     if (UniversalPlatform.isWeb) {
       // For preventing "DOMException: play() failed because the user didn't interact with the document first." in unit-tests running on web.
       webPlayer.muted = true;

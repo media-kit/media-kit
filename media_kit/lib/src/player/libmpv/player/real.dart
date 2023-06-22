@@ -9,6 +9,7 @@ import 'dart:ffi';
 import 'dart:async';
 import 'dart:collection';
 import 'package:ffi/ffi.dart';
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as path;
 
 import 'package:media_kit/src/player/platform_player.dart';
@@ -87,18 +88,20 @@ class libmpvPlayer extends PlatformPlayer {
         calloc.free(data);
       }
 
-      TaskQueue.instance.add(
-        () {
-          bool safe = lock.count == 0 &&
-              DateTime.now().difference(lock.time) >
-                  TaskQueue.instance.refractoryDuration;
-          if (safe) {
-            print('media_kit: mpv_terminate_destroy: ${ctx.address}');
-            mpv.mpv_terminate_destroy(ctx);
-          }
-          return safe;
-        },
-      );
+      if (terminate) {
+        TaskQueue.instance.add(
+          () {
+            bool safe = lock.count == 0 &&
+                DateTime.now().difference(lock.time) >
+                    TaskQueue.instance.refractoryDuration;
+            if (safe) {
+              print('media_kit: mpv_terminate_destroy: ${ctx.address}');
+              mpv.mpv_terminate_destroy(ctx);
+            }
+            return safe;
+          },
+        );
+      }
     }
 
     if (synchronized) {
@@ -1894,4 +1897,8 @@ class libmpvPlayer extends PlatformPlayer {
   /// [HashMap] for retrieving previously fetched audio-bitrate(s).
   static final HashMap<String, double> audioBitrateCache =
       HashMap<String, double>();
+
+  /// Whether `mpv_terminate_destroy` should be called in [dispose].
+  @visibleForTesting
+  static bool terminate = false;
 }
