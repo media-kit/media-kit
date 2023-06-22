@@ -185,21 +185,10 @@ class VideoState extends State<Video> {
                                       ? rect.width
                                       : rect.height * aspectRatio,
                                   height: rect.height,
-                                  child: Stack(
-                                    children: [
-                                      const SizedBox(),
-                                      Positioned.fill(
-                                        child: Texture(
-                                          textureId: id,
-                                          filterQuality: widget.filterQuality,
-                                        ),
-                                      ),
-                                      HtmlElementView(
-                                        key: _key,
-                                        viewType:
-                                            'com.alexmercerind.media_kit_video.$id',
-                                      )
-                                    ],
+                                  child: HtmlElementView(
+                                    key: _key,
+                                    viewType:
+                                        'com.alexmercerind.media_kit_video.$id',
                                   ),
                                 );
                               }
