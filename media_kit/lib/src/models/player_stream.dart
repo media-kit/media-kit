@@ -61,13 +61,13 @@ class PlayerStream {
   /// Audio bitrate of the currently playing [Media].
   final Stream<double?> audioBitrate;
 
-  /// Currently available [AudioDevice]s.
+  /// Currently selected [AudioDevice]s.
   final Stream<AudioDevice> audioDevice;
 
   /// Currently available [AudioDevice]s.
   final Stream<List<AudioDevice>> audioDevices;
 
-  /// Currently selected video, audio and subtitle tracks.
+  /// Currently selected video, audio and subtitle track.
   final Stream<Track> track;
 
   /// Currently available video, audio and subtitle tracks.

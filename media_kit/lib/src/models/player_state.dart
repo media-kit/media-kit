@@ -66,7 +66,7 @@ class PlayerState {
   /// Currently available [AudioDevice]s.
   final List<AudioDevice> audioDevices;
 
-  /// Currently selected video, audio & subtitle tracks.
+  /// Currently selected video, audio & subtitle track.
   final Track track;
 
   /// Currently available video, audio & subtitle tracks.
