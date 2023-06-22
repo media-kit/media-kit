@@ -133,9 +133,7 @@ dependencies:
     </td>
 </table>
 
-## Guide
-
-### TL;DR
+## TL;DR
 
 A quick usage example:
 
@@ -193,7 +191,349 @@ class MyScreenState extends State<MyScreen> {
 }
 ```
 
-~~For detailed overview & guide to number of features in the library, please visit the [documentation](#).~~ WIP
+## Documentation
+
+A usage guide for [package:media_kit](https://github.com/alexmercerind/media_kit).
+
+**Tip:** Use <kbd>Ctrl</kbd> + <kbd>F</kbd> to quickly search for things.
+
+### Contents
+- [Initialization](#initialization)
+- [Create a `Player`](#create-a-player)
+- [Dispose a `Player`](#dispose-a-player)
+- [Open a `Media` or `Playlist`](#open-a-media-or-playlist)
+- [Play, pause or play/pause](#play-pause-or-playpause)
+- [Seek](#seek)
+- [Loop or repeat](#loop-or-repeat)
+- [Set volume, rate or pitch](#set-volume-rate-or-pitch)
+- [Handle playback events](#handle-playback-events)
+- [Shuffle the queue](#shuffle-the-queue)
+- [Use HTTP headers](#use-http-headers)
+- [Use `extras` to store additional data with `Media`](use-extras-store-additional-data-with-media)
+- [Go to next, previous or any other position in queue](#go-to-next-previous-or-any-other-position-in-queue)
+- [Modify `Player`'s queue](#modify-players-queue)
+- [Select video, audio or subtitle track](#select-video-audio-or-subtitle-track)
+- [Select audio device](#select-audio-device)
+- [Displaying the video](#displaying-the-video)
+- [Video controls](#video-controls)
+
+### Initialization
+
+`MediaKit.ensureInitialized` must be called before using the package:
+
+```dart
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
+  runApp(const MyApp());
+}
+```
+
+The method also has some optional arguments to customize the global behavior. To handle any initialization errors, this may be surrounded by `try`/`catch`.
+
+### Create a Player
+
+A `Player` instance is used to start & control the playback of a media source e.g. URL or file.
+
+```dart
+final player = Player();
+```
+
+Additional options may be provided using the `configuration` argument supplied in the constructor. In general situations, you will never require this.
+
+```dart
+final player = Player(
+    configuration: PlayerConfiguration(
+      // Supply your options:
+      title: 'My awesome package:media_kit application',
+      ready: () {
+        print('The initialization is complete.');
+      },
+    ),
+  )
+```
+
+### Dispose a Player
+
+It is extremely important to release the allocated resources back to the system:
+
+```dart
+player.dispose();
+```
+
+### Open a Media or Playlist
+
+A `Playable` can be either a `Media` or a `Playlist`.
+
+### Play, pause or play/pause
+
+### Seek
+
+### Loop or repeat
+
+### Set volume, rate or pitch
+
+### Handle playback events
+
+### Shuffle the queue
+
+### Use HTTP headers
+
+### Use extras to store additional data with Media
+
+### Modify Player's queue
+
+### Go to next, previous or any other position in queue
+
+### Select video, audio or subtitle track
+
+### Select audio device
+
+### Displaying the video
+
+### Video controls
+
+[`package:media_kit`](https://github.com/alexmercerind/media_kit) provides highly-customizable pre-built video controls for usage.
+
+Apart from theming, layout can be customized, position of buttons can be modified, custom buttons can be created etc. Necessary features like fullscreen, keyboard shortcuts & swipe-based controls are also supported by default.
+
+<table>
+  <tr>
+    <td>
+      <a href="#materialdesktopvideocontrols"><tt>MaterialDesktopVideoControls</tt></a>
+    </td>
+    <td>
+      <a href="#materialvideocontrols"><tt>MaterialVideoControls</tt></a>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img height="312" src="https://user-images.githubusercontent.com/28951144/246606748-72557578-8be4-43c6-a3df-cb0aea99c879.jpg">
+    </td>
+    <td>
+      <img height="312" src="https://user-images.githubusercontent.com/28951144/246650427-a5bbabad-6f7b-4098-9325-ebe2a3068720.jpg">
+    </td>
+  </tr>
+</table>
+
+- `Video` widget provides `controls` argument to display & customize video controls.
+- By default, [`AdaptiveVideoControls`](#adaptivevideocontrols) are used.
+
+#### Types
+
+| Type                                                | Description                                                                                                   |
+|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| [`AdaptiveVideoControls`](#adaptivevideocontrols)               | Selects [`MaterialVideoControls`](#materialvideocontrols), [`CupertinoVideoControls`](#cupertinovideocontrols) etc. based on platform.                                                      |
+| [`MaterialVideoControls`](#materialvideocontrols)               | [Material Design](https://material.io/) video controls.                                                                               |
+| [`MaterialDesktopVideoControls`](#materialdesktopvideocontrols) | [Material Design](https://material.io/) video controls for desktop.                                                                   |
+| [`CupertinoVideoControls`](#cupertinovideocontrols)             | [iOS-style](https://developer.apple.com/design/human-interface-guidelines/designing-for-ios) video controls.                     |
+| [`NoVideoControls`](#novideocontrols)                           | Disable video controls _i.e._ only render video output.                                                                               |
+| Custom                                                          | Provide custom `builder` for video controls.                                                                                           |
+
+#### Select existing video controls
+
+Modify the `controls` argument. For advanced theming of existing video controls, see [theming & modifying video controls](#theming-&-modifying-video-controls) section.
+
+```dart
+Scaffold(
+  body: Video(
+    controller: controller,
+    // Select [MaterialVideoControls].
+    controls: MaterialVideoControls,
+  ),
+);
+```
+```dart
+Scaffold(
+  body: Video(
+    controller: controller,
+    // Select [CupertinoVideoControls].
+    controls: CupertinoVideoControls,
+  ),
+);
+```
+
+
+#### Build custom video controls
+
+Pass custom builder `Widget Function(BuildContext, VideoController)` as `controls` argument.
+
+```dart
+Scaffold(
+  body: Video(
+    controller: controller,
+    // Provide custom builder for controls.
+    controls: (state) {
+      return Center(
+        child: IconButton(
+          onPressed: () {
+            state.widget.controller.player.playOrPause();
+          },
+          icon: StreamBuilder(
+            stream: state.widget.controller.player.stream.playing,
+            builder: (context, playing) => Icon(
+              playing.data == true ? Icons.pause : Icons.play_arrow,
+            ),
+          ),
+          // It's not necessary to use [StreamBuilder] or to use [Player] & [VideoController] from [state].
+          // [StreamSubscription]s can be made inside [initState] of this widget.
+        ),
+      );
+    },
+  ),
+);
+```
+
+#### Use & modify video controls
+
+##### `AdaptiveVideoControls`
+
+- Selects [`MaterialVideoControls`](#materialvideocontrols), [`CupertinoVideoControls`](#cupertinovideocontrols) etc. based on platform.
+- Theming:
+  - Theme the specific controls according to sections below.
+
+##### `MaterialVideoControls`
+
+- [Material Design](https://material.io/) video controls.
+- Theming:
+  - Use `MaterialVideoControlsTheme` widget.
+  - `Video` widget(s) in the `child` tree will follow the specified theme:
+
+```dart
+// Wrap [Video] widget with [MaterialVideoControlsTheme].
+MaterialVideoControlsTheme(
+  normal: MaterialVideoControlsThemeData(
+    // Modify theme options:
+    buttonBarButtonSize: 24.0,
+    buttonBarButtonColor: Colors.white,
+    // Modify top button bar:
+    topButtonBar: [
+      const Spacer(),
+      MaterialDesktopCustomButton(
+        onPressed: () {
+          debugPrint('Custom "Settings" button pressed.');
+        },
+        icon: const Icon(Icons.settings),
+      ),
+    ],
+  ),
+  fullscreen: const MaterialVideoControlsThemeData(
+    // Modify theme options:
+    displaySeekBar: false,
+    automaticallyImplySkipNextButton: false,
+    automaticallyImplySkipPreviousButton: false,
+  ),
+  child: Scaffold(
+    body: Video(
+      controller: controller,
+    ),
+  ),
+);
+```
+- Related widgets (may be used in `primaryButtonBar`, `topButtonBar` & `bottomButtonBar`):
+  - `MaterialPlayOrPauseButton`
+  - `MaterialSkipNextButton`
+  - `MaterialSkipPreviousButton`
+  - `MaterialFullscreenButton`
+  - `MaterialCustomButton`
+  - `MaterialPositionIndicator`
+
+##### `MaterialDesktopVideoControls`
+
+- [Material Design](https://material.io/) video controls for desktop.
+- Theming: 
+  - Use `MaterialDesktopVideoControlsTheme` widget.
+  - `Video` widget(s) in the `child` tree will follow the specified theme:
+
+```dart
+// Wrap [Video] widget with [MaterialDesktopVideoControlsTheme].
+MaterialDesktopVideoControlsTheme(
+  normal: MaterialDesktopVideoControlsThemeData(
+    // Modify theme options:
+    seekBarThumbColor: Colors.blue,
+    seekBarPositionColor: Colors.blue,
+    toggleFullscreenOnDoublePress: false,
+    // Modify top button bar:
+    topButtonBar: [
+      const Spacer(),
+      MaterialDesktopCustomButton(
+        onPressed: () {
+          debugPrint('Custom "Settings" button pressed.');
+        },
+        icon: const Icon(Icons.settings),
+      ),
+    ],
+    // Modify bottom button bar:
+    bottomButtonBar: const [
+      Spacer(),
+      MaterialDesktopPlayOrPauseButton(),
+      Spacer(),
+    ],
+  ),
+  fullscreen: const MaterialDesktopVideoControlsThemeData(),
+  child: Scaffold(
+    body: Video(
+      controller: controller,
+    ),
+  ),
+);
+```
+- Related widgets (may be used in `primaryButtonBar`, `topButtonBar` & `bottomButtonBar`):
+  - `MaterialDesktopPlayOrPauseButton`
+  - `MaterialDesktopSkipNextButton`
+  - `MaterialDesktopSkipPreviousButton`
+  - `MaterialDesktopFullscreenButton`
+  - `MaterialDesktopCustomButton`
+  - `MaterialDesktopVolumeButton`
+  - `MaterialDesktopPositionIndicator`
+- Keyboard shortcuts may be modified using `keyboardShortcuts` argument. Default ones are listed below:
+
+| Shortcut                      | Action                    |
+|-------------------------------|---------------------------|
+| Media Play Button             | Play                      |
+| Media Pause Button            | Pause                     |
+| Media Play/Pause Button       | Play/Pause                |
+| Media Next Track Button       | Skip Next                 |
+| Media Previous Track Button   | Skip Previous             |
+| Space                         | Play/Pause                |
+| J                             | Seek 10s Behind           |
+| I                             | Seek 10s Ahead            |
+| Arrow Left                    | Seek 2s Behind            |
+| Arrow Right                   | Seek 2s Ahead             |
+| Arrow Up                      | Increase Volume 5%        |
+| Arrow Down                    | Decrease Volume 5%        |
+| F                             | Enter/Exit Fullscreen     |
+| Escape                        | Exit Fullscreen           |
+
+##### `CupertinoVideoControls`
+
+- [iOS-style](https://developer.apple.com/design/human-interface-guidelines/designing-for-ios) video controls.
+- Theming:
+  - Use `CupertinoVideoControlsTheme` widget.
+  - `Video` widget(s) in the `child` tree will follow the specified theme:
+
+```dart
+// Wrap [Video] widget with [CupertinoVideoControlsTheme].
+CupertinoVideoControlsTheme(
+  normal: const CupertinoVideoControlsThemeData(
+    // W.I.P.
+  ),
+  fullscreen: const CupertinoVideoControlsThemeData(
+    // W.I.P.
+  ),
+  child: Scaffold(
+    body: Video(
+      controller: controller,
+    ),
+  ),
+);
+```
+
+##### `NoVideoControls`
+
+- Disable video controls _i.e._ only render video output.
+- Theming:
+  - No theming applicable.
 
 ## Goals
 
@@ -605,6 +945,7 @@ yuv4mpegpipe    YUV4MPEG pipe
 - The list contains the supported formats (& not containers).
   - A video/audio format may be present in a number of containers.
   - e.g. an MP4 file generally contains H264 video stream.
+- On web, format support depends upon the web browser. Thus, it happens to be extremely limited as compared to native platforms.
 
 ## Permissions
 
