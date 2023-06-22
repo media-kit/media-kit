@@ -89,9 +89,9 @@ class libmpvPlayer extends PlatformPlayer {
 
       TaskQueue.instance.add(
         () {
-          final safe = DateTime.now().difference(lock.time) >
-                  TaskQueue.instance.refractoryDuration &&
-              lock.count == 0;
+          bool safe = lock.count == 0 &&
+              DateTime.now().difference(lock.time) >
+                  TaskQueue.instance.refractoryDuration;
           if (safe) {
             print('media_kit: mpv_terminate_destroy: ${ctx.address}');
             mpv.mpv_terminate_destroy(ctx);
@@ -193,6 +193,7 @@ class libmpvPlayer extends PlatformPlayer {
         }
       }
 
+      isShuffleEnabled = false;
       isPlayingStateChangeAllowed = false;
 
       for (int i = 0; i < playlist.length; i++) {
@@ -920,6 +921,11 @@ class libmpvPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      if (shuffle == isShuffleEnabled) {
+        return;
+      }
+      isShuffleEnabled = shuffle;
 
       await _command(
         [
@@ -1860,6 +1866,9 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Whether the [Player] has been disposed. This is used to prevent accessing dangling [ctx] after [dispose].
   bool disposed = false;
+
+  /// A flag to keep track of [setShuffle] calls.
+  bool isShuffleEnabled = false;
 
   /// A flag to prevent changes to [state.playing] due to `loadfile` commands in [open].
   ///

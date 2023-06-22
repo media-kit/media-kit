@@ -336,6 +336,8 @@ class webPlayer extends PlatformPlayer {
       _index = index;
       _playlist = playlist;
 
+      _shuffle.clear();
+
       state = state.copyWith(
         playlist: Playlist(
           playlist,
@@ -938,13 +940,11 @@ class webPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      // Currently playing [Media].
+
       final current = _playlist[_index];
-      if (shuffle) {
-        // Save original playlist.
-        _original.clear();
-        _original.addAll(_playlist);
-        // Shuffle playlist & update index.
+
+      if (shuffle && _shuffle.isEmpty) {
+        _shuffle.addAll(_playlist);
         _playlist.shuffle();
         _index = _playlist.indexOf(current);
 
@@ -957,11 +957,11 @@ class webPlayer extends PlatformPlayer {
         if (!playlistController.isClosed) {
           playlistController.add(state.playlist);
         }
-      } else {
-        // Restore original playlist & update index.
+      } else if (!shuffle && _shuffle.isNotEmpty) {
         _playlist.clear();
-        _playlist.addAll(_original);
+        _playlist.addAll(_shuffle);
         _index = _playlist.indexOf(current);
+        _shuffle.clear();
 
         state = state.copyWith(
           playlist: Playlist(
@@ -1070,7 +1070,7 @@ class webPlayer extends PlatformPlayer {
   // --------------------------------------------------
 
   /// Current loaded [Media] queue before shuffle.
-  final List<Media> _original = <Media>[];
+  final List<Media> _shuffle = <Media>[];
 
   /// Current index of the [Media] in the queue.
   int _index = 0;

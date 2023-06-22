@@ -142,7 +142,7 @@ void main() {
     () async {
       final player = Player();
 
-      final playlist = Playlist(
+      final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
             Media(sources.platform[i]),
@@ -155,7 +155,7 @@ void main() {
           [
             // Player.open
             for (int i = 0; i < sources.platform.length; i++)
-              playlist.copyWith(index: i),
+              playable.copyWith(index: i),
             // Player.dispose
             emitsDone,
           ],
@@ -208,7 +208,7 @@ void main() {
         ),
       );
 
-      await player.open(playlist);
+      await player.open(playable);
 
       await Future.delayed(const Duration(minutes: 1, seconds: 30));
 
@@ -265,7 +265,7 @@ void main() {
     () async {
       final player = Player();
 
-      final playlist = Playlist(
+      final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
             Media(sources.platform[i]),
@@ -276,7 +276,7 @@ void main() {
         player.stream.playlist,
         emitsInOrder(
           [
-            playlist,
+            playable,
             // Player.dispose
             emitsDone,
           ],
@@ -294,10 +294,7 @@ void main() {
         ),
       );
 
-      await player.open(
-        playlist,
-        play: false,
-      );
+      await player.open(playable, play: false);
 
       await Future.delayed(const Duration(seconds: 30));
 
@@ -372,7 +369,7 @@ void main() {
     () async {
       final player = Player();
 
-      final playlist = Playlist(
+      final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
             Media(sources.platform[i]),
@@ -384,7 +381,7 @@ void main() {
         emitsInOrder(
           [
             for (int i = 0; i < sources.platform.length; i++)
-              playlist.copyWith(index: i),
+              playable.copyWith(index: i),
             // Player.dispose
             emitsDone,
           ],
@@ -437,10 +434,7 @@ void main() {
         ),
       );
 
-      await player.open(
-        playlist,
-        play: false,
-      );
+      await player.open(playable, play: false);
       await player.play();
 
       await Future.delayed(const Duration(minutes: 1, seconds: 30));
@@ -567,14 +561,14 @@ void main() {
         },
       );
 
-      final expectPlaylist = expectAsync1(
+      final expectPlayable = expectAsync1(
         (value) {
           print(value);
           expect(value, isA<Playlist>());
-          final playlist = value as Playlist;
+          final playable = value as Playlist;
           expect(
             ListEquality().equals(
-              playlist.medias,
+              playable.medias,
               [
                 Media(
                   'http://$address:$port/0',
@@ -610,7 +604,7 @@ void main() {
 
       player.stream.playlist.listen((e) {
         if (e.index >= 0) {
-          expectPlaylist(e);
+          expectPlayable(e);
         }
       });
 
@@ -648,15 +642,15 @@ void main() {
         },
         count: sources.platform.length,
       );
-      final expectPlaylist = expectAsync2(
+      final expectPlayable = expectAsync2(
         (value, i) {
           print(value);
           expect(value, isA<Playlist>());
-          final playlist = value as Playlist;
-          expect(playlist.index, i);
+          final playable = value as Playlist;
+          expect(playable.index, i);
           expect(
             ListEquality().equals(
-              playlist.medias,
+              playable.medias,
               [
                 for (int i = 0; i < sources.platform.length; i++)
                   Media(
@@ -695,7 +689,7 @@ void main() {
 
       player.stream.playlist.listen((e) {
         if (e.index >= 0) {
-          expectPlaylist(e, e.index);
+          expectPlayable(e, e.index);
         }
       });
 
@@ -936,7 +930,7 @@ void main() {
     () async {
       final player = Player();
 
-      final playlist = Playlist(
+      final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
             Media(sources.platform[i]),
@@ -947,11 +941,11 @@ void main() {
       expect(
         player.stream.playlist,
         emits(
-          playlist,
+          playable,
         ),
       );
 
-      await player.open(playlist);
+      await player.open(playable);
 
       addTearDown(player.dispose);
     },
@@ -1194,7 +1188,7 @@ void main() {
     () async {
       final player = Player();
 
-      final playlist = Playlist(
+      final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
             Media(sources.platform[i]),
@@ -1208,19 +1202,19 @@ void main() {
             TypeMatcher<Playlist>().having(
               (playlist) => playlist.index,
               'index',
-              0,
+              equals(0),
             ),
             // Player.jump
             TypeMatcher<Playlist>().having(
               (playlist) => playlist.index,
               'index',
-              2,
+              equals(2),
             ),
           ],
         ),
       );
 
-      await player.open(playlist);
+      await player.open(playable);
 
       // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
@@ -1238,7 +1232,7 @@ void main() {
     () async {
       final player = Player();
 
-      final playlist = Playlist(
+      final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
             Media(sources.platform[i]),
@@ -1250,14 +1244,14 @@ void main() {
         emitsInOrder(
           [
             // Player.open
-            playlist,
+            playable,
             // Player.move
-            Playlist(move(playlist.medias, 1, 3)),
+            Playlist(move(playable.medias, 1, 3)),
           ],
         ),
       );
 
-      await player.open(playlist);
+      await player.open(playable);
 
       // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
@@ -1672,7 +1666,7 @@ void main() {
     () async {
       final player = Player();
 
-      final playlist = Playlist(
+      final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
             Media(sources.platform[i]),
@@ -1684,9 +1678,9 @@ void main() {
         emitsInOrder(
           [
             // Player.open
-            playlist,
+            playable,
             // Player.jump
-            playlist.copyWith(index: 1),
+            playable.copyWith(index: 1),
             // Player.remove
             Playlist(
               [
@@ -1707,7 +1701,7 @@ void main() {
         ),
       );
 
-      await player.open(playlist);
+      await player.open(playable);
       await player.jump(1);
 
       // NOTE: VOLUNTARY DELAY.
@@ -1726,7 +1720,7 @@ void main() {
     () async {
       final player = Player();
 
-      final playlist = Playlist(
+      final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
             Media(sources.platform[i]),
@@ -1738,7 +1732,7 @@ void main() {
         emitsInOrder(
           [
             // Player.open
-            playlist,
+            playable,
             // Player.remove
             Playlist(
               [
@@ -1759,7 +1753,7 @@ void main() {
         ),
       );
 
-      await player.open(playlist);
+      await player.open(playable);
 
       // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
@@ -1777,7 +1771,7 @@ void main() {
     () async {
       final player = Player();
 
-      final playlist = Playlist(
+      final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
             Media(sources.platform[i]),
@@ -1789,7 +1783,7 @@ void main() {
         emitsInOrder(
           [
             // Player.open
-            playlist,
+            playable,
             // Player.remove
             Playlist(
               [
@@ -1811,7 +1805,7 @@ void main() {
         ),
       );
 
-      await player.open(playlist);
+      await player.open(playable);
 
       // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
@@ -1829,7 +1823,7 @@ void main() {
     () async {
       final player = Player();
 
-      final playlist = Playlist(
+      final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
             Media(sources.platform[i]),
@@ -1841,7 +1835,7 @@ void main() {
         emitsInOrder(
           [
             // Player.open
-            playlist,
+            playable,
             // Player.jump
             Playlist(
               [
@@ -1864,7 +1858,7 @@ void main() {
       );
 
       await player.setPlaylistMode(PlaylistMode.none);
-      await player.open(playlist);
+      await player.open(playable);
 
       // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
@@ -1887,7 +1881,7 @@ void main() {
     () async {
       final player = Player();
 
-      final playlist = Playlist(
+      final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
             Media(sources.platform[i]),
@@ -1899,7 +1893,7 @@ void main() {
         emitsInOrder(
           [
             // Player.open
-            playlist,
+            playable,
             // Player.jump
             Playlist(
               [
@@ -1922,7 +1916,7 @@ void main() {
       );
 
       await player.setPlaylistMode(PlaylistMode.single);
-      await player.open(playlist);
+      await player.open(playable);
 
       // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
@@ -1945,7 +1939,7 @@ void main() {
     () async {
       final player = Player();
 
-      final playlist = Playlist(
+      final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
             Media(sources.platform[i]),
@@ -1957,7 +1951,7 @@ void main() {
         emitsInOrder(
           [
             // Player.open
-            playlist,
+            playable,
             // Player.jump
             Playlist(
               [
@@ -1981,7 +1975,7 @@ void main() {
       );
 
       await player.setPlaylistMode(PlaylistMode.loop);
-      await player.open(playlist);
+      await player.open(playable);
 
       // NOTE: VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
@@ -2039,6 +2033,124 @@ void main() {
       addTearDown(player.dispose);
     },
     skip: !UniversalPlatform.isWeb,
+  );
+  test(
+    'player-set-shuffle',
+    () async {
+      final player = Player();
+
+      final playable = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      player.stream.playlist.listen(
+        (e) {
+          print(e.medias.join('\n'));
+          print('------------------------------');
+        },
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // Player.open
+            playable,
+            // Player.setShuffle /w true
+            TypeMatcher<Playlist>().having(
+              (event) => event.medias.toSet(),
+              'medias',
+              equals(playable.medias.toSet()),
+            ),
+            // Player.setShuffle /w false
+            playable,
+          ],
+        ),
+      );
+
+      await player.open(playable);
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.setShuffle(true);
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      // VOLUNTARY DELAY.
+      await player.setShuffle(false);
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-set-shuffle-consecutive',
+    () async {
+      final player = Player();
+
+      final playable = Playlist(
+        [
+          for (int i = 0; i < sources.platform.length; i++)
+            Media(sources.platform[i]),
+        ],
+      );
+
+      player.stream.playlist.listen(
+        (e) {
+          print(e.medias.join('\n'));
+          print('------------------------------');
+        },
+      );
+
+      expect(
+        player.stream.playlist,
+        emitsInOrder(
+          [
+            // Player.open
+            playable,
+            // Player.setShuffle /w true
+            TypeMatcher<Playlist>().having(
+              (event) => event.medias.toSet(),
+              'medias',
+              equals(playable.medias.toSet()),
+            ),
+            // Player.setShuffle /w false
+            playable,
+          ],
+        ),
+      );
+
+      await player.open(playable);
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.setShuffle(true);
+      await player.setShuffle(true);
+      await player.setShuffle(true);
+      await player.setShuffle(true);
+      await player.setShuffle(true);
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      // VOLUNTARY DELAY.
+      await player.setShuffle(false);
+      await player.setShuffle(false);
+      await player.setShuffle(false);
+      await player.setShuffle(false);
+      await player.setShuffle(false);
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
   );
 }
 
