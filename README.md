@@ -135,7 +135,7 @@ dependencies:
 
 ## TL;DR
 
-A quick usage example:
+A quick usage example.
 
 ```dart
 import 'package:flutter/material.dart';
@@ -191,6 +191,8 @@ class MyScreenState extends State<MyScreen> {
 }
 ```
 
+**Note:** You may need to add required [permissions](#permissions) to your project.
+
 ## Documentation
 
 A usage guide for [package:media_kit](https://github.com/alexmercerind/media_kit).
@@ -224,6 +226,7 @@ A usage guide for [package:media_kit](https://github.com/alexmercerind/media_kit
 ```dart
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // Initialize:
   MediaKit.ensureInitialized();
   runApp(const MyApp());
 }
@@ -231,7 +234,7 @@ void main() {
 
 The method also has some optional arguments to customize the global behavior. To handle any initialization errors, this may be surrounded by `try`/`catch`.
 
-### Create a Player
+### Create a `Player`
 
 A `Player` instance is used to start & control the playback of a media source e.g. URL or file.
 
@@ -239,7 +242,7 @@ A `Player` instance is used to start & control the playback of a media source e.
 final Player player = Player();
 ```
 
-Additional options may be provided using the `configuration` argument supplied in the constructor. In general situations, you will never require this.
+Additional options may be provided using the `configuration` argument in the constructor. In general situations, you will never require this.
 
 ```dart
 final Player player = Player(
@@ -253,7 +256,7 @@ final Player player = Player(
   )
 ```
 
-### Dispose a Player
+### Dispose a `Player`
 
 It is extremely important to release the allocated resources back to the system:
 
@@ -261,7 +264,7 @@ It is extremely important to release the allocated resources back to the system:
 await player.dispose();
 ```
 
-### Open a Media or Playlist
+### Open a `Media` or `Playlist`
 
 A `Playable` can either be a `Media` or a `Playlist`.
 
@@ -270,14 +273,14 @@ A `Playable` can either be a `Media` or a `Playlist`.
 
 Use the `Player.open` method to load & start playback.
 
-#### Media
+#### `Media`
 
 ```dart
 final playable = Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4');
 await player.open(playable);
 ```
 
-#### Playlist
+#### `Playlist`
 
 ```dart
 final playable = Playlist(
@@ -419,7 +422,7 @@ player.stream.position.listen(
 );
 ```
 
-Following state(s) are available as events:
+The following state(s) are available as events:
 
 | Type                        | Name           | Description                                                                                              |
 | --------------------------- | -------------- | -------------------------------------------------------------------------------------------------------- |
@@ -445,22 +448,264 @@ Following state(s) are available as events:
 | `Stream<PlayerLog>`         | `log`          | Internal logs.                                                                                           |
 | `Stream<String>`            | `error`        | Error messages. This may be used to handle & display errors to the user.                                 |
 
-
 ### Shuffle the queue
+
+You may find the requirement to shuffle the `Playlist` you `open`'d in `Player`, like some music players do.
+
+```dart
+await player.setShuffle(true);
+```
+
+**Note:** This option is reset upon the next `Player.open` call.
 
 ### Use HTTP headers
 
-### Use extras to store additional data with Media
+Declare the `httpHeaders` argument in `Media` constructor. It takes the HTTP headers as `Map<String, String>`.
 
-### Modify Player's queue
+```dart
+final playable = Media(
+  'https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4',
+  httpHeaders: {
+    'Foo': 'Bar',
+    'Accept': '*/*',
+    'Range': 'bytes=0-',
+  },
+);
+```
+
+### Use `extras` to store additional data with `Media`
+
+The `extras` argument may be utilized to store additional data with a `Media` in form of `Map<String, dynamic>`.
+
+```dart
+final playable = Media(
+  'https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4',
+  extras: {
+    'track': '9',
+    'year': '2012',
+    'title': 'Courtesy Call',
+    'artist': 'Thousand Foot Krutch',
+    'album': 'The End Is Where We Begin',
+  },
+);
+```
+
+### Modify `Player`'s queue
+
+You can add or remove (etc.) a `Media` in an already playing `Playlist`:
+
+#### Add
+
+Add a new `Media` to the back of the queue:
+
+```dart
+await player.add(Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4'));
+```
+
+#### Remove
+
+Remove any item from the queue:
+
+```dart
+await player.remove(0);
+```
+
+#### Move
+
+Move any item in the queue from one position to another:
+
+```dart
+await player.move(6, 9);
+```
 
 ### Go to next, previous or any other position in queue
 
+#### Skip to the next queue item
+
+```dart
+await player.next();
+```
+
+#### Skip to the previous queue item
+
+```dart
+await player.previous();
+```
+
+#### Skip to any other queue item
+
+```dart
+await player.jump(5);
+```
+
 ### Select video, audio or subtitle track
+
+A media source may contain multiple video, audio or subtitle tracks e.g. for multiple languages. Available video, audio or subtitle tracks are notified through `Player`'s state. See ["Handle playback events" section](#handle-playback-events) for related information.
+
+By default, video, audio & subtitle track is selected automatically _i.e._ `VideoTrack.auto()`, `AudioTrack.auto()` & `SubtitleTrack.auto()`.
+
+#### Automatic selection
+
+```dart
+await player.setVideoTrack(VideoTrack.auto());
+
+await player.setAudioTrack(AudioTrack.auto());
+
+await player.setSubtitleTrack(SubtitleTrack.auto());
+```
+
+#### Disable track
+
+This may be used to essentially disable video output, disable audio output or stop rendering of subtitles etc.
+
+```dart
+await player.setVideoTrack(VideoTrack.no());
+
+await player.setAudioTrack(AudioTrack.no());
+
+await player.setSubtitleTrack(SubtitleTrack.no());
+```
+
+#### Select custom track
+
+- Retrieve currently available tracks:
+
+```dart
+List<VideoTrack> videos = player.state.tracks.video;
+List<AudioTrack> audios = player.state.tracks.audio;
+List<SubtitleTrack> subtitles = player.state.tracks.subtitle;
+
+// Get notified as [Stream]:
+player.stream.tracks.listen((event) {
+  List<VideoTrack> videos = event.video;
+  List<AudioTrack> audios = event.audio;
+  List<SubtitleTrack> subtitles = event.subtitle;
+});
+```
+
+- Select the track:
+
+```dart
+await player.setVideoTrack(videos[0]);
+await player.setAudioTrack(audios[1]);
+await player.setSubtitleTrack(subtitles[2]);
+```
+
+- Get notified about currently selected track:
+
+```dart
+VideoTrack video = player.state.track.video;
+AudioTrack audio = player.state.track.audio;
+SubtitleTrack subtitle = player.state.track.subtitle;
+
+// Get notified as [Stream]:
+player.stream.track.listen((event) {
+  VideoTrack video = event.video;
+  AudioTrack audio = event.audio;
+  SubtitleTrack subtitle = event.subtitle;
+});
+```
 
 ### Select audio device
 
+Available audio devices are notified through `Player`'s state. See ["Handle playback events" section](#handle-playback-events) for related information.
+
+By default, audio device is selected automatically _i.e._ `AudioDevice.auto()`.
+
+#### Default selection
+
+```dart
+await player.setAudioDevice(AudioDevice.auto());
+```
+
+#### Disable audio output
+
+```dart
+await player.setAudioDevice(AudioDevice.no());
+```
+
+### Select custom audio device
+
+- Retrieve currently available audio devices:
+
+```dart
+List<AudioDevice> devices = player.state.audioDevices;
+
+// Get notified as [Stream]:
+player.stream.audioDevices.listen((event) {
+  List<AudioDevice> devices = event;
+});
+```
+
+- Select the audio device:
+
+```dart
+await player.setAudioDevice(devices[1]);
+```
+
+- Get notified about currently selected audio device:
+
+```dart
+AudioDevice device = player.state.audioDevice;
+
+// Get notified as [Stream]:
+player.stream.audioDevice.listen((event) {
+  AudioDevice device = event;
+});
+```
+
 ### Displaying the video
+
+The **existing ["TL;DR example"](#tldr) should provide you better idea**.
+
+For displaying the video inside Flutter UI, you must:
+
+- Create `VideoController`
+  - Pass the `Player you already have. 
+- Create `Video` widget
+  - Pass the `VideoController` you already have.
+
+The code is easier to understand:
+
+```dart
+class _MyScreenState extends State<MyScreen> {
+  late final Player player = Player();
+  late final VideoController controller = VideoController(player);
+
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Video(
+        controller: controller,
+      ),
+    );
+  }
+}
+```
+
+The video playback uses [hardware acceleration](https://en.wikipedia.org/wiki/Hardware_acceleration) _i.e._ GPU by default.
+
+Additional options may be provided using the `configuration` argument in the constructor. In general situations, you will never require this.
+
+```dart
+final VideoController player = VideoController(
+  player,
+  configuration: const VideoControllerConfiguration(
+    // Supply your options:
+    enableHardwareAcceleration: true,      // default: true
+    width: 640,                            // default: null
+    height: 480,                           // default: null
+    // The in-code comments is best place to know more about these options:
+    // https://github.com/alexmercerind/media_kit/blob/main/media_kit_video/lib/src/video_controller/video_controller.dart
+  ),
+);
+```
 
 ### Video controls
 
@@ -1116,7 +1361,8 @@ yuv4mpegpipe    YUV4MPEG pipe
 - The list contains the supported formats (& not containers).
   - A video/audio format may be present in a number of containers.
   - e.g. an MP4 file generally contains H264 video stream.
-- On web, format support depends upon the web browser. Thus, it happens to be extremely limited as compared to native platforms.
+- On the web, format support depends upon the web browser.
+  - It happens to be extremely limited as compared to native platforms.
 
 ## Permissions
 
