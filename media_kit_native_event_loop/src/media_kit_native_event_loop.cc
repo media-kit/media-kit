@@ -20,8 +20,12 @@ void MediaKitEventLoopHandler::Register(int64_t handle, void* post_c_object, int
 
     auto context = reinterpret_cast<mpv_handle*>(handle);
 
-    mutexes_.emplace(std::make_pair(context, std::make_unique<std::mutex>()));
-    condition_variables_.emplace(std::make_pair(context, std::make_unique<std::condition_variable>()));
+    if (mutexes_.find(context) == mutexes_.end()) {
+      mutexes_.emplace(std::make_pair(context, std::make_unique<std::mutex>()));
+    }
+    if (condition_variables_.find(context) == condition_variables_.end()) {
+      condition_variables_.emplace(std::make_pair(context, std::make_unique<std::condition_variable>()));
+    }
 
     auto thread = std::make_unique<std::thread>([&, context, post_c_object, send_port]() {
       for (;;) {
