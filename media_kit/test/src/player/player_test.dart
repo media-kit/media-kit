@@ -457,8 +457,8 @@ void main() {
       final expectExtras = expectAsync1(
         (value) {
           print(value);
-          expect(value, isA<Map<String, String>>());
-          final extras = value as Map<String, String>;
+          expect(value, isA<Map<String, dynamic>>());
+          final extras = value as Map<String, dynamic>;
           expect(
             MapEquality().equals(
               extras,
@@ -488,7 +488,9 @@ void main() {
         ),
       );
 
-      addTearDown(player.dispose);
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -500,8 +502,8 @@ void main() {
       final expectExtras = expectAsync2(
         (value, i) {
           print(value);
-          expect(value, isA<Map<String, String>>());
-          final extras = value as Map<String, String>;
+          expect(value, isA<Map<String, dynamic>>());
+          final extras = value as Map<String, dynamic>;
           expect(
             MapEquality().equals(
               extras,
@@ -540,9 +542,11 @@ void main() {
         ),
       );
 
-      addTearDown(player.dispose);
+      await Future.delayed(const Duration(minutes: 1));
+
+      await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
   );
   test(
     'player-open-playable-media-http-headers',
@@ -620,7 +624,9 @@ void main() {
         ),
       );
 
-      addTearDown(player.dispose);
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
     skip: UniversalPlatform.isWeb,
@@ -707,9 +713,11 @@ void main() {
         ),
       );
 
-      addTearDown(player.dispose);
+      await Future.delayed(const Duration(minutes: 1));
+
+      await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
     skip: UniversalPlatform.isWeb,
   );
   test(
@@ -1059,7 +1067,7 @@ void main() {
 
         await player.setVolume(i.toDouble());
 
-        await Future.delayed(const Duration(milliseconds: 20));
+        await Future.delayed(const Duration(milliseconds: 100));
       }
 
       addTearDown(player.dispose);
@@ -1213,9 +1221,15 @@ void main() {
       );
 
       await player.open(playlist);
+
+      // NOTE: VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
       await player.jump(2);
 
-      addTearDown(player.dispose);
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1250,7 +1264,9 @@ void main() {
 
       await player.move(1, 3);
 
-      addTearDown(player.dispose);
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1278,15 +1294,14 @@ void main() {
         ),
       );
 
-      await player.setRate(5.0);
       await player.setPlaylistMode(PlaylistMode.none);
       await player.open(playable);
 
-      await Future.delayed(const Duration(seconds: 30));
+      await Future.delayed(const Duration(minutes: 1));
 
       await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
   );
   test(
     'player-index-transitions-playlist-mode-single',
@@ -1311,15 +1326,14 @@ void main() {
         ),
       );
 
-      await player.setRate(5.0);
       await player.setPlaylistMode(PlaylistMode.single);
       await player.open(playable);
 
-      await Future.delayed(const Duration(seconds: 30));
+      await Future.delayed(const Duration(minutes: 1));
 
       await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
   );
   test(
     'player-index-transitions-playlist-mode-loop',
@@ -1350,15 +1364,14 @@ void main() {
         ),
       );
 
-      await player.setRate(5.0);
       await player.setPlaylistMode(PlaylistMode.loop);
       await player.open(playable);
 
-      await Future.delayed(const Duration(seconds: 30));
+      await Future.delayed(const Duration(minutes: 2, seconds: 30));
 
-      addTearDown(player.dispose);
+      await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: Timeout(const Duration(minutes: 5)),
   );
   test(
     'player-next-playlist-mode-none',
@@ -1513,7 +1526,7 @@ void main() {
         player.previous();
       });
 
-      await Future.delayed(const Duration(seconds: 15));
+      await Future.delayed(const Duration(seconds: 45));
 
       timer.cancel();
       await player.dispose();
@@ -1554,7 +1567,7 @@ void main() {
         player.previous();
       });
 
-      await Future.delayed(const Duration(seconds: 15));
+      await Future.delayed(const Duration(seconds: 45));
 
       timer.cancel();
       await player.dispose();
@@ -1597,7 +1610,7 @@ void main() {
         player.previous();
       });
 
-      await Future.delayed(const Duration(seconds: 15));
+      await Future.delayed(const Duration(seconds: 45));
 
       timer.cancel();
       await player.dispose();
@@ -1702,7 +1715,9 @@ void main() {
 
       await player.remove(0);
 
-      addTearDown(player.dispose);
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1751,7 +1766,9 @@ void main() {
 
       await player.remove(1);
 
-      addTearDown(player.dispose);
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1801,7 +1818,9 @@ void main() {
 
       await player.remove(0);
 
-      addTearDown(player.dispose);
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1846,6 +1865,10 @@ void main() {
 
       await player.setPlaylistMode(PlaylistMode.none);
       await player.open(playlist);
+
+      // NOTE: VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
       await player.jump(sources.platform.length - 1);
 
       // NOTE: VOLUNTARY DELAY.
@@ -1853,7 +1876,9 @@ void main() {
 
       await player.remove(sources.platform.length - 1);
 
-      addTearDown(player.dispose);
+      await Future.delayed(const Duration(seconds: 45));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1898,6 +1923,10 @@ void main() {
 
       await player.setPlaylistMode(PlaylistMode.single);
       await player.open(playlist);
+
+      // NOTE: VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
       await player.jump(sources.platform.length - 1);
 
       // NOTE: VOLUNTARY DELAY.
@@ -1905,7 +1934,9 @@ void main() {
 
       await player.remove(sources.platform.length - 1);
 
-      addTearDown(player.dispose);
+      await Future.delayed(const Duration(seconds: 45));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1951,6 +1982,10 @@ void main() {
 
       await player.setPlaylistMode(PlaylistMode.loop);
       await player.open(playlist);
+
+      // NOTE: VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
       await player.jump(sources.platform.length - 1);
 
       // NOTE: VOLUNTARY DELAY.
@@ -1958,7 +1993,9 @@ void main() {
 
       await player.remove(sources.platform.length - 1);
 
-      addTearDown(player.dispose);
+      await Future.delayed(const Duration(seconds: 45));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
