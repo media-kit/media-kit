@@ -114,7 +114,9 @@ void MediaKitEventLoopHandler::Dispose(int64_t handle) {
       mutex_.lock();
       auto thread = threads_[context].get();
       mutex_.unlock();
-      thread->join();
+      if (thread->joinable()) {
+        thread->join();
+      }
     } catch (std::system_error& e) {
       std::cout << "MediaKitEventLoopHandler::Dispose: " << e.code() << " " << e.what() << std::endl;
     }
