@@ -55,6 +55,7 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   seekOnDoubleTap: true,
   controlsHoverDuration: Duration(seconds: 3),
   controlsTransitionDuration: Duration(milliseconds: 300),
+  bufferingIndicatorBuilder: null,
   primaryButtonBar: [
     Spacer(flex: 2),
     MaterialSkipPreviousButton(),
@@ -65,12 +66,15 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
     Spacer(flex: 2),
   ],
   topButtonBar: [],
+  topButtonBarMargin: EdgeInsets.symmetric(
+    horizontal: 16.0,
+  ),
   bottomButtonBar: [
     MaterialPositionIndicator(),
     Spacer(),
     MaterialFullscreenButton(),
   ],
-  buttonBarMargin: EdgeInsets.only(
+  bottomButtonBarMargin: EdgeInsets.only(
     left: 16.0,
     right: 8.0,
     bottom: 42.0,
@@ -126,6 +130,9 @@ class MaterialVideoControlsThemeData {
   /// [Duration] for which the controls will be animated when shown or hidden.
   final Duration controlsTransitionDuration;
 
+  /// Builder for the buffering indicator.
+  final Widget Function(BuildContext)? bufferingIndicatorBuilder;
+
   /// Custom builder for volume indicator.
   final Widget Function(BuildContext, double)? volumeIndicatorBuilder;
 
@@ -140,11 +147,14 @@ class MaterialVideoControlsThemeData {
   /// Buttons to be displayed in the top button bar.
   final List<Widget> topButtonBar;
 
+  /// Margin around the top button bar.
+  final EdgeInsets topButtonBarMargin;
+
   /// Buttons to be displayed in the bottom button bar.
   final List<Widget> bottomButtonBar;
 
   /// Margin around the button bar.
-  final EdgeInsets buttonBarMargin;
+  final EdgeInsets bottomButtonBarMargin;
 
   /// Height of the button bar.
   final double buttonBarHeight;
@@ -191,6 +201,7 @@ class MaterialVideoControlsThemeData {
     this.seekOnDoubleTap = true,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 300),
+    this.bufferingIndicatorBuilder,
     this.volumeIndicatorBuilder,
     this.brightnessIndicatorBuilder,
     this.primaryButtonBar = const [
@@ -203,12 +214,13 @@ class MaterialVideoControlsThemeData {
       Spacer(flex: 2),
     ],
     this.topButtonBar = const [],
+    this.topButtonBarMargin = const EdgeInsets.symmetric(horizontal: 16.0),
     this.bottomButtonBar = const [
       MaterialPositionIndicator(),
       Spacer(),
       MaterialFullscreenButton(),
     ],
-    this.buttonBarMargin = const EdgeInsets.only(left: 16.0, right: 8.0),
+    this.bottomButtonBarMargin = const EdgeInsets.only(left: 16.0, right: 8.0),
     this.buttonBarHeight = 56.0,
     this.buttonBarButtonSize = 24.0,
     this.buttonBarButtonColor = const Color(0xFFFFFFFF),
@@ -232,12 +244,14 @@ class MaterialVideoControlsThemeData {
     bool? seekOnDoubleTap,
     Duration? controlsHoverDuration,
     Duration? controlsTransitionDuration,
+    Widget Function(BuildContext)? bufferingIndicatorBuilder,
     Widget Function(BuildContext, double)? volumeIndicatorBuilder,
     Widget Function(BuildContext, double)? brightnessIndicatorBuilder,
     List<Widget>? primaryButtonBar,
     List<Widget>? topButtonBar,
+    EdgeInsets? topButtonBarMargin,
     List<Widget>? bottomButtonBar,
-    EdgeInsets? buttonBarMargin,
+    EdgeInsets? bottomButtonBarMargin,
     double? buttonBarHeight,
     double? buttonBarButtonSize,
     Color? buttonBarButtonColor,
@@ -264,14 +278,18 @@ class MaterialVideoControlsThemeData {
           controlsHoverDuration ?? this.controlsHoverDuration,
       controlsTransitionDuration:
           controlsTransitionDuration ?? this.controlsTransitionDuration,
+      bufferingIndicatorBuilder:
+          bufferingIndicatorBuilder ?? this.bufferingIndicatorBuilder,
       volumeIndicatorBuilder:
           volumeIndicatorBuilder ?? this.volumeIndicatorBuilder,
       brightnessIndicatorBuilder:
           brightnessIndicatorBuilder ?? this.brightnessIndicatorBuilder,
       primaryButtonBar: primaryButtonBar ?? this.primaryButtonBar,
       topButtonBar: topButtonBar ?? this.topButtonBar,
+      topButtonBarMargin: topButtonBarMargin ?? this.topButtonBarMargin,
       bottomButtonBar: bottomButtonBar ?? this.bottomButtonBar,
-      buttonBarMargin: buttonBarMargin ?? this.buttonBarMargin,
+      bottomButtonBarMargin:
+          bottomButtonBarMargin ?? this.bottomButtonBarMargin,
       buttonBarHeight: buttonBarHeight ?? this.buttonBarHeight,
       buttonBarButtonSize: buttonBarButtonSize ?? this.buttonBarButtonSize,
       buttonBarButtonColor: buttonBarButtonColor ?? this.buttonBarButtonColor,
@@ -349,6 +367,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   bool _volumeInterceptEventStream = false;
 
   late /* private */ var playlist = controller(context).player.state.playlist;
+  late bool buffering = controller(context).player.state.buffering;
 
   bool _mountSeekBackwardButton = false;
   bool _mountSeekForwardButton = false;
@@ -370,6 +389,13 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
             (event) {
               setState(() {
                 playlist = event;
+              });
+            },
+          ),
+          controller(context).player.stream.buffering.listen(
+            (event) {
+              setState(() {
+                buffering = event;
               });
             },
           ),
@@ -627,6 +653,20 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       ),
                     ),
               ),
+              // Buffering Indicator.
+              AnimatedOpacity(
+                curve: Curves.easeInOut,
+                opacity: buffering ? 1.0 : 0.0,
+                duration: _theme(context).controlsTransitionDuration,
+                child:
+                    _theme(context).bufferingIndicatorBuilder?.call(context) ??
+                        const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFFFFFFF),
+                          ),
+                        ),
+              ),
+
               // Controls:
               AnimatedOpacity(
                 curve: Curves.easeInOut,
@@ -726,7 +766,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           children: [
                             Container(
                               height: _theme(context).buttonBarHeight,
-                              margin: _theme(context).buttonBarMargin,
+                              margin: _theme(context).topButtonBarMargin,
                               child: Row(
                                 mainAxisSize: MainAxisSize.max,
                                 mainAxisAlignment: MainAxisAlignment.start,
@@ -734,13 +774,21 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 children: _theme(context).topButtonBar,
                               ),
                             ),
+                            // Only display [primaryButtonBar] if [buffering] is false.
                             Expanded(
-                              child: Center(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: _theme(context).primaryButtonBar,
+                              child: AnimatedOpacity(
+                                curve: Curves.easeInOut,
+                                opacity: buffering ? 0.0 : 1.0,
+                                duration:
+                                    _theme(context).controlsTransitionDuration,
+                                child: Center(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: _theme(context).primaryButtonBar,
+                                  ),
                                 ),
                               ),
                             ),
@@ -751,7 +799,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                   const MaterialSeekBar(),
                                 Container(
                                   height: _theme(context).buttonBarHeight,
-                                  margin: _theme(context).buttonBarMargin,
+                                  margin: _theme(context).bottomButtonBarMargin,
                                   child: Row(
                                     mainAxisSize: MainAxisSize.max,
                                     mainAxisAlignment: MainAxisAlignment.start,
@@ -784,7 +832,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                             ),
                           Container(
                             height: _theme(context).buttonBarHeight,
-                            margin: _theme(context).buttonBarMargin,
+                            margin: _theme(context).bottomButtonBarMargin,
                           ),
                         ],
                       ),
@@ -1003,6 +1051,22 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
     controller(context).player.seek(duration * slider);
   }
 
+  void onPanStart(DragStartDetails e, BoxConstraints constraints) {
+    final percent = e.localPosition.dx / constraints.maxWidth;
+    setState(() {
+      tapped = true;
+      slider = percent.clamp(0.0, 1.0);
+    });
+  }
+
+  void onPanDown(DragDownDetails e, BoxConstraints constraints) {
+    final percent = e.localPosition.dx / constraints.maxWidth;
+    setState(() {
+      tapped = true;
+      slider = percent.clamp(0.0, 1.0);
+    });
+  }
+
   void onPanUpdate(DragUpdateDetails e, BoxConstraints constraints) {
     final percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
@@ -1037,64 +1101,69 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
       clipBehavior: Clip.none,
       margin: _theme(context).seekBarMargin,
       child: LayoutBuilder(
-        builder: (context, constraints) => GestureDetector(
-          onPanUpdate: (e) => onPanUpdate(e, constraints),
-          child: Listener(
-            onPointerMove: (e) => onPointerMove(e, constraints),
-            onPointerDown: (e) => onPointerDown(),
-            onPointerUp: (e) => onPointerUp(),
-            child: Container(
-              color: Colors.transparent,
-              width: constraints.maxWidth,
-              height: _theme(context).seekBarContainerHeight,
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.bottomLeft,
-                children: [
-                  Container(
-                    width: constraints.maxWidth,
-                    height: _theme(context).seekBarHeight,
-                    alignment: Alignment.bottomLeft,
-                    color: _theme(context).seekBarColor,
-                    child: Stack(
-                      clipBehavior: Clip.none,
+        builder: (context, constraints) => MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onPanStart: (e) => onPanStart(e, constraints),
+            onPanDown: (e) => onPanDown(e, constraints),
+            onPanUpdate: (e) => onPanUpdate(e, constraints),
+            child: Listener(
+              onPointerMove: (e) => onPointerMove(e, constraints),
+              onPointerDown: (e) => onPointerDown(),
+              onPointerUp: (e) => onPointerUp(),
+              child: Container(
+                color: Colors.transparent,
+                width: constraints.maxWidth,
+                height: _theme(context).seekBarContainerHeight,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.bottomLeft,
+                  children: [
+                    Container(
+                      width: constraints.maxWidth,
+                      height: _theme(context).seekBarHeight,
                       alignment: Alignment.bottomLeft,
-                      children: [
-                        Container(
-                          width: constraints.maxWidth * bufferPercent,
-                          color: _theme(context).seekBarBufferColor,
-                        ),
-                        Container(
-                          width: tapped
-                              ? constraints.maxWidth * slider
-                              : constraints.maxWidth * positionPercent,
-                          color: _theme(context).seekBarPositionColor,
-                        ),
-                      ],
+                      color: _theme(context).seekBarColor,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.bottomLeft,
+                        children: [
+                          Container(
+                            width: constraints.maxWidth * bufferPercent,
+                            color: _theme(context).seekBarBufferColor,
+                          ),
+                          Container(
+                            width: tapped
+                                ? constraints.maxWidth * slider
+                                : constraints.maxWidth * positionPercent,
+                            color: _theme(context).seekBarPositionColor,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Positioned(
-                    left: tapped
-                        ? (constraints.maxWidth -
-                                _theme(context).seekBarThumbSize / 2) *
-                            slider
-                        : (constraints.maxWidth -
-                                _theme(context).seekBarThumbSize / 2) *
-                            positionPercent,
-                    bottom: -1.0 * _theme(context).seekBarThumbSize / 2 +
-                        _theme(context).seekBarHeight / 2,
-                    child: Container(
-                      width: _theme(context).seekBarThumbSize,
-                      height: _theme(context).seekBarThumbSize,
-                      decoration: BoxDecoration(
-                        color: _theme(context).seekBarThumbColor,
-                        borderRadius: BorderRadius.circular(
-                          _theme(context).seekBarThumbSize / 2,
+                    Positioned(
+                      left: tapped
+                          ? (constraints.maxWidth -
+                                  _theme(context).seekBarThumbSize / 2) *
+                              slider
+                          : (constraints.maxWidth -
+                                  _theme(context).seekBarThumbSize / 2) *
+                              positionPercent,
+                      bottom: -1.0 * _theme(context).seekBarThumbSize / 2 +
+                          _theme(context).seekBarHeight / 2,
+                      child: Container(
+                        width: _theme(context).seekBarThumbSize,
+                        height: _theme(context).seekBarThumbSize,
+                        decoration: BoxDecoration(
+                          color: _theme(context).seekBarThumbColor,
+                          borderRadius: BorderRadius.circular(
+                            _theme(context).seekBarThumbSize / 2,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
