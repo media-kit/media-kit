@@ -9,6 +9,7 @@ import 'dart:js' as js;
 import 'dart:collection';
 import 'dart:html' as html;
 import 'package:meta/meta.dart';
+import 'package:collection/collection.dart';
 import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
@@ -945,7 +946,11 @@ class webPlayer extends PlatformPlayer {
 
       if (shuffle && _shuffle.isEmpty) {
         _shuffle.addAll(_playlist);
-        _playlist.shuffle();
+        if (_playlist.length > 1) {
+          while (ListEquality().equals(_shuffle, _playlist)) {
+            _playlist.shuffle();
+          }
+        }
         _index = _playlist.indexOf(current);
 
         state = state.copyWith(
