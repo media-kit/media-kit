@@ -970,6 +970,10 @@ void main() {
     'player-buffering-open-file',
     () async {
       final player = Player();
+      player.streams.buffering
+          .listen((event) => print("buffering" + event.toString()));
+      player.streams.completed
+          .listen((event) => print("completed: " + event.toString()));
 
       expect(
         player.streams.playlist,
@@ -984,7 +988,6 @@ void main() {
           ],
         ),
       );
-      player.streams.buffering.listen((event) => print(event));
       expect(
         player.streams.buffering,
         emitsInOrder(
@@ -1016,7 +1019,10 @@ void main() {
     () async {
       final player = Player();
 
-      player.streams.buffering.listen((event) => print(event));
+      player.streams.buffering
+          .listen((event) => print("buffering" + event.toString()));
+      player.streams.completed
+          .listen((event) => print("completed: " + event.toString()));
 
       expect(
         player.streams.buffering,
@@ -1046,6 +1052,10 @@ void main() {
     'player-buffering-false-upon-complete',
     () async {
       final player = Player();
+      player.streams.buffering
+          .listen((event) => print("buffering" + event.toString()));
+      player.streams.completed
+          .listen((event) => print("completed: " + event.toString()));
 
       expect(
         player.streams.playlist,
@@ -1092,7 +1102,10 @@ void main() {
     () async {
       final player = Player();
       print("player-buffering-upon-seek");
-      player.streams.buffering.listen((event) => print(event));
+      player.streams.buffering
+          .listen((event) => print("buffering" + event.toString()));
+      player.streams.completed
+          .listen((event) => print("completed: " + event.toString()));
 
       expect(
         player.streams.buffering,
@@ -1135,6 +1148,3 @@ void main() {
     timeout: Timeout(const Duration(minutes: 1)),
   );
 }
-
-
-
