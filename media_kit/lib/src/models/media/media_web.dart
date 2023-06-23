@@ -53,7 +53,9 @@ class Media extends Playable {
   /// Normalizes the passed URI.
   static String normalizeURI(String uri) {
     if (uri.startsWith(_kAssetScheme)) {
-      // TODO: Missing implementation.
+      // Handle asset:// scheme. Only for Flutter.
+      final key = encodeAssetKey(uri);
+      return key;
     }
     return uri;
   }
