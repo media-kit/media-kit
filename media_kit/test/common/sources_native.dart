@@ -25,14 +25,20 @@ class _Sources {
     if (_prepared) return;
     // Download to local [File]s.
     for (int i = 0; i < network.length; i++) {
-      final response = await http.get(Uri.parse(network[i]));
       final destination = path.join(
-        path.dirname(Platform.script.toFilePath()),
+        Directory.systemTemp.path,
+        'media_kit',
         network[i].split('/').last,
       );
-      await File(destination).writeAsBytes(response.bodyBytes);
+      if (!await File(destination).parent.exists()) {
+        await File(destination).parent.create(recursive: true);
+      }
+      if (!await File(destination).exists()) {
+        final response = await http.get(Uri.parse(network[i]));
+        await File(destination).writeAsBytes(response.bodyBytes);
+      }
       file.add(destination);
-      bytes.add(response.bodyBytes);
+      bytes.add(await File(destination).readAsBytes());
     }
     // Force forward slashes for Windows.
     for (int i = 0; i < file.length; i++) {
