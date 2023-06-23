@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'dart:async';
 import 'dart:collection';
 import 'package:test/test.dart';
@@ -548,7 +547,7 @@ void main() {
       final player = Player();
 
       final address = '127.0.0.1';
-      final port = Random().nextInt(1 << 16 - 1);
+      final port = 8081;
 
       final expectHTTPHeaders = expectAsync1(
         (value) {
@@ -621,6 +620,7 @@ void main() {
       await Future.delayed(const Duration(seconds: 30));
 
       await player.dispose();
+      await server.close();
     },
     timeout: Timeout(const Duration(minutes: 1)),
     skip: UniversalPlatform.isWeb,
@@ -631,7 +631,7 @@ void main() {
       final player = Player();
 
       final address = '127.0.0.1';
-      final port = Random().nextInt(1 << 16 - 1);
+      final port = 8081;
 
       final expectHTTPHeaders = expectAsync2(
         (value, i) {
@@ -710,6 +710,7 @@ void main() {
       await Future.delayed(const Duration(minutes: 1));
 
       await player.dispose();
+      await server.close();
     },
     timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
     skip: UniversalPlatform.isWeb,
