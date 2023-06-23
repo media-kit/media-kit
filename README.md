@@ -663,7 +663,7 @@ The **existing ["TL;DR example"](#tldr) should provide you better idea**.
 For displaying the video inside Flutter UI, you must:
 
 - Create `VideoController`
-  - Pass the `Player you already have. 
+  - Pass the `Player` you already have. 
 - Create `Video` widget
   - Pass the `VideoController` you already have.
 
