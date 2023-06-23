@@ -22,7 +22,6 @@ jobs:
           flutter pub get
           flutter build windows --verbose
           copy build\windows\runner\Release\libmpv-2.dll ..\media_kit\libmpv-2.dll
-          copy build\windows\runner\Release\media_kit_native_event_loop.dll ..\media_kit\media_kit_native_event_loop.dll
 
       - run: dart pub get
       - run: dart test --platform vm
