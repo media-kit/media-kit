@@ -46,11 +46,11 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.11                             # Primary package.
+  media_kit: ^0.0.12                             # Primary package.
   
-  media_kit_video: ^0.0.12                       # For video rendering.
+  media_kit_video: ^0.0.13                       # For video rendering.
   
-  media_kit_native_event_loop: ^1.0.4            # Support for higher number of concurrent instances & better performance.
+  media_kit_native_event_loop: ^1.0.5            # Support for higher number of concurrent instances & better performance.
   
   media_kit_libs_android_video: ^1.0.6           # Android package for video native libraries.
   media_kit_libs_ios_video: ^1.0.4               # iOS package for video native libraries.
@@ -63,9 +63,9 @@ dependencies:
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.11                             # Primary package.
+  media_kit: ^0.0.12                             # Primary package.
   
-  media_kit_native_event_loop: ^1.0.4            # Support for higher number of concurrent instances & better performance.
+  media_kit_native_event_loop: ^1.0.5            # Support for higher number of concurrent instances & better performance.
   
   media_kit_libs_android_audio: ^1.0.6           # Android package for audio native libraries.
   media_kit_libs_ios_audio: ^1.0.4               # iOS package for audio native libraries.
@@ -85,11 +85,11 @@ dependencies:
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 13 or above.                     | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.12/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 13 or above.                     | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.12/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.12/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.12/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.12/media_kit_test_linux_x64.7z)          |
 | Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://alexmercerind.github.io//media_kit/)                                                                            |
 
 <table>
@@ -103,14 +103,14 @@ dependencies:
   </tr>
   <tr>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696332-37d54a33-9f8b-44df-a564-3420c74eb4da.jpg" height="400" alt="Android"></img>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/cf93a1fd-e1d8-4d1c-8bd5-cc393cef1ce9" height="400" alt="Android"></img>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/aea1f480-51e2-452a-b53c-c0e27f71f0d8" height="400" alt="Android"></img>
     </td>
     <td>
       <img src="https://user-images.githubusercontent.com/28951144/232696349-6bad4f2b-439b-43bb-9ced-e05cd52b1477.jpg" height="400" alt="iOS"></img>
+      <img src="https://user-images.githubusercontent.com/28951144/232696349-6bad4f2b-439b-43bb-9ced-e05cd52b1477.jpg" height="400" alt="iOS"></img>
     </td>
-</table>
-
-<table>
+  </tr>
   <tr>
     <td>
       macOS
@@ -118,21 +118,32 @@ dependencies:
     <td>
       Windows
     </td>
+  </tr>
+  <tr>
     <td>
-      GNU/Linux
+      <img src="https://user-images.githubusercontent.com/28951144/232696378-5c8f76a6-d0a5-4215-8c4f-5a76957e5692.jpg" height="200" alt="macOS"></img>
+    </td>
+    <td>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/742b0016-da58-42de-9880-ecaa0604c2b2" height="200" alt="Windows"></img>
     </td>
   </tr>
   <tr>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696378-5c8f76a6-d0a5-4215-8c4f-5a76957e5692.jpg" height="140" width="248.8" alt="macOS"></img>
+      GNU/Linux
     </td>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696391-c2577912-21c7-4a63-ad7c-37ded5cb2973.jpg" height="140" width="248.8" alt="Windows"></img>
+      Web
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="https://user-images.githubusercontent.com/28951144/232696361-57fa500a-1c24-4e5e-9152-a03bd5b7cfa6.jpg" height="200" alt="GNU/Linux"></img>
     </td>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696361-57fa500a-1c24-4e5e-9152-a03bd5b7cfa6.jpg" height="140" width="248.8" alt="GNU/Linux"></img>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/feb9fdf2-095f-43db-96af-f7782985238d" height="200" alt="Web"></img>
     </td>
 </table>
+
 
 ## TL;DR
 
@@ -1474,6 +1485,10 @@ Edit `macos/Runner/Release.entitlements` & `macos/Runner/DebugProfile.entitlemen
 
 N/A
 
+### Web
+
+N/A
+
 ## Notes
 
 ### Android
@@ -1526,6 +1541,12 @@ There are other ways to bundle these within your app package e.g. within Snap or
 - [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
 - [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/\_packaging)
 
+### Web
+
+On the web, **libmpv is not used**. Video & audio playback is handled by embedding [HTML `<video>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video).
+
+The format support depends upon the web browser. It happens to be extremely limited as compared to native platforms.
+
 ## Architecture
 
 ### package:media_kit
@@ -1543,17 +1564,36 @@ _Click on the zoom button on top-right or pinch inside._
 classDiagram
 
   Player *-- PlatformPlayer
-  PlatformPlayer <|-- libmpv_Player
-  PlatformPlayer <|-- web_Player
+  PlatformPlayer <|-- libmpvPlayer
+  PlatformPlayer <|-- webPlayer
   PlatformPlayer *-- PlayerState
   PlatformPlayer *-- PlayerStreams
   PlatformPlayer o-- PlayerConfiguration
 
-  libmpv_Player <.. NativeLibrary
+  libmpvPlayer <.. NativeLibrary
+  libmpvPlayer <.. Initializer
+  Initializer o-- InitializerIsolate
+  Initializer o-- InitializerNativeEventLoop
   
   Playable <.. Media
   Playable <.. Playlist
-  
+
+  class Initializer {
+    +create(path: String, callback: Function, options: Map<String, String>): Future<Pointer<mpv_handle>>
+    +dispose(handle: Pointer<mpv_handle>)
+  }
+
+  class InitializerIsolate {
+    +create(path: String, callback: Function, options: Map<String, String>): Future<Pointer<mpv_handle>>
+    +dispose(handle: Pointer<mpv_handle>)
+  }
+
+  class InitializerNativeEventLoop {
+    +ensureInitialized()
+    +create(path: String, callback: Future<void> Function(Pointer<mpv_event> event), options: Map<String, String>): Future<Pointer<mpv_handle>>
+    +dispose(handle: Pointer<mpv_handle>)
+  }
+
   class Playable {
   }
   
@@ -1699,7 +1739,7 @@ classDiagram
     #StreamController<int> heightController
   }
 
-  class libmpv_Player {
+  class libmpvPlayer {
     +dispose()
     +open(playable: Playable)
     +play()
@@ -1724,7 +1764,7 @@ classDiagram
     +«get» handle: Future<int>
   }
   
-  class web_Player {
+  class webPlayer {
     +dispose()
     +open(playable: Playable)
     +play()
@@ -1989,6 +2029,10 @@ classDiagram
   }
 ```
 
+#### Web
+
+_TODO: documentation._
+
 ## Implementation
 
 [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) is used for leveraging audio & video playback.  It _seems_ the best possible option since supports a wide variety of audio & video formats, provides hardware acceleration & bundle size is also minimal (select only required decoders etc. in FFmpeg/mpv).
@@ -2081,6 +2125,10 @@ You may visit [experimentation repository](https://github.com/alexmercerind/flut
 #### GNU/Linux
 
 On Flutter Linux, [both OpenGL (H/W) & pixel buffer (S/W) APIs](https://github.com/flutter/engine/pull/24916) are available for rendering on [`Texture` widget](https://api.flutter.dev/flutter/widgets/Texture-class.html).
+
+#### Web
+
+Video & audio playback is handled by embedding [HTML `<video>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video).
 
 ## License
 
