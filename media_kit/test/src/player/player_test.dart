@@ -1011,7 +1011,7 @@ void main() {
 
       await Future.delayed(const Duration(seconds: 30));
     },
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
     'player-buffering-open-network',
@@ -1045,7 +1045,7 @@ void main() {
       );
       await Future.delayed(const Duration(seconds: 30));
     },
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
     'player-buffering-false-upon-complete',
@@ -1092,11 +1092,11 @@ void main() {
 
       await player.play();
 
-      await Future.delayed(const Duration(seconds: 30));
       await player.streams.completed.where((event) => event == true).first;
+
       expect(player.state.buffering, equals(false));
     },
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
     'player-buffering-upon-seek',
@@ -1146,6 +1146,6 @@ void main() {
 
       await Future.delayed(const Duration(seconds: 30));
     },
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: Timeout(const Duration(minutes: 1)),
   );
 }
