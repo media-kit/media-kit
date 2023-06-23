@@ -1136,15 +1136,16 @@ class libmpvPlayer extends PlatformPlayer {
 
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
       if (isPlayingStateChangeAllowed) {
-        state = state.copyWith(
-          playing: true,
-          completed: false,
-        );
+        state =
+            state.copyWith(playing: true, completed: false, buffering: true);
         if (!playingController.isClosed) {
           playingController.add(true);
         }
         if (!completedController.isClosed) {
           completedController.add(false);
+        }
+        if (!bufferingController.isClosed) {
+          bufferingController.add(true);
         }
       }
     }
@@ -1183,7 +1184,6 @@ class libmpvPlayer extends PlatformPlayer {
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
         final buffering =
             (prop.ref.data.cast<Int8>().value != 0 && state.playing);
-        print("buffering: " + buffering.toString());
         state = state.copyWith(buffering: buffering);
         if (!bufferingController.isClosed) {
           bufferingController.add(buffering);

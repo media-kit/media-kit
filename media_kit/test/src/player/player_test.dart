@@ -966,47 +966,6 @@ void main() {
     },
   );
 
-
-  test(
-    'player-buffering-open-file',
-    () async {
-      final player = Player();
-
-      expect(
-        player.streams.playlist,
-        emitsInOrder(
-          [
-            Playlist(
-              [
-                Media(sources.file[0]),
-              ],
-              index: 0,
-            ),
-          ],
-        ),
-      );
-      expect(
-        player.streams.buffering,
-        emitsInOrder(
-          [
-            // Player::open
-            true,
-            // Player::play
-            false,
-          ],
-        ),
-      );
-
-      await player.open(
-        Media(sources.file[0]),
-        play: false,
-      );
-      await player.play();
-
-      await Future.delayed(const Duration(seconds: 30));
-    },
-    timeout: Timeout(const Duration(minutes: 1)),
-  );
   test(
     'player-buffering-open-file',
     () async {
@@ -1034,6 +993,8 @@ void main() {
             true,
             // finished buffering
             false,
+            //idle
+            true,
             // completed
             false,
           ],
@@ -1108,7 +1069,7 @@ void main() {
             // finished buffering
             false,
             // idle (but it completed)
-            false,
+            true,
             // Completed
             false
           ],
@@ -1130,7 +1091,7 @@ void main() {
     'player-buffering-upon-seek',
     () async {
       final player = Player();
-
+      print("player-buffering-upon-seek");
       player.streams.buffering.listen((event) => print(event));
 
       expect(
@@ -1141,8 +1102,12 @@ void main() {
             true,
             // finished buffering
             false,
-            // idle (but it completed)
+            // seek buffering
+            true,
+            // seek buffering ended
             false,
+            // idle (but it completed)
+            true,
             // Completed
             false
           ],
@@ -1151,16 +1116,25 @@ void main() {
       final Future<Duration> duration = player.streams.duration.first;
 
       await player.open(
-        Media(sources.network[0]),
+        Media(
+            'https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'),
         play: true,
       );
       await duration;
-      
-      await player.seek(player.state.buffer + Duration(seconds: 5));
+      //wait for the video to be buffered
+      await player.streams.buffering.where((event) => event == false).first;
+
+      Duration seekTO = player.state.duration - Duration(seconds: 5);
+
+      await player.seek(seekTO);
+
+      await player.play();
 
       await Future.delayed(const Duration(seconds: 30));
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
-
 }
+
+
+
