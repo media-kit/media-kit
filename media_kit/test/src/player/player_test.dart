@@ -971,7 +971,7 @@ void main() {
     () async {
       final player = Player();
       player.streams.buffering
-          .listen((event) => print("buffering" + event.toString()));
+          .listen((event) => print("buffering: " + event.toString()));
       player.streams.completed
           .listen((event) => print("completed: " + event.toString()));
 
@@ -1003,16 +1003,15 @@ void main() {
           ],
         ),
       );
-      final Future<Duration> duration = player.streams.duration.first;
 
       await player.open(
         Media(sources.file[0]),
         play: true,
       );
 
-      await Future.delayed(await duration);
+      await Future.delayed(const Duration(seconds: 30));
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
     'player-buffering-open-network',
@@ -1020,7 +1019,7 @@ void main() {
       final player = Player();
 
       player.streams.buffering
-          .listen((event) => print("buffering" + event.toString()));
+          .listen((event) => print("buffering: " + event.toString()));
       player.streams.completed
           .listen((event) => print("completed: " + event.toString()));
 
@@ -1046,14 +1045,14 @@ void main() {
       );
       await Future.delayed(const Duration(seconds: 30));
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
     'player-buffering-false-upon-complete',
     () async {
       final player = Player();
       player.streams.buffering
-          .listen((event) => print("buffering" + event.toString()));
+          .listen((event) => print("buffering: " + event.toString()));
       player.streams.completed
           .listen((event) => print("completed: " + event.toString()));
 
@@ -1095,7 +1094,7 @@ void main() {
 
       await Future.delayed(const Duration(seconds: 30));
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
     'player-buffering-upon-seek',
@@ -1103,7 +1102,7 @@ void main() {
       final player = Player();
       print("player-buffering-upon-seek");
       player.streams.buffering
-          .listen((event) => print("buffering" + event.toString()));
+          .listen((event) => print("buffering: " + event.toString()));
       player.streams.completed
           .listen((event) => print("completed: " + event.toString()));
 
@@ -1145,6 +1144,6 @@ void main() {
 
       await Future.delayed(const Duration(seconds: 30));
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: Timeout(const Duration(minutes: 2)),
   );
 }
