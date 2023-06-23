@@ -1888,5 +1888,5 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Whether `mpv_terminate_destroy` should be called in [dispose].
   @visibleForTesting
-  static bool terminate = false;
+  static bool terminate = true;
 }
