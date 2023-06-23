@@ -16,10 +16,10 @@ jobs:
         with:
           channel: "stable"
 
-      - name: libmpv-2.dll
+      - name: Setup libmpv for Windows
         run: |
           curl -LO https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-04-08/mpv-dev-x86_64-20230408-git-7ae7fc0.7z
-          cmake -E md5sum mpv-dev-x86_64-20230408-git-7ae7fc0.7z | find /i "d41d8cd98f00b204e9800998ecf8427e" > nul || exit 1
+          cmake -E md5sum mpv-dev-x86_64-20230408-git-7ae7fc0.7z | find /i "3d6e3686b5d543dfed6a775b8bff6b14" > nul || exit 1
           cmake -E tar x mpv-dev-x86_64-20230408-git-7ae7fc0.7z libmpv-2.dll
         shell: cmd
 
