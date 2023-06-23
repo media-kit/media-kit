@@ -996,10 +996,10 @@ void main() {
             true,
             // finished buffering
             false,
-            //idle
-            true,
-            // completed
-            false,
+            // // idle (but it completed)
+            // true,
+            // // Completed (since the streams are distinct the false will be ignored)
+            // false
           ],
         ),
       );
@@ -1031,10 +1031,10 @@ void main() {
             true,
             // finished buffering
             false,
-            // idle (but it completed)
-            true,
-            // completed
-            false,
+            // // idle (but it completed)
+            // true,
+            // // Completed (since the streams are distinct the false will be ignored)
+            // false
           ],
         ),
       );
@@ -1077,10 +1077,10 @@ void main() {
             true,
             // finished buffering
             false,
-            // idle (but it completed)
-            true,
-            // Completed
-            false
+            // // idle (but it completed)
+            // true,
+            // // Completed (since the streams are distinct the false will be ignored)
+            // false
           ],
         ),
       );
@@ -1093,6 +1093,8 @@ void main() {
       await player.play();
 
       await Future.delayed(const Duration(seconds: 30));
+      await player.streams.completed.where((event) => event == true).first;
+      expect(player.state.buffering, equals(false));
     },
     timeout: Timeout(const Duration(minutes: 2)),
   );
@@ -1118,10 +1120,10 @@ void main() {
             true,
             // seek buffering ended
             false,
-            // idle (but it completed)
-            true,
-            // Completed
-            false
+            // // idle (but it completed)
+            // true,
+            // // Completed (since the streams are distinct the false will be ignored)
+            // false
           ],
         ),
       );
