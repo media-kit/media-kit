@@ -90,7 +90,7 @@ dependencies:
 | macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_macos_universal.7z)    |
 | Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_win32_x64.7z)          |
 | GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_linux_x64.7z)          |
-| Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://github.com/alexmercerind/media_kit/pull/128)                                                                    |
+| Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://alexmercerind.github.io//media_kit/)                                                                            |
 
 <table>
   <tr>
@@ -217,8 +217,9 @@ A usage guide for [package:media_kit](https://github.com/alexmercerind/media_kit
 - [Modify `Player`'s queue](#modify-players-queue)
 - [Select video, audio or subtitle track](#select-video-audio-or-subtitle-track)
 - [Select audio device](#select-audio-device)
-- [Displaying the video](#displaying-the-video)
+- [Display the video](#display-the-video)
 - [Video controls](#video-controls)
+- [Next steps](#next-steps)
 
 ### Initialization
 
@@ -655,7 +656,7 @@ player.stream.audioDevice.listen((event) {
 });
 ```
 
-### Displaying the video
+### Display the video
 
 The **existing ["TL;DR example"](#tldr) should provide you better idea**.
 
@@ -952,6 +953,14 @@ CupertinoVideoControlsTheme(
 - Theming:
   - No theming applicable.
 
+### Next steps
+
+This guide follows a tutorial-like structure & covers nearly all features that [package:media_kit](https://github.com/alexmercerind/media_kit) offers. However, it is _not complete_ by any means. You are free to improve this page & add more documentation, which newcomers may find helpful. The following places can help you learn more:
+
+- [API reference](https://pub.dev/documentation/media_kit/latest/media_kit/media_kit-library.html) can be helpful for diving into deeper specifics.
+- [source-code of the demo application](https://github.com/alexmercerind2/media_kit-private/tree/main/media_kit_test/lib/tests) offers some complete code samples.
+- In-code comments & docstrings happen to be the most updated source of knowledge.
+
 ## Goals
 
 [package:media_kit](https://github.com/alexmercerind/media_kit) is a library for Flutter & Dart which **provides video & audio playback**.
@@ -959,11 +968,11 @@ CupertinoVideoControlsTheme(
 - **Strong:** Supports _most_ video & audio codecs.
 - **Performant:**
   - Handles multiple FHD videos flawlessly.
-  - Rendering is GPU powered (hardware accelerated).
+  - Rendering is GPU-powered (hardware accelerated).
   - 4K / 8K 60 FPS is supported.
-- **Stable:** Implementation is well tested & used across number of intensive media playback related apps.
-- **Feature Proof:** A simple usage API while offering large number of features to target multitude of apps.
-- **Modular:** Project is split into number of packages for reducing bundle size.
+- **Stable:** Implementation is well-tested & used across number of intensive media playback related apps.
+- **Feature Proof:** A simple usage API while offering a large number of features to target multitude of apps.
+- **Modular:** Project is split into a number of packages for reducing bundle size.
 - **Cross Platform**: Implementation works on all platforms supported by Flutter & Dart:
   - Android
   - iOS
@@ -973,10 +982,10 @@ CupertinoVideoControlsTheme(
   - ~~Web~~ WIP
 - **Flexible Architecture:**
   - Major part of implementation (80%+) is in 100% Dart ([FFI](https://dart.dev/guides/libraries/c-interop)) & shared across platforms.
-    - Makes behavior of library same & more predictable across platforms.
+    - Makes the behavior of library same & more predictable across platforms.
     - Makes development & implementation of new features easier & faster.
     - Avoids separate maintenance of native implementation for each platform.
-  - Only video embedding code is platform specific & part of separate package.
+  - Only video embedding code is platform-specific & part of separate package.
 
 You may see project's [architecture](https://github.com/alexmercerind/media_kit#architecture) & [implementation](https://github.com/alexmercerind/media_kit#implementation) details for further information.
 
