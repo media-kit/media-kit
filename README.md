@@ -137,13 +137,12 @@ dependencies:
   </tr>
   <tr>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696361-57fa500a-1c24-4e5e-9152-a03bd5b7cfa6.jpg" height="200" alt="GNU/Linux"></img>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/8cd63750-6746-4c75-bc4e-cca5e4c61890" height="200" alt="GNU/Linux"></img>
     </td>
     <td>
       <img src="https://github.com/alexmercerind/media_kit/assets/28951144/feb9fdf2-095f-43db-96af-f7782985238d" height="200" alt="Web"></img>
     </td>
 </table>
-
 
 ## TL;DR
 
