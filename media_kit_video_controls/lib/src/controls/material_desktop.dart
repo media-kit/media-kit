@@ -1231,11 +1231,19 @@ class MaterialDesktopVolumeButtonState
               onPressed: () async {
                 if (mute) {
                   await controller(context).player.setVolume(_volume);
+                  mute = !mute;
+                }
+                // https://github.com/alexmercerind/media_kit/pull/250#issuecomment-1605588306
+                else if (volume == 0.0) {
+                  _volume = 100.0;
+                  await controller(context).player.setVolume(100.0);
+                  mute = false;
                 } else {
                   _volume = volume;
                   await controller(context).player.setVolume(0.0);
+                  mute = !mute;
                 }
-                mute = !mute;
+
                 setState(() {});
               },
               iconSize: widget.iconSize ??
@@ -1243,7 +1251,7 @@ class MaterialDesktopVolumeButtonState
               color: widget.iconColor ?? _theme(context).buttonBarButtonColor,
               icon: AnimatedSwitcher(
                 duration: _theme(context).volumeBarTransitionDuration,
-                child: mute || volume == 0.0
+                child: volume == 0.0
                     ? (widget.volumeMuteIcon ??
                         const Icon(
                           Icons.volume_off,
