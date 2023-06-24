@@ -1245,7 +1245,8 @@ class libmpvPlayer extends PlatformPlayer {
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'core-idle' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-        final buffering = prop.ref.data.cast<Int8>().value == 1;
+        final buffering =
+            prop.ref.data.cast<Int8>().value == 1 && state.playing;
         state = state.copyWith(buffering: buffering);
         if (!bufferingController.isClosed) {
           bufferingController.add(buffering);

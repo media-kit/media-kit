@@ -96,6 +96,15 @@ class webPlayer extends PlatformPlayer {
           // PlayerState.state.playing & PlayerState.stream.playing
           // PlayerState.state.completed & PlayerState.stream.completed
           // PlayerState.state.buffering & PlayerState.stream.buffering
+
+          // A minimal quirk to match the native backend behavior.
+          state = state.copyWith(
+            buffering: true,
+          );
+          if (!bufferingController.isClosed) {
+            bufferingController.add(true);
+          }
+
           state = state.copyWith(
             playing: false,
             completed: true,
@@ -374,6 +383,15 @@ class webPlayer extends PlatformPlayer {
             }
           },
         );
+      } else {
+        // A minimal quirk to match the native backend behavior.
+        state = state.copyWith(
+          buffering: true,
+        );
+        if (!bufferingController.isClosed) {
+          bufferingController.add(true);
+        }
+        // [onCanPlay] & [onCanPlayThrough] will emit buffering = false.
       }
     }
 
