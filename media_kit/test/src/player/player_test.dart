@@ -2363,6 +2363,76 @@ void main() {
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
+  test(
+    'player-buffering-playlist',
+    () async {
+      final player = Player();
+
+      player.stream.playlist.listen((e) => print(e.index));
+      player.stream.completed.listen((e) => print('completed: $e'));
+      player.stream.buffering.listen((e) => print('buffering: $e'));
+
+      expect(
+        player.stream.buffering,
+        emitsInOrder(
+          [
+            // 0
+            // Player.open: buffering = true
+            true,
+            // Player.open: buffering = false
+            false,
+            // EOF
+            true,
+            false,
+
+            // 1
+            // Player.open: buffering = true
+            true,
+            // Player.open: buffering = false
+            false,
+            // EOF
+            true,
+            false,
+
+            // 2
+            // Player.open: buffering = true
+            true,
+            // Player.open: buffering = false
+            false,
+            // EOF
+            true,
+            false,
+
+            // 3
+            // Player.open: buffering = true
+            true,
+            // Player.open: buffering = false
+            false,
+            // EOF
+            true,
+            false,
+
+            // Player.dispose
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.open(
+        Playlist(
+          [
+            for (int i = 0; i < sources.network.length; i++)
+              Media(sources.network[i]),
+          ],
+        ),
+      );
+
+      await Future.delayed(const Duration(minutes: 1, seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 2)),
+  );
 }
 
 List<T> move<T>(List<T> list, int from, int to) {
