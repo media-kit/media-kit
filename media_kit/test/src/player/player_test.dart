@@ -363,6 +363,7 @@ void main() {
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
+
   test(
     'player-open-playable-playlist-play-false-play',
     () async {
@@ -2176,6 +2177,185 @@ void main() {
       await player.setShuffle(false);
       await player.setShuffle(false);
       await player.setShuffle(false);
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-buffering-file',
+    () async {
+      final player = Player();
+
+      player.stream.buffering.listen((e) => print(e));
+
+      expect(
+        player.stream.buffering,
+        emitsInOrder(
+          [
+            // Player.open: buffering = true
+            true,
+            // Player.open: buffering = false
+            false,
+            // EOF
+            true,
+            false,
+            // Player.dispose
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.open(Media(sources.file[0]));
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+    skip: UniversalPlatform.isWeb,
+  );
+  test(
+    'player-buffering-network',
+    () async {
+      final player = Player();
+
+      player.stream.buffering.listen((e) => print(e));
+
+      expect(
+        player.stream.buffering,
+        emitsInOrder(
+          [
+            // Player.open: buffering = true
+            true,
+            // Player.open: buffering = false
+            false,
+            // EOF
+            true,
+            false,
+            // Player.dispose
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.open(Media(sources.network[0]));
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-buffering-file-play-false',
+    () async {
+      final player = Player();
+
+      player.stream.buffering.listen((e) => print(e));
+
+      expect(
+        player.stream.buffering,
+        emitsInOrder(
+          [
+            // Player.open: buffering = true
+            true,
+            // Player.open: buffering = false
+            false,
+            // Player.dispose
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.open(
+        Media(sources.file[0]),
+        play: false,
+      );
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+    skip: UniversalPlatform.isWeb,
+  );
+  test(
+    'player-buffering-network-play-false',
+    () async {
+      final player = Player();
+
+      player.stream.buffering.listen((e) => print(e));
+
+      expect(
+        player.stream.buffering,
+        emitsInOrder(
+          [
+            // Player.open: buffering = true
+            true,
+            // Player.open: buffering = false
+            false,
+            // Player.dispose
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.open(
+        Media(sources.network[0]),
+        play: false,
+      );
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-buffering-upon-seek',
+    () async {
+      final player = Player();
+
+      player.stream.buffering.listen((e) => print(e));
+
+      expect(
+        player.stream.buffering,
+        emitsInOrder(
+          [
+            // Player.open: buffering = true
+            true,
+            // Player.open: buffering = false
+            false,
+            // Player.seek: buffering = true
+            true,
+            // Player.seek: buffering = false
+            false,
+            // EOF
+            true,
+            false,
+            // Player.dispose
+            emitsDone,
+          ],
+        ),
+      );
+
+      // Seek to the end of the stream to trigger buffering.
+      player.stream.duration.listen((event) async {
+        if (event > Duration.zero) {
+          // VOLUNTARY DELAY.
+          await Future.delayed(const Duration(seconds: 5));
+          await player.seek(event - const Duration(seconds: 10));
+        }
+      });
+
+      await player.open(
+        Media(
+          'https://github.com/alexmercerind/media_kit/assets/28951144/efb4057c-6fd3-4644-a0b1-42d5fb420ce9',
+        ),
+      );
 
       await Future.delayed(const Duration(seconds: 30));
 
