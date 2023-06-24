@@ -1136,17 +1136,20 @@ class libmpvPlayer extends PlatformPlayer {
 
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
       if (isPlayingStateChangeAllowed) {
-        state =
-            state.copyWith(playing: true, completed: false, buffering: true);
+        state = state.copyWith(
+          playing: true,
+          completed: false,
+        );
         if (!playingController.isClosed) {
           playingController.add(true);
         }
         if (!completedController.isClosed) {
           completedController.add(false);
         }
-        if (!bufferingController.isClosed) {
-          bufferingController.add(true);
-        }
+      }
+      state = state.copyWith(buffering: true);
+      if (!bufferingController.isClosed) {
+        bufferingController.add(true);
       }
     }
     // NOTE: Now, --keep-open=yes is used. Thus, eof-reached property is used instead of this.
@@ -1173,7 +1176,7 @@ class libmpvPlayer extends PlatformPlayer {
       if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
         if (isPlayingStateChangeAllowed) {
-          final playing = prop.ref.data.cast<Int8>().value != 1;
+          final playing = prop.ref.data.cast<Int8>().value == 0;
           state = state.copyWith(playing: playing);
           if (!playingController.isClosed) {
             playingController.add(playing);
@@ -1182,8 +1185,15 @@ class libmpvPlayer extends PlatformPlayer {
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'core-idle' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-        final buffering =
-            (prop.ref.data.cast<Int8>().value != 0 && state.playing);
+        final buffering = prop.ref.data.cast<Int8>().value == 1;
+        state = state.copyWith(buffering: buffering);
+        if (!bufferingController.isClosed) {
+          bufferingController.add(buffering);
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+        final buffering = prop.ref.data.cast<Int8>().value == 1;
         state = state.copyWith(buffering: buffering);
         if (!bufferingController.isClosed) {
           bufferingController.add(buffering);
@@ -1485,16 +1495,19 @@ class libmpvPlayer extends PlatformPlayer {
         if (value) {
           if (isPlayingStateChangeAllowed) {
             state = state.copyWith(
-                playing: false, completed: true, buffering: false);
+              playing: false,
+              completed: true,
+            );
             if (!playingController.isClosed) {
               playingController.add(false);
             }
             if (!completedController.isClosed) {
               completedController.add(true);
             }
-            if (!bufferingController.isClosed) {
-              bufferingController.add(false);
-            }
+          }
+          state = state.copyWith(buffering: false);
+          if (!bufferingController.isClosed) {
+            bufferingController.add(false);
           }
         }
       }
@@ -1698,8 +1711,8 @@ class libmpvPlayer extends PlatformPlayer {
         'playlist': generated.mpv_format.MPV_FORMAT_NODE,
         'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
-        'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
         'core-idle': generated.mpv_format.MPV_FORMAT_FLAG,
+        'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
         'demuxer-cache-time': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'audio-params': generated.mpv_format.MPV_FORMAT_NODE,
         'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
