@@ -967,120 +967,86 @@ void main() {
   );
 
   test(
-    'player-buffering-open-file',
+    'player-buffering-file',
     () async {
       final player = Player();
-      player.streams.buffering
-          .listen((event) => print("buffering: " + event.toString()));
-      player.streams.completed
-          .listen((event) => print("completed: " + event.toString()));
 
-      expect(
-        player.streams.playlist,
-        emitsInOrder(
-          [
-            Playlist(
-              [
-                Media(sources.file[0]),
-              ],
-              index: 0,
-            ),
-          ],
-        ),
-      );
+      player.streams.buffering.listen((e) => print(e));
+
       expect(
         player.streams.buffering,
         emitsInOrder(
           [
-            //buffering for the first playback
+            // Player.open: buffering = true
             true,
-            // finished buffering
+            // Player.open: buffering = false
             false,
-            // // idle (but it completed)
-            // true,
-            // // Completed (since the streams are distinct the false will be ignored)
-            // false
+            // EOF
+            true,
+            false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
 
-      await player.open(
-        Media(sources.file[0]),
-        play: true,
-      );
+      await player.open(Media(sources.file[0]));
 
       await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
-    'player-buffering-open-network',
+    'player-buffering-network',
     () async {
       final player = Player();
 
-      player.streams.buffering
-          .listen((event) => print("buffering: " + event.toString()));
-      player.streams.completed
-          .listen((event) => print("completed: " + event.toString()));
+      player.streams.buffering.listen((e) => print(e));
 
       expect(
         player.streams.buffering,
         emitsInOrder(
           [
-            //buffering for the first playback
+            // Player.open: buffering = true
             true,
-            // finished buffering
+            // Player.open: buffering = false
             false,
-            // // idle (but it completed)
-            // true,
-            // // Completed (since the streams are distinct the false will be ignored)
-            // false
+            // EOF
+            true,
+            false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
-      await player.open(
-        Media(
-          sources.network[0],
-        ),
-      );
+
+      await player.open(Media(sources.network[0]));
+
       await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
-    'player-buffering-false-upon-complete',
+    'player-buffering-file-play-false',
     () async {
       final player = Player();
-      player.streams.buffering
-          .listen((event) => print("buffering: " + event.toString()));
-      player.streams.completed
-          .listen((event) => print("completed: " + event.toString()));
 
-      expect(
-        player.streams.playlist,
-        emitsInOrder(
-          [
-            Playlist(
-              [
-                Media(sources.file[0]),
-              ],
-              index: 0,
-            ),
-          ],
-        ),
-      );
+      player.streams.buffering.listen((e) => print(e));
+
       expect(
         player.streams.buffering,
         emitsInOrder(
           [
-            //buffering for the first playback
+            // Player.open: buffering = true
             true,
-            // finished buffering
+            // Player.open: buffering = false
             false,
-            // // idle (but it completed)
-            // true,
-            // // Completed (since the streams are distinct the false will be ignored)
-            // false
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
@@ -1090,11 +1056,41 @@ void main() {
         play: false,
       );
 
-      await player.play();
+      await Future.delayed(const Duration(seconds: 30));
 
-      await player.streams.completed.where((event) => event == true).first;
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-buffering-network-play-false',
+    () async {
+      final player = Player();
 
-      expect(player.state.buffering, equals(false));
+      player.streams.buffering.listen((e) => print(e));
+
+      expect(
+        player.streams.buffering,
+        emitsInOrder(
+          [
+            // Player.open: buffering = true
+            true,
+            // Player.open: buffering = false
+            false,
+            // Player.dispose
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.open(
+        Media(sources.network[0]),
+        play: false,
+      );
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
@@ -1102,49 +1098,48 @@ void main() {
     'player-buffering-upon-seek',
     () async {
       final player = Player();
-      print("player-buffering-upon-seek");
-      player.streams.buffering
-          .listen((event) => print("buffering: " + event.toString()));
-      player.streams.completed
-          .listen((event) => print("completed: " + event.toString()));
+
+      player.streams.buffering.listen((e) => print(e));
 
       expect(
         player.streams.buffering,
         emitsInOrder(
           [
-            //buffering for the first playback
+            // Player.open: buffering = true
             true,
-            // finished buffering
+            // Player.open: buffering = false
             false,
-            // seek buffering
+            // Player.seek: buffering = true
             true,
-            // seek buffering ended
+            // Player.seek: buffering = false
             false,
-            // // idle (but it completed)
-            // true,
-            // // Completed (since the streams are distinct the false will be ignored)
-            // false
+            // EOF
+            true,
+            false,
+            // Player.dispose
+            emitsDone,
           ],
         ),
       );
-      final Future<Duration> duration = player.streams.duration.first;
+
+      // Seek to the end of the stream to trigger buffering.
+      player.streams.duration.listen((event) async {
+        if (event > Duration.zero) {
+          // VOLUNTARY DELAY.
+          await Future.delayed(const Duration(seconds: 5));
+          await player.seek(event - const Duration(seconds: 10));
+        }
+      });
 
       await player.open(
         Media(
-            'https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'),
-        play: true,
+          'https://github.com/alexmercerind/media_kit/assets/28951144/efb4057c-6fd3-4644-a0b1-42d5fb420ce9',
+        ),
       );
-      await duration;
-      //wait for the video to be buffered
-      await player.streams.buffering.where((event) => event == false).first;
-
-      Duration seekTO = player.state.duration - Duration(seconds: 5);
-
-      await player.seek(seekTO);
-
-      await player.play();
 
       await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 1)),
   );
