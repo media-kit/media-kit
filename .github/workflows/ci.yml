@@ -24,7 +24,7 @@ jobs:
         shell: cmd
 
       - run: dart pub get
-      - run: dart test --platform vm
+      - run: dart test
 
   media_kit-tests-linux:
     name: package:media_kit tests (Linux)
@@ -42,7 +42,7 @@ jobs:
         with:
           channel: "stable"
       - run: dart pub get
-      - run: dart test --platform vm
+      - run: dart test
 
   # TODO: Enable package:media_kit tests on macOS
 
@@ -60,7 +60,7 @@ jobs:
   #       with:
   #         channel: "stable"
   #     - run: dart pub get
-  #     - run: dart test --platform vm
+  #     - run: dart test
 
   media_kit-tests-web:
     name: package:media_kit tests (Web)
