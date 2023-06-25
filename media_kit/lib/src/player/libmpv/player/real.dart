@@ -254,12 +254,6 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      isPlayingStateChangeAllowed = true;
-      state = state.copyWith(playing: true);
-      if (!playingController.isClosed) {
-        playingController.add(true);
-      }
-
       final name = 'pause'.toNativeUtf8();
       final value = calloc<Uint8>();
       mpv.mpv_get_property(
@@ -293,12 +287,6 @@ class libmpvPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-
-      isPlayingStateChangeAllowed = true;
-      state = state.copyWith(playing: false);
-      if (!playingController.isClosed) {
-        playingController.add(false);
-      }
 
       final name = 'pause'.toNativeUtf8();
       final value = calloc<Uint8>();
@@ -334,7 +322,15 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
+      state = state.copyWith(
+        playing: !state.playing,
+      );
+      if (!playingController.isClosed) {
+        playingController.add(state.playing);
+      }
+
       isPlayingStateChangeAllowed = true;
+      isBufferingStateChangeAllowed = false;
 
       // This condition is specifically for the case when the internal playlist is ended (with [PlaylistLoopMode.none]), and we want to play the playlist again if play/pause is pressed.
       if (state.completed) {
@@ -1235,8 +1231,8 @@ class libmpvPlayer extends PlatformPlayer {
       final prop = event.ref.data.cast<generated.mpv_event_property>();
       if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+        final playing = prop.ref.data.cast<Int8>().value == 0;
         if (isPlayingStateChangeAllowed) {
-          final playing = prop.ref.data.cast<Int8>().value == 0;
           state = state.copyWith(playing: playing);
           if (!playingController.isClosed) {
             playingController.add(playing);
@@ -1245,11 +1241,16 @@ class libmpvPlayer extends PlatformPlayer {
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'core-idle' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-        final buffering =
-            prop.ref.data.cast<Int8>().value == 1 && state.playing;
-        state = state.copyWith(buffering: buffering);
-        if (!bufferingController.isClosed) {
-          bufferingController.add(buffering);
+        // Check for [isBufferingStateChangeAllowed] because `pause` causes `core-idle` to be fired.
+        final buffering = prop.ref.data.cast<Int8>().value == 1;
+        if (isBufferingStateChangeAllowed) {
+          state = state.copyWith(buffering: buffering);
+          if (!bufferingController.isClosed) {
+            bufferingController.add(buffering);
+          }
+        }
+        if (buffering) {
+          isBufferingStateChangeAllowed = true;
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
@@ -1890,6 +1891,11 @@ class libmpvPlayer extends PlatformPlayer {
   /// We set [isPlayingStateChangeAllowed] to `false` at the start of [open] to prevent this unwanted change & set it to `true` at the end of [open].
   /// While [isPlayingStateChangeAllowed] is `false`, any change to [state.playing] & [stream.playing] is ignored.
   bool isPlayingStateChangeAllowed = false;
+
+  /// A flag to prevent changes to [state.buffering] due to `pause` causing `core-idle` to be `true`.
+  ///
+  /// This is used to prevent [state.buffering] being set to `true` when [pause] or [playOrPause] is called.
+  bool isBufferingStateChangeAllowed = true;
 
   /// [Completer] to wait for initialization of this instance (in [_create]).
   final Completer<void> completer = Completer<void>();
