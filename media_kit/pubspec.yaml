@@ -6,16 +6,29 @@ version: 0.0.11
 funding:
   - https://www.github.com/sponsors/alexmercerind
 screenshots:
+  - description: "package:media_kit running on Android (visible controls)"
+    path: screenshots/android_0.jpg
   - description: "package:media_kit running on Android"
-    path: screenshots/android.jpg
+    path: screenshots/android_1.jpg
+  - description: "package:media_kit running on iOS (visible controls)"
+    path: screenshots/ios_0.jpg
   - description: "package:media_kit running on iOS"
-    path: screenshots/ios.jpg
+    path: screenshots/ios_1.jpg
   - description: "package:media_kit running on macOS"
     path: screenshots/macos.jpg
   - description: "package:media_kit running on Microsoft Windows"
     path: screenshots/windows.jpg
   - description: "package:media_kit running on GNU/Linux"
     path: screenshots/linux.jpg
+  - description: "package:media_kit running on web"
+    path: screenshots/web.jpg
+topics:
+  - video
+  - audio
+  - media
+  - video player
+  - audio player
+  - media player
 
 environment:
   sdk: ">=2.17.0 <4.0.0"

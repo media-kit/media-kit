@@ -38,11 +38,11 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.11                             # Primary package.
+  media_kit: ^0.0.12                             # Primary package.
   
-  media_kit_video: ^0.0.12                       # For video rendering.
+  media_kit_video: ^0.0.13                       # For video rendering.
   
-  media_kit_native_event_loop: ^1.0.4            # Support for higher number of concurrent instances & better performance.
+  media_kit_native_event_loop: ^1.0.5            # Support for higher number of concurrent instances & better performance.
   
   media_kit_libs_android_video: ^1.0.6           # Android package for video native libraries.
   media_kit_libs_ios_video: ^1.0.4               # iOS package for video native libraries.
@@ -55,9 +55,9 @@ dependencies:
 
 ```yaml
 dependencies:
-  media_kit: ^0.0.11                             # Primary package.
+  media_kit: ^0.0.12                             # Primary package.
   
-  media_kit_native_event_loop: ^1.0.4            # Support for higher number of concurrent instances & better performance.
+  media_kit_native_event_loop: ^1.0.5            # Support for higher number of concurrent instances & better performance.
   
   media_kit_libs_android_audio: ^1.0.6           # Android package for audio native libraries.
   media_kit_libs_ios_audio: ^1.0.4               # iOS package for audio native libraries.
@@ -68,20 +68,21 @@ dependencies:
 
 **Notes:**
 
-- If app needs both video & audio playback, select video playback libraries.
 - [Enable --split-per-abi](https://docs.flutter.dev/deployment/android#what-is-a-fat-apk) or [use app bundle (instead of APK)](https://docs.flutter.dev/deployment/android#when-should-i-build-app-bundles-versus-apks) on Android.
+- If app needs both video & audio playback, select video playback libraries.
+- Do not mix `media_kit_libs_*_video` & `media_kit_libs_*_audio` packages.
 - media_kit_libs_*** packages may be omitted depending upon the platform your app targets.
 
 ## Platforms
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 13 or above.                     | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.11/media_kit_test_linux_x64.7z)          |
-| Web         | 🚧    | 🚧    | [WIP](https://github.com/alexmercerind/media_kit/pull/128)                                 | [WIP](https://github.com/alexmercerind/media_kit/pull/128)               |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.12/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 13 or above.                     | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.12/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.12/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.12/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v0.0.12/media_kit_test_linux_x64.7z)          |
+| Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://alexmercerind.github.io//media_kit/)                                                                            |
 
 <table>
   <tr>
@@ -94,14 +95,14 @@ dependencies:
   </tr>
   <tr>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696332-37d54a33-9f8b-44df-a564-3420c74eb4da.jpg" height="400" alt="Android"></img>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/cf93a1fd-e1d8-4d1c-8bd5-cc393cef1ce9" height="400" alt="Android"></img>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/aea1f480-51e2-452a-b53c-c0e27f71f0d8" height="400" alt="Android"></img>
     </td>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696349-6bad4f2b-439b-43bb-9ced-e05cd52b1477.jpg" height="400" alt="iOS"></img>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/e8ce64cb-1ea9-4a3e-bc9c-db620abf88c9" height="400" alt="iOS"></img>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/d7159df2-1df1-46d3-84f8-238e2a66bfbc" height="400" alt="iOS"></img>
     </td>
-</table>
-
-<table>
+  </tr>
   <tr>
     <td>
       macOS
@@ -109,25 +110,35 @@ dependencies:
     <td>
       Windows
     </td>
+  </tr>
+  <tr>
     <td>
-      GNU/Linux
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/fca8dbbf-4262-431f-a04a-f3aa6afb2911" height="200" alt="macOS"></img>
+    </td>
+    <td>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/742b0016-da58-42de-9880-ecaa0604c2b2" height="200" alt="Windows"></img>
     </td>
   </tr>
   <tr>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696378-5c8f76a6-d0a5-4215-8c4f-5a76957e5692.jpg" height="140" width="248.8" alt="macOS"></img>
+      GNU/Linux
     </td>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696391-c2577912-21c7-4a63-ad7c-37ded5cb2973.jpg" height="140" width="248.8" alt="Windows"></img>
+      Web
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/8cd63750-6746-4c75-bc4e-cca5e4c61890" height="200" alt="GNU/Linux"></img>
     </td>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696361-57fa500a-1c24-4e5e-9152-a03bd5b7cfa6.jpg" height="140" width="248.8" alt="GNU/Linux"></img>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/feb9fdf2-095f-43db-96af-f7782985238d" height="200" alt="Web"></img>
     </td>
 </table>
 
-### TL;DR
+## TL;DR
 
-A quick usage example:
+A quick usage example.
 
 ```dart
 import 'package:flutter/material.dart';
@@ -183,7 +194,774 @@ class MyScreenState extends State<MyScreen> {
 }
 ```
 
-~~For detailed overview & guide to number of features in the library, please visit the [documentation](#).~~ WIP
+**Note:** You may need to add required [permissions](#permissions) to your project.
+
+## Guide
+
+A usage guide for [package:media_kit](https://github.com/alexmercerind/media_kit).
+
+**Tip:** Use <kbd>Ctrl</kbd> + <kbd>F</kbd> to quickly search for things.
+
+### Contents
+- [Initialization](#initialization)
+- [Create a `Player`](#create-a-player)
+- [Dispose a `Player`](#dispose-a-player)
+- [Open a `Media` or `Playlist`](#open-a-media-or-playlist)
+- [Play, pause or play/pause](#play-pause-or-playpause)
+- [Seek](#seek)
+- [Loop or repeat](#loop-or-repeat)
+- [Set volume, rate or pitch](#set-volume-rate-or-pitch)
+- [Handle playback events](#handle-playback-events)
+- [Shuffle the queue](#shuffle-the-queue)
+- [Use HTTP headers](#use-http-headers)
+- [Use `extras` to store additional data with `Media`](use-extras-store-additional-data-with-media)
+- [Go to next, previous or any other position in queue](#go-to-next-previous-or-any-other-position-in-queue)
+- [Modify `Player`'s queue](#modify-players-queue)
+- [Select video, audio or subtitle track](#select-video-audio-or-subtitle-track)
+- [Select audio device](#select-audio-device)
+- [Display the video](#display-the-video)
+- [Video controls](#video-controls)
+- [Next steps](#next-steps)
+
+### Initialization
+
+`MediaKit.ensureInitialized` must be called before using the package:
+
+```dart
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Initialize:
+  MediaKit.ensureInitialized();
+  runApp(const MyApp());
+}
+```
+
+The method also has some optional arguments to customize the global behavior. To handle any initialization errors, this may be surrounded by `try`/`catch`.
+
+### Create a `Player`
+
+A `Player` instance is used to start & control the playback of a media source e.g. URL or file.
+
+```dart
+final Player player = Player();
+```
+
+Additional options may be provided using the `configuration` argument in the constructor. In general situations, you will never require this.
+
+```dart
+final Player player = Player(
+    configuration: PlayerConfiguration(
+      // Supply your options:
+      title: 'My awesome package:media_kit application',
+      ready: () {
+        print('The initialization is complete.');
+      },
+    ),
+  )
+```
+
+### Dispose a `Player`
+
+It is extremely important to release the allocated resources back to the system:
+
+```dart
+await player.dispose();
+```
+
+### Open a `Media` or `Playlist`
+
+A `Playable` can either be a `Media` or a `Playlist`.
+
+- `Media`: Single playback source (file or URL).
+- `Playlist`: Queue of playback sources (file or URL).
+
+Use the `Player.open` method to load & start playback.
+
+#### `Media`
+
+```dart
+final playable = Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4');
+await player.open(playable);
+```
+
+#### `Playlist`
+
+```dart
+final playable = Playlist(
+  [
+    Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373709-603a7a89-2105-4e1b-a5a5-a6c3567c9a59.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373716-76da0a4e-225a-44e4-9ee7-3e9006dbc3e3.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373718-86ce5e1d-d195-45d5-baa6-ef94041d0b90.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373720-14d69157-1a56-4a78-a2f4-d7a134d7c3e9.mp4'),
+  ],
+);
+await player.open(playable);
+```
+
+**Notes:**
+
+1. By default, this will automatically start playing the playable. This may be disabled as follows:
+
+```dart
+await player.open(
+  playable,
+  play: false,
+);
+```
+
+2. By default, the playlist will start at the index `0`. This may be changed as follows:
+
+```dart
+final playable = Playlist(
+  [
+    Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373709-603a7a89-2105-4e1b-a5a5-a6c3567c9a59.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373716-76da0a4e-225a-44e4-9ee7-3e9006dbc3e3.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373718-86ce5e1d-d195-45d5-baa6-ef94041d0b90.mp4'),
+    Media('https://user-images.githubusercontent.com/28951144/229373720-14d69157-1a56-4a78-a2f4-d7a134d7c3e9.mp4'),
+  ],
+  // Declare the starting position.
+  index: 0,
+);
+await player.open(playable);
+```
+
+### Play, pause or play/pause
+
+The 3 methods are:
+
+```dart
+await player.play();
+```
+
+```dart
+await player.pause();
+```
+
+```dart
+await player.playOrPause();
+```
+
+### Seek
+
+Supply the final position to `Player.seek` method as `Duration`:
+
+```dart
+await player.seek(
+  const Duration(
+    minutes: 6,
+    seconds: 9,
+  ),
+);
+```
+
+### Loop or repeat
+
+Three `PlaylistMode`s are available:
+
+- `PlaylistMode.none`: End playback once end of the playlist is reached.
+- `PlaylistMode.single`: Indefinitely loop over the currently playing file in the playlist.
+- `PlaylistMode.loop`: Loop over the playlist & restart it from beginning once end is reached.
+
+```dart
+await player.setPlaylistMode(PlaylistMode.single);
+```
+
+### Set volume, rate or pitch
+
+#### Set the volume
+
+This controls the loudness of audio output. The maximum volume is `100.0`.
+
+```dart
+await player.setVolume(50.0);
+```
+
+#### Set the rate
+
+This controls the playback speed.
+
+```dart
+await player.setRate(1.5);
+```
+
+#### Set the pitch
+
+This controls the pitch of the audio output.
+
+```dart
+await player.setPitch(1.2);
+```
+
+**Note:** This requires `pitch` argument to be `true` in `PlayerConfiguration`.
+
+### Handle playback events
+
+You can access or subscribe to `Player`'s state changes.
+
+Event handling is an extremely important part of media playback. It is used to show changes in the UI, handle errors, detect the occurrence of play/pause, end-of-file, position updates etc.
+
+- `Player.stream.*`: Provides access to `Player`'s state as [`Stream`](https://dart.dev/tutorials/language/streams)(s).
+- `Player.state.*`: Provides access to `Player`'s state directly (for instantaneous access).
+
+A typical example will be:
+
+```dart
+player.stream.playing.listen(
+  (bool playing) {
+    if (playing) {
+      // Playing.
+    } else {
+      // Paused.
+    }
+  },
+);
+player.stream.position.listen(
+  (Duration position) {
+    setState(() {
+      // Update UI.
+    });
+  },
+);
+```
+
+The following state(s) are available as events:
+
+| Type                        | Name           | Description                                                                                              |
+| --------------------------- | -------------- | -------------------------------------------------------------------------------------------------------- |
+| `Stream<Playlist>`          | `playlist`     | Currently opened media sources.                                                                          |
+| `Stream<bool>`              | `playing`      | Whether playing or not.                                                                                  |
+| `Stream<bool>`              | `completed`    | Whether end of currently playing media source has been reached.                                          |
+| `Stream<Duration>`          | `position`     | Current playback position.                                                                               |
+| `Stream<Duration>`          | `duration`     | Current playback duration.                                                                               |
+| `Stream<double>`            | `volume`       | Current volume.                                                                                          |
+| `Stream<double>`            | `rate`         | Current playback rate.                                                                                   |
+| `Stream<double>`            | `pitch`        | Current pitch.                                                                                           |
+| `Stream<bool>`              | `buffering`    | Whether buffering or not.                                                                                |
+| `Stream<Duration>`          | `buffer`       | Current buffer position. This indicates how much of the stream has been decoded & cached by the demuxer. |
+| `Stream<PlaylistMode>`      | `playlistMode` | Current playlist mode.                                                                                   |
+| `Stream<AudioParams>`       | `audioParams`  | Audio parameters of the currently playing media source e.g. sample rate, channels, etc.                  |
+| `Stream<double?>`           | `audioBitrate` | Audio bitrate of the currently playing media source.                                                     |
+| `Stream<AudioDevice>`       | `audioDevice`  | Currently selected audio device.                                                                         |
+| `Stream<List<AudioDevice>>` | `audioDevices` | Currently available audio devices.                                                                       |
+| `Stream<Track>`             | `track`        | Currently selected video, audio and subtitle track.                                                      |
+| `Stream<Tracks>`            | `tracks`       | Currently available video, audio and subtitle tracks.                                                    |
+| `Stream<int>`               | `width`        | Currently playing video's width.                                                                         |
+| `Stream<int>`               | `height`       | Currently playing video's height.                                                                        |
+| `Stream<PlayerLog>`         | `log`          | Internal logs.                                                                                           |
+| `Stream<String>`            | `error`        | Error messages. This may be used to handle & display errors to the user.                                 |
+
+### Shuffle the queue
+
+You may find the requirement to shuffle the `Playlist` you `open`'d in `Player`, like some music players do.
+
+```dart
+await player.setShuffle(true);
+```
+
+**Note:** This option is reset upon the next `Player.open` call.
+
+### Use HTTP headers
+
+Declare the `httpHeaders` argument in `Media` constructor. It takes the HTTP headers as `Map<String, String>`.
+
+```dart
+final playable = Media(
+  'https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4',
+  httpHeaders: {
+    'Foo': 'Bar',
+    'Accept': '*/*',
+    'Range': 'bytes=0-',
+  },
+);
+```
+
+### Use `extras` to store additional data with `Media`
+
+The `extras` argument may be utilized to store additional data with a `Media` in form of `Map<String, dynamic>`.
+
+```dart
+final playable = Media(
+  'https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4',
+  extras: {
+    'track': '9',
+    'year': '2012',
+    'title': 'Courtesy Call',
+    'artist': 'Thousand Foot Krutch',
+    'album': 'The End Is Where We Begin',
+  },
+);
+```
+
+### Modify `Player`'s queue
+
+You can add or remove (etc.) a `Media` in an already playing `Playlist`:
+
+#### Add
+
+Add a new `Media` to the back of the queue:
+
+```dart
+await player.add(Media('https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4'));
+```
+
+#### Remove
+
+Remove any item from the queue:
+
+```dart
+await player.remove(0);
+```
+
+#### Move
+
+Move any item in the queue from one position to another:
+
+```dart
+await player.move(6, 9);
+```
+
+### Go to next, previous or any other position in queue
+
+#### Skip to the next queue item
+
+```dart
+await player.next();
+```
+
+#### Skip to the previous queue item
+
+```dart
+await player.previous();
+```
+
+#### Skip to any other queue item
+
+```dart
+await player.jump(5);
+```
+
+### Select video, audio or subtitle track
+
+A media source may contain multiple video, audio or subtitle tracks e.g. for multiple languages. Available video, audio or subtitle tracks are notified through `Player`'s state. See ["Handle playback events" section](#handle-playback-events) for related information.
+
+By default, video, audio & subtitle track is selected automatically _i.e._ `VideoTrack.auto()`, `AudioTrack.auto()` & `SubtitleTrack.auto()`.
+
+#### Automatic selection
+
+```dart
+await player.setVideoTrack(VideoTrack.auto());
+
+await player.setAudioTrack(AudioTrack.auto());
+
+await player.setSubtitleTrack(SubtitleTrack.auto());
+```
+
+#### Disable track
+
+This may be used to essentially disable video output, disable audio output or stop rendering of subtitles etc.
+
+```dart
+await player.setVideoTrack(VideoTrack.no());
+
+await player.setAudioTrack(AudioTrack.no());
+
+await player.setSubtitleTrack(SubtitleTrack.no());
+```
+
+#### Select custom track
+
+- Retrieve currently available tracks:
+
+```dart
+List<VideoTrack> videos = player.state.tracks.video;
+List<AudioTrack> audios = player.state.tracks.audio;
+List<SubtitleTrack> subtitles = player.state.tracks.subtitle;
+
+// Get notified as [Stream]:
+player.stream.tracks.listen((event) {
+  List<VideoTrack> videos = event.video;
+  List<AudioTrack> audios = event.audio;
+  List<SubtitleTrack> subtitles = event.subtitle;
+});
+```
+
+- Select the track:
+
+```dart
+await player.setVideoTrack(videos[0]);
+await player.setAudioTrack(audios[1]);
+await player.setSubtitleTrack(subtitles[2]);
+```
+
+- Get notified about currently selected track:
+
+```dart
+VideoTrack video = player.state.track.video;
+AudioTrack audio = player.state.track.audio;
+SubtitleTrack subtitle = player.state.track.subtitle;
+
+// Get notified as [Stream]:
+player.stream.track.listen((event) {
+  VideoTrack video = event.video;
+  AudioTrack audio = event.audio;
+  SubtitleTrack subtitle = event.subtitle;
+});
+```
+
+### Select audio device
+
+Available audio devices are notified through `Player`'s state. See ["Handle playback events" section](#handle-playback-events) for related information.
+
+By default, audio device is selected automatically _i.e._ `AudioDevice.auto()`.
+
+#### Default selection
+
+```dart
+await player.setAudioDevice(AudioDevice.auto());
+```
+
+#### Disable audio output
+
+```dart
+await player.setAudioDevice(AudioDevice.no());
+```
+
+#### Select custom audio device
+
+- Retrieve currently available audio devices:
+
+```dart
+List<AudioDevice> devices = player.state.audioDevices;
+
+// Get notified as [Stream]:
+player.stream.audioDevices.listen((event) {
+  List<AudioDevice> devices = event;
+});
+```
+
+- Select the audio device:
+
+```dart
+await player.setAudioDevice(devices[1]);
+```
+
+- Get notified about currently selected audio device:
+
+```dart
+AudioDevice device = player.state.audioDevice;
+
+// Get notified as [Stream]:
+player.stream.audioDevice.listen((event) {
+  AudioDevice device = event;
+});
+```
+
+### Display the video
+
+The **existing ["TL;DR example"](#tldr) should provide you better idea**.
+
+For displaying the video inside Flutter UI, you must:
+
+- Create `VideoController`
+  - Pass the `Player` you already have. 
+- Create `Video` widget
+  - Pass the `VideoController` you already have.
+
+The code is easier to understand:
+
+```dart
+class _MyScreenState extends State<MyScreen> {
+  late final Player player = Player();
+  late final VideoController controller = VideoController(player);
+
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Video(
+        controller: controller,
+      ),
+    );
+  }
+}
+```
+
+The video playback uses [hardware acceleration](https://en.wikipedia.org/wiki/Hardware_acceleration) _i.e._ GPU by default.
+
+Additional options may be provided using the `configuration` argument in the constructor. In general situations, you will never require this.
+
+```dart
+final VideoController player = VideoController(
+  player,
+  configuration: const VideoControllerConfiguration(
+    // Supply your options:
+    enableHardwareAcceleration: true,      // default: true
+    width: 640,                            // default: null
+    height: 480,                           // default: null
+    // The in-code comments is best place to know more about these options:
+    // https://github.com/alexmercerind/media_kit/blob/main/media_kit_video/lib/src/video_controller/video_controller.dart
+  ),
+);
+```
+
+### Video controls
+
+[`package:media_kit`](https://github.com/alexmercerind/media_kit) provides highly-customizable pre-built video controls for usage.
+
+Apart from theming, layout can be customized, position of buttons can be modified, custom buttons can be created etc. Necessary features like fullscreen, keyboard shortcuts & swipe-based controls are also supported by default.
+
+<table>
+  <tr>
+    <td>
+      <a href="#materialdesktopvideocontrols"><tt>MaterialDesktopVideoControls</tt></a>
+    </td>
+    <td>
+      <a href="#materialvideocontrols"><tt>MaterialVideoControls</tt></a>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img height="312" src="https://user-images.githubusercontent.com/28951144/246606748-72557578-8be4-43c6-a3df-cb0aea99c879.jpg">
+    </td>
+    <td>
+      <img height="312" src="https://user-images.githubusercontent.com/28951144/246650427-a5bbabad-6f7b-4098-9325-ebe2a3068720.jpg">
+    </td>
+  </tr>
+</table>
+
+- `Video` widget provides `controls` argument to display & customize video controls.
+- By default, [`AdaptiveVideoControls`](#adaptivevideocontrols) are used.
+
+#### Types
+
+| Type                                                | Description                                                                                                   |
+|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| [`AdaptiveVideoControls`](#adaptivevideocontrols)               | Selects [`MaterialVideoControls`](#materialvideocontrols), [`CupertinoVideoControls`](#cupertinovideocontrols) etc. based on platform.                                                      |
+| [`MaterialVideoControls`](#materialvideocontrols)               | [Material Design](https://material.io/) video controls.                                                                               |
+| [`MaterialDesktopVideoControls`](#materialdesktopvideocontrols) | [Material Design](https://material.io/) video controls for desktop.                                                                   |
+| [`CupertinoVideoControls`](#cupertinovideocontrols)             | [iOS-style](https://developer.apple.com/design/human-interface-guidelines/designing-for-ios) video controls.                     |
+| [`NoVideoControls`](#novideocontrols)                           | Disable video controls _i.e._ only render video output.                                                                               |
+| Custom                                                          | Provide custom `builder` for video controls.                                                                                           |
+
+#### Select existing video controls
+
+Modify the `controls` argument. For advanced theming of existing video controls, see [theming & modifying video controls](#theming-&-modifying-video-controls) section.
+
+```dart
+Scaffold(
+  body: Video(
+    controller: controller,
+    // Select [MaterialVideoControls].
+    controls: MaterialVideoControls,
+  ),
+);
+```
+```dart
+Scaffold(
+  body: Video(
+    controller: controller,
+    // Select [CupertinoVideoControls].
+    controls: CupertinoVideoControls,
+  ),
+);
+```
+
+
+#### Build custom video controls
+
+Pass custom builder `Widget Function(BuildContext, VideoController)` as `controls` argument.
+
+```dart
+Scaffold(
+  body: Video(
+    controller: controller,
+    // Provide custom builder for controls.
+    controls: (state) {
+      return Center(
+        child: IconButton(
+          onPressed: () {
+            state.widget.controller.player.playOrPause();
+          },
+          icon: StreamBuilder(
+            stream: state.widget.controller.player.stream.playing,
+            builder: (context, playing) => Icon(
+              playing.data == true ? Icons.pause : Icons.play_arrow,
+            ),
+          ),
+          // It's not necessary to use [StreamBuilder] or to use [Player] & [VideoController] from [state].
+          // [StreamSubscription]s can be made inside [initState] of this widget.
+        ),
+      );
+    },
+  ),
+);
+```
+
+#### Use & modify video controls
+
+##### `AdaptiveVideoControls`
+
+- Selects [`MaterialVideoControls`](#materialvideocontrols), [`CupertinoVideoControls`](#cupertinovideocontrols) etc. based on platform.
+- Theming:
+  - Theme the specific controls according to sections below.
+
+##### `MaterialVideoControls`
+
+- [Material Design](https://material.io/) video controls.
+- Theming:
+  - Use `MaterialVideoControlsTheme` widget.
+  - `Video` widget(s) in the `child` tree will follow the specified theme:
+
+```dart
+// Wrap [Video] widget with [MaterialVideoControlsTheme].
+MaterialVideoControlsTheme(
+  normal: MaterialVideoControlsThemeData(
+    // Modify theme options:
+    buttonBarButtonSize: 24.0,
+    buttonBarButtonColor: Colors.white,
+    // Modify top button bar:
+    topButtonBar: [
+      const Spacer(),
+      MaterialDesktopCustomButton(
+        onPressed: () {
+          debugPrint('Custom "Settings" button pressed.');
+        },
+        icon: const Icon(Icons.settings),
+      ),
+    ],
+  ),
+  fullscreen: const MaterialVideoControlsThemeData(
+    // Modify theme options:
+    displaySeekBar: false,
+    automaticallyImplySkipNextButton: false,
+    automaticallyImplySkipPreviousButton: false,
+  ),
+  child: Scaffold(
+    body: Video(
+      controller: controller,
+    ),
+  ),
+);
+```
+- Related widgets (may be used in `primaryButtonBar`, `topButtonBar` & `bottomButtonBar`):
+  - `MaterialPlayOrPauseButton`
+  - `MaterialSkipNextButton`
+  - `MaterialSkipPreviousButton`
+  - `MaterialFullscreenButton`
+  - `MaterialCustomButton`
+  - `MaterialPositionIndicator`
+
+##### `MaterialDesktopVideoControls`
+
+- [Material Design](https://material.io/) video controls for desktop.
+- Theming: 
+  - Use `MaterialDesktopVideoControlsTheme` widget.
+  - `Video` widget(s) in the `child` tree will follow the specified theme:
+
+```dart
+// Wrap [Video] widget with [MaterialDesktopVideoControlsTheme].
+MaterialDesktopVideoControlsTheme(
+  normal: MaterialDesktopVideoControlsThemeData(
+    // Modify theme options:
+    seekBarThumbColor: Colors.blue,
+    seekBarPositionColor: Colors.blue,
+    toggleFullscreenOnDoublePress: false,
+    // Modify top button bar:
+    topButtonBar: [
+      const Spacer(),
+      MaterialDesktopCustomButton(
+        onPressed: () {
+          debugPrint('Custom "Settings" button pressed.');
+        },
+        icon: const Icon(Icons.settings),
+      ),
+    ],
+    // Modify bottom button bar:
+    bottomButtonBar: const [
+      Spacer(),
+      MaterialDesktopPlayOrPauseButton(),
+      Spacer(),
+    ],
+  ),
+  fullscreen: const MaterialDesktopVideoControlsThemeData(),
+  child: Scaffold(
+    body: Video(
+      controller: controller,
+    ),
+  ),
+);
+```
+- Related widgets (may be used in `primaryButtonBar`, `topButtonBar` & `bottomButtonBar`):
+  - `MaterialDesktopPlayOrPauseButton`
+  - `MaterialDesktopSkipNextButton`
+  - `MaterialDesktopSkipPreviousButton`
+  - `MaterialDesktopFullscreenButton`
+  - `MaterialDesktopCustomButton`
+  - `MaterialDesktopVolumeButton`
+  - `MaterialDesktopPositionIndicator`
+- Keyboard shortcuts may be modified using `keyboardShortcuts` argument. Default ones are listed below:
+
+| Shortcut                      | Action                    |
+|-------------------------------|---------------------------|
+| Media Play Button             | Play                      |
+| Media Pause Button            | Pause                     |
+| Media Play/Pause Button       | Play/Pause                |
+| Media Next Track Button       | Skip Next                 |
+| Media Previous Track Button   | Skip Previous             |
+| Space                         | Play/Pause                |
+| J                             | Seek 10s Behind           |
+| I                             | Seek 10s Ahead            |
+| Arrow Left                    | Seek 2s Behind            |
+| Arrow Right                   | Seek 2s Ahead             |
+| Arrow Up                      | Increase Volume 5%        |
+| Arrow Down                    | Decrease Volume 5%        |
+| F                             | Enter/Exit Fullscreen     |
+| Escape                        | Exit Fullscreen           |
+
+##### `CupertinoVideoControls`
+
+- [iOS-style](https://developer.apple.com/design/human-interface-guidelines/designing-for-ios) video controls.
+- Theming:
+  - Use `CupertinoVideoControlsTheme` widget.
+  - `Video` widget(s) in the `child` tree will follow the specified theme:
+
+```dart
+// Wrap [Video] widget with [CupertinoVideoControlsTheme].
+CupertinoVideoControlsTheme(
+  normal: const CupertinoVideoControlsThemeData(
+    // W.I.P.
+  ),
+  fullscreen: const CupertinoVideoControlsThemeData(
+    // W.I.P.
+  ),
+  child: Scaffold(
+    body: Video(
+      controller: controller,
+    ),
+  ),
+);
+```
+
+##### `NoVideoControls`
+
+- Disable video controls _i.e._ only render video output.
+- Theming:
+  - No theming applicable.
+
+### Next steps
+
+This guide follows a tutorial-like structure & covers nearly all features that [package:media_kit](https://github.com/alexmercerind/media_kit) offers. However, it is _not complete_ by any means. You are free to improve this page & add more documentation, which newcomers may find helpful. The following places can help you learn more:
+
+- [API reference](https://pub.dev/documentation/media_kit/latest/media_kit/media_kit-library.html) can be helpful for diving into deeper specifics.
+- [source-code of the demo application](https://github.com/alexmercerind2/media_kit-private/tree/main/media_kit_test/lib/tests) offers some complete code samples.
+- In-code comments & docstrings happen to be the most updated source of knowledge.
 
 ## Goals
 
@@ -192,24 +970,24 @@ class MyScreenState extends State<MyScreen> {
 - **Strong:** Supports _most_ video & audio codecs.
 - **Performant:**
   - Handles multiple FHD videos flawlessly.
-  - Rendering is GPU powered (hardware accelerated).
+  - Rendering is GPU-powered (hardware accelerated).
   - 4K / 8K 60 FPS is supported.
-- **Stable:** Implementation is well tested & used across number of intensive media playback related apps.
-- **Feature Proof:** A simple usage API while offering large number of features to target multitude of apps.
-- **Modular:** Project is split into number of packages for reducing bundle size.
+- **Stable:** Implementation is well-tested & used across number of intensive media playback related apps.
+- **Feature Proof:** A simple usage API while offering a large number of features to target multitude of apps.
+- **Modular:** Project is split into a number of packages for reducing bundle size.
 - **Cross Platform**: Implementation works on all platforms supported by Flutter & Dart:
   - Android
   - iOS
   - macOS
   - Windows
   - GNU/Linux
-  - ~~Web~~ WIP
+  - Web
 - **Flexible Architecture:**
   - Major part of implementation (80%+) is in 100% Dart ([FFI](https://dart.dev/guides/libraries/c-interop)) & shared across platforms.
-    - Makes behavior of library same & more predictable across platforms.
+    - Makes the behavior of library same & more predictable across platforms.
     - Makes development & implementation of new features easier & faster.
     - Avoids separate maintenance of native implementation for each platform.
-  - Only video embedding code is platform specific & part of separate package.
+  - Only video embedding code is platform-specific & part of separate package.
 
 You may see project's [architecture](https://github.com/alexmercerind/media_kit#architecture) & [implementation](https://github.com/alexmercerind/media_kit#implementation) details for further information.
 
@@ -591,9 +1369,12 @@ yuv4mpegpipe    YUV4MPEG pipe
 </details>
 
 **Notes:**
+
 - The list contains the supported formats (& not containers).
   - A video/audio format may be present in a number of containers.
   - e.g. an MP4 file generally contains H264 video stream.
+- On the web, format support depends upon the web browser.
+  - It happens to be extremely limited as compared to native platforms.
 
 ## Permissions
 
@@ -657,7 +1438,7 @@ if (/* Android 13 or higher. */) {
 
 ### iOS
 
-Edit `ios/Runner/Info-Release.plist`, `ios/Runner/Info-Profile.plist`, `ios/Runner/Info-Debug.plist` to declare relevant permissions:
+Edit `ios/Runner/Info-Release.plist`, `ios/Runner/Info-Profile.plist`, `ios/Runner/Info-Debug.plist`:
 
 **Enable internet access**
 
@@ -675,7 +1456,7 @@ N/A
 
 ### macOS
 
-Edit `macos/Runner/Release.entitlements` & `macos/Runner/DebugProfile.entitlements` to declare relevant permissions:
+Edit `macos/Runner/Release.entitlements` & `macos/Runner/DebugProfile.entitlements`:
 
 **Enable internet access**
 
@@ -692,6 +1473,10 @@ Edit `macos/Runner/Release.entitlements` & `macos/Runner/DebugProfile.entitlemen
 ```
 
 ### GNU/Linux
+
+N/A
+
+### Web
 
 N/A
 
@@ -746,6 +1531,10 @@ There are other ways to bundle these within your app package e.g. within Snap or
 
 - [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
 - [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/\_packaging)
+
+### Web
+
+On the web, **libmpv is not used**. Video & audio playback is handled by embedding [HTML `<video>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video). The format support depends upon the web browser. It happens to be extremely limited as compared to native platforms.
 
 ## License
 
