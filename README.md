@@ -107,8 +107,8 @@ dependencies:
       <img src="https://github.com/alexmercerind/media_kit/assets/28951144/aea1f480-51e2-452a-b53c-c0e27f71f0d8" height="400" alt="Android"></img>
     </td>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696349-6bad4f2b-439b-43bb-9ced-e05cd52b1477.jpg" height="400" alt="iOS"></img>
-      <img src="https://user-images.githubusercontent.com/28951144/232696349-6bad4f2b-439b-43bb-9ced-e05cd52b1477.jpg" height="400" alt="iOS"></img>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/e8ce64cb-1ea9-4a3e-bc9c-db620abf88c9" height="400" alt="iOS"></img>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/d7159df2-1df1-46d3-84f8-238e2a66bfbc" height="400" alt="iOS"></img>
     </td>
   </tr>
   <tr>
@@ -121,7 +121,7 @@ dependencies:
   </tr>
   <tr>
     <td>
-      <img src="https://user-images.githubusercontent.com/28951144/232696378-5c8f76a6-d0a5-4215-8c4f-5a76957e5692.jpg" height="200" alt="macOS"></img>
+      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/fca8dbbf-4262-431f-a04a-f3aa6afb2911" height="200" alt="macOS"></img>
     </td>
     <td>
       <img src="https://github.com/alexmercerind/media_kit/assets/28951144/742b0016-da58-42de-9880-ecaa0604c2b2" height="200" alt="Windows"></img>
@@ -636,7 +636,7 @@ await player.setAudioDevice(AudioDevice.auto());
 await player.setAudioDevice(AudioDevice.no());
 ```
 
-### Select custom audio device
+#### Select custom audio device
 
 - Retrieve currently available audio devices:
 
@@ -989,7 +989,7 @@ This guide follows a tutorial-like structure & covers nearly all features that [
   - macOS
   - Windows
   - GNU/Linux
-  - ~~Web~~ WIP
+  - Web
 - **Flexible Architecture:**
   - Major part of implementation (80%+) is in 100% Dart ([FFI](https://dart.dev/guides/libraries/c-interop)) & shared across platforms.
     - Makes the behavior of library same & more predictable across platforms.
@@ -1542,9 +1542,7 @@ There are other ways to bundle these within your app package e.g. within Snap or
 
 ### Web
 
-On the web, **libmpv is not used**. Video & audio playback is handled by embedding [HTML `<video>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video).
-
-The format support depends upon the web browser. It happens to be extremely limited as compared to native platforms.
+On the web, **libmpv is not used**. Video & audio playback is handled by embedding [HTML `<video>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video). The format support depends upon the web browser. It happens to be extremely limited as compared to native platforms.
 
 ## Architecture
 
@@ -2108,7 +2106,7 @@ Possible improvements :
 
 The two APIs above are hardware accelerated i.e. GPU backed buffers are used. **This is performant approach, easily capable for rendering 4K 60 FPS videos**, rest depends on the hardware. Since [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) API is OpenGL based & the Texture API in Flutter is Direct3D based, [ANGLE (Almost Native Graphics Layer Engine)](https://github.com/google/angle) is used for interop, which translates the OpenGL ES 2.0 calls into Direct3D.
 
-This hardware accelerated video output requires DirectX 11 or higher. Most Windows systems with either integrated or discrete GPUs should support this already. On systems where Direct3D fails to load due to missing graphics drivers or unsupported feature-level or DirectX version etc. a fallback pixel-buffer based software renderer is used. This means that video is rendered by CPU & every frame is copied back to the RAM. This will cause some redundant load on the CPU, result in decreased battery life & may not play higher resolution videos properly. However, it works well.
+This hardware-accelerated video output requires DirectX 11 or higher. Most Windows systems with either integrated or discrete GPUs should support this already. On systems where Direct3D fails to load due to missing graphics drivers or unsupported feature-level or DirectX version etc. a fallback pixel-buffer based software renderer is used. This means that video is rendered by CPU & every frame is copied back to the RAM. This will cause some redundant load on the CPU, result in decreased battery life & may not play higher resolution videos properly. However, it works well.
 
 <details>
 
