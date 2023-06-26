@@ -218,6 +218,10 @@ class libmpvPlayer extends PlatformPlayer {
         }
         calloc.free(name);
         calloc.free(value);
+        state = state.copyWith(playing: true);
+        if (!playingController.isClosed) {
+          playingController.add(true);
+        }
       }
 
       // Jump to the specified [index] (in both cases either [play] is `true` or `false`).
@@ -254,6 +258,11 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
+      state = state.copyWith(playing: true);
+      if (!playingController.isClosed) {
+        playingController.add(true);
+      }
+
       final name = 'pause'.toNativeUtf8();
       final value = calloc<Uint8>();
       mpv.mpv_get_property(
@@ -287,6 +296,11 @@ class libmpvPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      state = state.copyWith(playing: false);
+      if (!playingController.isClosed) {
+        playingController.add(false);
+      }
 
       final name = 'pause'.toNativeUtf8();
       final value = calloc<Uint8>();
