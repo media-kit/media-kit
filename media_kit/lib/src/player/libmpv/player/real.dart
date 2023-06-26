@@ -272,7 +272,10 @@ class libmpvPlayer extends PlatformPlayer {
         value.cast(),
       );
       if (value.value == 1) {
-        await playOrPause(synchronized: false);
+        await playOrPause(
+          notify: false,
+          synchronized: false,
+        );
       }
       calloc.free(name);
       calloc.free(value);
@@ -311,7 +314,10 @@ class libmpvPlayer extends PlatformPlayer {
         value.cast(),
       );
       if (value.value == 0) {
-        await playOrPause(synchronized: false);
+        await playOrPause(
+          notify: false,
+          synchronized: false,
+        );
       }
       calloc.free(name);
       calloc.free(value);
@@ -327,6 +333,7 @@ class libmpvPlayer extends PlatformPlayer {
   /// Cycles between [play] & [pause] states of the [Player].
   @override
   Future<void> playOrPause({
+    bool notify = true,
     bool synchronized = true,
   }) {
     Future<void> function() async {
@@ -336,11 +343,14 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      state = state.copyWith(
-        playing: !state.playing,
-      );
-      if (!playingController.isClosed) {
-        playingController.add(state.playing);
+      if (notify) {
+        // Do not change the [state.playing] value if [playOrPause] was called from [play] or [pause]; where the [state.playing] value is already changed.
+        state = state.copyWith(
+          playing: !state.playing,
+        );
+        if (!playingController.isClosed) {
+          playingController.add(state.playing);
+        }
       }
 
       isPlayingStateChangeAllowed = true;
