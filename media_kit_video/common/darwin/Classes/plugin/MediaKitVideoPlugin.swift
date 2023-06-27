@@ -11,9 +11,12 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
     #if canImport(Flutter)
       let binaryMessenger = registrar.messenger()
       let registry = registrar.textures()
+      let utils: UtilsProtocol? = nil
     #elseif canImport(FlutterMacOS)
       let binaryMessenger = registrar.messenger
       let registry = registrar.textures
+      let window: NSWindow = (registrar.view?.window)!
+      let utils: UtilsProtocol? = Utils(window)
     #endif
 
     let channel = FlutterMethodChannel(
@@ -22,19 +25,26 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
     )
     let instance = MediaKitVideoPlugin(
       registry: registry,
-      channel: channel
+      channel: channel,
+      utils: utils
     )
     registrar.addMethodCallDelegate(instance, channel: channel)
   }
 
   private let channel: FlutterMethodChannel
   private let videoOutputManager: VideoOutputManager
+  private let utils: UtilsProtocol?
 
-  init(registry: FlutterTextureRegistry, channel: FlutterMethodChannel) {
+  init(
+    registry: FlutterTextureRegistry,
+    channel: FlutterMethodChannel,
+    utils: UtilsProtocol?
+  ) {
     self.channel = channel
     videoOutputManager = VideoOutputManager(
       registry: registry
     )
+    self.utils = utils
   }
 
   public func handle(
@@ -48,6 +58,10 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
       handleSetSizeMethodCall(call.arguments, result)
     case "VideoOutputManager.Dispose":
       handleDisposeMethodCall(call.arguments, result)
+    case "Utils.EnterNativeFullscreen":
+      handleEnterNativeFullscreenMethodCall(call.arguments, result)
+    case "Utils.ExitNativeFullscreen":
+      handleExitNativeFullscreenMethodCall(call.arguments, result)
     default:
       result(FlutterMethodNotImplemented)
     }
@@ -126,6 +140,30 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
       handle: handle!
     )
 
+    result(nil)
+  }
+
+  private func handleEnterNativeFullscreenMethodCall(
+    _: Any?,
+    _ result: FlutterResult
+  ) {
+    if utils == nil {
+      return result(FlutterMethodNotImplemented)
+    }
+
+    utils?.enterNativeFullscreen()
+    result(nil)
+  }
+
+  private func handleExitNativeFullscreenMethodCall(
+    _: Any?,
+    _ result: FlutterResult
+  ) {
+    if utils == nil {
+      return result(FlutterMethodNotImplemented)
+    }
+
+    utils?.exitNativeFullscreen()
     result(nil)
   }
 }
