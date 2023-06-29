@@ -11,6 +11,7 @@ import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/utils/android_asset_loader.dart';
+import 'package:media_kit/src/utils/android_content_uri_provider.dart';
 
 /// {@template media}
 ///
@@ -116,6 +117,20 @@ class Media extends Playable {
         throw Exception('Unable to load asset: $asset');
       }
       uri = asset;
+    }
+    // content:// URI support for Android.
+    try {
+      if (Platform.isAndroid) {
+        if (Uri.parse(uri).isScheme('CONTENT')) {
+          final fd = AndroidContentUriProvider.openFileDescriptorSync(uri);
+          if (fd > 0) {
+            return 'fd://$fd';
+          }
+        }
+      }
+    } catch (exception, stacktrace) {
+      print(exception);
+      print(stacktrace);
     }
     // Keep the resulting URI normalization same as used by libmpv internally.
     // [File] or network URIs.
