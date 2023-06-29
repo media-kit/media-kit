@@ -1,3 +1,10 @@
+/**
+ * This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+ *
+ * Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+ * All rights reserved.
+ * Use of this source code is governed by MIT license that can be found in the LICENSE file.
+ */
 package com.alexmercerind.media_kit_libs_android_video;
 
 import android.util.Log;
@@ -28,7 +35,7 @@ public class MediaKitLibsAndroidVideoPlugin implements FlutterPlugin {
         Log.i("media_kit", "package:media_kit_libs_android_video attached.");
         try {
             // Save android.content.Context for access later within MediaKitAndroidHelpers e.g. loading bundled assets.
-            MediaKitAndroidHelper.setApplicationContext(flutterPluginBinding.getApplicationContext());
+            MediaKitAndroidHelper.setApplicationContextJava(flutterPluginBinding.getApplicationContext());
             Log.i("media_kit", "Saved application context.");
         } catch (Throwable e) {
             e.printStackTrace();
