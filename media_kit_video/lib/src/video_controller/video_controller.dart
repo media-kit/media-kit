@@ -76,14 +76,7 @@ class VideoController {
 
     () async {
       try {
-        if (WebVideoController.supported) {
-          final result = await WebVideoController.create(
-            player,
-            configuration,
-          );
-          platform.complete(result);
-          notifier.value = result;
-        } else if (NativeVideoController.supported) {
+        if (NativeVideoController.supported) {
           final result = await NativeVideoController.create(
             player,
             configuration,
@@ -92,6 +85,13 @@ class VideoController {
           notifier.value = result;
         } else if (AndroidVideoController.supported) {
           final result = await AndroidVideoController.create(
+            player,
+            configuration,
+          );
+          platform.complete(result);
+          notifier.value = result;
+        } else if (WebVideoController.supported) {
+          final result = await WebVideoController.create(
             player,
             configuration,
           );
