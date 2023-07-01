@@ -9,8 +9,8 @@ import 'dart:ffi';
 import 'dart:async';
 import 'dart:collection';
 import 'package:ffi/ffi.dart';
+import 'package:path/path.dart';
 import 'package:meta/meta.dart';
-import 'package:path/path.dart' as path;
 
 import 'package:media_kit/src/player/platform_player.dart';
 import 'package:media_kit/src/player/libmpv/core/initializer.dart';
@@ -1229,7 +1229,7 @@ class libmpvPlayer extends PlatformPlayer {
       if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-device-list' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
         final value = prop.ref.data.cast<generated.mpv_node>();
-        final audioDevices = <AudioDevice>[AudioDevice.auto()];
+        final audioDevices = <AudioDevice>[];
         if (value.ref.format == generated.mpv_format.MPV_FORMAT_NODE_ARRAY) {
           final list = value.ref.u.list.ref;
           for (int i = 0; i < list.num; i++) {
@@ -1780,7 +1780,7 @@ class libmpvPlayer extends PlatformPlayer {
           // We manually save `subfont.ttf` to the application's cache directory and set `config` & `config-dir` to use it.
           final subfont = await AndroidAssetLoader.load('subfont.ttf');
           if (subfont.isNotEmpty) {
-            final directory = path.dirname(subfont);
+            final directory = dirname(subfont);
             // This asset is bundled as part of `package:media_kit_libs_android_video`.
             // Use it if located inside the application bundle, otherwise no worries.
             options.addAll(
@@ -1835,7 +1835,7 @@ class libmpvPlayer extends PlatformPlayer {
         // Disable audio output on older Android emulators with API Level < 25.
         // OpenSL ES audio output seems to be broken on some of these.
         else if (AndroidHelper.isEmulator && AndroidHelper.APILevel <= 25)
-          'ao': 'null'
+          'ao': 'null',
       };
       // Other properties based on [PlayerConfiguration].
       properties.addAll(

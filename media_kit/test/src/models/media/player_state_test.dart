@@ -18,49 +18,135 @@ void main() {
     'player-state-default-values',
     () {
       final state = PlayerState();
-      expect(state.playlist, equals(Playlist([])));
-      expect(state.playing, equals(false));
-      expect(state.completed, equals(false));
-      expect(state.position, equals(Duration.zero));
-      expect(state.duration, equals(Duration.zero));
-      expect(state.volume, equals(100.0));
-      expect(state.rate, equals(1.0));
-      expect(state.pitch, equals(1.0));
-      expect(state.buffering, equals(false));
-      expect(state.buffer, equals(Duration.zero));
-      expect(state.playlistMode, equals(PlaylistMode.none));
-      expect(state.audioParams.format, isNull);
-      expect(state.audioParams.sampleRate, isNull);
-      expect(state.audioParams.channels, isNull);
-      expect(state.audioParams.channelCount, isNull);
-      expect(state.audioParams.hrChannels, isNull);
-      expect(state.audioBitrate, isNull);
-      expect(state.audioDevice, equals(AudioDevice.auto()));
       expect(
-        ListEquality().equals(state.audioDevices, [AudioDevice.auto()]),
-        isTrue,
+        state.playlist,
+        equals(Playlist([])),
+      );
+      expect(
+        state.playing,
+        equals(false),
+      );
+      expect(
+        state.completed,
+        equals(false),
+      );
+      expect(
+        state.position,
+        equals(Duration.zero),
+      );
+      expect(
+        state.duration,
+        equals(Duration.zero),
+      );
+      expect(
+        state.volume,
+        equals(100.0),
+      );
+      expect(
+        state.rate,
+        equals(1.0),
+      );
+      expect(
+        state.pitch,
+        equals(1.0),
+      );
+      expect(
+        state.buffering,
+        equals(false),
+      );
+      expect(
+        state.buffer,
+        equals(Duration.zero),
+      );
+      expect(
+        state.playlistMode,
+        equals(PlaylistMode.none),
+      );
+      expect(
+        state.audioParams.format,
+        isNull,
+      );
+      expect(
+        state.audioParams.sampleRate,
+        isNull,
+      );
+      expect(
+        state.audioParams.channels,
+        isNull,
+      );
+      expect(
+        state.audioParams.channelCount,
+        isNull,
+      );
+      expect(
+        state.audioParams.hrChannels,
+        isNull,
+      );
+      expect(
+        state.audioBitrate,
+        isNull,
+      );
+      expect(
+        state.audioDevice,
+        equals(AudioDevice.auto()),
       );
       expect(
         ListEquality().equals(state.audioDevices, [AudioDevice.auto()]),
         isTrue,
       );
-      expect(state.track.video, equals(VideoTrack.auto()));
-      expect(state.track.audio, equals(AudioTrack.auto()));
-      expect(state.track.subtitle, equals(SubtitleTrack.auto()));
       expect(
-        ListEquality().equals(state.tracks.video, [VideoTrack.auto()]),
+        ListEquality().equals(state.audioDevices, [AudioDevice.auto()]),
         isTrue,
       );
       expect(
-        ListEquality().equals(state.tracks.audio, [AudioTrack.auto()]),
+        state.track,
+        equals(Track()),
+      );
+      expect(
+        state.tracks,
+        equals(Tracks()),
+      );
+      expect(
+        state.track.video,
+        equals(VideoTrack.auto()),
+      );
+      expect(
+        state.track.audio,
+        equals(AudioTrack.auto()),
+      );
+      expect(
+        state.track.subtitle,
+        equals(SubtitleTrack.auto()),
+      );
+      expect(
+        ListEquality().equals(state.tracks.video, [
+          VideoTrack.auto(),
+          VideoTrack.no(),
+        ]),
         isTrue,
       );
       expect(
-        ListEquality().equals(state.tracks.subtitle, [SubtitleTrack.auto()]),
+        ListEquality().equals(state.tracks.audio, [
+          AudioTrack.auto(),
+          AudioTrack.no(),
+        ]),
         isTrue,
       );
-      expect(state.width, isNull);
-      expect(state.height, isNull);
+      expect(
+        ListEquality().equals(state.tracks.subtitle, [
+          SubtitleTrack.auto(),
+          SubtitleTrack.no(),
+        ]),
+        isTrue,
+      );
+      expect(
+        state.width,
+        isNull,
+      );
+      expect(
+        state.height,
+        isNull,
+      );
     },
   );
 }
