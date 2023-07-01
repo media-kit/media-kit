@@ -1,3 +1,15 @@
+## 1.0.0
+
+- feat: web support
+- feat: `Player.stop`
+- feat: support for AGP 8.0
+- feat: pre-built video controls
+- fix: `buffering` stream behavior
+- fix: improve stability on Android emulator(s)
+- fix: default `PlayerState` `volume` = `100.0`
+- fix: `Player.add`, `Player.remove`, `Player.jump` & `Player.move` stability
+- test: stricter & more unit-tests
+
 ## 0.0.11
 
 - fix: `audioDevices` state/stream not being set/emit

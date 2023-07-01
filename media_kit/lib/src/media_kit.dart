@@ -35,7 +35,7 @@ abstract class MediaKit {
       libmpvEnsureInitialized(libmpv: libmpv);
     } else if (UniversalPlatform.isIOS) {
       libmpvEnsureInitialized(libmpv: libmpv);
-    } else if (UniversalPlatform.isMacOS) {
+    } else if (UniversalPlatform.isAndroid) {
       libmpvEnsureInitialized(libmpv: libmpv);
     } else if (UniversalPlatform.isWeb) {
       webEnsureInitialized(libmpv: libmpv);
