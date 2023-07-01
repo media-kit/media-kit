@@ -343,6 +343,16 @@ await player.pause();
 await player.playOrPause();
 ```
 
+### Stop
+
+The `stop` method may be used to stop the playback of currently opened `Media` or `Playlist`. 
+
+```dart
+await player.stop();
+```
+
+It does not release allocated resources back to the system (unlike [`dispose`](#dispose-a-player)) & `Player` still stays usable.
+
 ### Seek
 
 Supply the final position to `Player.seek` method as `Duration`:

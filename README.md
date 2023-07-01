@@ -216,6 +216,7 @@ A usage guide for [package:media_kit](https://github.com/alexmercerind/media_kit
 - [Dispose a `Player`](#dispose-a-player)
 - [Open a `Media` or `Playlist`](#open-a-media-or-playlist)
 - [Play, pause or play/pause](#play-pause-or-playpause)
+- [Stop](#stop)
 - [Seek](#seek)
 - [Loop or repeat](#loop-or-repeat)
 - [Set volume, rate or pitch](#set-volume-rate-or-pitch)
@@ -350,6 +351,16 @@ await player.pause();
 ```dart
 await player.playOrPause();
 ```
+
+### Stop
+
+The `stop` method may be used to stop the playback of currently opened `Media` or `Playlist`. 
+
+```dart
+await player.stop();
+```
+
+It does not release allocated resources back to the system (unlike [`dispose`](#dispose-a-player)) & `Player` still stays usable.
 
 ### Seek
 
