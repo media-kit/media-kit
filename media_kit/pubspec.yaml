@@ -24,11 +24,9 @@ screenshots:
     path: screenshots/web.jpg
 topics:
   - video
+  - video-player
   - audio
-  - media
-  - video player
-  - audio player
-  - media player
+  - audio-player
 
 environment:
   sdk: ">=2.17.0 <4.0.0"
