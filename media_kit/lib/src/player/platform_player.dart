@@ -104,127 +104,135 @@ abstract class PlatformPlayer {
     bool play = true,
   }) {
     throw UnimplementedError(
-      '[PlatformPlayer.open] is not implemented.',
+      '[PlatformPlayer.open] is not implemented',
+    );
+  }
+
+  /// Stops the [Player].
+  /// Unloads the current [Media] or [Playlist] from the [Player]. This method is similar to [dispose] but does not release the resources & [Player] is still usable.
+  Future<void> stop() {
+    throw UnimplementedError(
+      '[PlatformPlayer.stop] is not implemented',
     );
   }
 
   FutureOr<void> play() {
     throw UnimplementedError(
-      '[PlatformPlayer.play] is not implemented.',
+      '[PlatformPlayer.play] is not implemented',
     );
   }
 
   FutureOr<void> pause() {
     throw UnimplementedError(
-      '[PlatformPlayer.pause] is not implemented.',
+      '[PlatformPlayer.pause] is not implemented',
     );
   }
 
   FutureOr<void> playOrPause() {
     throw UnimplementedError(
-      '[PlatformPlayer.playOrPause] is not implemented.',
+      '[PlatformPlayer.playOrPause] is not implemented',
     );
   }
 
   FutureOr<void> add(Media media) {
     throw UnimplementedError(
-      '[PlatformPlayer.add] is not implemented.',
+      '[PlatformPlayer.add] is not implemented',
     );
   }
 
   FutureOr<void> remove(int index) {
     throw UnimplementedError(
-      '[PlatformPlayer.remove] is not implemented.',
+      '[PlatformPlayer.remove] is not implemented',
     );
   }
 
   FutureOr<void> next() {
     throw UnimplementedError(
-      '[PlatformPlayer.next] is not implemented.',
+      '[PlatformPlayer.next] is not implemented',
     );
   }
 
   FutureOr<void> previous() {
     throw UnimplementedError(
-      '[PlatformPlayer.previous] is not implemented.',
+      '[PlatformPlayer.previous] is not implemented',
     );
   }
 
   FutureOr<void> jump(int index) {
     throw UnimplementedError(
-      '[PlatformPlayer.jump] is not implemented.',
+      '[PlatformPlayer.jump] is not implemented',
     );
   }
 
   FutureOr<void> move(int from, int to) {
     throw UnimplementedError(
-      '[PlatformPlayer.move] is not implemented.',
+      '[PlatformPlayer.move] is not implemented',
     );
   }
 
   FutureOr<void> seek(Duration duration) {
     throw UnimplementedError(
-      '[PlatformPlayer.seek] is not implemented.',
+      '[PlatformPlayer.seek] is not implemented',
     );
   }
 
   FutureOr<void> setPlaylistMode(PlaylistMode playlistMode) {
     throw UnimplementedError(
-      '[PlatformPlayer.setPlaylistMode] is not implemented.',
+      '[PlatformPlayer.setPlaylistMode] is not implemented',
     );
   }
 
   FutureOr<void> setVolume(double volume) {
     throw UnimplementedError(
-      '[PlatformPlayer.volume] is not implemented.',
+      '[PlatformPlayer.volume] is not implemented',
     );
   }
 
   FutureOr<void> setRate(double rate) {
     throw UnimplementedError(
-      '[PlatformPlayer.rate] is not implemented.',
+      '[PlatformPlayer.rate] is not implemented',
     );
   }
 
   FutureOr<void> setPitch(double pitch) {
     throw UnimplementedError(
-      '[PlatformPlayer.pitch] is not implemented.',
+      '[PlatformPlayer.pitch] is not implemented',
     );
   }
 
   FutureOr<void> setShuffle(bool shuffle) {
     throw UnimplementedError(
-      '[PlatformPlayer.shuffle] is not implemented.',
+      '[PlatformPlayer.shuffle] is not implemented',
     );
   }
 
   FutureOr<void> setAudioDevice(AudioDevice audioDevice) {
     throw UnimplementedError(
-      '[PlatformPlayer.setAudioDevice] is not implemented.',
+      '[PlatformPlayer.setAudioDevice] is not implemented',
     );
   }
 
   FutureOr<void> setVideoTrack(VideoTrack track) {
     throw UnimplementedError(
-      '[PlatformPlayer.setVideoTrack] is not implemented.',
+      '[PlatformPlayer.setVideoTrack] is not implemented',
     );
   }
 
   FutureOr<void> setAudioTrack(AudioTrack track) {
     throw UnimplementedError(
-      '[PlatformPlayer.setAudioTrack] is not implemented.',
+      '[PlatformPlayer.setAudioTrack] is not implemented',
     );
   }
 
   FutureOr<void> setSubtitleTrack(SubtitleTrack track) {
     throw UnimplementedError(
-      '[PlatformPlayer.setSubtitleTrack] is not implemented.',
+      '[PlatformPlayer.setSubtitleTrack] is not implemented',
     );
   }
 
   Future<int> get handle {
     throw UnimplementedError(
-      '[PlatformPlayer.handle] is not implemented.',
+      '[PlatformPlayer.handle] is not implemented',
     );
   }
 
@@ -305,12 +313,12 @@ abstract class PlatformPlayer {
       StreamController<Tracks>.broadcast();
 
   @protected
-  final StreamController<int> widthController =
-      StreamController<int>.broadcast();
+  final StreamController<int?> widthController =
+      StreamController<int?>.broadcast();
 
   @protected
-  final StreamController<int> heightController =
-      StreamController<int>.broadcast();
+  final StreamController<int?> heightController =
+      StreamController<int?>.broadcast();
 
   /// Publicly defined clean-up [Function]s which must be called before [dispose].
   final List<Future<void> Function()> release = [];

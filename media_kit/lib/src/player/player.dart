@@ -3,8 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-
-import 'dart:io';
+import 'package:universal_platform/universal_platform.dart';
 
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
@@ -14,8 +13,6 @@ import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_stream.dart';
-
-import 'package:media_kit/src/utils/web.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
 import 'package:media_kit/src/player/web/player/player.dart';
@@ -105,18 +102,18 @@ class Player {
   Player({
     PlayerConfiguration configuration = const PlayerConfiguration(),
   }) {
-    if (kIsWeb) {
+    if (UniversalPlatform.isWindows) {
+      platform = libmpvPlayer(configuration: configuration);
+    } else if (UniversalPlatform.isLinux) {
+      platform = libmpvPlayer(configuration: configuration);
+    } else if (UniversalPlatform.isMacOS) {
+      platform = libmpvPlayer(configuration: configuration);
+    } else if (UniversalPlatform.isIOS) {
+      platform = libmpvPlayer(configuration: configuration);
+    } else if (UniversalPlatform.isAndroid) {
+      platform = libmpvPlayer(configuration: configuration);
+    } else if (UniversalPlatform.isWeb) {
       platform = webPlayer(configuration: configuration);
-    } else if (Platform.isWindows) {
-      platform = libmpvPlayer(configuration: configuration);
-    } else if (Platform.isLinux) {
-      platform = libmpvPlayer(configuration: configuration);
-    } else if (Platform.isMacOS) {
-      platform = libmpvPlayer(configuration: configuration);
-    } else if (Platform.isIOS) {
-      platform = libmpvPlayer(configuration: configuration);
-    } else if (Platform.isAndroid) {
-      platform = libmpvPlayer(configuration: configuration);
     }
   }
 
@@ -164,6 +161,12 @@ class Player {
       playable,
       play: play,
     );
+  }
+
+  /// Stops the [Player].
+  /// Unloads the current [Media] or [Playlist] from the [Player]. This method is similar to [dispose] but does not release the resources & [Player] is still usable.
+  Future<void> stop() async {
+    return platform?.stop();
   }
 
   /// Starts playing the [Player].
