@@ -3,6 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'package:collection/collection.dart';
 
 /// {@template _track}
 ///
@@ -147,6 +148,20 @@ class Track {
   }
 
   @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is Track) {
+      return video == other.video &&
+          audio == other.audio &&
+          subtitle == other.subtitle;
+    }
+    return false;
+  }
+
+  @override
+  int get hashCode => video.hashCode ^ audio.hashCode ^ subtitle.hashCode;
+
+  @override
   String toString() =>
       'Track(video: $video, audio: $audio, subtitle: $subtitle)';
 }
@@ -170,10 +185,36 @@ class Tracks {
 
   /// {@macro tracks}
   const Tracks({
-    this.video = const [VideoTrack('auto', null, null)],
-    this.audio = const [AudioTrack('auto', null, null)],
-    this.subtitle = const [SubtitleTrack('auto', null, null)],
+    this.video = const [
+      VideoTrack('auto', null, null),
+      VideoTrack('no', null, null),
+    ],
+    this.audio = const [
+      AudioTrack('auto', null, null),
+      AudioTrack('no', null, null),
+    ],
+    this.subtitle = const [
+      SubtitleTrack('auto', null, null),
+      SubtitleTrack('no', null, null),
+    ],
   });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is Tracks) {
+      return ListEquality().equals(video, other.video) &&
+          ListEquality().equals(audio, other.audio) &&
+          ListEquality().equals(subtitle, other.subtitle);
+    }
+    return false;
+  }
+
+  @override
+  int get hashCode =>
+      ListEquality().hash(video) ^
+      ListEquality().hash(audio) ^
+      ListEquality().hash(subtitle);
 
   @override
   String toString() =>

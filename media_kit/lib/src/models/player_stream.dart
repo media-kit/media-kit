@@ -74,10 +74,10 @@ class PlayerStream {
   final Stream<Tracks> tracks;
 
   /// Currently playing video's width.
-  final Stream<int> width;
+  final Stream<int?> width;
 
   /// Currently playing video's height.
-  final Stream<int> height;
+  final Stream<int?> height;
 
   /// [Stream] emitting internal logs.
   final Stream<PlayerLog> log;
