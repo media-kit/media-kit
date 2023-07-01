@@ -5,12 +5,15 @@ import 'package:test/test.dart';
 import 'package:collection/collection.dart';
 import 'package:universal_platform/universal_platform.dart';
 
-import 'package:media_kit/src/media_kit.dart';
-import 'package:media_kit/src/player/player.dart';
+import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
+import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
+
+import 'package:media_kit/src/media_kit.dart';
+import 'package:media_kit/src/player/player.dart';
 import 'package:media_kit/src/player/platform_player.dart';
 import 'package:media_kit/src/player/web/player/player.dart';
 import 'package:media_kit/src/player/libmpv/player/player.dart';
@@ -776,6 +779,7 @@ void main() {
       );
 
       player.stream.position.listen((event) async {
+        print(event);
         expectPosition(event);
       });
 
@@ -853,6 +857,7 @@ void main() {
       );
 
       player.stream.position.listen((event) async {
+        print(event);
         expectPosition(event);
       });
 
@@ -2428,6 +2433,82 @@ void main() {
       );
 
       await Future.delayed(const Duration(minutes: 1, seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 2)),
+  );
+  test(
+    'player-stop',
+    () async {
+      final player = Player();
+
+      await player.open(Media(sources.platform[0]));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.stop();
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      print(player.state);
+
+      expect(player.state.playlist, equals(Playlist([])));
+      expect(player.state.playing, equals(false));
+      expect(player.state.completed, equals(false));
+      expect(player.state.position, equals(Duration.zero));
+      expect(player.state.duration, equals(Duration.zero));
+      expect(player.state.buffering, equals(false));
+      expect(player.state.buffer, equals(Duration.zero));
+      expect(player.state.audioParams, equals(const AudioParams()));
+      expect(player.state.audioBitrate, equals(null));
+      expect(player.state.track, equals(const Track()));
+      expect(player.state.tracks, equals(const Tracks()));
+      expect(player.state.width, equals(null));
+      expect(player.state.height, equals(null));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 2)),
+  );
+  test(
+    'player-stop-open',
+    () async {
+      final player = Player();
+
+      await player.open(Media(sources.platform[0]));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.stop();
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      final expectPosition = expectAsync1(
+        (value) {
+          print(value);
+          expect(value, isA<Duration>());
+        },
+        count: 1,
+        max: -1,
+      );
+
+      player.stream.position.listen((event) async {
+        print(event);
+        expectPosition(event);
+      });
+
+      await player.open(Media(sources.platform[0]));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
 
       await player.dispose();
     },
