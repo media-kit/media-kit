@@ -7,11 +7,13 @@
  */
 package com.alexmercerind.mediakitandroidhelper;
 
-import android.content.Context;
 import android.net.Uri;
+import android.content.Context;
+import androidx.annotation.Keep;
 
 import java.io.FileNotFoundException;
 
+@Keep
 public class MediaKitAndroidHelper {
     static {
         System.loadLibrary("mediakitandroidhelper");

@@ -60,12 +60,14 @@ abstract class AndroidContentUriProvider {
 
   /// Closes the file descriptor of the content:// URI.
   static Future<void> closeFileDescriptor(int fileDescriptor) async {
+    _loaded.removeWhere((key, value) => value == fileDescriptor);
     // Run on another [Isolate] to avoid blocking the UI.
     await compute(closeFileDescriptorSync, fileDescriptor);
   }
 
   /// Closes the file descriptor of the content:// URI.
   static void closeFileDescriptorSync(int fileDescriptor) {
+    _loaded.removeWhere((key, value) => value == fileDescriptor);
     final lib = DynamicLibrary.open('libmediakitandroidhelper.so');
     final closeFileDescriptor =
         lib.lookupFunction<CloseFileDescriptorCXX, CloseFileDescriptorDart>(
