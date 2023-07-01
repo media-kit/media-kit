@@ -12,6 +12,7 @@
 
 #include <gtk/gtk.h>
 
+#include "include/media_kit_video/utils.h"
 #include "include/media_kit_video/video_output_manager.h"
 
 #define MEDIA_KIT_VIDEO_PLUGIN(obj)                                     \
@@ -21,6 +22,7 @@
 struct _MediaKitVideoPlugin {
   GObject parent_instance;
   FlMethodChannel* channel;
+  FlView* view;
   VideoOutputManager* video_output_manager;
 };
 
@@ -115,6 +117,17 @@ static void media_kit_video_plugin_handle_method_call(
     video_output_manager_dispose(self->video_output_manager, handle_value);
     FlValue* result = fl_value_new_null();
     response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+
+  } else if (g_strcmp0(method, "Utils.EnterNativeFullscreen") == 0) {
+    utils_enter_native_fullscreen(
+        gtk_widget_get_toplevel(GTK_WIDGET(self->view)));
+    FlValue* result = fl_value_new_null();
+    response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+  } else if (g_strcmp0(method, "Utils.ExitNativeFullscreen") == 0) {
+    utils_exit_native_fullscreen(
+        gtk_widget_get_toplevel(GTK_WIDGET(self->view)));
+    FlValue* result = fl_value_new_null();
+    response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
   } else {
     response = FL_METHOD_RESPONSE(fl_method_not_implemented_response_new());
   }
@@ -155,8 +168,7 @@ static MediaKitVideoPlugin* media_kit_video_plugin_new(
   FlTextureRegistrar* texture_registrar =
       fl_plugin_registrar_get_texture_registrar(registrar);
   FlView* view = fl_plugin_registrar_get_view(registrar);
-  // Create new |VideoOutputManager| instance. Pass |texture_registrar| as
-  // reference.
+  self->view = view;
   self->video_output_manager =
       video_output_manager_new(texture_registrar, view);
   return self;
