@@ -7,8 +7,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:media_kit_video/media_kit_video.dart' show VideoState;
 
-import 'package:media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
-import 'package:media_kit_video_controls/src/controls/widgets/video_state_inherited_widget.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_state_inherited_widget.dart';
 
 /// {@template cupertino_video_controls}
 ///

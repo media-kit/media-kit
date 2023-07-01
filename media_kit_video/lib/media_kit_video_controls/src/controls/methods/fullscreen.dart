@@ -10,9 +10,9 @@ import 'package:flutter/foundation.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:media_kit_video_controls/utils/dart_html/dart_html.dart';
-import 'package:media_kit_video_controls/src/controls/methods/video_controller.dart';
-import 'package:media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
+import 'package:media_kit_video/media_kit_video_controls/utils/dart_html/dart_html.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_controller.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
 
 /// Whether a [Video] present in the current [BuildContext] is in fullscreen or not.
 bool isFullscreen(BuildContext context) =>

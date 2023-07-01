@@ -10,10 +10,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:media_kit_video_controls/src/controls/extensions/duration.dart';
-import 'package:media_kit_video_controls/src/controls/methods/video_controller.dart';
-import 'package:media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
-import 'package:media_kit_video_controls/src/controls/widgets/video_state_inherited_widget.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_controller.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_state_inherited_widget.dart';
 
 /// {@template material_desktop_video_controls}
 ///
@@ -76,6 +76,12 @@ class MaterialDesktopVideoControlsThemeData {
   final Map<ShortcutActivator, VoidCallback>? keyboardShortcuts;
 
   // GENERIC
+
+  /// Padding around the controls.
+  ///
+  /// * Default: `EdgeInsets.zero`
+  /// * Fullscreen: `MediaQuery.of(context).padding`
+  final EdgeInsets? padding;
 
   /// [Duration] after which the controls will be hidden when there is no mouse movement.
   final Duration controlsHoverDuration;
@@ -175,6 +181,7 @@ class MaterialDesktopVideoControlsThemeData {
     this.toggleFullscreenOnDoublePress = true,
     this.modifyVolumeOnScroll = true,
     this.keyboardShortcuts,
+    this.padding,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 150),
     this.bufferingIndicatorBuilder,
@@ -619,10 +626,12 @@ class _MaterialDesktopVideoControlsState
                               ),
                             if (mount)
                               Padding(
-                                // Add padding in fullscreen!
-                                padding: isFullscreen(context)
-                                    ? MediaQuery.of(context).padding
-                                    : EdgeInsets.zero,
+                                padding: _theme(context).padding ??
+                                    (
+                                        // Add padding in fullscreen!
+                                        isFullscreen(context)
+                                            ? MediaQuery.of(context).padding
+                                            : EdgeInsets.zero),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   mainAxisAlignment: MainAxisAlignment.start,

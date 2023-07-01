@@ -5,7 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'package:flutter/widgets.dart';
 import 'package:wakelock/wakelock.dart';
-import 'package:media_kit_video_controls/media_kit_video_controls.dart'
+import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
 
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
