@@ -5,6 +5,13 @@ repository: https://github.com/alexmercerind/media_kit
 version: 1.0.0
 funding:
   - https://www.github.com/sponsors/alexmercerind
+topics:
+  - video
+  - audio
+  - media
+  - video player
+  - audio player
+  - media player
 
 environment:
   sdk: ">=2.19.6 <3.0.0"

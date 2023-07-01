@@ -5,6 +5,13 @@ repository: https://github.com/alexmercerind/media_kit
 version: 0.0.12
 funding:
   - https://www.github.com/sponsors/alexmercerind
+topics:
+  - video
+  - audio
+  - media
+  - video player
+  - audio player
+  - media player
 
 environment:
   sdk: ">=2.17.0 <4.0.0"
@@ -14,8 +21,9 @@ dependencies:
   flutter:
     sdk: flutter
   ffi: ^2.0.1
-  synchronized: ^3.1.0
   wakelock: ^0.6.2
+  synchronized: ^3.1.0
+  universal_platform: ^1.0.0+1
   plugin_platform_interface: ^2.0.2
 
   # NOTE: Bump before publishing to pub.dev
@@ -47,3 +55,4 @@ flutter:
       android:
         package: com.alexmercerind.media_kit_video
         pluginClass: MediaKitVideoPlugin
+      web:
