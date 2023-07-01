@@ -4,6 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
+import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_device.dart';
@@ -18,36 +19,39 @@ import 'package:media_kit/src/models/audio_params.dart';
 ///
 /// {@endtemplate}
 class PlayerState {
-  /// [List] of currently opened [Media]s.
+  /// Currently opened [Media]s.
   final Playlist playlist;
 
-  /// Whether [Player] is playing or not.
+  /// Whether playing or not.
   final bool playing;
 
-  /// Whether currently playing [Media] in [Player] has ended or not.
+  /// Whether end of currently playing [Media] has been reached.
   final bool completed;
 
-  /// Current playback position of the [Player].
+  /// Current playback position.
   final Duration position;
 
-  /// Duration of the currently playing [Media] in the [Player].
+  /// Current playback duration.
   final Duration duration;
 
-  /// Current volume of the [Player].
+  /// Current volume.
   final double volume;
 
-  /// Current playback rate of the [Player].
+  /// Current playback rate.
   final double rate;
 
-  /// Current pitch of the [Player].
+  /// Current pitch.
   final double pitch;
 
-  /// Whether the [Player] is buffering.
+  /// Whether buffering or not.
   final bool buffering;
 
-  /// The total buffered duration of the currently playing [Media] in the [Player].
+  /// Current buffer position.
   /// This indicates how much of the stream has been decoded & cached by the demuxer.
   final Duration buffer;
+
+  /// Current playlist mode.
+  final PlaylistMode playlistMode;
 
   /// Audio parameters of the currently playing [Media].
   /// e.g. sample rate, channels, etc.
@@ -62,7 +66,7 @@ class PlayerState {
   /// Currently available [AudioDevice]s.
   final List<AudioDevice> audioDevices;
 
-  /// Currently selected video, audio & subtitle tracks.
+  /// Currently selected video, audio & subtitle track.
   final Track track;
 
   /// Currently available video, audio & subtitle tracks.
@@ -81,11 +85,12 @@ class PlayerState {
     this.completed = false,
     this.position = Duration.zero,
     this.duration = Duration.zero,
-    this.buffer = Duration.zero,
     this.volume = 100.0,
     this.rate = 1.0,
     this.pitch = 1.0,
     this.buffering = false,
+    this.buffer = Duration.zero,
+    this.playlistMode = PlaylistMode.none,
     this.audioParams = const AudioParams(),
     this.audioBitrate,
     this.audioDevice = const AudioDevice('auto', ''),
@@ -102,11 +107,12 @@ class PlayerState {
     bool? completed,
     Duration? position,
     Duration? duration,
-    Duration? buffer,
     double? volume,
     double? rate,
     double? pitch,
     bool? buffering,
+    Duration? buffer,
+    PlaylistMode? playlistMode,
     AudioParams? audioParams,
     double? audioBitrate,
     AudioDevice? audioDevice,
@@ -122,11 +128,12 @@ class PlayerState {
       completed: completed ?? this.completed,
       position: position ?? this.position,
       duration: duration ?? this.duration,
-      buffer: buffer ?? this.buffer,
       volume: volume ?? this.volume,
       rate: rate ?? this.rate,
       pitch: pitch ?? this.pitch,
       buffering: buffering ?? this.buffering,
+      buffer: buffer ?? this.buffer,
+      playlistMode: playlistMode ?? this.playlistMode,
       audioParams: audioParams ?? this.audioParams,
       audioBitrate: audioBitrate ?? this.audioBitrate,
       audioDevice: audioDevice ?? this.audioDevice,
@@ -145,11 +152,12 @@ class PlayerState {
       'completed: $completed, '
       'position: $position, '
       'duration: $duration, '
-      'buffer: $buffer, '
       'volume: $volume, '
       'rate: $rate, '
       'pitch: $pitch, '
       'buffering: $buffering, '
+      'buffer: $buffer, '
+      'playlistMode: $playlistMode, '
       'audioParams: $audioParams, '
       'audioBitrate: $audioBitrate, '
       'audioDevice: $audioDevice, '

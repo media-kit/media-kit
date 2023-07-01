@@ -48,11 +48,20 @@ abstract class AndroidHelper {
                 MediaKitAndroidHelperIsEmulatorDart>(
           'MediaKitAndroidHelperIsEmulator',
         );
-      }
-      // Invoke av_jni_set_java_vm to set reference to JavaVM*. This is internally consumed by libmpv & FFmpeg.
-      final vm = _MediaKitAndroidHelperGetJavaVM?.call();
-      if (vm != null) {
-        _av_jni_set_java_vm?.call(vm);
+
+        Pointer<Void>? vm;
+        while (true) {
+          // Invoke av_jni_set_java_vm to set reference to JavaVM*.
+          // This is internally consumed by libmpv & FFmpeg.
+          vm = _MediaKitAndroidHelperGetJavaVM?.call();
+          if (vm != null) {
+            if (vm != nullptr) {
+              _av_jni_set_java_vm?.call(vm);
+              break;
+            }
+          }
+          sleep(const Duration(milliseconds: 20));
+        }
       }
     } catch (exception, stacktrace) {
       print(exception);

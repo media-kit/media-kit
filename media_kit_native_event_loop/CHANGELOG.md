@@ -1,5 +1,6 @@
 ## 1.0.5
 
+- fix(windows): rare "mutex destroyed while busy" error
 - fix(macos): occasional EXC_BAD_ACCESS on application terminate
 
 ## 1.0.4

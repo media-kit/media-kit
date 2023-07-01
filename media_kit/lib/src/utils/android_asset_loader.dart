@@ -14,7 +14,7 @@ import 'package:media_kit/src/utils/isolates.dart';
 /// AndroidAssetLoader
 /// ------------------
 ///
-/// This class is used to assets bundled with the application on Android.
+/// This class is used to access assets bundled with the application on Android.
 /// The implementation depends on the mediakitandroidhelper library.
 ///
 /// Learn more: https://github.com/media-kit/media-kit-android-helper

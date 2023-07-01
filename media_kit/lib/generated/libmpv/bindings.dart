@@ -1704,8 +1704,8 @@ abstract class mpv_error {
   static const int MPV_ERROR_VO_INIT_FAILED = -15;
 
   /// There was no audio or video data to play. This also happens if the
-  /// file was recognized, but did not contain any audio or video streams,
-  /// or no streams were selected.
+  /// file was recognized, but did not contain any audio or video stream,
+  /// or no stream were selected.
   static const int MPV_ERROR_NOTHING_TO_PLAY = -16;
 
   /// When trying to load the file, the file format could not be determined,

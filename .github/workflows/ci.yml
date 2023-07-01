@@ -2,23 +2,29 @@ name: Github Actions
 on: [push, pull_request]
 
 jobs:
-  # TODO: Enable package:media_kit tests on Windows
+  media_kit-tests-windows:
+    name: package:media_kit tests (Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: media_kit
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
 
-  # media_kit-tests-windows:
-  #   name: package:media_kit tests (Windows)
-  #   runs-on: windows-latest
-  #   defaults:
-  #     run:
-  #       working-directory: media_kit
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #       with:
-  #         submodules: "true"
-  #     - uses: subosito/flutter-action@v1
-  #       with:
-  #         channel: "stable"
-  #     - run: dart pub get
-  #     - run: dart test
+      - name: Setup libmpv for Windows
+        run: |
+          curl -LO https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-04-08/mpv-dev-x86_64-20230408-git-7ae7fc0.7z
+          cmake -E md5sum mpv-dev-x86_64-20230408-git-7ae7fc0.7z | find /i "3d6e3686b5d543dfed6a775b8bff6b14" > nul || exit 1
+          cmake -E tar x mpv-dev-x86_64-20230408-git-7ae7fc0.7z libmpv-2.dll
+        shell: cmd
+
+      - run: dart pub get
+      - run: dart test
 
   media_kit-tests-linux:
     name: package:media_kit tests (Linux)
@@ -55,6 +61,26 @@ jobs:
   #         channel: "stable"
   #     - run: dart pub get
   #     - run: dart test
+
+  media_kit-tests-web:
+    name: package:media_kit tests (Web)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - run: sudo apt-get update
+      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      # Delete tests which import native code & depend upon dart:ffi
+      - run: rm -r test/src/player/libmpv
+      - run: dart pub get
+      - run: dart test --platform chrome
 
   windows:
     name: Windows

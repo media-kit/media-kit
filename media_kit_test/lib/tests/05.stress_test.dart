@@ -35,6 +35,7 @@ class _StressTestScreenState extends State<StressTestScreen> {
       players[i].setVolume(0.0);
       players[i].setPlaylistMode(PlaylistMode.loop);
       players[i].open(Media(sources[i % sources.length]));
+      players[i].stream.error.listen((error) => debugPrint(error));
     }
   }
 
@@ -48,16 +49,20 @@ class _StressTestScreenState extends State<StressTestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final children = controllers
-        .map(
-          (e) => Card(
-            elevation: 4.0,
-            margin: EdgeInsets.zero,
-            clipBehavior: Clip.antiAlias,
-            child: Video(controller: e),
-          ),
-        )
-        .toList();
+    final children = controllers.map(
+      (e) {
+        final video = Video(controller: e);
+        if (Theme.of(context).platform == TargetPlatform.android) {
+          return video;
+        }
+        return Card(
+          elevation: 8.0,
+          margin: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
+          child: video,
+        );
+      },
+    ).toList();
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),

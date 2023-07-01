@@ -1,3 +1,15 @@
+## 1.0.0
+
+- feat: web support
+- feat: `Player.stop`
+- feat: support for AGP 8.0
+- feat: pre-built video controls
+- fix: `buffering` stream behavior
+- fix: improve stability on Android emulator(s)
+- fix: default `PlayerState` `volume` = `100.0`
+- fix: `Player.add`, `Player.remove`, `Player.jump` & `Player.move` stability
+- test: stricter & more unit-tests
+
 ## 0.0.11
 
 - fix: `audioDevices` state/stream not being set/emit
@@ -8,7 +20,7 @@
 
 ## 0.0.10
 
-- perf: emit distinct events in `Player.streams`
+- perf: emit distinct events in `Player.stream`
 - fix(android): crash on some devices
 - fix: `Player.setAudioDevice` not working
 - fix: set/emit `completed` as `false` upon `Player.seek`
@@ -58,14 +70,14 @@
 - Android support
 - feat: video output width & height states/events:
   - `Player.state.width`: currently playing video's width as `int`
-  - `Player.streams.width`: currently playing video's width as `Stream<int>`
+  - `Player.stream.width`: currently playing video's width as `Stream<int>`
   - `Player.state.height`: currently playing video's height as `int`
-  - `Player.streams.height`: currently playing video's height as `Stream<int>`
+  - `Player.stream.height`: currently playing video's height as `Stream<int>`
 - feat(refactor): entry point
   - `MediaKit.ensureInitialized`
 - feat: media stream buffer state/event:
   - `Player.state.buffer`: currently buffered duration of the media stream as `Duration`
-  - `Player.streams.buffer`: currently buffered duration of the media stream as `Stream<Duration>`
+  - `Player.stream.buffer`: currently buffered duration of the media stream as `Stream<Duration>`
 - perf: limit demuxer cache size to 32 MB by default
 - fix: HTTPS m3u8 file loading
 - fix: asset names with special characters
@@ -106,16 +118,16 @@
 - feat: `Player.open` now accepts `Playable` i.e. `Media` or `Playlist`
 - feat: access `Player` logs from internal backend e.g. libmpv
   - `PlayerLogs`: class
-  - `Player.streams.logs`: logs as `Stream<PlayerLogs>`
+  - `Player.stream.logs`: logs as `Stream<PlayerLogs>`
 - fix: improve internal playlist handling & management
 - feat: audio output device selection & enumeration
   - `Player.setAudioDevice`: method
   - `AudioDevice`: class
   - `AudioDevice.auto`: factory constructor
   - `Player.state.audioDevice`: currently selected audio device as `AudioDevice`
-  - `Player.streams.audioDevice`: currently selected audio device as `Stream<AudioDevice>`
+  - `Player.stream.audioDevice`: currently selected audio device as `Stream<AudioDevice>`
   - `Player.state.audioDevices`: currently available audio device(s) as `List<AudioDevice>`
-  - `Player.streams.audioDevices`: currently available audio device(s) as `Stream<List<AudioDevice>>`
+  - `Player.stream.audioDevices`: currently available audio device(s) as `Stream<List<AudioDevice>>`
 - feat: video, audio & subtitle track selection & enumeration (#54)
   - `Player.selectVideoTrack`: method
   - `Player.selectAudioTrack`: method
@@ -130,17 +142,17 @@
   - `SubtitleTrack.auto`: factory constructor
   - `SubtitleTrack.no`: factory constructor
   - `Player.state.track.video`: currently selected video track as `VideoTrack`
-  - `Player.streams.track.video`: currently selected video track as `Stream<VideoTrack>`
+  - `Player.stream.track.video`: currently selected video track as `Stream<VideoTrack>`
   - `Player.state.track.audio`: currently selected audio track as `AudioTrack`
-  - `Player.streams.track.audio`: currently selected audio track as `Stream<AudioTrack>`
+  - `Player.stream.track.audio`: currently selected audio track as `Stream<AudioTrack>`
   - `Player.state.track.subtitle`: currently selected subtitle track as `SubtitleTrack`
-  - `Player.streams.track.subtitle`: currently selected subtitle track as `Stream<SubtitleTrack>`
+  - `Player.stream.track.subtitle`: currently selected subtitle track as `Stream<SubtitleTrack>`
   - `Player.state.tracks.video`: currently available video track(s) as `List<VideoTrack>`
-  - `Player.streams.tracks.video`: currently available video track(s) as `Stream<List<VideoTrack>>`
+  - `Player.stream.tracks.video`: currently available video track(s) as `Stream<List<VideoTrack>>`
   - `Player.state.tracks.audio`: currently available audio track(s) as `List<AudioTrack>`
-  - `Player.streams.tracks.audio`: currently available audio track(s) as `Stream<List<AudioTrack>>`
+  - `Player.stream.tracks.audio`: currently available audio track(s) as `Stream<List<AudioTrack>>`
   - `Player.state.tracks.subtitle`: currently available subtitle track(s) as `List<SubtitleTrack>`
-  - `Player.streams.tracks.subtitle`: currently available subtitle track(s) as `Stream<List<SubtitleTrack>>`
+  - `Player.stream.tracks.subtitle`: currently available subtitle track(s) as `Stream<List<SubtitleTrack>>`
 - refactor: rename `Player.volume` setter to `Player.setVolume`
 - refactor: rename `Player.rate` setter to `Player.setRate`
 - refactor: rename `Player.pitch` setter to `Player.setPitch`
@@ -149,10 +161,10 @@
 - refactor: rename `Player.state.isPaused` to `Player.state.paused`
 - refactor: rename `Player.state.isCompleted` to `Player.state.completed`
 - refactor: rename `Player.state.isBuffering` to `Player.state.buffering`
-- refactor: rename `Player.streams.isPlaying` to `Player.streams.playing`
-- refactor: rename `Player.streams.isPaused` to `Player.streams.paused`
-- refactor: rename `Player.streams.isCompleted` to `Player.streams.completed`
-- refactor: rename `Player.streams.isBuffering` to `Player.streams.buffering`
+- refactor: rename `Player.stream.isPlaying` to `Player.stream.playing`
+- refactor: rename `Player.stream.isPaused` to `Player.stream.paused`
+- refactor: rename `Player.stream.isCompleted` to `Player.stream.completed`
+- refactor: rename `Player.stream.isBuffering` to `Player.stream.buffering`
 
 ## 0.0.1
 

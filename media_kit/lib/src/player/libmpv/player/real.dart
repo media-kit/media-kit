@@ -7,17 +7,19 @@
 import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
+import 'dart:collection';
 import 'package:ffi/ffi.dart';
-import 'package:path/path.dart' as path;
-import 'package:synchronized/synchronized.dart';
+import 'package:path/path.dart';
+import 'package:meta/meta.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
-import 'package:media_kit/src/player/libmpv/core/task_queue.dart';
 import 'package:media_kit/src/player/libmpv/core/initializer.dart';
 import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 import 'package:media_kit/src/player/libmpv/core/fallback_bitrate_handler.dart';
 import 'package:media_kit/src/player/libmpv/core/initializer_native_event_loop.dart';
 
+import 'package:media_kit/src/utils/lock_ext.dart';
+import 'package:media_kit/src/utils/task_queue.dart';
 import 'package:media_kit/src/utils/android_helper.dart';
 import 'package:media_kit/src/utils/android_asset_loader.dart';
 
@@ -26,9 +28,9 @@ import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/media/media.dart';
-import 'package:media_kit/src/models/player_error.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
@@ -62,10 +64,12 @@ class libmpvPlayer extends PlatformPlayer {
   Future<void> dispose({bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      await pause(synchronized: false);
 
       disposed = true;
 
@@ -73,28 +77,20 @@ class libmpvPlayer extends PlatformPlayer {
 
       Initializer.dispose(ctx);
 
-      final commands = [
-        'set vid no',
-        'set aid no',
-        'set sid no',
-      ];
-      for (final command in commands) {
-        final data = command.toNativeUtf8();
-        mpv.mpv_command_string(
-          ctx,
-          data.cast(),
-        );
-        calloc.free(data);
-      }
-
-      TaskQueue.instance.add(
-        () => lock.synchronized(
+      if (terminate) {
+        TaskQueue.instance.add(
           () {
-            print('media_kit: mpv_terminate_destroy: ${ctx.address}');
-            mpv.mpv_terminate_destroy(ctx);
+            bool safe = lock.count == 0 &&
+                DateTime.now().difference(lock.time) >
+                    TaskQueue.instance.refractoryDuration;
+            if (safe) {
+              print('media_kit: mpv_terminate_destroy: ${ctx.address}');
+              mpv.mpv_terminate_destroy(ctx);
+            }
+            return safe;
           },
-        ),
-      );
+        );
+      }
     }
 
     if (synchronized) {
@@ -130,7 +126,7 @@ class libmpvPlayer extends PlatformPlayer {
   }) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
@@ -189,6 +185,7 @@ class libmpvPlayer extends PlatformPlayer {
         }
       }
 
+      isShuffleEnabled = false;
       isPlayingStateChangeAllowed = false;
 
       for (int i = 0; i < playlist.length; i++) {
@@ -222,6 +219,10 @@ class libmpvPlayer extends PlatformPlayer {
         }
         calloc.free(name);
         calloc.free(value);
+        state = state.copyWith(playing: true);
+        if (!playingController.isClosed) {
+          playingController.add(true);
+        }
       }
 
       // Jump to the specified [index] (in both cases either [play] is `true` or `false`).
@@ -246,19 +247,120 @@ class libmpvPlayer extends PlatformPlayer {
     }
   }
 
-  /// Starts playing the [Player].
+  /// Stops the [Player].
+  /// Unloads the current [Media] or [Playlist] from the [Player]. This method is similar to [dispose] but does not release the resources & [Player] is still usable.
   @override
-  Future<void> play({
-    bool synchronized = true,
-  }) {
+  Future<void> stop({bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      isPlayingStateChangeAllowed = true;
+      isShuffleEnabled = false;
+      isPlayingStateChangeAllowed = false;
+      isBufferingStateChangeAllowed = false;
+
+      final commands = [
+        'stop',
+        'playlist-clear',
+        'playlist-play-index none',
+      ];
+      for (final command in commands) {
+        final args = command.toNativeUtf8();
+        mpv.mpv_command_string(
+          ctx,
+          args.cast(),
+        );
+        calloc.free(args);
+      }
+
+      // Reset the remaining attributes.
+      state = PlayerState().copyWith(
+        volume: state.volume,
+        rate: state.rate,
+        pitch: state.pitch,
+        playlistMode: state.playlistMode,
+        audioDevice: state.audioDevice,
+        audioDevices: state.audioDevices,
+      );
+      if (!playlistController.isClosed) {
+        playlistController.add(Playlist([]));
+      }
+      if (!playingController.isClosed) {
+        playingController.add(false);
+      }
+      if (!completedController.isClosed) {
+        completedController.add(false);
+      }
+      if (!positionController.isClosed) {
+        positionController.add(Duration.zero);
+      }
+      if (!durationController.isClosed) {
+        durationController.add(Duration.zero);
+      }
+      // if (!volumeController.isClosed) {
+      //   volumeController.add(0.0);
+      // }
+      // if (!rateController.isClosed) {
+      //   rateController.add(0.0);
+      // }
+      // if (!pitchController.isClosed) {
+      //   pitchController.add(0.0);
+      // }
+      if (!bufferingController.isClosed) {
+        bufferingController.add(false);
+      }
+      if (!bufferController.isClosed) {
+        bufferController.add(Duration.zero);
+      }
+      // if (!playlistModeController.isClosed) {
+      //   playlistModeController.add(PlaylistMode.none);
+      // }
+      if (!audioParamsController.isClosed) {
+        audioParamsController.add(const AudioParams());
+      }
+      if (!audioBitrateController.isClosed) {
+        audioBitrateController.add(null);
+      }
+      // if (!audioDeviceController.isClosed) {
+      //   audioDeviceController.add(AudioDevice.auto());
+      // }
+      // if (!audioDevicesController.isClosed) {
+      //   audioDevicesController.add([AudioDevice.auto()]);
+      // }
+      if (!trackController.isClosed) {
+        trackController.add(Track());
+      }
+      if (!tracksController.isClosed) {
+        tracksController.add(Tracks());
+      }
+      if (!widthController.isClosed) {
+        widthController.add(null);
+      }
+      if (!heightController.isClosed) {
+        heightController.add(null);
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Starts playing the [Player].
+  @override
+  Future<void> play({bool synchronized = true}) {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
       state = state.copyWith(playing: true);
       if (!playingController.isClosed) {
         playingController.add(true);
@@ -273,7 +375,10 @@ class libmpvPlayer extends PlatformPlayer {
         value.cast(),
       );
       if (value.value == 1) {
-        await playOrPause(synchronized: false);
+        await playOrPause(
+          notify: false,
+          synchronized: false,
+        );
       }
       calloc.free(name);
       calloc.free(value);
@@ -288,17 +393,14 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Pauses the [Player].
   @override
-  Future<void> pause({
-    bool synchronized = true,
-  }) {
+  Future<void> pause({bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      isPlayingStateChangeAllowed = true;
       state = state.copyWith(playing: false);
       if (!playingController.isClosed) {
         playingController.add(false);
@@ -313,7 +415,10 @@ class libmpvPlayer extends PlatformPlayer {
         value.cast(),
       );
       if (value.value == 0) {
-        await playOrPause(synchronized: false);
+        await playOrPause(
+          notify: false,
+          synchronized: false,
+        );
       }
       calloc.free(name);
       calloc.free(value);
@@ -329,16 +434,28 @@ class libmpvPlayer extends PlatformPlayer {
   /// Cycles between [play] & [pause] states of the [Player].
   @override
   Future<void> playOrPause({
+    bool notify = true,
     bool synchronized = true,
   }) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
+      if (notify) {
+        // Do not change the [state.playing] value if [playOrPause] was called from [play] or [pause]; where the [state.playing] value is already changed.
+        state = state.copyWith(
+          playing: !state.playing,
+        );
+        if (!playingController.isClosed) {
+          playingController.add(state.playing);
+        }
+      }
+
       isPlayingStateChangeAllowed = true;
+      isBufferingStateChangeAllowed = false;
 
       // This condition is specifically for the case when the internal playlist is ended (with [PlaylistLoopMode.none]), and we want to play the playlist again if play/pause is pressed.
       if (state.completed) {
@@ -370,25 +487,20 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Appends a [Media] to the [Player]'s playlist.
   @override
-  Future<void> add(
-    Media media, {
-    bool synchronized = true,
-  }) {
+  Future<void> add(Media media, {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      await _command(
-        [
-          'loadfile',
-          media.uri,
-          'append',
-          null,
-        ],
+      final command = 'loadfile ${media.uri} append'.toNativeUtf8();
+      mpv.mpv_command_string(
+        ctx,
+        command.cast(),
       );
+      calloc.free(command.cast());
     }
 
     if (synchronized) {
@@ -400,23 +512,49 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Removes the [Media] at specified index from the [Player]'s playlist.
   @override
-  Future<void> remove(
-    int index, {
-    bool synchronized = true,
-  }) {
+  Future<void> remove(int index, {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      await _command(
-        [
-          'playlist-remove',
-          index.toString(),
-        ],
+      // If we remove the last item in the playlist while playlist mode is none or single, then playback will stop.
+      // In this situation, the playlist doesn't seem to be updated, so we manually update it.
+      if (state.playlist.index == index &&
+          state.playlist.medias.length - 1 == index &&
+          [
+            PlaylistMode.none,
+            PlaylistMode.single,
+          ].contains(state.playlistMode)) {
+        state = state.copyWith(
+          // Allow playOrPause /w state.completed code-path to play the playlist again.
+          completed: true,
+          playlist: state.playlist.copyWith(
+            medias: state.playlist.medias.sublist(
+              0,
+              state.playlist.medias.length - 1,
+            ),
+            index: state.playlist.medias.length - 2 < 0
+                ? 0
+                : state.playlist.medias.length - 2,
+          ),
+        );
+        if (!completedController.isClosed) {
+          completedController.add(true);
+        }
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+      }
+
+      final command = 'playlist-remove $index'.toNativeUtf8();
+      mpv.mpv_command_string(
+        ctx,
+        command.cast(),
       );
+      calloc.free(command.cast());
     }
 
     if (synchronized) {
@@ -428,15 +566,22 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Jumps to next [Media] in the [Player]'s playlist.
   @override
-  Future<void> next({
-    bool synchronized = true,
-  }) {
+  Future<void> next({bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      // Do nothing if currently present at the first or last index & playlist mode is [PlaylistMode.none] or [PlaylistMode.single].
+      if ([
+            PlaylistMode.none,
+            PlaylistMode.single,
+          ].contains(state.playlistMode) &&
+          state.playlist.index == state.playlist.medias.length - 1) {
+        return;
+      }
 
       await play(synchronized: false);
       final command = 'playlist-next'.toNativeUtf8();
@@ -456,15 +601,22 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Jumps to previous [Media] in the [Player]'s playlist.
   @override
-  Future<void> previous({
-    bool synchronized = true,
-  }) {
+  Future<void> previous({bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      // Do nothing if currently present at the first or last index & playlist mode is [PlaylistMode.none] or [PlaylistMode.single].
+      if ([
+            PlaylistMode.none,
+            PlaylistMode.single,
+          ].contains(state.playlistMode) &&
+          state.playlist.index == 0) {
+        return;
+      }
 
       await play(synchronized: false);
       final command = 'playlist-prev'.toNativeUtf8();
@@ -484,13 +636,10 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Jumps to specified [Media]'s index in the [Player]'s playlist.
   @override
-  Future<void> jump(
-    int index, {
-    bool synchronized = true,
-  }) {
+  Future<void> jump(int index, {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
@@ -517,25 +666,20 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Moves the playlist [Media] at [from], so that it takes the place of the [Media] [to].
   @override
-  Future<void> move(
-    int from,
-    int to, {
-    bool synchronized = true,
-  }) {
+  Future<void> move(int from, int to, {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      await _command(
-        [
-          'playlist-move',
-          from.toString(),
-          to.toString(),
-        ],
+      final command = 'playlist-move $from $to'.toNativeUtf8();
+      mpv.mpv_command_string(
+        ctx,
+        command.cast(),
       );
+      calloc.free(command.cast());
     }
 
     if (synchronized) {
@@ -547,13 +691,10 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Seeks the currently playing [Media] in the [Player] by specified [Duration].
   @override
-  Future<void> seek(
-    Duration duration, {
-    bool synchronized = true,
-  }) {
+  Future<void> seek(Duration duration, {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
@@ -587,13 +728,11 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Sets playlist mode.
   @override
-  Future<void> setPlaylistMode(
-    PlaylistMode playlistMode, {
-    bool synchronized = true,
-  }) {
+  Future<void> setPlaylistMode(PlaylistMode playlistMode,
+      {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
@@ -652,6 +791,11 @@ class libmpvPlayer extends PlatformPlayer {
       calloc.free(playlist);
       calloc.free(yes);
       calloc.free(no);
+
+      state = state.copyWith(playlistMode: playlistMode);
+      if (!playlistModeController.isClosed) {
+        playlistModeController.add(playlistMode);
+      }
     }
 
     if (synchronized) {
@@ -663,13 +807,10 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Sets the playback volume of the [Player]. Defaults to `100.0`.
   @override
-  Future<void> setVolume(
-    double volume, {
-    bool synchronized = true,
-  }) {
+  Future<void> setVolume(double volume, {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
@@ -696,16 +837,21 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Sets the playback rate of the [Player]. Defaults to `1.0`.
   @override
-  Future<void> setRate(
-    double rate, {
-    bool synchronized = true,
-  }) {
+  Future<void> setRate(double rate, {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      if (rate <= 0.0) {
+        throw ArgumentError.value(
+          rate,
+          'rate',
+          'Must be greater than 0.0',
+        );
+      }
 
       if (configuration.pitch) {
         // Pitch shift control is enabled.
@@ -716,12 +862,9 @@ class libmpvPlayer extends PlatformPlayer {
         if (!rateController.isClosed) {
           rateController.add(state.rate);
         }
-        // Apparently, using `scaletempo:scale` actually controls the playback rate
-        // as intended after setting `audio-pitch-correction` as `FALSE`.
-        // `speed` on the other hand, changes the pitch when `audio-pitch-correction`
-        // is set to `FALSE`. Since, it also alters the actual [speed], the
-        // `scaletempo:scale` is divided by the same value of [pitch] to compensate the
-        // speed change.
+        // Apparently, using scaletempo:scale actually controls the playback rate as intended after setting audio-pitch-correction as FALSE.
+        // speed on the other hand, changes the pitch when audio-pitch-correction is set to FALSE.
+        // Since, it also alters the actual [speed], the scaletempo:scale is divided by the same value of [pitch] to compensate the speed change.
         var name = 'audio-pitch-correction'.toNativeUtf8();
         final no = 'no'.toNativeUtf8();
         mpv.mpv_set_property_string(
@@ -775,18 +918,23 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Sets the relative pitch of the [Player]. Defaults to `1.0`.
   @override
-  Future<void> setPitch(
-    double pitch, {
-    bool synchronized = true,
-  }) {
+  Future<void> setPitch(double pitch, {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
       if (configuration.pitch) {
+        if (pitch <= 0.0) {
+          throw ArgumentError.value(
+            pitch,
+            'pitch',
+            'Must be greater than 0.0',
+          );
+        }
+
         // Pitch shift control is enabled.
 
         state = state.copyWith(
@@ -795,12 +943,9 @@ class libmpvPlayer extends PlatformPlayer {
         if (!pitchController.isClosed) {
           pitchController.add(state.pitch);
         }
-        // Apparently, using `scaletempo:scale` actually controls the playback rate
-        // as intended after setting `audio-pitch-correction` as `FALSE`.
-        // `speed` on the other hand, changes the pitch when `audio-pitch-correction`
-        // is set to `FALSE`. Since, it also alters the actual [speed], the
-        // `scaletempo:scale` is divided by the same value of [pitch] to compensate the
-        // speed change.
+        // Apparently, using scaletempo:scale actually controls the playback rate as intended after setting audio-pitch-correction as FALSE.
+        // speed on the other hand, changes the pitch when audio-pitch-correction is set to FALSE.
+        // Since, it also alters the actual [speed], the scaletempo:scale is divided by the same value of [pitch] to compensate the speed change.
         var name = 'audio-pitch-correction'.toNativeUtf8();
         final no = 'no'.toNativeUtf8();
         mpv.mpv_set_property_string(
@@ -834,7 +979,7 @@ class libmpvPlayer extends PlatformPlayer {
         calloc.free(value);
       } else {
         // Pitch shift control is disabled.
-        throw Exception('[PlayerConfiguration.pitch] is false.');
+        throw ArgumentError('[PlayerConfiguration.pitch] is false');
       }
     }
 
@@ -847,16 +992,18 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Enables or disables shuffle for [Player]. Default is `false`.
   @override
-  Future<void> setShuffle(
-    bool shuffle, {
-    bool synchronized = true,
-  }) {
+  Future<void> setShuffle(bool shuffle, {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      if (shuffle == isShuffleEnabled) {
+        return;
+      }
+      isShuffleEnabled = shuffle;
 
       await _command(
         [
@@ -874,16 +1021,14 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Sets the current [AudioDevice] for audio output.
   ///
-  /// * Currently selected [AudioDevice] can be accessed using [state.audioDevice] or [streams.audioDevice].
-  /// * The list of currently available [AudioDevice]s can be obtained accessed using [state.audioDevices] or [streams.audioDevices].
+  /// * Currently selected [AudioDevice] can be accessed using [state.audioDevice] or [stream.audioDevice].
+  /// * The list of currently available [AudioDevice]s can be obtained accessed using [state.audioDevices] or [stream.audioDevices].
   @override
-  Future<void> setAudioDevice(
-    AudioDevice audioDevice, {
-    bool synchronized = true,
-  }) {
+  Future<void> setAudioDevice(AudioDevice audioDevice,
+      {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
@@ -908,16 +1053,13 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Sets the current [VideoTrack] for video output.
   ///
-  /// * Currently selected [VideoTrack] can be accessed using [state.track.video] or [streams.track.video].
-  /// * The list of currently available [VideoTrack]s can be obtained accessed using [state.tracks.video] or [streams.tracks.video].
+  /// * Currently selected [VideoTrack] can be accessed using [state.track.video] or [stream.track.video].
+  /// * The list of currently available [VideoTrack]s can be obtained accessed using [state.tracks.video] or [stream.tracks.video].
   @override
-  Future<void> setVideoTrack(
-    VideoTrack track, {
-    bool synchronized = true,
-  }) {
+  Future<void> setVideoTrack(VideoTrack track, {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
@@ -950,16 +1092,13 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Sets the current [AudioTrack] for audio output.
   ///
-  /// * Currently selected [AudioTrack] can be accessed using [state.track.audio] or [streams.track.audio].
-  /// * The list of currently available [AudioTrack]s can be obtained accessed using [state.tracks.audio] or [streams.tracks.audio].
+  /// * Currently selected [AudioTrack] can be accessed using [state.track.audio] or [stream.track.audio].
+  /// * The list of currently available [AudioTrack]s can be obtained accessed using [state.tracks.audio] or [stream.tracks.audio].
   @override
-  Future<void> setAudioTrack(
-    AudioTrack track, {
-    bool synchronized = true,
-  }) {
+  Future<void> setAudioTrack(AudioTrack track, {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
@@ -992,16 +1131,14 @@ class libmpvPlayer extends PlatformPlayer {
 
   /// Sets the current [SubtitleTrack] for subtitle output.
   ///
-  /// * Currently selected [SubtitleTrack] can be accessed using [state.track.subtitle] or [streams.track.subtitle].
-  /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [streams.tracks.subtitle].
+  /// * Currently selected [SubtitleTrack] can be accessed using [state.track.subtitle] or [stream.track.subtitle].
+  /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [stream.tracks.subtitle].
   @override
-  Future<void> setSubtitleTrack(
-    SubtitleTrack track, {
-    bool synchronized = true,
-  }) {
+  Future<void> setSubtitleTrack(SubtitleTrack track,
+      {bool synchronized = true}) {
     Future<void> function() async {
       if (disposed) {
-        throw AssertionError('[Player] has been disposed.');
+        throw AssertionError('[Player] has been disposed');
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
@@ -1048,7 +1185,7 @@ class libmpvPlayer extends PlatformPlayer {
   ///
   Future<void> setProperty(String property, String value) async {
     if (disposed) {
-      throw AssertionError('[Player] has been disposed.');
+      throw AssertionError('[Player] has been disposed');
     }
     await waitForPlayerInitialization;
     await waitForVideoControllerInitializationIfAttached;
@@ -1147,6 +1284,10 @@ class libmpvPlayer extends PlatformPlayer {
           completedController.add(false);
         }
       }
+      state = state.copyWith(buffering: true);
+      if (!bufferingController.isClosed) {
+        bufferingController.add(true);
+      }
     }
     // NOTE: Now, --keep-open=yes is used. Thus, eof-reached property is used instead of this.
     // if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
@@ -1171,17 +1312,31 @@ class libmpvPlayer extends PlatformPlayer {
       final prop = event.ref.data.cast<generated.mpv_event_property>();
       if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+        final playing = prop.ref.data.cast<Int8>().value == 0;
         if (isPlayingStateChangeAllowed) {
-          final playing = prop.ref.data.cast<Int8>().value != 1;
           state = state.copyWith(playing: playing);
           if (!playingController.isClosed) {
             playingController.add(playing);
           }
         }
       }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'core-idle' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+        // Check for [isBufferingStateChangeAllowed] because `pause` causes `core-idle` to be fired.
+        final buffering = prop.ref.data.cast<Int8>().value == 1;
+        if (isBufferingStateChangeAllowed) {
+          state = state.copyWith(buffering: buffering);
+          if (!bufferingController.isClosed) {
+            bufferingController.add(buffering);
+          }
+        }
+        if (buffering) {
+          isBufferingStateChangeAllowed = true;
+        }
+      }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-        final buffering = prop.ref.data.cast<Int8>().value != 0;
+        final buffering = prop.ref.data.cast<Int8>().value == 1;
         state = state.copyWith(buffering: buffering);
         if (!bufferingController.isClosed) {
           bufferingController.add(buffering);
@@ -1214,19 +1369,18 @@ class libmpvPlayer extends PlatformPlayer {
         if (!durationController.isClosed) {
           durationController.add(duration);
         }
-        // NOTE: Using manual bitrate calculation for some local files.
         if (state.playlist.index >= 0 &&
             state.playlist.index < state.playlist.medias.length) {
           final uri = state.playlist.medias[state.playlist.index].uri;
           if (FallbackBitrateHandler.supported(uri)) {
-            if (!bitrates.containsKey(uri) ||
-                !bitrates.containsKey(Media.normalizeURI(uri))) {
-              bitrates[uri] = await FallbackBitrateHandler.calculateBitrate(
+            if (!audioBitrateCache.containsKey(Media.normalizeURI(uri))) {
+              audioBitrateCache[uri] =
+                  await FallbackBitrateHandler.calculateBitrate(
                 uri,
                 duration,
               );
             }
-            final bitrate = bitrates[uri];
+            final bitrate = audioBitrateCache[uri];
             if (bitrate != null) {
               state = state.copyWith(audioBitrate: bitrate);
               if (!audioBitrateController.isClosed) {
@@ -1260,9 +1414,8 @@ class libmpvPlayer extends PlatformPlayer {
               if (map.values[j].format ==
                   generated.mpv_format.MPV_FORMAT_STRING) {
                 if (property == 'filename') {
-                  final value =
-                      map.values[j].u.string.cast<Utf8>().toDartString();
-                  playlist.add(medias[value] ?? Media(value));
+                  final v = map.values[j].u.string.cast<Utf8>().toDartString();
+                  playlist.add(Media(v));
                 }
               }
             }
@@ -1355,14 +1508,11 @@ class libmpvPlayer extends PlatformPlayer {
             state.playlist.index >= 0) {
           final data = prop.ref.data.cast<Double>().value;
           final uri = state.playlist.medias[state.playlist.index].uri;
-          // NOTE: Using manual bitrate calculation for some local files.
           if (!FallbackBitrateHandler.supported(uri)) {
-            if (!bitrates.containsKey(uri) ||
-                !bitrates.containsKey(Media.normalizeURI(uri))) {
-              bitrates[uri] = data;
-              bitrates[Media.normalizeURI(uri)] = data;
+            if (!audioBitrateCache.containsKey(Media.normalizeURI(uri))) {
+              audioBitrateCache[Media.normalizeURI(uri)] = data;
             }
-            final bitrate = bitrates[uri] ?? bitrates[Media.normalizeURI(uri)];
+            final bitrate = audioBitrateCache[Media.normalizeURI(uri)];
             if (!audioBitrateController.isClosed &&
                 bitrate != state.audioBitrate) {
               audioBitrateController.add(bitrate);
@@ -1493,6 +1643,10 @@ class libmpvPlayer extends PlatformPlayer {
               completedController.add(true);
             }
           }
+          state = state.copyWith(buffering: false);
+          if (!bufferingController.isClosed) {
+            bufferingController.add(false);
+          }
         }
       }
     }
@@ -1510,6 +1664,27 @@ class libmpvPlayer extends PlatformPlayer {
             text: text,
           ),
         );
+        // --------------------------------------------------
+        // Emit error(s) based on the log messages.
+        if (level == 'error') {
+          if (prefix == 'file') {
+            // file:// not found.
+            if (!errorController.isClosed) {
+              errorController.add(text);
+            }
+          }
+        }
+        if (level == 'error') {
+          if (prefix == 'ffmpeg') {
+            if (text.startsWith('tcp:')) {
+              // http:// error of any kind.
+              if (!errorController.isClosed) {
+                errorController.add(text);
+              }
+            }
+          }
+        }
+        // --------------------------------------------------
       }
     }
     // Handle HTTP headers specified in the [Media].
@@ -1523,7 +1698,7 @@ class libmpvPlayer extends PlatformPlayer {
             name.cast(),
           );
           // Get the headers for current [Media] by looking up [uri] in the [HashMap].
-          final headers = medias[uri.cast<Utf8>().toDartString()]?.httpHeaders;
+          final headers = Media(uri.cast<Utf8>().toDartString()).httpHeaders;
           if (headers != null) {
             final property = 'http-header-fields'.toNativeUtf8();
             // Allocate & fill the [mpv_node] with the headers.
@@ -1605,7 +1780,7 @@ class libmpvPlayer extends PlatformPlayer {
           // We manually save `subfont.ttf` to the application's cache directory and set `config` & `config-dir` to use it.
           final subfont = await AndroidAssetLoader.load('subfont.ttf');
           if (subfont.isNotEmpty) {
-            final directory = path.dirname(subfont);
+            final directory = dirname(subfont);
             // This asset is bundled as part of `package:media_kit_libs_android_video`.
             // Use it if located inside the application bundle, otherwise no worries.
             options.addAll(
@@ -1638,11 +1813,11 @@ class libmpvPlayer extends PlatformPlayer {
       // demuxer-max-bytes = 32 * 1024 * 1024
       // demuxer-max-back-bytes = 32 * 1024 * 1024
       //
-      // ANDROID (Physical Device):
+      // ANDROID (Physical Device OR API Level > 25):
       //
       // ao = opensles
       //
-      // ANDROID (Emulator & API Level < 25):
+      // ANDROID (Emulator AND API Level <= 25):
       //
       // ao = null
       //
@@ -1655,12 +1830,12 @@ class libmpvPlayer extends PlatformPlayer {
         'demuxer-max-back-bytes': (32 * 1024 * 1024).toString(),
         // On Android, prefer OpenSL ES audio output.
         // AudioTrack audio output is prone to crashes in some rare cases.
-        if (AndroidHelper.isPhysicalDevice)
+        if (AndroidHelper.isPhysicalDevice || AndroidHelper.APILevel > 25)
           'ao': 'opensles'
         // Disable audio output on older Android emulators with API Level < 25.
         // OpenSL ES audio output seems to be broken on some of these.
-        else if (AndroidHelper.isEmulator && AndroidHelper.APILevel < 25)
-          'ao': 'null'
+        else if (AndroidHelper.isEmulator && AndroidHelper.APILevel <= 25)
+          'ao': 'null',
       };
       // Other properties based on [PlayerConfiguration].
       properties.addAll(
@@ -1687,7 +1862,7 @@ class libmpvPlayer extends PlatformPlayer {
         calloc.free(value);
       }
 
-      // Observe the properties to update the state & feed event streams.
+      // Observe the properties to update the state & feed event stream.
       <String, int>{
         'pause': generated.mpv_format.MPV_FORMAT_FLAG,
         'time-pos': generated.mpv_format.MPV_FORMAT_DOUBLE,
@@ -1695,6 +1870,7 @@ class libmpvPlayer extends PlatformPlayer {
         'playlist': generated.mpv_format.MPV_FORMAT_NODE,
         'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
+        'core-idle': generated.mpv_format.MPV_FORMAT_FLAG,
         'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
         'demuxer-cache-time': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'audio-params': generated.mpv_format.MPV_FORMAT_NODE,
@@ -1719,28 +1895,20 @@ class libmpvPlayer extends PlatformPlayer {
         },
       );
 
-      if (configuration.logLevel != MPVLogLevel.none) {
-        // https://github.com/mpv-player/mpv/blob/e1727553f164181265f71a20106fbd5e34fa08b0/libmpv/client.h#L1410-L1419
-        final levels = {
-          MPVLogLevel.none: 'no',
-          MPVLogLevel.fatal: 'fatal',
-          MPVLogLevel.error: 'error',
-          MPVLogLevel.warn: 'warn',
-          MPVLogLevel.info: 'info',
-          MPVLogLevel.v: 'v',
-          MPVLogLevel.debug: 'debug',
-          MPVLogLevel.trace: 'trace',
-        };
-
-        final level = levels[configuration.logLevel];
-        if (level != null) {
-          final minLevel = level.toNativeUtf8();
-          mpv.mpv_request_log_messages(
-            ctx,
-            minLevel.cast(),
-          );
-          calloc.free(minLevel);
-        }
+      // https://github.com/mpv-player/mpv/blob/e1727553f164181265f71a20106fbd5e34fa08b0/libmpv/client.h#L1410-L1419
+      final levels = {
+        MPVLogLevel.error: 'error',
+        MPVLogLevel.warn: 'warn',
+        MPVLogLevel.info: 'info',
+        MPVLogLevel.v: 'v',
+        MPVLogLevel.debug: 'debug',
+        MPVLogLevel.trace: 'trace',
+      };
+      final level = levels[configuration.logLevel];
+      if (level != null) {
+        final min = level.toNativeUtf8();
+        mpv.mpv_request_log_messages(ctx, min.cast());
+        calloc.free(min);
       }
 
       // Add libmpv hooks for supporting custom HTTP headers in [Media].
@@ -1757,12 +1925,7 @@ class libmpvPlayer extends PlatformPlayer {
   void _error(int code) {
     if (code < 0 && !errorController.isClosed) {
       final message = mpv.mpv_error_string(code).cast<Utf8>().toDartString();
-      errorController.add(
-        PlayerError(
-          code,
-          message,
-        ),
-      );
+      errorController.add(message);
     }
   }
 
@@ -1793,17 +1956,25 @@ class libmpvPlayer extends PlatformPlayer {
   /// Whether the [Player] has been disposed. This is used to prevent accessing dangling [ctx] after [dispose].
   bool disposed = false;
 
+  /// A flag to keep track of [setShuffle] calls.
+  bool isShuffleEnabled = false;
+
   /// A flag to prevent changes to [state.playing] due to `loadfile` commands in [open].
   ///
   /// By default, `MPV_EVENT_START_FILE` is fired when a new media source is loaded.
-  /// This event modifies the [state.playing] & [streams.playing] to `true`.
+  /// This event modifies the [state.playing] & [stream.playing] to `true`.
   ///
   /// However, the [Player] is in paused state before the media source is loaded.
   /// Thus, [state.playing] should not be changed, unless the user explicitly calls [play] or [playOrPause].
   ///
   /// We set [isPlayingStateChangeAllowed] to `false` at the start of [open] to prevent this unwanted change & set it to `true` at the end of [open].
-  /// While [isPlayingStateChangeAllowed] is `false`, any change to [state.playing] & [streams.playing] is ignored.
+  /// While [isPlayingStateChangeAllowed] is `false`, any change to [state.playing] & [stream.playing] is ignored.
   bool isPlayingStateChangeAllowed = false;
+
+  /// A flag to prevent changes to [state.buffering] due to `pause` causing `core-idle` to be `true`.
+  ///
+  /// This is used to prevent [state.buffering] being set to `true` when [pause] or [playOrPause] is called.
+  bool isBufferingStateChangeAllowed = true;
 
   /// [Completer] to wait for initialization of this instance (in [_create]).
   final Completer<void> completer = Completer<void>();
@@ -1812,5 +1983,13 @@ class libmpvPlayer extends PlatformPlayer {
   Future<void> get waitForPlayerInitialization => completer.future;
 
   /// Synchronization & mutual exclusion between methods of this class.
-  static final Lock lock = Lock();
+  static final LockExt lock = LockExt();
+
+  /// [HashMap] for retrieving previously fetched audio-bitrate(s).
+  static final HashMap<String, double> audioBitrateCache =
+      HashMap<String, double>();
+
+  /// Whether `mpv_terminate_destroy` should be called in [dispose].
+  @visibleForTesting
+  static bool terminate = true;
 }

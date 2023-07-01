@@ -1,3 +1,8 @@
+## 1.1.0
+
+- feat: support for AGP 8.0
+- build: bump dependencies
+
 ## 1.0.6
 
 - build: bump dependencies

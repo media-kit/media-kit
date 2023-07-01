@@ -39,6 +39,26 @@ class AudioParams {
   });
 
   @override
+  operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is AudioParams &&
+        other.format == format &&
+        other.sampleRate == sampleRate &&
+        other.channels == channels &&
+        other.channelCount == channelCount &&
+        other.hrChannels == hrChannels;
+  }
+
+  @override
+  int get hashCode =>
+      format.hashCode ^
+      sampleRate.hashCode ^
+      channels.hashCode ^
+      channelCount.hashCode ^
+      hrChannels.hashCode;
+
+  @override
   String toString() =>
       'AudioParams(format: $format, sampleRate: $sampleRate, channels: $channels, channelCount: $channelCount, hrChannels: $hrChannels)';
 }

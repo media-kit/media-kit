@@ -20,8 +20,12 @@ void MediaKitEventLoopHandler::Register(int64_t handle, void* post_c_object, int
 
     auto context = reinterpret_cast<mpv_handle*>(handle);
 
-    mutexes_.emplace(std::make_pair(context, std::make_unique<std::mutex>()));
-    condition_variables_.emplace(std::make_pair(context, std::make_unique<std::condition_variable>()));
+    if (mutexes_.find(context) == mutexes_.end()) {
+      mutexes_.emplace(std::make_pair(context, std::make_unique<std::mutex>()));
+    }
+    if (condition_variables_.find(context) == condition_variables_.end()) {
+      condition_variables_.emplace(std::make_pair(context, std::make_unique<std::condition_variable>()));
+    }
 
     auto thread = std::make_unique<std::thread>([&, context, post_c_object, send_port]() {
       for (;;) {
@@ -110,7 +114,9 @@ void MediaKitEventLoopHandler::Dispose(int64_t handle) {
       mutex_.lock();
       auto thread = threads_[context].get();
       mutex_.unlock();
-      thread->join();
+      if (thread->joinable()) {
+        thread->join();
+      }
     } catch (std::system_error& e) {
       std::cout << "MediaKitEventLoopHandler::Dispose: " << e.code() << " " << e.what() << std::endl;
     }
@@ -122,7 +128,12 @@ void MediaKitEventLoopHandler::Dispose(int64_t handle) {
 
       std::lock_guard<std::mutex> lock(mutex_);
 
+#ifndef _WIN32
+      // Apparently destroying |std::mutex| from Windows' MSVC is a mess. I rather just leak it.
+      // https://github.com/alexmercerind/media_kit/issues/9#issuecomment-1596120224
       mutexes_.erase(context);
+#endif
+
       threads_.erase(context);
       condition_variables_.erase(context);
 

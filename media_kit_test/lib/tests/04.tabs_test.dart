@@ -65,7 +65,8 @@ class TabViewState extends State<TabView> {
     super.initState();
     player.setVolume(0.0);
     player.setPlaylistMode(PlaylistMode.loop);
-    player.open(Media(sources[widget.i]));
+    player.open(Media(sources[widget.i % sources.length]));
+    player.stream.error.listen((error) => debugPrint(error));
   }
 
   @override
@@ -76,6 +77,9 @@ class TabViewState extends State<TabView> {
 
   @override
   Widget build(BuildContext context) {
-    return Video(controller: controller);
+    return Video(
+      controller: controller,
+      controls: NoVideoControls,
+    );
   }
 }

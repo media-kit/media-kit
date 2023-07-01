@@ -20,7 +20,7 @@ void main() {
   setUp(NativeLibrary.ensureInitialized);
   test(
     'initializer-create',
-    () async {
+    () {
       expect(
         Initializer.create(NativeLibrary.path, (_) async {}),
         completes,

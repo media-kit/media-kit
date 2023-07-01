@@ -59,9 +59,9 @@ class AndroidVideoController extends PlatformVideoController {
     // Merge the width & height [Stream]s into a single [Stream] of [Rect]s.
     int w = -1;
     int h = -1;
-    _widthStreamSubscription = player.streams.width.listen(
+    _widthStreamSubscription = player.stream.width.listen(
       (event) => _lock.synchronized(() {
-        if (event > 0) {
+        if (event != null && event > 0) {
           w = event;
           if (w != -1 && h != -1) {
             _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
@@ -75,9 +75,9 @@ class AndroidVideoController extends PlatformVideoController {
         }
       }),
     );
-    _heightStreamSubscription = player.streams.height.listen(
+    _heightStreamSubscription = player.stream.height.listen(
       (event) => _lock.synchronized(() {
-        if (event > 0) {
+        if (event != null && event > 0) {
           h = event;
           if (w != -1 && h != -1) {
             _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
@@ -259,8 +259,8 @@ class AndroidVideoController extends PlatformVideoController {
     int? width,
     int? height,
   }) {
-    throw UnimplementedError(
-      '[AndroidVideoController.setSize] is not available on Android.',
+    throw UnsupportedError(
+      '[AndroidVideoController.setSize] is not available on Android',
     );
   }
 
@@ -290,10 +290,10 @@ class AndroidVideoController extends PlatformVideoController {
   final _controller = StreamController<Rect>();
 
   /// [StreamSubscription] for listening to video width.
-  StreamSubscription<int>? _widthStreamSubscription;
+  StreamSubscription<int?>? _widthStreamSubscription;
 
   /// [StreamSubscription] for listening to video height.
-  StreamSubscription<int>? _heightStreamSubscription;
+  StreamSubscription<int?>? _heightStreamSubscription;
 
   /// [StreamSubscription] for listening to video [Rect] from [_controller].
   StreamSubscription<Rect>? _rectStreamSubscription;

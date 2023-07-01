@@ -27,6 +27,7 @@ class _VideoControllerSetSizeScreenState
     player.setVolume(0.0);
     player.setPlaylistMode(PlaylistMode.loop);
     player.open(Media(sources[0]));
+    player.stream.error.listen((error) => debugPrint(error));
   }
 
   @override
@@ -44,9 +45,12 @@ class _VideoControllerSetSizeScreenState
       body: Stack(
         alignment: Alignment.bottomRight,
         children: [
-          Video(controller: controller),
+          Video(
+            controller: controller,
+            controls: NoVideoControls,
+          ),
           Card(
-            elevation: 4.0,
+            elevation: 8.0,
             margin: const EdgeInsets.all(16.0),
             child: SizedBox(
               width: 120.0,

@@ -32,6 +32,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     "media_kit_video_plugin.cc"
     "video_output_manager.cc"
     "video_output.cc"
+    "utils.cc"
     ${PLUGIN_SOURCES}
   )
 

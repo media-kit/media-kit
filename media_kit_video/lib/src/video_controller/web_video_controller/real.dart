@@ -77,6 +77,23 @@ class WebVideoController extends PlatformVideoController {
       },
     );
 
+    // Notify about the first frame being rendered.
+    // Case: If some [Media] is already playing when [VideoController] is created.
+    if (player.state.width != null && player.state.height != null) {
+      if (!controller.waitUntilFirstFrameRenderedCompleter.isCompleted) {
+        controller.waitUntilFirstFrameRenderedCompleter.complete();
+      }
+    }
+
+    controller._element?.onCanPlayThrough.listen(
+      (_) {
+        // Notify about first frame being rendered.
+        if (!controller.waitUntilFirstFrameRenderedCompleter.isCompleted) {
+          controller.waitUntilFirstFrameRenderedCompleter.complete();
+        }
+      },
+    );
+
     // Return the [PlatformVideoController].
     return controller;
   }
@@ -91,8 +108,10 @@ class WebVideoController extends PlatformVideoController {
   Future<void> setSize({
     int? width,
     int? height,
-  }) async {
-    // N/A
+  }) {
+    throw UnsupportedError(
+      '[AndroidVideoController.setSize] is not available on web',
+    );
   }
 
   /// Disposes the instance. Releases allocated resources back to the system.

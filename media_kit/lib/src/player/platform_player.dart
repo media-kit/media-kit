@@ -14,10 +14,9 @@ import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
-import 'package:media_kit/src/models/player_error.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
-import 'package:media_kit/src/models/player_streams.dart';
+import 'package:media_kit/src/models/player_stream.dart';
 
 /// {@template platform_player}
 /// PlatformPlayer
@@ -40,19 +39,18 @@ abstract class PlatformPlayer {
   late PlayerState state = PlayerState();
 
   /// Current state of the player available as listenable [Stream]s.
-  late PlayerStreams streams = PlayerStreams(
+  late PlayerStream stream = PlayerStream(
     playlistController.stream.distinct(),
     playingController.stream.distinct(),
     completedController.stream.distinct(),
     positionController.stream.distinct(),
     durationController.stream.distinct(),
-    bufferController.stream.distinct(),
     volumeController.stream.distinct(),
     rateController.stream.distinct(),
     pitchController.stream.distinct(),
     bufferingController.stream.distinct(),
-    logController.stream.distinct(),
-    errorController.stream.distinct(),
+    bufferController.stream.distinct(),
+    playlistModeController.stream.distinct(),
     audioParamsController.stream.distinct(),
     audioBitrateController.stream.distinct(),
     audioDeviceController.stream.distinct(),
@@ -61,6 +59,8 @@ abstract class PlatformPlayer {
     tracksController.stream.distinct(),
     widthController.stream.distinct(),
     heightController.stream.distinct(),
+    logController.stream.distinct(),
+    errorController.stream /* ERROR STREAM SHOULD NOT BE DISTINCT */,
   );
 
   @mustCallSuper
@@ -104,127 +104,135 @@ abstract class PlatformPlayer {
     bool play = true,
   }) {
     throw UnimplementedError(
-      '[PlatformPlayer.open] is not implemented.',
+      '[PlatformPlayer.open] is not implemented',
+    );
+  }
+
+  /// Stops the [Player].
+  /// Unloads the current [Media] or [Playlist] from the [Player]. This method is similar to [dispose] but does not release the resources & [Player] is still usable.
+  Future<void> stop() {
+    throw UnimplementedError(
+      '[PlatformPlayer.stop] is not implemented',
     );
   }
 
   FutureOr<void> play() {
     throw UnimplementedError(
-      '[PlatformPlayer.play] is not implemented.',
+      '[PlatformPlayer.play] is not implemented',
     );
   }
 
   FutureOr<void> pause() {
     throw UnimplementedError(
-      '[PlatformPlayer.pause] is not implemented.',
+      '[PlatformPlayer.pause] is not implemented',
     );
   }
 
   FutureOr<void> playOrPause() {
     throw UnimplementedError(
-      '[PlatformPlayer.playOrPause] is not implemented.',
+      '[PlatformPlayer.playOrPause] is not implemented',
     );
   }
 
   FutureOr<void> add(Media media) {
     throw UnimplementedError(
-      '[PlatformPlayer.add] is not implemented.',
+      '[PlatformPlayer.add] is not implemented',
     );
   }
 
   FutureOr<void> remove(int index) {
     throw UnimplementedError(
-      '[PlatformPlayer.remove] is not implemented.',
+      '[PlatformPlayer.remove] is not implemented',
     );
   }
 
   FutureOr<void> next() {
     throw UnimplementedError(
-      '[PlatformPlayer.next] is not implemented.',
+      '[PlatformPlayer.next] is not implemented',
     );
   }
 
   FutureOr<void> previous() {
     throw UnimplementedError(
-      '[PlatformPlayer.previous] is not implemented.',
+      '[PlatformPlayer.previous] is not implemented',
     );
   }
 
   FutureOr<void> jump(int index) {
     throw UnimplementedError(
-      '[PlatformPlayer.jump] is not implemented.',
+      '[PlatformPlayer.jump] is not implemented',
     );
   }
 
   FutureOr<void> move(int from, int to) {
     throw UnimplementedError(
-      '[PlatformPlayer.move] is not implemented.',
+      '[PlatformPlayer.move] is not implemented',
     );
   }
 
   FutureOr<void> seek(Duration duration) {
     throw UnimplementedError(
-      '[PlatformPlayer.seek] is not implemented.',
+      '[PlatformPlayer.seek] is not implemented',
     );
   }
 
   FutureOr<void> setPlaylistMode(PlaylistMode playlistMode) {
     throw UnimplementedError(
-      '[PlatformPlayer.setPlaylistMode] is not implemented.',
+      '[PlatformPlayer.setPlaylistMode] is not implemented',
     );
   }
 
   FutureOr<void> setVolume(double volume) {
     throw UnimplementedError(
-      '[PlatformPlayer.volume] is not implemented.',
+      '[PlatformPlayer.volume] is not implemented',
     );
   }
 
   FutureOr<void> setRate(double rate) {
     throw UnimplementedError(
-      '[PlatformPlayer.rate] is not implemented.',
+      '[PlatformPlayer.rate] is not implemented',
     );
   }
 
   FutureOr<void> setPitch(double pitch) {
     throw UnimplementedError(
-      '[PlatformPlayer.pitch] is not implemented.',
+      '[PlatformPlayer.pitch] is not implemented',
     );
   }
 
   FutureOr<void> setShuffle(bool shuffle) {
     throw UnimplementedError(
-      '[PlatformPlayer.shuffle] is not implemented.',
+      '[PlatformPlayer.shuffle] is not implemented',
     );
   }
 
   FutureOr<void> setAudioDevice(AudioDevice audioDevice) {
     throw UnimplementedError(
-      '[PlatformPlayer.setAudioDevice] is not implemented.',
+      '[PlatformPlayer.setAudioDevice] is not implemented',
     );
   }
 
   FutureOr<void> setVideoTrack(VideoTrack track) {
     throw UnimplementedError(
-      '[PlatformPlayer.setVideoTrack] is not implemented.',
+      '[PlatformPlayer.setVideoTrack] is not implemented',
     );
   }
 
   FutureOr<void> setAudioTrack(AudioTrack track) {
     throw UnimplementedError(
-      '[PlatformPlayer.setAudioTrack] is not implemented.',
+      '[PlatformPlayer.setAudioTrack] is not implemented',
     );
   }
 
   FutureOr<void> setSubtitleTrack(SubtitleTrack track) {
     throw UnimplementedError(
-      '[PlatformPlayer.setSubtitleTrack] is not implemented.',
+      '[PlatformPlayer.setSubtitleTrack] is not implemented',
     );
   }
 
   Future<int> get handle {
     throw UnimplementedError(
-      '[PlatformPlayer.handle] is not implemented.',
+      '[PlatformPlayer.handle] is not implemented',
     );
   }
 
@@ -249,10 +257,6 @@ abstract class PlatformPlayer {
       StreamController.broadcast();
 
   @protected
-  final StreamController<Duration> bufferController =
-      StreamController<Duration>.broadcast();
-
-  @protected
   final StreamController<double> volumeController =
       StreamController.broadcast();
 
@@ -269,12 +273,20 @@ abstract class PlatformPlayer {
       StreamController<bool>.broadcast();
 
   @protected
+  final StreamController<Duration> bufferController =
+      StreamController<Duration>.broadcast();
+
+  @protected
+  final StreamController<PlaylistMode> playlistModeController =
+      StreamController<PlaylistMode>.broadcast();
+
+  @protected
   final StreamController<PlayerLog> logController =
       StreamController<PlayerLog>.broadcast();
 
   @protected
-  final StreamController<PlayerError> errorController =
-      StreamController<PlayerError>.broadcast();
+  final StreamController<String> errorController =
+      StreamController<String>.broadcast();
 
   @protected
   final StreamController<AudioParams> audioParamsController =
@@ -301,12 +313,12 @@ abstract class PlatformPlayer {
       StreamController<Tracks>.broadcast();
 
   @protected
-  final StreamController<int> widthController =
-      StreamController<int>.broadcast();
+  final StreamController<int?> widthController =
+      StreamController<int?>.broadcast();
 
   @protected
-  final StreamController<int> heightController =
-      StreamController<int>.broadcast();
+  final StreamController<int?> heightController =
+      StreamController<int?>.broadcast();
 
   /// Publicly defined clean-up [Function]s which must be called before [dispose].
   final List<Future<void> Function()> release = [];
@@ -389,7 +401,7 @@ class PlayerConfiguration {
     this.pitch = false,
     this.title,
     this.ready,
-    this.logLevel = MPVLogLevel.none,
+    this.logLevel = MPVLogLevel.error,
     this.bufferSize = 32 * 1024 * 1024,
     this.protocolWhitelist = const [
       'file',
@@ -412,10 +424,12 @@ class PlayerConfiguration {
 /// {@endtemplate}
 enum MPVLogLevel {
   /// Disable absolutely all messages.
-  none,
+  /* none, */
 
   /// Critical/aborting errors.
-  fatal,
+  /* fatal, */
+
+  // package:media_kit internally consumes logs of level error.
 
   /// Simple errors.
   error,

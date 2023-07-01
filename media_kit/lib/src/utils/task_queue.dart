@@ -9,6 +9,7 @@ import 'dart:async';
 /// ---------
 ///
 /// A simple class where multiple tasks can be queued for sequential execution with specified refractory duration between each task.
+///
 class TaskQueue {
   /// [TaskQueue] singleton instance.
   static final instance = TaskQueue._(const Duration(seconds: 10));
@@ -16,26 +17,30 @@ class TaskQueue {
   /// The refractory duration between each task's execution.
   final Duration refractoryDuration;
 
-  TaskQueue._(this.refractoryDuration);
+  TaskQueue._(this.refractoryDuration) {
+    _timer = Timer.periodic(refractoryDuration, _execute);
+  }
 
-  /// Adds a task to the queue for execution.
-  void add(Function task) {
+  /// Adds a task to the queue for execution. The task will be removed from the queue when it returns `true`.
+  void add(bool Function() task) {
     _tasks.add(task);
-    if (!_running) {
-      _running = true;
-      _run();
+  }
+
+  /// Executes all the tasks in the queue sequentially.
+  void _execute(Timer timer) {
+    if (_tasks.isNotEmpty) {
+      final task = _tasks[0];
+      if (task.call()) {
+        _tasks.removeAt(0);
+      }
     }
   }
 
-  Future<void> _run() async {
-    while (_tasks.isNotEmpty) {
-      final task = _tasks.removeAt(0);
-      await Future.delayed(refractoryDuration);
-      await task();
-    }
-    _running = false;
+  /// Disposes the [TaskQueue] instance.
+  void dispose() {
+    _timer?.cancel();
   }
 
-  bool _running = false;
+  Timer? _timer;
   final List<Function> _tasks = [];
 }

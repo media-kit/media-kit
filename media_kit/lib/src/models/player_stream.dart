@@ -9,94 +9,95 @@ import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
-import 'package:media_kit/src/models/player_error.dart';
+import 'package:media_kit/src/models/playlist_mode.dart';
 
-/// {@template player_streams}
+/// {@template player_stream}
 ///
-/// PlayerStreams
-/// -------------
+/// PlayerStream
+/// ------------
 ///
 /// Event [Stream]s for subscribing to [Player] events.
 ///
 /// {@endtemplate}
-class PlayerStreams {
-  /// [List] of currently opened [Media]s.
+class PlayerStream {
+  /// Currently opened [Media]s.
   final Stream<Playlist> playlist;
 
-  /// Whether [Player] is playing or not.
+  /// Whether playing or not.
   final Stream<bool> playing;
 
-  /// Whether currently playing [Media] in [Player] has ended or not.
+  /// Whether end of currently playing [Media] has been reached.
   final Stream<bool> completed;
 
-  /// Current playback position of the [Player].
+  /// Current playback position.
   final Stream<Duration> position;
 
-  /// Duration of the currently playing [Media] in the [Player].
+  /// Current playback duration.
   final Stream<Duration> duration;
 
-  /// The total buffered duration of the currently playing [Media] in the [Player].
+  /// Current volume.
+  final Stream<double> volume;
+
+  /// Current playback rate.
+  final Stream<double> rate;
+
+  /// Current pitch.
+  final Stream<double> pitch;
+
+  /// Whether buffering or not.
+  final Stream<bool> buffering;
+
+  /// Current buffer position.
   /// This indicates how much of the stream has been decoded & cached by the demuxer.
   final Stream<Duration> buffer;
 
-  /// Current volume of the [Player].
-  final Stream<double> volume;
-
-  /// Current playback rate of the [Player].
-  final Stream<double> rate;
-
-  /// Current pitch of the [Player].
-  final Stream<double> pitch;
-
-  /// Whether the [Player] has stopped for buffering.
-  final Stream<bool> buffering;
-
-  /// [Stream] emitting [PlayerLog]s.
-  final Stream<PlayerLog> log;
-
-  /// [Stream] raising [PlayerError]s.
-  /// This may be used to catch errors raised by [Player].
-  final Stream<PlayerError> error;
+  /// Current playlist mode.
+  final Stream<PlaylistMode> playlistMode;
 
   /// Audio parameters of the currently playing [Media].
   /// e.g. sample rate, channels, etc.
   final Stream<AudioParams> audioParams;
 
-  /// Audio bitrate of the currently playing [Media] in the [Player].
+  /// Audio bitrate of the currently playing [Media].
   final Stream<double?> audioBitrate;
 
-  /// Currently selected [AudioDevice].
+  /// Currently selected [AudioDevice]s.
   final Stream<AudioDevice> audioDevice;
 
   /// Currently available [AudioDevice]s.
   final Stream<List<AudioDevice>> audioDevices;
 
-  /// Currently selected video, audio and subtitle tracks.
+  /// Currently selected video, audio and subtitle track.
   final Stream<Track> track;
 
   /// Currently available video, audio and subtitle tracks.
   final Stream<Tracks> tracks;
 
   /// Currently playing video's width.
-  final Stream<int> width;
+  final Stream<int?> width;
 
   /// Currently playing video's height.
-  final Stream<int> height;
+  final Stream<int?> height;
 
-  /// {@macro player_streams}
-  const PlayerStreams(
+  /// [Stream] emitting internal logs.
+  final Stream<PlayerLog> log;
+
+  /// [Stream] emitting error messages. This may be used to handle & display errors to the user.
+  final Stream<String> error;
+
+  /// {@macro player_stream}
+  const PlayerStream(
     this.playlist,
     this.playing,
     this.completed,
     this.position,
     this.duration,
-    this.buffer,
     this.volume,
     this.rate,
     this.pitch,
     this.buffering,
-    this.log,
-    this.error,
+    this.buffer,
+    this.playlistMode,
     this.audioParams,
     this.audioBitrate,
     this.audioDevice,
@@ -105,5 +106,7 @@ class PlayerStreams {
     this.tracks,
     this.width,
     this.height,
+    this.log,
+    this.error,
   );
 }

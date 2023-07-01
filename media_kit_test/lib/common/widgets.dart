@@ -1,7 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:file_picker/file_picker.dart';
 
 import 'package:media_kit/media_kit.dart';
+
+import '../common/sources/sources.dart';
 
 class TracksSelector extends StatefulWidget {
   final Player player;
@@ -125,27 +129,27 @@ class _SeekBarState extends State<SeekBar> {
     buffer = widget.player.state.buffer;
     subscriptions.addAll(
       [
-        widget.player.streams.playing.listen((event) {
+        widget.player.stream.playing.listen((event) {
           setState(() {
             playing = event;
           });
         }),
-        widget.player.streams.completed.listen((event) {
+        widget.player.stream.completed.listen((event) {
           setState(() {
             position = Duration.zero;
           });
         }),
-        widget.player.streams.position.listen((event) {
+        widget.player.stream.position.listen((event) {
           setState(() {
             if (!seeking) position = event;
           });
         }),
-        widget.player.streams.duration.listen((event) {
+        widget.player.stream.duration.listen((event) {
           setState(() {
             duration = event;
           });
         }),
-        widget.player.streams.buffer.listen((event) {
+        widget.player.stream.buffer.listen((event) {
           setState(() {
             buffer = event;
           });
@@ -164,41 +168,22 @@ class _SeekBarState extends State<SeekBar> {
 
   @override
   Widget build(BuildContext context) {
-    final horizontal =
-        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Column(
       children: [
         const SizedBox(height: 16.0),
-        if (!horizontal)
-          Row(
-            children: [
-              const Spacer(),
-              IconButton(
-                onPressed: widget.player.playOrPause,
-                icon: Icon(
-                  playing ? Icons.pause : Icons.play_arrow,
-                ),
-                color: Theme.of(context).primaryColor,
-                iconSize: 36.0,
-              ),
-              const Spacer(),
-            ],
-          ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(width: 48.0),
-            if (horizontal) ...[
-              IconButton(
-                onPressed: widget.player.playOrPause,
-                icon: Icon(
-                  playing ? Icons.pause : Icons.play_arrow,
-                ),
-                color: Theme.of(context).primaryColor,
-                iconSize: 36.0,
+            IconButton(
+              onPressed: widget.player.playOrPause,
+              icon: Icon(
+                playing ? Icons.pause : Icons.play_arrow,
               ),
-              const SizedBox(width: 24.0),
-            ],
+              color: Theme.of(context).primaryColor,
+              iconSize: 36.0,
+            ),
+            const SizedBox(width: 24.0),
             Text(position.toString().substring(2, 7)),
             Expanded(
               child: Slider(
@@ -237,10 +222,21 @@ class _SeekBarState extends State<SeekBar> {
   }
 }
 
+Future<void> showFilePicker(BuildContext context, Player player) async {
+  final result = await FilePicker.platform.pickFiles(type: FileType.any);
+  if (result?.files.isNotEmpty ?? false) {
+    final file = result!.files.first;
+    if (kIsWeb) {
+      await player.open(Media(convertBytesToURL(file.bytes!)));
+    } else {
+      await player.open(Media(file.path!));
+    }
+  }
+}
+
 Future<void> showURIPicker(BuildContext context, Player player) async {
   final key = GlobalKey<FormState>();
-  final video = TextEditingController();
-  final audio = TextEditingController();
+  final src = TextEditingController();
   await showModalBottomSheet(
     context: context,
     builder: (context) => Container(
@@ -255,7 +251,7 @@ Future<void> showURIPicker(BuildContext context, Player player) async {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               TextFormField(
-                controller: video,
+                controller: src,
                 style: const TextStyle(fontSize: 14.0),
                 decoration: const InputDecoration(
                   border: UnderlineInputBorder(),
@@ -268,26 +264,12 @@ Future<void> showURIPicker(BuildContext context, Player player) async {
                   return null;
                 },
               ),
-              TextFormField(
-                controller: audio,
-                style: const TextStyle(fontSize: 14.0),
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(),
-                  labelText: 'Audio URI (Optional)',
-                ),
-              ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: ElevatedButton(
                   onPressed: () {
                     if (key.currentState!.validate()) {
-                      if (player.platform is libmpvPlayer) {
-                        (player.platform as dynamic).setProperty(
-                          "audio-files",
-                          audio.text,
-                        );
-                      }
-                      player.open(Media(video.text));
+                      player.open(Media(src.text));
                       Navigator.of(context).maybePop();
                     }
                   },

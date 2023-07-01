@@ -4,12 +4,10 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-import 'dart:io';
+import 'package:universal_platform/universal_platform.dart';
 
-import 'package:media_kit/src/utils/web.dart';
-
-import 'package:media_kit/src/player/libmpv/player/player.dart';
 import 'package:media_kit/src/player/web/player/player.dart';
+import 'package:media_kit/src/player/libmpv/player/player.dart';
 
 /// {@template media_kit}
 ///
@@ -29,18 +27,18 @@ import 'package:media_kit/src/player/web/player/player.dart';
 abstract class MediaKit {
   /// {@macro media_kit}
   static void ensureInitialized({String? libmpv}) {
-    if (kIsWeb) {
+    if (UniversalPlatform.isWindows) {
+      libmpvEnsureInitialized(libmpv: libmpv);
+    } else if (UniversalPlatform.isLinux) {
+      libmpvEnsureInitialized(libmpv: libmpv);
+    } else if (UniversalPlatform.isMacOS) {
+      libmpvEnsureInitialized(libmpv: libmpv);
+    } else if (UniversalPlatform.isIOS) {
+      libmpvEnsureInitialized(libmpv: libmpv);
+    } else if (UniversalPlatform.isAndroid) {
+      libmpvEnsureInitialized(libmpv: libmpv);
+    } else if (UniversalPlatform.isWeb) {
       webEnsureInitialized(libmpv: libmpv);
-    } else if (Platform.isWindows) {
-      libmpvEnsureInitialized(libmpv: libmpv);
-    } else if (Platform.isLinux) {
-      libmpvEnsureInitialized(libmpv: libmpv);
-    } else if (Platform.isMacOS) {
-      libmpvEnsureInitialized(libmpv: libmpv);
-    } else if (Platform.isIOS) {
-      libmpvEnsureInitialized(libmpv: libmpv);
-    } else if (Platform.isAndroid) {
-      libmpvEnsureInitialized(libmpv: libmpv);
     }
   }
 }

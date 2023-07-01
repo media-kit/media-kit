@@ -1,3 +1,13 @@
+## 1.0.0
+
+- feat: web support
+- feat: fullscreen API
+- feat: acquire wakelock
+- feat: support for AGP 8.0
+- feat: pre-built video controls
+- feat: `controls` argument in `Video` widget
+- feat: `AdaptiveVideoControls`, `MaterialVideoControls`, `MaterialDesktopVideoControls` & `NoVideoControls`
+
 ## 0.0.12
 
 - fix(android): improve `Texture` resize handling

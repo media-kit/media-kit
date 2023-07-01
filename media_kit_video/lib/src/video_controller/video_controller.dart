@@ -51,6 +51,9 @@ import 'package:media_kit_video/src/video_controller/web_video_controller/web_vi
 ///
 /// {@endtemplate}
 class VideoController {
+  /// The [Player] instance associated with this [VideoController].
+  final Player player;
+
   /// Platform specific internal implementation initialized depending upon the current platform.
   final platform = Completer<PlatformVideoController>();
 
@@ -65,7 +68,7 @@ class VideoController {
 
   /// {@macro video_controller}
   VideoController(
-    Player player, {
+    this.player, {
     VideoControllerConfiguration configuration =
         const VideoControllerConfiguration(),
   }) {
@@ -73,9 +76,7 @@ class VideoController {
 
     () async {
       try {
-        if (WebVideoController.supported) {
-          // TODO(@alexmercerind): Missing implementation.
-        } else if (NativeVideoController.supported) {
+        if (NativeVideoController.supported) {
           final result = await NativeVideoController.create(
             player,
             configuration,
@@ -84,6 +85,13 @@ class VideoController {
           notifier.value = result;
         } else if (AndroidVideoController.supported) {
           final result = await AndroidVideoController.create(
+            player,
+            configuration,
+          );
+          platform.complete(result);
+          notifier.value = result;
+        } else if (WebVideoController.supported) {
+          final result = await WebVideoController.create(
             player,
             configuration,
           );

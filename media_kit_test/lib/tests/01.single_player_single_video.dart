@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -23,6 +22,12 @@ class _SinglePlayerSingleVideoScreenState
     player,
     configuration: configuration.value,
   );
+
+  @override
+  void initState() {
+    super.initState();
+    player.stream.error.listen((error) => debugPrint(error));
+  }
 
   @override
   void dispose() {
@@ -63,14 +68,7 @@ class _SinglePlayerSingleVideoScreenState
           FloatingActionButton(
             heroTag: 'file',
             tooltip: 'Open [File]',
-            onPressed: () async {
-              final result = await FilePicker.platform.pickFiles(
-                type: FileType.any,
-              );
-              if (result?.files.isNotEmpty ?? false) {
-                await player.open(Media(result!.files.first.path!));
-              }
-            },
+            onPressed: () => showFilePicker(context, player),
             child: const Icon(Icons.file_open),
           ),
           const SizedBox(width: 16.0),
@@ -104,7 +102,6 @@ class _SinglePlayerSingleVideoScreenState
                               ),
                             ),
                           ),
-                          SeekBar(player: player),
                           const SizedBox(height: 32.0),
                         ],
                       ),
@@ -126,10 +123,6 @@ class _SinglePlayerSingleVideoScreenState
                     width: MediaQuery.of(context).size.width,
                     height: MediaQuery.of(context).size.width * 9.0 / 16.0,
                   ),
-                  const SizedBox(height: 16.0),
-                  SeekBar(player: player),
-                  const SizedBox(height: 32.0),
-                  const Divider(height: 1.0, thickness: 1.0),
                   ...items,
                 ],
               ),

@@ -89,23 +89,26 @@ class PaintFirstFrameScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('package:media_kit'),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          for (final player in players) {
-            player.playOrPause();
-          }
-        },
-        child: const Icon(Icons.play_arrow),
-      ),
       body: ListView.separated(
-        itemCount: 5,
-        itemBuilder: (context, i) => Video(
-          controller: controllers[i],
-          width: MediaQuery.of(context).size.width.clamp(0, 480.0),
-          height:
-              MediaQuery.of(context).size.width.clamp(0, 480.0) * 9.0 / 16.0,
-          fill: Colors.transparent,
-        ),
+        itemCount: controllers.length,
+        itemBuilder: (context, i) {
+          final video = SizedBox(
+            height: 256.0,
+            child: AspectRatio(
+              aspectRatio: 16.0 / 9.0,
+              child: Video(controller: controllers[i]),
+            ),
+          );
+          if (Theme.of(context).platform == TargetPlatform.android) {
+            return video;
+          }
+          return Card(
+            elevation: 8.0,
+            margin: EdgeInsets.zero,
+            clipBehavior: Clip.antiAlias,
+            child: video,
+          );
+        },
         separatorBuilder: (context, i) => const SizedBox(height: 16.0),
         padding: const EdgeInsets.all(16.0),
       ),

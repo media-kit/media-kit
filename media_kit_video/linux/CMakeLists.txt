@@ -21,6 +21,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     "texture_sw.cc"
     "video_output_manager.cc"
     "video_output.cc"
+    "utils.cc"
   )
 
   apply_standard_settings(${PLUGIN_NAME})

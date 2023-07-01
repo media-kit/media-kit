@@ -6,6 +6,7 @@
 // Use of this source code is governed by MIT license that can be found in the
 // LICENSE file.
 #include "media_kit_video_plugin.h"
+#include "utils.h"
 
 #include <Windows.h>
 
@@ -128,6 +129,18 @@ void MediaKitVideoPlugin::HandleMethodCall(
       height_value = static_cast<int64_t>(std::stoll(height.c_str()));
     }
     video_output_manager_->SetSize(handle_value, width_value, height_value);
+    result->Success(flutter::EncodableValue(std::monostate{}));
+  } else if (method_call.method_name().compare("Utils.EnterNativeFullscreen") ==
+             0) {
+    auto window =
+        ::GetAncestor(registrar_->GetView()->GetNativeWindow(), GA_ROOT);
+    Utils::EnterNativeFullscreen(window);
+    result->Success(flutter::EncodableValue(std::monostate{}));
+  } else if (method_call.method_name().compare("Utils.ExitNativeFullscreen") ==
+             0) {
+    auto window =
+        ::GetAncestor(registrar_->GetView()->GetNativeWindow(), GA_ROOT);
+    Utils::ExitNativeFullscreen(window);
     result->Success(flutter::EncodableValue(std::monostate{}));
   } else {
     result->NotImplemented();
