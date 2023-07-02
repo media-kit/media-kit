@@ -1,3 +1,7 @@
+## 1.0.2
+
+- deps: update [`package:http`](https://pub.dev/packages/http) dependency constraint
+
 ## 1.0.1
 
 - deps: bump [`package:http`](https://pub.dev/packages/http) to `1.1.0`
