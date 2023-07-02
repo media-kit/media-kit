@@ -1,3 +1,7 @@
+## 1.0.1
+
+- deps: bump [`package:http`](https://pub.dev/packages/http) to `1.1.0`
+
 ## 1.0.0
 
 - feat: web support
