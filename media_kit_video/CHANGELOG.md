@@ -1,3 +1,7 @@
+## 1.0.2
+
+- fix(video/macos): fix fullscreen support
+
 ## 1.0.1
 
 - fix: synchronize `VideoController` constructor

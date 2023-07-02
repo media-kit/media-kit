@@ -87,15 +87,14 @@ Future<void> enterNativeFullscreen() async {
     if (kIsWeb) {
       await document.documentElement?.requestFullscreen();
     } else if (Platform.isAndroid || Platform.isIOS) {
-      await Future.wait(
+      await SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.immersiveSticky,
+        overlays: [],
+      );
+      await SystemChrome.setPreferredOrientations(
         [
-          SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
-          SystemChrome.setPreferredOrientations(
-            [
-              DeviceOrientation.landscapeLeft,
-              DeviceOrientation.landscapeRight,
-            ],
-          ),
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
         ],
       );
     } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
@@ -116,12 +115,11 @@ Future<void> exitNativeFullscreen() async {
     if (kIsWeb) {
       document.exitFullscreen();
     } else if (Platform.isAndroid || Platform.isIOS) {
-      await Future.wait(
-        [
-          SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge),
-          SystemChrome.setPreferredOrientations([]),
-        ],
+      await SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: SystemUiOverlay.values,
       );
+      await SystemChrome.setPreferredOrientations([]);
     } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
       await const MethodChannel('com.alexmercerind/media_kit_video')
           .invokeMethod(

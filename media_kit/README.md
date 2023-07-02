@@ -40,7 +40,7 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
 dependencies:
   media_kit: ^1.0.2                              # Primary package.
   
-  media_kit_video: ^1.0.1                        # For video rendering.
+  media_kit_video: ^1.0.2                        # For video rendering.
   
   media_kit_native_event_loop: ^1.0.6            # Support for higher number of concurrent instances & better performance.
   

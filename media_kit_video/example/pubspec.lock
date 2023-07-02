@@ -103,17 +103,17 @@ packages:
     dependency: transitive
     description:
       name: media_kit
-      sha256: a7ee8f460b5459d5d9ccd95d6a2f27486cbf7ba48d248cb4c5b7c2c40098d1a0
+      sha256: "8c7d9417bed724a3fcaadd91c722fea042737cafb153aa1f1e6461a0fee683a3"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.1"
+    version: "1.0.2"
   media_kit_video:
     dependency: "direct main"
     description:
       path: ".."
       relative: true
     source: path
-    version: "1.0.1"
+    version: "1.0.2"
   meta:
     dependency: transitive
     description:
