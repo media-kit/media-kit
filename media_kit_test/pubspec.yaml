@@ -30,7 +30,7 @@ dependencies:
     path: ../media_kit_libs_android_video
 
   path: ^1.8.2
-  http: ^0.13.5
+  http: ^1.1.0
   file_picker: ^5.2.4
   path_provider: ^2.0.14
 
