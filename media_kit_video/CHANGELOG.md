@@ -1,3 +1,8 @@
+## 1.0.1
+
+- fix: synchronize `VideoController` constructor
+- fix: `fullscreen` video controls theme data not being applied
+
 ## 1.0.0
 
 - feat: web support

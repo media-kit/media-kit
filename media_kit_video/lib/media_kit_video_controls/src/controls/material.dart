@@ -22,17 +22,29 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/vi
 /// {@endtemplate}
 Widget MaterialVideoControls(VideoState state) {
   final theme = MaterialVideoControlsTheme.maybeOf(state.context);
-  final Widget child;
   if (theme == null) {
-    child = const MaterialVideoControlsTheme(
-      normal: kDefaultMaterialVideoControlsThemeData,
-      fullscreen: kDefaultMaterialVideoControlsThemeDataFullscreen,
-      child: _MaterialVideoControls(),
+    return VideoStateInheritedWidget(
+      state: state,
+      controlsThemeDataBuilder: null,
+      child: const MaterialVideoControlsTheme(
+        normal: kDefaultMaterialVideoControlsThemeData,
+        fullscreen: kDefaultMaterialVideoControlsThemeDataFullscreen,
+        child: _MaterialVideoControls(),
+      ),
     );
   } else {
-    child = const _MaterialVideoControls();
+    return VideoStateInheritedWidget(
+      state: state,
+      controlsThemeDataBuilder: (child) {
+        return MaterialVideoControlsTheme(
+          normal: theme.normal,
+          fullscreen: theme.fullscreen,
+          child: child,
+        );
+      },
+      child: const _MaterialVideoControls(),
+    );
   }
-  return VideoStateInheritedWidget(state: state, child: child);
 }
 
 /// [MaterialVideoControlsThemeData] available in this [context].

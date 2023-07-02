@@ -15,3 +15,7 @@ VideoState state(BuildContext context) =>
 /// Returns the [VideoController] associated with the [Video] present in the current [BuildContext].
 VideoController controller(BuildContext context) =>
     VideoStateInheritedWidget.of(context).state.widget.controller;
+
+/// Returns the video controls theme data builder associated with the [Video] present in the current [BuildContext].
+Widget Function(Widget)? controlsThemeDataBuilder(BuildContext context) =>
+    VideoStateInheritedWidget.of(context).controlsThemeDataBuilder;

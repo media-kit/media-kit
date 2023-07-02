@@ -17,17 +17,29 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/vi
 /// {@endtemplate}
 Widget CupertinoVideoControls(VideoState state) {
   final theme = CupertinoVideoControlsTheme.maybeOf(state.context);
-  final Widget child;
   if (theme == null) {
-    child = const CupertinoVideoControlsTheme(
-      normal: kDefaultCupertinoVideoControlsThemeData,
-      fullscreen: kDefaultCupertinoVideoControlsThemeDataFullscreen,
-      child: _CupertinoVideoControls(),
+    return VideoStateInheritedWidget(
+      state: state,
+      controlsThemeDataBuilder: null,
+      child: const CupertinoVideoControlsTheme(
+        normal: kDefaultCupertinoVideoControlsThemeData,
+        fullscreen: kDefaultCupertinoVideoControlsThemeDataFullscreen,
+        child: _CupertinoVideoControls(),
+      ),
     );
   } else {
-    child = const _CupertinoVideoControls();
+    return VideoStateInheritedWidget(
+      state: state,
+      controlsThemeDataBuilder: (child) {
+        return CupertinoVideoControlsTheme(
+          normal: theme.normal,
+          fullscreen: theme.fullscreen,
+          child: child,
+        );
+      },
+      child: const _CupertinoVideoControls(),
+    );
   }
-  return VideoStateInheritedWidget(state: state, child: child);
 }
 
 /// [MaterialDesktopVideoControlsThemeData] available in this [context].

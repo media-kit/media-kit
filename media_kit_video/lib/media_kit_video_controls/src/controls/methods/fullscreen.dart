@@ -23,24 +23,27 @@ Future<void> enterFullscreen(BuildContext context) {
   return lock.synchronized(() async {
     if (!isFullscreen(context)) {
       if (context.mounted) {
-        Navigator.of(context).push(
+        final builder = controlsThemeDataBuilder(context);
+        Navigator.of(context, rootNavigator: true).push(
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => FullscreenInheritedWidget(
-              parent: state(context),
-              child: Video(
-                controller: controller(context),
-                // Not required in fullscreen mode:
-                // width: null,
-                // height: null,
-                // Inherit following properties from the parent [Video]:
-                fit: state(context).widget.fit,
-                fill: state(context).widget.fill,
-                alignment: state(context).widget.alignment,
-                aspectRatio: state(context).widget.aspectRatio,
-                filterQuality: state(context).widget.filterQuality,
-                controls: state(context).widget.controls,
-                // Do not acquire or modify existing wakelock in fullscreen mode:
-                wakelock: false,
+            pageBuilder: (_, __, ___) => (builder ?? (e) => e).call(
+              FullscreenInheritedWidget(
+                parent: state(context),
+                child: Video(
+                  controller: controller(context),
+                  // Not required in fullscreen mode:
+                  // width: null,
+                  // height: null,
+                  // Inherit following properties from the parent [Video]:
+                  fit: state(context).widget.fit,
+                  fill: state(context).widget.fill,
+                  alignment: state(context).widget.alignment,
+                  aspectRatio: state(context).widget.aspectRatio,
+                  filterQuality: state(context).widget.filterQuality,
+                  controls: state(context).widget.controls,
+                  // Do not acquire or modify existing wakelock in fullscreen mode:
+                  wakelock: false,
+                ),
               ),
             ),
             transitionDuration: Duration.zero,

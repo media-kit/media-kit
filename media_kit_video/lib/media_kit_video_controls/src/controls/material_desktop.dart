@@ -5,8 +5,8 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: non_constant_identifier_names
 import 'dart:async';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -17,22 +17,34 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/vi
 
 /// {@template material_desktop_video_controls}
 ///
-/// [Video] controls which use MaterialDesktop design.
+/// [Video] controls which use Material design.
 ///
 /// {@endtemplate}
 Widget MaterialDesktopVideoControls(VideoState state) {
   final theme = MaterialDesktopVideoControlsTheme.maybeOf(state.context);
-  final Widget child;
   if (theme == null) {
-    child = const MaterialDesktopVideoControlsTheme(
-      normal: kDefaultMaterialDesktopVideoControlsThemeData,
-      fullscreen: kDefaultMaterialDesktopVideoControlsThemeDataFullscreen,
-      child: _MaterialDesktopVideoControls(),
+    return VideoStateInheritedWidget(
+      state: state,
+      controlsThemeDataBuilder: null,
+      child: const MaterialDesktopVideoControlsTheme(
+        normal: kDefaultMaterialDesktopVideoControlsThemeData,
+        fullscreen: kDefaultMaterialDesktopVideoControlsThemeDataFullscreen,
+        child: _MaterialDesktopVideoControls(),
+      ),
     );
   } else {
-    child = const _MaterialDesktopVideoControls();
+    return VideoStateInheritedWidget(
+      state: state,
+      controlsThemeDataBuilder: (child) {
+        return MaterialDesktopVideoControlsTheme(
+          normal: theme.normal,
+          fullscreen: theme.fullscreen,
+          child: child,
+        );
+      },
+      child: const _MaterialDesktopVideoControls(),
+    );
   }
-  return VideoStateInheritedWidget(state: state, child: child);
 }
 
 /// [MaterialDesktopVideoControlsThemeData] available in this [context].

@@ -13,9 +13,11 @@ import 'package:media_kit_video/media_kit_video.dart';
 /// {@endtemplate}
 class VideoStateInheritedWidget extends InheritedWidget {
   final VideoState state;
+  final Widget Function(Widget)? controlsThemeDataBuilder;
   const VideoStateInheritedWidget({
     super.key,
     required this.state,
+    required this.controlsThemeDataBuilder,
     required super.child,
   });
 
@@ -35,5 +37,6 @@ class VideoStateInheritedWidget extends InheritedWidget {
 
   @override
   bool updateShouldNotify(VideoStateInheritedWidget oldWidget) =>
-      identical(state, oldWidget.state);
+      identical(state, oldWidget.state) &&
+      identical(controlsThemeDataBuilder, oldWidget.controlsThemeDataBuilder);
 }
