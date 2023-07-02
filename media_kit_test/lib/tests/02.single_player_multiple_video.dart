@@ -19,12 +19,7 @@ class SinglePlayerMultipleVideoScreen extends StatefulWidget {
 class _SinglePlayerMultipleVideoScreenState
     extends State<SinglePlayerMultipleVideoScreen> {
   late final Player player = Player();
-  // A single [VideoController] is sufficient for multiple [Video] widgets (& more efficient). Here, two instances are created for testing purposes.
-  late final VideoController controller0 = VideoController(
-    player,
-    configuration: configuration.value,
-  );
-  late final VideoController controller1 = VideoController(
+  late final VideoController controller = VideoController(
     player,
     configuration: configuration.value,
   );
@@ -32,6 +27,7 @@ class _SinglePlayerMultipleVideoScreenState
   @override
   void initState() {
     super.initState();
+    player.open(Media(sources[0]));
     player.stream.error.listen((error) => debugPrint(error));
   }
 
@@ -116,11 +112,11 @@ class _SinglePlayerMultipleVideoScreenState
                                   child: Row(
                                     children: [
                                       Expanded(
-                                          child:
-                                              Video(controller: controller0)),
+                                        child: Video(controller: controller),
+                                      ),
                                       Expanded(
-                                          child:
-                                              Video(controller: controller0)),
+                                        child: Video(controller: controller),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -128,11 +124,11 @@ class _SinglePlayerMultipleVideoScreenState
                                   child: Row(
                                     children: [
                                       Expanded(
-                                          child:
-                                              Video(controller: controller1)),
+                                        child: Video(controller: controller),
+                                      ),
                                       Expanded(
-                                          child:
-                                              Video(controller: controller1)),
+                                        child: Video(controller: controller),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -167,13 +163,13 @@ class _SinglePlayerMultipleVideoScreenState
                             children: [
                               Expanded(
                                 child: Video(
-                                  controller: controller0,
+                                  controller: controller,
                                   controls: NoVideoControls,
                                 ),
                               ),
                               Expanded(
                                 child: Video(
-                                  controller: controller0,
+                                  controller: controller,
                                   controls: NoVideoControls,
                                 ),
                               ),
@@ -185,13 +181,13 @@ class _SinglePlayerMultipleVideoScreenState
                             children: [
                               Expanded(
                                 child: Video(
-                                  controller: controller1,
+                                  controller: controller,
                                   controls: NoVideoControls,
                                 ),
                               ),
                               Expanded(
                                 child: Video(
-                                  controller: controller1,
+                                  controller: controller,
                                   controls: NoVideoControls,
                                 ),
                               ),

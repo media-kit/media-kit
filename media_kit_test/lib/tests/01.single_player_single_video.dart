@@ -26,6 +26,7 @@ class _SinglePlayerSingleVideoScreenState
   @override
   void initState() {
     super.initState();
+    player.open(Media(sources[0]));
     player.stream.error.listen((error) => debugPrint(error));
   }
 
