@@ -1,3 +1,7 @@
+## 1.0.6
+
+- fix(windows): possible crash on hot-restart
+
 ## 1.0.5
 
 - fix(windows): rare "mutex destroyed while busy" error

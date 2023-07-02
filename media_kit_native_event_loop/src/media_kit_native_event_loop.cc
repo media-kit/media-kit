@@ -148,7 +148,7 @@ void MediaKitEventLoopHandler::Initialize() {
   auto contexts = std::vector<mpv_handle*>();
 
   mutex_.lock();
-  for (auto& [context, _] : mutexes_) {
+  for (auto& [context, _] : threads_) {
     contexts.push_back(context);
   }
   mutex_.unlock();
@@ -176,7 +176,7 @@ MediaKitEventLoopHandler::~MediaKitEventLoopHandler() {
   auto contexts = std::vector<mpv_handle*>();
 
   mutex_.lock();
-  for (auto& [context, _] : mutexes_) {
+  for (auto& [context, _] : threads_) {
     contexts.push_back(context);
   }
   mutex_.unlock();
