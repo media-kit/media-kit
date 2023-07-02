@@ -15,8 +15,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
     #elseif canImport(FlutterMacOS)
       let binaryMessenger = registrar.messenger
       let registry = registrar.textures
-      let window: NSWindow = (registrar.view?.window)!
-      let utils: UtilsProtocol? = Utils(window)
+      let utils: UtilsProtocol? = Utils(registrar)
     #endif
 
     let channel = FlutterMethodChannel(
