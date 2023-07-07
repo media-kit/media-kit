@@ -4,7 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'package:flutter/widgets.dart';
-import 'package:wakelock/wakelock.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
 
@@ -132,14 +132,14 @@ class VideoState extends State<Video> {
   void initState() {
     super.initState();
     if (widget.wakelock) {
-      Wakelock.enable().catchError((_) {});
+      WakelockPlus.enable().catchError((_) {});
     }
   }
 
   @override
   void dispose() {
     if (widget.wakelock) {
-      Wakelock.disable().catchError((_) {});
+      WakelockPlus.disable().catchError((_) {});
     }
     super.dispose();
   }
