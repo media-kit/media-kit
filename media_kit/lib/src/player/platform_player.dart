@@ -5,6 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:meta/meta.dart';
 
 import 'package:media_kit/src/models/track.dart';
@@ -227,6 +228,12 @@ abstract class PlatformPlayer {
   FutureOr<void> setSubtitleTrack(SubtitleTrack track) {
     throw UnimplementedError(
       '[PlatformPlayer.setSubtitleTrack] is not implemented',
+    );
+  }
+
+  FutureOr<Uint8List?> screenshot({String format = 'image/jpeg'}) async {
+    throw UnimplementedError(
+      '[PlatformPlayer.screenshot] is not implemented',
     );
   }
 

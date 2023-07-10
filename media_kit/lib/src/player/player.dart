@@ -3,6 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'dart:typed_data';
 import 'package:universal_platform/universal_platform.dart';
 
 import 'package:media_kit/src/models/track.dart';
@@ -278,6 +279,15 @@ class Player {
   /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [stream.tracks.subtitle].
   Future<void> setSubtitleTrack(SubtitleTrack track) async {
     return platform?.setSubtitleTrack(track);
+  }
+
+  /// Takes the snapshot of the current frame & returns encoded image bytes as [Uint8List].
+  ///
+  /// The [format] parameter specifies the format of the image to be returned. Supported values are:
+  /// * `image/jpeg`
+  /// * `image/png`
+  Future<Uint8List?> screenshot({String format = 'image/jpeg'}) async {
+    return platform?.screenshot();
   }
 
   /// Internal platform specific identifier for this [Player] instance.
