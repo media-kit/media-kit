@@ -231,6 +231,7 @@ A usage guide for [package:media_kit](https://github.com/alexmercerind/media_kit
 - [Select video, audio or subtitle track](#select-video-audio-or-subtitle-track)
 - [Select audio device](#select-audio-device)
 - [Display the video](#display-the-video)
+- [Capture screenshot](#capture-screenshot)
 - [Video controls](#video-controls)
 - [Next steps](#next-steps)
 
@@ -731,6 +732,18 @@ final VideoController player = VideoController(
   ),
 );
 ```
+
+### Capture screenshot
+
+The `screenshot` method takes the snapshot of the current video frame & returns encoded image bytes as `Uint8List`.
+
+```dart
+final Uint8List? screenshot = await player.screenshot();
+```
+
+Additionally `format` argument may be specified to change the encoding format. Following formats are supported:
+- `image/jpeg` (default)
+- `image/png`
 
 ### Video controls
 
