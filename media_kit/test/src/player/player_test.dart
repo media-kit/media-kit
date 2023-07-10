@@ -2537,6 +2537,7 @@ void main() {
       await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 2)),
+    skip: UniversalPlatform.isWeb,
   );
   test(
     'player-screenshot-format',
@@ -2560,6 +2561,53 @@ void main() {
       await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 2)),
+    skip: UniversalPlatform.isWeb,
+  );
+  test(
+    'player-screenshot',
+    () async {
+      final player = Player();
+
+      await player.open(Media(sources.platform[0]));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      // CORS
+      final screenshot = await player.screenshot();
+
+      expect(screenshot, isNull);
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 2)),
+    skip: !UniversalPlatform.isWeb,
+  );
+  test(
+    'player-screenshot-format',
+    () async {
+      final player = Player();
+
+      await player.open(Media(sources.platform[0]));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      // CORS
+      final screenshot = await player.screenshot(format: 'image/png');
+
+      expect(screenshot, isNull);
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 2)),
+    skip: !UniversalPlatform.isWeb,
   );
   test(
     'player-screenshot-argument-error',
