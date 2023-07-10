@@ -7,8 +7,11 @@
 import 'dart:ffi';
 import 'dart:async';
 import 'dart:collection';
-import 'package:ffi/ffi.dart';
+import 'dart:typed_data';
 import 'package:meta/meta.dart';
+import 'package:image/image.dart';
+
+import 'package:media_kit/ffi/ffi.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
 import 'package:media_kit/src/player/libmpv/core/initializer.dart';
@@ -16,6 +19,7 @@ import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 import 'package:media_kit/src/player/libmpv/core/fallback_bitrate_handler.dart';
 import 'package:media_kit/src/player/libmpv/core/initializer_native_event_loop.dart';
 
+import 'package:media_kit/src/utils/isolates.dart';
 import 'package:media_kit/src/utils/lock_ext.dart';
 import 'package:media_kit/src/utils/task_queue.dart';
 import 'package:media_kit/src/utils/android_helper.dart';
@@ -66,13 +70,13 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      disposed = true;
-
       await pause(synchronized: false);
 
       await setVideoTrack(VideoTrack.no(), synchronized: false);
       await setAudioTrack(AudioTrack.no(), synchronized: false);
       await setSubtitleTrack(SubtitleTrack.no(), synchronized: false);
+
+      disposed = true;
 
       await super.dispose();
 
@@ -1170,6 +1174,49 @@ class libmpvPlayer extends PlatformPlayer {
     }
   }
 
+  /// Takes the snapshot of the current frame & returns encoded image bytes as [Uint8List].
+  ///
+  /// The [format] parameter specifies the format of the image to be returned. Supported values are:
+  /// * `image/jpeg`
+  /// * `image/png`
+  @override
+  Future<Uint8List?> screenshot(
+      {String format = 'image/jpeg', bool synchronized = true}) async {
+    Future<Uint8List?> function() async {
+      if (![
+        'image/jpeg',
+        'image/png',
+      ].contains(format)) {
+        throw ArgumentError.value(
+          format,
+          'format',
+          'Supported values are: image/jpeg, image/png',
+        );
+      }
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      return compute(
+        _screenshot,
+        _ScreenshotData(
+          ctx.address,
+          NativeLibrary.path,
+          format,
+        ),
+      );
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
   /// [generated.mpv_handle] address of the internal libmpv player instance.
   @override
   Future<int> get handle async {
@@ -2017,3 +2064,121 @@ class libmpvPlayer extends PlatformPlayer {
   @visibleForTesting
   static bool terminate = true;
 }
+
+// --------------------------------------------------
+// Performance sensitive methods in [Player] are executed in an [Isolate].
+// This avoids blocking the Dart event loop for long periods of time.
+//
+// TBD(@alexmercerind): Maybe eventually move all methods to [Isolate]?
+// --------------------------------------------------
+
+class _ScreenshotData {
+  final int ctx;
+  final String libmpv;
+  final String format;
+
+  _ScreenshotData(
+    this.ctx,
+    this.libmpv,
+    this.format,
+  );
+}
+
+Uint8List? _screenshot(_ScreenshotData data) {
+  // ---------
+  final mpv = generated.MPV(DynamicLibrary.open(data.libmpv));
+  final ctx = Pointer<generated.mpv_handle>.fromAddress(data.ctx);
+  // ---------
+  final format = data.format;
+  // ---------
+
+  // https://mpv.io/manual/stable/#command-interface-screenshot-raw
+  final args = ['screenshot-raw'];
+
+  final result = calloc<generated.mpv_node>();
+
+  final pointers = args.map<Pointer<Utf8>>((e) {
+    return e.toNativeUtf8();
+  }).toList();
+  final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join().length);
+  for (int i = 0; i < args.length; i++) {
+    arr[i] = pointers[i];
+  }
+  mpv.mpv_command_ret(
+    ctx,
+    arr.cast(),
+    result.cast(),
+  );
+
+  assert(result.ref.format == generated.mpv_format.MPV_FORMAT_NODE_MAP);
+
+  int? w, h, stride;
+  Uint8List? bytes;
+
+  final map = result.ref.u.list;
+  for (int i = 0; i < map.ref.num; i++) {
+    final key = map.ref.keys[i].cast<Utf8>().toDartString();
+    final value = map.ref.values[i];
+    switch (value.format) {
+      case generated.mpv_format.MPV_FORMAT_INT64:
+        switch (key) {
+          case 'w':
+            w = value.u.int64;
+            break;
+          case 'h':
+            h = value.u.int64;
+            break;
+          case 'stride':
+            stride = value.u.int64;
+            break;
+        }
+        break;
+      case generated.mpv_format.MPV_FORMAT_BYTE_ARRAY:
+        switch (key) {
+          case 'data':
+            final data = value.u.ba.ref.data.cast<Uint8>();
+            bytes = data.asTypedList(value.u.ba.ref.size);
+            break;
+        }
+        break;
+    }
+  }
+
+  Uint8List? image;
+
+  if (w != null && h != null && stride != null && bytes != null) {
+    final pixels = Image(
+      width: w,
+      height: h,
+      numChannels: 4,
+    );
+    for (final pixel in pixels) {
+      final x = pixel.x;
+      final y = pixel.y;
+      final i = (y * stride) + (x * 4);
+      pixel.b = bytes[i];
+      pixel.g = bytes[i + 1];
+      pixel.r = bytes[i + 2];
+      pixel.a = bytes[i + 3];
+    }
+    switch (format) {
+      case 'image/jpeg':
+        {
+          image = encodeJpg(pixels);
+          break;
+        }
+      case 'image/png':
+        {
+          image = encodePng(pixels);
+        }
+    }
+  }
+
+  calloc.free(arr);
+  pointers.forEach(calloc.free);
+  mpv.mpv_free_node_contents(result.cast());
+
+  return image;
+}
+
+// --------------------------------------------------
