@@ -287,7 +287,9 @@ class Player {
   /// * `image/jpeg`
   /// * `image/png`
   Future<Uint8List?> screenshot({String format = 'image/jpeg'}) async {
-    return platform?.screenshot();
+    return platform?.screenshot(
+      format: format,
+    );
   }
 
   /// Internal platform specific identifier for this [Player] instance.
