@@ -571,20 +571,6 @@ class _MaterialDesktopVideoControlsState
                   onExit: (_) => onExit(),
                   child: Stack(
                     children: [
-                      // Buffering Indicator.
-                      AnimatedOpacity(
-                        curve: Curves.easeInOut,
-                        opacity: buffering ? 1.0 : 0.0,
-                        duration: _theme(context).controlsTransitionDuration,
-                        child: _theme(context)
-                                .bufferingIndicatorBuilder
-                                ?.call(context) ??
-                            const Center(
-                              child: CircularProgressIndicator(
-                                color: Color(0xFFFFFFFF),
-                              ),
-                            ),
-                      ),
                       AnimatedOpacity(
                         curve: Curves.easeInOut,
                         opacity: visible ? 1.0 : 0.0,
@@ -636,6 +622,46 @@ class _MaterialDesktopVideoControlsState
                                   ),
                                 ),
                               ),
+                            // Buffering Indicator.
+                            Padding(
+                              padding: _theme(context).padding ??
+                                  (
+                                      // Add padding in fullscreen!
+                                      isFullscreen(context)
+                                          ? MediaQuery.of(context).padding
+                                          : EdgeInsets.zero),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    height: _theme(context).buttonBarHeight,
+                                    margin: _theme(context).topButtonBarMargin,
+                                  ),
+                                  Expanded(
+                                    child: Center(
+                                      child: AnimatedOpacity(
+                                        curve: Curves.easeInOut,
+                                        opacity: buffering ? 1.0 : 0.0,
+                                        duration: _theme(context)
+                                            .controlsTransitionDuration,
+                                        child: _theme(context)
+                                                .bufferingIndicatorBuilder
+                                                ?.call(context) ??
+                                            const Center(
+                                              child: CircularProgressIndicator(
+                                                color: Color(0xFFFFFFFF),
+                                              ),
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    height: _theme(context).buttonBarHeight,
+                                    margin:
+                                        _theme(context).bottomButtonBarMargin,
+                                  ),
+                                ],
+                              ),
+                            ),
                             if (mount)
                               Padding(
                                 padding: _theme(context).padding ??
@@ -728,7 +754,7 @@ class _MaterialDesktopVideoControlsState
 
 // SEEK BAR
 
-/// MaterialDesktop design seek bar.
+/// Material design seek bar.
 class MaterialDesktopSeekBar extends StatefulWidget {
   const MaterialDesktopSeekBar({
     Key? key,
