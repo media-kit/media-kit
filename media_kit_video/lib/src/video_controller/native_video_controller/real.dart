@@ -7,12 +7,12 @@ import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'dart:collection';
-import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:media_kit/media_kit.dart';
 // ignore_for_file: unused_import, implementation_imports
+import 'package:media_kit/ffi/ffi.dart';
 import 'package:media_kit/generated/libmpv/bindings.dart';
 import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 

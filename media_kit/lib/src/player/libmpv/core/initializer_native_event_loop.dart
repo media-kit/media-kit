@@ -8,7 +8,8 @@ import 'dart:ffi';
 import 'dart:async';
 import 'dart:isolate';
 import 'dart:collection';
-import 'package:ffi/ffi.dart';
+
+import 'package:media_kit/ffi/ffi.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
 
