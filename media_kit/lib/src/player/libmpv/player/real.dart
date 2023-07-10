@@ -4,12 +4,10 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: camel_case_types
-import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'dart:collection';
 import 'package:ffi/ffi.dart';
-import 'package:path/path.dart';
 import 'package:meta/meta.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
@@ -21,7 +19,6 @@ import 'package:media_kit/src/player/libmpv/core/initializer_native_event_loop.d
 import 'package:media_kit/src/utils/lock_ext.dart';
 import 'package:media_kit/src/utils/task_queue.dart';
 import 'package:media_kit/src/utils/android_helper.dart';
-import 'package:media_kit/src/utils/android_asset_loader.dart';
 
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
@@ -69,9 +66,13 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
+      disposed = true;
+
       await pause(synchronized: false);
 
-      disposed = true;
+      await setVideoTrack(VideoTrack.no(), synchronized: false);
+      await setAudioTrack(AudioTrack.no(), synchronized: false);
+      await setSubtitleTrack(SubtitleTrack.no(), synchronized: false);
 
       await super.dispose();
 
@@ -1627,6 +1628,18 @@ class libmpvPlayer extends PlatformPlayer {
           heightController.add(height);
         }
       }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'sub-text' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_STRING) {
+        final data = mpv.mpv_get_property_string(ctx, prop.ref.name);
+        final value = data == nullptr ? null : data.cast<Utf8>().toDartString();
+        print(value);
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'secondary-sub-text' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_STRING) {
+        final data = mpv.mpv_get_property_string(ctx, prop.ref.name);
+        final value = data == nullptr ? null : data.cast<Utf8>().toDartString();
+        print(value);
+      }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'eof-reached' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
         final value = prop.ref.data.cast<Bool>().value;
@@ -1681,6 +1694,13 @@ class libmpvPlayer extends PlatformPlayer {
               if (!errorController.isClosed) {
                 errorController.add(text);
               }
+            }
+          }
+        }
+        if (level == 'error') {
+          if (prefix == 'cplayer') {
+            if (!errorController.isClosed) {
+              errorController.add(text);
             }
           }
         }
@@ -1774,29 +1794,29 @@ class libmpvPlayer extends PlatformPlayer {
       // The libmpv options which must be set before [MPV.mpv_initialize].
       final options = <String, String>{};
 
-      if (Platform.isAndroid) {
-        try {
-          // On Android, the system fonts cannot be picked up by libass/fontconfig. This makes subtitles not work.
-          // We manually save `subfont.ttf` to the application's cache directory and set `config` & `config-dir` to use it.
-          final subfont = await AndroidAssetLoader.load('subfont.ttf');
-          if (subfont.isNotEmpty) {
-            final directory = dirname(subfont);
-            // This asset is bundled as part of `package:media_kit_libs_android_video`.
-            // Use it if located inside the application bundle, otherwise no worries.
-            options.addAll(
-              {
-                'config': 'yes',
-                'config-dir': directory,
-              },
-            );
-            print(subfont);
-            print(directory);
-          }
-        } catch (exception, stacktrace) {
-          print(exception);
-          print(stacktrace);
-        }
-      }
+      // if (Platform.isAndroid) {
+      //   try {
+      //     // On Android, the system fonts cannot be picked up by libass/fontconfig. This makes subtitles not work.
+      //     // We manually save `subfont.ttf` to the application's cache directory and set `config` & `config-dir` to use it.
+      //     final subfont = await AndroidAssetLoader.load('subfont.ttf');
+      //     if (subfont.isNotEmpty) {
+      //       final directory = dirname(subfont);
+      //       // This asset is bundled as part of `package:media_kit_libs_android_video`.
+      //       // Use it if located inside the application bundle, otherwise no worries.
+      //       options.addAll(
+      //         {
+      //           'config': 'yes',
+      //           'config-dir': directory,
+      //         },
+      //       );
+      //       print(subfont);
+      //       print(directory);
+      //     }
+      //   } catch (exception, stacktrace) {
+      //     print(exception);
+      //     print(stacktrace);
+      //   }
+      // }
 
       ctx = await Initializer.create(
         NativeLibrary.path,
@@ -1809,9 +1829,9 @@ class libmpvPlayer extends PlatformPlayer {
       // idle = yes
       // pause = yes
       // keep-open = yes
+      // sub-demuxer = lavf
+      // audio-display = no
       // network-timeout = 5
-      // demuxer-max-bytes = 32 * 1024 * 1024
-      // demuxer-max-back-bytes = 32 * 1024 * 1024
       //
       // ANDROID (Physical Device OR API Level > 25):
       //
@@ -1825,9 +1845,9 @@ class libmpvPlayer extends PlatformPlayer {
         'idle': 'yes',
         'pause': 'yes',
         'keep-open': 'yes',
+        'sub-demuxer': 'lavf',
+        'audio-display': 'no',
         'network-timeout': '5',
-        'demuxer-max-bytes': (32 * 1024 * 1024).toString(),
-        'demuxer-max-back-bytes': (32 * 1024 * 1024).toString(),
         // On Android, prefer OpenSL ES audio output.
         // AudioTrack audio output is prone to crashes in some rare cases.
         if (AndroidHelper.isPhysicalDevice || AndroidHelper.APILevel > 25)
@@ -1844,6 +1864,8 @@ class libmpvPlayer extends PlatformPlayer {
             'osc': 'no',
             'osd-level': '0',
           },
+          'demuxer-max-bytes': configuration.bufferSize.toString(),
+          'demuxer-max-back-bytes': configuration.bufferSize.toString(),
           if (configuration.vo != null) 'vo': '${configuration.vo}',
           if (configuration.title != null) 'title': '${configuration.title}',
           'demuxer-lavf-o':
@@ -1882,6 +1904,8 @@ class libmpvPlayer extends PlatformPlayer {
         'height': generated.mpv_format.MPV_FORMAT_INT64,
         'eof-reached': generated.mpv_format.MPV_FORMAT_FLAG,
         'idle-active': generated.mpv_format.MPV_FORMAT_FLAG,
+        'sub-text': generated.mpv_format.MPV_FORMAT_STRING,
+        'secondary-sub-text': generated.mpv_format.MPV_FORMAT_STRING,
       }.forEach(
         (property, format) {
           final name = property.toNativeUtf8();
