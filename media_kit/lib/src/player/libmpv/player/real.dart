@@ -5,6 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: camel_case_types
 import 'dart:ffi';
+import 'dart:math';
 import 'dart:async';
 import 'dart:collection';
 import 'dart:typed_data';
@@ -31,6 +32,7 @@ import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/video_params.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 
@@ -1174,7 +1176,7 @@ class libmpvPlayer extends PlatformPlayer {
     }
   }
 
-  /// Takes the snapshot of the current frame & returns encoded image bytes as [Uint8List].
+  /// Takes the snapshot of the current video frame & returns encoded image bytes as [Uint8List].
   ///
   /// The [format] parameter specifies the format of the image to be returned. Supported values are:
   /// * `image/jpeg`
@@ -1659,22 +1661,6 @@ class libmpvPlayer extends PlatformPlayer {
           }
         }
       }
-      if (prop.ref.name.cast<Utf8>().toDartString() == 'width' &&
-          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
-        final width = prop.ref.data.cast<Int64>().value;
-        state = state.copyWith(width: width);
-        if (!widthController.isClosed) {
-          widthController.add(width);
-        }
-      }
-      if (prop.ref.name.cast<Utf8>().toDartString() == 'height' &&
-          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
-        final height = prop.ref.data.cast<Int64>().value;
-        state = state.copyWith(height: height);
-        if (!heightController.isClosed) {
-          heightController.add(height);
-        }
-      }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'sub-text' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_STRING) {
         final data = mpv.mpv_get_property_string(ctx, prop.ref.name);
@@ -1706,6 +1692,81 @@ class libmpvPlayer extends PlatformPlayer {
           state = state.copyWith(buffering: false);
           if (!bufferingController.isClosed) {
             bufferingController.add(false);
+          }
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'video-out-params' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+        final node = prop.ref.data.cast<generated.mpv_node>().ref;
+        final data = <String, dynamic>{};
+        for (int i = 0; i < node.u.list.ref.num; i++) {
+          final key = node.u.list.ref.keys[i].cast<Utf8>().toDartString();
+          final value = node.u.list.ref.values[i];
+          switch (value.format) {
+            case generated.mpv_format.MPV_FORMAT_INT64:
+              data[key] = value.u.int64;
+              break;
+            case generated.mpv_format.MPV_FORMAT_DOUBLE:
+              data[key] = value.u.double_;
+              break;
+            case generated.mpv_format.MPV_FORMAT_STRING:
+              data[key] = value.u.string.cast<Utf8>().toDartString();
+              break;
+          }
+        }
+
+        final params = VideoParams(
+          pixelformat: data['pixelformat'],
+          hwPixelformat: data['hw-pixelformat'],
+          w: data['w'],
+          h: data['h'],
+          dw: data['dw'],
+          dh: data['dh'],
+          aspect: data['aspect'],
+          par: data['par'],
+          colormatrix: data['colormatrix'],
+          colorlevels: data['colorlevels'],
+          primaries: data['primaries'],
+          gamma: data['gamma'],
+          sigPeak: data['sig-peak'],
+          light: data['light'],
+          chromaLocation: data['chroma-location'],
+          rotate: data['rotate'],
+          stereoIn: data['stereo-in'],
+          averageBpp: data['average-bpp'],
+          alpha: data['alpha'],
+        );
+
+        state = state.copyWith(
+          videoParams: params,
+        );
+        if (!videoParamsController.isClosed) {
+          videoParamsController.add(params);
+        }
+
+        final dw = params.dw;
+        final dh = params.dh;
+        final rotate = params.rotate ?? 0;
+        if (dw is int && dh is int) {
+          final int width;
+          final int height;
+          if (sin(rotate * pi / 180).round() == 0) {
+            width = dw;
+            height = dh;
+          } else {
+            // width & height are swapped for 90 or 270 degrees rotation.
+            width = dh;
+            height = dw;
+          }
+          state = state.copyWith(
+            width: width,
+            height: height,
+          );
+          if (!widthController.isClosed) {
+            widthController.add(width);
+          }
+          if (!heightController.isClosed) {
+            heightController.add(height);
           }
         }
       }
@@ -1876,7 +1937,6 @@ class libmpvPlayer extends PlatformPlayer {
       // idle = yes
       // pause = yes
       // keep-open = yes
-      // sub-demuxer = lavf
       // audio-display = no
       // network-timeout = 5
       //
@@ -1892,7 +1952,6 @@ class libmpvPlayer extends PlatformPlayer {
         'idle': 'yes',
         'pause': 'yes',
         'keep-open': 'yes',
-        'sub-demuxer': 'lavf',
         'audio-display': 'no',
         'network-timeout': '5',
         // On Android, prefer OpenSL ES audio output.
@@ -1946,9 +2005,8 @@ class libmpvPlayer extends PlatformPlayer {
         'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'audio-device': generated.mpv_format.MPV_FORMAT_NODE,
         'audio-device-list': generated.mpv_format.MPV_FORMAT_NODE,
+        'video-out-params': generated.mpv_format.MPV_FORMAT_NODE,
         'track-list': generated.mpv_format.MPV_FORMAT_NODE,
-        'width': generated.mpv_format.MPV_FORMAT_INT64,
-        'height': generated.mpv_format.MPV_FORMAT_INT64,
         'eof-reached': generated.mpv_format.MPV_FORMAT_FLAG,
         'idle-active': generated.mpv_format.MPV_FORMAT_FLAG,
         'sub-text': generated.mpv_format.MPV_FORMAT_STRING,

@@ -281,7 +281,7 @@ class Player {
     return platform?.setSubtitleTrack(track);
   }
 
-  /// Takes the snapshot of the current frame & returns encoded image bytes as [Uint8List].
+  /// Takes the snapshot of the current video frame & returns encoded image bytes as [Uint8List].
   ///
   /// The [format] parameter specifies the format of the image to be returned. Supported values are:
   /// * `image/jpeg`

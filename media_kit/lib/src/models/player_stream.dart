@@ -10,6 +10,7 @@ import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
+import 'package:media_kit/src/models/video_params.dart';
 
 /// {@template player_stream}
 ///
@@ -58,6 +59,10 @@ class PlayerStream {
   /// e.g. sample rate, channels, etc.
   final Stream<AudioParams> audioParams;
 
+  /// Video parameters of the currently playing [Media].
+  /// e.g. width, height, rotation etc.
+  final Stream<VideoParams> videoParams;
+
   /// Audio bitrate of the currently playing [Media].
   final Stream<double?> audioBitrate;
 
@@ -99,6 +104,7 @@ class PlayerStream {
     this.buffer,
     this.playlistMode,
     this.audioParams,
+    this.videoParams,
     this.audioBitrate,
     this.audioDevice,
     this.audioDevices,

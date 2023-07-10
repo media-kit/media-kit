@@ -15,6 +15,7 @@ import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/video_params.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_stream.dart';
@@ -53,6 +54,7 @@ abstract class PlatformPlayer {
     bufferController.stream.distinct(),
     playlistModeController.stream.distinct(),
     audioParamsController.stream.distinct(),
+    videoParamsController.stream.distinct(),
     audioBitrateController.stream.distinct(),
     audioDeviceController.stream.distinct(),
     audioDevicesController.stream.distinct(),
@@ -81,6 +83,7 @@ abstract class PlatformPlayer {
         logController.close(),
         errorController.close(),
         audioParamsController.close(),
+        videoParamsController.close(),
         audioBitrateController.close(),
         audioDeviceController.close(),
         audioDevicesController.close(),
@@ -298,6 +301,10 @@ abstract class PlatformPlayer {
   @protected
   final StreamController<AudioParams> audioParamsController =
       StreamController<AudioParams>.broadcast();
+
+  @protected
+  final StreamController<VideoParams> videoParamsController =
+      StreamController<VideoParams>.broadcast();
 
   @protected
   final StreamController<double?> audioBitrateController =

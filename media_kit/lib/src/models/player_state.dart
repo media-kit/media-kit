@@ -4,11 +4,12 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/video_params.dart';
+import 'package:media_kit/src/models/playlist_mode.dart';
 
 /// {@template player_state}
 ///
@@ -57,6 +58,10 @@ class PlayerState {
   /// e.g. sample rate, channels, etc.
   final AudioParams audioParams;
 
+  /// Video parameters of the currently playing [Media].
+  /// e.g. width, height, rotation, etc.
+  final VideoParams videoParams;
+
   /// Audio bitrate of the currently playing [Media].
   final double? audioBitrate;
 
@@ -92,6 +97,7 @@ class PlayerState {
     this.buffer = Duration.zero,
     this.playlistMode = PlaylistMode.none,
     this.audioParams = const AudioParams(),
+    this.videoParams = const VideoParams(),
     this.audioBitrate,
     this.audioDevice = const AudioDevice('auto', ''),
     this.audioDevices = const [AudioDevice('auto', '')],
@@ -114,6 +120,7 @@ class PlayerState {
     Duration? buffer,
     PlaylistMode? playlistMode,
     AudioParams? audioParams,
+    VideoParams? videoParams,
     double? audioBitrate,
     AudioDevice? audioDevice,
     List<AudioDevice>? audioDevices,
@@ -135,6 +142,7 @@ class PlayerState {
       buffer: buffer ?? this.buffer,
       playlistMode: playlistMode ?? this.playlistMode,
       audioParams: audioParams ?? this.audioParams,
+      videoParams: videoParams ?? this.videoParams,
       audioBitrate: audioBitrate ?? this.audioBitrate,
       audioDevice: audioDevice ?? this.audioDevice,
       audioDevices: audioDevices ?? this.audioDevices,
@@ -159,6 +167,7 @@ class PlayerState {
       'buffer: $buffer, '
       'playlistMode: $playlistMode, '
       'audioParams: $audioParams, '
+      'videoParams: $videoParams, '
       'audioBitrate: $audioBitrate, '
       'audioDevice: $audioDevice, '
       'audioDevices: $audioDevices, '
