@@ -377,7 +377,31 @@ int64_t VideoOutput::GetVideoWidth() {
   }
   // Video resolution dependent width.
   int64_t width = 0;
-  mpv_get_property(handle_, "width", MPV_FORMAT_INT64, &width);
+
+  mpv_node params;
+  mpv_get_property(handle_, "video-out-params", MPV_FORMAT_NODE, &params);
+
+  int64_t dw = 0, dh = 0, rotate = 0;
+  if (params.format == MPV_FORMAT_NODE_MAP) {
+    for (int32_t i = 0; i < params.u.list->num; i++) {
+      char* key = params.u.list->keys[i];
+      auto value = params.u.list->values[i];
+      if (value.format == MPV_FORMAT_INT64) {
+        if (strcmp(key, "dw") == 0) {
+          dw = value.u.int64;
+        }
+        if (strcmp(key, "dh") == 0) {
+          dh = value.u.int64;
+        }
+        if (strcmp(key, "rotate") == 0) {
+          rotate = value.u.int64;
+        }
+      }
+    }
+  }
+
+  width = rotate == 0 || rotate == 180 ? dw : dh;
+
   if (pixel_buffer_ != nullptr) {
     // Limit width if software rendering is being used.
     return std::clamp(width, static_cast<int64_t>(0),
@@ -393,7 +417,31 @@ int64_t VideoOutput::GetVideoHeight() {
   }
   // Video resolution dependent height.
   int64_t height = 0;
-  mpv_get_property(handle_, "height", MPV_FORMAT_INT64, &height);
+
+  mpv_node params;
+  mpv_get_property(handle_, "video-out-params", MPV_FORMAT_NODE, &params);
+
+  int64_t dw = 0, dh = 0, rotate = 0;
+  if (params.format == MPV_FORMAT_NODE_MAP) {
+    for (int32_t i = 0; i < params.u.list->num; i++) {
+      char* key = params.u.list->keys[i];
+      auto value = params.u.list->values[i];
+      if (value.format == MPV_FORMAT_INT64) {
+        if (strcmp(key, "dw") == 0) {
+          dw = value.u.int64;
+        }
+        if (strcmp(key, "dh") == 0) {
+          dh = value.u.int64;
+        }
+        if (strcmp(key, "rotate") == 0) {
+          rotate = value.u.int64;
+        }
+      }
+    }
+  }
+
+  height = rotate == 0 || rotate == 180 ? dh : dw;
+
   if (pixel_buffer_ != nullptr) {
     // Limit width if software rendering is being used.
     return std::clamp(height, static_cast<int64_t>(0),

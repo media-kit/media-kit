@@ -5,6 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:meta/meta.dart';
 
 import 'package:media_kit/src/models/track.dart';
@@ -14,6 +15,7 @@ import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/video_params.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_stream.dart';
@@ -52,6 +54,7 @@ abstract class PlatformPlayer {
     bufferController.stream.distinct(),
     playlistModeController.stream.distinct(),
     audioParamsController.stream.distinct(),
+    videoParamsController.stream.distinct(),
     audioBitrateController.stream.distinct(),
     audioDeviceController.stream.distinct(),
     audioDevicesController.stream.distinct(),
@@ -59,6 +62,7 @@ abstract class PlatformPlayer {
     tracksController.stream.distinct(),
     widthController.stream.distinct(),
     heightController.stream.distinct(),
+    subtitleController.stream.distinct(),
     logController.stream.distinct(),
     errorController.stream /* ERROR STREAM SHOULD NOT BE DISTINCT */,
   );
@@ -77,9 +81,8 @@ abstract class PlatformPlayer {
         rateController.close(),
         pitchController.close(),
         bufferingController.close(),
-        logController.close(),
-        errorController.close(),
         audioParamsController.close(),
+        videoParamsController.close(),
         audioBitrateController.close(),
         audioDeviceController.close(),
         audioDevicesController.close(),
@@ -87,6 +90,9 @@ abstract class PlatformPlayer {
         tracksController.close(),
         widthController.close(),
         heightController.close(),
+        subtitleController.close(),
+        logController.close(),
+        errorController.close(),
       ],
     );
     for (final callback in release) {
@@ -230,6 +236,12 @@ abstract class PlatformPlayer {
     );
   }
 
+  FutureOr<Uint8List?> screenshot({String format = 'image/jpeg'}) async {
+    throw UnimplementedError(
+      '[PlatformPlayer.screenshot] is not implemented',
+    );
+  }
+
   Future<int> get handle {
     throw UnimplementedError(
       '[PlatformPlayer.handle] is not implemented',
@@ -293,6 +305,10 @@ abstract class PlatformPlayer {
       StreamController<AudioParams>.broadcast();
 
   @protected
+  final StreamController<VideoParams> videoParamsController =
+      StreamController<VideoParams>.broadcast();
+
+  @protected
   final StreamController<double?> audioBitrateController =
       StreamController<double?>.broadcast();
 
@@ -319,6 +335,10 @@ abstract class PlatformPlayer {
   @protected
   final StreamController<int?> heightController =
       StreamController<int?>.broadcast();
+
+  @protected
+  final StreamController<List<String>> subtitleController =
+      StreamController<List<String>>.broadcast();
 
   /// Publicly defined clean-up [Function]s which must be called before [dispose].
   final List<Future<void> Function()> release = [];
@@ -378,6 +398,18 @@ class PlayerConfiguration {
   /// Default: `null`.
   final void Function()? ready;
 
+  /// Whether to use [libass](https://github.com/libass/libass) based subtitle rendering for libmpv backend.
+  ///
+  /// By default, subtitles are rendering is Flutter `Widget` based. Enabling this option will render subtitles using libass.
+  ///
+  /// On Android, this option requires [libassAndroidFont] to be set.
+  final bool libass;
+
+  /// The asset name of the `.ttf` font file to be used for libass based subtitle rendering on Android.
+  ///
+  /// e.g. `assets/fonts/subtitle.ttf`
+  final String? libassAndroidFont;
+
   /// Sets the log level on libmpv backend.
   /// Default: `none`.
   final MPVLogLevel logLevel;
@@ -401,6 +433,8 @@ class PlayerConfiguration {
     this.pitch = false,
     this.title,
     this.ready,
+    this.libass = false,
+    this.libassAndroidFont,
     this.logLevel = MPVLogLevel.error,
     this.bufferSize = 32 * 1024 * 1024,
     this.protocolWhitelist = const [

@@ -59,6 +59,11 @@ class AudioParams {
       hrChannels.hashCode;
 
   @override
-  String toString() =>
-      'AudioParams(format: $format, sampleRate: $sampleRate, channels: $channels, channelCount: $channelCount, hrChannels: $hrChannels)';
+  String toString() => 'AudioParams('
+      'format: $format, '
+      'sampleRate: $sampleRate, '
+      'channels: $channels, '
+      'channelCount: $channelCount, '
+      'hrChannels: $hrChannels'
+      ')';
 }

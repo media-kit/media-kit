@@ -107,6 +107,7 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   seekBarBufferColor: Color(0x3DFFFFFF),
   seekBarThumbSize: 12.8,
   seekBarThumbColor: Color(0xFFFF0000),
+  shiftSubtitlesOnControlsVisibilityChange: true,
 );
 
 /// {@template material_video_controls_theme_data}
@@ -210,6 +211,11 @@ class MaterialVideoControlsThemeData {
   /// [Color] of the seek bar thumb.
   final Color seekBarThumbColor;
 
+  // SUBTITLE
+
+  /// Whether to shift the subtitles upwards when the controls are visible.
+  final bool shiftSubtitlesOnControlsVisibilityChange;
+
   /// {@macro material_video_controls_theme_data}
   const MaterialVideoControlsThemeData({
     this.displaySeekBar = true,
@@ -252,6 +258,7 @@ class MaterialVideoControlsThemeData {
     this.seekBarBufferColor = const Color(0x3DFFFFFF),
     this.seekBarThumbSize = 12.8,
     this.seekBarThumbColor = const Color(0xFFFF0000),
+    this.shiftSubtitlesOnControlsVisibilityChange = true,
   });
 
   /// Creates a copy of this [MaterialVideoControlsThemeData] with the given fields replaced by the non-null parameter values.
@@ -283,6 +290,7 @@ class MaterialVideoControlsThemeData {
     Color? seekBarBufferColor,
     double? seekBarThumbSize,
     Color? seekBarThumbColor,
+    bool? shiftSubtitlesOnControlsVisibilityChange,
   }) {
     return MaterialVideoControlsThemeData(
       displaySeekBar: displaySeekBar ?? this.displaySeekBar,
@@ -322,6 +330,9 @@ class MaterialVideoControlsThemeData {
       seekBarBufferColor: seekBarBufferColor ?? this.seekBarBufferColor,
       seekBarThumbSize: seekBarThumbSize ?? this.seekBarThumbSize,
       seekBarThumbColor: seekBarThumbColor ?? this.seekBarThumbColor,
+      shiftSubtitlesOnControlsVisibilityChange:
+          shiftSubtitlesOnControlsVisibilityChange ??
+              this.shiftSubtitlesOnControlsVisibilityChange,
     );
   }
 }
@@ -399,6 +410,13 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   final List<StreamSubscription> subscriptions = [];
 
+  double get subtitleVerticalShiftOffset =>
+      (_theme(context).padding?.bottom ?? 0.0) +
+      (_theme(context).bottomButtonBarMargin.vertical) +
+      (_theme(context).bottomButtonBar.isNotEmpty
+          ? _theme(context).buttonBarHeight
+          : 0.0);
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -440,24 +458,49 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     super.dispose();
   }
 
+  void shiftSubtitle() {
+    if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
+      state(context).subtitleViewKey.currentState?.setPadding(
+            state(context).widget.subtitleViewConfiguration.padding +
+                EdgeInsets.fromLTRB(
+                  0.0,
+                  0.0,
+                  0.0,
+                  subtitleVerticalShiftOffset,
+                ),
+          );
+    }
+  }
+
+  void unshiftSubtitle() {
+    if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
+      state(context).subtitleViewKey.currentState?.setPadding(
+            state(context).widget.subtitleViewConfiguration.padding,
+          );
+    }
+  }
+
   void onTap() {
     if (!visible) {
       setState(() {
         mount = true;
         visible = true;
       });
+      shiftSubtitle();
       _timer?.cancel();
       _timer = Timer(_theme(context).controlsHoverDuration, () {
         if (mounted) {
           setState(() {
             visible = false;
           });
+          unshiftSubtitle();
         }
       });
     } else {
       setState(() {
         visible = false;
       });
+      unshiftSubtitle();
       _timer?.cancel();
     }
   }
@@ -673,20 +716,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       ),
                     ),
               ),
-              // Buffering Indicator.
-              AnimatedOpacity(
-                curve: Curves.easeInOut,
-                opacity: buffering ? 1.0 : 0.0,
-                duration: _theme(context).controlsTransitionDuration,
-                child:
-                    _theme(context).bufferingIndicatorBuilder?.call(context) ??
-                        const Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFFFFFFFF),
-                          ),
-                        ),
-              ),
-
               // Controls:
               AnimatedOpacity(
                 curve: Curves.easeInOut,
@@ -773,6 +802,45 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                         ],
                       ),
                     ),
+                    // Buffering Indicator.
+                    Padding(
+                      padding: _theme(context).padding ??
+                          (
+                              // Add padding in fullscreen!
+                              isFullscreen(context)
+                                  ? MediaQuery.of(context).padding
+                                  : EdgeInsets.zero),
+                      child: Column(
+                        children: [
+                          Container(
+                            height: _theme(context).buttonBarHeight,
+                            margin: _theme(context).topButtonBarMargin,
+                          ),
+                          Expanded(
+                            child: Center(
+                              child: AnimatedOpacity(
+                                curve: Curves.easeInOut,
+                                opacity: buffering ? 1.0 : 0.0,
+                                duration:
+                                    _theme(context).controlsTransitionDuration,
+                                child: _theme(context)
+                                        .bufferingIndicatorBuilder
+                                        ?.call(context) ??
+                                    const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFFFFFFFF),
+                                      ),
+                                    ),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            height: _theme(context).buttonBarHeight,
+                            margin: _theme(context).bottomButtonBarMargin,
+                          ),
+                        ],
+                      ),
+                    ),
                     if (mount)
                       Padding(
                         padding: _theme(context).padding ??
@@ -838,7 +906,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                   ],
                 ),
               ),
-
               // Double-Tap Seek Seek-Bar:
               if (!mount)
                 if (_mountSeekBackwardButton || _mountSeekForwardButton)

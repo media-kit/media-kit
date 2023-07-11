@@ -5,7 +5,9 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: camel_case_types
 import 'dart:async';
+import 'dart:convert';
 import 'dart:js' as js;
+import 'dart:typed_data';
 import 'dart:collection';
 import 'dart:html' as html;
 import 'package:meta/meta.dart';
@@ -1176,6 +1178,60 @@ class webPlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
       throw UnsupportedError(
           '[Player.setSubtitleTrack] is not supported on web');
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Takes the snapshot of the current frame & returns encoded image bytes as [Uint8List].
+  ///
+  /// The [format] parameter specifies the format of the image to be returned. Supported values are:
+  /// * `image/jpeg`
+  /// * `image/png`
+  @override
+  Future<Uint8List?> screenshot(
+      {String format = 'image/jpeg', bool synchronized = true}) async {
+    Future<Uint8List?> function() async {
+      if (![
+        'image/jpeg',
+        'image/png',
+      ].contains(format)) {
+        throw ArgumentError.value(
+          format,
+          'format',
+          'Supported values are: image/jpeg, image/png',
+        );
+      }
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      // Kind of limited in usage:
+      // https://stackoverflow.com/questions/35244215/html5-video-screenshot-via-canvas-using-cors
+
+      try {
+        final canvas = html.CanvasElement();
+        canvas.width = element.videoWidth;
+        canvas.height = element.videoHeight;
+        final context = canvas.context2D;
+        context.drawImage(element, 0, 0);
+
+        final data = canvas.toDataUrl(format);
+        final bytes = base64.decode(data.split(',').last);
+
+        canvas.remove();
+
+        return bytes;
+      } catch (_) {
+        return null;
+      }
     }
 
     if (synchronized) {

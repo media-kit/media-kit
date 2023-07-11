@@ -7,7 +7,6 @@ import 'dart:io';
 import 'dart:ffi';
 import 'dart:async';
 import 'dart:collection';
-import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:synchronized/synchronized.dart';
@@ -19,6 +18,7 @@ import 'package:media_kit/media_kit.dart';
 // Only downside I can see is that we are now depending package:media_kit_video on package:ffi & package:media_kit. However, it's absolutely fine because package:media_kit_video is crafted for package:media_kit.
 // Also... now the API is also improved, now [VideoController.create] consumes [Player] directly instead of [Player.handle] which as an [int].
 // ignore_for_file: unused_import, implementation_imports
+import 'package:media_kit/ffi/ffi.dart';
 import 'package:media_kit/generated/libmpv/bindings.dart';
 import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 

@@ -6,11 +6,15 @@
 // ignore_for_file: camel_case_types
 import 'dart:io';
 import 'dart:ffi';
+import 'dart:math';
 import 'dart:async';
 import 'dart:collection';
-import 'package:ffi/ffi.dart';
-import 'package:path/path.dart';
+import 'dart:typed_data';
 import 'package:meta/meta.dart';
+import 'package:path/path.dart';
+import 'package:image/image.dart';
+
+import 'package:media_kit/ffi/ffi.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
 import 'package:media_kit/src/player/libmpv/core/initializer.dart';
@@ -18,6 +22,7 @@ import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 import 'package:media_kit/src/player/libmpv/core/fallback_bitrate_handler.dart';
 import 'package:media_kit/src/player/libmpv/core/initializer_native_event_loop.dart';
 
+import 'package:media_kit/src/utils/isolates.dart';
 import 'package:media_kit/src/utils/lock_ext.dart';
 import 'package:media_kit/src/utils/task_queue.dart';
 import 'package:media_kit/src/utils/android_helper.dart';
@@ -30,6 +35,7 @@ import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/video_params.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 
@@ -70,6 +76,10 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
 
       await pause(synchronized: false);
+
+      await setVideoTrack(VideoTrack.no(), synchronized: false);
+      await setAudioTrack(AudioTrack.no(), synchronized: false);
+      await setSubtitleTrack(SubtitleTrack.no(), synchronized: false);
 
       disposed = true;
 
@@ -1169,6 +1179,49 @@ class libmpvPlayer extends PlatformPlayer {
     }
   }
 
+  /// Takes the snapshot of the current video frame & returns encoded image bytes as [Uint8List].
+  ///
+  /// The [format] parameter specifies the format of the image to be returned. Supported values are:
+  /// * `image/jpeg`
+  /// * `image/png`
+  @override
+  Future<Uint8List?> screenshot(
+      {String format = 'image/jpeg', bool synchronized = true}) async {
+    Future<Uint8List?> function() async {
+      if (![
+        'image/jpeg',
+        'image/png',
+      ].contains(format)) {
+        throw ArgumentError.value(
+          format,
+          'format',
+          'Supported values are: image/jpeg, image/png',
+        );
+      }
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      return compute(
+        _screenshot,
+        _ScreenshotData(
+          ctx.address,
+          NativeLibrary.path,
+          format,
+        ),
+      );
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
   /// [generated.mpv_handle] address of the internal libmpv player instance.
   @override
   Future<int> get handle async {
@@ -1611,20 +1664,36 @@ class libmpvPlayer extends PlatformPlayer {
           }
         }
       }
-      if (prop.ref.name.cast<Utf8>().toDartString() == 'width' &&
-          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
-        final width = prop.ref.data.cast<Int64>().value;
-        state = state.copyWith(width: width);
-        if (!widthController.isClosed) {
-          widthController.add(width);
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'sub-text' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+        final value = prop.ref.data.cast<generated.mpv_node>();
+        if (value.ref.format == generated.mpv_format.MPV_FORMAT_STRING) {
+          final text = value.ref.u.string.cast<Utf8>().toDartString();
+          state = state.copyWith(
+            subtitle: [
+              text,
+              state.subtitle[1],
+            ],
+          );
+          if (!subtitleController.isClosed) {
+            subtitleController.add(state.subtitle);
+          }
         }
       }
-      if (prop.ref.name.cast<Utf8>().toDartString() == 'height' &&
-          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
-        final height = prop.ref.data.cast<Int64>().value;
-        state = state.copyWith(height: height);
-        if (!heightController.isClosed) {
-          heightController.add(height);
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'secondary-sub-text' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+        final value = prop.ref.data.cast<generated.mpv_node>();
+        if (value.ref.format == generated.mpv_format.MPV_FORMAT_STRING) {
+          final text = value.ref.u.string.cast<Utf8>().toDartString();
+          state = state.copyWith(
+            subtitle: [
+              state.subtitle[0],
+              text,
+            ],
+          );
+          if (!subtitleController.isClosed) {
+            subtitleController.add(state.subtitle);
+          }
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'eof-reached' &&
@@ -1646,6 +1715,81 @@ class libmpvPlayer extends PlatformPlayer {
           state = state.copyWith(buffering: false);
           if (!bufferingController.isClosed) {
             bufferingController.add(false);
+          }
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'video-out-params' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+        final node = prop.ref.data.cast<generated.mpv_node>().ref;
+        final data = <String, dynamic>{};
+        for (int i = 0; i < node.u.list.ref.num; i++) {
+          final key = node.u.list.ref.keys[i].cast<Utf8>().toDartString();
+          final value = node.u.list.ref.values[i];
+          switch (value.format) {
+            case generated.mpv_format.MPV_FORMAT_INT64:
+              data[key] = value.u.int64;
+              break;
+            case generated.mpv_format.MPV_FORMAT_DOUBLE:
+              data[key] = value.u.double_;
+              break;
+            case generated.mpv_format.MPV_FORMAT_STRING:
+              data[key] = value.u.string.cast<Utf8>().toDartString();
+              break;
+          }
+        }
+
+        final params = VideoParams(
+          pixelformat: data['pixelformat'],
+          hwPixelformat: data['hw-pixelformat'],
+          w: data['w'],
+          h: data['h'],
+          dw: data['dw'],
+          dh: data['dh'],
+          aspect: data['aspect'],
+          par: data['par'],
+          colormatrix: data['colormatrix'],
+          colorlevels: data['colorlevels'],
+          primaries: data['primaries'],
+          gamma: data['gamma'],
+          sigPeak: data['sig-peak'],
+          light: data['light'],
+          chromaLocation: data['chroma-location'],
+          rotate: data['rotate'],
+          stereoIn: data['stereo-in'],
+          averageBpp: data['average-bpp'],
+          alpha: data['alpha'],
+        );
+
+        state = state.copyWith(
+          videoParams: params,
+        );
+        if (!videoParamsController.isClosed) {
+          videoParamsController.add(params);
+        }
+
+        final dw = params.dw;
+        final dh = params.dh;
+        final rotate = params.rotate ?? 0;
+        if (dw is int && dh is int) {
+          final int width;
+          final int height;
+          if (sin(rotate * pi / 180).round() == 0) {
+            width = dw;
+            height = dh;
+          } else {
+            // width & height are swapped for 90 or 270 degrees rotation.
+            width = dh;
+            height = dw;
+          }
+          state = state.copyWith(
+            width: width,
+            height: height,
+          );
+          if (!widthController.isClosed) {
+            widthController.add(width);
+          }
+          if (!heightController.isClosed) {
+            heightController.add(height);
           }
         }
       }
@@ -1681,6 +1825,13 @@ class libmpvPlayer extends PlatformPlayer {
               if (!errorController.isClosed) {
                 errorController.add(text);
               }
+            }
+          }
+        }
+        if (level == 'error') {
+          if (prefix == 'cplayer') {
+            if (!errorController.isClosed) {
+              errorController.add(text);
             }
           }
         }
@@ -1774,11 +1925,18 @@ class libmpvPlayer extends PlatformPlayer {
       // The libmpv options which must be set before [MPV.mpv_initialize].
       final options = <String, String>{};
 
-      if (Platform.isAndroid) {
+      if (Platform.isAndroid &&
+          configuration.libass &&
+          configuration.libassAndroidFont != null) {
         try {
-          // On Android, the system fonts cannot be picked up by libass/fontconfig. This makes subtitles not work.
-          // We manually save `subfont.ttf` to the application's cache directory and set `config` & `config-dir` to use it.
-          final subfont = await AndroidAssetLoader.load('subfont.ttf');
+          // On Android, the system fonts cannot be picked up by libass/fontconfig. This makes libass subtitle rendering fail.
+          // We save the subtitle font to the application's cache directory and set `config` & `config-dir` to use it.
+          final subfont = await AndroidAssetLoader.load(
+            join(
+              'flutter_assets',
+              configuration.libassAndroidFont,
+            ),
+          );
           if (subfont.isNotEmpty) {
             final directory = dirname(subfont);
             // This asset is bundled as part of `package:media_kit_libs_android_video`.
@@ -1809,9 +1967,8 @@ class libmpvPlayer extends PlatformPlayer {
       // idle = yes
       // pause = yes
       // keep-open = yes
+      // audio-display = no
       // network-timeout = 5
-      // demuxer-max-bytes = 32 * 1024 * 1024
-      // demuxer-max-back-bytes = 32 * 1024 * 1024
       //
       // ANDROID (Physical Device OR API Level > 25):
       //
@@ -1825,9 +1982,8 @@ class libmpvPlayer extends PlatformPlayer {
         'idle': 'yes',
         'pause': 'yes',
         'keep-open': 'yes',
+        'audio-display': 'no',
         'network-timeout': '5',
-        'demuxer-max-bytes': (32 * 1024 * 1024).toString(),
-        'demuxer-max-back-bytes': (32 * 1024 * 1024).toString(),
         // On Android, prefer OpenSL ES audio output.
         // AudioTrack audio output is prone to crashes in some rare cases.
         if (AndroidHelper.isPhysicalDevice || AndroidHelper.APILevel > 25)
@@ -1844,10 +2000,15 @@ class libmpvPlayer extends PlatformPlayer {
             'osc': 'no',
             'osd-level': '0',
           },
+          'demuxer-max-bytes': configuration.bufferSize.toString(),
+          'demuxer-max-back-bytes': configuration.bufferSize.toString(),
           if (configuration.vo != null) 'vo': '${configuration.vo}',
           if (configuration.title != null) 'title': '${configuration.title}',
           'demuxer-lavf-o':
               'protocol_whitelist=[${configuration.protocolWhitelist.join(',')}]',
+          'sub-ass': configuration.libass ? 'yes' : 'no',
+          'sub-visibility': configuration.libass ? 'yes' : 'no',
+          'secondary-sub-visibility': configuration.libass ? 'yes' : 'no',
         },
       );
       for (final property in properties.entries) {
@@ -1877,11 +2038,12 @@ class libmpvPlayer extends PlatformPlayer {
         'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'audio-device': generated.mpv_format.MPV_FORMAT_NODE,
         'audio-device-list': generated.mpv_format.MPV_FORMAT_NODE,
+        'video-out-params': generated.mpv_format.MPV_FORMAT_NODE,
         'track-list': generated.mpv_format.MPV_FORMAT_NODE,
-        'width': generated.mpv_format.MPV_FORMAT_INT64,
-        'height': generated.mpv_format.MPV_FORMAT_INT64,
         'eof-reached': generated.mpv_format.MPV_FORMAT_FLAG,
         'idle-active': generated.mpv_format.MPV_FORMAT_FLAG,
+        'sub-text': generated.mpv_format.MPV_FORMAT_NODE,
+        'secondary-sub-text': generated.mpv_format.MPV_FORMAT_NODE,
       }.forEach(
         (property, format) {
           final name = property.toNativeUtf8();
@@ -1993,3 +2155,121 @@ class libmpvPlayer extends PlatformPlayer {
   @visibleForTesting
   static bool terminate = true;
 }
+
+// --------------------------------------------------
+// Performance sensitive methods in [Player] are executed in an [Isolate].
+// This avoids blocking the Dart event loop for long periods of time.
+//
+// TBD(@alexmercerind): Maybe eventually move all methods to [Isolate]?
+// --------------------------------------------------
+
+class _ScreenshotData {
+  final int ctx;
+  final String libmpv;
+  final String format;
+
+  _ScreenshotData(
+    this.ctx,
+    this.libmpv,
+    this.format,
+  );
+}
+
+Uint8List? _screenshot(_ScreenshotData data) {
+  // ---------
+  final mpv = generated.MPV(DynamicLibrary.open(data.libmpv));
+  final ctx = Pointer<generated.mpv_handle>.fromAddress(data.ctx);
+  // ---------
+  final format = data.format;
+  // ---------
+
+  // https://mpv.io/manual/stable/#command-interface-screenshot-raw
+  final args = ['screenshot-raw'];
+
+  final result = calloc<generated.mpv_node>();
+
+  final pointers = args.map<Pointer<Utf8>>((e) {
+    return e.toNativeUtf8();
+  }).toList();
+  final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join().length);
+  for (int i = 0; i < args.length; i++) {
+    arr[i] = pointers[i];
+  }
+  mpv.mpv_command_ret(
+    ctx,
+    arr.cast(),
+    result.cast(),
+  );
+
+  assert(result.ref.format == generated.mpv_format.MPV_FORMAT_NODE_MAP);
+
+  int? w, h, stride;
+  Uint8List? bytes;
+
+  final map = result.ref.u.list;
+  for (int i = 0; i < map.ref.num; i++) {
+    final key = map.ref.keys[i].cast<Utf8>().toDartString();
+    final value = map.ref.values[i];
+    switch (value.format) {
+      case generated.mpv_format.MPV_FORMAT_INT64:
+        switch (key) {
+          case 'w':
+            w = value.u.int64;
+            break;
+          case 'h':
+            h = value.u.int64;
+            break;
+          case 'stride':
+            stride = value.u.int64;
+            break;
+        }
+        break;
+      case generated.mpv_format.MPV_FORMAT_BYTE_ARRAY:
+        switch (key) {
+          case 'data':
+            final data = value.u.ba.ref.data.cast<Uint8>();
+            bytes = data.asTypedList(value.u.ba.ref.size);
+            break;
+        }
+        break;
+    }
+  }
+
+  Uint8List? image;
+
+  if (w != null && h != null && stride != null && bytes != null) {
+    final pixels = Image(
+      width: w,
+      height: h,
+      numChannels: 4,
+    );
+    for (final pixel in pixels) {
+      final x = pixel.x;
+      final y = pixel.y;
+      final i = (y * stride) + (x * 4);
+      pixel.b = bytes[i];
+      pixel.g = bytes[i + 1];
+      pixel.r = bytes[i + 2];
+      pixel.a = bytes[i + 3];
+    }
+    switch (format) {
+      case 'image/jpeg':
+        {
+          image = encodeJpg(pixels);
+          break;
+        }
+      case 'image/png':
+        {
+          image = encodePng(pixels);
+        }
+    }
+  }
+
+  calloc.free(arr);
+  pointers.forEach(calloc.free);
+  mpv.mpv_free_node_contents(result.cast());
+
+  return image;
+}
+
+// --------------------------------------------------

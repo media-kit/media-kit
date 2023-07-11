@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'dart:collection';
+import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:collection/collection.dart';
 import 'package:universal_platform/universal_platform.dart';
@@ -2506,6 +2507,126 @@ void main() {
       });
 
       await player.open(Media(sources.platform[0]));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 2)),
+  );
+  test(
+    'player-screenshot',
+    () async {
+      final player = Player();
+
+      await player.open(Media(sources.platform[0]));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      final screenshot = await player.screenshot();
+
+      expect(screenshot, isNotNull);
+      expect(screenshot, isA<Uint8List>());
+      expect(screenshot?.length ?? 0, greaterThan(0));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 2)),
+    skip: UniversalPlatform.isWeb,
+  );
+  test(
+    'player-screenshot-format',
+    () async {
+      final player = Player();
+
+      await player.open(Media(sources.platform[0]));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      final screenshot = await player.screenshot(format: 'image/png');
+
+      expect(screenshot, isNotNull);
+      expect(screenshot, isA<Uint8List>());
+      expect(screenshot?.length ?? 0, greaterThan(0));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 2)),
+    skip: UniversalPlatform.isWeb,
+  );
+  test(
+    'player-screenshot',
+    () async {
+      final player = Player();
+
+      await player.open(Media(sources.platform[0]));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      // CORS
+      final screenshot = await player.screenshot();
+
+      expect(screenshot, isNull);
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 2)),
+    skip: !UniversalPlatform.isWeb,
+  );
+  test(
+    'player-screenshot-format',
+    () async {
+      final player = Player();
+
+      await player.open(Media(sources.platform[0]));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      // CORS
+      final screenshot = await player.screenshot(format: 'image/png');
+
+      expect(screenshot, isNull);
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 2)),
+    skip: !UniversalPlatform.isWeb,
+  );
+  test(
+    'player-screenshot-argument-error',
+    () async {
+      final player = Player();
+
+      await player.open(Media(sources.platform[0]));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      expect(
+        () async => await player.screenshot(format: 'abc'),
+        throwsArgumentError,
+      );
+      expect(
+        () async => await player.screenshot(format: 'xyz'),
+        throwsArgumentError,
+      );
 
       // VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));

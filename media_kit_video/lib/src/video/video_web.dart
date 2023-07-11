@@ -11,6 +11,8 @@ import 'package:media_kit_video/media_kit_video_controls/media_kit_video_control
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 
+import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
+
 /// {@template video}
 ///
 /// Video
@@ -88,6 +90,9 @@ class Video extends StatefulWidget {
   /// Whether to acquire wake lock while playing the video.
   final bool wakelock;
 
+  /// The configuration for subtitles e.g. [TextStyle] & padding etc.
+  final SubtitleViewConfiguration subtitleViewConfiguration;
+
   /// {@macro video}
   const Video({
     Key? key,
@@ -101,6 +106,7 @@ class Video extends StatefulWidget {
     this.filterQuality = FilterQuality.low,
     this.controls = media_kit_video_controls.AdaptiveVideoControls,
     this.wakelock = true,
+    this.subtitleViewConfiguration = const SubtitleViewConfiguration(),
   }) : super(key: key);
 
   @override
@@ -108,6 +114,7 @@ class Video extends StatefulWidget {
 }
 
 class VideoState extends State<Video> {
+  GlobalKey<SubtitleViewState> subtitleViewKey = GlobalKey<SubtitleViewState>();
   ValueKey _key = const ValueKey(true);
 
   // Public API:
@@ -156,6 +163,8 @@ class VideoState extends State<Video> {
     final controls = widget.controls;
     final controller = widget.controller;
     final aspectRatio = widget.aspectRatio;
+    final subtitleViewConfiguration = widget.subtitleViewConfiguration;
+
     return Container(
       clipBehavior: Clip.none,
       width: widget.width ?? double.infinity,
@@ -199,6 +208,11 @@ class VideoState extends State<Video> {
                       ),
               ),
             ),
+          ),
+          SubtitleView(
+            controller: controller,
+            key: subtitleViewKey,
+            configuration: subtitleViewConfiguration,
           ),
           if (controls != null)
             Positioned.fill(

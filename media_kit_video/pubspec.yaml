@@ -18,9 +18,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  ffi: ^2.0.1
-  wakelock_plus: ^1.1.0
   synchronized: ^3.1.0
+  wakelock_plus: ^1.1.1
   screen_brightness: ^0.2.2
   volume_controller: ^2.0.7
   universal_platform: ^1.0.0+1
