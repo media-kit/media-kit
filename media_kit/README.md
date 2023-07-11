@@ -223,6 +223,7 @@ A usage guide for [package:media_kit](https://github.com/alexmercerind/media_kit
 - [Select audio device](#select-audio-device)
 - [Display the video](#display-the-video)
 - [Capture screenshot](#capture-screenshot)
+- [Customize subtitles](#customize-subtitles)
 - [Video controls](#video-controls)
 - [Next steps](#next-steps)
 
@@ -735,6 +736,31 @@ final Uint8List? screenshot = await player.screenshot();
 Additionally `format` argument may be specified to change the encoding format. Following formats are supported:
 - `image/jpeg` (default)
 - `image/png`
+
+### Customize subtitles
+
+`SubtitleViewConfiguration` can be passed to the `Video` widget for customizing the subtitles. The code is easier to understand:
+
+Notably, `TextStyle`, `TextAlign` & `EdgeInsetsGeometry` can be provided.
+
+```dart
+Video(
+  controller: controller,
+  subtitleViewConfiguration: const SubtitleViewConfiguration(
+    style: TextStyle(
+      height: 1.4,
+      fontSize: 24.0,
+      letterSpacing: 0.0,
+      wordSpacing: 0.0,
+      color: Color(0xffffffff),
+      fontWeight: FontWeight.normal,
+      backgroundColor: Color(0xaa000000),
+    ),
+    textAlign: TextAlign.center,
+    padding: EdgeInsets.all(24.0),
+  ),
+);
+```
 
 ### Video controls
 
