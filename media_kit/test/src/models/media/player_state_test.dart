@@ -62,30 +62,34 @@ void main() {
         state.playlistMode,
         equals(PlaylistMode.none),
       );
-      expect(
-        state.audioParams.format,
-        isNull,
-      );
-      expect(
-        state.audioParams.sampleRate,
-        isNull,
-      );
-      expect(
-        state.audioParams.channels,
-        isNull,
-      );
-      expect(
-        state.audioParams.channelCount,
-        isNull,
-      );
-      expect(
-        state.audioParams.hrChannels,
-        isNull,
-      );
+      expect(state.audioParams.format, isNull);
+      expect(state.audioParams.sampleRate, isNull);
+      expect(state.audioParams.channels, isNull);
+      expect(state.audioParams.channelCount, isNull);
+      expect(state.audioParams.hrChannels, isNull);
       expect(
         state.audioBitrate,
         isNull,
       );
+      expect(state.videoParams.pixelformat, isNull);
+      expect(state.videoParams.hwPixelformat, isNull);
+      expect(state.videoParams.w, isNull);
+      expect(state.videoParams.h, isNull);
+      expect(state.videoParams.dw, isNull);
+      expect(state.videoParams.dh, isNull);
+      expect(state.videoParams.aspect, isNull);
+      expect(state.videoParams.par, isNull);
+      expect(state.videoParams.colormatrix, isNull);
+      expect(state.videoParams.colorlevels, isNull);
+      expect(state.videoParams.primaries, isNull);
+      expect(state.videoParams.gamma, isNull);
+      expect(state.videoParams.sigPeak, isNull);
+      expect(state.videoParams.light, isNull);
+      expect(state.videoParams.chromaLocation, isNull);
+      expect(state.videoParams.rotate, isNull);
+      expect(state.videoParams.stereoIn, isNull);
+      expect(state.videoParams.averageBpp, isNull);
+      expect(state.videoParams.alpha, isNull);
       expect(
         state.audioDevice,
         equals(AudioDevice.auto()),
@@ -146,6 +150,10 @@ void main() {
       expect(
         state.height,
         isNull,
+      );
+      expect(
+        ListEquality().equals(state.subtitle, ['', '']),
+        isTrue,
       );
     },
   );

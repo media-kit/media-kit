@@ -83,6 +83,9 @@ class PlayerState {
   /// Currently playing video's height.
   final int? height;
 
+  /// Currently displayed subtitle.
+  final List<String> subtitle;
+
   /// {@macro player_state}
   const PlayerState({
     this.playlist = const Playlist([]),
@@ -105,6 +108,7 @@ class PlayerState {
     this.tracks = const Tracks(),
     this.width,
     this.height,
+    this.subtitle = const ['', ''],
   });
 
   PlayerState copyWith({
@@ -128,6 +132,7 @@ class PlayerState {
     Tracks? tracks,
     int? width,
     int? height,
+    List<String>? subtitle,
   }) {
     return PlayerState(
       playlist: playlist ?? this.playlist,
@@ -150,6 +155,7 @@ class PlayerState {
       tracks: tracks ?? this.tracks,
       width: width ?? this.width,
       height: height ?? this.height,
+      subtitle: subtitle ?? this.subtitle,
     );
   }
 
@@ -175,5 +181,6 @@ class PlayerState {
       'tracks: $tracks, '
       'width: $width, '
       'height: $height'
+      'subtitle: $subtitle'
       ')';
 }

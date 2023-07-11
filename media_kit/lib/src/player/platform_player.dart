@@ -62,6 +62,7 @@ abstract class PlatformPlayer {
     tracksController.stream.distinct(),
     widthController.stream.distinct(),
     heightController.stream.distinct(),
+    subtitleController.stream.distinct(),
     logController.stream.distinct(),
     errorController.stream /* ERROR STREAM SHOULD NOT BE DISTINCT */,
   );
@@ -80,8 +81,6 @@ abstract class PlatformPlayer {
         rateController.close(),
         pitchController.close(),
         bufferingController.close(),
-        logController.close(),
-        errorController.close(),
         audioParamsController.close(),
         videoParamsController.close(),
         audioBitrateController.close(),
@@ -91,6 +90,9 @@ abstract class PlatformPlayer {
         tracksController.close(),
         widthController.close(),
         heightController.close(),
+        subtitleController.close(),
+        logController.close(),
+        errorController.close(),
       ],
     );
     for (final callback in release) {
@@ -334,6 +336,10 @@ abstract class PlatformPlayer {
   final StreamController<int?> heightController =
       StreamController<int?>.broadcast();
 
+  @protected
+  final StreamController<List<String>> subtitleController =
+      StreamController<List<String>>.broadcast();
+
   /// Publicly defined clean-up [Function]s which must be called before [dispose].
   final List<Future<void> Function()> release = [];
 
@@ -392,6 +398,18 @@ class PlayerConfiguration {
   /// Default: `null`.
   final void Function()? ready;
 
+  /// Whether to use [libass](https://github.com/libass/libass) based subtitle rendering for libmpv backend.
+  ///
+  /// By default, subtitles are rendering is Flutter `Widget` based. Enabling this option will render subtitles using libass.
+  ///
+  /// On Android, this option requires [libassAndroidFont] to be set.
+  final bool libass;
+
+  /// The asset name of the `.ttf` font file to be used for libass based subtitle rendering on Android.
+  ///
+  /// e.g. `assets/fonts/subtitle.ttf`
+  final String? libassAndroidFont;
+
   /// Sets the log level on libmpv backend.
   /// Default: `none`.
   final MPVLogLevel logLevel;
@@ -415,6 +433,8 @@ class PlayerConfiguration {
     this.pitch = false,
     this.title,
     this.ready,
+    this.libass = false,
+    this.libassAndroidFont,
     this.logLevel = MPVLogLevel.error,
     this.bufferSize = 32 * 1024 * 1024,
     this.protocolWhitelist = const [

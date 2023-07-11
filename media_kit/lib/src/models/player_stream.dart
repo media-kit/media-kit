@@ -84,6 +84,9 @@ class PlayerStream {
   /// Currently playing video's height.
   final Stream<int?> height;
 
+  /// Currently displayed subtitle.
+  final Stream<List<String>> subtitle;
+
   /// [Stream] emitting internal logs.
   final Stream<PlayerLog> log;
 
@@ -112,6 +115,7 @@ class PlayerStream {
     this.tracks,
     this.width,
     this.height,
+    this.subtitle,
     this.log,
     this.error,
   );
