@@ -85,10 +85,10 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
   # 1. Generate the plugin_ffi template project for Android using:
   # * flutter create --org com.alexmercerind --template plugin_ffi --platforms=android .
   # 2. Add the libmpv/FFmpeg & other dependencies to which this target will link at:
-  # * ../android/libs/lib/arm64-v8a/*
-  # * ../android/libs/lib/armeabi-v7a/*
-  # * ../android/libs/lib/x86_64/*
-  # * ../android/libs/lib/x66/*
+  # * ../../../../../libmpv/src/main/jniLibs/arm64-v8a/*
+  # * ../../../../../libmpv/src/main/jniLibs/armeabi-v7a/*
+  # * ../../../../../libmpv/src/main/jniLibs/x86_64/*
+  # * ../../../../../libmpv/src/main/jniLibs/x66/*
   # 3. Add the libmpv headers at include/*
   # 4. Generate the APK file:
   # * flutter build apk --release
@@ -101,7 +101,14 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
   # Include libmpv headers & link to the library.
   target_link_libraries(
     ${TARGET_NAME} PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/../android/libs/lib/${ANDROID_ABI}/libmpv.so"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../libmpv/src/main/jniLibs/${ANDROID_ABI}/libavcodec.so"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../libmpv/src/main/jniLibs/${ANDROID_ABI}/libavfilter.so"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../libmpv/src/main/jniLibs/${ANDROID_ABI}/libavformat.so"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../libmpv/src/main/jniLibs/${ANDROID_ABI}/libavutil.so"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../libmpv/src/main/jniLibs/${ANDROID_ABI}/libmpv.so"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../libmpv/src/main/jniLibs/${ANDROID_ABI}/libswresample.so"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../libmpv/src/main/jniLibs/${ANDROID_ABI}/libswscale.so"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../libmpv/src/main/jniLibs/${ANDROID_ABI}/libmediakitandroidhelper.so"
   )
 
   # Additional options.
