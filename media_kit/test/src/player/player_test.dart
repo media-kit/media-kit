@@ -2767,7 +2767,11 @@ void main() {
         ),
       );
 
-      await player.open(Media(sources.platform[4]));
+      await player.open(
+        Media(
+          'https://github.com/ietf-wg-cellar/matroska-test-files/raw/master/test_files/test5.mkv',
+        ),
+      );
 
       await Future.delayed(const Duration(minutes: 1));
 
