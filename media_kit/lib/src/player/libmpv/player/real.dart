@@ -4,12 +4,14 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: camel_case_types
+import 'dart:io';
 import 'dart:ffi';
 import 'dart:math';
 import 'dart:async';
 import 'dart:collection';
 import 'dart:typed_data';
 import 'package:meta/meta.dart';
+import 'package:path/path.dart';
 import 'package:image/image.dart';
 
 import 'package:media_kit/ffi/ffi.dart';
@@ -24,6 +26,7 @@ import 'package:media_kit/src/utils/isolates.dart';
 import 'package:media_kit/src/utils/lock_ext.dart';
 import 'package:media_kit/src/utils/task_queue.dart';
 import 'package:media_kit/src/utils/android_helper.dart';
+import 'package:media_kit/src/utils/android_asset_loader.dart';
 
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
@@ -1662,16 +1665,36 @@ class libmpvPlayer extends PlatformPlayer {
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'sub-text' &&
-          prop.ref.format == generated.mpv_format.MPV_FORMAT_STRING) {
-        final data = mpv.mpv_get_property_string(ctx, prop.ref.name);
-        final value = data == nullptr ? null : data.cast<Utf8>().toDartString();
-        print(value);
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+        final value = prop.ref.data.cast<generated.mpv_node>();
+        if (value.ref.format == generated.mpv_format.MPV_FORMAT_STRING) {
+          final text = value.ref.u.string.cast<Utf8>().toDartString();
+          state = state.copyWith(
+            subtitle: [
+              text,
+              state.subtitle[1],
+            ],
+          );
+          if (!subtitleController.isClosed) {
+            subtitleController.add(state.subtitle);
+          }
+        }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'secondary-sub-text' &&
-          prop.ref.format == generated.mpv_format.MPV_FORMAT_STRING) {
-        final data = mpv.mpv_get_property_string(ctx, prop.ref.name);
-        final value = data == nullptr ? null : data.cast<Utf8>().toDartString();
-        print(value);
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+        final value = prop.ref.data.cast<generated.mpv_node>();
+        if (value.ref.format == generated.mpv_format.MPV_FORMAT_STRING) {
+          final text = value.ref.u.string.cast<Utf8>().toDartString();
+          state = state.copyWith(
+            subtitle: [
+              state.subtitle[0],
+              text,
+            ],
+          );
+          if (!subtitleController.isClosed) {
+            subtitleController.add(state.subtitle);
+          }
+        }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'eof-reached' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
@@ -1902,29 +1925,36 @@ class libmpvPlayer extends PlatformPlayer {
       // The libmpv options which must be set before [MPV.mpv_initialize].
       final options = <String, String>{};
 
-      // if (Platform.isAndroid) {
-      //   try {
-      //     // On Android, the system fonts cannot be picked up by libass/fontconfig. This makes subtitles not work.
-      //     // We manually save `subfont.ttf` to the application's cache directory and set `config` & `config-dir` to use it.
-      //     final subfont = await AndroidAssetLoader.load('subfont.ttf');
-      //     if (subfont.isNotEmpty) {
-      //       final directory = dirname(subfont);
-      //       // This asset is bundled as part of `package:media_kit_libs_android_video`.
-      //       // Use it if located inside the application bundle, otherwise no worries.
-      //       options.addAll(
-      //         {
-      //           'config': 'yes',
-      //           'config-dir': directory,
-      //         },
-      //       );
-      //       print(subfont);
-      //       print(directory);
-      //     }
-      //   } catch (exception, stacktrace) {
-      //     print(exception);
-      //     print(stacktrace);
-      //   }
-      // }
+      if (Platform.isAndroid &&
+          configuration.libass &&
+          configuration.libassAndroidFont != null) {
+        try {
+          // On Android, the system fonts cannot be picked up by libass/fontconfig. This makes libass subtitle rendering fail.
+          // We save the subtitle font to the application's cache directory and set `config` & `config-dir` to use it.
+          final subfont = await AndroidAssetLoader.load(
+            join(
+              'flutter_assets',
+              configuration.libassAndroidFont,
+            ),
+          );
+          if (subfont.isNotEmpty) {
+            final directory = dirname(subfont);
+            // This asset is bundled as part of `package:media_kit_libs_android_video`.
+            // Use it if located inside the application bundle, otherwise no worries.
+            options.addAll(
+              {
+                'config': 'yes',
+                'config-dir': directory,
+              },
+            );
+            print(subfont);
+            print(directory);
+          }
+        } catch (exception, stacktrace) {
+          print(exception);
+          print(stacktrace);
+        }
+      }
 
       ctx = await Initializer.create(
         NativeLibrary.path,
@@ -1976,6 +2006,9 @@ class libmpvPlayer extends PlatformPlayer {
           if (configuration.title != null) 'title': '${configuration.title}',
           'demuxer-lavf-o':
               'protocol_whitelist=[${configuration.protocolWhitelist.join(',')}]',
+          'sub-ass': configuration.libass ? 'yes' : 'no',
+          'sub-visibility': configuration.libass ? 'yes' : 'no',
+          'secondary-sub-visibility': configuration.libass ? 'yes' : 'no',
         },
       );
       for (final property in properties.entries) {
@@ -2009,8 +2042,8 @@ class libmpvPlayer extends PlatformPlayer {
         'track-list': generated.mpv_format.MPV_FORMAT_NODE,
         'eof-reached': generated.mpv_format.MPV_FORMAT_FLAG,
         'idle-active': generated.mpv_format.MPV_FORMAT_FLAG,
-        'sub-text': generated.mpv_format.MPV_FORMAT_STRING,
-        'secondary-sub-text': generated.mpv_format.MPV_FORMAT_STRING,
+        'sub-text': generated.mpv_format.MPV_FORMAT_NODE,
+        'secondary-sub-text': generated.mpv_format.MPV_FORMAT_NODE,
       }.forEach(
         (property, format) {
           final name = property.toNativeUtf8();
