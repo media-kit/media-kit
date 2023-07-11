@@ -2184,7 +2184,10 @@ Uint8List? _screenshot(_ScreenshotData data) {
   // ---------
 
   // https://mpv.io/manual/stable/#command-interface-screenshot-raw
-  final args = ['screenshot-raw'];
+  final args = [
+    'screenshot-raw',
+    'video',
+  ];
 
   final result = calloc<generated.mpv_node>();
 
