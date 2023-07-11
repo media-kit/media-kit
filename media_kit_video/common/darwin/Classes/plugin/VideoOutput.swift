@@ -46,9 +46,9 @@ public class VideoOutput: NSObject {
     assert(handle != nil, "handle casting")
 
     self.handle = handle!
-    self.width = configuration.width
-    self.height = configuration.height
-    self.enableHardwareAcceleration = configuration.enableHardwareAcceleration
+    width = configuration.width
+    height = configuration.height
+    enableHardwareAcceleration = configuration.enableHardwareAcceleration
     self.registry = registry
     self.textureUpdateCallback = textureUpdateCallback
 
@@ -155,24 +155,28 @@ public class VideoOutput: NSObject {
 
   private var videoWidth: Int64 {
     // fixed width
-    if self.width != nil {
-      return self.width!
+    if width != nil {
+      return width!
     }
 
-    var width: Int64 = 0
-    mpv_get_property(handle, "width", MPV_FORMAT_INT64, &width)
+    let params = MPVHelpers.getVideoOutParams(handle)
+    let width = params.rotate == 0 || params.rotate == 180
+      ? params.dw
+      : params.dh
 
     return width
   }
 
   private var videoHeight: Int64 {
     // fixed height
-    if self.height != nil {
-      return self.height!
+    if height != nil {
+      return height!
     }
 
-    var height: Int64 = 0
-    mpv_get_property(handle, "height", MPV_FORMAT_INT64, &height)
+    let params = MPVHelpers.getVideoOutParams(handle)
+    let height = params.rotate == 0 || params.rotate == 180
+      ? params.dh
+      : params.dw
 
     return height
   }
