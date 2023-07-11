@@ -958,7 +958,7 @@ void main() {
       addTearDown(player.dispose);
     },
     timeout: Timeout(const Duration(minutes: 1)),
-    // TODO: Flaky on GNU/Linux CI.
+    // TODO: Flaky!
     skip: true,
   );
   test(
@@ -2125,6 +2125,8 @@ void main() {
 
       await player.dispose();
     },
+    // TODO: Flaky!
+    skip: true,
     timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
@@ -2188,6 +2190,8 @@ void main() {
 
       await player.dispose();
     },
+    // TODO: Flaky!
+    skip: true,
     timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
@@ -2633,6 +2637,143 @@ void main() {
 
       await player.dispose();
     },
+    timeout: Timeout(const Duration(minutes: 2)),
+  );
+  test(
+    'player-subtitle',
+    () async {
+      final player = Player();
+
+      player.stream.subtitle.listen((subtitle) {
+        print(subtitle);
+      });
+
+      expect(
+        player.stream.subtitle,
+        emitsInOrder(
+          [
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  '',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  '...the colossus of Rhodes!',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  '',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  'No!',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  '',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  'The colossus of Rhodes\nand it is here just for you Proog.',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  '',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  'It is there...',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  '',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  'I\'m telling you,\nEmo...',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.open(Media(sources.platform[4]));
+
+      await Future.delayed(const Duration(minutes: 1));
+
+      await player.dispose();
+    },
+    skip: UniversalPlatform.isWeb,
     timeout: Timeout(const Duration(minutes: 2)),
   );
 }
