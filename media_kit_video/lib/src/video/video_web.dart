@@ -209,11 +209,12 @@ class VideoState extends State<Video> {
               ),
             ),
           ),
-          SubtitleView(
-            controller: controller,
-            key: subtitleViewKey,
-            configuration: subtitleViewConfiguration,
-          ),
+          if (!(controller.player.platform?.configuration.libass ?? false))
+            SubtitleView(
+              controller: controller,
+              key: subtitleViewKey,
+              configuration: subtitleViewConfiguration,
+            ),
           if (controls != null)
             Positioned.fill(
               child: controls.call(this),
