@@ -1109,6 +1109,18 @@ class NativePlayer extends PlatformPlayer {
   ///
   /// * Currently selected [AudioTrack] can be accessed using [state.track.audio] or [stream.track.audio].
   /// * The list of currently available [AudioTrack]s can be obtained accessed using [state.tracks.audio] or [stream.tracks.audio].
+  /// * External audio tracks can be loaded using [AudioTrack.external] constructor.
+  ///
+  /// ```dart
+  /// player.setAudioTrack(
+  ///   AudioTrack.external(
+  ///     'https://www.iandevlin.com/html5test/webvtt/v/upc-tobymanley.theora.ogg',
+  ///     title: 'English',
+  ///     language: 'en',
+  ///   ),
+  /// );
+  /// ```
+  ///
   @override
   Future<void> setAudioTrack(AudioTrack track, {bool synchronized = true}) {
     Future<void> function() async {
@@ -1118,22 +1130,42 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      final name = 'aid'.toNativeUtf8();
-      final value = track.id.toNativeUtf8();
-      mpv.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
-      state = state.copyWith(
-        track: state.track.copyWith(
-          audio: track,
-        ),
-      );
-      if (!trackController.isClosed) {
-        trackController.add(state.track);
+      if (track.external) {
+        await _command(
+          [
+            'audio-add',
+            track.id,
+            'select',
+            track.title ?? 'external',
+            track.language ?? 'auto',
+          ],
+        );
+        state = state.copyWith(
+          track: state.track.copyWith(
+            audio: track,
+          ),
+        );
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
+      } else {
+        final name = 'aid'.toNativeUtf8();
+        final value = track.id.toNativeUtf8();
+        mpv.mpv_set_property_string(
+          ctx,
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+        state = state.copyWith(
+          track: state.track.copyWith(
+            audio: track,
+          ),
+        );
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
       }
     }
 
@@ -1148,6 +1180,18 @@ class NativePlayer extends PlatformPlayer {
   ///
   /// * Currently selected [SubtitleTrack] can be accessed using [state.track.subtitle] or [stream.track.subtitle].
   /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [stream.tracks.subtitle].
+  /// * External subtitle tracks can be loaded using [SubtitleTrack.external] constructor.
+  ///
+  /// ```dart
+  /// player.setSubtitleTrack(
+  ///   SubtitleTrack.external(
+  ///     'https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt',
+  ///     title: 'English',
+  ///     language: 'en',
+  ///   ),
+  /// );
+  /// ```
+  ///
   @override
   Future<void> setSubtitleTrack(SubtitleTrack track,
       {bool synchronized = true}) {
@@ -1158,22 +1202,42 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      final name = 'sid'.toNativeUtf8();
-      final value = track.id.toNativeUtf8();
-      mpv.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
-      state = state.copyWith(
-        track: state.track.copyWith(
-          subtitle: track,
-        ),
-      );
-      if (!trackController.isClosed) {
-        trackController.add(state.track);
+      if (track.external) {
+        await _command(
+          [
+            'sub-add',
+            track.id,
+            'select',
+            track.title ?? 'external',
+            track.language ?? 'auto',
+          ],
+        );
+        state = state.copyWith(
+          track: state.track.copyWith(
+            subtitle: track,
+          ),
+        );
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
+      } else {
+        final name = 'sid'.toNativeUtf8();
+        final value = track.id.toNativeUtf8();
+        mpv.mpv_set_property_string(
+          ctx,
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+        state = state.copyWith(
+          track: state.track.copyWith(
+            subtitle: track,
+          ),
+        );
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
       }
     }
 
