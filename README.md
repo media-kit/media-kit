@@ -233,6 +233,8 @@ A usage guide for [package:media_kit](https://github.com/alexmercerind/media_kit
 - [Display the video](#display-the-video)
 - [Capture screenshot](#capture-screenshot)
 - [Customize subtitles](#customize-subtitles)
+- [Load external subtitle track](#load-external-subtitle-track)
+- [Load external audio track](#load-external-audio-track)
 - [Video controls](#video-controls)
 - [Next steps](#next-steps)
 
@@ -465,6 +467,7 @@ The following state(s) are available as events:
 | `Stream<Duration>`          | `buffer`       | Current buffer position. This indicates how much of the stream has been decoded & cached by the demuxer. |
 | `Stream<PlaylistMode>`      | `playlistMode` | Current playlist mode.                                                                                   |
 | `Stream<AudioParams>`       | `audioParams`  | Audio parameters of the currently playing media source e.g. sample rate, channels, etc.                  |
+| `Stream<VideoParams>`       | `videoParams`  | Video parameters of the currently playing media source e.g. width, height, rotation etc.                 |
 | `Stream<double?>`           | `audioBitrate` | Audio bitrate of the currently playing media source.                                                     |
 | `Stream<AudioDevice>`       | `audioDevice`  | Currently selected audio device.                                                                         |
 | `Stream<List<AudioDevice>>` | `audioDevices` | Currently available audio devices.                                                                       |
@@ -472,6 +475,7 @@ The following state(s) are available as events:
 | `Stream<Tracks>`            | `tracks`       | Currently available video, audio and subtitle tracks.                                                    |
 | `Stream<int>`               | `width`        | Currently playing video's width.                                                                         |
 | `Stream<int>`               | `height`       | Currently playing video's height.                                                                        |
+| `Stream<int>`               | `subtitle`     | Currently displayed subtitle.                                                                            |
 | `Stream<PlayerLog>`         | `log`          | Internal logs.                                                                                           |
 | `Stream<String>`            | `error`        | Error messages. This may be used to handle & display errors to the user.                                 |
 
@@ -771,6 +775,37 @@ Video(
 );
 ```
 
+https://user-images.githubusercontent.com/28951144/253067794-73b5ca5d-e90d-4892-bc09-2a80f05c9f0b.mp4
+
+
+### Load external subtitle track
+
+The `SubtitleTrack.external` constructor can be used to load external subtitle track with URI e.g. SRT, WebVTT etc. The code is easier to understand:
+
+```dart
+player.setSubtitleTrack(
+  SubtitleTrack.external(
+    'https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt',
+    title: 'English',
+    language: 'en',
+  ),
+);
+```
+
+### Load external audio track
+
+The `AudioTrack.external` constructor can be used to load external audio track with URI. The code is easier to understand:
+
+```dart
+player.setAudioTrack(
+  AudioTrack.external(
+    'https://www.iandevlin.com/html5test/webvtt/v/upc-tobymanley.theora.ogg',
+    title: 'English',
+    language: 'en',
+  ),
+);
+```
+
 ### Video controls
 
 [`package:media_kit`](https://github.com/alexmercerind/media_kit) provides highly-customizable pre-built video controls for usage.
@@ -832,7 +867,6 @@ Scaffold(
   ),
 );
 ```
-
 
 #### Build custom video controls
 
