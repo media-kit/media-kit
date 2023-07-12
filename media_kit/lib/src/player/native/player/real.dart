@@ -1714,25 +1714,9 @@ class NativePlayer extends PlatformPlayer {
               audio: audio,
               subtitle: subtitle,
             ),
-            // Remove selections which are not in the list anymore.
-            track: Track(
-              video: video.contains(state.track.video)
-                  ? state.track.video
-                  : VideoTrack.auto(),
-              audio: audio.contains(state.track.audio)
-                  ? state.track.audio
-                  : AudioTrack.auto(),
-              subtitle: subtitle.contains(state.track.subtitle)
-                  ? state.track.subtitle
-                  : SubtitleTrack.auto(),
-            ),
           );
-
           if (!tracksController.isClosed) {
             tracksController.add(state.tracks);
-          }
-          if (!trackController.isClosed) {
-            trackController.add(state.track);
           }
         }
       }
@@ -1784,9 +1768,20 @@ class NativePlayer extends PlatformPlayer {
               completedController.add(true);
             }
           }
-          state = state.copyWith(buffering: false);
+
+          state = state.copyWith(
+            buffering: false,
+            tracks: Tracks(),
+            track: Track(),
+          );
           if (!bufferingController.isClosed) {
             bufferingController.add(false);
+          }
+          if (!tracksController.isClosed) {
+            tracksController.add(Tracks());
+          }
+          if (!trackController.isClosed) {
+            trackController.add(Track());
           }
         }
       }

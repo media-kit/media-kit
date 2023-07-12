@@ -2656,9 +2656,47 @@ void main() {
     () async {
       final player = Player();
 
+      player.stream.tracks.listen((event) {
+        print(event);
+      });
       player.stream.subtitle.listen((subtitle) {
         print(subtitle);
       });
+
+      expect(
+        player.stream.tracks,
+        emitsInOrder(
+          [
+            Tracks(
+              video: [
+                VideoTrack('auto', null, null),
+                VideoTrack('no', null, null),
+                VideoTrack('1', null, null)
+              ],
+              audio: [
+                AudioTrack('auto', null, null),
+                AudioTrack('no', null, null),
+                AudioTrack('1', null, null),
+                AudioTrack('2', 'Commentary', 'eng')
+              ],
+              subtitle: [
+                SubtitleTrack('auto', null, null),
+                SubtitleTrack('no', null, null),
+                SubtitleTrack('1', null, 'eng'),
+                SubtitleTrack('2', null, 'hun'),
+                SubtitleTrack('3', null, 'ger'),
+                SubtitleTrack('4', null, 'fre'),
+                SubtitleTrack('5', null, 'spa'),
+                SubtitleTrack('6', null, 'ita'),
+                SubtitleTrack('7', null, 'jpn'),
+                SubtitleTrack('8', null, 'null'),
+              ],
+            ),
+            Tracks(),
+            emitsDone,
+          ],
+        ),
+      );
 
       expect(
         player.stream.subtitle,
@@ -2667,10 +2705,7 @@ void main() {
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
-                [
-                  '',
-                  '',
-                ],
+                ['', ''],
               ),
               'subtitle',
               isTrue,
@@ -2678,10 +2713,7 @@ void main() {
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
-                [
-                  '...the colossus of Rhodes!',
-                  '',
-                ],
+                ['...the colossus of Rhodes!', ''],
               ),
               'subtitle',
               isTrue,
@@ -2689,10 +2721,7 @@ void main() {
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
-                [
-                  '',
-                  '',
-                ],
+                ['', ''],
               ),
               'subtitle',
               isTrue,
@@ -2700,10 +2729,7 @@ void main() {
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
-                [
-                  'No!',
-                  '',
-                ],
+                ['No!', ''],
               ),
               'subtitle',
               isTrue,
@@ -2711,10 +2737,7 @@ void main() {
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
-                [
-                  '',
-                  '',
-                ],
+                ['', ''],
               ),
               'subtitle',
               isTrue,
@@ -2724,7 +2747,7 @@ void main() {
                 subtitle,
                 [
                   'The colossus of Rhodes\nand it is here just for you Proog.',
-                  '',
+                  ''
                 ],
               ),
               'subtitle',
@@ -2733,10 +2756,7 @@ void main() {
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
-                [
-                  '',
-                  '',
-                ],
+                ['', ''],
               ),
               'subtitle',
               isTrue,
@@ -2744,10 +2764,7 @@ void main() {
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
-                [
-                  'It is there...',
-                  '',
-                ],
+                ['It is there...', ''],
               ),
               'subtitle',
               isTrue,
@@ -2755,10 +2772,7 @@ void main() {
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
-                [
-                  '',
-                  '',
-                ],
+                ['', ''],
               ),
               'subtitle',
               isTrue,
@@ -2766,10 +2780,7 @@ void main() {
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
-                [
-                  'I\'m telling you,\nEmo...',
-                  '',
-                ],
+                ['I\'m telling you,\nEmo...', ''],
               ),
               'subtitle',
               isTrue,
@@ -2782,6 +2793,320 @@ void main() {
       await player.open(
         Media(
           'https://github.com/ietf-wg-cellar/matroska-test-files/raw/master/test_files/test5.mkv',
+        ),
+      );
+
+      await Future.delayed(const Duration(minutes: 1));
+
+      await player.dispose();
+    },
+    skip: UniversalPlatform.isWeb,
+    timeout: Timeout(const Duration(minutes: 2)),
+  );
+  test(
+    'player-tracks-playlist',
+    () async {
+      final player = Player();
+
+      player.stream.tracks.listen((event) {
+        print(event);
+      });
+
+      expect(
+        player.stream.tracks,
+        emitsInOrder(
+          [
+            Tracks(
+              video: [
+                VideoTrack('auto', null, null),
+                VideoTrack('no', null, null),
+                VideoTrack('1', null, null)
+              ],
+              audio: [
+                AudioTrack('auto', null, null),
+                AudioTrack('no', null, null),
+                AudioTrack('1', null, null),
+                AudioTrack('2', 'Commentary', 'eng')
+              ],
+              subtitle: [
+                SubtitleTrack('auto', null, null),
+                SubtitleTrack('no', null, null),
+                SubtitleTrack('1', null, 'eng'),
+                SubtitleTrack('2', null, 'hun'),
+                SubtitleTrack('3', null, 'ger'),
+                SubtitleTrack('4', null, 'fre'),
+                SubtitleTrack('5', null, 'spa'),
+                SubtitleTrack('6', null, 'ita'),
+                SubtitleTrack('7', null, 'jpn'),
+                SubtitleTrack('8', null, 'null'),
+              ],
+            ),
+            Tracks(),
+            Tracks(
+              video: [
+                VideoTrack('auto', null, null),
+                VideoTrack('no', null, null),
+                VideoTrack('1', null, null)
+              ],
+              audio: [
+                AudioTrack('auto', null, null),
+                AudioTrack('no', null, null),
+                AudioTrack('1', null, null),
+                AudioTrack('2', 'Commentary', 'eng')
+              ],
+              subtitle: [
+                SubtitleTrack('auto', null, null),
+                SubtitleTrack('no', null, null),
+                SubtitleTrack('1', null, 'eng'),
+                SubtitleTrack('2', null, 'hun'),
+                SubtitleTrack('3', null, 'ger'),
+                SubtitleTrack('4', null, 'fre'),
+                SubtitleTrack('5', null, 'spa'),
+                SubtitleTrack('6', null, 'ita'),
+                SubtitleTrack('7', null, 'jpn'),
+                SubtitleTrack('8', null, 'null'),
+              ],
+            ),
+            Tracks(),
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.open(
+        Playlist(
+          [
+            Media(
+              'https://github.com/ietf-wg-cellar/matroska-test-files/raw/master/test_files/test5.mkv',
+            ),
+            Media(
+              'https://github.com/ietf-wg-cellar/matroska-test-files/raw/master/test_files/test5.mkv',
+            ),
+          ],
+        ),
+      );
+
+      await Future.delayed(const Duration(minutes: 2));
+
+      await player.dispose();
+    },
+    skip: UniversalPlatform.isWeb,
+    timeout: Timeout(const Duration(minutes: 3)),
+  );
+  test(
+    'player-external-set-subtitle-track',
+    () async {
+      final player = Player();
+
+      player.stream.track.listen((event) {
+        print(event);
+      });
+      player.stream.subtitle.listen((event) {
+        print(event);
+      });
+
+      expect(
+        player.stream.track,
+        emitsInOrder(
+          [
+            Track(
+              video: VideoTrack.auto(),
+              audio: AudioTrack.auto(),
+              subtitle: SubtitleTrack.external(
+                'https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt',
+                title: 'English',
+                language: 'en',
+              ),
+            ),
+            Track(
+              video: VideoTrack.auto(),
+              audio: AudioTrack.auto(),
+              subtitle: SubtitleTrack.auto(),
+            ),
+            // Player.dispose
+            Track(
+              video: VideoTrack.no(),
+              audio: AudioTrack.auto(),
+              subtitle: SubtitleTrack.auto(),
+            ),
+            Track(
+              video: VideoTrack.no(),
+              audio: AudioTrack.no(),
+              subtitle: SubtitleTrack.auto(),
+            ),
+            Track(
+              video: VideoTrack.no(),
+              audio: AudioTrack.no(),
+              subtitle: SubtitleTrack.no(),
+            ),
+            emitsDone,
+          ],
+        ),
+      );
+      expect(
+        player.stream.subtitle,
+        emitsInOrder(
+          [
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['Everyone wants the most from life', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  'Like internet experiences that are rich and entertaining',
+                  ''
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['Phone conversations where people truly connect', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  'Your favourite TV programmes ready to watch at the touch of a button',
+                  ''
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  'Which is why we are bringing TV, internet and phone together in one super package',
+                  ''
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['One simple way to get everything', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['UPC', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['Simply for everyone', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            emitsDone,
+          ],
+        ),
+      );
+
+      await player.open(
+        Media(
+          'https://www.iandevlin.com/html5test/webvtt/v/upc-tobymanley.theora.ogg',
+        ),
+      );
+      await player.setSubtitleTrack(
+        SubtitleTrack.external(
+          'https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt',
+          title: 'English',
+          language: 'en',
         ),
       );
 
