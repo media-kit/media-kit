@@ -78,7 +78,7 @@ jobs:
         with:
           channel: "stable"
       # Delete tests which import native code & depend upon dart:ffi
-      - run: rm -r test/src/player/libmpv
+      - run: rm -r test/src/player/native
       - run: dart pub get
       - run: dart test --platform chrome
 
