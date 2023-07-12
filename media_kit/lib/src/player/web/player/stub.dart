@@ -10,8 +10,8 @@ import 'package:media_kit/src/player/platform_player.dart';
 
 void webEnsureInitialized({String? libmpv}) {}
 
-class webPlayer extends PlatformPlayer {
-  webPlayer({required super.configuration});
+class WebPlayer extends PlatformPlayer {
+  WebPlayer({required super.configuration});
 
   /// Whether the `<video>` element should have muted attribute or not.
   @visibleForTesting

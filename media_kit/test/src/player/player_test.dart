@@ -17,7 +17,7 @@ import 'package:media_kit/src/media_kit.dart';
 import 'package:media_kit/src/player/player.dart';
 import 'package:media_kit/src/player/platform_player.dart';
 import 'package:media_kit/src/player/web/player/player.dart';
-import 'package:media_kit/src/player/libmpv/player/player.dart';
+import 'package:media_kit/src/player/native/player/player.dart';
 
 import '../../common/sources.dart';
 
@@ -27,7 +27,7 @@ void main() {
     await sources.prepare();
     if (UniversalPlatform.isWeb) {
       // For preventing "DOMException: play() failed because the user didn't interact with the document first." in unit-tests running on web.
-      webPlayer.muted = true;
+      WebPlayer.muted = true;
     }
   });
   test(
@@ -36,7 +36,7 @@ void main() {
       final player = Player();
       expect(
         player.platform,
-        isA<libmpvPlayer>(),
+        isA<NativePlayer>(),
       );
 
       addTearDown(player.dispose);
@@ -49,7 +49,7 @@ void main() {
       final player = Player();
       expect(
         player.platform,
-        isA<webPlayer>(),
+        isA<WebPlayer>(),
       );
 
       addTearDown(player.dispose);

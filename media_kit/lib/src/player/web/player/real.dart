@@ -29,15 +29,15 @@ void webEnsureInitialized({String? libmpv}) {}
 
 /// {@template web_player}
 ///
-/// webPlayer
+/// WebPlayer
 /// ---------
 ///
 /// HTML `<video>` based implementation of [PlatformPlayer].
 ///
 /// {@endtemplate}
-class webPlayer extends PlatformPlayer {
+class WebPlayer extends PlatformPlayer {
   /// {@macro web_player}
-  webPlayer({required super.configuration})
+  WebPlayer({required super.configuration})
       : id = js.context[kInstanceCount] ?? 0,
         element = html.VideoElement() {
     lock.synchronized(() async {
@@ -1257,6 +1257,10 @@ class webPlayer extends PlatformPlayer {
 
   // --------------------------------------------------
 
+  /// Internal platform specific identifier for this [Player] instance.
+  ///
+  /// Since, [int] is a primitive type, it can be used to pass this [Player] instance to native code without directly depending upon this library.
+  ///
   @override
   Future<int> get handle => Future.value(id);
 

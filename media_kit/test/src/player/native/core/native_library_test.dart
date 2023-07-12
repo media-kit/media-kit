@@ -6,7 +6,7 @@
 
 import 'package:test/test.dart';
 
-import 'package:media_kit/src/player/libmpv/core/native_library.dart';
+import 'package:media_kit/src/player/native/core/native_library.dart';
 
 void main() {
   test(

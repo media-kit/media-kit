@@ -15,9 +15,9 @@ import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_stream.dart';
 
-import 'package:media_kit/src/player/platform_player.dart';
+import 'package:media_kit/src/player/native/player/player.dart';
 import 'package:media_kit/src/player/web/player/player.dart';
-import 'package:media_kit/src/player/libmpv/player/player.dart';
+import 'package:media_kit/src/player/platform_player.dart';
 
 /// {@template player}
 ///
@@ -104,17 +104,17 @@ class Player {
     PlayerConfiguration configuration = const PlayerConfiguration(),
   }) {
     if (UniversalPlatform.isWindows) {
-      platform = libmpvPlayer(configuration: configuration);
+      platform = NativePlayer(configuration: configuration);
     } else if (UniversalPlatform.isLinux) {
-      platform = libmpvPlayer(configuration: configuration);
+      platform = NativePlayer(configuration: configuration);
     } else if (UniversalPlatform.isMacOS) {
-      platform = libmpvPlayer(configuration: configuration);
+      platform = NativePlayer(configuration: configuration);
     } else if (UniversalPlatform.isIOS) {
-      platform = libmpvPlayer(configuration: configuration);
+      platform = NativePlayer(configuration: configuration);
     } else if (UniversalPlatform.isAndroid) {
-      platform = libmpvPlayer(configuration: configuration);
+      platform = NativePlayer(configuration: configuration);
     } else if (UniversalPlatform.isWeb) {
-      platform = webPlayer(configuration: configuration);
+      platform = WebPlayer(configuration: configuration);
     }
   }
 

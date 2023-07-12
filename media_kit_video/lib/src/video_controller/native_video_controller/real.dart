@@ -13,8 +13,9 @@ import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 // ignore_for_file: unused_import, implementation_imports
 import 'package:media_kit/ffi/ffi.dart';
+import 'package:media_kit/src/player/native/core/native_library.dart';
+
 import 'package:media_kit/generated/libmpv/bindings.dart';
-import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';

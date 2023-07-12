@@ -6,8 +6,8 @@
 // ignore_for_file: camel_case_types
 import 'package:media_kit/src/player/platform_player.dart';
 
-void libmpvEnsureInitialized({String? libmpv}) {}
+void nativeEnsureInitialized({String? libmpv}) {}
 
-class libmpvPlayer extends PlatformPlayer {
-  libmpvPlayer({required super.configuration});
+class NativePlayer extends PlatformPlayer {
+  NativePlayer({required super.configuration});
 }

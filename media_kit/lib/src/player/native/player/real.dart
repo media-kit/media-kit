@@ -3,7 +3,6 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-// ignore_for_file: camel_case_types
 import 'dart:io';
 import 'dart:ffi';
 import 'dart:math';
@@ -17,10 +16,10 @@ import 'package:image/image.dart';
 import 'package:media_kit/ffi/ffi.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
-import 'package:media_kit/src/player/libmpv/core/initializer.dart';
-import 'package:media_kit/src/player/libmpv/core/native_library.dart';
-import 'package:media_kit/src/player/libmpv/core/fallback_bitrate_handler.dart';
-import 'package:media_kit/src/player/libmpv/core/initializer_native_event_loop.dart';
+import 'package:media_kit/src/player/native/core/initializer.dart';
+import 'package:media_kit/src/player/native/core/native_library.dart';
+import 'package:media_kit/src/player/native/core/fallback_bitrate_handler.dart';
+import 'package:media_kit/src/player/native/core/initializer_native_event_loop.dart';
 
 import 'package:media_kit/src/utils/isolates.dart';
 import 'package:media_kit/src/utils/lock_ext.dart';
@@ -41,24 +40,24 @@ import 'package:media_kit/src/models/playlist_mode.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 
-/// Initializes the libmpv backend for package:media_kit.
-void libmpvEnsureInitialized({String? libmpv}) {
+/// Initializes the native backend for package:media_kit.
+void nativeEnsureInitialized({String? libmpv}) {
   AndroidHelper.ensureInitialized();
   NativeLibrary.ensureInitialized(libmpv: libmpv);
   InitializerNativeEventLoop.ensureInitialized();
 }
 
-/// {@template libmpv_player}
+/// {@template native_player}
 ///
-/// libmpvPlayer
+/// NativePlayer
 /// ------------
 ///
-/// libmpv based implementation of [PlatformPlayer].
+/// Native based implementation of [PlatformPlayer].
 ///
 /// {@endtemplate}
-class libmpvPlayer extends PlatformPlayer {
-  /// {@macro libmpv_player}
-  libmpvPlayer({required super.configuration})
+class NativePlayer extends PlatformPlayer {
+  /// {@macro native_player}
+  NativePlayer({required super.configuration})
       : mpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path)) {
     _create().then((_) {
       configuration.ready?.call();
@@ -154,7 +153,7 @@ class libmpvPlayer extends PlatformPlayer {
       }
 
       final commands = [
-        // Clear existing playlist & change currently playing libmpv index to none.
+        // Clear existing playlist & change currently playing index to none.
         // This causes playback to stop & player to enter the idle state.
         'stop',
         'playlist-clear',
@@ -1222,14 +1221,17 @@ class libmpvPlayer extends PlatformPlayer {
     }
   }
 
-  /// [generated.mpv_handle] address of the internal libmpv player instance.
+  /// Internal platform specific identifier for this [Player] instance.
+  ///
+  /// Since, [int] is a primitive type, it can be used to pass this [Player] instance to native code without directly depending upon this library.
+  ///
   @override
   Future<int> get handle async {
     await waitForPlayerInitialization;
     return ctx.address;
   }
 
-  /// Sets property for the internal `libmpv` instance of this [Player].
+  /// Sets property for the internal libmpv instance of this [Player].
   /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
   ///
   /// See:
@@ -1922,7 +1924,7 @@ class libmpvPlayer extends PlatformPlayer {
 
   Future<void> _create() {
     return lock.synchronized(() async {
-      // The libmpv options which must be set before [MPV.mpv_initialize].
+      // The options which must be set before [MPV.mpv_initialize].
       final options = <String, String>{};
 
       if (Platform.isAndroid &&
@@ -2165,19 +2167,19 @@ class libmpvPlayer extends PlatformPlayer {
 
 class _ScreenshotData {
   final int ctx;
-  final String libmpv;
+  final String lib;
   final String format;
 
   _ScreenshotData(
     this.ctx,
-    this.libmpv,
+    this.lib,
     this.format,
   );
 }
 
 Uint8List? _screenshot(_ScreenshotData data) {
   // ---------
-  final mpv = generated.MPV(DynamicLibrary.open(data.libmpv));
+  final mpv = generated.MPV(DynamicLibrary.open(data.lib));
   final ctx = Pointer<generated.mpv_handle>.fromAddress(data.ctx);
   // ---------
   final format = data.format;
