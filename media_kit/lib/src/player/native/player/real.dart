@@ -330,6 +330,9 @@ class NativePlayer extends PlatformPlayer {
       if (!audioParamsController.isClosed) {
         audioParamsController.add(const AudioParams());
       }
+      if (!videoParamsController.isClosed) {
+        videoParamsController.add(const VideoParams());
+      }
       if (!audioBitrateController.isClosed) {
         audioBitrateController.add(null);
       }
@@ -350,6 +353,9 @@ class NativePlayer extends PlatformPlayer {
       }
       if (!heightController.isClosed) {
         heightController.add(null);
+      }
+      if (!subtitleController.isClosed) {
+        subtitleController.add(['', '']);
       }
     }
 

@@ -11,6 +11,7 @@ import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/video_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 
 import 'package:media_kit/src/media_kit.dart';
@@ -2468,11 +2469,22 @@ void main() {
       expect(player.state.buffering, equals(false));
       expect(player.state.buffer, equals(Duration.zero));
       expect(player.state.audioParams, equals(const AudioParams()));
+      expect(player.state.videoParams, equals(const VideoParams()));
       expect(player.state.audioBitrate, equals(null));
       expect(player.state.track, equals(const Track()));
       expect(player.state.tracks, equals(const Tracks()));
       expect(player.state.width, equals(null));
       expect(player.state.height, equals(null));
+      expect(
+        ListEquality().equals(
+          player.state.subtitle,
+          [
+            '',
+            '',
+          ],
+        ),
+        equals(true),
+      );
 
       // VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));

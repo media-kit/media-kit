@@ -22,6 +22,8 @@ import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/player_state.dart';
+import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/video_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 
 /// Initializes the web backend for package:media_kit.
@@ -466,18 +468,21 @@ class WebPlayer extends PlatformPlayer {
       // if (!playlistModeController.isClosed) {
       //   playlistModeController.add(PlaylistMode.none);
       // }
-      // if (!audioParamsController.isClosed) {
-      //   audioParamsController.add(const AudioParams());
-      // }
-      // if (!audioBitrateController.isClosed) {
-      //   audioBitrateController.add(null);
-      // }
-      if (!audioDeviceController.isClosed) {
-        audioDeviceController.add(AudioDevice.auto());
+      if (!audioParamsController.isClosed) {
+        audioParamsController.add(const AudioParams());
       }
-      if (!audioDevicesController.isClosed) {
-        audioDevicesController.add([AudioDevice.auto()]);
+      if (!videoParamsController.isClosed) {
+        videoParamsController.add(const VideoParams());
       }
+      if (!audioBitrateController.isClosed) {
+        audioBitrateController.add(null);
+      }
+      // if (!audioDeviceController.isClosed) {
+      //   audioDeviceController.add(AudioDevice.auto());
+      // }
+      // if (!audioDevicesController.isClosed) {
+      //   audioDevicesController.add([AudioDevice.auto()]);
+      // }
       if (!trackController.isClosed) {
         trackController.add(Track());
       }
@@ -489,6 +494,9 @@ class WebPlayer extends PlatformPlayer {
       }
       if (!heightController.isClosed) {
         heightController.add(null);
+      }
+      if (!subtitleController.isClosed) {
+        subtitleController.add(['', '']);
       }
     }
 
