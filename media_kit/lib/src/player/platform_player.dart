@@ -400,12 +400,12 @@ class PlayerConfiguration {
 
   /// Whether to use [libass](https://github.com/libass/libass) based subtitle rendering for libmpv backend.
   ///
-  /// By default, subtitles rendering is Flutter `Widget` based. Enabling this option will render subtitles using [libass](https://github.com/libass/libass).
+  /// By default, subtitles rendering is Flutter `Widget` based.
   ///
   /// On Android, this option requires [libassAndroidFont] to be set.
   final bool libass;
 
-  /// The asset name of the `.ttf` font file to be used for [libass](https://github.com/libass/libass) based subtitle rendering on Android.
+  /// Asset name of the `.ttf` font file to be used for [libass](https://github.com/libass/libass) based subtitle rendering on Android.
   ///
   /// e.g. `assets/fonts/subtitle.ttf`
   final String? libassAndroidFont;
