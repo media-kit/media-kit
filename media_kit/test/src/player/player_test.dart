@@ -26,10 +26,17 @@ void main() {
   setUp(() async {
     MediaKit.ensureInitialized();
     await sources.prepare();
-    if (UniversalPlatform.isWeb) {
-      // For preventing "DOMException: play() failed because the user didn't interact with the document first." in unit-tests running on web.
-      WebPlayer.muted = true;
+
+    final player = Player();
+    if (player is NativePlayer) {
+      // For preventing video driver & audio driver initialization errors in unit-tests.
+      NativePlayer.test = true;
     }
+    if (player is WebPlayer) {
+      // For preventing "DOMException: play() failed because the user didn't interact with the document first." in unit-tests.
+      WebPlayer.test = true;
+    }
+    await player.dispose();
   });
   test(
     'player-platform',

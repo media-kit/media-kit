@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import 'tests/01.single_player_single_video.dart';
 import 'tests/02.single_player_multiple_video.dart';
@@ -84,7 +85,7 @@ class PrimaryScreen extends StatelessWidget {
         children: [
           ListTile(
             title: const Text(
-              '01.single_player_single_video.dart',
+              'single_player_single_video.dart',
               style: TextStyle(fontSize: 14.0),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -97,24 +98,26 @@ class PrimaryScreen extends StatelessWidget {
               );
             },
           ),
-          ListTile(
-            title: const Text(
-              '02.single_player_multiple_video.dart',
-              style: TextStyle(fontSize: 14.0),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          if (UniversalPlatform.isWeb)
+            ListTile(
+              title: const Text(
+                'single_player_multiple_video.dart',
+                style: TextStyle(fontSize: 14.0),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const SinglePlayerMultipleVideoScreen(),
+                  ),
+                );
+              },
             ),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const SinglePlayerMultipleVideoScreen(),
-                ),
-              );
-            },
-          ),
           ListTile(
             title: const Text(
-              '03.multiple_player_multiple_video.dart',
+              'multiple_player_multiple_video.dart',
               style: TextStyle(fontSize: 14.0),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -130,7 +133,7 @@ class PrimaryScreen extends StatelessWidget {
           ),
           ListTile(
             title: const Text(
-              '04.tabs_test.dart',
+              'tabs_test.dart',
               style: TextStyle(fontSize: 14.0),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -145,7 +148,7 @@ class PrimaryScreen extends StatelessWidget {
           ),
           ListTile(
             title: const Text(
-              '05.stress_test.dart',
+              'stress_test.dart',
               style: TextStyle(fontSize: 14.0),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -160,7 +163,7 @@ class PrimaryScreen extends StatelessWidget {
           ),
           ListTile(
             title: const Text(
-              '06.paint_first_frame.dart',
+              'paint_first_frame.dart',
               style: TextStyle(fontSize: 14.0),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -169,36 +172,38 @@ class PrimaryScreen extends StatelessWidget {
               paintFirstFrame(context);
             },
           ),
-          ListTile(
-            title: const Text(
-              '07.video_controller_set_size.dart',
-              style: TextStyle(fontSize: 14.0),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          if (UniversalPlatform.isWeb)
+            ListTile(
+              title: const Text(
+                'video_controller_set_size.dart',
+                style: TextStyle(fontSize: 14.0),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const VideoControllerSetSizeScreen(),
+                  ),
+                );
+              },
             ),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const VideoControllerSetSizeScreen(),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            title: const Text(
-              '08.screenshot.dart',
-              style: TextStyle(fontSize: 14.0),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          if (UniversalPlatform.isWeb)
+            ListTile(
+              title: const Text(
+                'screenshot.dart',
+                style: TextStyle(fontSize: 14.0),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const Screenshot(),
+                  ),
+                );
+              },
             ),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const Screenshot(),
-                ),
-              );
-            },
-          ),
         ],
       ),
     );
