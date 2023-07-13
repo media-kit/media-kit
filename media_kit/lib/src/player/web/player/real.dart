@@ -3,7 +3,6 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-// ignore_for_file: camel_case_types
 import 'dart:async';
 import 'dart:convert';
 import 'dart:js' as js;
@@ -47,7 +46,7 @@ class WebPlayer extends PlatformPlayer {
         // Do not add autoplay=false attribute: https://stackoverflow.com/a/19664804/12825435
         /* ..autoplay = false */
         ..controls = false
-        ..muted = muted
+        ..muted = test
         ..style.width = '100%'
         ..style.height = '100%'
         ..style.border = 'none'
@@ -1142,7 +1141,9 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      throw UnsupportedError('[Player.setVideoTrack] is not supported on web');
+      throw UnsupportedError(
+        '[Player.setVideoTrack] is not supported on web',
+      );
     }
 
     if (synchronized) {
@@ -1163,7 +1164,16 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      throw UnsupportedError('[Player.setAudioTrack] is not supported on web');
+
+      if (track.external) {
+        final child = html.SourceElement();
+        child.src = track.id;
+        element.append(child);
+      } else {
+        throw UnsupportedError(
+          '[Player.setAudioTrack] is only supported with [AudioTrack.external] on web',
+        );
+      }
     }
 
     if (synchronized) {
@@ -1184,8 +1194,23 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      throw UnsupportedError(
-          '[Player.setSubtitleTrack] is not supported on web');
+      if (track.external) {
+        final child = html.TrackElement();
+        child.src = track.id;
+        child.kind = 'subtitles';
+        child.label = track.title;
+        child.srclang = track.language;
+        child.setAttribute('default', 'true');
+        element.append(child);
+        // final tracks = element.textTracks?.toList() ?? <html.TextTrack>[];
+        // for (final track in tracks) {
+        //   track.mode = 'hidden';
+        // }
+      } else {
+        throw UnsupportedError(
+          '[Player.setSubtitleTrack] is only supported with [SubtitleTrack.external] on web',
+        );
+      }
     }
 
     if (synchronized) {
@@ -1294,7 +1319,7 @@ class WebPlayer extends PlatformPlayer {
   /// JavaScript object attribute used to store the instance count of [Player] in [js.context].
   static const kInstanceCount = '\$com.alexmercerind.media_kit.instance_count';
 
-  /// Whether the `<video>` element should have muted attribute or not.
+  /// Whether the [WebPlayer] is initialized for unit-testing.
   @visibleForTesting
-  static bool muted = false;
+  static bool test = false;
 }

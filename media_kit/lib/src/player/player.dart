@@ -274,7 +274,7 @@ class Player {
   /// ```dart
   /// player.setAudioTrack(
   ///   AudioTrack.external(
-  ///     'https://www.iandevlin.com/html5test/webvtt/v/upc-tobymanley.theora.ogg',
+  ///     'https://www.iandevlin.com/html5test/webvtt/v/upc-tobymanley.mp4',
   ///     title: 'English',
   ///     language: 'en',
   ///   ),

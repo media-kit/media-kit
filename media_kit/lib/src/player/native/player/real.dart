@@ -86,20 +86,20 @@ class NativePlayer extends PlatformPlayer {
 
       Initializer.dispose(ctx);
 
-      if (terminate) {
-        TaskQueue.instance.add(
-          () {
-            bool safe = lock.count == 0 &&
-                DateTime.now().difference(lock.time) >
-                    TaskQueue.instance.refractoryDuration;
-            if (safe) {
-              print('media_kit: mpv_terminate_destroy: ${ctx.address}');
-              mpv.mpv_terminate_destroy(ctx);
-            }
-            return safe;
-          },
-        );
-      }
+      TaskQueue.instance.add(
+        () {
+          bool safe = true;
+          safe = safe && lock.count == 0;
+          safe = safe &&
+              DateTime.now().difference(lock.time) >
+                  TaskQueue.instance.refractoryDuration;
+          if (safe) {
+            mpv.mpv_terminate_destroy(ctx);
+            print('media_kit: mpv_terminate_destroy: ${ctx.address}');
+          }
+          return safe;
+        },
+      );
     }
 
     if (synchronized) {
@@ -1114,7 +1114,7 @@ class NativePlayer extends PlatformPlayer {
   /// ```dart
   /// player.setAudioTrack(
   ///   AudioTrack.external(
-  ///     'https://www.iandevlin.com/html5test/webvtt/v/upc-tobymanley.theora.ogg',
+  ///     'https://www.iandevlin.com/html5test/webvtt/v/upc-tobymanley.mp4',
   ///     title: 'English',
   ///     language: 'en',
   ///   ),
@@ -2218,9 +2218,9 @@ class NativePlayer extends PlatformPlayer {
   static final HashMap<String, double> audioBitrateCache =
       HashMap<String, double>();
 
-  /// Whether `mpv_terminate_destroy` should be called in [dispose].
+  /// Whether the [NativePlayer] is initialized for unit-testing.
   @visibleForTesting
-  static bool terminate = true;
+  static bool test = false;
 }
 
 // --------------------------------------------------
