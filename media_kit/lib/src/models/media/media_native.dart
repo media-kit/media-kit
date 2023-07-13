@@ -10,8 +10,8 @@ import 'package:uri_parser/uri_parser.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/src/models/playable.dart';
-import 'package:media_kit/src/utils/android_asset_loader.dart';
-import 'package:media_kit/src/utils/android_content_uri_provider.dart';
+import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
+import 'package:media_kit/src/player/native/utils/android_content_uri_provider.dart';
 
 /// {@template media}
 ///

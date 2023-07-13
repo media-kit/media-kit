@@ -15,6 +15,8 @@ import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
 
+import 'package:media_kit/src/player/web/utils/duration.dart';
+
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/playlist.dart';
@@ -167,19 +169,26 @@ class WebPlayer extends PlatformPlayer {
       element.onTimeUpdate.listen((_) {
         lock.synchronized(() async {
           // PlayerState.state.position & PlayerState.stream.position
-          final value = element.currentTime * 1000 ~/ 1;
-          final position = Duration(milliseconds: value);
-          state = state.copyWith(position: position);
-          if (!positionController.isClosed) {
-            positionController.add(position);
-          }
-          // PlayerState.state.buffer & PlayerState.stream.buffer
-          final i = element.buffered.length - 1;
-          if (i >= 0) {
-            final value = element.buffered.end(i) * 1000 ~/ 1;
-            final buffer = Duration(milliseconds: value);
-            if (!bufferController.isClosed) {
-              bufferController.add(buffer);
+          final position = convertNumVideoDurationToPluginDuration(
+            element.currentTime,
+          );
+          if (position != null) {
+            state = state.copyWith(position: position);
+            if (!positionController.isClosed) {
+              positionController.add(position);
+            }
+            // PlayerState.state.buffer & PlayerState.stream.buffer
+            final i = element.buffered.length - 1;
+            if (i >= 0) {
+              final buffer = convertNumVideoDurationToPluginDuration(
+                element.buffered.end(i),
+              );
+              if (buffer != null) {
+                state = state.copyWith(buffer: buffer);
+                if (!bufferController.isClosed) {
+                  bufferController.add(buffer);
+                }
+              }
             }
           }
         });
@@ -187,11 +196,14 @@ class WebPlayer extends PlatformPlayer {
       element.onDurationChange.listen((_) {
         lock.synchronized(() async {
           // PlayerState.state.duration & PlayerState.stream.duration
-          final value = element.duration * 1000 ~/ 1;
-          final duration = Duration(milliseconds: value);
-          state = state.copyWith(duration: duration);
-          if (!durationController.isClosed) {
-            durationController.add(duration);
+          final duration = convertNumVideoDurationToPluginDuration(
+            element.duration,
+          );
+          if (duration != null) {
+            state = state.copyWith(duration: duration);
+            if (!durationController.isClosed) {
+              durationController.add(duration);
+            }
           }
         });
       });
@@ -1202,10 +1214,10 @@ class WebPlayer extends PlatformPlayer {
         child.srclang = track.language;
         child.setAttribute('default', 'true');
         element.append(child);
-        // final tracks = element.textTracks?.toList() ?? <html.TextTrack>[];
-        // for (final track in tracks) {
-        //   track.mode = 'hidden';
-        // }
+        final tracks = element.textTracks?.toList() ?? <html.TextTrack>[];
+        for (final track in tracks) {
+          track.mode = 'hidden';
+        }
       } else {
         throw UnsupportedError(
           '[Player.setSubtitleTrack] is only supported with [SubtitleTrack.external] on web',

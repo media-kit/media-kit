@@ -16,16 +16,17 @@ import 'package:image/image.dart';
 import 'package:media_kit/ffi/ffi.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
+
 import 'package:media_kit/src/player/native/core/initializer.dart';
 import 'package:media_kit/src/player/native/core/native_library.dart';
 import 'package:media_kit/src/player/native/core/fallback_bitrate_handler.dart';
 import 'package:media_kit/src/player/native/core/initializer_native_event_loop.dart';
 
-import 'package:media_kit/src/utils/isolates.dart';
-import 'package:media_kit/src/utils/lock_ext.dart';
-import 'package:media_kit/src/utils/task_queue.dart';
-import 'package:media_kit/src/utils/android_helper.dart';
-import 'package:media_kit/src/utils/android_asset_loader.dart';
+import 'package:media_kit/src/player/native/utils/isolates.dart';
+import 'package:media_kit/src/player/native/utils/lock_ext.dart';
+import 'package:media_kit/src/player/native/utils/task_queue.dart';
+import 'package:media_kit/src/player/native/utils/android_helper.dart';
+import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
 
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
@@ -2078,6 +2079,12 @@ class NativePlayer extends PlatformPlayer {
           'secondary-sub-visibility': configuration.libass ? 'yes' : 'no',
         },
       );
+
+      if (test) {
+        properties['vo'] = 'null';
+        properties['ao'] = 'null';
+      }
+
       for (final property in properties.entries) {
         final name = property.key.toNativeUtf8();
         final value = property.value.toNativeUtf8();
