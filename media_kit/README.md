@@ -774,7 +774,7 @@ https://user-images.githubusercontent.com/28951144/253067794-73b5ca5d-e90d-4892-
 The `SubtitleTrack.external` constructor can be used to load external subtitle track with URI e.g. SRT, WebVTT etc. The code is easier to understand:
 
 ```dart
-player.setSubtitleTrack(
+await player.setSubtitleTrack(
   SubtitleTrack.external(
     'https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt',
     title: 'English',
@@ -788,9 +788,9 @@ player.setSubtitleTrack(
 The `AudioTrack.external` constructor can be used to load external audio track with URI. The code is easier to understand:
 
 ```dart
-player.setAudioTrack(
+await player.setAudioTrack(
   AudioTrack.external(
-    'https://www.iandevlin.com/html5test/webvtt/v/upc-tobymanley.theora.ogg',
+    'https://www.iandevlin.com/html5test/webvtt/v/upc-tobymanley.mp4',
     title: 'English',
     language: 'en',
   ),
