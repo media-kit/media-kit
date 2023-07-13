@@ -125,6 +125,13 @@ class WebPlayer extends PlatformPlayer {
           if (!bufferingController.isClosed) {
             bufferingController.add(false);
           }
+
+          element.children.clear();
+          state = state.copyWith(track: Track());
+          if (!trackController.isClosed) {
+            trackController.add(Track());
+          }
+
           // PlayerState.state.playlist.index & PlayerState.stream.playlist.index
           switch (_playlistMode) {
             case PlaylistMode.none:
@@ -429,6 +436,12 @@ class WebPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
+      element.children.clear();
+      state = state.copyWith(track: Track());
+      if (!trackController.isClosed) {
+        trackController.add(Track());
+      }
+
       element
         ..src = ''
         ..load();
@@ -656,6 +669,12 @@ class WebPlayer extends PlatformPlayer {
       else if (_index == index &&
           _playlist.length - 1 == index &&
           _playlistMode == PlaylistMode.loop) {
+        element.children.clear();
+        state = state.copyWith(track: Track());
+        if (!trackController.isClosed) {
+          trackController.add(Track());
+        }
+
         _index = 0;
         element.src = _playlist[_index].uri;
         await play(synchronized: false);
@@ -727,6 +746,12 @@ class WebPlayer extends PlatformPlayer {
           playlistController.add(state.playlist);
         }
 
+        element.children.clear();
+        state = state.copyWith(track: Track());
+        if (!trackController.isClosed) {
+          trackController.add(Track());
+        }
+
         element.src = _playlist[_index].uri;
         await play(synchronized: false);
 
@@ -794,6 +819,12 @@ class WebPlayer extends PlatformPlayer {
           playlistController.add(state.playlist);
         }
 
+        element.children.clear();
+        state = state.copyWith(track: Track());
+        if (!trackController.isClosed) {
+          trackController.add(Track());
+        }
+
         element.src = _playlist[_index].uri;
         await play(synchronized: false);
 
@@ -853,6 +884,12 @@ class WebPlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
 
       _index = index;
+
+      element.children.clear();
+      state = state.copyWith(track: Track());
+      if (!trackController.isClosed) {
+        trackController.add(Track());
+      }
 
       element.src = _playlist[_index].uri;
       await play(synchronized: false);
@@ -1178,9 +1215,16 @@ class WebPlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
 
       if (track.external) {
+        element.children.removeWhere((e) => e is html.SourceElement);
+
         final child = html.SourceElement();
         child.src = track.id;
         element.append(child);
+
+        state = state.copyWith(track: state.track.copyWith(audio: track));
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
       } else {
         throw UnsupportedError(
           '[Player.setAudioTrack] is only supported with [AudioTrack.external] on web',
@@ -1206,18 +1250,68 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
       if (track.external) {
+        element.children.removeWhere((e) => e is html.TrackElement);
+
         final child = html.TrackElement();
-        child.src = track.id;
+
+        // Support loading for subtitles as URL or raw string.
+        Uri? uri;
+        try {
+          uri = Uri.parse(track.id);
+        } catch (_) {}
+        if (uri != null) {
+          child.src = uri.toString();
+        } else {
+          child.src = html.Url.createObjectUrlFromBlob(html.Blob([track.id]));
+        }
+
         child.kind = 'subtitles';
         child.label = track.title;
         child.srclang = track.language;
-        child.setAttribute('default', 'true');
         element.append(child);
-        final tracks = element.textTracks?.toList() ?? <html.TextTrack>[];
-        for (final track in tracks) {
-          track.mode = 'hidden';
+
+        state = state.copyWith(track: state.track.copyWith(subtitle: track));
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
         }
+
+        // To match native behavior.
+        state = state.copyWith(subtitle: ['', '']);
+        if (!subtitleController.isClosed) {
+          subtitleController.add(['', '']);
+        }
+
+        final tracks = element.textTracks?.toList() ?? <html.TextTrack>[];
+        tracks.first.mode = 'hidden';
+        tracks.first.onCueChange.listen((_) {
+          try {
+            final data = tracks.first.activeCues?.map((e) {
+              final text = (e as dynamic).text as String;
+              return text
+                  .replaceAll(RegExp('<[^>]*>'), ' ')
+                  .replaceAll(RegExp('\\s+'), ' ')
+                  .trim();
+            }).toList();
+            if (data != null) {
+              final subtitle = ['', ''];
+              if (data.length == 1) {
+                subtitle[0] = data[0];
+              } else if (data.length == 2) {
+                subtitle[0] = data[0];
+                subtitle[1] = data.skip(1).join('\n');
+              }
+              state = state.copyWith(subtitle: subtitle);
+              if (!subtitleController.isClosed) {
+                subtitleController.add(subtitle);
+              }
+            }
+          } catch (exception, stacktrace) {
+            print(exception);
+            print(stacktrace);
+          }
+        });
       } else {
         throw UnsupportedError(
           '[Player.setSubtitleTrack] is only supported with [SubtitleTrack.external] on web',
