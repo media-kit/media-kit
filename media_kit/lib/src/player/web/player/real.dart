@@ -103,7 +103,7 @@ class WebPlayer extends PlatformPlayer {
           // PlayerState.state.completed & PlayerState.stream.completed
           // PlayerState.state.buffering & PlayerState.stream.buffering
 
-          // A minimal quirk to match the native backend behavior.
+          // A minimal quirk to match the NativePlayer behavior.
           state = state.copyWith(
             buffering: true,
           );
@@ -315,6 +315,35 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      // To match NativePlayer behavior.
+
+      await pause(synchronized: false);
+
+      state = state.copyWith(
+        track: state.track.copyWith(
+          video: VideoTrack.no(),
+        ),
+      );
+      if (!trackController.isClosed) {
+        trackController.add(state.track);
+      }
+      state = state.copyWith(
+        track: state.track.copyWith(
+          audio: AudioTrack.no(),
+        ),
+      );
+      if (!trackController.isClosed) {
+        trackController.add(state.track);
+      }
+      state = state.copyWith(
+        track: state.track.copyWith(
+          subtitle: SubtitleTrack.no(),
+        ),
+      );
+      if (!trackController.isClosed) {
+        trackController.add(state.track);
+      }
 
       disposed = true;
 
@@ -1277,7 +1306,7 @@ class WebPlayer extends PlatformPlayer {
           trackController.add(state.track);
         }
 
-        // To match native behavior.
+        // To match NativePlayer behavior.
         state = state.copyWith(subtitle: ['', '']);
         if (!subtitleController.isClosed) {
           subtitleController.add(['', '']);
