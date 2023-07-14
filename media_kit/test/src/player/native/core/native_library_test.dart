@@ -7,7 +7,6 @@
 import 'package:test/test.dart';
 
 import 'package:media_kit/src/player/native/core/native_library.dart';
-import 'package:universal_platform/universal_platform.dart';
 
 void main() {
   test(
@@ -18,7 +17,6 @@ void main() {
         returnsNormally,
       );
     },
-    skip: UniversalPlatform.isMacOS,
   );
   test(
     'native-library-path',
@@ -31,6 +29,5 @@ void main() {
         returnsNormally,
       );
     },
-    skip: UniversalPlatform.isMacOS,
   );
 }
