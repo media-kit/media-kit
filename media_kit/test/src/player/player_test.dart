@@ -24,7 +24,9 @@ import '../../common/sources.dart';
 
 void main() {
   setUp(() async {
-    MediaKit.ensureInitialized();
+    MediaKit.ensureInitialized(
+      libmpv: Platform.isMacOS ? "test/ci/macos/libs/libmpv.dylib" : null,
+    );
     await sources.prepare();
 
     // For preventing video driver & audio driver initialization errors in unit-tests.
