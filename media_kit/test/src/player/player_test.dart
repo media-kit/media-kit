@@ -25,7 +25,8 @@ import '../../common/sources.dart';
 void main() {
   setUp(() async {
     MediaKit.ensureInitialized(
-      libmpv: Platform.isMacOS ? "test/ci/macos/libs/libmpv.dylib" : null,
+      libmpv:
+          UniversalPlatform.isMacOS ? "test/ci/macos/libs/libmpv.dylib" : null,
     );
     await sources.prepare();
 
