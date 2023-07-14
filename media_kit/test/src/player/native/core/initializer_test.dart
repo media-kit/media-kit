@@ -16,9 +16,15 @@ import 'package:media_kit/src/player/native/core/initializer.dart';
 import 'package:media_kit/src/player/native/core/native_library.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 void main() {
-  setUp(NativeLibrary.ensureInitialized);
+  setUp(
+    () => NativeLibrary.ensureInitialized(
+      libmpv:
+          UniversalPlatform.isMacOS ? "test/ci/macos/libs/libmpv.dylib" : null,
+    ),
+  );
   test(
     'initializer-create',
     () {
