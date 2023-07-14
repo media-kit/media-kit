@@ -47,6 +47,8 @@ jobs:
   media_kit-tests-macos:
     name: package:media_kit tests (macOS)
     runs-on: macos-latest
+    env:
+      LIBMPV_LIBRARY_PATH: test/ci/macos/libs/libmpv.dylib
     defaults:
       run:
         working-directory: media_kit

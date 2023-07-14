@@ -14,5 +14,3 @@ mkdir -p ./test/ci/macos/libs
 curl -s -L https://github.com/media-kit/libmpv-darwin-build/releases/download/${LIBS_VERSION}/libmpv-libs-video-${LIBS_VERSION}-macos-${LIBS_ARCH}.tar.gz | tar xvz --strip-components 1 - -C ./test/ci/macos/libs
 
 sh ./test/ci/macos/scripts/relink_dylibs.sh @rpath $PWD/test/ci/macos/libs ./test/ci/macos/libs
-
-export LIBMPV_LIBRARY_PATH="test/ci/macos/libs/libmpv.dylib"
