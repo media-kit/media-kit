@@ -38,49 +38,6 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
   </a>
 </strong>
 
-## Installation
-
-[package:media_kit](https://github.com/alexmercerind/media_kit) is split into number of packages to improve modularity & reduce bundle size.
-
-#### For apps that need video playback:
-
-```yaml
-dependencies:
-  media_kit: ^1.0.2                              # Primary package.
-  
-  media_kit_video: ^1.0.2                        # For video rendering.
-  
-  media_kit_native_event_loop: ^1.0.6            # Support for higher number of concurrent instances & better performance.
-  
-  media_kit_libs_android_video: ^1.1.1           # Android package for video native libraries.
-  media_kit_libs_ios_video: ^1.0.4               # iOS package for video native libraries.
-  media_kit_libs_macos_video: ^1.0.5             # macOS package for video native libraries.
-  media_kit_libs_windows_video: ^1.0.2           # Windows package for video native libraries.
-  media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.
-```
-
-#### For apps that need audio playback:
-
-```yaml
-dependencies:
-  media_kit: ^1.0.2                              # Primary package.
-  
-  media_kit_native_event_loop: ^1.0.6            # Support for higher number of concurrent instances & better performance.
-  
-  media_kit_libs_android_audio: ^1.1.1           # Android package for audio native libraries.
-  media_kit_libs_ios_audio: ^1.0.4               # iOS package for audio native libraries.
-  media_kit_libs_macos_audio: ^1.0.5             # macOS package for audio native libraries.
-  media_kit_libs_windows_audio: ^1.0.3           # Windows package for audio native libraries.
-  media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.
-```
-
-**Notes:**
-
-- [Enable --split-per-abi](https://docs.flutter.dev/deployment/android#what-is-a-fat-apk) or [use app bundle (instead of APK)](https://docs.flutter.dev/deployment/android#when-should-i-build-app-bundles-versus-apks) on Android.
-- If app needs both video & audio playback, select video playback libraries.
-- Do not mix `media_kit_libs_*_video` & `media_kit_libs_*_audio` packages.
-- media_kit_libs_*** packages may be omitted depending upon the platform your app targets.
-
 ## Platforms
 
 | Platform | Video | Audio | Notes | Demo |
@@ -143,6 +100,50 @@ dependencies:
       <img src="https://github.com/alexmercerind/media_kit/assets/28951144/feb9fdf2-095f-43db-96af-f7782985238d" height="200" alt="Web"></img>
     </td>
 </table>
+
+## Installation
+
+[package:media_kit](https://github.com/alexmercerind/media_kit) is split into number of packages to improve modularity & reduce bundle size.
+
+#### For apps that need video playback:
+
+```yaml
+dependencies:
+  media_kit: ^1.0.2                              # Primary package.
+  
+  media_kit_video: ^1.0.2                        # For video rendering.
+  
+  media_kit_native_event_loop: ^1.0.6            # Support for higher number of concurrent instances & better performance.
+  
+  media_kit_libs_android_video: ^1.1.1           # Android package for video native libraries.
+  media_kit_libs_ios_video: ^1.0.4               # iOS package for video native libraries.
+  media_kit_libs_macos_video: ^1.0.5             # macOS package for video native libraries.
+  media_kit_libs_windows_video: ^1.0.2           # Windows package for video native libraries.
+  media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.
+```
+
+#### For apps that need audio playback:
+
+```yaml
+dependencies:
+  media_kit: ^1.0.2                              # Primary package.
+  
+  media_kit_native_event_loop: ^1.0.6            # Support for higher number of concurrent instances & better performance.
+  
+  media_kit_libs_android_audio: ^1.1.1           # Android package for audio native libraries.
+  media_kit_libs_ios_audio: ^1.0.4               # iOS package for audio native libraries.
+  media_kit_libs_macos_audio: ^1.0.5             # macOS package for audio native libraries.
+  media_kit_libs_windows_audio: ^1.0.3           # Windows package for audio native libraries.
+  media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.
+```
+
+**Notes:**
+
+- [Enable --split-per-abi](https://docs.flutter.dev/deployment/android#what-is-a-fat-apk) or [use app bundle (instead of APK)](https://docs.flutter.dev/deployment/android#when-should-i-build-app-bundles-versus-apks) on Android.
+- The video libraries should be selected if both video & audio support is needed.
+- The performance in ["Release" mode](https://docs.flutter.dev/testing/build-modes#debug) is substantially higher than in ["Debug" mode](https://docs.flutter.dev/testing/build-modes#debug).
+- The media\_kit\_libs\_\*\*\*\_video & media\_kit\_libs\_\*\*\*\_audio packages should not be mixed.
+- The media\_kit\_libs\_\*\*\* packages may be omitted depending upon the platforms your project targets.
 
 ## TL;DR
 
