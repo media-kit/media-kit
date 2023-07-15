@@ -1287,13 +1287,21 @@ class WebPlayer extends PlatformPlayer {
 
         // Support loading for subtitles as URL or raw string.
         Uri? uri;
-        try {
-          uri = Uri.parse(track.id);
-        } catch (_) {}
+        if (track.id.length < 4096) {
+          try {
+            uri = Uri.parse(track.id);
+          } catch (_) {}
+        }
         if (uri != null) {
           child.src = uri.toString();
         } else {
-          child.src = html.Url.createObjectUrlFromBlob(html.Blob([track.id]));
+          final src = html.Url.createObjectUrlFromBlob(html.Blob([track.id]));
+          child.src = src;
+
+          // Revoke the object URL after use i.e. upon [dispose].
+          release.add(() async {
+            html.Url.revokeObjectUrl(src);
+          });
         }
 
         child.kind = 'subtitles';
