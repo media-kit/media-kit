@@ -3,11 +3,16 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-// ignore_for_file: camel_case_types
+import 'package:meta/meta.dart';
+
 import 'package:media_kit/src/player/platform_player.dart';
 
-void libmpvEnsureInitialized({String? libmpv}) {}
+void nativeEnsureInitialized({String? libmpv}) {}
 
-class libmpvPlayer extends PlatformPlayer {
-  libmpvPlayer({required super.configuration});
+class NativePlayer extends PlatformPlayer {
+  NativePlayer({required super.configuration});
+
+  /// Whether the [NativePlayer] is initialized for unit-testing.
+  @visibleForTesting
+  static bool test = false;
 }

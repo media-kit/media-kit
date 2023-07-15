@@ -12,8 +12,8 @@ import 'package:test/test.dart';
 
 import 'package:media_kit/ffi/ffi.dart';
 
-import 'package:media_kit/src/player/libmpv/core/initializer.dart';
-import 'package:media_kit/src/player/libmpv/core/native_library.dart';
+import 'package:media_kit/src/player/native/core/initializer.dart';
+import 'package:media_kit/src/player/native/core/native_library.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
 
@@ -116,6 +116,10 @@ void main() {
         );
         calloc.free(command);
       }
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      Initializer.dispose(handle);
     },
   );
   test(
@@ -154,6 +158,10 @@ void main() {
           dirname(Platform.script.toFilePath()),
         );
       }
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      Initializer.dispose(handle);
     },
   );
   test(
@@ -192,6 +200,10 @@ void main() {
           dirname(Platform.script.toFilePath()),
         );
       }
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      Initializer.dispose(handle);
     },
   );
 }

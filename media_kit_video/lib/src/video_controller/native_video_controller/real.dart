@@ -13,8 +13,9 @@ import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 // ignore_for_file: unused_import, implementation_imports
 import 'package:media_kit/ffi/ffi.dart';
+import 'package:media_kit/src/player/native/core/native_library.dart';
+
 import 'package:media_kit/generated/libmpv/bindings.dart';
-import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
@@ -49,7 +50,8 @@ class NativeVideoController extends PlatformVideoController {
   NativeVideoController._(
     super.player,
     super.configuration,
-  );
+  )   : width = configuration.width,
+        height = configuration.height;
 
   /// {@macro native_video_controller}
   static Future<PlatformVideoController> create(
@@ -68,9 +70,6 @@ class NativeVideoController extends PlatformVideoController {
       player,
       configuration,
     );
-
-    controller.width = configuration.width;
-    controller.height = configuration.height;
 
     // ----------------------------------------------
     NativeLibrary.ensureInitialized();
@@ -147,16 +146,29 @@ class NativeVideoController extends PlatformVideoController {
       // No need to resize if the requested size is same as the current size.
       return;
     }
-    this.width = width;
-    this.height = height;
-    await _channel.invokeMethod(
-      'VideoOutputManager.SetSize',
-      {
-        'handle': handle.toString(),
-        'width': width.toString(),
-        'height': height.toString(),
-      },
-    );
+    if (width != null && height != null) {
+      this.width = width;
+      this.height = height;
+      await _channel.invokeMethod(
+        'VideoOutputManager.SetSize',
+        {
+          'handle': handle.toString(),
+          'width': width.toString(),
+          'height': height.toString(),
+        },
+      );
+    } else {
+      this.width = null;
+      this.height = null;
+      await _channel.invokeMethod(
+        'VideoOutputManager.SetSize',
+        {
+          'handle': handle.toString(),
+          'width': 'null',
+          'height': 'null',
+        },
+      );
+    }
   }
 
   /// Disposes the instance. Releases allocated resources back to the system.

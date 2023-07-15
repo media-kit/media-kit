@@ -19,8 +19,9 @@ import 'package:media_kit/media_kit.dart';
 // Also... now the API is also improved, now [VideoController.create] consumes [Player] directly instead of [Player.handle] which as an [int].
 // ignore_for_file: unused_import, implementation_imports
 import 'package:media_kit/ffi/ffi.dart';
+import 'package:media_kit/src/player/native/core/native_library.dart';
+
 import 'package:media_kit/generated/libmpv/bindings.dart';
-import 'package:media_kit/src/player/libmpv/core/native_library.dart';
 
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
@@ -196,7 +197,7 @@ class AndroidVideoController extends PlatformVideoController {
             ? {
                 // H/W decoding & rendering with --vo=gpu + --hwdec=mediacodec-copy.
                 'vo': 'gpu',
-                'hwdec': 'mediacodec-copy',
+                'hwdec': 'mediacodec',
                 'opengl-es': 'yes',
                 'force-window': 'yes',
                 'gpu-context': 'android',

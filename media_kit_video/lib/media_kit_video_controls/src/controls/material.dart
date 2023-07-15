@@ -107,7 +107,7 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   seekBarBufferColor: Color(0x3DFFFFFF),
   seekBarThumbSize: 12.8,
   seekBarThumbColor: Color(0xFFFF0000),
-  shiftSubtitlesOnControlsVisibilityChange: true,
+  shiftSubtitlesOnControlsVisibilityChange: false,
 );
 
 /// {@template material_video_controls_theme_data}
@@ -258,7 +258,7 @@ class MaterialVideoControlsThemeData {
     this.seekBarBufferColor = const Color(0x3DFFFFFF),
     this.seekBarThumbSize = 12.8,
     this.seekBarThumbColor = const Color(0xFFFF0000),
-    this.shiftSubtitlesOnControlsVisibilityChange = true,
+    this.shiftSubtitlesOnControlsVisibilityChange = false,
   });
 
   /// Creates a copy of this [MaterialVideoControlsThemeData] with the given fields replaced by the non-null parameter values.

@@ -10,7 +10,7 @@ export 'package:media_kit/src/media_kit.dart';
 export 'package:media_kit/src/player/player.dart';
 export 'package:media_kit/src/player/platform_player.dart';
 
-export 'package:media_kit/src/player/libmpv/player/player.dart';
+export 'package:media_kit/src/player/native/player/player.dart';
 export 'package:media_kit/src/player/web/player/player.dart';
 
 export 'package:media_kit/src/models/track.dart';
@@ -19,3 +19,5 @@ export 'package:media_kit/src/models/media/media.dart';
 export 'package:media_kit/src/models/audio_device.dart';
 export 'package:media_kit/src/models/audio_params.dart';
 export 'package:media_kit/src/models/playlist_mode.dart';
+
+export 'package:media_kit/src/legacy.dart';

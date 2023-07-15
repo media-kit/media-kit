@@ -3,7 +3,6 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-// ignore_for_file: camel_case_types
 import 'dart:io';
 import 'dart:ffi';
 import 'dart:math';
@@ -17,16 +16,17 @@ import 'package:image/image.dart';
 import 'package:media_kit/ffi/ffi.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
-import 'package:media_kit/src/player/libmpv/core/initializer.dart';
-import 'package:media_kit/src/player/libmpv/core/native_library.dart';
-import 'package:media_kit/src/player/libmpv/core/fallback_bitrate_handler.dart';
-import 'package:media_kit/src/player/libmpv/core/initializer_native_event_loop.dart';
 
-import 'package:media_kit/src/utils/isolates.dart';
-import 'package:media_kit/src/utils/lock_ext.dart';
-import 'package:media_kit/src/utils/task_queue.dart';
-import 'package:media_kit/src/utils/android_helper.dart';
-import 'package:media_kit/src/utils/android_asset_loader.dart';
+import 'package:media_kit/src/player/native/core/initializer.dart';
+import 'package:media_kit/src/player/native/core/native_library.dart';
+import 'package:media_kit/src/player/native/core/fallback_bitrate_handler.dart';
+import 'package:media_kit/src/player/native/core/initializer_native_event_loop.dart';
+
+import 'package:media_kit/src/player/native/utils/isolates.dart';
+import 'package:media_kit/src/player/native/utils/lock_ext.dart';
+import 'package:media_kit/src/player/native/utils/task_queue.dart';
+import 'package:media_kit/src/player/native/utils/android_helper.dart';
+import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
 
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
@@ -41,24 +41,24 @@ import 'package:media_kit/src/models/playlist_mode.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 
-/// Initializes the libmpv backend for package:media_kit.
-void libmpvEnsureInitialized({String? libmpv}) {
+/// Initializes the native backend for package:media_kit.
+void nativeEnsureInitialized({String? libmpv}) {
   AndroidHelper.ensureInitialized();
   NativeLibrary.ensureInitialized(libmpv: libmpv);
   InitializerNativeEventLoop.ensureInitialized();
 }
 
-/// {@template libmpv_player}
+/// {@template native_player}
 ///
-/// libmpvPlayer
+/// NativePlayer
 /// ------------
 ///
-/// libmpv based implementation of [PlatformPlayer].
+/// Native based implementation of [PlatformPlayer].
 ///
 /// {@endtemplate}
-class libmpvPlayer extends PlatformPlayer {
-  /// {@macro libmpv_player}
-  libmpvPlayer({required super.configuration})
+class NativePlayer extends PlatformPlayer {
+  /// {@macro native_player}
+  NativePlayer({required super.configuration})
       : mpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path)) {
     _create().then((_) {
       configuration.ready?.call();
@@ -87,20 +87,20 @@ class libmpvPlayer extends PlatformPlayer {
 
       Initializer.dispose(ctx);
 
-      if (terminate) {
-        TaskQueue.instance.add(
-          () {
-            bool safe = lock.count == 0 &&
-                DateTime.now().difference(lock.time) >
-                    TaskQueue.instance.refractoryDuration;
-            if (safe) {
-              print('media_kit: mpv_terminate_destroy: ${ctx.address}');
-              mpv.mpv_terminate_destroy(ctx);
-            }
-            return safe;
-          },
-        );
-      }
+      TaskQueue.instance.add(
+        () {
+          bool safe = true;
+          safe = safe && lock.count == 0;
+          safe = safe &&
+              DateTime.now().difference(lock.time) >
+                  TaskQueue.instance.refractoryDuration;
+          if (safe) {
+            mpv.mpv_terminate_destroy(ctx);
+            print('media_kit: mpv_terminate_destroy: ${ctx.address}');
+          }
+          return safe;
+        },
+      );
     }
 
     if (synchronized) {
@@ -154,7 +154,7 @@ class libmpvPlayer extends PlatformPlayer {
       }
 
       final commands = [
-        // Clear existing playlist & change currently playing libmpv index to none.
+        // Clear existing playlist & change currently playing index to none.
         // This causes playback to stop & player to enter the idle state.
         'stop',
         'playlist-clear',
@@ -331,6 +331,9 @@ class libmpvPlayer extends PlatformPlayer {
       if (!audioParamsController.isClosed) {
         audioParamsController.add(const AudioParams());
       }
+      if (!videoParamsController.isClosed) {
+        videoParamsController.add(const VideoParams());
+      }
       if (!audioBitrateController.isClosed) {
         audioBitrateController.add(null);
       }
@@ -351,6 +354,9 @@ class libmpvPlayer extends PlatformPlayer {
       }
       if (!heightController.isClosed) {
         heightController.add(null);
+      }
+      if (!subtitleController.isClosed) {
+        subtitleController.add(['', '']);
       }
     }
 
@@ -1104,6 +1110,18 @@ class libmpvPlayer extends PlatformPlayer {
   ///
   /// * Currently selected [AudioTrack] can be accessed using [state.track.audio] or [stream.track.audio].
   /// * The list of currently available [AudioTrack]s can be obtained accessed using [state.tracks.audio] or [stream.tracks.audio].
+  /// * External audio tracks can be loaded using [AudioTrack.external] constructor.
+  ///
+  /// ```dart
+  /// player.setAudioTrack(
+  ///   AudioTrack.external(
+  ///     'https://www.iandevlin.com/html5test/webvtt/v/upc-tobymanley.mp4',
+  ///     title: 'English',
+  ///     language: 'en',
+  ///   ),
+  /// );
+  /// ```
+  ///
   @override
   Future<void> setAudioTrack(AudioTrack track, {bool synchronized = true}) {
     Future<void> function() async {
@@ -1113,22 +1131,42 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      final name = 'aid'.toNativeUtf8();
-      final value = track.id.toNativeUtf8();
-      mpv.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
-      state = state.copyWith(
-        track: state.track.copyWith(
-          audio: track,
-        ),
-      );
-      if (!trackController.isClosed) {
-        trackController.add(state.track);
+      if (track.external) {
+        await _command(
+          [
+            'audio-add',
+            track.id,
+            'select',
+            track.title ?? 'external',
+            track.language ?? 'auto',
+          ],
+        );
+        state = state.copyWith(
+          track: state.track.copyWith(
+            audio: track,
+          ),
+        );
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
+      } else {
+        final name = 'aid'.toNativeUtf8();
+        final value = track.id.toNativeUtf8();
+        mpv.mpv_set_property_string(
+          ctx,
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+        state = state.copyWith(
+          track: state.track.copyWith(
+            audio: track,
+          ),
+        );
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
       }
     }
 
@@ -1143,6 +1181,18 @@ class libmpvPlayer extends PlatformPlayer {
   ///
   /// * Currently selected [SubtitleTrack] can be accessed using [state.track.subtitle] or [stream.track.subtitle].
   /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [stream.tracks.subtitle].
+  /// * External subtitle tracks can be loaded using [SubtitleTrack.external] constructor.
+  ///
+  /// ```dart
+  /// player.setSubtitleTrack(
+  ///   SubtitleTrack.external(
+  ///     'https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt',
+  ///     title: 'English',
+  ///     language: 'en',
+  ///   ),
+  /// );
+  /// ```
+  ///
   @override
   Future<void> setSubtitleTrack(SubtitleTrack track,
       {bool synchronized = true}) {
@@ -1153,22 +1203,42 @@ class libmpvPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      final name = 'sid'.toNativeUtf8();
-      final value = track.id.toNativeUtf8();
-      mpv.mpv_set_property_string(
-        ctx,
-        name.cast(),
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
-      state = state.copyWith(
-        track: state.track.copyWith(
-          subtitle: track,
-        ),
-      );
-      if (!trackController.isClosed) {
-        trackController.add(state.track);
+      if (track.external) {
+        await _command(
+          [
+            'sub-add',
+            track.id,
+            'select',
+            track.title ?? 'external',
+            track.language ?? 'auto',
+          ],
+        );
+        state = state.copyWith(
+          track: state.track.copyWith(
+            subtitle: track,
+          ),
+        );
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
+      } else {
+        final name = 'sid'.toNativeUtf8();
+        final value = track.id.toNativeUtf8();
+        mpv.mpv_set_property_string(
+          ctx,
+          name.cast(),
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+        state = state.copyWith(
+          track: state.track.copyWith(
+            subtitle: track,
+          ),
+        );
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
       }
     }
 
@@ -1222,14 +1292,17 @@ class libmpvPlayer extends PlatformPlayer {
     }
   }
 
-  /// [generated.mpv_handle] address of the internal libmpv player instance.
+  /// Internal platform specific identifier for this [Player] instance.
+  ///
+  /// Since, [int] is a primitive type, it can be used to pass this [Player] instance to native code without directly depending upon this library.
+  ///
   @override
   Future<int> get handle async {
     await waitForPlayerInitialization;
     return ctx.address;
   }
 
-  /// Sets property for the internal `libmpv` instance of this [Player].
+  /// Sets property for the internal libmpv instance of this [Player].
   /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
   ///
   /// See:
@@ -1642,25 +1715,9 @@ class libmpvPlayer extends PlatformPlayer {
               audio: audio,
               subtitle: subtitle,
             ),
-            // Remove selections which are not in the list anymore.
-            track: Track(
-              video: video.contains(state.track.video)
-                  ? state.track.video
-                  : VideoTrack.auto(),
-              audio: audio.contains(state.track.audio)
-                  ? state.track.audio
-                  : AudioTrack.auto(),
-              subtitle: subtitle.contains(state.track.subtitle)
-                  ? state.track.subtitle
-                  : SubtitleTrack.auto(),
-            ),
           );
-
           if (!tracksController.isClosed) {
             tracksController.add(state.tracks);
-          }
-          if (!trackController.isClosed) {
-            trackController.add(state.track);
           }
         }
       }
@@ -1712,9 +1769,20 @@ class libmpvPlayer extends PlatformPlayer {
               completedController.add(true);
             }
           }
-          state = state.copyWith(buffering: false);
+
+          state = state.copyWith(
+            buffering: false,
+            tracks: Tracks(),
+            track: Track(),
+          );
           if (!bufferingController.isClosed) {
             bufferingController.add(false);
+          }
+          if (!tracksController.isClosed) {
+            tracksController.add(Tracks());
+          }
+          if (!trackController.isClosed) {
+            trackController.add(Track());
           }
         }
       }
@@ -1922,7 +1990,7 @@ class libmpvPlayer extends PlatformPlayer {
 
   Future<void> _create() {
     return lock.synchronized(() async {
-      // The libmpv options which must be set before [MPV.mpv_initialize].
+      // The options which must be set before [MPV.mpv_initialize].
       final options = <String, String>{};
 
       if (Platform.isAndroid &&
@@ -2011,6 +2079,12 @@ class libmpvPlayer extends PlatformPlayer {
           'secondary-sub-visibility': configuration.libass ? 'yes' : 'no',
         },
       );
+
+      if (test) {
+        properties['vo'] = 'null';
+        properties['ao'] = 'null';
+      }
+
       for (final property in properties.entries) {
         final name = property.key.toNativeUtf8();
         final value = property.value.toNativeUtf8();
@@ -2151,9 +2225,9 @@ class libmpvPlayer extends PlatformPlayer {
   static final HashMap<String, double> audioBitrateCache =
       HashMap<String, double>();
 
-  /// Whether `mpv_terminate_destroy` should be called in [dispose].
+  /// Whether the [NativePlayer] is initialized for unit-testing.
   @visibleForTesting
-  static bool terminate = true;
+  static bool test = false;
 }
 
 // --------------------------------------------------
@@ -2165,19 +2239,19 @@ class libmpvPlayer extends PlatformPlayer {
 
 class _ScreenshotData {
   final int ctx;
-  final String libmpv;
+  final String lib;
   final String format;
 
   _ScreenshotData(
     this.ctx,
-    this.libmpv,
+    this.lib,
     this.format,
   );
 }
 
 Uint8List? _screenshot(_ScreenshotData data) {
   // ---------
-  final mpv = generated.MPV(DynamicLibrary.open(data.libmpv));
+  final mpv = generated.MPV(DynamicLibrary.open(data.lib));
   final ctx = Pointer<generated.mpv_handle>.fromAddress(data.ctx);
   // ---------
   final format = data.format;

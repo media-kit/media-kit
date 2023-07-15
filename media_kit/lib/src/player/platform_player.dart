@@ -366,17 +366,17 @@ abstract class PlatformPlayer {
 ///
 /// {@endtemplate}
 class PlayerConfiguration {
-  /// Sets the video output driver for libmpv backend.
+  /// Sets the video output driver for native backend.
   ///
   /// Default: `null`.
   final String? vo;
 
-  /// Enables on-screen controls for libmpv backend.
+  /// Enables on-screen controls for native backend.
   ///
   /// Default: `false`.
   final bool osc;
 
-  /// Enables or disables pitch shift control for libmpv backend.
+  /// Enables or disables pitch shift control for native backend.
   ///
   /// Enabling this option may result in de-syncing of audio & video.
   /// Thus, usage in audio only applications is recommended.
@@ -387,7 +387,7 @@ class PlayerConfiguration {
   /// Default: `false`.
   final bool pitch;
 
-  /// Sets the name of the underlying window & process for libmpv backend.
+  /// Sets the name of the underlying window & process for native backend.
   /// This is visible inside the Windows' volume mixer.
   ///
   /// Default: `null`.
@@ -398,28 +398,28 @@ class PlayerConfiguration {
   /// Default: `null`.
   final void Function()? ready;
 
-  /// Whether to use [libass](https://github.com/libass/libass) based subtitle rendering for libmpv backend.
+  /// Whether to use [libass](https://github.com/libass/libass) based subtitle rendering for native backend.
   ///
-  /// By default, subtitles rendering is Flutter `Widget` based. Enabling this option will render subtitles using [libass](https://github.com/libass/libass).
+  /// By default, subtitles rendering is Flutter `Widget` based.
   ///
   /// On Android, this option requires [libassAndroidFont] to be set.
   final bool libass;
 
-  /// The asset name of the `.ttf` font file to be used for [libass](https://github.com/libass/libass) based subtitle rendering on Android.
+  /// Asset name of the `.ttf` font file to be used for [libass](https://github.com/libass/libass) based subtitle rendering on Android.
   ///
   /// e.g. `assets/fonts/subtitle.ttf`
   final String? libassAndroidFont;
 
-  /// Sets the log level on libmpv backend.
+  /// Sets the log level on native backend.
   /// Default: `none`.
   final MPVLogLevel logLevel;
 
-  /// Sets the demuxer cache size (in bytes) for libmpv backend.
+  /// Sets the demuxer cache size (in bytes) for native backend.
   ///
   /// Default: `32` MB or `32 * 1024 * 1024` bytes.
   final int bufferSize;
 
-  /// Sets the list of allowed protocols for libmpv backend.
+  /// Sets the list of allowed protocols for native backend.
   ///
   /// Default: `['file', 'tcp', 'tls', 'http', 'https', 'crypto', 'data']`.
   ///
@@ -453,7 +453,7 @@ class PlayerConfiguration {
 ///
 /// MPVLogLevel
 /// --------------------
-/// Options to customise the [Player] libmpv backend log level.
+/// Options to customise the [Player] native backend log level.
 ///
 /// {@endtemplate}
 enum MPVLogLevel {
