@@ -2898,8 +2898,15 @@ void main() {
   test(
     'player-external-set-subtitle-track',
     () async {
-      final player = Player();
+      final player = Player(
+        configuration: const PlayerConfiguration(
+          logLevel: MPVLogLevel.v,
+        ),
+      );
 
+      player.stream.log.listen((event) {
+        print(event);
+      });
       player.stream.track.listen((event) {
         print(event);
       });
