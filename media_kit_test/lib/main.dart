@@ -98,7 +98,7 @@ class PrimaryScreen extends StatelessWidget {
               );
             },
           ),
-          if (UniversalPlatform.isWeb)
+          if (!UniversalPlatform.isWeb)
             ListTile(
               title: const Text(
                 'single_player_multiple_video.dart',
@@ -172,7 +172,7 @@ class PrimaryScreen extends StatelessWidget {
               paintFirstFrame(context);
             },
           ),
-          if (UniversalPlatform.isWeb)
+          if (!UniversalPlatform.isWeb)
             ListTile(
               title: const Text(
                 'video_controller_set_size.dart',
@@ -188,7 +188,7 @@ class PrimaryScreen extends StatelessWidget {
                 );
               },
             ),
-          if (UniversalPlatform.isWeb)
+          if (!UniversalPlatform.isWeb)
             ListTile(
               title: const Text(
                 'screenshot.dart',
