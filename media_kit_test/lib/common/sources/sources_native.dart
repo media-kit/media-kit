@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart' as path;
 
 /// List of sample videos available for playback.
@@ -17,6 +17,7 @@ Future<void> prepareSources() async {
   ];
   final directory = await path.getApplicationSupportDirectory();
   for (int i = 0; i < uris.length; i++) {
+    progress.value = 'Downloading sample video ${(i + 1)} of ${uris.length}...';
     final file = File(
       path.join(
         directory.path,
@@ -25,13 +26,17 @@ Future<void> prepareSources() async {
       ),
     );
     if (!await file.exists()) {
-      debugPrint('Downloading ${uris[i]}...');
       final response = await http.get(Uri.parse(uris[i]));
-      await file.create(recursive: true);
-      await file.writeAsBytes(response.bodyBytes);
+      if (response.statusCode == 200) {
+        await file.create(recursive: true);
+        await file.writeAsBytes(response.bodyBytes);
+        sources.add(file.path);
+      } else {
+        i--;
+      }
+    } else {
+      sources.add(file.path);
     }
-    debugPrint('Sample Video: ${file.path}');
-    sources.add(file.path);
   }
 }
 
@@ -39,3 +44,7 @@ String convertBytesToURL(Uint8List bytes) {
   // N/A
   throw UnimplementedError();
 }
+
+final ValueNotifier<String> progress = ValueNotifier<String>(
+  'Downloading sample video 1 of 5...',
+);

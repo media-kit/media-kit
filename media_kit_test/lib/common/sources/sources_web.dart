@@ -21,3 +21,7 @@ String convertBytesToURL(Uint8List bytes) {
   final object = html.Url.createObjectUrlFromBlob(blob);
   return object;
 }
+
+final ValueNotifier<String> progress = ValueNotifier<String>(
+  '',
+);

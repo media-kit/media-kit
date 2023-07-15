@@ -219,10 +219,23 @@ class DownloadingScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('package:media_kit'),
       ),
-      body: const Center(
-        child: Text(
-          'Downloading sample videos...',
-          style: TextStyle(fontSize: 14.0),
+      body: Center(
+        child: ValueListenableBuilder<String>(
+          valueListenable: progress,
+          child: const CircularProgressIndicator(),
+          builder: (context, progress, child) => Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              child!,
+              const SizedBox(height: 16.0),
+              Text(
+                progress,
+                style: const TextStyle(fontSize: 14.0),
+              ),
+            ],
+          ),
         ),
       ),
     );
