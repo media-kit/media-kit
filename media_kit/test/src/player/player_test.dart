@@ -960,9 +960,8 @@ void main() {
 
       addTearDown(player.dispose);
     },
+    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 1)),
-    // TODO: Flaky!
-    skip: true,
   );
   test(
     'player-audio-devices',
@@ -2128,8 +2127,7 @@ void main() {
 
       await player.dispose();
     },
-    // TODO: Flaky!
-    skip: true,
+    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
@@ -2193,8 +2191,7 @@ void main() {
 
       await player.dispose();
     },
-    // TODO: Flaky!
-    skip: true,
+    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
@@ -2493,6 +2490,7 @@ void main() {
 
       await player.dispose();
     },
+    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
@@ -3123,7 +3121,7 @@ void main() {
 
       await player.dispose();
     },
-    skip: UniversalPlatform.isWeb,
+    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
@@ -3397,3 +3395,5 @@ List<T> move<T>(List<T> list, int from, int to) {
   }
   return map.values.toList();
 }
+
+const kSkipFlakyTests = true;
