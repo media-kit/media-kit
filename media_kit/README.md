@@ -1048,7 +1048,7 @@ CupertinoVideoControlsTheme(
 This guide follows a tutorial-like structure & covers nearly all features that [package:media_kit](https://github.com/alexmercerind/media_kit) offers. However, it is _not complete_ by any means. You are free to improve this page & add more documentation, which newcomers may find helpful. The following places can help you learn more:
 
 - [API reference](https://pub.dev/documentation/media_kit/latest/media_kit/media_kit-library.html) can be helpful for diving into deeper specifics.
-- [source-code of the demo application](https://github.com/alexmercerind2/media_kit-private/tree/main/media_kit_test/lib/tests) offers some complete code samples.
+- [source-code of the demo application](https://github.com/alexmercerind/media_kit/tree/main/media_kit_test/lib/tests) offers some complete code samples.
 - In-code comments & docstrings happen to be the most updated source of knowledge.
 
 ## Goals
