@@ -1885,8 +1885,6 @@ class NativePlayer extends PlatformPlayer {
               errorController.add(text);
             }
           }
-        }
-        if (level == 'error') {
           if (prefix == 'ffmpeg') {
             if (text.startsWith('tcp:')) {
               // http:// error of any kind.
@@ -1895,9 +1893,12 @@ class NativePlayer extends PlatformPlayer {
               }
             }
           }
-        }
-        if (level == 'error') {
-          if (prefix == 'cplayer') {
+          if (prefix == 'vd') {
+            if (!errorController.isClosed) {
+              errorController.add(text);
+            }
+          }
+          if (prefix == 'ad') {
             if (!errorController.isClosed) {
               errorController.add(text);
             }
