@@ -108,6 +108,9 @@ class SubtitleViewState extends State<SubtitleView> {
 /// Configurable options for customizing the [SubtitleView] behaviour.
 /// {@endtemplate}
 class SubtitleViewConfiguration {
+  /// Whether the subtitles should be visible or not.
+  final bool visible;
+
   /// The text style to be used for the subtitles.
   final TextStyle style;
 
@@ -119,6 +122,7 @@ class SubtitleViewConfiguration {
 
   /// {@macro subtitle_view_configuration}
   const SubtitleViewConfiguration({
+    this.visible = true,
     this.style = const TextStyle(
       height: 1.4,
       fontSize: 24.0,

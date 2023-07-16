@@ -218,7 +218,8 @@ class VideoState extends State<Video> {
               ),
             ),
           ),
-          if (!(controller.player.platform?.configuration.libass ?? false))
+          if (subtitleViewConfiguration.visible &&
+              !(controller.player.platform?.configuration.libass ?? false))
             SubtitleView(
               controller: controller,
               key: subtitleViewKey,
