@@ -249,4 +249,37 @@ void main() {
     },
     skip: !UniversalPlatform.isWeb,
   );
+  test(
+    'media-finalizer',
+    () async {
+      Media.cache.clear();
+
+      for (int i = 0; i < 2; i++) {
+        if (i == 0) {
+          Media(
+            sources.platform.first,
+            extras: {
+              'foo': 'bar',
+              'baz': 'qux',
+            },
+            httpHeaders: {
+              'key_0': 'value_0',
+              'key_1': 'value_1',
+            },
+          );
+          await Future.delayed(Duration(seconds: 5));
+        }
+        if (i == 1) {
+          final playable = Media(sources.platform.first);
+
+          print(playable.extras);
+          print(playable.httpHeaders);
+
+          expect(playable.extras, isNull);
+          expect(playable.httpHeaders, isNull);
+        }
+      }
+    },
+    skip: UniversalPlatform.isWeb,
+  );
 }
