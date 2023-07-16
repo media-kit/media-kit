@@ -153,6 +153,10 @@ class NativePlayer extends PlatformPlayer {
         index = -1;
       }
 
+      // Keep these [Media] objects in memory.
+      current.clear();
+      current.addAll(playlist);
+
       final commands = [
         // Clear existing playlist & change currently playing index to none.
         // This causes playback to stop & player to enter the idle state.
@@ -510,6 +514,9 @@ class NativePlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      // Keep this [Media] object in memory.
+      current.add(media);
 
       final command = 'loadfile ${media.uri} append'.toNativeUtf8();
       mpv.mpv_command_string(
@@ -2212,6 +2219,13 @@ class NativePlayer extends PlatformPlayer {
   ///
   /// This is used to prevent [state.buffering] being set to `true` when [pause] or [playOrPause] is called.
   bool isBufferingStateChangeAllowed = true;
+
+  /// Currently loaded [Media]s.
+  /// This is used to prevent additional data stored in [Media] from being garbage collected.
+  ///
+  /// In summary, after loading a [Media] uri into libmpv, `track-list` is used to observe any changes & notify event [Stream].
+  /// When receiving `track-list`, the URIs are looked up internally to fetch [Media.extras] & [Media.httpHeaders] etc.
+  final HashSet<Media> current = HashSet<Media>();
 
   /// [Completer] to wait for initialization of this instance (in [_create]).
   final Completer<void> completer = Completer<void>();
