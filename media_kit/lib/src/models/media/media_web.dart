@@ -3,6 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// ignore_for_file: library_private_types_in_public_api
 import 'dart:collection';
 
 import 'package:media_kit/src/models/playable.dart';
@@ -22,6 +23,19 @@ import 'package:media_kit/src/models/playable.dart';
 ///
 /// {@endtemplate}
 class Media extends Playable {
+  /// The [Finalizer] is invoked when the [Media] instance is garbage collected.
+  /// This has been done to:
+  /// 1. Evict the [Media] instance from [cache].
+  /// 2. Close the file descriptor created by [AndroidContentUriProvider] to handle content:// URIs on Android.
+  static final Finalizer<String> _finalizer = Finalizer<String>((uri) async {
+    // Decrement reference count.
+    ref[uri] = ((ref[uri] ?? 0) - 1).clamp(0, 1 << 32);
+    // Remove [Media] instance from [cache] if reference count is 0.
+    if (ref[uri] == 0) {
+      cache.remove(uri);
+    }
+  });
+
   /// URI of the [Media].
   final String uri;
 
@@ -47,7 +61,15 @@ class Media extends Playable {
     if (httpHeaders != null) {
       throw UnsupportedError('HTTP headers are not supported on web');
     }
-    cache[uri] = this;
+    // Increment reference count.
+    ref[uri] = ((ref[uri] ?? 0) + 1).clamp(0, 1 << 32);
+    // Store [this] instance in [cache].
+    cache[uri] = _MediaCache(
+      extras: extras,
+      httpHeaders: httpHeaders,
+    );
+    // Attach [this] instance to [Finalizer].
+    _finalizer.attach(this, uri);
   }
 
   /// Normalizes the passed URI.
@@ -91,5 +113,30 @@ class Media extends Playable {
 
   /// Previously created [Media] instances.
   /// This [HashMap] is used to retrieve previously set [extras] & [httpHeaders].
-  static final HashMap<String, Media> cache = HashMap<String, Media>();
+  static final HashMap<String, _MediaCache> cache =
+      HashMap<String, _MediaCache>();
+
+  /// Previously created [Media] instances' reference count.
+  static final HashMap<String, int> ref = HashMap<String, int>();
+}
+
+/// {@template _media_cache}
+/// A simple class to pack optional arguments in [Media] together.
+/// {@endtemplate}
+class _MediaCache {
+  /// Additional optional user data.
+  ///
+  /// Default: `null`.
+  final Map<String, dynamic>? extras;
+
+  /// HTTP headers.
+  ///
+  /// Default: `null`.
+  final Map<String, String>? httpHeaders;
+
+  /// {@macro _media_cache}
+  const _MediaCache({
+    this.extras,
+    this.httpHeaders,
+  });
 }

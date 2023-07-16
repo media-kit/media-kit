@@ -197,7 +197,7 @@ class AndroidVideoController extends PlatformVideoController {
             ? {
                 // H/W decoding & rendering with --vo=gpu + --hwdec=mediacodec-copy.
                 'vo': 'gpu',
-                'hwdec': 'mediacodec-copy',
+                'hwdec': 'mediacodec',
                 'opengl-es': 'yes',
                 'force-window': 'yes',
                 'gpu-context': 'android',

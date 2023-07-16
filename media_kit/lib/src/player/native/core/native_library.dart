@@ -23,12 +23,22 @@ abstract class NativeLibrary {
   /// This method discovers & loads the libmpv shared library. It is generally present with the name `libmpv-2.dll` on Windows & `libmpv.so` on GNU/Linux.
   /// The [libmpv] parameter can be used to manually specify the path to the libmpv shared library.
   static void ensureInitialized({String? libmpv}) {
+    // Attempt to load [libmpv] argument.
     if (libmpv != null) {
       DynamicLibrary.open(libmpv);
       _resolved = libmpv;
       return;
     }
-
+    // Attempt to load [LIBMPV_LIBRARY_PATH] environment variable.
+    try {
+      final env = Platform.environment['LIBMPV_LIBRARY_PATH'];
+      if (env != null) {
+        DynamicLibrary.open(env);
+        _resolved = env;
+        return;
+      }
+    } catch (_) {}
+    // Attempt to load default names.
     final names = {
       'windows': [
         'libmpv-2.dll',
@@ -77,7 +87,7 @@ abstract class NativeLibrary {
       }
     } else {
       throw Exception(
-        'Unsupported operating system: ${Platform.operatingSystem}.',
+        'Unsupported operating system: ${Platform.operatingSystem}',
       );
     }
   }

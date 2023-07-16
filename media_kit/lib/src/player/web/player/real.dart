@@ -3,7 +3,6 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-// ignore_for_file: camel_case_types
 import 'dart:async';
 import 'dart:convert';
 import 'dart:js' as js;
@@ -16,12 +15,16 @@ import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
 
+import 'package:media_kit/src/player/web/utils/duration.dart';
+
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/player_state.dart';
+import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/video_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 
 /// Initializes the web backend for package:media_kit.
@@ -45,7 +48,7 @@ class WebPlayer extends PlatformPlayer {
         // Do not add autoplay=false attribute: https://stackoverflow.com/a/19664804/12825435
         /* ..autoplay = false */
         ..controls = false
-        ..muted = muted
+        ..muted = test
         ..style.width = '100%'
         ..style.height = '100%'
         ..style.border = 'none'
@@ -100,7 +103,7 @@ class WebPlayer extends PlatformPlayer {
           // PlayerState.state.completed & PlayerState.stream.completed
           // PlayerState.state.buffering & PlayerState.stream.buffering
 
-          // A minimal quirk to match the native backend behavior.
+          // A minimal quirk to match the NativePlayer behavior.
           state = state.copyWith(
             buffering: true,
           );
@@ -122,6 +125,13 @@ class WebPlayer extends PlatformPlayer {
           if (!bufferingController.isClosed) {
             bufferingController.add(false);
           }
+
+          element.children.clear();
+          state = state.copyWith(track: Track());
+          if (!trackController.isClosed) {
+            trackController.add(Track());
+          }
+
           // PlayerState.state.playlist.index & PlayerState.stream.playlist.index
           switch (_playlistMode) {
             case PlaylistMode.none:
@@ -166,19 +176,26 @@ class WebPlayer extends PlatformPlayer {
       element.onTimeUpdate.listen((_) {
         lock.synchronized(() async {
           // PlayerState.state.position & PlayerState.stream.position
-          final value = element.currentTime * 1000 ~/ 1;
-          final position = Duration(milliseconds: value);
-          state = state.copyWith(position: position);
-          if (!positionController.isClosed) {
-            positionController.add(position);
-          }
-          // PlayerState.state.buffer & PlayerState.stream.buffer
-          final i = element.buffered.length - 1;
-          if (i >= 0) {
-            final value = element.buffered.end(i) * 1000 ~/ 1;
-            final buffer = Duration(milliseconds: value);
-            if (!bufferController.isClosed) {
-              bufferController.add(buffer);
+          final position = convertNumVideoDurationToPluginDuration(
+            element.currentTime,
+          );
+          if (position != null) {
+            state = state.copyWith(position: position);
+            if (!positionController.isClosed) {
+              positionController.add(position);
+            }
+            // PlayerState.state.buffer & PlayerState.stream.buffer
+            final i = element.buffered.length - 1;
+            if (i >= 0) {
+              final buffer = convertNumVideoDurationToPluginDuration(
+                element.buffered.end(i),
+              );
+              if (buffer != null) {
+                state = state.copyWith(buffer: buffer);
+                if (!bufferController.isClosed) {
+                  bufferController.add(buffer);
+                }
+              }
             }
           }
         });
@@ -186,11 +203,14 @@ class WebPlayer extends PlatformPlayer {
       element.onDurationChange.listen((_) {
         lock.synchronized(() async {
           // PlayerState.state.duration & PlayerState.stream.duration
-          final value = element.duration * 1000 ~/ 1;
-          final duration = Duration(milliseconds: value);
-          state = state.copyWith(duration: duration);
-          if (!durationController.isClosed) {
-            durationController.add(duration);
+          final duration = convertNumVideoDurationToPluginDuration(
+            element.duration,
+          );
+          if (duration != null) {
+            state = state.copyWith(duration: duration);
+            if (!durationController.isClosed) {
+              durationController.add(duration);
+            }
           }
         });
       });
@@ -295,6 +315,35 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      // To match NativePlayer behavior.
+
+      await pause(synchronized: false);
+
+      state = state.copyWith(
+        track: state.track.copyWith(
+          video: VideoTrack.no(),
+        ),
+      );
+      if (!trackController.isClosed) {
+        trackController.add(state.track);
+      }
+      state = state.copyWith(
+        track: state.track.copyWith(
+          audio: AudioTrack.no(),
+        ),
+      );
+      if (!trackController.isClosed) {
+        trackController.add(state.track);
+      }
+      state = state.copyWith(
+        track: state.track.copyWith(
+          subtitle: SubtitleTrack.no(),
+        ),
+      );
+      if (!trackController.isClosed) {
+        trackController.add(state.track);
+      }
 
       disposed = true;
 
@@ -416,6 +465,12 @@ class WebPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
+      element.children.clear();
+      state = state.copyWith(track: Track());
+      if (!trackController.isClosed) {
+        trackController.add(Track());
+      }
+
       element
         ..src = ''
         ..load();
@@ -466,18 +521,21 @@ class WebPlayer extends PlatformPlayer {
       // if (!playlistModeController.isClosed) {
       //   playlistModeController.add(PlaylistMode.none);
       // }
-      // if (!audioParamsController.isClosed) {
-      //   audioParamsController.add(const AudioParams());
-      // }
-      // if (!audioBitrateController.isClosed) {
-      //   audioBitrateController.add(null);
-      // }
-      if (!audioDeviceController.isClosed) {
-        audioDeviceController.add(AudioDevice.auto());
+      if (!audioParamsController.isClosed) {
+        audioParamsController.add(const AudioParams());
       }
-      if (!audioDevicesController.isClosed) {
-        audioDevicesController.add([AudioDevice.auto()]);
+      if (!videoParamsController.isClosed) {
+        videoParamsController.add(const VideoParams());
       }
+      if (!audioBitrateController.isClosed) {
+        audioBitrateController.add(null);
+      }
+      // if (!audioDeviceController.isClosed) {
+      //   audioDeviceController.add(AudioDevice.auto());
+      // }
+      // if (!audioDevicesController.isClosed) {
+      //   audioDevicesController.add([AudioDevice.auto()]);
+      // }
       if (!trackController.isClosed) {
         trackController.add(Track());
       }
@@ -489,6 +547,9 @@ class WebPlayer extends PlatformPlayer {
       }
       if (!heightController.isClosed) {
         heightController.add(null);
+      }
+      if (!subtitleController.isClosed) {
+        subtitleController.add(['', '']);
       }
     }
 
@@ -637,6 +698,12 @@ class WebPlayer extends PlatformPlayer {
       else if (_index == index &&
           _playlist.length - 1 == index &&
           _playlistMode == PlaylistMode.loop) {
+        element.children.clear();
+        state = state.copyWith(track: Track());
+        if (!trackController.isClosed) {
+          trackController.add(Track());
+        }
+
         _index = 0;
         element.src = _playlist[_index].uri;
         await play(synchronized: false);
@@ -708,6 +775,12 @@ class WebPlayer extends PlatformPlayer {
           playlistController.add(state.playlist);
         }
 
+        element.children.clear();
+        state = state.copyWith(track: Track());
+        if (!trackController.isClosed) {
+          trackController.add(Track());
+        }
+
         element.src = _playlist[_index].uri;
         await play(synchronized: false);
 
@@ -775,6 +848,12 @@ class WebPlayer extends PlatformPlayer {
           playlistController.add(state.playlist);
         }
 
+        element.children.clear();
+        state = state.copyWith(track: Track());
+        if (!trackController.isClosed) {
+          trackController.add(Track());
+        }
+
         element.src = _playlist[_index].uri;
         await play(synchronized: false);
 
@@ -834,6 +913,12 @@ class WebPlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
 
       _index = index;
+
+      element.children.clear();
+      state = state.copyWith(track: Track());
+      if (!trackController.isClosed) {
+        trackController.add(Track());
+      }
 
       element.src = _playlist[_index].uri;
       await play(synchronized: false);
@@ -1134,7 +1219,9 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      throw UnsupportedError('[Player.setVideoTrack] is not supported on web');
+      throw UnsupportedError(
+        '[Player.setVideoTrack] is not supported on web',
+      );
     }
 
     if (synchronized) {
@@ -1155,7 +1242,23 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      throw UnsupportedError('[Player.setAudioTrack] is not supported on web');
+
+      if (track.external) {
+        element.children.removeWhere((e) => e is html.SourceElement);
+
+        final child = html.SourceElement();
+        child.src = track.id;
+        element.append(child);
+
+        state = state.copyWith(track: state.track.copyWith(audio: track));
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
+      } else {
+        throw UnsupportedError(
+          '[Player.setAudioTrack] is only supported with [AudioTrack.external] on web',
+        );
+      }
     }
 
     if (synchronized) {
@@ -1176,8 +1279,81 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      throw UnsupportedError(
-          '[Player.setSubtitleTrack] is not supported on web');
+
+      if (track.external) {
+        element.children.removeWhere((e) => e is html.TrackElement);
+
+        final child = html.TrackElement();
+
+        // Support loading for subtitles as URL or raw string.
+        Uri? uri;
+        if (track.id.length < 4096) {
+          try {
+            uri = Uri.parse(track.id);
+          } catch (_) {}
+        }
+        if (uri != null) {
+          child.src = uri.toString();
+        } else {
+          final src = html.Url.createObjectUrlFromBlob(html.Blob([track.id]));
+          child.src = src;
+
+          // Revoke the object URL after use i.e. upon [dispose].
+          release.add(() async {
+            html.Url.revokeObjectUrl(src);
+          });
+        }
+
+        child.kind = 'subtitles';
+        child.label = track.title;
+        child.srclang = track.language;
+        element.append(child);
+
+        state = state.copyWith(track: state.track.copyWith(subtitle: track));
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
+
+        // To match NativePlayer behavior.
+        state = state.copyWith(subtitle: ['', '']);
+        if (!subtitleController.isClosed) {
+          subtitleController.add(['', '']);
+        }
+
+        final tracks = element.textTracks?.toList() ?? <html.TextTrack>[];
+        tracks.first.mode = 'hidden';
+        tracks.first.onCueChange.listen((_) {
+          try {
+            final data = tracks.first.activeCues?.map((e) {
+              final text = (e as dynamic).text as String;
+              return text
+                  .replaceAll(RegExp('<[^>]*>'), ' ')
+                  .replaceAll(RegExp('\\s+'), ' ')
+                  .trim();
+            }).toList();
+            if (data != null) {
+              final subtitle = ['', ''];
+              if (data.length == 1) {
+                subtitle[0] = data[0];
+              } else if (data.length == 2) {
+                subtitle[0] = data[0];
+                subtitle[1] = data.skip(1).join('\n');
+              }
+              state = state.copyWith(subtitle: subtitle);
+              if (!subtitleController.isClosed) {
+                subtitleController.add(subtitle);
+              }
+            }
+          } catch (exception, stacktrace) {
+            print(exception);
+            print(stacktrace);
+          }
+        });
+      } else {
+        throw UnsupportedError(
+          '[Player.setSubtitleTrack] is only supported with [SubtitleTrack.external] on web',
+        );
+      }
     }
 
     if (synchronized) {
@@ -1286,7 +1462,7 @@ class WebPlayer extends PlatformPlayer {
   /// JavaScript object attribute used to store the instance count of [Player] in [js.context].
   static const kInstanceCount = '\$com.alexmercerind.media_kit.instance_count';
 
-  /// Whether the `<video>` element should have muted attribute or not.
+  /// Whether the [WebPlayer] is initialized for unit-testing.
   @visibleForTesting
-  static bool muted = false;
+  static bool test = false;
 }

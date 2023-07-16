@@ -58,48 +58,48 @@ task downloadDependencies(type: Exec) {
     
     // Download all *.jar dependencies & verify their MD5 checksums.
 
-    def urlARM64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.10/video-arm64-v8a.jar"
-    def urlARMEABI = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.10/video-armeabi-v7a.jar"
-    def urlX86_64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.10/video-x86_64.jar"
-    def urlX86 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.10/video-x86.jar"
+    def urlDefaultARM64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/default-arm64-v8a.jar"
+    def urlDefaultARMEABI = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/default-armeabi-v7a.jar"
+    def urlDefaultX86_64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/default-x86_64.jar"
+    def urlDefaultX86 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/default-x86.jar"
 
-    def urlNoFFmpegARM64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.10/no-ffmpeg-video-arm64-v8a.jar"
-    def urlNoFFmpegARMEABI = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.10/no-ffmpeg-video-armeabi-v7a.jar"
-    def urlNoFFmpegX86_64 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.10/no-ffmpeg-video-x86_64.jar"
-    def urlNoFFmpegX86 = "https://github.com/media-kit/android-dependencies/releases/download/v0.0.10/no-ffmpeg-video-x86.jar"
+    def urlNoFFmpegARM64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/no-ffmpeg-arm64-v8a.jar"
+    def urlNoFFmpegARMEABI = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/no-ffmpeg-armeabi-v7a.jar"
+    def urlNoFFmpegX86_64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/no-ffmpeg-x86_64.jar"
+    def urlNoFFmpegX86 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/no-ffmpeg-x86.jar"
 
-    def destARM64 = file("$buildDir/v0.0.10/video-arm64-v8a.jar")
-    def destARMEABI = file("$buildDir/v0.0.10/video-armeabi-v7a.jar")
-    def destX86_64 = file("$buildDir/v0.0.10/video-x86_64.jar")
-    def destX86 = file("$buildDir/v0.0.10/video-x86.jar")
+    def destDefaultARM64 = file("$buildDir/v1.0.0/default-arm64-v8a.jar")
+    def destDefaultARMEABI = file("$buildDir/v1.0.0/default-armeabi-v7a.jar")
+    def destDefaultX86_64 = file("$buildDir/v1.0.0/default-x86_64.jar")
+    def destDefaultX86 = file("$buildDir/v1.0.0/default-x86.jar")
     
-    def destNoFFmpegARM64 = file("$buildDir/v0.0.10/no-ffmpeg-video-arm64-v8a.jar")
-    def destNoFFmpegARMEABI = file("$buildDir/v0.0.10/no-ffmpeg-video-armeabi-v7a.jar")
-    def destNoFFmpegX86_64 = file("$buildDir/v0.0.10/no-ffmpeg-video-x86_64.jar")
-    def destNoFFmpegX86 = file("$buildDir/v0.0.10/no-ffmpeg-video-x86.jar")
+    def destNoFFmpegARM64 = file("$buildDir/v1.0.0/no-ffmpeg-arm64-v8a.jar")
+    def destNoFFmpegARMEABI = file("$buildDir/v1.0.0/no-ffmpeg-armeabi-v7a.jar")
+    def destNoFFmpegX86_64 = file("$buildDir/v1.0.0/no-ffmpeg-x86_64.jar")
+    def destNoFFmpegX86 = file("$buildDir/v1.0.0/no-ffmpeg-x86.jar")
 
-    if (!destARM64.exists()) {
-        destARM64.parentFile.mkdirs()
-        destARM64.withOutputStream { os ->
-            os << new URL(urlARM64).openStream()
+    if (!destDefaultARM64.exists()) {
+        destDefaultARM64.parentFile.mkdirs()
+        destDefaultARM64.withOutputStream { os ->
+            os << new URL(urlDefaultARM64).openStream()
         }
     }
-    if (!destARMEABI.exists()) {
-        destARMEABI.parentFile.mkdirs()
-        destARMEABI.withOutputStream { os ->
-            os << new URL(urlARMEABI).openStream()
+    if (!destDefaultARMEABI.exists()) {
+        destDefaultARMEABI.parentFile.mkdirs()
+        destDefaultARMEABI.withOutputStream { os ->
+            os << new URL(urlDefaultARMEABI).openStream()
         }
     }
-    if (!destX86_64.exists()) {
-        destX86_64.parentFile.mkdirs()
-        destX86_64.withOutputStream { os ->
-            os << new URL(urlX86_64).openStream()
+    if (!destDefaultX86_64.exists()) {
+        destDefaultX86_64.parentFile.mkdirs()
+        destDefaultX86_64.withOutputStream { os ->
+            os << new URL(urlDefaultX86_64).openStream()
         }
     }
-    if (!destX86.exists()) {
-        destX86.parentFile.mkdirs()
-        destX86.withOutputStream { os ->
-            os << new URL(urlX86).openStream()
+    if (!destDefaultX86.exists()) {
+        destDefaultX86.parentFile.mkdirs()
+        destDefaultX86.withOutputStream { os ->
+            os << new URL(urlDefaultX86).openStream()
         }
     }
 
@@ -131,73 +131,74 @@ task downloadDependencies(type: Exec) {
         }
     }
 
-    def md5ARM64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destARM64.toPath())).encodeHex().toString().toUpperCase()
-    def md5ARMEABI = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destARMEABI.toPath())).encodeHex().toString().toUpperCase()
-    def md5X86_64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destX86_64.toPath())).encodeHex().toString().toUpperCase()
-    def md5X86 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destX86.toPath())).encodeHex().toString().toUpperCase()
+    def md5DefaultARM64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destDefaultARM64.toPath())).encodeHex().toString()
+    def md5DefaultARMEABI = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destDefaultARMEABI.toPath())).encodeHex().toString()
+    def md5DefaultX86_64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destDefaultX86_64.toPath())).encodeHex().toString()
+    def md5DefaultX86 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destDefaultX86.toPath())).encodeHex().toString()
     
-    def md5NoFFmpegARM64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegARM64.toPath())).encodeHex().toString().toUpperCase()
-    def md5NoFFmpegARMEABI = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegARMEABI.toPath())).encodeHex().toString().toUpperCase()
-    def md5NoFFmpegX86_64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegX86_64.toPath())).encodeHex().toString().toUpperCase()
-    def md5NoFFmpegX86 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegX86.toPath())).encodeHex().toString().toUpperCase()
+    def md5NoFFmpegARM64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegARM64.toPath())).encodeHex().toString()
+    def md5NoFFmpegARMEABI = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegARMEABI.toPath())).encodeHex().toString()
+    def md5NoFFmpegX86_64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegX86_64.toPath())).encodeHex().toString()
+    def md5NoFFmpegX86 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegX86.toPath())).encodeHex().toString()
 
-    if (md5ARM64 != "17B1D0D62CE359567C036A2CD7BC2D83") {
+    if (md5DefaultARM64 != "ec8ffd1010411913f58d4ce36d81cf4a") {
         throw new GradleException("media_kit: arm64-v8a JAR verification failed.")
     }
-    if (md5ARMEABI != "8A4FDA32EFF3D7A29EBDC1475DF629A2") {
+    if (md5DefaultARMEABI != "e600a59b4666206c4dde4a4a4976c2d0") {
         throw new GradleException("media_kit: armeabi-v7a JAR verification failed.")
     }
-    if (md5X86_64 != "3F40499935FA9A4A9867B032F4220A6B") {
+    if (md5DefaultX86_64 != "798dae67283f259e431982a29dc0e3a5") {
         throw new GradleException("media_kit: x86_64 JAR verification failed.")
     }
-    if (md5X86 != "F758C0319BDA3B08A272916769F5932C") {
+    if (md5DefaultX86 != "f3f9e4f50b9d5164f8b33e758110664d") {
         throw new GradleException("media_kit: x86 JAR verification failed.")
     }
 
-    if (md5NoFFmpegARM64 != "EBD535698F6A9A4A6324BD01635C9C3C") {
+    if (md5NoFFmpegARM64 != "ed77eae3cf16d17d15176431d3cc320b") {
         throw new GradleException("media_kit: arm64-v8a JAR verification failed.")
     }
-    if (md5NoFFmpegARMEABI != "E70640AEE1BA80EA59A2FC15DDC060B7") {
+    if (md5NoFFmpegARMEABI != "920d5acbe65de2a2890f78fc4eaf1800") {
         throw new GradleException("media_kit: armeabi-v7a JAR verification failed.")
     }
-    if (md5NoFFmpegX86_64 != "5A13556A2ADBC706E5FA470B937B5A0F") {
+    if (md5NoFFmpegX86_64 != "fc269db7baa48bf7484f5383f9f665bb") {
         throw new GradleException("media_kit: x86_64 JAR verification failed.")
     }
-    if (md5NoFFmpegX86 != "E5E9803859AC3C7317A1030C67033FE6") {
+    if (md5NoFFmpegX86 != "159281eb3da6c1e124451df47284be08") {
         throw new GradleException("media_kit: x86 JAR verification failed.")
     }
 
     // Check if package:ffmpeg_kit_flutter is present in pubspec.lock.
 
-    def ffmpeg = false;
+    def normal = true;
+
     def pubspec = file("$buildDir/../../pubspec.lock")
     if (!pubspec.exists()) {
         println "media_kit: WARNING: pubspec.lock not found."
     } else {
-        ffmpeg = pubspec.text.contains("ffmpeg_kit_flutter")
+        normal = !pubspec.text.contains("ffmpeg_kit_flutter")
     }
-    if (ffmpeg) {
+    if (!normal) {
         println "media_kit: package:ffmpeg_kit_flutter found..."
         println "media_kit: Skipping FFmpeg download..."
     }
 
     // Create a copy of the selected *.jar files to an /output subdirectory.
 
-    if (!ffmpeg) {
+    if (normal) {
         copy {
-            from destARM64
+            from destDefaultARM64
             into "$buildDir/output"
         }
         copy {
-            from destARMEABI
+            from destDefaultARMEABI
             into "$buildDir/output"
         }
         copy {
-            from destX86_64
+            from destDefaultX86_64
             into "$buildDir/output"
         }
         copy {
-            from destX86
+            from destDefaultX86
             into "$buildDir/output"
         }
     } else {

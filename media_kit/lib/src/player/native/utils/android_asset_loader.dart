@@ -8,7 +8,7 @@ import 'dart:collection';
 
 import 'package:media_kit/ffi/ffi.dart';
 
-import 'package:media_kit/src/utils/isolates.dart';
+import 'package:media_kit/src/player/native/utils/isolates.dart';
 
 /// {@template android_asset_loader}
 ///

@@ -116,6 +116,10 @@ void main() {
         );
         calloc.free(command);
       }
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      Initializer.dispose(handle);
     },
   );
   test(
@@ -154,6 +158,10 @@ void main() {
           dirname(Platform.script.toFilePath()),
         );
       }
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      Initializer.dispose(handle);
     },
   );
   test(
@@ -192,6 +200,10 @@ void main() {
           dirname(Platform.script.toFilePath()),
         );
       }
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      Initializer.dispose(handle);
     },
   );
 }

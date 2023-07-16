@@ -180,7 +180,7 @@ class PlayerState {
       'track: $track, '
       'tracks: $tracks, '
       'width: $width, '
-      'height: $height'
+      'height: $height, '
       'subtitle: $subtitle'
       ')';
 }

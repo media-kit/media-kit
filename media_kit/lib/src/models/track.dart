@@ -74,14 +74,48 @@ class VideoTrack extends _Track {
 /// This may be selected for output in [Player].
 /// {@endtemplate}
 class AudioTrack extends _Track {
+  /// Whether the audio track is external.
+  final bool external;
+
   /// {@macro audio_track}
-  const AudioTrack(super.id, super.title, super.language);
+  const AudioTrack(
+    super.id,
+    super.title,
+    super.language, [
+    this.external = false,
+  ]);
 
   /// No audio track. Disables audio output.
   factory AudioTrack.no() => AudioTrack('no', null, null);
 
   /// Default audio track. Selects the first audio track.
   factory AudioTrack.auto() => AudioTrack('auto', null, null);
+
+  /// External audio track. Selects the audio track with given [uri].
+  ///
+  /// This factory constructor may be used to load external audio.
+  ///
+  /// **NOTE:** External audio track is automatically unloaded upon playback completion.
+  factory AudioTrack.external(
+    String uri, {
+    String? title,
+    String? language,
+  }) =>
+      AudioTrack(uri, title, language, true);
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is AudioTrack) {
+      return id == other.id && external == other.external;
+    }
+    return false;
+  }
+
+  @override
+  int get hashCode => 0x3 ^ id.hashCode ^ external.hashCode;
 
   @override
   String toString() => 'AudioTrack($id, $title, $language)';
@@ -96,14 +130,48 @@ class AudioTrack extends _Track {
 /// This may be selected for output in [Player].
 /// {@endtemplate}
 class SubtitleTrack extends _Track {
+  /// Whether the subtitle track is external.
+  final bool external;
+
   /// {@macro subtitle_track}
-  const SubtitleTrack(super.id, super.title, super.language);
+  const SubtitleTrack(
+    super.id,
+    super.title,
+    super.language, [
+    this.external = false,
+  ]);
 
   /// No subtitle track. Disables subtitle output.
   factory SubtitleTrack.no() => SubtitleTrack('no', null, null);
 
   /// Default subtitle track. Selects the first subtitle track.
   factory SubtitleTrack.auto() => SubtitleTrack('auto', null, null);
+
+  /// External subtitle track. Selects the subtitle track with given [uri].
+  ///
+  /// This factory constructor may be used to load external subtitles e.g. SRT, WebVTT etc.
+  ///
+  /// **NOTE:** External audio track is automatically unloaded upon playback completion.
+  factory SubtitleTrack.external(
+    String uri, {
+    String? title,
+    String? language,
+  }) =>
+      SubtitleTrack(uri, title, language, true);
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is SubtitleTrack) {
+      return id == other.id && external == other.external;
+    }
+    return false;
+  }
+
+  @override
+  int get hashCode => 0x3 ^ id.hashCode ^ external.hashCode;
 
   @override
   String toString() => 'SubtitleTrack($id, $title, $language)';

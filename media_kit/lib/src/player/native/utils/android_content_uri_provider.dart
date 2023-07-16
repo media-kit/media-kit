@@ -8,7 +8,7 @@ import 'dart:collection';
 
 import 'package:media_kit/ffi/ffi.dart';
 
-import 'package:media_kit/src/utils/isolates.dart';
+import 'package:media_kit/src/player/native/utils/isolates.dart';
 
 /// {@template android_content_uri_provider}
 ///
@@ -61,21 +61,20 @@ abstract class AndroidContentUriProvider {
 
   /// Closes the file descriptor of the content:// URI.
   static Future<void> closeFileDescriptor(int fileDescriptor) async {
-    _loaded.removeWhere((key, value) => value == fileDescriptor);
     // Run on another [Isolate] to avoid blocking the UI.
     await compute(closeFileDescriptorSync, fileDescriptor);
+    _loaded.removeWhere((key, value) => value == fileDescriptor);
   }
 
   /// Closes the file descriptor of the content:// URI.
   static void closeFileDescriptorSync(int fileDescriptor) {
-    _loaded.removeWhere((key, value) => value == fileDescriptor);
     final lib = DynamicLibrary.open('libmediakitandroidhelper.so');
     final closeFileDescriptor =
         lib.lookupFunction<CloseFileDescriptorCXX, CloseFileDescriptorDart>(
       'MediaKitAndroidHelperCloseFileDescriptor',
     );
-
     closeFileDescriptor.call(fileDescriptor);
+    _loaded.removeWhere((key, value) => value == fileDescriptor);
   }
 
   /// Stores the file descriptors of previously loaded content:// URIs. This avoids redundant FFI calls.
