@@ -65,8 +65,8 @@ class Media extends Playable {
     ref[uri] = ((ref[uri] ?? 0) + 1).clamp(0, 1 << 32);
     // Store [this] instance in [cache].
     cache[uri] = _MediaCache(
-      extras: extras,
-      httpHeaders: httpHeaders,
+      extras: this.extras,
+      httpHeaders: this.httpHeaders,
     );
     // Attach [this] instance to [Finalizer].
     _finalizer.attach(this, uri);
@@ -139,4 +139,10 @@ class _MediaCache {
     this.extras,
     this.httpHeaders,
   });
+
+  @override
+  String toString() => '_MediaCache('
+      'extras: $extras, '
+      'httpHeaders: $httpHeaders'
+      ')';
 }

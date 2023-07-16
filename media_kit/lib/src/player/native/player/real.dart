@@ -2223,8 +2223,8 @@ class NativePlayer extends PlatformPlayer {
   /// Currently loaded [Media]s.
   /// This is used to prevent additional data stored in [Media] from being garbage collected.
   ///
-  /// In summary, after loading a [Media] uri into libmpv, `track-list` is used to observe any changes & notify event [Stream].
-  /// When receiving `track-list`, the URIs are looked up internally to fetch [Media.extras] & [Media.httpHeaders] etc.
+  /// In summary, after loading a [Media] uri into libmpv, `playlist` is used to observe any changes & notify event [Stream].
+  /// When receiving `playlist`, the URIs are looked up internally to fetch [Media.extras] & [Media.httpHeaders] etc.
   final HashSet<Media> current = HashSet<Media>();
 
   /// [Completer] to wait for initialization of this instance (in [_create]).

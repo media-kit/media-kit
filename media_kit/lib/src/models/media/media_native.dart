@@ -44,7 +44,7 @@ class Media extends Playable {
     if (Platform.isAndroid) {
       final data = Uri.parse(uri);
       if (data.isScheme('FD')) {
-        final fd = int.parse(data.pathSegments.last);
+        final fd = int.parse(data.authority);
         if (fd > 0) {
           await AndroidContentUriProvider.closeFileDescriptor(fd);
         }
@@ -78,8 +78,8 @@ class Media extends Playable {
     ref[uri] = ((ref[uri] ?? 0) + 1).clamp(0, 1 << 32);
     // Store [this] instance in [cache].
     cache[uri] = _MediaCache(
-      extras: extras,
-      httpHeaders: httpHeaders,
+      extras: this.extras,
+      httpHeaders: this.httpHeaders,
     );
     // Attach [this] instance to [Finalizer].
     _finalizer.attach(this, uri);
@@ -238,4 +238,10 @@ class _MediaCache {
     this.extras,
     this.httpHeaders,
   });
+
+  @override
+  String toString() => '_MediaCache('
+      'extras: $extras, '
+      'httpHeaders: $httpHeaders'
+      ')';
 }
