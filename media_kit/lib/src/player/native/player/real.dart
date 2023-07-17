@@ -2001,6 +2001,13 @@ class NativePlayer extends PlatformPlayer {
       // The options which must be set before [MPV.mpv_initialize].
       final options = <String, String>{};
 
+      // Disable video ouput by default, overwritten by [VideoController]
+      if (configuration.vo == 'null') {
+        options.addAll({
+          'vid': 'no',
+        });
+      }
+
       if (Platform.isAndroid &&
           configuration.libass &&
           configuration.libassAndroidFont != null) {

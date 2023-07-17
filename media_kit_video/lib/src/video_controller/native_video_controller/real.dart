@@ -77,6 +77,7 @@ class NativeVideoController extends PlatformVideoController {
     final values = {
       'vo': configuration.vo ?? 'libmpv',
       'hwdec': configuration.hwdec ?? 'auto',
+      'vid': 'auto',
     };
     for (final entry in values.entries) {
       final property = entry.key.toNativeUtf8();
