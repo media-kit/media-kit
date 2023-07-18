@@ -24,57 +24,64 @@ import 'package:media_kit/src/player/native/utils/isolates.dart';
 abstract class AndroidContentUriProvider {
   /// Returns the file descriptor of the content:// URI.
   static Future<int> openFileDescriptor(String uri) async {
-    if (_loaded.containsKey(uri)) {
-      return _loaded[uri]!;
+    final lookup = _loaded[uri];
+    if (lookup != null) {
+      return lookup;
     }
-
-    // Run on another [Isolate] to avoid blocking the UI.
-    final path = await compute(openFileDescriptorSync, uri);
-
-    _loaded[uri] = path;
-
-    return path;
+    final fileDescriptor = await compute(_openFileDescriptor, uri);
+    _loaded[uri] = fileDescriptor;
+    return fileDescriptor;
   }
 
   /// Returns the file descriptor of the content:// URI.
   static int openFileDescriptorSync(String uri) {
-    if (_loaded.containsKey(uri)) {
-      return _loaded[uri]!;
+    final lookup = _loaded[uri];
+    if (lookup != null) {
+      return lookup;
     }
-
-    final lib = DynamicLibrary.open('libmediakitandroidhelper.so');
-    final openFileDescriptor =
-        lib.lookupFunction<OpenFileDescriptorCXX, OpenFileDescriptorDart>(
-      'MediaKitAndroidHelperOpenFileDescriptor',
-    );
-
-    final name = uri.toNativeUtf8();
-
-    final fileDescriptor = openFileDescriptor.call(name.cast());
-
-    calloc.free(name);
-
+    final fileDescriptor = _openFileDescriptor(uri);
     _loaded[uri] = fileDescriptor;
-
     return fileDescriptor;
   }
 
   /// Closes the file descriptor of the content:// URI.
-  static Future<void> closeFileDescriptor(int fileDescriptor) async {
-    // Run on another [Isolate] to avoid blocking the UI.
-    await compute(closeFileDescriptorSync, fileDescriptor);
-    _loaded.removeWhere((key, value) => value == fileDescriptor);
+  static Future<void> closeFileDescriptor(String uri) async {
+    final lookup = _loaded[uri];
+    if (lookup != null) {
+      _loaded.remove(uri);
+      await compute(_closeFileDescriptor, lookup);
+    }
   }
 
   /// Closes the file descriptor of the content:// URI.
-  static void closeFileDescriptorSync(int fileDescriptor) {
+  static void closeFileDescriptorSync(String uri) {
+    final lookup = _loaded[uri];
+    if (lookup != null) {
+      _loaded.remove(uri);
+      _closeFileDescriptor(lookup);
+    }
+  }
+
+  /// The native implementation for [openFileDescriptor] & [openFileDescriptorSync].
+  static int _openFileDescriptor(String uri) {
     final lib = DynamicLibrary.open('libmediakitandroidhelper.so');
-    final closeFileDescriptor =
+    final fn =
+        lib.lookupFunction<OpenFileDescriptorCXX, OpenFileDescriptorDart>(
+      'MediaKitAndroidHelperOpenFileDescriptor',
+    );
+    final name = uri.toNativeUtf8();
+    final fileDescriptor = fn.call(name.cast());
+    return fileDescriptor;
+  }
+
+  /// The native implementation for [closeFileDescriptor] & [closeFileDescriptorSync].
+  static void _closeFileDescriptor(int fileDescriptor) {
+    final lib = DynamicLibrary.open('libmediakitandroidhelper.so');
+    final fn =
         lib.lookupFunction<CloseFileDescriptorCXX, CloseFileDescriptorDart>(
       'MediaKitAndroidHelperCloseFileDescriptor',
     );
-    closeFileDescriptor.call(fileDescriptor);
-    _loaded.removeWhere((key, value) => value == fileDescriptor);
+    fn.call(fileDescriptor);
   }
 
   /// Stores the file descriptors of previously loaded content:// URIs. This avoids redundant FFI calls.

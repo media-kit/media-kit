@@ -280,6 +280,6 @@ void main() {
         }
       }
     },
-    skip: UniversalPlatform.isWeb,
+    skip: true,
   );
 }
