@@ -65,11 +65,14 @@ class AndroidVideoController extends PlatformVideoController {
         if (event != null && event > 0) {
           w = event;
           if (w != -1 && h != -1) {
-            _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
-            // Notify about the first frame being rendered.
-            if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
-              waitUntilFirstFrameRenderedCompleter.complete();
-            }
+            _controller.add(
+              Rect.fromLTWH(
+                0.0,
+                0.0,
+                w.toDouble(),
+                h.toDouble(),
+              ),
+            );
             w = -1;
             h = -1;
           }
@@ -81,11 +84,14 @@ class AndroidVideoController extends PlatformVideoController {
         if (event != null && event > 0) {
           h = event;
           if (w != -1 && h != -1) {
-            _controller.add(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
-            // Notify about the first frame being rendered.
-            if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
-              waitUntilFirstFrameRenderedCompleter.complete();
-            }
+            _controller.add(
+              Rect.fromLTWH(
+                0.0,
+                0.0,
+                w.toDouble(),
+                h.toDouble(),
+              ),
+            );
             w = -1;
             h = -1;
           }
@@ -133,7 +139,12 @@ class AndroidVideoController extends PlatformVideoController {
           calloc.free(property);
           mpv.mpv_free(vo.cast());
 
-          await player.seek(player.state.position);
+          // Notify about the first frame being rendered.
+          if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+            // The first-time resize of the surface causes a glitchy frame to be rendered. Add a voluntary delay to avoid that.
+            await Future.delayed(const Duration(milliseconds: 50));
+            waitUntilFirstFrameRenderedCompleter.complete();
+          }
 
           // ----------------------------------------------
         } catch (exception, stacktrace) {
