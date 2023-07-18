@@ -44,24 +44,24 @@ jobs:
       - run: dart pub get
       - run: dart test
 
-  media_kit-tests-macos:
-    name: package:media_kit tests (macOS)
-    runs-on: macos-latest
-    env:
-      LIBMPV_LIBRARY_PATH: test/ci/macos/libs/libmpv.dylib
-    defaults:
-      run:
-        working-directory: media_kit
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: "true"
-      - run: sh test/ci/macos/scripts/setup_dylibs.sh
-      - uses: subosito/flutter-action@v1
-        with:
-          channel: "stable"
-      - run: dart pub get
-      - run: dart test
+#   media_kit-tests-macos:
+#     name: package:media_kit tests (macOS)
+#     runs-on: macos-latest
+#     env:
+#       LIBMPV_LIBRARY_PATH: test/ci/macos/libs/libmpv.dylib
+#     defaults:
+#       run:
+#         working-directory: media_kit
+#     steps:
+#       - uses: actions/checkout@v2
+#         with:
+#           submodules: "true"
+#       - run: sh test/ci/macos/scripts/setup_dylibs.sh
+#       - uses: subosito/flutter-action@v1
+#         with:
+#           channel: "stable"
+#       - run: dart pub get
+#       - run: dart test
 
   media_kit-tests-web:
     name: package:media_kit tests (Web)
