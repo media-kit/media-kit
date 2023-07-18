@@ -2163,43 +2163,46 @@ class NativePlayer extends PlatformPlayer {
       calloc.free(load);
       calloc.free(unload);
 
-      // Fetch available decoders in libavcodec.
-      // https://mpv.io/manual/stable/#command-interface-decoder-list
-      final decoders = HashSet<String>();
-      final name = 'decoder-list'.toNativeUtf8();
-      final data = calloc<generated.mpv_node>();
-      mpv.mpv_get_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_NODE,
-        data.cast(),
-      );
-      if (data.ref.format == generated.mpv_format.MPV_FORMAT_NODE_ARRAY) {
-        for (int i = 0; i < data.ref.u.list.ref.num; i++) {
-          final decoder = data.ref.u.list.ref.values[i];
-          if (decoder.format == generated.mpv_format.MPV_FORMAT_NODE_MAP) {
-            String? name;
-            for (int j = 0; j < decoder.u.list.ref.num; j++) {
-              final k = decoder.u.list.ref.keys[j].cast<Utf8>().toDartString();
-              final v = decoder.u.list.ref.values[j];
-              if (k == 'codec' &&
-                  v.format == generated.mpv_format.MPV_FORMAT_STRING) {
-                name ??= v.u.string.cast<Utf8>().toDartString();
+      // Query the list of available decoders in libavcodec & store result in static attribute [decoders].
+      // This prevents redundant native calls for subsequent [Player] instances.
+      if (decoders.isEmpty) {
+        final name = 'decoder-list'.toNativeUtf8();
+        final data = calloc<generated.mpv_node>();
+        mpv.mpv_get_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_NODE,
+          data.cast(),
+        );
+        if (data.ref.format == generated.mpv_format.MPV_FORMAT_NODE_ARRAY) {
+          for (int i = 0; i < data.ref.u.list.ref.num; i++) {
+            final decoder = data.ref.u.list.ref.values[i];
+            if (decoder.format == generated.mpv_format.MPV_FORMAT_NODE_MAP) {
+              String? name;
+              for (int j = 0; j < decoder.u.list.ref.num; j++) {
+                final k =
+                    decoder.u.list.ref.keys[j].cast<Utf8>().toDartString();
+                final v = decoder.u.list.ref.values[j];
+                if (k == 'codec' &&
+                    v.format == generated.mpv_format.MPV_FORMAT_STRING) {
+                  name ??= v.u.string.cast<Utf8>().toDartString();
+                }
+                if (k == 'driver' &&
+                    v.format == generated.mpv_format.MPV_FORMAT_STRING) {
+                  name ??= v.u.string.cast<Utf8>().toDartString();
+                }
               }
-              if (k == 'driver' &&
-                  v.format == generated.mpv_format.MPV_FORMAT_STRING) {
-                name ??= v.u.string.cast<Utf8>().toDartString();
+              if (name != null) {
+                decoders.add(name);
               }
-            }
-            if (name != null) {
-              decoders.add(name);
             }
           }
         }
+        mpv.mpv_free_node_contents(data);
+        calloc.free(name);
+        calloc.free(data);
       }
-      mpv.mpv_free_node_contents(data);
-      calloc.free(name);
-      calloc.free(data);
+
       // In case no video-decoders are found, this means media_kit_libs_***_audio is being used.
       // Thus, --vid=no is required to prevent libmpv from trying to decode video (otherwise bad things may happen).
       //
@@ -2210,7 +2213,7 @@ class NativePlayer extends PlatformPlayer {
         mpv.mpv_set_property_string(ctx, vid.cast(), no.cast());
         calloc.free(vid);
         calloc.free(no);
-      } else {}
+      }
     });
   }
 
@@ -2288,6 +2291,10 @@ class NativePlayer extends PlatformPlayer {
   /// [HashMap] for retrieving previously fetched audio-bitrate(s).
   static final HashMap<String, double> audioBitrateCache =
       HashMap<String, double>();
+
+  /// Available decoders in libavcodec.
+  /// https://mpv.io/manual/stable/#command-interface-decoder-list
+  static final decoders = HashSet<String>();
 
   /// Whether the [NativePlayer] is initialized for unit-testing.
   @visibleForTesting
