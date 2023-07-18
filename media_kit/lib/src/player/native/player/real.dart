@@ -2162,6 +2162,58 @@ class NativePlayer extends PlatformPlayer {
       mpv.mpv_hook_add(ctx, 0, unload.cast(), 0);
       calloc.free(load);
       calloc.free(unload);
+
+      // Query the list of available decoders in libavcodec & store result in static attribute [decoders].
+      // This prevents redundant native calls for subsequent [Player] instances.
+      if (decoders.isEmpty) {
+        final name = 'decoder-list'.toNativeUtf8();
+        final data = calloc<generated.mpv_node>();
+        mpv.mpv_get_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_NODE,
+          data.cast(),
+        );
+        if (data.ref.format == generated.mpv_format.MPV_FORMAT_NODE_ARRAY) {
+          for (int i = 0; i < data.ref.u.list.ref.num; i++) {
+            final decoder = data.ref.u.list.ref.values[i];
+            if (decoder.format == generated.mpv_format.MPV_FORMAT_NODE_MAP) {
+              String? name;
+              for (int j = 0; j < decoder.u.list.ref.num; j++) {
+                final k =
+                    decoder.u.list.ref.keys[j].cast<Utf8>().toDartString();
+                final v = decoder.u.list.ref.values[j];
+                if (k == 'codec' &&
+                    v.format == generated.mpv_format.MPV_FORMAT_STRING) {
+                  name ??= v.u.string.cast<Utf8>().toDartString();
+                }
+                if (k == 'driver' &&
+                    v.format == generated.mpv_format.MPV_FORMAT_STRING) {
+                  name ??= v.u.string.cast<Utf8>().toDartString();
+                }
+              }
+              if (name != null) {
+                decoders.add(name);
+              }
+            }
+          }
+        }
+        mpv.mpv_free_node_contents(data);
+        calloc.free(name);
+        calloc.free(data);
+      }
+
+      // In case no video-decoders are found, this means media_kit_libs_***_audio is being used.
+      // Thus, --vid=no is required to prevent libmpv from trying to decode video (otherwise bad things may happen).
+      //
+      // Search for common H264 decoder to check if video support is available.
+      if (!decoders.contains('h264')) {
+        final vid = 'vid'.toNativeUtf8();
+        final no = 'no'.toNativeUtf8();
+        mpv.mpv_set_property_string(ctx, vid.cast(), no.cast());
+        calloc.free(vid);
+        calloc.free(no);
+      }
     });
   }
 
@@ -2240,6 +2292,10 @@ class NativePlayer extends PlatformPlayer {
   static final HashMap<String, double> audioBitrateCache =
       HashMap<String, double>();
 
+  /// Available decoders in libavcodec.
+  /// https://mpv.io/manual/stable/#command-interface-decoder-list
+  static final decoders = HashSet<String>();
+
   /// Whether the [NativePlayer] is initialized for unit-testing.
   @visibleForTesting
   static bool test = false;
@@ -2293,73 +2349,75 @@ Uint8List? _screenshot(_ScreenshotData data) {
     result.cast(),
   );
 
-  assert(result.ref.format == generated.mpv_format.MPV_FORMAT_NODE_MAP);
-
-  int? w, h, stride;
-  Uint8List? bytes;
-
-  final map = result.ref.u.list;
-  for (int i = 0; i < map.ref.num; i++) {
-    final key = map.ref.keys[i].cast<Utf8>().toDartString();
-    final value = map.ref.values[i];
-    switch (value.format) {
-      case generated.mpv_format.MPV_FORMAT_INT64:
-        switch (key) {
-          case 'w':
-            w = value.u.int64;
-            break;
-          case 'h':
-            h = value.u.int64;
-            break;
-          case 'stride':
-            stride = value.u.int64;
-            break;
-        }
-        break;
-      case generated.mpv_format.MPV_FORMAT_BYTE_ARRAY:
-        switch (key) {
-          case 'data':
-            final data = value.u.ba.ref.data.cast<Uint8>();
-            bytes = data.asTypedList(value.u.ba.ref.size);
-            break;
-        }
-        break;
-    }
-  }
-
   Uint8List? image;
 
-  if (w != null && h != null && stride != null && bytes != null) {
-    final pixels = Image(
-      width: w,
-      height: h,
-      numChannels: 4,
-    );
-    for (final pixel in pixels) {
-      final x = pixel.x;
-      final y = pixel.y;
-      final i = (y * stride) + (x * 4);
-      pixel.b = bytes[i];
-      pixel.g = bytes[i + 1];
-      pixel.r = bytes[i + 2];
-      pixel.a = bytes[i + 3];
-    }
-    switch (format) {
-      case 'image/jpeg':
-        {
-          image = encodeJpg(pixels);
+  if (result.ref.format == generated.mpv_format.MPV_FORMAT_NODE_MAP) {
+    int? w, h, stride;
+    Uint8List? bytes;
+
+    final map = result.ref.u.list;
+    for (int i = 0; i < map.ref.num; i++) {
+      final key = map.ref.keys[i].cast<Utf8>().toDartString();
+      final value = map.ref.values[i];
+      switch (value.format) {
+        case generated.mpv_format.MPV_FORMAT_INT64:
+          switch (key) {
+            case 'w':
+              w = value.u.int64;
+              break;
+            case 'h':
+              h = value.u.int64;
+              break;
+            case 'stride':
+              stride = value.u.int64;
+              break;
+          }
           break;
-        }
-      case 'image/png':
-        {
-          image = encodePng(pixels);
-        }
+        case generated.mpv_format.MPV_FORMAT_BYTE_ARRAY:
+          switch (key) {
+            case 'data':
+              final data = value.u.ba.ref.data.cast<Uint8>();
+              bytes = data.asTypedList(value.u.ba.ref.size);
+              break;
+          }
+          break;
+      }
+    }
+
+    if (w != null && h != null && stride != null && bytes != null) {
+      final pixels = Image(
+        width: w,
+        height: h,
+        numChannels: 4,
+      );
+      for (final pixel in pixels) {
+        final x = pixel.x;
+        final y = pixel.y;
+        final i = (y * stride) + (x * 4);
+        pixel.b = bytes[i];
+        pixel.g = bytes[i + 1];
+        pixel.r = bytes[i + 2];
+        pixel.a = bytes[i + 3];
+      }
+      switch (format) {
+        case 'image/jpeg':
+          {
+            image = encodeJpg(pixels);
+            break;
+          }
+        case 'image/png':
+          {
+            image = encodePng(pixels);
+          }
+      }
     }
   }
 
-  calloc.free(arr);
   pointers.forEach(calloc.free);
   mpv.mpv_free_node_contents(result.cast());
+
+  calloc.free(arr);
+  calloc.free(result.cast());
 
   return image;
 }

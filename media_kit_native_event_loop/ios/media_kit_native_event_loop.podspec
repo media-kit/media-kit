@@ -35,7 +35,7 @@ Pod::Spec.new do |s|
     framework_search_paths_iphonesimulator = sprintf('$(PROJECT_DIR)/../.symlinks/plugins/%s/ios/Frameworks/MPV.xcframework/ios-arm64_x86_64-simulator', mku.libs_package)
 
     s.source_files        = 'Classes/**/*'
-    s.platform            = :ios, '13.0'
+    s.platform            = :ios, '9.0'
     s.swift_version       = '5.0'
     s.pod_target_xcconfig = {
       'DEFINES_MODULE'                               => 'YES',
