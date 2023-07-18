@@ -54,8 +54,8 @@ option(MEDIA_KIT_LIBS_AVAILABLE "package:media_kit libraries are available." ON)
 set(LIBMPV "mpv-dev-x86_64-20230404-git-68b3239.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-build/releases/download/2023-04-04/${LIBMPV}")
-set(LIBMPV_MD5 "d5cd4a834fdb44a2d7b966ca56825bc8")
+set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-build/releases/download/2023-07-18/${LIBMPV}")
+set(LIBMPV_MD5 "acfbd622fa9266251e93334e20bd31ad")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
