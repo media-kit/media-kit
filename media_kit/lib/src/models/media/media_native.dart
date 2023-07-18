@@ -46,7 +46,7 @@ class Media extends Playable {
       if (data.isScheme('FD')) {
         final fd = int.parse(data.authority);
         if (fd > 0) {
-          await AndroidContentUriProvider.closeFileDescriptor(fd);
+          await AndroidContentUriProvider.closeFileDescriptor(uri);
         }
       }
     }
