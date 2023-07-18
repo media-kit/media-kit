@@ -24,44 +24,38 @@ import 'package:media_kit/src/player/native/utils/isolates.dart';
 abstract class AndroidAssetLoader {
   /// Copies an asset bundled with the application to the external files directory & returns it absolute path.
   static Future<String> load(String asset) async {
-    if (_loaded.containsKey(asset)) {
-      return _loaded[asset]!;
+    final lookup = _loaded[asset];
+    if (lookup != null) {
+      return lookup;
     }
-
-    // Run on another [Isolate] to avoid blocking the UI.
-    final path = await compute(loadSync, asset);
-
+    final path = await compute(_copyAssetToFilesDir, asset);
     _loaded[asset] = path;
-
     return path;
   }
 
   /// Copies an asset bundled with the application to the files directory & returns it absolute path.
   static String loadSync(String asset) {
-    if (_loaded.containsKey(asset)) {
-      return _loaded[asset]!;
+    final lookup = _loaded[asset];
+    if (lookup != null) {
+      return lookup;
     }
+    final path = _copyAssetToFilesDir(asset);
+    _loaded[asset] = path;
+    return path;
+  }
 
+  /// The native implementation for [load] & [loadSync].
+  static String _copyAssetToFilesDir(String asset) {
     final lib = DynamicLibrary.open('libmediakitandroidhelper.so');
     final fn = lib.lookupFunction<FnCXX, FnDart>(
       'MediaKitAndroidHelperCopyAssetToFilesDir',
     );
-
     final name = asset.toNativeUtf8();
     final result = List.generate(4096, (index) => ' ').join('').toNativeUtf8();
-
-    fn.call(
-      name.cast(),
-      result.cast(),
-    );
-
+    fn.call(name.cast(), result.cast());
     final path = result.cast<Utf8>().toDartString().trim();
-
     calloc.free(name);
     calloc.free(result);
-
-    _loaded[asset] = path;
-
     return path;
   }
 
