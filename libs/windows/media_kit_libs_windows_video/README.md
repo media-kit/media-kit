@@ -4,7 +4,7 @@
 
 Windows package providing video (& audio) native libraries for [`package:media_kit`](https://github.com/alexmercerind/media_kit).
 
-Visit [alexmercerind/mpv-win32-cmake@`master`](https://github.com/alexmercerind/mpv-win32-cmake/tree/master) for descriptive details.
+Visit [media-kit/libmpv-win32-video-cmake@`master`](https://github.com/media-kit/libmpv-win32-video-cmake) & [media-kit/libmpv-win32-video-build@`master`](https://github.com/media-kit/libmpv-win32-video-build) for descriptive details.
 
 ## Support
 

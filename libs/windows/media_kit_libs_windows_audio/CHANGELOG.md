@@ -1,6 +1,6 @@
 ## 1.0.4
 
-- [mpv-player/mpv@`68b3239`](https://github.com/mpv-player/mpv/commit/68b3239b523cd75ba0a12f680ac7bc77e5647d40)
+- [mpv-player/mpv@`140ec21`](https://github.com/mpv-player/mpv/commit/140ec21c89d671d392877a7f3b91d67e7d7b9239)
 - perf: reduce bundle size
 
 ## 1.0.3
