@@ -60,6 +60,19 @@ void main() {
     skip: !UniversalPlatform.isWeb,
   );
   test(
+    'player-wait-for-player-initialization',
+    () async {
+      final player = Player();
+      final future = player.platform?.waitForPlayerInitialization;
+      expect(future, isNotNull);
+      expect(future, completes);
+
+      await Future.delayed(const Duration(seconds: 10));
+
+      await player.dispose();
+    },
+  );
+  test(
     'player-handle',
     () {
       final player = Player();

@@ -68,7 +68,7 @@ abstract class PlatformPlayer {
   );
 
   @mustCallSuper
-  FutureOr<void> dispose() async {
+  Future<void> dispose() async {
     await Future.wait(
       [
         playlistController.close(),
@@ -105,7 +105,7 @@ abstract class PlatformPlayer {
     }
   }
 
-  FutureOr<void> open(
+  Future<void> open(
     Playable playable, {
     bool play = true,
   }) {
@@ -122,121 +122,121 @@ abstract class PlatformPlayer {
     );
   }
 
-  FutureOr<void> play() {
+  Future<void> play() {
     throw UnimplementedError(
       '[PlatformPlayer.play] is not implemented',
     );
   }
 
-  FutureOr<void> pause() {
+  Future<void> pause() {
     throw UnimplementedError(
       '[PlatformPlayer.pause] is not implemented',
     );
   }
 
-  FutureOr<void> playOrPause() {
+  Future<void> playOrPause() {
     throw UnimplementedError(
       '[PlatformPlayer.playOrPause] is not implemented',
     );
   }
 
-  FutureOr<void> add(Media media) {
+  Future<void> add(Media media) {
     throw UnimplementedError(
       '[PlatformPlayer.add] is not implemented',
     );
   }
 
-  FutureOr<void> remove(int index) {
+  Future<void> remove(int index) {
     throw UnimplementedError(
       '[PlatformPlayer.remove] is not implemented',
     );
   }
 
-  FutureOr<void> next() {
+  Future<void> next() {
     throw UnimplementedError(
       '[PlatformPlayer.next] is not implemented',
     );
   }
 
-  FutureOr<void> previous() {
+  Future<void> previous() {
     throw UnimplementedError(
       '[PlatformPlayer.previous] is not implemented',
     );
   }
 
-  FutureOr<void> jump(int index) {
+  Future<void> jump(int index) {
     throw UnimplementedError(
       '[PlatformPlayer.jump] is not implemented',
     );
   }
 
-  FutureOr<void> move(int from, int to) {
+  Future<void> move(int from, int to) {
     throw UnimplementedError(
       '[PlatformPlayer.move] is not implemented',
     );
   }
 
-  FutureOr<void> seek(Duration duration) {
+  Future<void> seek(Duration duration) {
     throw UnimplementedError(
       '[PlatformPlayer.seek] is not implemented',
     );
   }
 
-  FutureOr<void> setPlaylistMode(PlaylistMode playlistMode) {
+  Future<void> setPlaylistMode(PlaylistMode playlistMode) {
     throw UnimplementedError(
       '[PlatformPlayer.setPlaylistMode] is not implemented',
     );
   }
 
-  FutureOr<void> setVolume(double volume) {
+  Future<void> setVolume(double volume) {
     throw UnimplementedError(
       '[PlatformPlayer.volume] is not implemented',
     );
   }
 
-  FutureOr<void> setRate(double rate) {
+  Future<void> setRate(double rate) {
     throw UnimplementedError(
       '[PlatformPlayer.rate] is not implemented',
     );
   }
 
-  FutureOr<void> setPitch(double pitch) {
+  Future<void> setPitch(double pitch) {
     throw UnimplementedError(
       '[PlatformPlayer.pitch] is not implemented',
     );
   }
 
-  FutureOr<void> setShuffle(bool shuffle) {
+  Future<void> setShuffle(bool shuffle) {
     throw UnimplementedError(
       '[PlatformPlayer.shuffle] is not implemented',
     );
   }
 
-  FutureOr<void> setAudioDevice(AudioDevice audioDevice) {
+  Future<void> setAudioDevice(AudioDevice audioDevice) {
     throw UnimplementedError(
       '[PlatformPlayer.setAudioDevice] is not implemented',
     );
   }
 
-  FutureOr<void> setVideoTrack(VideoTrack track) {
+  Future<void> setVideoTrack(VideoTrack track) {
     throw UnimplementedError(
       '[PlatformPlayer.setVideoTrack] is not implemented',
     );
   }
 
-  FutureOr<void> setAudioTrack(AudioTrack track) {
+  Future<void> setAudioTrack(AudioTrack track) {
     throw UnimplementedError(
       '[PlatformPlayer.setAudioTrack] is not implemented',
     );
   }
 
-  FutureOr<void> setSubtitleTrack(SubtitleTrack track) {
+  Future<void> setSubtitleTrack(SubtitleTrack track) {
     throw UnimplementedError(
       '[PlatformPlayer.setSubtitleTrack] is not implemented',
     );
   }
 
-  FutureOr<Uint8List?> screenshot({String format = 'image/jpeg'}) async {
+  Future<Uint8List?> screenshot({String format = 'image/jpeg'}) async {
     throw UnimplementedError(
       '[PlatformPlayer.screenshot] is not implemented',
     );
@@ -340,8 +340,15 @@ abstract class PlatformPlayer {
   final StreamController<List<String>> subtitleController =
       StreamController<List<String>>.broadcast();
 
-  /// Publicly defined clean-up [Function]s which must be called before [dispose].
-  final List<Future<void> Function()> release = [];
+  // --------------------------------------------------
+
+  /// [Completer] to wait for initialization of this instance.
+  final Completer<void> completer = Completer<void>();
+
+  /// [Future<void>] to wait for initialization of this instance.
+  Future<void> get waitForPlayerInitialization => completer.future;
+
+  // --------------------------------------------------
 
   /// [bool] for signaling [VideoController] (from `package:media_kit_video`) initialization.
   bool isVideoControllerAttached = false;
@@ -356,6 +363,11 @@ abstract class PlatformPlayer {
     }
     return Future.value(null);
   }
+
+  // --------------------------------------------------
+
+  /// Publicly defined clean-up [Function]s which must be called before [dispose].
+  final List<Future<void> Function()> release = [];
 }
 
 /// {@template player_configuration}

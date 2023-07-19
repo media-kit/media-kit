@@ -4,7 +4,7 @@
 
 Windows package providing audio (only) native libraries for [`package:media_kit`](https://github.com/alexmercerind/media_kit).
 
-Visit [alexmercerind/mpv-win32-cmake@`disable-gl`](https://github.com/alexmercerind/mpv-win32-cmake/tree/disable-gl) for descriptive details.
+Visit [media-kit/libmpv-win32-audio-cmake@`master`](https://github.com/media-kit/libmpv-win32-audio-cmake) & [media-kit/libmpv-win32-audio-build@`master`](https://github.com/media-kit/libmpv-win32-audio-build) for descriptive details.
 
 Thanks to [Mitchel Stewart](https://github.com/Quackdoc) for providing patches to generate minimal libmpv & FFmpeg audio specific builds.
 

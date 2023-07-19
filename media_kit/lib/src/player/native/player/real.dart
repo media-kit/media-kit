@@ -60,9 +60,12 @@ class NativePlayer extends PlatformPlayer {
   /// {@macro native_player}
   NativePlayer({required super.configuration})
       : mpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path)) {
-    _create().then((_) {
-      configuration.ready?.call();
-    });
+    future = _create()
+      ..then((_) {
+        try {
+          configuration.ready?.call();
+        } catch (_) {}
+      });
   }
 
   /// Disposes the [Player] instance & releases the resources.
@@ -1340,6 +1343,7 @@ class NativePlayer extends PlatformPlayer {
       final prop = event.ref.data.cast<generated.mpv_event_property>();
       if (prop.ref.name.cast<Utf8>().toDartString() == 'idle-active' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+        await future;
         // The [Player] has entered the idle state; initialization is complete.
         if (!completer.isCompleted) {
           completer.complete();
@@ -1999,7 +2003,11 @@ class NativePlayer extends PlatformPlayer {
   Future<void> _create() {
     return lock.synchronized(() async {
       // The options which must be set before [MPV.mpv_initialize].
-      final options = <String, String>{};
+      final options = <String, String>{
+        // Set --vid=no by default to prevent redundant video decoding.
+        // [VideoController] internally sets --vid=auto upon attachment to enable video rendering & decoding.
+        if (!test) 'vid': 'no',
+      };
 
       if (Platform.isAndroid &&
           configuration.libass &&
@@ -2162,58 +2170,6 @@ class NativePlayer extends PlatformPlayer {
       mpv.mpv_hook_add(ctx, 0, unload.cast(), 0);
       calloc.free(load);
       calloc.free(unload);
-
-      // Query the list of available decoders in libavcodec & store result in static attribute [decoders].
-      // This prevents redundant native calls for subsequent [Player] instances.
-      if (decoders.isEmpty) {
-        final name = 'decoder-list'.toNativeUtf8();
-        final data = calloc<generated.mpv_node>();
-        mpv.mpv_get_property(
-          ctx,
-          name.cast(),
-          generated.mpv_format.MPV_FORMAT_NODE,
-          data.cast(),
-        );
-        if (data.ref.format == generated.mpv_format.MPV_FORMAT_NODE_ARRAY) {
-          for (int i = 0; i < data.ref.u.list.ref.num; i++) {
-            final decoder = data.ref.u.list.ref.values[i];
-            if (decoder.format == generated.mpv_format.MPV_FORMAT_NODE_MAP) {
-              String? name;
-              for (int j = 0; j < decoder.u.list.ref.num; j++) {
-                final k =
-                    decoder.u.list.ref.keys[j].cast<Utf8>().toDartString();
-                final v = decoder.u.list.ref.values[j];
-                if (k == 'codec' &&
-                    v.format == generated.mpv_format.MPV_FORMAT_STRING) {
-                  name ??= v.u.string.cast<Utf8>().toDartString();
-                }
-                if (k == 'driver' &&
-                    v.format == generated.mpv_format.MPV_FORMAT_STRING) {
-                  name ??= v.u.string.cast<Utf8>().toDartString();
-                }
-              }
-              if (name != null) {
-                decoders.add(name);
-              }
-            }
-          }
-        }
-        mpv.mpv_free_node_contents(data);
-        calloc.free(name);
-        calloc.free(data);
-      }
-
-      // In case no video-decoders are found, this means media_kit_libs_***_audio is being used.
-      // Thus, --vid=no is required to prevent libmpv from trying to decode video (otherwise bad things may happen).
-      //
-      // Search for common H264 decoder to check if video support is available.
-      if (!decoders.contains('h264')) {
-        final vid = 'vid'.toNativeUtf8();
-        final no = 'no'.toNativeUtf8();
-        mpv.mpv_set_property_string(ctx, vid.cast(), no.cast());
-        calloc.free(vid);
-        calloc.free(no);
-      }
     });
   }
 
@@ -2249,6 +2205,10 @@ class NativePlayer extends PlatformPlayer {
   /// [Pointer] to [generated.mpv_handle] of this instance.
   Pointer<generated.mpv_handle> ctx = nullptr;
 
+  /// The [Future] to wait for [_create] completion.
+  /// This is used to prevent signaling [completer] (from [PlatformPlayer]) before [_create] completes in any hypothetical situation (because `idle-active` may fire before it).
+  Future<void>? future;
+
   /// Whether the [Player] has been disposed. This is used to prevent accessing dangling [ctx] after [dispose].
   bool disposed = false;
 
@@ -2279,22 +2239,12 @@ class NativePlayer extends PlatformPlayer {
   /// When receiving `playlist`, the URIs are looked up internally to fetch [Media.extras] & [Media.httpHeaders] etc.
   final HashSet<Media> current = HashSet<Media>();
 
-  /// [Completer] to wait for initialization of this instance (in [_create]).
-  final Completer<void> completer = Completer<void>();
-
-  /// [Future<void>] to wait for initialization of this instance.
-  Future<void> get waitForPlayerInitialization => completer.future;
-
   /// Synchronization & mutual exclusion between methods of this class.
   static final LockExt lock = LockExt();
 
   /// [HashMap] for retrieving previously fetched audio-bitrate(s).
   static final HashMap<String, double> audioBitrateCache =
       HashMap<String, double>();
-
-  /// Available decoders in libavcodec.
-  /// https://mpv.io/manual/stable/#command-interface-decoder-list
-  static final decoders = HashSet<String>();
 
   /// Whether the [NativePlayer] is initialized for unit-testing.
   @visibleForTesting

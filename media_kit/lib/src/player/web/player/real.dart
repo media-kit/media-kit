@@ -43,7 +43,7 @@ class WebPlayer extends PlatformPlayer {
   WebPlayer({required super.configuration})
       : id = js.context[kInstanceCount] ?? 0,
         element = html.VideoElement() {
-    lock.synchronized(() async {
+    lock.synchronized(() {
       element
         // Do not add autoplay=false attribute: https://stackoverflow.com/a/19664804/12825435
         /* ..autoplay = false */
@@ -302,7 +302,10 @@ class WebPlayer extends PlatformPlayer {
           }
         });
       });
-      configuration.ready?.call();
+      completer.complete();
+      try {
+        configuration.ready?.call();
+      } catch (_) {}
       // --------------------------------------------------
     });
   }
@@ -1448,10 +1451,6 @@ class WebPlayer extends PlatformPlayer {
 
   /// Whether the [Player] has been disposed.
   bool disposed = false;
-
-  /// [Future<void>] to wait for initialization of this instance.
-  Future<void> get waitForPlayerInitialization =>
-      Future.value() /* Not required. */;
 
   /// Synchronization & mutual exclusion between methods of this class.
   final Lock lock = Lock();

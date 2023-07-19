@@ -48,11 +48,11 @@ target_link_libraries(
 # ------------------------------------------------------------------------------
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20230408-git-7ae7fc0.7z")
+set(LIBMPV "mpv-dev-x86_64-20230719-git-140ec21.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-04-08/${LIBMPV}")
-set(LIBMPV_MD5 "3d6e3686b5d543dfed6a775b8bff6b14")
+set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-07-19/${LIBMPV}")
+set(LIBMPV_MD5 "86204f54ed914321a95977e3f68c181a")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
@@ -93,7 +93,7 @@ endif()
 set(ANGLE "ANGLE.7z")
 
 # Download URL & MD5 hash of the ANGLE archive.
-set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-OpenGLES/releases/download/v1.0.0/ANGLE.7z")
+set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.0/ANGLE.7z")
 set(ANGLE_MD5 "e5be38d0e1c5cbe5f70e53701ea8b6c9")
 
 # Download location of the ANGLE archive.
