@@ -10,7 +10,6 @@
 #include <iostream>
 
 #pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d3d9.lib")
 #pragma comment(lib, "d3d11.lib")
 
 #define FAIL(message)                                                 \
@@ -28,9 +27,7 @@ int ANGLESurfaceManager::instance_count_ = 0;
 ANGLESurfaceManager::ANGLESurfaceManager(int32_t width, int32_t height)
     : width_(width), height_(height) {
   mutex_ = ::CreateMutex(NULL, FALSE, NULL);
-  // Create new Direct3D texture & |surface_|, |display_| & |context_|.
-  Initialize();
-  MakeCurrent(true);
+  Create();
   instance_count_++;
 }
 
@@ -47,9 +44,7 @@ void ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
   }
   width_ = width;
   height_ = height;
-  // Create new Direct3D texture & |surface_| preserving previously created
-  // |display_| & |context_| from the constructor.
-  Initialize();
+  Create();
 }
 
 void ANGLESurfaceManager::Draw(std::function<void()> callback) {
@@ -63,17 +58,12 @@ void ANGLESurfaceManager::Draw(std::function<void()> callback) {
 
 void ANGLESurfaceManager::Read() {
   ::WaitForSingleObject(mutex_, INFINITE);
-  // Only supported on D3D 11 code path.
   if (d3d_11_device_context_ != nullptr) {
     d3d_11_device_context_->CopyResource(d3d_11_texture_2D_.Get(),
                                          internal_d3d_11_texture_2D_.Get());
     d3d_11_device_context_->Flush();
   }
   ::ReleaseMutex(mutex_);
-}
-
-void ANGLESurfaceManager::SwapBuffers() {
-  glFinish();
 }
 
 void ANGLESurfaceManager::MakeCurrent(bool value) {
@@ -84,78 +74,76 @@ void ANGLESurfaceManager::MakeCurrent(bool value) {
   }
 }
 
-bool ANGLESurfaceManager::CreateEGLDisplay() {
-  if (display_ == EGL_NO_DISPLAY) {
-    auto eglGetPlatformDisplayEXT =
-        reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
-            eglGetProcAddress("eglGetPlatformDisplayEXT"));
-    if (eglGetPlatformDisplayEXT) {
-      // D3D11.
-      display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
-                                          EGL_DEFAULT_DISPLAY,
-                                          kD3D11DisplayAttributes);
-      if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
-        // D3D 11 Feature Level 9_3.
-        display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
-                                            EGL_DEFAULT_DISPLAY,
-                                            kD3D11_9_3DisplayAttributes);
-        if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
-          // D3D 9.
-          display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
-                                              EGL_DEFAULT_DISPLAY,
-                                              kD3D9DisplayAttributes);
-          if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
-            // Whatever.
-            display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
-                                                EGL_DEFAULT_DISPLAY,
-                                                kWrapDisplayAttributes);
-            if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
-              FAIL("eglGetPlatformDisplayEXT");
-            }
-          }
-        }
-      }
-    } else {
-      FAIL("eglGetProcAddress");
-    }
-  }
-  return true;
+void ANGLESurfaceManager::SwapBuffers() {
+  glFinish();
 }
 
-void ANGLESurfaceManager::Initialize() {
-  // Release previously allocated resources. Do not release existing |context_|,
-  // if any.
+void ANGLESurfaceManager::Create() {
   CleanUp(false);
-
-  // Presently, I believe it is a good idea to show these failure messages
-  // directly to the user. It'll help fix the platform & hardware specific
-  // issues.
-
-  // Create new D3D device & texture.
-  auto success = InitializeD3D11();
-  // TODO: ANGLE's Direct X interop doesn't seem to work with anything below
-  // DirectX 11 or even WDDM 1.0 + Direct9Ex. Flutter also seems to fallback to
-  // software rendering. I have tested Windows 7 in a VirtualBox & there doesn't
-  // seem to be any hardware accelerated rendering inside Flutter window.
-  if (!success) {
+  if (!CreateD3DTexture()) {
     throw std::runtime_error("Unable to create Windows Direct3D device.");
     return;
   }
-  // Create & bind ANGLE EGL surface.
-  success = CreateAndBindEGLSurface();
-  // Exit on error.
-  if (!success) {
+  if (!CreateEGLDisplay()) {
+    throw std::runtime_error("Unable to create ANGLE EGL display.");
+    return;
+  }
+  if (!CreateAndBindEGLSurface()) {
     throw std::runtime_error("Unable to create ANGLE EGL surface.");
     return;
   }
-  // Additional check.
   if (internal_handle_ == nullptr || handle_ == nullptr) {
     throw std::runtime_error("Unable to retrieve Direct3D shared HANDLE.");
     return;
   }
 }
 
-bool ANGLESurfaceManager::InitializeD3D11() {
+void ANGLESurfaceManager::CleanUp(bool release_context) {
+  if (release_context) {
+    if (display_ != EGL_NO_DISPLAY && surface_ != EGL_NO_SURFACE) {
+      eglReleaseTexImage(display_, surface_, EGL_BACK_BUFFER);
+    }
+    if (display_ != EGL_NO_DISPLAY && context_ != EGL_NO_CONTEXT) {
+      eglDestroyContext(display_, context_);
+      context_ = EGL_NO_CONTEXT;
+    }
+    if (surface_ != EGL_NO_SURFACE) {
+      eglDestroySurface(display_, surface_);
+      surface_ = EGL_NO_SURFACE;
+    }
+    if (instance_count_ == 1) {
+      eglTerminate(display_);
+    }
+    display_ = EGL_NO_DISPLAY;
+    // Release D3D device & context if the instance is being destroyed.
+    if (d3d_11_device_context_) {
+      d3d_11_device_context_->Release();
+      d3d_11_device_context_ = nullptr;
+    }
+    if (d3d_11_device_) {
+      d3d_11_device_->Release();
+      d3d_11_device_ = nullptr;
+    }
+  } else {
+    // Clear context & destroy existing |surface_|.
+    eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, context_);
+    if (display_ != EGL_NO_DISPLAY && surface_ != EGL_NO_SURFACE) {
+      eglDestroySurface(display_, surface_);
+    }
+    surface_ = EGL_NO_SURFACE;
+  }
+  // Release D3D 11 texture(s).
+  if (internal_d3d_11_texture_2D_) {
+    internal_d3d_11_texture_2D_->Release();
+    internal_d3d_11_texture_2D_ = nullptr;
+  }
+  if (d3d_11_texture_2D_) {
+    d3d_11_texture_2D_->Release();
+    d3d_11_texture_2D_ = nullptr;
+  }
+}
+
+bool ANGLESurfaceManager::CreateD3DTexture() {
   if (adapter_ == nullptr) {
     auto feature_levels = {
         D3D_FEATURE_LEVEL_11_0,
@@ -171,7 +159,7 @@ bool ANGLESurfaceManager::InitializeD3D11() {
     IDXGIFactory* dxgi = nullptr;
     ::CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgi);
     // Manually selecting adapter. As far as my experience goes, this is the
-    // safest approach. Passing `0` (so-called default) seems to cause issues
+    // safest approach. Passing NULL (so-called default) seems to cause issues
     // on Windows 7 or maybe some older graphics drivers.
     // First adapter is the default.
     // |D3D_DRIVER_TYPE_UNKNOWN| must be passed with manual adapter selection.
@@ -217,130 +205,71 @@ bool ANGLESurfaceManager::InitializeD3D11() {
   d3d11_texture2D_desc.CPUAccessFlags = 0;
   d3d11_texture2D_desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
 
-  // The general idea is to create two textures, one that is used for rendering
-  // using ANGLE/EGL and another one that is used for accessing the rendered
-  // content using Direct3D 11.
+  // The general idea is to create two textures, one that is used to |Draw|
+  // using ANGLE & another one that is used for |Read| the rendered content
+  // using |handle|.
   // The internal texture is copied to the public texture once a frame is
   // requested using |ID3D11DeviceContext::CopyResource|. This prevents any kind
   // of synchronization issues.
 
-  // Internal D3D11 texture used to render to (using ANGLE).
+  // Internal.
   auto hr = d3d_11_device_->CreateTexture2D(&d3d11_texture2D_desc, nullptr,
                                             &internal_d3d_11_texture_2D_);
   CHECK_HRESULT("ID3D11Device::CreateTexture2D");
   auto resource = Microsoft::WRL::ComPtr<IDXGIResource>{};
   hr = internal_d3d_11_texture_2D_.As(&resource);
   CHECK_HRESULT("ID3D11Texture2D::As");
-  // IMPORTANT: Retrieve |internal_handle_| for interop.
+  // Retrieve the shared |HANDLE| for interop.
   hr = resource->GetSharedHandle(&internal_handle_);
   CHECK_HRESULT("IDXGIResource::GetSharedHandle");
   internal_d3d_11_texture_2D_->AddRef();
 
-  // Public D3D11 texture used to read from (using Direct3D 11).
+  // External.
   hr = d3d_11_device_->CreateTexture2D(&d3d11_texture2D_desc, nullptr,
                                        &d3d_11_texture_2D_);
   CHECK_HRESULT("ID3D11Device::CreateTexture2D");
   hr = d3d_11_texture_2D_.As(&resource);
   CHECK_HRESULT("ID3D11Texture2D::As");
-  // IMPORTANT: Retrieve |handle_| for interop.
+  // Retrieve the shared |HANDLE| for interop.
   hr = resource->GetSharedHandle(&handle_);
   CHECK_HRESULT("IDXGIResource::GetSharedHandle");
   d3d_11_texture_2D_->AddRef();
 
-  // Create EGL surface.
-  CreateEGLDisplay();
   return true;
 }
 
-bool ANGLESurfaceManager::InitializeD3D9() {
-  auto hr = ::Direct3DCreate9Ex(D3D_SDK_VERSION, &d3d_9_ex_);
-  CHECK_HRESULT("Direct3DCreate9Ex");
-  auto present_params = D3DPRESENT_PARAMETERS{};
-  present_params.BackBufferWidth = width_;
-  present_params.BackBufferHeight = height_;
-  present_params.BackBufferFormat = D3DFMT_UNKNOWN;
-  present_params.BackBufferCount = 1;
-  present_params.SwapEffect = D3DSWAPEFFECT_DISCARD;
-  present_params.hDeviceWindow = 0;
-  present_params.Windowed = TRUE;
-  present_params.Flags = D3DPRESENTFLAG_VIDEO;
-  present_params.FullScreen_RefreshRateInHz = 0;
-  present_params.PresentationInterval = 0;
-  hr = d3d_9_ex_->CreateDeviceEx(
-      D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, 0,
-      D3DCREATE_FPU_PRESERVE | D3DCREATE_HARDWARE_VERTEXPROCESSING |
-          D3DCREATE_DISABLE_PSGP_THREADING | D3DCREATE_MULTITHREADED,
-      &present_params, 0, &d3d_9_device_ex_);
-  CHECK_HRESULT("IDirect3D9Ex::CreateDeviceEx");
-  // IMPORTANT: Retrieve |internal_handle_| for interop.
-  hr = d3d_9_device_ex_->CreateTexture(
-      width_, height_, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8,
-      D3DPOOL_DEFAULT, &d3d_9_texture_, &internal_handle_);
-
-  // Not using separate textures for public and private surfaces in D3D9.
-
-  handle_ = internal_handle_;
-  CHECK_HRESULT("IDirect3DDevice9Ex::CreateTexture");
-  CreateEGLDisplay();
+bool ANGLESurfaceManager::CreateEGLDisplay() {
+  if (display_ == EGL_NO_DISPLAY) {
+    auto eglGetPlatformDisplayEXT =
+        reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
+            eglGetProcAddress("eglGetPlatformDisplayEXT"));
+    if (eglGetPlatformDisplayEXT) {
+      display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
+                                          EGL_DEFAULT_DISPLAY,
+                                          kD3D11DisplayAttributes);
+      if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
+        display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
+                                            EGL_DEFAULT_DISPLAY,
+                                            kD3D11_9_3DisplayAttributes);
+        if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
+          display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
+                                              EGL_DEFAULT_DISPLAY,
+                                              kD3D9DisplayAttributes);
+          if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
+            display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
+                                                EGL_DEFAULT_DISPLAY,
+                                                kWrapDisplayAttributes);
+            if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
+              FAIL("eglGetPlatformDisplayEXT");
+            }
+          }
+        }
+      }
+    } else {
+      FAIL("eglGetProcAddress");
+    }
+  }
   return true;
-}
-
-void ANGLESurfaceManager::CleanUp(bool release_context) {
-  if (release_context) {
-    if (display_ != EGL_NO_DISPLAY && surface_ != EGL_NO_SURFACE) {
-      eglReleaseTexImage(display_, surface_, EGL_BACK_BUFFER);
-    }
-    if (display_ != EGL_NO_DISPLAY && context_ != EGL_NO_CONTEXT) {
-      eglDestroyContext(display_, context_);
-      context_ = EGL_NO_CONTEXT;
-    }
-    if (surface_ != EGL_NO_SURFACE) {
-      eglDestroySurface(display_, surface_);
-      surface_ = EGL_NO_SURFACE;
-    }
-    if (instance_count_ == 1) {
-      eglTerminate(display_);
-    }
-    display_ = EGL_NO_DISPLAY;
-    // Release D3D device & context if the instance is being destroyed.
-    if (d3d_11_device_context_) {
-      d3d_11_device_context_->Release();
-      d3d_11_device_context_ = nullptr;
-    }
-    if (d3d_11_device_) {
-      d3d_11_device_->Release();
-      d3d_11_device_ = nullptr;
-    }
-    if (d3d_9_ex_) {
-      d3d_9_ex_->Release();
-      d3d_9_ex_ = nullptr;
-    }
-    if (d3d_9_device_ex_) {
-      d3d_9_device_ex_->Release();
-      d3d_9_device_ex_ = nullptr;
-    }
-  } else {
-    // Clear context & destroy existing |surface_|.
-    eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, context_);
-    if (display_ != EGL_NO_DISPLAY && surface_ != EGL_NO_SURFACE) {
-      eglDestroySurface(display_, surface_);
-    }
-    surface_ = EGL_NO_SURFACE;
-  }
-  // Release D3D 11 texture(s).
-  if (internal_d3d_11_texture_2D_) {
-    internal_d3d_11_texture_2D_->Release();
-    internal_d3d_11_texture_2D_ = nullptr;
-  }
-  if (d3d_11_texture_2D_) {
-    d3d_11_texture_2D_->Release();
-    d3d_11_texture_2D_ = nullptr;
-  }
-  // Release D3D 9 texture(s).
-  if (d3d_9_texture_) {
-    d3d_9_texture_->Release();
-    d3d_9_texture_ = nullptr;
-  }
 }
 
 bool ANGLESurfaceManager::CreateAndBindEGLSurface() {

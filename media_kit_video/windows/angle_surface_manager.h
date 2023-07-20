@@ -9,9 +9,6 @@
 #ifndef ANGLE_SURFACE_MANAGER_H_
 #define ANGLE_SURFACE_MANAGER_H_
 
-// Make declarations in |d3d9.h| visible.
-#define DIRECT3D_VERSION 0x0900
-
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <EGL/eglplatform.h>
@@ -22,15 +19,18 @@
 
 #include <d3d.h>
 #include <d3d11.h>
-#include <d3d9.h>
 #include <wrl.h>
 
 #include <cstdint>
 #include <functional>
 
-// A large part of implementation is inspired (not derived) from Flutter.
-// Primarily because it is well tested & stable reference implementation for
-// hosting ANGLE. See:
+// |ANGLESurfaceManager| provides an abstraction around ANGLE to easily draw
+// OpenGL ES 2.0 content & read as D3D 11 texture using shared |HANDLE|.
+// * |Draw|: Takes callback where OpenGL ES 2.0 calls can be made for rendering.
+// * |Read|: Copies the drawn content to D3D 11 texture & makes it available to
+//           the shared |handle| for access.
+
+// A large part of implementation is inspired from Flutter.
 // https://github.com/flutter/engine/blob/master/shell/platform/windows/angle_surface_manager.h
 
 class ANGLESurfaceManager {
@@ -39,53 +39,29 @@ class ANGLESurfaceManager {
   const int32_t height() const { return height_; }
   const HANDLE handle() const { return handle_; }
 
-  // Creates a new instance of |ANGLESurfaceManager|, automatically creates
-  // internal D3D 11 & D3D 9 devices based on platform's capability.
   ANGLESurfaceManager(int32_t width, int32_t height);
 
   ~ANGLESurfaceManager();
 
-  // Resizes the internal |ID3D11Texture2D| & |EGLSurface|. This preserves the
-  // |context_| & |display_| associated with this instance.
   void HandleResize(int32_t width, int32_t height);
 
-  // May be used to draw content on the |EGLSurface| using ANGLE.
-  //
-  // Automatically acquires & releases |context_| before & after |draw_callback|
-  // is completed. Ensures synchronization with |RequestFrame| aswell.
   void Draw(std::function<void()> callback);
 
-  // Copies the rendered content from internal |ID3D11Texture2D| to public
-  // |ID3D11Texture2D|. The |handle| may be used to access the rendered content.
   void Read();
-
-  void SwapBuffers();
 
   void MakeCurrent(bool value);
 
  private:
-  bool CreateEGLDisplay();
+  void SwapBuffers();
 
-  // Creates new Direct3D device & texture, EGL |display_|, |context_| &
-  // |surface_| using |width_| & |height_|. If a |display_| & |context_| already
-  // exists, then it is preserved. Only new Direct3D device & texture &
-  // |surface_| will be created if |height_| & |width_| were changed e.g. by
-  // |HandleResize|.
-  void Initialize();
-
-  // Attempts to create D3D 11 (and compatibility supported) device & texture.
-  // Returns success as bool.
-  bool InitializeD3D11();
-
-  // Attempts to create D3D 9 (and compatibility supported) device & texture.
-  // Returns success as bool.
-  // NOTE: Not working.
-  bool InitializeD3D9();
+  void Create();
 
   void CleanUp(bool release_context);
 
-  // Creates ANGLE specific |surface_| and |context_| after consuming D3D
-  // |handle_| from either |InitializeD3D11| or |InitializeD3D9|.
+  bool CreateD3DTexture();
+
+  bool CreateEGLDisplay();
+
   bool CreateAndBindEGLSurface();
 
   IDXGIAdapter* adapter_ = nullptr;
@@ -96,16 +72,12 @@ class ANGLESurfaceManager {
 
   // Sync |Draw| & |Read| calls.
   HANDLE mutex_ = nullptr;
-  // D3D 11 specific references.
+  // D3D 11
   ID3D11Device* d3d_11_device_ = nullptr;
   ID3D11DeviceContext* d3d_11_device_context_ = nullptr;
   Microsoft::WRL::ComPtr<ID3D11Texture2D> internal_d3d_11_texture_2D_;
   Microsoft::WRL::ComPtr<ID3D11Texture2D> d3d_11_texture_2D_;
-  // D3D 9 specific references.
-  IDirect3D9Ex* d3d_9_ex_ = nullptr;
-  IDirect3DDevice9Ex* d3d_9_device_ex_ = nullptr;
-  IDirect3DTexture9* d3d_9_texture_ = nullptr;
-  // ANGLE specific references.
+  // ANGLE
   EGLSurface surface_ = EGL_NO_SURFACE;
   EGLDisplay display_ = EGL_NO_DISPLAY;
   EGLContext context_ = nullptr;
