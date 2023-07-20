@@ -10,16 +10,8 @@
 
 #include <algorithm>
 
-// Only used for fallback software rendering, when hardware does not support
-// DirectX 11 i.e. enough to support ANGLE. There is no way I'm allowing
-// rendering anything higher 1080p with CPU on some retarded old computer. The
-// thing might blow up in flames.
-// TODO(@alexmercerind): Now that multiple flutter::TextureVariant (& respective
-// FlutterDesktopGpuSurfaceDescriptor or FlutterDesktopPixelBuffer) are kept
-// alive and disposed safely after usage, it's no longer necessary to
-// pre-allocate a fixed size buffer for software rendering. However, this
-// refactor is very-low priority for now. On the other hand, limiting to 1080p
-// for S/W rendering seems actually good.
+// Limit the frame size to 1080p in software rendering.
+// This is for performance reasons & to avoid allocating too much memory.
 #define SW_RENDERING_MAX_WIDTH 1920
 #define SW_RENDERING_MAX_HEIGHT 1080
 #define SW_RENDERING_PIXEL_BUFFER_SIZE \
@@ -52,6 +44,7 @@ VideoOutput::VideoOutput(int64_t handle,
         surface_manager_ = std::make_unique<ANGLESurfaceManager>(
             static_cast<int32_t>(width_.value_or(1)),
             static_cast<int32_t>(height_.value_or(1)));
+        surface_manager_->MakeCurrent(true);
         Resize(width_.value_or(1), height_.value_or(1));
         mpv_opengl_init_params gl_init_params{
             [](auto, auto name) {
@@ -377,45 +370,6 @@ int64_t VideoOutput::GetVideoWidth() {
   }
   // Video resolution dependent width.
   int64_t width = 0;
-
-  mpv_node params;
-  mpv_get_property(handle_, "video-out-params", MPV_FORMAT_NODE, &params);
-
-  int64_t dw = 0, dh = 0, rotate = 0;
-  if (params.format == MPV_FORMAT_NODE_MAP) {
-    for (int32_t i = 0; i < params.u.list->num; i++) {
-      char* key = params.u.list->keys[i];
-      auto value = params.u.list->values[i];
-      if (value.format == MPV_FORMAT_INT64) {
-        if (strcmp(key, "dw") == 0) {
-          dw = value.u.int64;
-        }
-        if (strcmp(key, "dh") == 0) {
-          dh = value.u.int64;
-        }
-        if (strcmp(key, "rotate") == 0) {
-          rotate = value.u.int64;
-        }
-      }
-    }
-  }
-
-  width = rotate == 0 || rotate == 180 ? dw : dh;
-
-  if (pixel_buffer_ != nullptr) {
-    // Limit width if software rendering is being used.
-    return std::clamp(width, static_cast<int64_t>(0),
-                      static_cast<int64_t>(SW_RENDERING_MAX_WIDTH));
-  }
-  return width;
-}
-
-int64_t VideoOutput::GetVideoHeight() {
-  // Fixed height.
-  if (height_) {
-    return height_.value();
-  }
-  // Video resolution dependent height.
   int64_t height = 0;
 
   mpv_node params;
@@ -440,12 +394,67 @@ int64_t VideoOutput::GetVideoHeight() {
     }
   }
 
+  width = rotate == 0 || rotate == 180 ? dw : dh;
   height = rotate == 0 || rotate == 180 ? dh : dw;
 
   if (pixel_buffer_ != nullptr) {
-    // Limit width if software rendering is being used.
-    return std::clamp(height, static_cast<int64_t>(0),
-                      static_cast<int64_t>(SW_RENDERING_MAX_HEIGHT));
+    // Make sure |width| & |height| fit between |SW_RENDERING_MAX_WIDTH| &
+    // |SW_RENDERING_MAX_HEIGHT| while maintaining aspect-ratio.
+    if (width >= SW_RENDERING_MAX_WIDTH) {
+      return SW_RENDERING_MAX_WIDTH;
+    }
+    if (height >= SW_RENDERING_MAX_HEIGHT) {
+      return width / height * SW_RENDERING_MAX_HEIGHT;
+    }
   }
+
+  return width;
+}
+
+int64_t VideoOutput::GetVideoHeight() {
+  // Fixed height.
+  if (height_) {
+    return height_.value();
+  }
+  // Video resolution dependent height.
+  int64_t width = 0;
+  int64_t height = 0;
+
+  mpv_node params;
+  mpv_get_property(handle_, "video-out-params", MPV_FORMAT_NODE, &params);
+
+  int64_t dw = 0, dh = 0, rotate = 0;
+  if (params.format == MPV_FORMAT_NODE_MAP) {
+    for (int32_t i = 0; i < params.u.list->num; i++) {
+      char* key = params.u.list->keys[i];
+      auto value = params.u.list->values[i];
+      if (value.format == MPV_FORMAT_INT64) {
+        if (strcmp(key, "dw") == 0) {
+          dw = value.u.int64;
+        }
+        if (strcmp(key, "dh") == 0) {
+          dh = value.u.int64;
+        }
+        if (strcmp(key, "rotate") == 0) {
+          rotate = value.u.int64;
+        }
+      }
+    }
+  }
+
+  width = rotate == 0 || rotate == 180 ? dw : dh;
+  height = rotate == 0 || rotate == 180 ? dh : dw;
+
+  if (pixel_buffer_ != NULL) {
+    // Make sure |width| & |height| fit between |SW_RENDERING_MAX_WIDTH| &
+    // |SW_RENDERING_MAX_HEIGHT| while maintaining aspect-ratio.
+    if (height >= SW_RENDERING_MAX_HEIGHT) {
+      return SW_RENDERING_MAX_HEIGHT;
+    }
+    if (width >= SW_RENDERING_MAX_WIDTH) {
+      return height / width * SW_RENDERING_MAX_WIDTH;
+    }
+  }
+
   return height;
 }
