@@ -288,13 +288,47 @@ gint64 video_output_get_width(VideoOutput* self) {
   if (self->width) {
     return self->width;
   }
+
   // Video resolution dependent width.
   gint64 width = 0;
-  mpv_get_property(self->handle, "width", MPV_FORMAT_INT64, &width);
-  if (self->texture_sw) {
-    // Limit width if software rendering is being used.
-    return CLAMP(width, 0, SW_RENDERING_MAX_WIDTH);
+  gint64 height = 0;
+
+  mpv_node params;
+  mpv_get_property(self->handle, "video-out-params", MPV_FORMAT_NODE, &params);
+
+  int64_t dw = 0, dh = 0, rotate = 0;
+  if (params.format == MPV_FORMAT_NODE_MAP) {
+    for (int32_t i = 0; i < params.u.list->num; i++) {
+      char* key = params.u.list->keys[i];
+      auto value = params.u.list->values[i];
+      if (value.format == MPV_FORMAT_INT64) {
+        if (strcmp(key, "dw") == 0) {
+          dw = value.u.int64;
+        }
+        if (strcmp(key, "dh") == 0) {
+          dh = value.u.int64;
+        }
+        if (strcmp(key, "rotate") == 0) {
+          rotate = value.u.int64;
+        }
+      }
+    }
   }
+
+  width = rotate == 0 || rotate == 180 ? dw : dh;
+  height = rotate == 0 || rotate == 180 ? dh : dw;
+
+  if (self->texture_sw != NULL) {
+    // Make sure |width| & |height| fit between |SW_RENDERING_MAX_WIDTH| &
+    // |SW_RENDERING_MAX_HEIGHT| while maintaining aspect ratio.
+    if (width >= SW_RENDERING_MAX_WIDTH) {
+      return SW_RENDERING_MAX_WIDTH;
+    }
+    if (height >= SW_RENDERING_MAX_HEIGHT) {
+      return width / height * SW_RENDERING_MAX_HEIGHT;
+    }
+  }
+
   return width;
 }
 
@@ -303,13 +337,47 @@ gint64 video_output_get_height(VideoOutput* self) {
   if (self->width) {
     return self->height;
   }
+
   // Video resolution dependent height.
+  gint64 width = 0;
   gint64 height = 0;
-  mpv_get_property(self->handle, "height", MPV_FORMAT_INT64, &height);
-  if (self->texture_sw) {
-    // Limit width if software rendering is being used.
-    return CLAMP(height, 0, SW_RENDERING_MAX_HEIGHT);
+
+  mpv_node params;
+  mpv_get_property(self->handle, "video-out-params", MPV_FORMAT_NODE, &params);
+
+  int64_t dw = 0, dh = 0, rotate = 0;
+  if (params.format == MPV_FORMAT_NODE_MAP) {
+    for (int32_t i = 0; i < params.u.list->num; i++) {
+      char* key = params.u.list->keys[i];
+      auto value = params.u.list->values[i];
+      if (value.format == MPV_FORMAT_INT64) {
+        if (strcmp(key, "dw") == 0) {
+          dw = value.u.int64;
+        }
+        if (strcmp(key, "dh") == 0) {
+          dh = value.u.int64;
+        }
+        if (strcmp(key, "rotate") == 0) {
+          rotate = value.u.int64;
+        }
+      }
+    }
   }
+
+  width = rotate == 0 || rotate == 180 ? dw : dh;
+  height = rotate == 0 || rotate == 180 ? dh : dw;
+
+  if (self->texture_sw != NULL) {
+    // Make sure |width| & |height| fit between |SW_RENDERING_MAX_WIDTH| &
+    // |SW_RENDERING_MAX_HEIGHT| while maintaining aspect ratio.
+    if (height >= SW_RENDERING_MAX_HEIGHT) {
+      return SW_RENDERING_MAX_HEIGHT;
+    }
+    if (width >= SW_RENDERING_MAX_WIDTH) {
+      return height / width * SW_RENDERING_MAX_WIDTH;
+    }
+  }
+
   return height;
 }
 
