@@ -4,7 +4,7 @@
 
 iOS package providing audio native libraries for [`package:media_kit`](https://github.com/alexmercerind/media_kit).
 
-Visit [birros/libmpv-build@`main`](https://github.com/birros/libmpv-build/tree/main) for descriptive details.
+Visit [media-kit/libmpv-darwin-build@`main`](https://github.com/media-kit/libmpv-darwin-build/tree/main) for descriptive details.
 
 Thanks to [Julien Muret](https://github.com/birros) for libmpv & FFmpeg builds for iOS.
 
