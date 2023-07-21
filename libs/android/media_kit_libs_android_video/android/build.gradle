@@ -58,25 +58,25 @@ task downloadDependencies(type: Exec) {
     
     // Download all *.jar dependencies & verify their MD5 checksums.
 
-    def urlDefaultARM64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/default-arm64-v8a.jar"
-    def urlDefaultARMEABI = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/default-armeabi-v7a.jar"
-    def urlDefaultX86_64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/default-x86_64.jar"
-    def urlDefaultX86 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/default-x86.jar"
+    def urlDefaultARM64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.1/default-arm64-v8a.jar"
+    def urlDefaultARMEABI = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.1/default-armeabi-v7a.jar"
+    def urlDefaultX86_64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.1/default-x86_64.jar"
+    def urlDefaultX86 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.1/default-x86.jar"
 
-    def urlNoFFmpegARM64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/no-ffmpeg-default-arm64-v8a.jar"
-    def urlNoFFmpegARMEABI = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/no-ffmpeg-default-armeabi-v7a.jar"
-    def urlNoFFmpegX86_64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/no-ffmpeg-default-x86_64.jar"
-    def urlNoFFmpegX86 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.0/no-ffmpeg-default-x86.jar"
+    def urlNoFFmpegARM64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.1/no-ffmpeg-default-arm64-v8a.jar"
+    def urlNoFFmpegARMEABI = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.1/no-ffmpeg-default-armeabi-v7a.jar"
+    def urlNoFFmpegX86_64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.1/no-ffmpeg-default-x86_64.jar"
+    def urlNoFFmpegX86 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.0.1/no-ffmpeg-default-x86.jar"
 
-    def destDefaultARM64 = file("$buildDir/v1.0.0/default-arm64-v8a.jar")
-    def destDefaultARMEABI = file("$buildDir/v1.0.0/default-armeabi-v7a.jar")
-    def destDefaultX86_64 = file("$buildDir/v1.0.0/default-x86_64.jar")
-    def destDefaultX86 = file("$buildDir/v1.0.0/default-x86.jar")
+    def destDefaultARM64 = file("$buildDir/v1.0.1/default-arm64-v8a.jar")
+    def destDefaultARMEABI = file("$buildDir/v1.0.1/default-armeabi-v7a.jar")
+    def destDefaultX86_64 = file("$buildDir/v1.0.1/default-x86_64.jar")
+    def destDefaultX86 = file("$buildDir/v1.0.1/default-x86.jar")
     
-    def destNoFFmpegARM64 = file("$buildDir/v1.0.0/no-ffmpeg-default-arm64-v8a.jar")
-    def destNoFFmpegARMEABI = file("$buildDir/v1.0.0/no-ffmpeg-default-armeabi-v7a.jar")
-    def destNoFFmpegX86_64 = file("$buildDir/v1.0.0/no-ffmpeg-default-x86_64.jar")
-    def destNoFFmpegX86 = file("$buildDir/v1.0.0/no-ffmpeg-default-x86.jar")
+    def destNoFFmpegARM64 = file("$buildDir/v1.0.1/no-ffmpeg-default-arm64-v8a.jar")
+    def destNoFFmpegARMEABI = file("$buildDir/v1.0.1/no-ffmpeg-default-armeabi-v7a.jar")
+    def destNoFFmpegX86_64 = file("$buildDir/v1.0.1/no-ffmpeg-default-x86_64.jar")
+    def destNoFFmpegX86 = file("$buildDir/v1.0.1/no-ffmpeg-default-x86.jar")
 
     if (!destDefaultARM64.exists()) {
         destDefaultARM64.parentFile.mkdirs()
@@ -141,29 +141,29 @@ task downloadDependencies(type: Exec) {
     def md5NoFFmpegX86_64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegX86_64.toPath())).encodeHex().toString()
     def md5NoFFmpegX86 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destNoFFmpegX86.toPath())).encodeHex().toString()
 
-    if (md5DefaultARM64 != "a5dd46edfa28b1e74fbb313d5e065b92") {
+    if (md5DefaultARM64 != "518ca06a2f16ae35c03725b2a4e7d71a") {
         throw new GradleException("media_kit: arm64-v8a JAR verification failed.")
     }
-    if (md5DefaultARMEABI != "2d8a4b7ba3979ed3be5978db0e361316") {
+    if (md5DefaultARMEABI != "34b5302a7e50774a68a8caad5ff91383") {
         throw new GradleException("media_kit: armeabi-v7a JAR verification failed.")
     }
-    if (md5DefaultX86_64 != "354555f9443b28a2aa7b410c4d7b287c") {
+    if (md5DefaultX86_64 != "14ed63a20a37a04efafcd0033e573f65") {
         throw new GradleException("media_kit: x86_64 JAR verification failed.")
     }
-    if (md5DefaultX86 != "6888c7c71cc669b674c2ce2645d456d1") {
+    if (md5DefaultX86 != "5c2073e39a04d5797a4ee68b89213652") {
         throw new GradleException("media_kit: x86 JAR verification failed.")
     }
 
-    if (md5NoFFmpegARM64 != "ea81062d9e87d6ef4d8dfd3d5aa1d487") {
+    if (md5NoFFmpegARM64 != "a035a0e9f47e1304faf9ec687d8d3932") {
         throw new GradleException("media_kit: arm64-v8a JAR verification failed.")
     }
-    if (md5NoFFmpegARMEABI != "3a8f9bbb44aaccc73430ba6dbe6375bb") {
+    if (md5NoFFmpegARMEABI != "cc60970c66959ffb1401eb354d24133e") {
         throw new GradleException("media_kit: armeabi-v7a JAR verification failed.")
     }
-    if (md5NoFFmpegX86_64 != "8f2dd4be45f4bd367f952b4f88178013") {
+    if (md5NoFFmpegX86_64 != "da6a3f82d99b879cd8a5831c4dda80ff") {
         throw new GradleException("media_kit: x86_64 JAR verification failed.")
     }
-    if (md5NoFFmpegX86 != "bc331d8f11250b3551b721533c1abb5b") {
+    if (md5NoFFmpegX86 != "083efe9492d0f94317f6f6707c579a2b") {
         throw new GradleException("media_kit: x86 JAR verification failed.")
     }
 
