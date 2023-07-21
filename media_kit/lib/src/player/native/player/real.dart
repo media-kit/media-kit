@@ -9,9 +9,11 @@ import 'dart:math';
 import 'dart:async';
 import 'dart:collection';
 import 'dart:typed_data';
-import 'package:meta/meta.dart';
 import 'package:path/path.dart';
+import 'package:meta/meta.dart';
 import 'package:image/image.dart';
+import 'package:uri_parser/uri_parser.dart';
+import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/ffi/ffi.dart';
 
@@ -24,6 +26,7 @@ import 'package:media_kit/src/player/native/core/initializer_native_event_loop.d
 
 import 'package:media_kit/src/player/native/utils/isolates.dart';
 import 'package:media_kit/src/player/native/utils/lock_ext.dart';
+import 'package:media_kit/src/player/native/utils/temp_file.dart';
 import 'package:media_kit/src/player/native/utils/task_queue.dart';
 import 'package:media_kit/src/player/native/utils/android_helper.dart';
 import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
@@ -1214,10 +1217,39 @@ class NativePlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
 
       if (track.external) {
+        // Support loading for subtitles as URI or raw string.
+        String? uri;
+        if (track.id.length < 4096) {
+          try {
+            final parser = URIParser(track.id);
+            switch (parser.type) {
+              case URIType.file:
+                {
+                  uri = parser.file!.path;
+                  break;
+                }
+              case URIType.network:
+                {
+                  uri = parser.uri!.toString();
+                  break;
+                }
+              default:
+                {
+                  break;
+                }
+            }
+          } catch (_) {}
+        }
+        if (uri == null) {
+          final temp = await TempFile.create();
+          await temp.write_(track.id);
+          uri = temp.uri.toString();
+        }
+
         await _command(
           [
             'sub-add',
-            track.id,
+            uri,
             'select',
             track.title ?? 'external',
             track.language ?? 'auto',
