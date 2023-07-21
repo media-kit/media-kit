@@ -115,8 +115,9 @@ class Video extends StatefulWidget {
 }
 
 class VideoState extends State<Video> {
-  GlobalKey<SubtitleViewState> subtitleViewKey = GlobalKey<SubtitleViewState>();
-  Wakelock? _wakelock;
+  final GlobalKey<SubtitleViewState> _subtitleViewKey =
+      GlobalKey<SubtitleViewState>();
+  final Wakelock _wakelock = Wakelock();
   StreamSubscription? _playingSubscription;
 
   // Public API:
@@ -137,18 +138,29 @@ class VideoState extends State<Video> {
     return media_kit_video_controls.toggleFullscreen(context);
   }
 
+  void setSubtitleViewPadding(
+    EdgeInsets padding, {
+    Duration duration = const Duration(milliseconds: 100),
+  }) {
+    return _subtitleViewKey.currentState?.setPadding(
+      padding,
+      duration: duration,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-
     if (widget.wakelock) {
-      _wakelock = Wakelock();
+      if (widget.controller.player.state.playing) {
+        _wakelock.enable();
+      }
       _playingSubscription = widget.controller.player.stream.playing.listen(
         (playing) {
           if (playing) {
-            _wakelock?.enable();
+            _wakelock.enable();
           } else {
-            _wakelock?.disable();
+            _wakelock.disable();
           }
         },
       );
@@ -157,8 +169,8 @@ class VideoState extends State<Video> {
 
   @override
   void dispose() {
+    _wakelock.disable();
     _playingSubscription?.cancel();
-    _wakelock?.disable();
     super.dispose();
   }
 
@@ -235,7 +247,7 @@ class VideoState extends State<Video> {
               !(controller.player.platform?.configuration.libass ?? false))
             SubtitleView(
               controller: controller,
-              key: subtitleViewKey,
+              key: _subtitleViewKey,
               configuration: subtitleViewConfiguration,
             ),
           if (controls != null)

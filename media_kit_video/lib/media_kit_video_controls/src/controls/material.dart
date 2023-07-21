@@ -460,7 +460,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   void shiftSubtitle() {
     if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
-      state(context).subtitleViewKey.currentState?.setPadding(
+      state(context).setSubtitleViewPadding(
             state(context).widget.subtitleViewConfiguration.padding +
                 EdgeInsets.fromLTRB(
                   0.0,
@@ -474,7 +474,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   void unshiftSubtitle() {
     if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
-      state(context).subtitleViewKey.currentState?.setPadding(
+      state(context).setSubtitleViewPadding(
             state(context).widget.subtitleViewConfiguration.padding,
           );
     }
