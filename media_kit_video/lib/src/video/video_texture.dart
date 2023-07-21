@@ -3,10 +3,12 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
+import 'package:media_kit_video/src/utils/wakelock.dart';
 
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
@@ -114,6 +116,8 @@ class Video extends StatefulWidget {
 
 class VideoState extends State<Video> {
   GlobalKey<SubtitleViewState> subtitleViewKey = GlobalKey<SubtitleViewState>();
+  Wakelock? _wakelock;
+  StreamSubscription? _playingSubscription;
 
   // Public API:
 
@@ -136,16 +140,25 @@ class VideoState extends State<Video> {
   @override
   void initState() {
     super.initState();
+
     if (widget.wakelock) {
-      WakelockPlus.enable().catchError((_) {});
+      _wakelock = Wakelock();
+      _playingSubscription = widget.controller.player.stream.playing.listen(
+        (playing) {
+          if (playing) {
+            _wakelock?.enable();
+          } else {
+            _wakelock?.disable();
+          }
+        },
+      );
     }
   }
 
   @override
   void dispose() {
-    if (widget.wakelock) {
-      WakelockPlus.disable().catchError((_) {});
-    }
+    _playingSubscription?.cancel();
+    _wakelock?.disable();
     super.dispose();
   }
 
