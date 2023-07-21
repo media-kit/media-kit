@@ -1,6 +1,6 @@
 name: media_kit_libs_ios_audio
 description: iOS package providing audio native libraries for package:media_kit.
-version: 1.0.4
+version: 1.0.5
 homepage: https://github.com/alexmercerind/media_kit.git
 repository: https://github.com/alexmercerind/media_kit.git
 funding:

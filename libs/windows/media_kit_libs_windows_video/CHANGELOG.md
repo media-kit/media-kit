@@ -4,6 +4,7 @@
 - [ANGLE 2.1.18844 git hash: 2693b03eba82](https://github.com/google/angle)
 - MSVCRT
 - UCRT
+- perf: reduce bundle size
 
 ## 1.0.2
 

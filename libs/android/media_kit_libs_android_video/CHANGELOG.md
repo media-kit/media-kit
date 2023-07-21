@@ -1,6 +1,7 @@
 ## 1.2.0
 
 - build: bump dependencies
+- perf: reduce bundle size
 
 ## 1.1.1
 
