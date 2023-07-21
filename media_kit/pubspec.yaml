@@ -34,6 +34,7 @@ environment:
 dependencies:
   meta: ^1.8.0
   path: ^1.8.0
+  uuid: ^3.0.7
   image: ^4.0.17
   uri_parser: ^2.0.2
   collection: ^1.17.0
