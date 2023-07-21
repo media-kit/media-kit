@@ -2907,7 +2907,7 @@ void main() {
     timeout: Timeout(const Duration(minutes: 3)),
   );
   test(
-    'player-external-set-subtitle-track',
+    'player-set-subtitle-track-external',
     () async {
       final player = Player(
         configuration: const PlayerConfiguration(
@@ -3138,7 +3138,7 @@ void main() {
     timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
-    'player-external-set-subtitle-track',
+    'player-set-subtitle-track-external-str',
     () async {
       final webvtt = '''WEBVTT FILE
 
@@ -3393,7 +3393,6 @@ Simply for <u>everyone</u>
 
       await player.dispose();
     },
-    skip: !UniversalPlatform.isWeb,
     timeout: Timeout(const Duration(minutes: 2)),
   );
 }
