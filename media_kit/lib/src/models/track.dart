@@ -74,15 +74,15 @@ class VideoTrack extends _Track {
 /// This may be selected for output in [Player].
 /// {@endtemplate}
 class AudioTrack extends _Track {
-  /// Whether the audio track is external.
-  final bool external;
+  /// Whether the audio track is loaded from URI.
+  final bool uri;
 
   /// {@macro audio_track}
   const AudioTrack(
     super.id,
     super.title,
     super.language, [
-    this.external = false,
+    this.uri = false,
   ]);
 
   /// No audio track. Disables audio output.
@@ -91,12 +91,12 @@ class AudioTrack extends _Track {
   /// Default audio track. Selects the first audio track.
   factory AudioTrack.auto() => AudioTrack('auto', null, null);
 
-  /// External audio track. Selects the audio track with given [uri].
+  /// [AudioTrack] loaded with URI.
   ///
-  /// This factory constructor may be used to load external audio.
+  /// This factory constructor may be used to load external audio as URI.
   ///
   /// **NOTE:** External audio track is automatically unloaded upon playback completion.
-  factory AudioTrack.external(
+  factory AudioTrack.uri(
     String uri, {
     String? title,
     String? language,
@@ -109,13 +109,13 @@ class AudioTrack extends _Track {
       return true;
     }
     if (other is AudioTrack) {
-      return id == other.id && external == other.external;
+      return id == other.id && uri == other.uri;
     }
     return false;
   }
 
   @override
-  int get hashCode => 0x3 ^ id.hashCode ^ external.hashCode;
+  int get hashCode => 0x3 ^ id.hashCode ^ uri.hashCode;
 
   @override
   String toString() => 'AudioTrack($id, $title, $language)';
@@ -130,15 +130,19 @@ class AudioTrack extends _Track {
 /// This may be selected for output in [Player].
 /// {@endtemplate}
 class SubtitleTrack extends _Track {
-  /// Whether the subtitle track is external.
-  final bool external;
+  /// Whether the subtitle track is loaded from URI.
+  final bool uri;
+
+  /// Whether the audio track is loaded from data.
+  final bool data;
 
   /// {@macro subtitle_track}
   const SubtitleTrack(
     super.id,
     super.title,
     super.language, [
-    this.external = false,
+    this.uri = false,
+    this.data = false,
   ]);
 
   /// No subtitle track. Disables subtitle output.
@@ -147,17 +151,29 @@ class SubtitleTrack extends _Track {
   /// Default subtitle track. Selects the first subtitle track.
   factory SubtitleTrack.auto() => SubtitleTrack('auto', null, null);
 
-  /// External subtitle track. Selects the subtitle track with given [uri].
+  /// [SubtitleTrack] loaded with URI.
   ///
-  /// This factory constructor may be used to load external subtitles e.g. SRT, WebVTT etc.
+  /// This factory constructor may be used to load external subtitles e.g. SRT, WebVTT etc. as URI.
   ///
   /// **NOTE:** External audio track is automatically unloaded upon playback completion.
-  factory SubtitleTrack.external(
+  factory SubtitleTrack.uri(
     String uri, {
     String? title,
     String? language,
   }) =>
-      SubtitleTrack(uri, title, language, true);
+      SubtitleTrack(uri, title, language, true, false);
+
+  /// [SubtitleTrack] loaded with data.
+  ///
+  /// This factory constructor may be used to load external subtitles e.g. SRT, WebVTT etc. as data.
+  ///
+  /// **NOTE:** External audio track is automatically unloaded upon playback completion.
+  factory SubtitleTrack.data(
+    String data, {
+    String? title,
+    String? language,
+  }) =>
+      SubtitleTrack(data, title, language, false, true);
 
   @override
   bool operator ==(Object other) {
@@ -165,16 +181,16 @@ class SubtitleTrack extends _Track {
       return true;
     }
     if (other is SubtitleTrack) {
-      return id == other.id && external == other.external;
+      return id == other.id && uri == other.uri && data == other.data;
     }
     return false;
   }
 
   @override
-  int get hashCode => 0x3 ^ id.hashCode ^ external.hashCode;
+  int get hashCode => 0x3 ^ id.hashCode ^ uri.hashCode ^ data.hashCode;
 
   @override
-  String toString() => 'SubtitleTrack($id, $title, $language)';
+  String toString() => 'SubtitleTrack($id, $title, $language, $data)';
 }
 
 // For composition in [PlayerState] & [PlayerStreams] classes.
