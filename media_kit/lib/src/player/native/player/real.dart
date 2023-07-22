@@ -12,7 +12,6 @@ import 'dart:typed_data';
 import 'package:path/path.dart';
 import 'package:meta/meta.dart';
 import 'package:image/image.dart';
-import 'package:uri_parser/uri_parser.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/ffi/ffi.dart';
@@ -102,7 +101,7 @@ class NativePlayer extends PlatformPlayer {
                   TaskQueue.instance.refractoryDuration;
           if (safe) {
             mpv.mpv_terminate_destroy(ctx);
-            print('media_kit: mpv_terminate_destroy: ${ctx.address}');
+            print('media_kit: Player.dispose: ${ctx.address}');
           }
           return safe;
         },
@@ -1144,7 +1143,7 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      if (track.external) {
+      if (track.uri) {
         await _command(
           [
             'audio-add',
@@ -1216,34 +1215,19 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      if (track.external) {
-        // Support loading for subtitles as URI or raw string.
-        String? uri;
-        if (track.id.length < 4096) {
-          try {
-            final parser = URIParser(track.id);
-            switch (parser.type) {
-              case URIType.file:
-                {
-                  uri = parser.file!.path;
-                  break;
-                }
-              case URIType.network:
-                {
-                  uri = parser.uri!.toString();
-                  break;
-                }
-              default:
-                {
-                  break;
-                }
-            }
-          } catch (_) {}
-        }
-        if (uri == null) {
+      if (track.uri || track.data) {
+        final String uri;
+        if (track.uri) {
+          uri = track.id;
+        } else if (track.data) {
+          // Save the subtitle data to a temporary [File].
           final temp = await TempFile.create();
           await temp.write_(track.id);
+          // Delete the temporary [File] upon [dispose].
+          release.add(temp.delete_);
           uri = temp.uri.toString();
+        } else {
+          return;
         }
 
         await _command(

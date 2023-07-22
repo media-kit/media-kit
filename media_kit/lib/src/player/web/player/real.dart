@@ -1246,7 +1246,7 @@ class WebPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      if (track.external) {
+      if (track.uri) {
         element.children.removeWhere((e) => e is html.SourceElement);
 
         final child = html.SourceElement();
@@ -1259,7 +1259,7 @@ class WebPlayer extends PlatformPlayer {
         }
       } else {
         throw UnsupportedError(
-          '[Player.setAudioTrack] is only supported with [AudioTrack.external] on web',
+          '[Player.setAudioTrack] is only supported with [AudioTrack.uri] on web',
         );
       }
     }
@@ -1283,27 +1283,25 @@ class WebPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      if (track.external) {
-        element.children.removeWhere((e) => e is html.TrackElement);
-
-        final child = html.TrackElement();
-
-        // Support loading for subtitles as URI or raw string.
-        String? uri;
-        if (track.id.length < 4096) {
-          try {
-            uri = Uri.parse(track.id).toString();
-          } catch (_) {}
-        }
-        if (uri == null) {
+      if (track.uri || track.data) {
+        final String uri;
+        if (track.uri) {
+          uri = track.id;
+        } else if (track.data) {
+          // Create object URL from subtitle data.
           final src = html.Url.createObjectUrlFromBlob(html.Blob([track.id]));
-          uri = src;
-          // Revoke the object URL after use i.e. upon [dispose].
+          // Revoke the object URL upon [dispose].
           release.add(() async {
             html.Url.revokeObjectUrl(src);
           });
+          uri = src;
+        } else {
+          return;
         }
 
+        element.children.removeWhere((e) => e is html.TrackElement);
+
+        final child = html.TrackElement();
         child.src = uri;
         child.kind = 'subtitles';
         child.label = track.title;
@@ -1352,7 +1350,7 @@ class WebPlayer extends PlatformPlayer {
         });
       } else {
         throw UnsupportedError(
-          '[Player.setSubtitleTrack] is only supported with [SubtitleTrack.external] on web',
+          '[Player.setSubtitleTrack] is only supported with [SubtitleTrack.uri] & [SubtitleTrack.data] on web',
         );
       }
     }
