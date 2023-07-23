@@ -46,9 +46,9 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
 
 ```yaml
 dependencies:
-  media_kit: ^1.0.2                              # Primary package.
+  media_kit: ^1.1.0                              # Primary package.
   
-  media_kit_video: ^1.0.2                        # For video rendering.
+  media_kit_video: ^1.1.0                        # For video rendering.
   
   media_kit_native_event_loop: ^1.0.6            # Support for higher number of concurrent instances & better performance.
   
@@ -63,7 +63,7 @@ dependencies:
 
 ```yaml
 dependencies:
-  media_kit: ^1.0.2                              # Primary package.
+  media_kit: ^1.1.0                              # Primary package.
   
   media_kit_native_event_loop: ^1.0.6            # Support for higher number of concurrent instances & better performance.
   
@@ -91,7 +91,7 @@ dependencies:
 | macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v1.0.1/media_kit_test_macos_universal.7z)    |
 | Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v1.0.1/media_kit_test_win32_x64.7z)          |
 | GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v1.0.1/media_kit_test_linux_x64.7z)          |
-| Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://alexmercerind.github.io//media_kit/)                                                                            |
+| Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://alexmercerind.github.io/media_kit/)                                                                            |
 
 <table>
   <tr>
@@ -144,6 +144,20 @@ dependencies:
       <img src="https://github.com/alexmercerind/media_kit/assets/28951144/feb9fdf2-095f-43db-96af-f7782985238d" height="200" alt="Web"></img>
     </td>
 </table>
+
+- ✅ Video playback
+- ✅ Audio playback
+- ✅ Cross-platform
+- ✅ Wide codec/format support
+- ✅ Hardware/GPU acceleration
+- ✅ Playlist support with next/previous/jump/shuffle
+- ✅ Volume/Rate/Pitch change
+- ✅ Video/Audio/Subtitle track selection
+- ✅ External audio/subtitle track selection
+- ✅ HTTP headers
+- ✅ Video controls
+- ✅ Subtitle styling
+- ✅ Screenshot
 
 ## TL;DR
 
@@ -1693,14 +1707,14 @@ _Click on the zoom button on top-right or pinch inside._
 classDiagram
 
   Player *-- PlatformPlayer
-  PlatformPlayer <|-- libmpvPlayer
-  PlatformPlayer <|-- webPlayer
+  PlatformPlayer <|-- NativePlayer
+  PlatformPlayer <|-- WebPlayer
   PlatformPlayer *-- PlayerState
   PlatformPlayer *-- PlayerStreams
   PlatformPlayer o-- PlayerConfiguration
 
-  libmpvPlayer <.. NativeLibrary
-  libmpvPlayer <.. Initializer
+  NativePlayer <.. NativeLibrary
+  NativePlayer <.. Initializer
   Initializer o-- InitializerIsolate
   Initializer o-- InitializerNativeEventLoop
   
@@ -1868,7 +1882,7 @@ classDiagram
     #StreamController<int> heightController
   }
 
-  class libmpvPlayer {
+  class NativePlayer {
     +dispose()
     +open(playable: Playable)
     +play()
@@ -1893,7 +1907,7 @@ classDiagram
     +«get» handle: Future<int>
   }
   
-  class webPlayer {
+  class WebPlayer {
     +dispose()
     +open(playable: Playable)
     +play()
