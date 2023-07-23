@@ -257,10 +257,12 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
           ),
           if (subtitleViewConfiguration.visible &&
               !(controller.player.platform?.configuration.libass ?? false))
-            SubtitleView(
-              controller: controller,
-              key: _subtitleViewKey,
-              configuration: subtitleViewConfiguration,
+            Positioned.fill(
+              child: SubtitleView(
+                controller: controller,
+                key: _subtitleViewKey,
+                configuration: subtitleViewConfiguration,
+              ),
             ),
           if (controls != null)
             Positioned.fill(
