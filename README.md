@@ -840,7 +840,7 @@ Simply for <u>everyone</u>
 
 ### Load external audio track
 
-The `AudioTrack.external` constructor can be used to load external audio track **with URI**. The code is easier to understand:
+The `AudioTrack.uri` constructor can be used to load external audio track **with URI**. The code is easier to understand:
 
 ```dart
 await player.setAudioTrack(
