@@ -1371,24 +1371,25 @@ class WebPlayer extends PlatformPlayer {
   Future<Uint8List?> screenshot(
       {String? format = 'image/jpeg', bool synchronized = true}) async {
     Future<Uint8List?> function() async {
+      if (![
+        'image/jpeg',
+        'image/png',
+      ].contains(format)) {
+        throw ArgumentError.value(
+          format,
+          'format',
+          'Supported values are: image/jpeg, image/png',
+        );
+      }
+
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
       try {
-        if (![
-          'image/jpeg',
-          'image/png',
-        ].contains(format)) {
-          throw ArgumentError.value(
-            format,
-            'format',
-            'Supported values are: image/jpeg, image/png',
-          );
-        }
-        if (disposed) {
-          throw AssertionError('[Player] has been disposed');
-        }
-
-        await waitForPlayerInitialization;
-        await waitForVideoControllerInitializationIfAttached;
-
         // Kind of limited in usage:
         // https://stackoverflow.com/questions/35244215/html5-video-screenshot-via-canvas-using-cors
         final canvas = html.CanvasElement();
@@ -1403,8 +1404,9 @@ class WebPlayer extends PlatformPlayer {
         canvas.remove();
 
         return bytes;
-      } catch (_) {}
-      return null;
+      } catch (_) {
+        return null;
+      }
     }
 
     if (synchronized) {
