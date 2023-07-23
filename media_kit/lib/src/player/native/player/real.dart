@@ -9,9 +9,10 @@ import 'dart:math';
 import 'dart:async';
 import 'dart:collection';
 import 'dart:typed_data';
-import 'package:meta/meta.dart';
 import 'package:path/path.dart';
+import 'package:meta/meta.dart';
 import 'package:image/image.dart';
+import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/ffi/ffi.dart';
 
@@ -24,6 +25,7 @@ import 'package:media_kit/src/player/native/core/initializer_native_event_loop.d
 
 import 'package:media_kit/src/player/native/utils/isolates.dart';
 import 'package:media_kit/src/player/native/utils/lock_ext.dart';
+import 'package:media_kit/src/player/native/utils/temp_file.dart';
 import 'package:media_kit/src/player/native/utils/task_queue.dart';
 import 'package:media_kit/src/player/native/utils/android_helper.dart';
 import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
@@ -99,7 +101,7 @@ class NativePlayer extends PlatformPlayer {
                   TaskQueue.instance.refractoryDuration;
           if (safe) {
             mpv.mpv_terminate_destroy(ctx);
-            print('media_kit: mpv_terminate_destroy: ${ctx.address}');
+            print('media_kit: Player.dispose: ${ctx.address}');
           }
           return safe;
         },
@@ -1120,11 +1122,11 @@ class NativePlayer extends PlatformPlayer {
   ///
   /// * Currently selected [AudioTrack] can be accessed using [state.track.audio] or [stream.track.audio].
   /// * The list of currently available [AudioTrack]s can be obtained accessed using [state.tracks.audio] or [stream.tracks.audio].
-  /// * External audio tracks can be loaded using [AudioTrack.external] constructor.
+  /// * External audio track can be loaded using [AudioTrack.uri] constructor.
   ///
   /// ```dart
   /// player.setAudioTrack(
-  ///   AudioTrack.external(
+  ///   AudioTrack.uri(
   ///     'https://www.iandevlin.com/html5test/webvtt/v/upc-tobymanley.mp4',
   ///     title: 'English',
   ///     language: 'en',
@@ -1141,7 +1143,7 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      if (track.external) {
+      if (track.uri) {
         await _command(
           [
             'audio-add',
@@ -1191,11 +1193,11 @@ class NativePlayer extends PlatformPlayer {
   ///
   /// * Currently selected [SubtitleTrack] can be accessed using [state.track.subtitle] or [stream.track.subtitle].
   /// * The list of currently available [SubtitleTrack]s can be obtained accessed using [state.tracks.subtitle] or [stream.tracks.subtitle].
-  /// * External subtitle tracks can be loaded using [SubtitleTrack.external] constructor.
+  /// * External subtitle track can be loaded using [SubtitleTrack.uri] or [SubtitleTrack.data] constructor.
   ///
   /// ```dart
   /// player.setSubtitleTrack(
-  ///   SubtitleTrack.external(
+  ///   SubtitleTrack.uri(
   ///     'https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt',
   ///     title: 'English',
   ///     language: 'en',
@@ -1213,11 +1215,25 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      if (track.external) {
+      if (track.uri || track.data) {
+        final String uri;
+        if (track.uri) {
+          uri = track.id;
+        } else if (track.data) {
+          // Save the subtitle data to a temporary [File].
+          final temp = await TempFile.create();
+          await temp.write_(track.id);
+          // Delete the temporary [File] upon [dispose].
+          release.add(temp.delete_);
+          uri = temp.uri.toString();
+        } else {
+          return;
+        }
+
         await _command(
           [
             'sub-add',
-            track.id,
+            uri,
             'select',
             track.title ?? 'external',
             track.language ?? 'auto',

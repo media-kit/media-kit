@@ -2907,7 +2907,7 @@ void main() {
     timeout: Timeout(const Duration(minutes: 3)),
   );
   test(
-    'player-external-set-subtitle-track',
+    'player-set-subtitle-track-external-uri',
     () async {
       final player = Player(
         configuration: const PlayerConfiguration(
@@ -2932,7 +2932,7 @@ void main() {
             Track(
               video: VideoTrack.auto(),
               audio: AudioTrack.auto(),
-              subtitle: SubtitleTrack.external(
+              subtitle: SubtitleTrack.uri(
                 'https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt',
                 title: 'English',
                 language: 'en',
@@ -3123,7 +3123,7 @@ void main() {
         ),
       );
       await player.setSubtitleTrack(
-        SubtitleTrack.external(
+        SubtitleTrack.uri(
           'https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt',
           title: 'English',
           language: 'en',
@@ -3138,7 +3138,7 @@ void main() {
     timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
-    'player-external-set-subtitle-track',
+    'player-set-subtitle-track-external-data',
     () async {
       final webvtt = '''WEBVTT FILE
 
@@ -3191,7 +3191,7 @@ Simply for <u>everyone</u>
             Track(
               video: VideoTrack.auto(),
               audio: AudioTrack.auto(),
-              subtitle: SubtitleTrack.external(
+              subtitle: SubtitleTrack.data(
                 webvtt,
                 title: 'English',
                 language: 'en',
@@ -3382,7 +3382,7 @@ Simply for <u>everyone</u>
         ),
       );
       await player.setSubtitleTrack(
-        SubtitleTrack.external(
+        SubtitleTrack.data(
           webvtt,
           title: 'English',
           language: 'en',
@@ -3393,7 +3393,6 @@ Simply for <u>everyone</u>
 
       await player.dispose();
     },
-    skip: !UniversalPlatform.isWeb,
     timeout: Timeout(const Duration(minutes: 2)),
   );
 }
