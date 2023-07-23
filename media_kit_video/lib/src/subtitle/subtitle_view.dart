@@ -4,8 +4,9 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:async';
-
+import 'dart:math';
 import 'package:flutter/material.dart';
+
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
 /// {@template subtitle_view}
@@ -40,6 +41,11 @@ class SubtitleViewState extends State<SubtitleView> {
 
   // The [StreamSubscription] to listen to the subtitle changes.
   StreamSubscription<List<String>>? subscription;
+
+  // The reference width for calculating the visible text scale factor.
+  static const kTextScaleFactorReferenceWidth = 1920.0;
+  // The reference height for calculating the visible text scale factor.
+  static const kTextScaleFactorReferenceHeight = 1080.0;
 
   @override
   void initState() {
@@ -77,26 +83,35 @@ class SubtitleViewState extends State<SubtitleView> {
   /// {@macro subtitle_view}
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      left: 0.0,
-      right: 0.0,
-      bottom: 0.0,
-      child: Material(
-        color: Colors.transparent,
-        child: AnimatedContainer(
-          padding: padding,
-          duration: duration,
-          alignment: Alignment.bottomCenter,
-          child: Text(
-            [
-              for (final line in subtitle)
-                if (line.trim().isNotEmpty) line.trim(),
-            ].join('\n'),
-            style: style,
-            textAlign: textAlign,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate the visible text scale factor.
+        final textScaleFactor = widget.configuration.textScaleFactor ??
+            MediaQuery.of(context).textScaleFactor *
+                sqrt(
+                  ((constraints.maxWidth * constraints.maxHeight) /
+                          (kTextScaleFactorReferenceWidth *
+                              kTextScaleFactorReferenceHeight))
+                      .clamp(0.0, 1.0),
+                );
+        return Material(
+          color: Colors.transparent,
+          child: AnimatedContainer(
+            padding: padding,
+            duration: duration,
+            alignment: Alignment.bottomCenter,
+            child: Text(
+              [
+                for (final line in subtitle)
+                  if (line.trim().isNotEmpty) line.trim(),
+              ].join('\n'),
+              style: style,
+              textAlign: textAlign,
+              textScaleFactor: textScaleFactor,
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -117,6 +132,9 @@ class SubtitleViewConfiguration {
   /// The text alignment to be used for the subtitles.
   final TextAlign textAlign;
 
+  /// The text scale factor to be used for the subtitles.
+  final double? textScaleFactor;
+
   /// The padding to be used for the subtitles.
   final EdgeInsets padding;
 
@@ -125,7 +143,7 @@ class SubtitleViewConfiguration {
     this.visible = true,
     this.style = const TextStyle(
       height: 1.4,
-      fontSize: 24.0,
+      fontSize: 32.0,
       letterSpacing: 0.0,
       wordSpacing: 0.0,
       color: Color(0xffffffff),
@@ -133,6 +151,7 @@ class SubtitleViewConfiguration {
       backgroundColor: Color(0xaa000000),
     ),
     this.textAlign = TextAlign.center,
+    this.textScaleFactor,
     this.padding = const EdgeInsets.fromLTRB(
       16.0,
       0.0,

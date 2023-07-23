@@ -91,6 +91,9 @@ class Video extends StatefulWidget {
   /// Whether to acquire wake lock while playing the video.
   final bool wakelock;
 
+  /// Whether to pause the video when application enters background mode.
+  final bool pauseUponEnteringBackgroundMode;
+
   /// The configuration for subtitles e.g. [TextStyle] & padding etc.
   final SubtitleViewConfiguration subtitleViewConfiguration;
 
@@ -107,6 +110,7 @@ class Video extends StatefulWidget {
     this.filterQuality = FilterQuality.low,
     this.controls = media_kit_video_controls.AdaptiveVideoControls,
     this.wakelock = true,
+    this.pauseUponEnteringBackgroundMode = true,
     this.subtitleViewConfiguration = const SubtitleViewConfiguration(),
   }) : super(key: key);
 
@@ -114,7 +118,7 @@ class Video extends StatefulWidget {
   State<Video> createState() => VideoState();
 }
 
-class VideoState extends State<Video> {
+class VideoState extends State<Video> with WidgetsBindingObserver {
   final GlobalKey<SubtitleViewState> _subtitleViewKey =
       GlobalKey<SubtitleViewState>();
   final Wakelock _wakelock = Wakelock();
@@ -149,8 +153,22 @@ class VideoState extends State<Video> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (widget.pauseUponEnteringBackgroundMode) {
+      if ([
+        AppLifecycleState.paused,
+        AppLifecycleState.inactive,
+        AppLifecycleState.detached,
+      ].contains(state)) {
+        widget.controller.player.pause();
+      }
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (widget.wakelock) {
       if (widget.controller.player.state.playing) {
         _wakelock.enable();
@@ -169,12 +187,12 @@ class VideoState extends State<Video> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _wakelock.disable();
     _playingSubscription?.cancel();
     super.dispose();
   }
 
-  /// Web specific API to re-draw [HtmlElementView].
   void refreshView() {}
 
   @override
@@ -245,10 +263,12 @@ class VideoState extends State<Video> {
           ),
           if (subtitleViewConfiguration.visible &&
               !(controller.player.platform?.configuration.libass ?? false))
-            SubtitleView(
-              controller: controller,
-              key: _subtitleViewKey,
-              configuration: subtitleViewConfiguration,
+            Positioned.fill(
+              child: SubtitleView(
+                controller: controller,
+                key: _subtitleViewKey,
+                configuration: subtitleViewConfiguration,
+              ),
             ),
           if (controls != null)
             Positioned.fill(

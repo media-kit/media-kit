@@ -91,7 +91,7 @@ dependencies:
 | macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v1.1.0/media_kit_test_macos_universal.7z)    |
 | Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v1.1.0/media_kit_test_win32_x64.7z)          |
 | GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v1.1.0/media_kit_test_linux_x64.7z)          |
-| Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://alexmercerind.github.io//media_kit/)                                                                            |
+| Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://alexmercerind.github.io/media_kit/)                                                                            |
 
 <table>
   <tr>
@@ -150,7 +150,7 @@ dependencies:
 - ✅ Cross platform
 - ✅ Wide format/codec support
 - ✅ Hardware/GPU acceleration
-- ✅ Playlist support w/ next/previous/jump/shuffle
+- ✅ Playlist support with next/previous/jump/shuffle
 - ✅ Volume/Rate/Pitch change
 - ✅ Video/Audio/Subtitle track selection
 - ✅ External audio/subtitle track selection
