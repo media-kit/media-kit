@@ -581,14 +581,14 @@ class _MaterialDesktopVideoControlsState
                     }
                   : null,
               child: GestureDetector(
-                onTapUp: (e) {
-                  if (_theme(context).toggleFullscreenOnDoublePress) {
-                    final now = DateTime.now();
-                    final difference = now.difference(last);
-                    last = now;
-                    if (difference < const Duration(milliseconds: 400)) {
-                      toggleFullscreen(context);
-                    }
+                onTapUp: !_theme(context).toggleFullscreenOnDoublePress
+                    ? null
+                    : (e) {
+                  final now = DateTime.now();
+                  final difference = now.difference(last);
+                  last = now;
+                  if (difference < const Duration(milliseconds: 400)) {
+                    toggleFullscreen(context);
                   }
                 },
                 onPanUpdate: _theme(context).modifyVolumeOnScroll
