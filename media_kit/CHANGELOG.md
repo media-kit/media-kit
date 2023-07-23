@@ -1,3 +1,21 @@
+## 1.1.0
+
+- feat: `Player.screenshot` for capturing video snapshots as `Uint8List`
+- feat: external audio track & subtitle track support
+  - `AudioTrack.uri`
+  - `SubtitleTrack.uri` & `SubtitleTrack.data`
+- feat: WebVTT subtitle support
+- feat: `Player.state.videoParams` & `Player.stream.videoParams`
+- feat: `Player.state.subtitle` & `Player.stream.subtitle`
+- perf(android): use `hwdec=mediacodec` w/ `enableHardwareAcceleration`
+- fix(android): OpenSL ES limit
+- fix(android): improve stability
+- fix(android): file-descriptor clean-up for content:// URI
+- fix(windows): improve stability
+- fix: immediately set `vid`/`aid`/`sid` to `no` in `dispose`
+- perf: reduce bundle size by <= 50%
+- perf: do not decode video until `VideoController` attach
+
 ## 1.0.2
 
 - deps: update [`package:http`](https://pub.dev/packages/http) dependency constraint
