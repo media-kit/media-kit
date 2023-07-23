@@ -236,7 +236,7 @@ abstract class PlatformPlayer {
     );
   }
 
-  Future<Uint8List?> screenshot({String format = 'image/jpeg'}) async {
+  Future<Uint8List?> screenshot({String? format = 'image/jpeg'}) async {
     throw UnimplementedError(
       '[PlatformPlayer.screenshot] is not implemented',
     );

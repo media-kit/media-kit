@@ -2578,11 +2578,18 @@ void main() {
       // VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
 
-      final screenshot = await player.screenshot(format: 'image/png');
-
-      expect(screenshot, isNotNull);
-      expect(screenshot, isA<Uint8List>());
-      expect(screenshot?.length ?? 0, greaterThan(0));
+      final jpeg = await player.screenshot(format: 'image/jpeg');
+      expect(jpeg, isNotNull);
+      expect(jpeg, isA<Uint8List>());
+      expect(jpeg?.length ?? 0, greaterThan(0));
+      final png = await player.screenshot(format: 'image/png');
+      expect(png, isNotNull);
+      expect(png, isA<Uint8List>());
+      expect(png?.length ?? 0, greaterThan(0));
+      final pixels = await player.screenshot(format: null);
+      expect(pixels, isNotNull);
+      expect(pixels, isA<Uint8List>());
+      expect(pixels?.length ?? 0, greaterThan(0));
 
       // VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));

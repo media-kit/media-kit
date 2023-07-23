@@ -1278,20 +1278,22 @@ class NativePlayer extends PlatformPlayer {
   /// Takes the snapshot of the current video frame & returns encoded image bytes as [Uint8List].
   ///
   /// The [format] parameter specifies the format of the image to be returned. Supported values are:
-  /// * `image/jpeg`
-  /// * `image/png`
+  /// * `image/jpeg`: Returns a JPEG encoded image.
+  /// * `image/png`: Returns a PNG encoded image.
+  /// * `null`: Returns BGRA pixel buffer.
   @override
   Future<Uint8List?> screenshot(
-      {String format = 'image/jpeg', bool synchronized = true}) async {
+      {String? format = 'image/jpeg', bool synchronized = true}) async {
     Future<Uint8List?> function() async {
       if (![
         'image/jpeg',
         'image/png',
+        null,
       ].contains(format)) {
         throw ArgumentError.value(
           format,
           'format',
-          'Supported values are: image/jpeg, image/png',
+          'Supported values are: image/jpeg, image/png, null',
         );
       }
       if (disposed) {
@@ -2277,7 +2279,7 @@ class NativePlayer extends PlatformPlayer {
 class _ScreenshotData {
   final int ctx;
   final String lib;
-  final String format;
+  final String? format;
 
   _ScreenshotData(
     this.ctx,
@@ -2374,6 +2376,12 @@ Uint8List? _screenshot(_ScreenshotData data) {
         case 'image/png':
           {
             image = encodePng(pixels);
+            break;
+          }
+        case null:
+          {
+            image = bytes;
+            break;
           }
       }
     }
