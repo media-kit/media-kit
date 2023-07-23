@@ -1,3 +1,16 @@
+## 1.1.0
+
+- feat: `SubtitleView`, `SubtitleViewConfiguration`
+- feat: `shiftSubtitlesOnControlsVisibilityChange` in `MaterialVideoControls` & `MaterialDesktopVideoControls`
+- feat: apply rotation from metadata to video output
+- feat: improve wakelock behavior
+- feat: `pauseUponEnteringBackgroundMode`
+- fix: `bufferingIndicatorBuilder` padding in `MaterialVideoControls` & `MaterialDesktopVideoControls`
+- fix(windows): maintain aspect ratio in s/w rendering pixel-buffer size clamping
+- fix(linux): maintain aspect ratio in s/w rendering pixel-buffer size clamping
+- perf(android): use `hwdec=mediacodec` w/ `enableHardwareAcceleration`
+- deps: migrate [`package:wakelock_plus`](https://pub.dev/packages/wakelock_plus)
+
 ## 1.0.2
 
 - fix(video/macos): fix fullscreen support
