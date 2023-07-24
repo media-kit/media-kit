@@ -2353,28 +2353,42 @@ Uint8List? _screenshot(_ScreenshotData data) {
     }
 
     if (w != null && h != null && stride != null && bytes != null) {
-      final pixels = Image(
-        width: w,
-        height: h,
-        numChannels: 4,
-      );
-      for (final pixel in pixels) {
-        final x = pixel.x;
-        final y = pixel.y;
-        final i = (y * stride) + (x * 4);
-        pixel.b = bytes[i];
-        pixel.g = bytes[i + 1];
-        pixel.r = bytes[i + 2];
-        pixel.a = bytes[i + 3];
-      }
       switch (format) {
         case 'image/jpeg':
           {
+            final pixels = Image(
+              width: w,
+              height: h,
+              numChannels: 4,
+            );
+            for (final pixel in pixels) {
+              final x = pixel.x;
+              final y = pixel.y;
+              final i = (y * stride) + (x * 4);
+              pixel.b = bytes[i];
+              pixel.g = bytes[i + 1];
+              pixel.r = bytes[i + 2];
+              pixel.a = bytes[i + 3];
+            }
             image = encodeJpg(pixels);
             break;
           }
         case 'image/png':
           {
+            final pixels = Image(
+              width: w,
+              height: h,
+              numChannels: 4,
+            );
+            for (final pixel in pixels) {
+              final x = pixel.x;
+              final y = pixel.y;
+              final i = (y * stride) + (x * 4);
+              pixel.b = bytes[i];
+              pixel.g = bytes[i + 1];
+              pixel.r = bytes[i + 2];
+              pixel.a = bytes[i + 3];
+            }
             image = encodePng(pixels);
             break;
           }
