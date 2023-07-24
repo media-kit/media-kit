@@ -12,6 +12,7 @@ import 'dart:typed_data';
 import 'package:path/path.dart';
 import 'package:meta/meta.dart';
 import 'package:image/image.dart';
+import 'package:synchronized/synchronized.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/ffi/ffi.dart';
@@ -24,9 +25,7 @@ import 'package:media_kit/src/player/native/core/fallback_bitrate_handler.dart';
 import 'package:media_kit/src/player/native/core/initializer_native_event_loop.dart';
 
 import 'package:media_kit/src/player/native/utils/isolates.dart';
-import 'package:media_kit/src/player/native/utils/lock_ext.dart';
 import 'package:media_kit/src/player/native/utils/temp_file.dart';
-import 'package:media_kit/src/player/native/utils/task_queue.dart';
 import 'package:media_kit/src/player/native/utils/android_helper.dart';
 import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
 
@@ -92,20 +91,9 @@ class NativePlayer extends PlatformPlayer {
 
       Initializer.dispose(ctx);
 
-      TaskQueue.instance.add(
-        () {
-          bool safe = true;
-          safe = safe && lock.count == 0;
-          safe = safe &&
-              DateTime.now().difference(lock.time) >
-                  TaskQueue.instance.refractoryDuration;
-          if (safe) {
-            mpv.mpv_terminate_destroy(ctx);
-            print('media_kit: Player.dispose: ${ctx.address}');
-          }
-          return safe;
-        },
-      );
+      Future.delayed(const Duration(seconds: 5), () {
+        mpv.mpv_terminate_destroy(ctx);
+      });
     }
 
     if (synchronized) {
@@ -2258,7 +2246,7 @@ class NativePlayer extends PlatformPlayer {
   final HashSet<Media> current = HashSet<Media>();
 
   /// Synchronization & mutual exclusion between methods of this class.
-  static final LockExt lock = LockExt();
+  static final Lock lock = Lock();
 
   /// [HashMap] for retrieving previously fetched audio-bitrate(s).
   static final HashMap<String, double> audioBitrateCache =
