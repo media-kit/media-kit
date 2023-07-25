@@ -107,7 +107,7 @@ abstract class InitializerIsolate {
       _ports.remove(handle.address);
       _isolates.remove(handle.address);
       // A voluntary delay. Although, [Isolate.kill] is not necessary since execution in the [Isolate] will stop automatically.
-      Future.delayed(const Duration(seconds: 10), () {
+      Future.delayed(const Duration(seconds: 2), () {
         isolate.kill(priority: Isolate.immediate);
       });
     }
