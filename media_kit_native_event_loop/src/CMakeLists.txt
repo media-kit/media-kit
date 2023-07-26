@@ -102,6 +102,7 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
   target_link_libraries(
     ${TARGET_NAME} PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../libmpv/src/main/jniLibs/${ANDROID_ABI}/libmpv.so"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../libmpv/src/main/jniLibs/${ANDROID_ABI}/libmediakitandroidhelper.so"
   )
 
   # Additional options.
