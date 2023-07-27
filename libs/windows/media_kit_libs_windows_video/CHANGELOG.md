@@ -1,3 +1,12 @@
+## 1.0.5
+
+- [mpv-player/mpv@`140ec21`](https://github.com/mpv-player/mpv/commit/140ec21c89d671d392877a7f3b91d67e7d7b9239)
+- [ANGLE 2.1.18844 git hash: 2693b03eba82](https://github.com/google/angle)
+- MSVCRT
+- UCRT
+- fix: HLS support
+- perf: reduce bundle size
+
 ## 1.0.4
 
 - [mpv-player/mpv@`140ec21`](https://github.com/mpv-player/mpv/commit/140ec21c89d671d392877a7f3b91d67e7d7b9239)
