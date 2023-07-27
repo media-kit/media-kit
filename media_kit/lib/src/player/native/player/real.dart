@@ -2094,8 +2094,10 @@ class NativePlayer extends PlatformPlayer {
           'demuxer-max-back-bytes': configuration.bufferSize.toString(),
           if (configuration.vo != null) 'vo': '${configuration.vo}',
           if (configuration.title != null) 'title': '${configuration.title}',
-          'demuxer-lavf-o':
-              'protocol_whitelist=[${configuration.protocolWhitelist.join(',')}]',
+          'demuxer-lavf-o': [
+            'strict=experimental',
+            'protocol_whitelist=[${configuration.protocolWhitelist.join(',')}]'
+          ].join(','),
           'sub-ass': configuration.libass ? 'yes' : 'no',
           'sub-visibility': configuration.libass ? 'yes' : 'no',
           'secondary-sub-visibility': configuration.libass ? 'yes' : 'no',
