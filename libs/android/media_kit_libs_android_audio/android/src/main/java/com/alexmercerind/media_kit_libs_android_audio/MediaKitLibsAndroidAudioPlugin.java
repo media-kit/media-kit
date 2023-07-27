@@ -23,11 +23,6 @@ public class MediaKitLibsAndroidAudioPlugin implements FlutterPlugin {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        try {
-            System.loadLibrary("avcodec");
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
     }
 
     @Override

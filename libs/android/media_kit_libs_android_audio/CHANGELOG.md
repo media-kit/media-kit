@@ -1,3 +1,10 @@
+## 1.3.0
+
+- build: bump dependencies
+- feat: DASH support
+- perf: reduce bundle size
+- perf: static link FFmpeg w/ libmpv
+
 ## 1.2.0
 
 - build: bump dependencies
