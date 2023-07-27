@@ -52,7 +52,7 @@ set(LIBMPV "mpv-dev-x86_64-20230725-git-140ec21.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
 set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-build/releases/download/2023-07-25/${LIBMPV}")
-set(LIBMPV_MD5 "88df2906dcc16ef5825f40467f8fd307")
+set(LIBMPV_MD5 "a7b80936e0956da4439833e99d7d6f2f")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
