@@ -20,80 +20,135 @@ class TracksSelector extends StatefulWidget {
 }
 
 class _TracksSelectorState extends State<TracksSelector> {
+  late Track track = widget.player.state.track;
+  late Tracks tracks = widget.player.state.tracks;
+
+  List<StreamSubscription> subscriptions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    track = widget.player.state.track;
+    tracks = widget.player.state.tracks;
+    subscriptions.addAll(
+      [
+        widget.player.stream.track.listen((track) {
+          setState(() {
+            this.track = track;
+          });
+        }),
+        widget.player.stream.tracks.listen((tracks) {
+          setState(() {
+            this.tracks = tracks;
+          });
+        }),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    for (final s in subscriptions) {
+      s.cancel();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        DropdownButton<VideoTrack>(
-          value: widget.player.state.track.video,
-          items: widget.player.state.tracks.video
-              .map(
-                (e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(
-                    '${e.id} • ${e.title} • ${e.language}',
-                    style: const TextStyle(
-                      fontSize: 14.0,
+        Expanded(
+          child: DropdownButton<VideoTrack>(
+            isExpanded: true,
+            itemHeight: null,
+            value: track.video,
+            items: tracks.video
+                .map(
+                  (e) => DropdownMenuItem(
+                    value: e,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        '${e.id} • ${e.title} • ${e.language}',
+                        style: const TextStyle(
+                          fontSize: 14.0,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              )
-              .toList(),
-          onChanged: (track) async {
-            if (track != null) {
-              await widget.player.setVideoTrack(track);
-              setState(() {});
-            }
-          },
+                )
+                .toList(),
+            onChanged: (track) async {
+              if (track != null) {
+                await widget.player.setVideoTrack(track);
+                setState(() {});
+              }
+            },
+          ),
         ),
         const SizedBox(width: 16.0),
-        DropdownButton<AudioTrack>(
-          value: widget.player.state.track.audio,
-          items: widget.player.state.tracks.audio
-              .map(
-                (e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(
-                    '${e.id} • ${e.title} • ${e.language}',
-                    style: const TextStyle(
-                      fontSize: 14.0,
+        Expanded(
+          child: DropdownButton<AudioTrack>(
+            isExpanded: true,
+            itemHeight: null,
+            value: track.audio,
+            items: tracks.audio
+                .map(
+                  (e) => DropdownMenuItem(
+                    value: e,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        '${e.id} • ${e.title} • ${e.language}',
+                        style: const TextStyle(
+                          fontSize: 14.0,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              )
-              .toList(),
-          onChanged: (track) async {
-            if (track != null) {
-              await widget.player.setAudioTrack(track);
-              setState(() {});
-            }
-          },
+                )
+                .toList(),
+            onChanged: (track) async {
+              if (track != null) {
+                await widget.player.setAudioTrack(track);
+                setState(() {});
+              }
+            },
+          ),
         ),
         const SizedBox(width: 16.0),
-        DropdownButton<SubtitleTrack>(
-          value: widget.player.state.track.subtitle,
-          items: widget.player.state.tracks.subtitle
-              .map(
-                (e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(
-                    '${e.id} • ${e.title} • ${e.language}',
-                    style: const TextStyle(
-                      fontSize: 14.0,
+        Expanded(
+          child: DropdownButton<SubtitleTrack>(
+            isExpanded: true,
+            itemHeight: null,
+            value: track.subtitle,
+            items: tracks.subtitle
+                .map(
+                  (e) => DropdownMenuItem(
+                    value: e,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        '${e.id} • ${e.title} • ${e.language}',
+                        style: const TextStyle(
+                          fontSize: 14.0,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              )
-              .toList(),
-          onChanged: (track) async {
-            if (track != null) {
-              await widget.player.setSubtitleTrack(track);
-              setState(() {});
-            }
-          },
+                )
+                .toList(),
+            onChanged: (track) async {
+              if (track != null) {
+                await widget.player.setSubtitleTrack(track);
+                setState(() {});
+              }
+            },
+          ),
         ),
-        const SizedBox(width: 52.0),
       ],
     );
   }
