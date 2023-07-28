@@ -1,4 +1,4 @@
-/// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
 ///
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
@@ -87,7 +87,7 @@ class Media extends Playable {
     if (key.startsWith('/')) {
       key = key.substring(1);
     }
-    // https://github.com/alexmercerind/media_kit/issues/121
+    // https://github.com/media-kit/media-kit/issues/121
     return key.split('/').map((e) => Uri.encodeComponent(e)).join('/');
   }
 

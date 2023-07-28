@@ -1,4 +1,4 @@
-/// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
 ///
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
@@ -1011,7 +1011,7 @@ class WebPlayer extends PlatformPlayer {
       element.currentTime = duration.inMilliseconds.toDouble() / 1000.0;
 
       // It is self explanatory that PlayerState.completed & PlayerStreams.completed must enter the false state if seek is called. Typically after EOF.
-      // https://github.com/alexmercerind/media_kit/issues/221
+      // https://github.com/media-kit/media-kit/issues/221
       state = state.copyWith(completed: false);
       if (!completedController.isClosed) {
         completedController.add(false);

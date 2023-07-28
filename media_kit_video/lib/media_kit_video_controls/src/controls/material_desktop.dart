@@ -1,4 +1,4 @@
-/// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
 ///
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
@@ -584,13 +584,13 @@ class _MaterialDesktopVideoControlsState
                 onTapUp: !_theme(context).toggleFullscreenOnDoublePress
                     ? null
                     : (e) {
-                  final now = DateTime.now();
-                  final difference = now.difference(last);
-                  last = now;
-                  if (difference < const Duration(milliseconds: 400)) {
-                    toggleFullscreen(context);
-                  }
-                },
+                        final now = DateTime.now();
+                        final difference = now.difference(last);
+                        last = now;
+                        if (difference < const Duration(milliseconds: 400)) {
+                          toggleFullscreen(context);
+                        }
+                      },
                 onPanUpdate: _theme(context).modifyVolumeOnScroll
                     ? (e) {
                         if (e.delta.dy > 0) {
@@ -1324,7 +1324,7 @@ class MaterialDesktopVolumeButtonState
                   await controller(context).player.setVolume(_volume);
                   mute = !mute;
                 }
-                // https://github.com/alexmercerind/media_kit/pull/250#issuecomment-1605588306
+                // https://github.com/media-kit/media-kit/pull/250#issuecomment-1605588306
                 else if (volume == 0.0) {
                   _volume = 100.0;
                   await controller(context).player.setVolume(100.0);

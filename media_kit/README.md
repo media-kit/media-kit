@@ -1,8 +1,8 @@
-# [package:media_kit](https://github.com/alexmercerind/media_kit)
+# [package:media_kit](https://github.com/media-kit/media-kit)
 
 A complete video & audio playback library for Flutter & Dart. Performant, stable, feature-proof & modular.
 
-[![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmercerind/media_kit/actions/workflows/ci.yml)
+[![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/media-kit/media-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/media-kit/media-kit/actions/workflows/ci.yml)
 
 <hr>
 
@@ -32,7 +32,7 @@ A complete video & audio playback library for Flutter & Dart. Performant, stable
 
 ## Installation
 
-[package:media_kit](https://github.com/alexmercerind/media_kit) is split into number of packages to improve modularity & reduce bundle size.
+[package:media_kit](https://github.com/media-kit/media-kit) is split into number of packages to improve modularity & reduce bundle size.
 
 #### For apps that need video playback:
 
@@ -78,11 +78,11 @@ dependencies:
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v1.1.1/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v1.1.1/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v1.1.1/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v1.1.1/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/alexmercerind/media_kit/releases/download/media_kit-v1.1.1/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.1/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.1/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.1/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.1/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.1/media_kit_test_linux_x64.7z)          |
 | Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://alexmercerind.github.io/media_kit/)                                                                            |
 
 
@@ -97,12 +97,12 @@ dependencies:
   </tr>
   <tr>
     <td>
-      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/cf93a1fd-e1d8-4d1c-8bd5-cc393cef1ce9" height="400" alt="Android"></img>
-      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/aea1f480-51e2-452a-b53c-c0e27f71f0d8" height="400" alt="Android"></img>
+      <img src="https://github.com/media-kit/media-kit/assets/28951144/cf93a1fd-e1d8-4d1c-8bd5-cc393cef1ce9" height="400" alt="Android"></img>
+      <img src="https://github.com/media-kit/media-kit/assets/28951144/aea1f480-51e2-452a-b53c-c0e27f71f0d8" height="400" alt="Android"></img>
     </td>
     <td>
-      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/e8ce64cb-1ea9-4a3e-bc9c-db620abf88c9" height="400" alt="iOS"></img>
-      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/d7159df2-1df1-46d3-84f8-238e2a66bfbc" height="400" alt="iOS"></img>
+      <img src="https://github.com/media-kit/media-kit/assets/28951144/e8ce64cb-1ea9-4a3e-bc9c-db620abf88c9" height="400" alt="iOS"></img>
+      <img src="https://github.com/media-kit/media-kit/assets/28951144/d7159df2-1df1-46d3-84f8-238e2a66bfbc" height="400" alt="iOS"></img>
     </td>
   </tr>
   <tr>
@@ -115,10 +115,10 @@ dependencies:
   </tr>
   <tr>
     <td>
-      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/fca8dbbf-4262-431f-a04a-f3aa6afb2911" height="200" alt="macOS"></img>
+      <img src="https://github.com/media-kit/media-kit/assets/28951144/fca8dbbf-4262-431f-a04a-f3aa6afb2911" height="200" alt="macOS"></img>
     </td>
     <td>
-      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/742b0016-da58-42de-9880-ecaa0604c2b2" height="200" alt="Windows"></img>
+      <img src="https://github.com/media-kit/media-kit/assets/28951144/742b0016-da58-42de-9880-ecaa0604c2b2" height="200" alt="Windows"></img>
     </td>
   </tr>
   <tr>
@@ -131,10 +131,10 @@ dependencies:
   </tr>
   <tr>
     <td>
-      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/8cd63750-6746-4c75-bc4e-cca5e4c61890" height="200" alt="GNU/Linux"></img>
+      <img src="https://github.com/media-kit/media-kit/assets/28951144/8cd63750-6746-4c75-bc4e-cca5e4c61890" height="200" alt="GNU/Linux"></img>
     </td>
     <td>
-      <img src="https://github.com/alexmercerind/media_kit/assets/28951144/feb9fdf2-095f-43db-96af-f7782985238d" height="200" alt="Web"></img>
+      <img src="https://github.com/media-kit/media-kit/assets/28951144/feb9fdf2-095f-43db-96af-f7782985238d" height="200" alt="Web"></img>
     </td>
 </table>
 
@@ -216,7 +216,7 @@ class MyScreenState extends State<MyScreen> {
 
 ## Guide
 
-A usage guide for [package:media_kit](https://github.com/alexmercerind/media_kit).
+A usage guide for [package:media_kit](https://github.com/media-kit/media-kit).
 
 **Tip:** Use <kbd>Ctrl</kbd> + <kbd>F</kbd> to quickly search for things.
 
@@ -740,7 +740,7 @@ final VideoController player = VideoController(
     width: 640,                            // default: null
     height: 480,                           // default: null
     // The in-code comments is best place to know more about these options:
-    // https://github.com/alexmercerind/media_kit/blob/main/media_kit_video/lib/src/video_controller/video_controller.dart
+    // https://github.com/media-kit/media-kit/blob/main/media_kit_video/lib/src/video_controller/video_controller.dart
   ),
 );
 ```
@@ -862,7 +862,7 @@ await player.setAudioTrack(
 
 ### Video controls
 
-[`package:media_kit`](https://github.com/alexmercerind/media_kit) provides highly-customizable pre-built video controls for usage.
+[`package:media_kit`](https://github.com/media-kit/media-kit) provides highly-customizable pre-built video controls for usage.
 
 Apart from theming, layout can be customized, position of buttons can be modified, custom buttons can be created etc. Necessary features like fullscreen, keyboard shortcuts & swipe-based controls are also supported by default.
 
@@ -1106,15 +1106,15 @@ CupertinoVideoControlsTheme(
 
 ### Next steps
 
-This guide follows a tutorial-like structure & covers nearly all features that [package:media_kit](https://github.com/alexmercerind/media_kit) offers. However, it is _not complete_ by any means. You are free to improve this page & add more documentation, which newcomers may find helpful. The following places can help you learn more:
+This guide follows a tutorial-like structure & covers nearly all features that [package:media_kit](https://github.com/media-kit/media-kit) offers. However, it is _not complete_ by any means. You are free to improve this page & add more documentation, which newcomers may find helpful. The following places can help you learn more:
 
 - [API reference](https://pub.dev/documentation/media_kit/latest/media_kit/media_kit-library.html) can be helpful for diving into deeper specifics.
-- [source-code of the demo application](https://github.com/alexmercerind/media_kit/tree/main/media_kit_test/lib/tests) offers some complete code samples.
+- [source-code of the demo application](https://github.com/media-kit/media-kit/tree/main/media_kit_test/lib/tests) offers some complete code samples.
 - In-code comments & docstrings happen to be the most updated source of knowledge.
 
 ## Goals
 
-[package:media_kit](https://github.com/alexmercerind/media_kit) is a library for Flutter & Dart which **provides video & audio playback**.
+[package:media_kit](https://github.com/media-kit/media-kit) is a library for Flutter & Dart which **provides video & audio playback**.
 
 - **Strong:** Supports _most_ video & audio codecs.
 - **Performant:**
@@ -1138,7 +1138,7 @@ This guide follows a tutorial-like structure & covers nearly all features that [
     - Avoids separate maintenance of native implementation for each platform.
   - Only video embedding code is platform-specific & part of separate package.
 
-You may see project's [architecture](https://github.com/alexmercerind/media_kit#architecture) & [implementation](https://github.com/alexmercerind/media_kit#implementation) details for further information.
+You may see project's [architecture](https://github.com/media-kit/media-kit#architecture) & [implementation](https://github.com/media-kit/media-kit#implementation) details for further information.
 
 The project aims to meet demands of the community, this includes:
 1. Holding accountability.
@@ -1146,7 +1146,7 @@ The project aims to meet demands of the community, this includes:
 
 ## Fund Development
 
-If you find [package:media_kit](https://github.com/alexmercerind/media_kit) package(s) useful, please consider sponsoring me.
+If you find [package:media_kit](https://github.com/media-kit/media-kit) package(s) useful, please consider sponsoring me.
 
 Since this is first of a kind project, it takes a lot of time to experiment & develop. It's a very tedious process to write code, document, maintain & provide support for free. Your support can ensure the quality of the package your project depends upon. I will feel rewarded for my hard-work & research.
 
