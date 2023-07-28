@@ -1,3 +1,14 @@
+## 1.1.1
+
+- feat: `Player.screenshot` pixel-buffer support
+- feat: WebVTT over HLS support
+- feat(android): DASH support
+- feat(android): load/call `mpv_lavc_set_java_vm` in `AndroidHelper`
+- perf(android): static link FFmpeg w/ libmpv
+- perf: reduce bundle size
+- perf: improve `Player.dispose` & eliminate `mpv_terminate_destroy` delay
+- fix(windows): broken HLS support
+
 ## 1.1.0
 
 - feat: `Player.screenshot` for capturing video snapshots as `Uint8List`
