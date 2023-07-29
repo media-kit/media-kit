@@ -1,6 +1,6 @@
 # [package:media_kit](https://github.com/media-kit/media-kit)
 
-A complete video & audio playback library for Flutter & Dart. Performant, stable, feature-proof & modular.
+A complete video & audio playback library for Flutter & Dart.
 
 [![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/media-kit/media-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/media-kit/media-kit/actions/workflows/ci.yml)
 
