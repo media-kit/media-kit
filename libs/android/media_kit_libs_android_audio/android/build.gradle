@@ -98,16 +98,16 @@ task downloadDependencies(type: Exec) {
     def md5DefaultX86_64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destDefaultX86_64.toPath())).encodeHex().toString()
     def md5DefaultX86 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destDefaultX86.toPath())).encodeHex().toString()
 
-    if (md5DefaultARM64 != "8cbb951264a21626c1662885eae2b4c2") {
+    if (md5DefaultARM64 != "364f97ce0648f78187af3988ed93ab53") {
         throw new GradleException("media_kit: arm64-v8a JAR verification failed.")
     }
-    if (md5DefaultARMEABI != "20ace2083ca695ead09b21d25724229a") {
+    if (md5DefaultARMEABI != "e605d692422bf2dfdb15f4457d286e20") {
         throw new GradleException("media_kit: armeabi-v7a JAR verification failed.")
     }
-    if (md5DefaultX86_64 != "0f88e6f7e291ed14551542e175800dca") {
+    if (md5DefaultX86_64 != "29b34e90b63e1c27c04eb9b8367d564f") {
         throw new GradleException("media_kit: x86_64 JAR verification failed.")
     }
-    if (md5DefaultX86 != "35fe07092ab23c05cb6b73464eb31ce2") {
+    if (md5DefaultX86 != "6912417a8c274146c7a99aa29ec19a08") {
         throw new GradleException("media_kit: x86 JAR verification failed.")
     }
 
