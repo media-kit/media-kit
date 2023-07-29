@@ -1,4 +1,4 @@
-/// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
 ///
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
@@ -19,8 +19,8 @@ import 'package:media_kit/generated/libmpv/bindings.dart';
 /// Creates & returns initialized [Pointer<mpv_handle>] whose event loop is running on native thread.
 ///
 /// See:
-/// * https://github.com/alexmercerind/media_kit/issues/40
-/// * https://github.com/alexmercerind/media_kit/pull/46
+/// * https://github.com/media-kit/media-kit/issues/40
+/// * https://github.com/media-kit/media-kit/pull/46
 /// * https://github.com/dart-lang/sdk/issues/51254
 /// * https://github.com/dart-lang/sdk/issues/51261
 ///

@@ -2376,7 +2376,7 @@ void main() {
 
       await player.open(
         Media(
-          'https://github.com/alexmercerind/media_kit/assets/28951144/efb4057c-6fd3-4644-a0b1-42d5fb420ce9',
+          'https://github.com/media-kit/media-kit/assets/28951144/efb4057c-6fd3-4644-a0b1-42d5fb420ce9',
         ),
       );
 

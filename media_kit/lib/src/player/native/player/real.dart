@@ -1,4 +1,4 @@
-/// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
 ///
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
@@ -728,7 +728,7 @@ class NativePlayer extends PlatformPlayer {
       calloc.free(args);
 
       // It is self explanatory that PlayerState.completed & PlayerStreams.completed must enter the false state if seek is called. Typically after EOF.
-      // https://github.com/alexmercerind/media_kit/issues/221
+      // https://github.com/media-kit/media-kit/issues/221
       state = state.copyWith(completed: false);
       if (!completedController.isClosed) {
         completedController.add(false);
@@ -2094,8 +2094,10 @@ class NativePlayer extends PlatformPlayer {
           'demuxer-max-back-bytes': configuration.bufferSize.toString(),
           if (configuration.vo != null) 'vo': '${configuration.vo}',
           if (configuration.title != null) 'title': '${configuration.title}',
-          'demuxer-lavf-o':
-              'protocol_whitelist=[${configuration.protocolWhitelist.join(',')}]',
+          'demuxer-lavf-o': [
+            'strict=experimental',
+            'protocol_whitelist=[${configuration.protocolWhitelist.join(',')}]'
+          ].join(','),
           'sub-ass': configuration.libass ? 'yes' : 'no',
           'sub-visibility': configuration.libass ? 'yes' : 'no',
           'secondary-sub-visibility': configuration.libass ? 'yes' : 'no',

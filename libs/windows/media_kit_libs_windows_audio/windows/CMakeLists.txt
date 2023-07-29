@@ -1,4 +1,4 @@
-# This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+# This file is a part of media_kit (https://github.com/media-kit/media-kit).
 #
 # Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 # All rights reserved.
@@ -51,11 +51,11 @@ option(MEDIA_KIT_LIBS_AVAILABLE "package:media_kit libraries are available." ON)
 # Thanks to Mitchel Stewart (https://github.com/Quackdoc) for providing patches to generate minimal libmpv & FFmpeg audio specific builds.
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20230404-git-68b3239.7z")
+set(LIBMPV "mpv-dev-x86_64-20230725-git-140ec21.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-build/releases/download/2023-07-18/${LIBMPV}")
-set(LIBMPV_MD5 "6bc6adbcbc14744838e0a38923ef893a")
+set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-build/releases/download/2023-07-25/${LIBMPV}")
+set(LIBMPV_MD5 "a7b80936e0956da4439833e99d7d6f2f")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")

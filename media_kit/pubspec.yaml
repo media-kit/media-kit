@@ -1,8 +1,8 @@
 name: media_kit
 description: A complete video & audio playback library for Flutter & Dart. Performant, stable, feature-proof & modular.
-homepage: https://github.com/alexmercerind/media_kit
-repository: https://github.com/alexmercerind/media_kit
-version: 1.1.0
+homepage: https://github.com/media-kit/media-kit
+repository: https://github.com/media-kit/media-kit
+version: 1.1.1
 funding:
   - https://www.github.com/sponsors/alexmercerind
 screenshots:

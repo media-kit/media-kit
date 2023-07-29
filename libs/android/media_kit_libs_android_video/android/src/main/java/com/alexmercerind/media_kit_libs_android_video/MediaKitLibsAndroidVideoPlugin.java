@@ -1,5 +1,5 @@
 /**
- * This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+ * This file is a part of media_kit (https://github.com/media-kit/media-kit).
  *
  * Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
  * All rights reserved.
@@ -20,11 +20,6 @@ public class MediaKitLibsAndroidVideoPlugin implements FlutterPlugin {
         // DynamicLibrary.open on Dart side may not work on some ancient devices unless System.loadLibrary is called first.
         try {
             System.loadLibrary("mpv");
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-        try {
-            System.loadLibrary("avcodec");
         } catch (Throwable e) {
             e.printStackTrace();
         }

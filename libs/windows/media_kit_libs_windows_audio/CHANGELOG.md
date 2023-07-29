@@ -1,3 +1,9 @@
+## 1.0.5
+
+- [mpv-player/mpv@`140ec21`](https://github.com/mpv-player/mpv/commit/140ec21c89d671d392877a7f3b91d67e7d7b9239)
+- fix: HLS support
+- perf: reduce bundle size
+
 ## 1.0.4
 
 - [mpv-player/mpv@`140ec21`](https://github.com/mpv-player/mpv/commit/140ec21c89d671d392877a7f3b91d67e7d7b9239)
@@ -18,7 +24,7 @@
 ## 1.0.1
 
 - [mpv-player/mpv@`5510d9f`](https://github.com/mpv-player/mpv/commit/5510d9f6632c009c398ce48a4d5a89c7f95efc96)
-- fix: location of extracted header files (compatibility with [`media_kit_native_event_loop`](https://github.com/alexmercerind/media_kit/tree/main/media_kit_native_event_loop))
+- fix: location of extracted header files (compatibility with [`media_kit_native_event_loop`](https://github.com/media-kit/media-kit/tree/main/media_kit_native_event_loop))
 
 ## 1.0.0
 

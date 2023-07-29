@@ -1,4 +1,4 @@
-/// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
 ///
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
@@ -394,7 +394,7 @@ class PlayerConfiguration {
   /// Thus, usage in audio only applications is recommended.
   /// This uses `scaletempo` under the hood & disables `audio-pitch-correction`.
   ///
-  /// See: https://github.com/alexmercerind/media_kit/issues/45
+  /// See: https://github.com/media-kit/media-kit/issues/45
   ///
   /// Default: `false`.
   final bool pitch;

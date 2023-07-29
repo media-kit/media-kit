@@ -1,3 +1,8 @@
+## 1.1.1
+
+- chore: `try`/`catch` native calls to hide stray logs
+- fix: `MaterialDesktopVideoControls`: do not add `onTapUp` callback if `toggleFullscreenOnDoublePress` is disabled
+
 ## 1.1.0
 
 - feat: `SubtitleView`, `SubtitleViewConfiguration`

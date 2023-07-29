@@ -1,4 +1,4 @@
-# This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+# This file is a part of media_kit (https://github.com/media-kit/media-kit).
 #
 # Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 # All rights reserved.
@@ -48,11 +48,11 @@ target_link_libraries(
 # ------------------------------------------------------------------------------
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20230719-git-140ec21.7z")
+set(LIBMPV "mpv-dev-x86_64-20230726-git-140ec21.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-07-19/${LIBMPV}")
-set(LIBMPV_MD5 "86204f54ed914321a95977e3f68c181a")
+set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-07-26/${LIBMPV}")
+set(LIBMPV_MD5 "88df2906dcc16ef5825f40467f8fd307")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")

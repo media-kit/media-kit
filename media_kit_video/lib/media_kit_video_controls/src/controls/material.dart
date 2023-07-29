@@ -1,4 +1,4 @@
-/// This file is a part of media_kit (https://github.com/alexmercerind/media_kit).
+/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
 ///
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
@@ -451,7 +451,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     // package:screen_brightness
     Future.microtask(() async {
       try {
-        ScreenBrightness().resetScreenBrightness();
+        await ScreenBrightness().resetScreenBrightness();
       } catch (_) {}
     });
     // --------------------------------------------------
@@ -461,22 +461,22 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   void shiftSubtitle() {
     if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
       state(context).setSubtitleViewPadding(
-            state(context).widget.subtitleViewConfiguration.padding +
-                EdgeInsets.fromLTRB(
-                  0.0,
-                  0.0,
-                  0.0,
-                  subtitleVerticalShiftOffset,
-                ),
-          );
+        state(context).widget.subtitleViewConfiguration.padding +
+            EdgeInsets.fromLTRB(
+              0.0,
+              0.0,
+              0.0,
+              subtitleVerticalShiftOffset,
+            ),
+      );
     }
   }
 
   void unshiftSubtitle() {
     if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
       state(context).setSubtitleViewPadding(
-            state(context).widget.subtitleViewConfiguration.padding,
-          );
+        state(context).widget.subtitleViewConfiguration.padding,
+      );
     }
   }
 
@@ -553,10 +553,12 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     // --------------------------------------------------
   }
 
-  void setVolume(double value) {
+  Future<void> setVolume(double value) async {
     // --------------------------------------------------
     // package:volume_controller
-    VolumeController().setVolume(value);
+    try {
+      VolumeController().setVolume(value);
+    } catch (_) {}
     setState(() {
       _volumeValue = value;
       _volumeIndicator = true;
@@ -574,10 +576,12 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     // --------------------------------------------------
   }
 
-  void setBrightness(double value) {
+  Future<void> setBrightness(double value) async {
     // --------------------------------------------------
     // package:screen_brightness
-    ScreenBrightness().setScreenBrightness(value);
+    try {
+      await ScreenBrightness().setScreenBrightness(value);
+    } catch (_) {}
     setState(() {
       _brightnessIndicator = true;
     });

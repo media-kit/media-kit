@@ -1,8 +1,8 @@
 name: media_kit_libs_android_video
 description: Android package providing video (& audio) native libraries for package:media_kit.
-version: 1.2.0
-homepage: https://github.com/alexmercerind/media_kit.git
-repository: https://github.com/alexmercerind/media_kit.git
+version: 1.3.0
+homepage: https://github.com/media-kit/media-kit.git
+repository: https://github.com/media-kit/media-kit.git
 funding:
   - https://www.github.com/sponsors/alexmercerind
 

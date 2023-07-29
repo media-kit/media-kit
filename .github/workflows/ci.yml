@@ -44,24 +44,24 @@ jobs:
       - run: dart pub get
       - run: dart test
 
-#   media_kit-tests-macos:
-#     name: package:media_kit tests (macOS)
-#     runs-on: macos-latest
-#     env:
-#       LIBMPV_LIBRARY_PATH: test/ci/macos/libs/libmpv.dylib
-#     defaults:
-#       run:
-#         working-directory: media_kit
-#     steps:
-#       - uses: actions/checkout@v2
-#         with:
-#           submodules: "true"
-#       - run: sh test/ci/macos/scripts/setup_dylibs.sh
-#       - uses: subosito/flutter-action@v1
-#         with:
-#           channel: "stable"
-#       - run: dart pub get
-#       - run: dart test
+  #   media_kit-tests-macos:
+  #     name: package:media_kit tests (macOS)
+  #     runs-on: macos-latest
+  #     env:
+  #       LIBMPV_LIBRARY_PATH: test/ci/macos/libs/libmpv.dylib
+  #     defaults:
+  #       run:
+  #         working-directory: media_kit
+  #     steps:
+  #       - uses: actions/checkout@v2
+  #         with:
+  #           submodules: "true"
+  #       - run: sh test/ci/macos/scripts/setup_dylibs.sh
+  #       - uses: subosito/flutter-action@v1
+  #         with:
+  #           channel: "stable"
+  #       - run: dart pub get
+  #       - run: dart test
 
   media_kit-tests-web:
     name: package:media_kit tests (Web)
@@ -342,6 +342,111 @@ jobs:
       - name: Remove `media_kit_libs_*` dependencies
         run: |
           sed -i '/media_kit_libs_/d' pubspec.yaml
+          cat pubspec.yaml
+      - run: flutter pub get
+      - run: flutter build apk --split-per-abi --verbose
+
+  audio-libs-windows:
+    name: Windows (audio libs)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          "C:\Program Files\Git\usr\bin\sed.exe" -i "s/\bmedia_kit_libs_\([^[:space:]_]*\)_video\b/media_kit_libs_\1_audio/g" pubspec.yaml
+          type pubspec.yaml
+        shell: cmd
+      - run: flutter pub get
+      - run: flutter build windows --verbose
+        # TODO(@alexmercerind): package:media_kit_video won't build with package:media_kit_libs_windows_audio due to missing ANGLE headers.
+        continue-on-error: true
+
+  audio-libs-linux:
+    name: Linux (audio libs)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - run: sudo apt-get update
+      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i 's/\bmedia_kit_libs_\([^[:space:]_]*\)_video\b/media_kit_libs_\1_audio/g' pubspec.yaml
+          cat pubspec.yaml
+      - run: flutter pub get
+      - run: flutter build linux --verbose
+
+  audio-libs-macos:
+    name: macOS (audio libs)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '' 's/\bmedia_kit_libs_\([^[:space:]_]*\)_video\b/media_kit_libs_\1_audio/g' pubspec.yaml
+          cat pubspec.yaml
+      - run: flutter pub get
+      - run: flutter build macos --verbose
+
+  audio-libs-ios:
+    name: iOS (audio libs)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '' 's/\bmedia_kit_libs_\([^[:space:]_]*\)_video\b/media_kit_libs_\1_audio/g' pubspec.yaml
+          cat pubspec.yaml
+      - run: flutter pub get
+      - run: flutter build ios --verbose --no-codesign
+
+  audio-libs-android:
+    name: Android (audio libs)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i 's/\bmedia_kit_libs_\([^[:space:]_]*\)_video\b/media_kit_libs_\1_audio/g' pubspec.yaml
           cat pubspec.yaml
       - run: flutter pub get
       - run: flutter build apk --split-per-abi --verbose

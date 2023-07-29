@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.description      = <<-DESC
   iOS dependency package for package:media_kit.
                        DESC
-  s.homepage         = 'https://github.com/alexmercerind/media_kit.git'
+  s.homepage         = 'https://github.com/media-kit/media-kit.git'
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Hitesh Kumar Saini' => 'saini123hitesh@gmail.com' }
 
