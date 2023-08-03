@@ -192,12 +192,11 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
               // for slowing the UI thread as little as possible. It's a pity
               // that software rendering is feeling faster than hardware
               // rendering due to fucked-up GTK.
-              g_thread_new(
-                  "mpv_render_context_set_update_callback",
-                  [](gpointer data) -> gpointer {
+              gdk_threads_add_idle(
+                  [](gpointer data) -> gboolean {
                     VideoOutput* self = (VideoOutput*)data;
                     if (self->destroyed) {
-                      return NULL;
+                      return FALSE;
                     }
                     g_mutex_lock(&self->mutex);
                     gint64 width = video_output_get_width(self);
@@ -218,7 +217,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                           FL_TEXTURE(self->texture_sw));
                     }
                     g_mutex_unlock(&self->mutex);
-                    return NULL;
+                    return FALSE;
                   },
                   data);
             },
@@ -313,6 +312,7 @@ gint64 video_output_get_width(VideoOutput* self) {
         }
       }
     }
+    mpv_free_node_contents(&params);
   }
 
   width = rotate == 0 || rotate == 180 ? dw : dh;
@@ -362,6 +362,7 @@ gint64 video_output_get_height(VideoOutput* self) {
         }
       }
     }
+    mpv_free_node_contents(&params);
   }
 
   width = rotate == 0 || rotate == 180 ? dw : dh;
