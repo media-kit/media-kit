@@ -392,6 +392,7 @@ int64_t VideoOutput::GetVideoWidth() {
         }
       }
     }
+    mpv_free_node_contents(&params);
   }
 
   width = rotate == 0 || rotate == 180 ? dw : dh;
@@ -440,6 +441,7 @@ int64_t VideoOutput::GetVideoHeight() {
         }
       }
     }
+    mpv_free_node_contents(&params);
   }
 
   width = rotate == 0 || rotate == 180 ? dw : dh;
