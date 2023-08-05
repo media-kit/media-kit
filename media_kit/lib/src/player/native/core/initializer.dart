@@ -41,11 +41,11 @@ abstract class Initializer {
 
   /// Disposes the event loop of the [Pointer<mpv_handle>] created by [create].
   /// NOTE: [Pointer<mpv_handle>] itself is not disposed.
-  static void dispose(Pointer<mpv_handle> handle) {
+  static Future<void> dispose(Pointer<mpv_handle> handle) async {
     try {
-      InitializerNativeEventLoop.dispose(handle);
+      return await InitializerNativeEventLoop.dispose(handle);
     } catch (_) {
-      InitializerIsolate.dispose(handle);
+      return await InitializerIsolate.dispose(handle);
     }
   }
 }
