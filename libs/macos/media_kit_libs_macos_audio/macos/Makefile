@@ -1,4 +1,4 @@
-all: Frameworks/*.xcframework
+all: Frameworks/*.xcframework Frameworks/.symlinks
 
 MPV_XCFRAMEWORKS_VERSION=v0.5.1
 MPV_XCFRAMEWORKS_SHA256SUM=2dd65f4afc5031e22794a5b583cf56f8e6b4e901d2d811cf5c8a0dd1d083c08f
@@ -22,6 +22,11 @@ Frameworks/*.xcframework: .cache/xcframeworks/libmpv-xcframeworks-macos-universa
 	rm -rf Frameworks/*.xcframework
 	tar -xvf .cache/xcframeworks/libmpv-xcframeworks-macos-universal.tar.gz --strip-components 1 -C Frameworks
 	touch Frameworks/*.xcframework
+
+Frameworks/.symlinks: Frameworks/*.xcframework
+	rm -rf Frameworks/.symlinks
+	mkdir -p Frameworks/.symlinks/mpv
+	sh create_framework_symlinks.sh Frameworks/Mpv.xcframework Frameworks/.symlinks/mpv
 
 .PHONY: clean
 clean:
