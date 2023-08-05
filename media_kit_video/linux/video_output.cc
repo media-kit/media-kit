@@ -160,7 +160,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
             g_print("media_kit: VideoOutput: Using H/W rendering.\n");
           }
         }
-        gdk_gl_context_clear_current();
       }
     }
     if (error) {
