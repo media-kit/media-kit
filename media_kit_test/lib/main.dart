@@ -12,6 +12,7 @@ import 'tests/05.stress_test.dart';
 import 'tests/06.paint_first_frame.dart';
 import 'tests/07.video_controller_set_size.dart';
 import 'tests/08.screenshot.dart';
+import 'tests/09.seamless.dart';
 
 import 'common/globals.dart';
 import 'common/sources/sources.dart';
@@ -204,6 +205,21 @@ class PrimaryScreen extends StatelessWidget {
                 );
               },
             ),
+          ListTile(
+            title: const Text(
+              'seamless.dart',
+              style: TextStyle(fontSize: 14.0),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const Seamless(),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
