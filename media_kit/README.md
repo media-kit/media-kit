@@ -1666,20 +1666,32 @@ During the build phase, the following warnings are not critical and cannot be si
 
 ### GNU/Linux
 
-System shared libraries from distribution specific user-installed packages are used by-default. You can install these as follows:
+#### Install libmpv
 
-#### Ubuntu/Debian
+System shared libraries from distribution specific user-installed packages are used by-default. **This is how GNU/Linux works.** You can install these as follows:
+
+##### Ubuntu/Debian
 
 ```bash
 sudo apt install libmpv-dev mpv
 ```
 
-#### Packaging
+##### Packaging
 
 There are other ways to bundle these within your app package e.g. within Snap or Flatpak. Few examples:
 
 - [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
 - [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/\_packaging)
+
+#### Utilize [mimalloc](https://github.com/microsoft/mimalloc)
+
+You should consider replacing the default memory allocator with [mimalloc](https://github.com/microsoft/mimalloc) for [avoiding memory leaks](https://github.com/media-kit/media-kit/issues/68).
+
+This is as simple as [adding one line to `linux/CMakeLists.txt`](https://github.com/media-kit/media-kit/blob/d02a97ce70b316207db024401fb99e3f4509a250/media_kit_test/linux/CMakeLists.txt#L92-L94):
+
+```cmake
+target_link_libraries(${BINARY_NAME} PRIVATE ${MIMALLOC_LIB})
+```
 
 ### Web
 
