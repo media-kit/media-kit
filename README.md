@@ -46,32 +46,32 @@ A complete video & audio playback library for Flutter & Dart.
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.1                              # Primary package.
+  media_kit: ^1.1.2                              # Primary package.
   
-  media_kit_video: ^1.1.1                        # For video rendering.
+  media_kit_video: ^1.1.2                        # For video rendering.
   
-  media_kit_native_event_loop: ^1.0.6            # Support for higher number of concurrent instances & better performance.
+  media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
   
   media_kit_libs_android_video: ^1.3.0           # Android package for video native libraries.
-  media_kit_libs_ios_video: ^1.0.5               # iOS package for video native libraries.
-  media_kit_libs_macos_video: ^1.0.6             # macOS package for video native libraries.
+  media_kit_libs_ios_video: ^1.1.0               # iOS package for video native libraries.
+  media_kit_libs_macos_video: ^1.1.0             # macOS package for video native libraries.
   media_kit_libs_windows_video: ^1.0.5           # Windows package for video native libraries.
-  media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.
+  media_kit_libs_linux: ^1.1.0                   # GNU/Linux dependency package.
 ```
 
 #### For apps that need audio playback:
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.1                              # Primary package.
+  media_kit: ^1.1.2                              # Primary package.
   
-  media_kit_native_event_loop: ^1.0.6            # Support for higher number of concurrent instances & better performance.
+  media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
   
   media_kit_libs_android_audio: ^1.3.0           # Android package for audio native libraries.
-  media_kit_libs_ios_audio: ^1.0.5               # iOS package for audio native libraries.
-  media_kit_libs_macos_audio: ^1.0.6             # macOS package for audio native libraries.
+  media_kit_libs_ios_audio: ^1.1.0               # iOS package for audio native libraries.
+  media_kit_libs_macos_audio: ^1.1.0             # macOS package for audio native libraries.
   media_kit_libs_windows_audio: ^1.0.5           # Windows package for audio native libraries.
-  media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.
+  media_kit_libs_linux: ^1.1.0                   # GNU/Linux dependency package.
 ```
 
 **Notes:**
@@ -86,11 +86,11 @@ dependencies:
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.1/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.1/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.1/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.1/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.1/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.2/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.2/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.2/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.2/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.2/media_kit_test_linux_x64.7z)          |
 | Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://media-kit.github.io/media-kit/)                                                                            |
 
 <table>
@@ -240,7 +240,7 @@ A usage guide for [package:media_kit](https://github.com/media-kit/media-kit).
 - [Handle playback events](#handle-playback-events)
 - [Shuffle the queue](#shuffle-the-queue)
 - [Use HTTP headers](#use-http-headers)
-- [Use `extras` to store additional data with `Media`](use-extras-store-additional-data-with-media)
+- [Use `extras` to store additional data with `Media`](#use-extras-store-additional-data-with-media)
 - [Go to next, previous or any other position in queue](#go-to-next-previous-or-any-other-position-in-queue)
 - [Modify `Player`'s queue](#modify-players-queue)
 - [Select video, audio or subtitle track](#select-video-audio-or-subtitle-track)

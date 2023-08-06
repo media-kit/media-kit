@@ -1,3 +1,7 @@
+## 1.1.2
+
+- feat: export `PlayerState` & `PlayerStream`
+
 ## 1.1.1
 
 - feat: `Player.screenshot` pixel-buffer support
