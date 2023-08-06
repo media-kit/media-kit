@@ -26,6 +26,7 @@ Frameworks/*.xcframework: .cache/xcframeworks/libmpv-xcframeworks-macos-universa
 Frameworks/.symlinks: Frameworks/*.xcframework
 	rm -rf Frameworks/.symlinks
 	mkdir -p Frameworks/.symlinks/mpv
+	sed -i '' 's/\r$$//g' create_framework_symlinks.sh # remove CRLF line terminator added by Flutter packaging (https://github.com/media-kit/media-kit/issues/338)
 	sh create_framework_symlinks.sh Frameworks/Mpv.xcframework Frameworks/.symlinks/mpv
 
 .PHONY: clean
