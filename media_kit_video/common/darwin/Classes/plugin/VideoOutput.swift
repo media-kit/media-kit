@@ -133,16 +133,16 @@ public class VideoOutput: NSObject {
       height: Double(height)
     )
 
+    if width == 0 || height == 0 {
+      return
+    }
+
     if currentWidth != width || currentHeight != height {
       currentWidth = width
       currentHeight = height
 
       texture.resize(size)
       textureUpdateCallback(textureId, size)
-    }
-
-    if width == 0 || height == 0 {
-      return
     }
 
     if disposed {
