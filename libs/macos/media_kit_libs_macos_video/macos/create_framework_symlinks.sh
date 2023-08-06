@@ -59,7 +59,7 @@ create_framework_symlinks() {
     SRC_DIR="$1"
     SYMLINKS_DIR="$2"
 
-    find "${SRC_DIR}" -depth 1 -type d | while read SRC; do
+    find "${SRC_DIR}" -mindepth 1 -maxdepth 1 -type d | while read SRC; do
         SLUG="$(basename "${SRC}")"
         NAME="$(echo "${SLUG}" | cut -d '-' -f 1 -f 3)"
 
