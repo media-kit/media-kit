@@ -19,3 +19,11 @@ VideoController controller(BuildContext context) =>
 /// Returns the video controls theme data builder associated with the [Video] present in the current [BuildContext].
 Widget Function(Widget)? controlsThemeDataBuilder(BuildContext context) =>
     VideoStateInheritedWidget.of(context).controlsThemeDataBuilder;
+
+/// Returns the callback which must be invoked when the video enters fullscreen mode.
+Future<void> Function()? onEnterFullscreen(BuildContext context) =>
+    VideoStateInheritedWidget.of(context).state.widget.onEnterFullscreen;
+
+/// Returns the callback which must be invoked when the video exits fullscreen mode.
+Future<void> Function()? onExitFullscreen(BuildContext context) =>
+    VideoStateInheritedWidget.of(context).state.widget.onExitFullscreen;

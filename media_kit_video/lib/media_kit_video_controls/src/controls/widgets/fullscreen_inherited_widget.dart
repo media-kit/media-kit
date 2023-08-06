@@ -5,6 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_controller.dart';
 
 /// {@template fullscreen_inherited_widget}
 ///
@@ -63,7 +64,7 @@ class _FullscreenInheritedWidgetPopScopeState
     return WillPopScope(
       onWillPop: () async {
         // Make sure to exit native fullscreen when this route is popped from the navigator.
-        await exitNativeFullscreen();
+        await onExitFullscreen(context)?.call();
         return true;
       },
       child: widget.child,
