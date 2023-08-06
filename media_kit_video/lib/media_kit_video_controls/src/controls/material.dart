@@ -827,45 +827,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                         ],
                       ),
                     ),
-                    // Buffering Indicator.
-                    Padding(
-                      padding: _theme(context).padding ??
-                          (
-                              // Add padding in fullscreen!
-                              isFullscreen(context)
-                                  ? MediaQuery.of(context).padding
-                                  : EdgeInsets.zero),
-                      child: Column(
-                        children: [
-                          Container(
-                            height: _theme(context).buttonBarHeight,
-                            margin: _theme(context).topButtonBarMargin,
-                          ),
-                          Expanded(
-                            child: Center(
-                              child: AnimatedOpacity(
-                                curve: Curves.easeInOut,
-                                opacity: buffering ? 1.0 : 0.0,
-                                duration:
-                                    _theme(context).controlsTransitionDuration,
-                                child: _theme(context)
-                                        .bufferingIndicatorBuilder
-                                        ?.call(context) ??
-                                    const Center(
-                                      child: CircularProgressIndicator(
-                                        color: Color(0xFFFFFFFF),
-                                      ),
-                                    ),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            height: _theme(context).buttonBarHeight,
-                            margin: _theme(context).bottomButtonBarMargin,
-                          ),
-                        ],
-                      ),
-                    ),
                     if (mount)
                       Padding(
                         padding: _theme(context).padding ??
@@ -952,6 +913,47 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       ),
                     ],
                   ),
+              // Buffering Indicator.
+              IgnorePointer(
+                child: Padding(
+                  padding: _theme(context).padding ??
+                      (
+                          // Add padding in fullscreen!
+                          isFullscreen(context)
+                              ? MediaQuery.of(context).padding
+                              : EdgeInsets.zero),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: _theme(context).buttonBarHeight,
+                        margin: _theme(context).topButtonBarMargin,
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: AnimatedOpacity(
+                            curve: Curves.easeInOut,
+                            opacity: buffering ? 1.0 : 0.0,
+                            duration:
+                                _theme(context).controlsTransitionDuration,
+                            child: _theme(context)
+                                    .bufferingIndicatorBuilder
+                                    ?.call(context) ??
+                                const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Color(0xFFFFFFFF),
+                                  ),
+                                ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        height: _theme(context).buttonBarHeight,
+                        margin: _theme(context).bottomButtonBarMargin,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               // Double-Tap Seek Button(s):
               if (!mount)
                 if (_mountSeekBackwardButton || _mountSeekForwardButton)
