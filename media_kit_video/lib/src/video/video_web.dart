@@ -3,17 +3,18 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// ignore_for_file: avoid_web_libraries_in_flutter
+import 'dart:html';
 import 'dart:async';
-
 import 'package:flutter/widgets.dart';
-import 'package:media_kit_video/src/utils/wakelock.dart';
+
+import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
 
+import 'package:media_kit_video/src/utils/wakelock.dart';
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
-
-import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 
 /// {@template video}
 ///
@@ -86,8 +87,7 @@ class Video extends StatefulWidget {
   final FilterQuality filterQuality;
 
   /// Video controls builder.
-  final dynamic /* VideoControlsBuilder? */ /* All my homies hate Flutter for Web. */
-      controls;
+  final dynamic /* VideoControlsBuilder? */ controls;
 
   /// Whether to acquire wake lock while playing the video.
   final bool wakelock;
@@ -97,6 +97,12 @@ class Video extends StatefulWidget {
 
   /// The configuration for subtitles e.g. [TextStyle] & padding etc.
   final SubtitleViewConfiguration subtitleViewConfiguration;
+
+  /// The callback invoked when the [Video] enters fullscreen.
+  final Future<void> Function() onEnterFullscreen;
+
+  /// The callback invoked when the [Video] exits fullscreen.
+  final Future<void> Function() onExitFullscreen;
 
   /// {@macro video}
   const Video({
@@ -113,6 +119,8 @@ class Video extends StatefulWidget {
     this.wakelock = true,
     this.pauseUponEnteringBackgroundMode = true,
     this.subtitleViewConfiguration = const SubtitleViewConfiguration(),
+    this.onEnterFullscreen = defaultEnterNativeFullscreen,
+    this.onExitFullscreen = defaultExitNativeFullscreen,
   }) : super(key: key);
 
   @override
@@ -273,3 +281,27 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     );
   }
 }
+
+// --------------------------------------------------
+
+/// Makes the native window enter fullscreen.
+Future<void> defaultEnterNativeFullscreen() async {
+  try {
+    await document.documentElement?.requestFullscreen();
+  } catch (exception, stacktrace) {
+    debugPrint(exception.toString());
+    debugPrint(stacktrace.toString());
+  }
+}
+
+/// Makes the native window exit fullscreen.
+Future<void> defaultExitNativeFullscreen() async {
+  try {
+    document.exitFullscreen();
+  } catch (exception, stacktrace) {
+    debugPrint(exception.toString());
+    debugPrint(stacktrace.toString());
+  }
+}
+
+// --------------------------------------------------
