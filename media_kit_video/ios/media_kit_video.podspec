@@ -29,8 +29,8 @@ Pod::Spec.new do |s|
   
   if mku.libs_found
     # Define paths to frameworks dir
-    framework_search_paths_iphoneos        = sprintf('$(PROJECT_DIR)/../.symlinks/plugins/%s/ios/Frameworks/MPV.xcframework/ios-arm64', mku.libs_package)
-    framework_search_paths_iphonesimulator = sprintf('$(PROJECT_DIR)/../.symlinks/plugins/%s/ios/Frameworks/MPV.xcframework/ios-arm64_x86_64-simulator', mku.libs_package)
+    framework_search_paths_iphoneos        = sprintf('$(PROJECT_DIR)/../.symlinks/plugins/%s/ios/Frameworks/.symlinks/mpv/ios', mku.libs_package)
+    framework_search_paths_iphonesimulator = sprintf('$(PROJECT_DIR)/../.symlinks/plugins/%s/ios/Frameworks/.symlinks/mpv/ios-simulator', mku.libs_package)
 
     s.source_files        = 'Classes/plugin/**/*.swift', 'Headers/**/*.h'
     s.pod_target_xcconfig = {

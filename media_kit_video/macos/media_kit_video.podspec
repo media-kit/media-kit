@@ -29,7 +29,7 @@ Pod::Spec.new do |s|
 
   if mku.libs_found
     # Define paths to frameworks dir
-    framework_search_paths_macosx = sprintf('$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/%s/macos/Frameworks/MPV.xcframework/macos-arm64_x86_64', mku.libs_package)
+    framework_search_paths_macosx = sprintf('$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/%s/macos/Frameworks/.symlinks/mpv/macos', mku.libs_package)
 
     s.source_files        = 'Classes/plugin/**/*.swift', 'Headers/**/*.h'
     s.pod_target_xcconfig = {
