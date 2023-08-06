@@ -23,10 +23,9 @@ import 'package:media_kit/src/player/native/core/native_library.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
 
+import 'package:media_kit_video/src/utils/query_decoders.dart';
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
-
-import 'package:media_kit_video/src/video_controller/utils/query_decoders.dart';
 
 /// {@template android_video_controller}
 ///

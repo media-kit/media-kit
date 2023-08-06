@@ -65,6 +65,7 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   volumeGesture: true,
   brightnessGesture: true,
   seekOnDoubleTap: true,
+  visibleOnMount: false,
   padding: null,
   controlsHoverDuration: Duration(seconds: 3),
   controlsTransitionDuration: Duration(milliseconds: 300),
@@ -135,6 +136,9 @@ class MaterialVideoControlsThemeData {
 
   /// Whether to enable double tap to seek on left or right side of the screen.
   final bool seekOnDoubleTap;
+
+  /// Whether the controls are initially visible.
+  final bool visibleOnMount;
 
   // GENERIC
 
@@ -224,6 +228,7 @@ class MaterialVideoControlsThemeData {
     this.volumeGesture = false,
     this.brightnessGesture = false,
     this.seekOnDoubleTap = true,
+    this.visibleOnMount = false,
     this.padding,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 300),
@@ -269,6 +274,7 @@ class MaterialVideoControlsThemeData {
     bool? volumeGesture,
     bool? brightnessGesture,
     bool? seekOnDoubleTap,
+    bool? visibleOnMount,
     Duration? controlsHoverDuration,
     Duration? controlsTransitionDuration,
     Widget Function(BuildContext)? bufferingIndicatorBuilder,
@@ -302,6 +308,7 @@ class MaterialVideoControlsThemeData {
       volumeGesture: volumeGesture ?? this.volumeGesture,
       brightnessGesture: brightnessGesture ?? this.brightnessGesture,
       seekOnDoubleTap: seekOnDoubleTap ?? this.seekOnDoubleTap,
+      visibleOnMount: visibleOnMount ?? this.visibleOnMount,
       controlsHoverDuration:
           controlsHoverDuration ?? this.controlsHoverDuration,
       controlsTransitionDuration:
@@ -382,8 +389,8 @@ class _MaterialVideoControls extends StatefulWidget {
 
 /// {@macro material_video_controls}
 class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
-  bool mount = false;
-  bool visible = false;
+  late bool mount = _theme(context).visibleOnMount;
+  late bool visible = _theme(context).visibleOnMount;
 
   Timer? _timer;
 
@@ -439,6 +446,20 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
           ),
         ],
       );
+
+      if (_theme(context).visibleOnMount) {
+        _timer = Timer(
+          _theme(context).controlsHoverDuration,
+          () {
+            if (mounted) {
+              setState(() {
+                visible = false;
+              });
+              unshiftSubtitle();
+            }
+          },
+        );
+      }
     }
   }
 
@@ -806,45 +827,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                         ],
                       ),
                     ),
-                    // Buffering Indicator.
-                    Padding(
-                      padding: _theme(context).padding ??
-                          (
-                              // Add padding in fullscreen!
-                              isFullscreen(context)
-                                  ? MediaQuery.of(context).padding
-                                  : EdgeInsets.zero),
-                      child: Column(
-                        children: [
-                          Container(
-                            height: _theme(context).buttonBarHeight,
-                            margin: _theme(context).topButtonBarMargin,
-                          ),
-                          Expanded(
-                            child: Center(
-                              child: AnimatedOpacity(
-                                curve: Curves.easeInOut,
-                                opacity: buffering ? 1.0 : 0.0,
-                                duration:
-                                    _theme(context).controlsTransitionDuration,
-                                child: _theme(context)
-                                        .bufferingIndicatorBuilder
-                                        ?.call(context) ??
-                                    const Center(
-                                      child: CircularProgressIndicator(
-                                        color: Color(0xFFFFFFFF),
-                                      ),
-                                    ),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            height: _theme(context).buttonBarHeight,
-                            margin: _theme(context).bottomButtonBarMargin,
-                          ),
-                        ],
-                      ),
-                    ),
                     if (mount)
                       Padding(
                         padding: _theme(context).padding ??
@@ -931,6 +913,47 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       ),
                     ],
                   ),
+              // Buffering Indicator.
+              IgnorePointer(
+                child: Padding(
+                  padding: _theme(context).padding ??
+                      (
+                          // Add padding in fullscreen!
+                          isFullscreen(context)
+                              ? MediaQuery.of(context).padding
+                              : EdgeInsets.zero),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: _theme(context).buttonBarHeight,
+                        margin: _theme(context).topButtonBarMargin,
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: AnimatedOpacity(
+                            curve: Curves.easeInOut,
+                            opacity: buffering ? 1.0 : 0.0,
+                            duration:
+                                _theme(context).controlsTransitionDuration,
+                            child: _theme(context)
+                                    .bufferingIndicatorBuilder
+                                    ?.call(context) ??
+                                const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Color(0xFFFFFFFF),
+                                  ),
+                                ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        height: _theme(context).buttonBarHeight,
+                        margin: _theme(context).bottomButtonBarMargin,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               // Double-Tap Seek Button(s):
               if (!mount)
                 if (_mountSeekBackwardButton || _mountSeekForwardButton)

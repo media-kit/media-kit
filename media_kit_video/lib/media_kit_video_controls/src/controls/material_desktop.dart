@@ -87,6 +87,9 @@ class MaterialDesktopVideoControlsThemeData {
   /// Keyboards shortcuts.
   final Map<ShortcutActivator, VoidCallback>? keyboardShortcuts;
 
+  /// Whether the controls are initially visible.
+  final bool visibleOnMount;
+
   // GENERIC
 
   /// Padding around the controls.
@@ -198,6 +201,7 @@ class MaterialDesktopVideoControlsThemeData {
     this.toggleFullscreenOnDoublePress = true,
     this.modifyVolumeOnScroll = true,
     this.keyboardShortcuts,
+    this.visibleOnMount = false,
     this.padding,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 150),
@@ -246,6 +250,7 @@ class MaterialDesktopVideoControlsThemeData {
     bool? toggleFullscreenOnDoublePress,
     bool? modifyVolumeOnScroll,
     Map<ShortcutActivator, VoidCallback>? keyboardShortcuts,
+    bool? visibleOnMount,
     Duration? controlsHoverDuration,
     Duration? controlsTransitionDuration,
     Widget Function(BuildContext)? bufferingIndicatorBuilder,
@@ -286,6 +291,7 @@ class MaterialDesktopVideoControlsThemeData {
           toggleFullscreenOnDoublePress ?? this.toggleFullscreenOnDoublePress,
       modifyVolumeOnScroll: modifyVolumeOnScroll ?? this.modifyVolumeOnScroll,
       keyboardShortcuts: keyboardShortcuts ?? this.keyboardShortcuts,
+      visibleOnMount: visibleOnMount ?? this.visibleOnMount,
       controlsHoverDuration:
           controlsHoverDuration ?? this.controlsHoverDuration,
       bufferingIndicatorBuilder:
@@ -375,15 +381,15 @@ class _MaterialDesktopVideoControls extends StatefulWidget {
 /// {@macro material_desktop_video_controls}
 class _MaterialDesktopVideoControlsState
     extends State<_MaterialDesktopVideoControls> {
-  bool mount = false;
-  bool visible = false;
-
-  DateTime last = DateTime.now();
+  late bool mount = _theme(context).visibleOnMount;
+  late bool visible = _theme(context).visibleOnMount;
 
   Timer? _timer;
 
   late /* private */ var playlist = controller(context).player.state.playlist;
   late bool buffering = controller(context).player.state.buffering;
+
+  DateTime last = DateTime.now();
 
   final List<StreamSubscription> subscriptions = [];
 
@@ -416,6 +422,20 @@ class _MaterialDesktopVideoControlsState
           ),
         ],
       );
+
+      if (_theme(context).visibleOnMount) {
+        _timer = Timer(
+          _theme(context).controlsHoverDuration,
+          () {
+            if (mounted) {
+              setState(() {
+                visible = false;
+              });
+              unshiftSubtitle();
+            }
+          },
+        );
+      }
     }
   }
 
@@ -666,46 +686,6 @@ class _MaterialDesktopVideoControlsState
                                   ),
                                 ),
                               ),
-                            // Buffering Indicator.
-                            Padding(
-                              padding: _theme(context).padding ??
-                                  (
-                                      // Add padding in fullscreen!
-                                      isFullscreen(context)
-                                          ? MediaQuery.of(context).padding
-                                          : EdgeInsets.zero),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    height: _theme(context).buttonBarHeight,
-                                    margin: _theme(context).topButtonBarMargin,
-                                  ),
-                                  Expanded(
-                                    child: Center(
-                                      child: AnimatedOpacity(
-                                        curve: Curves.easeInOut,
-                                        opacity: buffering ? 1.0 : 0.0,
-                                        duration: _theme(context)
-                                            .controlsTransitionDuration,
-                                        child: _theme(context)
-                                                .bufferingIndicatorBuilder
-                                                ?.call(context) ??
-                                            const Center(
-                                              child: CircularProgressIndicator(
-                                                color: Color(0xFFFFFFFF),
-                                              ),
-                                            ),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    height: _theme(context).buttonBarHeight,
-                                    margin:
-                                        _theme(context).bottomButtonBarMargin,
-                                  ),
-                                ],
-                              ),
-                            ),
                             if (mount)
                               Padding(
                                 padding: _theme(context).padding ??
@@ -782,6 +762,47 @@ class _MaterialDesktopVideoControlsState
                                 ),
                               ),
                           ],
+                        ),
+                      ),
+                      // Buffering Indicator.
+                      IgnorePointer(
+                        child: Padding(
+                          padding: _theme(context).padding ??
+                              (
+                                  // Add padding in fullscreen!
+                                  isFullscreen(context)
+                                      ? MediaQuery.of(context).padding
+                                      : EdgeInsets.zero),
+                          child: Column(
+                            children: [
+                              Container(
+                                height: _theme(context).buttonBarHeight,
+                                margin: _theme(context).topButtonBarMargin,
+                              ),
+                              Expanded(
+                                child: Center(
+                                  child: AnimatedOpacity(
+                                    curve: Curves.easeInOut,
+                                    opacity: buffering ? 1.0 : 0.0,
+                                    duration: _theme(context)
+                                        .controlsTransitionDuration,
+                                    child: _theme(context)
+                                            .bufferingIndicatorBuilder
+                                            ?.call(context) ??
+                                        const Center(
+                                          child: CircularProgressIndicator(
+                                            color: Color(0xFFFFFFFF),
+                                          ),
+                                        ),
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                height: _theme(context).buttonBarHeight,
+                                margin: _theme(context).bottomButtonBarMargin,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
