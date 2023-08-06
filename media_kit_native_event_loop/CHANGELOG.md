@@ -1,3 +1,8 @@
+## 1.0.7
+
+- build(darwin): bump `mpv` headers to `0.36.0`
+- build(darwin): use symlinks for `FRAMEWORK_SEARCH_PATHS`, `media_kit_libs_*** >= 1.1.0`
+
 ## 1.0.6
 
 - fix(windows): possible crash on hot-restart
