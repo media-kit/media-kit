@@ -12,7 +12,6 @@ import 'dart:collection';
 import 'package:media_kit/ffi/ffi.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
-import 'package:media_kit/src/player/native/utils/isolates.dart';
 
 /// InitializerNativeEventLoop
 /// --------------------------
@@ -29,12 +28,36 @@ abstract class InitializerNativeEventLoop {
   /// Initializes the |InitializerNativeEventLoop| class for usage.
   static void ensureInitialized() {
     try {
-      final initialize = lib.lookupFunction<
-          MediaKitEventLoopHandlerInitializeCXX,
+      final dylib = () {
+        if (Platform.isMacOS || Platform.isIOS) {
+          return DynamicLibrary.open(
+            'media_kit_native_event_loop.framework/media_kit_native_event_loop',
+          );
+        }
+        if (Platform.isAndroid || Platform.isLinux) {
+          return DynamicLibrary.open('libmedia_kit_native_event_loop.so');
+        }
+        if (Platform.isWindows) {
+          return DynamicLibrary.open('media_kit_native_event_loop.dll');
+        }
+      }()!;
+      _register = dylib.lookupFunction<MediaKitEventLoopHandlerRegisterCXX,
+          MediaKitEventLoopHandlerRegisterDart>(
+        'MediaKitEventLoopHandlerRegister',
+      );
+      _notify = dylib.lookupFunction<MediaKitEventLoopHandlerNotifyCXX,
+          MediaKitEventLoopHandlerNotifyDart>(
+        'MediaKitEventLoopHandlerNotify',
+      );
+      _dispose = dylib.lookupFunction<MediaKitEventLoopHandlerDisposeCXX,
+          MediaKitEventLoopHandlerDisposeDart>(
+        'MediaKitEventLoopHandlerDispose',
+      );
+      _initialize = dylib.lookupFunction<MediaKitEventLoopHandlerInitializeCXX,
           MediaKitEventLoopHandlerInitializeDart>(
         'MediaKitEventLoopHandlerInitialize',
       );
-      initialize.call();
+      _initialize?.call();
     } catch (_) {
       print(
         'media_kit: WARNING: package:media_kit_native_event_loop not found.',
@@ -50,9 +73,7 @@ abstract class InitializerNativeEventLoop {
   ) async {
     // Native functions from the shared library should be resolved by now. If not, throw an exception.
     // Primarily, this will happen when the shared library is not found i.e. package:media_kit_native_event_loop is not installed.
-    try {
-      lib;
-    } catch (_) {
+    if (_register == null || _notify == null || _dispose == null) {
       throw Exception(
         'package:media_kit_native_event_loop shared library not loaded.',
       );
@@ -83,7 +104,7 @@ abstract class InitializerNativeEventLoop {
       // Save [callback] to invoke it inside [ReceivePort] listener.
       _callbacks[handle.address] = callback;
       // Register event callback.
-      await _register(
+      _register?.call(
         handle.address,
         NativeApi.postCObject.cast(),
         _receiver.sendPort.nativePort,
@@ -95,19 +116,16 @@ abstract class InitializerNativeEventLoop {
 
   /// Disposes the event loop of the [Pointer<mpv_handle>] created by [create].
   /// NOTE: [Pointer<mpv_handle>] itself is not disposed.
-  static Future<void> dispose(Pointer<mpv_handle> handle) async {
+  static void dispose(Pointer<mpv_handle> handle) {
     // Native functions from the shared library should be resolved by now. If not, throw an exception.
     // Primarily, this will happen when the shared library is not found i.e. package:media_kit_native_event_loop is not installed.
-    try {
-      lib;
-    } catch (_) {
+    if (_register == null || _notify == null || _dispose == null) {
       throw Exception(
         'package:media_kit_native_event_loop shared library not loaded.',
       );
     }
-
+    _dispose?.call(handle.address);
     _callbacks.remove(handle.address);
-    await _dispose.call(handle.address);
   }
 
   /// [ReceivePort] used to listen for `mpv_event`(s) from the native event loop.
@@ -125,86 +143,20 @@ abstract class InitializerNativeEventLoop {
           print(stacktrace);
         }
         // Notify native event loop that event has been handled & it is safe to move onto next `mpv_wait_event`.
-        await _notify(message[0]);
+        _notify?.call(message[0]);
       },
     );
-
-  static Future<void> _register(int handle, Pointer<Void> callback, int port) {
-    return compute(
-      _registerIsolate,
-      _RegisterData(
-        handle,
-        callback.address,
-        port,
-      ),
-    );
-  }
-
-  static Future<void> _notify(int handle) {
-    return compute(
-      _notifyIsolate,
-      _NotifyData(handle),
-    );
-  }
-
-  static Future<void> _dispose(int handle) {
-    return compute(
-      _disposeIsolate,
-      _DisposeData(handle),
-    );
-  }
-
-  static void _registerIsolate(_RegisterData data) {
-    final register = lib.lookupFunction<MediaKitEventLoopHandlerRegisterCXX,
-        MediaKitEventLoopHandlerRegisterDart>(
-      'MediaKitEventLoopHandlerRegister',
-    );
-    register.call(
-      data.handle,
-      Pointer.fromAddress(data.callback),
-      data.port,
-    );
-  }
-
-  static void _notifyIsolate(_NotifyData data) {
-    final notify = lib.lookupFunction<MediaKitEventLoopHandlerNotifyCXX,
-        MediaKitEventLoopHandlerNotifyDart>(
-      'MediaKitEventLoopHandlerNotify',
-    );
-    notify.call(data.handle);
-  }
-
-  static void _disposeIsolate(_DisposeData data) {
-    final dispose = lib.lookupFunction<MediaKitEventLoopHandlerDisposeCXX,
-        MediaKitEventLoopHandlerDisposeDart>(
-      'MediaKitEventLoopHandlerDispose',
-    );
-    dispose.call(data.handle);
-  }
-
-  // The resolved package:media_kit_native_event_loop shared library.
-  static DynamicLibrary? _lib;
-  static DynamicLibrary get lib {
-    if (_lib != null) {
-      return _lib!;
-    }
-    if (Platform.isMacOS || Platform.isIOS) {
-      _lib = DynamicLibrary.open(
-        'media_kit_native_event_loop.framework/media_kit_native_event_loop',
-      );
-    }
-    if (Platform.isAndroid || Platform.isLinux) {
-      _lib = DynamicLibrary.open('libmedia_kit_native_event_loop.so');
-    }
-    if (Platform.isWindows) {
-      _lib = DynamicLibrary.open('media_kit_native_event_loop.dll');
-    }
-    return _lib!;
-  }
 
   // Registered [callback]s to receive [mpv_event](s) from the native event loop.
   static final _callbacks =
       HashMap<int, Future<void> Function(Pointer<mpv_event>)>();
+
+  // Resolved native functions from the shared library:
+
+  static MediaKitEventLoopHandlerRegisterDart? _register;
+  static MediaKitEventLoopHandlerNotifyDart? _notify;
+  static MediaKitEventLoopHandlerDisposeDart? _dispose;
+  static MediaKitEventLoopHandlerInitializeDart? _initialize;
 }
 
 // Type definitions for native functions in the shared library.
@@ -230,24 +182,3 @@ typedef MediaKitEventLoopHandlerRegisterDart = void Function(
 typedef MediaKitEventLoopHandlerNotifyDart = void Function(int handle);
 typedef MediaKitEventLoopHandlerDisposeDart = void Function(int handle);
 typedef MediaKitEventLoopHandlerInitializeDart = void Function();
-
-// --------------------------------------------------
-
-class _RegisterData {
-  final int handle;
-  final int callback;
-  final int port;
-  const _RegisterData(this.handle, this.callback, this.port);
-}
-
-class _NotifyData {
-  final int handle;
-  const _NotifyData(this.handle);
-}
-
-class _DisposeData {
-  final int handle;
-  const _DisposeData(this.handle);
-}
-
-// --------------------------------------------------

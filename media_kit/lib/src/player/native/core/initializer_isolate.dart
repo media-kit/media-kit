@@ -99,7 +99,7 @@ abstract class InitializerIsolate {
 
   /// Disposes the event loop of the [Pointer<mpv_handle>] created by [create].
   /// NOTE: [Pointer<mpv_handle>] itself is not disposed.
-  static Future<void> dispose(Pointer<mpv_handle> handle) async {
+  static void dispose(Pointer<mpv_handle> handle) {
     final port = _ports[handle.address];
     final isolate = _isolates[handle.address];
     if (port != null && isolate != null) {
