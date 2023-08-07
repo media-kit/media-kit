@@ -46,16 +46,15 @@ target_link_libraries(
 )
 
 # ------------------------------------------------------------------------------
-option(MEDIA_KIT_LIBS_AVAILABLE "package:media_kit libraries are available." ON)
 
 # Thanks to Mitchel Stewart (https://github.com/Quackdoc) for providing patches to generate minimal libmpv & FFmpeg audio specific builds.
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20230725-git-140ec21.7z")
+set(LIBMPV "mpv-dev-x86_64-20230807-git-140ec21.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-build/releases/download/2023-07-25/${LIBMPV}")
-set(LIBMPV_MD5 "a7b80936e0956da4439833e99d7d6f2f")
+set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-build/releases/download/2023-08-07/${LIBMPV}")
+set(LIBMPV_MD5 "f18e95c73f3d3cc765a488d50ee650b5")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")

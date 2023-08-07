@@ -58,15 +58,15 @@ task downloadDependencies(type: Exec) {
     
     // Download all *.jar dependencies & verify their MD5 checksums.
 
-    def urlDefaultARM64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.0/default-arm64-v8a.jar"
-    def urlDefaultARMEABI = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.0/default-armeabi-v7a.jar"
-    def urlDefaultX86_64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.0/default-x86_64.jar"
-    def urlDefaultX86 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.0/default-x86.jar"
+    def urlDefaultARM64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.1/default-arm64-v8a.jar"
+    def urlDefaultARMEABI = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.1/default-armeabi-v7a.jar"
+    def urlDefaultX86_64 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.1/default-x86_64.jar"
+    def urlDefaultX86 = "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.1/default-x86.jar"
 
-    def destDefaultARM64 = file("$buildDir/v1.1.0/default-arm64-v8a.jar")
-    def destDefaultARMEABI = file("$buildDir/v1.1.0/default-armeabi-v7a.jar")
-    def destDefaultX86_64 = file("$buildDir/v1.1.0/default-x86_64.jar")
-    def destDefaultX86 = file("$buildDir/v1.1.0/default-x86.jar")
+    def destDefaultARM64 = file("$buildDir/v1.1.1/default-arm64-v8a.jar")
+    def destDefaultARMEABI = file("$buildDir/v1.1.1/default-armeabi-v7a.jar")
+    def destDefaultX86_64 = file("$buildDir/v1.1.1/default-x86_64.jar")
+    def destDefaultX86 = file("$buildDir/v1.1.1/default-x86.jar")
 
     if (!destDefaultARM64.exists()) {
         destDefaultARM64.parentFile.mkdirs()
@@ -98,16 +98,16 @@ task downloadDependencies(type: Exec) {
     def md5DefaultX86_64 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destDefaultX86_64.toPath())).encodeHex().toString()
     def md5DefaultX86 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destDefaultX86.toPath())).encodeHex().toString()
 
-    if (md5DefaultARM64 != "8d97edc8e5edcbb3f3ea877bcae955dc") {
+    if (md5DefaultARM64 != "abe2d0c94f7adb20910be3400c178c33") {
         throw new GradleException("media_kit: arm64-v8a JAR verification failed.")
     }
-    if (md5DefaultARMEABI != "a5b15a1534d6f5c22e52cc2dcfbd187a") {
+    if (md5DefaultARMEABI != "dabfc6c267eeb17b24bf15f967c808af") {
         throw new GradleException("media_kit: armeabi-v7a JAR verification failed.")
     }
-    if (md5DefaultX86_64 != "2dd22e001b86dc25bf3b5766d3b44ec3") {
+    if (md5DefaultX86_64 != "7c8e2098fccba506c7db251cfcd513e7") {
         throw new GradleException("media_kit: x86_64 JAR verification failed.")
     }
-    if (md5DefaultX86 != "064951cc5e3259c29f6d27437ffda878") {
+    if (md5DefaultX86 != "335d5a02a3fb8beb85671cde03cba4cd") {
         throw new GradleException("media_kit: x86 JAR verification failed.")
     }
 
