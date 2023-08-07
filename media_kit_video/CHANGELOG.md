@@ -1,3 +1,9 @@
+## 1.1.3
+
+- feat(android): `VideoControllerConfiguration.scale`
+- fix(android): use `hwdec=auto`
+- fix(android): `SurfaceTexture.setDefaultBufferSize` & render race
+
 ## 1.1.2
 
 - fix(windows): memory leak in `GetVideoWidth`/`GetVideoHeight`

@@ -1,3 +1,10 @@
+## 1.1.3
+
+- fix: `EXT-X-KEY` support
+- fix: set `subs-fallback` & `subs-with-matching-audio`
+- fix(android): use `hwdec=auto`
+- fix(android): `SurfaceTexture.setDefaultBufferSize` & render race
+
 ## 1.1.2+1
 
 - docs: document updated

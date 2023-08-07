@@ -1,6 +1,6 @@
 # [package:media_kit](https://github.com/media-kit/media-kit)
 
-A complete video & audio playback library for Flutter & Dart.
+A cross-platform video player & audio player for Flutter & Dart.
 
 [![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/media-kit/media-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/media-kit/media-kit/actions/workflows/ci.yml)
 
@@ -46,16 +46,16 @@ A complete video & audio playback library for Flutter & Dart.
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.2                              # Primary package.
+  media_kit: ^1.1.3                              # Primary package.
   
-  media_kit_video: ^1.1.2                        # For video rendering.
+  media_kit_video: ^1.1.3                        # For video rendering.
   
   media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_android_video: ^1.3.0           # Android package for video native libraries.
+  media_kit_libs_android_video: ^1.3.1           # Android package for video native libraries.
   media_kit_libs_ios_video: ^1.1.1               # iOS package for video native libraries.
   media_kit_libs_macos_video: ^1.1.1             # macOS package for video native libraries.
-  media_kit_libs_windows_video: ^1.0.5           # Windows package for video native libraries.
+  media_kit_libs_windows_video: ^1.0.6           # Windows package for video native libraries.
   media_kit_libs_linux: ^1.1.0                   # GNU/Linux dependency package.
 ```
 
@@ -63,14 +63,14 @@ dependencies:
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.2                              # Primary package.
+  media_kit: ^1.1.3                              # Primary package.
   
   media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_android_audio: ^1.3.0           # Android package for audio native libraries.
+  media_kit_libs_android_audio: ^1.3.1           # Android package for audio native libraries.
   media_kit_libs_ios_audio: ^1.1.1               # iOS package for audio native libraries.
   media_kit_libs_macos_audio: ^1.1.1             # macOS package for audio native libraries.
-  media_kit_libs_windows_audio: ^1.0.5           # Windows package for audio native libraries.
+  media_kit_libs_windows_audio: ^1.0.6           # Windows package for audio native libraries.
   media_kit_libs_linux: ^1.1.0                   # GNU/Linux dependency package.
 ```
 
