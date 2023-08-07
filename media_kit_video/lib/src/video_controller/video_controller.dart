@@ -34,7 +34,10 @@ import 'package:media_kit_video/src/video_controller/web_video_controller/web_vi
 /// 1. You can limit size of the video output by specifying [VideoControllerConfiguration.width] & [VideoControllerConfiguration.height].
 ///    * A smaller width & height may yield substantial performance improvements.
 ///    * By default, both [VideoControllerConfiguration.height] & [VideoControllerConfiguration.width] are `null` i.e. output is based on video's resolution.
-/// 2. You can switch between GPU & CPU rendering by specifying [VideoControllerConfiguration.enableHardwareAcceleration].
+/// 2. You can reduce scale of the video output by specifying [VideoControllerConfiguration.scale].
+///    * A smaller scale may yield substantial performance improvements. Specifying this value will cause [VideoControllerConfiguration.width] & [VideoControllerConfiguration.height] to be ignored.
+///    * By default, [VideoControllerConfiguration.scale] is `1.0` i.e. output is based on video's resolution.
+/// 3. You can switch between GPU & CPU rendering by specifying [VideoControllerConfiguration.enableHardwareAcceleration].
 ///    * Disabling the option may improve stability on certain devices.
 ///    * By default, [VideoControllerConfiguration.enableHardwareAcceleration] is `true` i.e. GPU (Direct3D/OpenGL/METAL) is utilized.
 ///
@@ -155,51 +158,4 @@ class VideoController {
     final instance = await platform.future;
     return instance.waitUntilFirstFrameRendered;
   }
-}
-
-/// {@template video_controller_configuration}
-///
-/// VideoControllerConfiguration
-/// ----------------------------
-/// Configurable options for customizing the [VideoController] behavior.
-///
-/// {@endtemplate}
-class VideoControllerConfiguration {
-  /// Sets the [`--vo`](https://mpv.io/manual/stable/#options-vo) property on libmpv backend.
-  ///
-  /// Default: Platform specific.
-  /// * Windows, GNU/Linux, macOS & iOS: `libmpv`
-  /// * Android: `gpu`
-  final String? vo;
-
-  /// Sets the [`--hwdec`](https://mpv.io/manual/stable/#options-hwdec) property on libmpv backend.
-  ///
-  /// Default: Platform specific.
-  /// * Windows, GNU/Linux, macOS & iOS : `auto`
-  /// * Android: `mediacodec-copy`
-  final String? hwdec;
-
-  /// The fixed width of the [Video] output.
-  ///
-  /// Default: `null`
-  final int? width;
-
-  /// The fixed height of the [Video] output.
-  ///
-  /// Default: `null`
-  final int? height;
-
-  /// Whether to enable hardware acceleration.
-  ///
-  /// Default: `true`
-  final bool enableHardwareAcceleration;
-
-  /// {@macro video_controller_configuration}
-  const VideoControllerConfiguration({
-    this.vo,
-    this.hwdec,
-    this.width,
-    this.height,
-    this.enableHardwareAcceleration = true,
-  });
 }

@@ -60,3 +60,59 @@ abstract class PlatformVideoController {
   @protected
   final waitUntilFirstFrameRenderedCompleter = Completer<void>();
 }
+
+/// {@template video_controller_configuration}
+///
+/// VideoControllerConfiguration
+/// ----------------------------
+/// Configurable options for customizing the [VideoController] behavior.
+///
+/// {@endtemplate}
+class VideoControllerConfiguration {
+  /// Sets the [`--vo`](https://mpv.io/manual/stable/#options-vo) property on libmpv backend.
+  ///
+  /// Default: Platform specific.
+  /// * Windows, GNU/Linux, macOS & iOS: `libmpv`
+  /// * Android: `gpu`
+  final String? vo;
+
+  /// Sets the [`--hwdec`](https://mpv.io/manual/stable/#options-hwdec) property on libmpv backend.
+  ///
+  /// Default: Platform specific.
+  /// * Windows, GNU/Linux, macOS & iOS : `auto`
+  /// * Android: `mediacodec-copy`
+  final String? hwdec;
+
+  /// The fixed width for the video output.
+  /// This may be used for performance reasons.
+  ///
+  /// Default: `null`
+  final int? width;
+
+  /// The fixed height for the video output.
+  /// This may be used for performance reasons.
+  ///
+  /// Default: `null`
+  final int? height;
+
+  /// The scale for the video output.
+  /// This may be used for performance reasons. Specifying this option will cause [width] & [height] to be ignored.
+  ///
+  /// Default: `1.0`
+  final double scale;
+
+  /// Whether to enable hardware acceleration.
+  ///
+  /// Default: `true`
+  final bool enableHardwareAcceleration;
+
+  /// {@macro video_controller_configuration}
+  const VideoControllerConfiguration({
+    this.vo,
+    this.hwdec,
+    this.width,
+    this.height,
+    this.scale = 1.0,
+    this.enableHardwareAcceleration = true,
+  });
+}
