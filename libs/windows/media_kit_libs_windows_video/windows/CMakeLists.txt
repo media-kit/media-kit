@@ -48,11 +48,11 @@ target_link_libraries(
 # ------------------------------------------------------------------------------
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20230726-git-140ec21.7z")
+set(LIBMPV "mpv-dev-x86_64-20230807-git-140ec21.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-07-26/${LIBMPV}")
-set(LIBMPV_MD5 "88df2906dcc16ef5825f40467f8fd307")
+set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-08-07/${LIBMPV}")
+set(LIBMPV_MD5 "66f9aac79a767af25f554e0662352470")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
