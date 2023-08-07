@@ -2082,6 +2082,8 @@ class NativePlayer extends PlatformPlayer {
         // OpenSL ES audio output seems to be broken on some of these.
         else if (AndroidHelper.isEmulator && AndroidHelper.APILevel <= 25)
           'ao': 'null',
+        'subs-fallback': 'yes',
+        'subs-with-matching-audio': 'yes',
       };
       // Other properties based on [PlayerConfiguration].
       properties.addAll(

@@ -66,12 +66,6 @@ class NativeVideoController extends PlatformVideoController {
       return _controllers[handle]!;
     }
 
-    // Creation:
-    final controller = NativeVideoController._(
-      player,
-      configuration,
-    );
-
     // In case no video-decoders are found, this means media_kit_libs_***_audio is being used.
     // Thus, --vid=no is required to prevent libmpv from trying to decode video (otherwise bad things may happen).
     //
@@ -84,6 +78,18 @@ class NativeVideoController extends PlatformVideoController {
         'Please use media_kit_libs_***_video instead of media_kit_libs_***_audio.',
       );
     }
+
+    // Creation:
+    final controller = NativeVideoController._(
+      player,
+      configuration,
+    );
+
+    // Register [_dispose] for execution upon [Player.dispose].
+    player.platform?.release.add(controller._dispose);
+
+    // Store the [NativeVideoController] in the [_controllers].
+    _controllers[handle] = controller;
 
     // ----------------------------------------------
     NativeLibrary.ensureInitialized();
@@ -105,12 +111,6 @@ class NativeVideoController extends PlatformVideoController {
       calloc.free(value);
     }
     // ----------------------------------------------
-
-    // Register [_dispose] for execution upon [Player.dispose].
-    player.platform?.release.add(controller._dispose);
-
-    // Store the [NativeVideoController] in the [_controllers].
-    _controllers[handle] = controller;
 
     // Wait until first texture ID is received i.e. render context & EGL/D3D surface is created.
     // We are not waiting on the native-side itself because it will block the UI thread.

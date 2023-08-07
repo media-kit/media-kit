@@ -59,13 +59,13 @@ class AndroidVideoController extends PlatformVideoController {
     }
 
     // Merge the width & height [Stream]s into a single [Stream] of [Rect]s.
-    int w = -1;
-    int h = -1;
+    double w = -1.0;
+    double h = -1.0;
     _widthStreamSubscription = player.stream.width.listen(
       (event) => _lock.synchronized(() {
         if (event != null && event > 0) {
-          w = event;
-          if (w != -1 && h != -1) {
+          w = event * configuration.scale;
+          if (w > 0.0 && h > 0.0) {
             _controller.add(
               Rect.fromLTWH(
                 0.0,
@@ -74,8 +74,8 @@ class AndroidVideoController extends PlatformVideoController {
                 h.toDouble(),
               ),
             );
-            w = -1;
-            h = -1;
+            w = -1.0;
+            h = -1.0;
           }
         }
       }),
@@ -83,8 +83,8 @@ class AndroidVideoController extends PlatformVideoController {
     _heightStreamSubscription = player.stream.height.listen(
       (event) => _lock.synchronized(() {
         if (event != null && event > 0) {
-          h = event;
-          if (w != -1 && h != -1) {
+          h = event * configuration.scale;
+          if (w > 0.0 && h > 0.0) {
             _controller.add(
               Rect.fromLTWH(
                 0.0,
@@ -93,8 +93,8 @@ class AndroidVideoController extends PlatformVideoController {
                 h.toDouble(),
               ),
             );
-            w = -1;
-            h = -1;
+            w = -1.0;
+            h = -1.0;
           }
         }
       }),
@@ -114,7 +114,7 @@ class AndroidVideoController extends PlatformVideoController {
             property.cast(),
           );
           debugPrint(vo.cast<Utf8>().toDartString());
-          if (vo.cast<Utf8>().toDartString() == 'gpu') {
+          if (['gpu', 'null'].contains(vo.cast<Utf8>().toDartString())) {
             // NOTE: Only required for --vo=gpu
             // With --vo=gpu, we need to update the android.graphics.SurfaceTexture size & notify libmpv to re-create vo.
             // In native Android, this kind of rendering is done with android.view.SurfaceView + android.view.SurfaceHolder, which offers onSurfaceChanged to handle this.
@@ -126,24 +126,30 @@ class AndroidVideoController extends PlatformVideoController {
                 'height': event.height.toInt().toString(),
               },
             );
-            final name = 'android-surface-size'.toNativeUtf8();
-            final value =
-                '${event.width.toInt()}x${event.height.toInt()}'.toNativeUtf8();
-            mpv.mpv_set_option_string(
-              Pointer.fromAddress(handle),
-              name.cast(),
-              value.cast(),
-            );
-            calloc.free(name);
-            calloc.free(value);
+
+            final values = {
+              'wid': _wid.toString(),
+              'android-surface-size':
+                  '${event.width.toInt()}x${event.height.toInt()}',
+              'vo': 'gpu',
+            };
+            for (final entry in values.entries) {
+              final name = entry.key.toNativeUtf8();
+              final value = entry.value.toNativeUtf8();
+              mpv.mpv_set_option_string(
+                Pointer.fromAddress(handle),
+                name.cast(),
+                value.cast(),
+              );
+              calloc.free(name);
+              calloc.free(value);
+            }
           }
           calloc.free(property);
           mpv.mpv_free(vo.cast());
 
           // Notify about the first frame being rendered.
           if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
-            // The first-time resize of the surface causes a glitchy frame to be rendered. Add a voluntary delay to avoid that.
-            await Future.delayed(const Duration(milliseconds: 50));
             waitUntilFirstFrameRenderedCompleter.complete();
           }
 
@@ -169,37 +175,6 @@ class AndroidVideoController extends PlatformVideoController {
       return _controllers[handle]!;
     }
 
-    bool enableHardwareAcceleration = configuration.enableHardwareAcceleration;
-
-    // Enforce software rendering in emulators.
-    final bool isEmulator = await _channel.invokeMethod('Utils.IsEmulator');
-    if (isEmulator) {
-      debugPrint('media_kit: AndroidVideoController: Emulator detected.');
-      debugPrint('media_kit: AndroidVideoController: Enforcing S/W rendering.');
-      enableHardwareAcceleration = false;
-    }
-
-    // Creation:
-    final controller = AndroidVideoController._(
-      player,
-      configuration,
-    );
-    // Register [_dispose] for execution upon [Player.dispose].
-    player.platform?.release.add(controller._dispose);
-
-    // Store the [VideoController] in the [_controllers].
-    _controllers[handle] = controller;
-
-    final data = await _channel.invokeMethod(
-      'VideoOutputManager.Create',
-      {
-        'handle': handle.toString(),
-      },
-    );
-    final int id = data['id'];
-    final int wid = data['wid'];
-    debugPrint(data.toString());
-
     // In case no video-decoders are found, this means media_kit_libs_***_audio is being used.
     // Thus, --vid=no is required to prevent libmpv from trying to decode video (otherwise bad things may happen).
     //
@@ -213,43 +188,62 @@ class AndroidVideoController extends PlatformVideoController {
       );
     }
 
+    bool enableHardwareAcceleration = configuration.enableHardwareAcceleration;
+    // Enforce software rendering in emulators.
+    final bool isEmulator = await _channel.invokeMethod('Utils.IsEmulator');
+    if (isEmulator) {
+      debugPrint('media_kit: AndroidVideoController: Emulator detected.');
+      debugPrint('media_kit: AndroidVideoController: Enforcing S/W rendering.');
+      enableHardwareAcceleration = false;
+    }
+
+    // Creation:
+    final controller = AndroidVideoController._(
+      player,
+      configuration,
+    );
+
+    // Register [_dispose] for execution upon [Player.dispose].
+    player.platform?.release.add(controller._dispose);
+
+    // Store the [VideoController] in the [_controllers].
+    _controllers[handle] = controller;
+
+    final data = await _channel.invokeMethod(
+      'VideoOutputManager.Create',
+      {
+        'handle': handle.toString(),
+      },
+    );
+    debugPrint(data.toString());
+
+    controller._id = data['id'];
+    controller._wid = data['wid'];
+
     // ----------------------------------------------
     NativeLibrary.ensureInitialized();
     final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+
     final values = configuration.vo == null || configuration.hwdec == null
-        ? enableHardwareAcceleration
-            ? {
-                // H/W decoding & rendering with --vo=gpu + --hwdec=mediacodec.
-                'vo': 'gpu',
-                'hwdec': 'mediacodec',
-                'vid': 'auto',
-                'opengl-es': 'yes',
-                'force-window': 'yes',
-                'gpu-context': 'android',
-                'wid': wid.toString(),
-              }
-            : {
-                // S/W decoding & rendering with --vo=gpu + --hwdec=no.
-                'vo': 'gpu',
-                'hwdec': 'no',
-                'vid': 'auto',
-                'opengl-es': 'yes',
-                'force-window': 'yes',
-                'gpu-context': 'android',
-                'wid': wid.toString(),
-              }
+        ? {
+            // By default, android.view.Surface has a size of 1x1. If we assign --wid here, libmpv will internally start rendering & the first frame will be drawn as a solid color: https://github.com/media-kit/media-kit/issues/339
+            // The solution is to assign --wid after android.graphics.SurfaceTexture.setDefaultBufferSize has been called & --android-surface-size has been updated (see inside _controller.stream.listen).
+            //
+            // It is necessary to set vo=null here to avoid SIGSEGV, --wid must be assigned before vo=gpu is set.
+            'vo': 'null',
+            'hwdec': enableHardwareAcceleration ? 'auto' : 'no',
+          }
         : {
+            'wid': controller._wid.toString(),
             'vo': configuration.vo!,
             'hwdec': configuration.hwdec!,
-            'vid': 'auto',
-            'opengl-es': 'yes',
-            'force-window': 'yes',
-            'gpu-context': 'android',
-            'wid': wid.toString(),
           };
-    // TODO(@alexmercerind): Few other rendering options might be worth exposing to clients in the future.
     values.addAll(
       {
+        'vid': 'auto',
+        'opengl-es': 'yes',
+        'force-window': 'yes',
+        'gpu-context': 'android',
         'sub-use-margins': 'no',
         'sub-font-provider': 'none',
         'sub-scale-with-window': 'yes',
@@ -270,7 +264,7 @@ class AndroidVideoController extends PlatformVideoController {
     }
     // ----------------------------------------------
 
-    controller.id.value = id;
+    controller.id.value = controller._id;
 
     // Return the [PlatformVideoController].
     return controller;
@@ -310,6 +304,12 @@ class AndroidVideoController extends PlatformVideoController {
       },
     );
   }
+
+  /// Texture ID returned by Flutter's texture registry.
+  int? _id;
+
+  /// Pointer address to the global object reference of `android.view.Surface` i.e. `(intptr_t)(*android.view.Surface)`.
+  int? _wid;
 
   /// [Lock] used to synchronize the [_widthStreamSubscription] & [_heightStreamSubscription].
   final _lock = Lock();
