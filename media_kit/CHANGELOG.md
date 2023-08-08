@@ -1,3 +1,11 @@
+## 1.1.3+1
+
+- docs: document updated
+  - `media_kit_libs_ios_audio`
+  - `media_kit_libs_ios_video`
+  - `media_kit_libs_macos_audio`
+  - `media_kit_libs_macos_video`
+
 ## 1.1.3
 
 - fix: `EXT-X-KEY` support
