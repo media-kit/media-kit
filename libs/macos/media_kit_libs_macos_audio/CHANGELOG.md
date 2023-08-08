@@ -1,3 +1,7 @@
+## 1.1.2
+
+- build: bump dependencies
+
 ## 1.1.1
 
 - fix: fix CRLF line terminator added by Flutter packaging (#338)
