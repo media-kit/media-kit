@@ -1343,6 +1343,71 @@ class NativePlayer extends PlatformPlayer {
     calloc.free(data);
   }
 
+  /// Observes property for the internal libmpv instance of this [Player].
+  /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
+  ///
+  /// See:
+  /// * https://mpv.io/manual/master/#options
+  /// * https://mpv.io/manual/master/#properties
+  ///
+  Future<int> observeProperty(
+    String property,
+    Future<void> Function(String) listener,
+  ) async {
+    if (disposed) {
+      throw AssertionError('[Player] has been disposed');
+    }
+    await waitForPlayerInitialization;
+    await waitForVideoControllerInitializationIfAttached;
+
+    if (observed.containsKey(property)) {
+      throw ArgumentError.value(
+        property,
+        'property',
+        'Already observed',
+      );
+    }
+    final reply = Random().nextInt(1 << 16) + 1;
+    observed[property] = ObservedProperty(reply, listener);
+    final name = property.toNativeUtf8();
+    mpv.mpv_observe_property(
+      ctx,
+      reply,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_NONE,
+    );
+    calloc.free(name);
+    return reply;
+  }
+
+  /// Unobserves property for the internal libmpv instance of this [Player].
+  /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
+  ///
+  /// See:
+  /// * https://mpv.io/manual/master/#options
+  /// * https://mpv.io/manual/master/#properties
+  ///
+  Future<void> unobserveProperty(String property) async {
+    if (disposed) {
+      throw AssertionError('[Player] has been disposed');
+    }
+    await waitForPlayerInitialization;
+    await waitForVideoControllerInitializationIfAttached;
+
+    if (!observed.containsKey(property)) {
+      throw ArgumentError.value(
+        property,
+        'property',
+        'Not observed',
+      );
+    }
+    final reply = observed[property]?.reply;
+    if (reply != null) {
+      observed.remove(property);
+      mpv.mpv_unobserve_property(ctx, reply);
+    }
+  }
+
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
     if (event.ref.event_id ==
         generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
@@ -1878,6 +1943,18 @@ class NativePlayer extends PlatformPlayer {
           }
         }
       }
+      if (observed.containsKey(prop.ref.name.cast<Utf8>().toDartString())) {
+        if (prop.ref.format == generated.mpv_format.MPV_FORMAT_NONE) {
+          final fn = observed[prop.ref.name.cast<Utf8>().toDartString()];
+          if (fn != null) {
+            final data = mpv.mpv_get_property_string(ctx, prop.ref.name);
+            if (data != nullptr) {
+              await fn.listener.call(data.cast<Utf8>().toDartString());
+              mpv.mpv_free(data.cast());
+            }
+          }
+        }
+      }
     }
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_LOG_MESSAGE) {
       final eventLogMessage =
@@ -2249,6 +2326,10 @@ class NativePlayer extends PlatformPlayer {
   /// When receiving `playlist`, the URIs are looked up internally to fetch [Media.extras] & [Media.httpHeaders] etc.
   final HashSet<Media> current = HashSet<Media>();
 
+  /// Currently observed properties through [observeProperty].
+  final HashMap<String, ObservedProperty> observed =
+      HashMap<String, ObservedProperty>();
+
   /// Synchronization & mutual exclusion between methods of this class.
   static final Lock lock = Lock();
 
@@ -2259,6 +2340,13 @@ class NativePlayer extends PlatformPlayer {
   /// Whether the [NativePlayer] is initialized for unit-testing.
   @visibleForTesting
   static bool test = false;
+}
+
+class ObservedProperty {
+  final int reply;
+  final Future<void> Function(String) listener;
+
+  ObservedProperty(this.reply, this.listener);
 }
 
 // --------------------------------------------------
