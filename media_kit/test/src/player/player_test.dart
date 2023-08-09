@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
 import 'dart:collection';
 import 'dart:typed_data';
 import 'package:test/test.dart';
@@ -3401,6 +3402,104 @@ Simply for <u>everyone</u>
       await player.dispose();
     },
     timeout: Timeout(const Duration(minutes: 2)),
+  );
+  test(
+    'player-native-player-set-property',
+    () async {
+      final player = Player();
+      final property = 'volume';
+
+      expect(player.platform, isA<NativePlayer>());
+
+      expect(
+        player.stream.volume,
+        emits(equals(69.0)),
+      );
+
+      await (player.platform as dynamic).setProperty(property, '69.0');
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.dispose();
+    },
+    skip: UniversalPlatform.isWeb,
+  );
+  test(
+    'player-native-player-observe-property',
+    () async {
+      final player = Player();
+      final property = 'demuxer-cache-state';
+
+      expect(player.platform, isA<NativePlayer>());
+
+      final expectListener = expectAsync1(
+        (value) {
+          print(value);
+          expect(value, isA<String>());
+          final data = value as String;
+          expect(() => json.decode(data), returnsNormally);
+        },
+        count: 1,
+        max: -1,
+      );
+
+      await (player.platform as dynamic).observeProperty(
+        property,
+        (data) async {
+          // The listener must be invoked.
+          expectListener(data);
+        },
+      );
+      expect(
+        (player.platform as dynamic).observed.containsKey(property),
+        isTrue,
+      );
+
+      await player.open(Media(sources.platform[0]));
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await (player.platform as dynamic).unobserveProperty(property);
+      expect(
+        (player.platform as dynamic).observed.containsKey(property),
+        isFalse,
+      );
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      // Subsequent calls must throw [ArgumentError].
+      expect(
+        (player.platform as dynamic).observeProperty(
+          property,
+          (data) async {},
+        ),
+        completes,
+      );
+      expect(
+        (player.platform as dynamic).observeProperty(
+          property,
+          (data) async {},
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        (player.platform as dynamic).unobserveProperty(property),
+        completes,
+      );
+      expect(
+        (player.platform as dynamic).unobserveProperty(property),
+        throwsArgumentError,
+      );
+
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
+      await player.dispose();
+    },
+    skip: UniversalPlatform.isWeb,
   );
 }
 
