@@ -5,7 +5,6 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:io';
 import 'dart:ffi';
-import 'dart:math';
 import 'dart:async';
 import 'dart:collection';
 import 'dart:typed_data';
@@ -1343,6 +1342,68 @@ class NativePlayer extends PlatformPlayer {
     calloc.free(data);
   }
 
+  /// Observes property for the internal libmpv instance of this [Player].
+  /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
+  ///
+  /// See:
+  /// * https://mpv.io/manual/master/#options
+  /// * https://mpv.io/manual/master/#properties
+  ///
+  Future<void> observeProperty(
+    String property,
+    Future<void> Function(String) listener,
+  ) async {
+    if (disposed) {
+      throw AssertionError('[Player] has been disposed');
+    }
+    await waitForPlayerInitialization;
+    await waitForVideoControllerInitializationIfAttached;
+
+    if (observed.containsKey(property)) {
+      throw ArgumentError.value(
+        property,
+        'property',
+        'Already observed',
+      );
+    }
+    final reply = property.hashCode;
+    observed[property] = listener;
+    final name = property.toNativeUtf8();
+    mpv.mpv_observe_property(
+      ctx,
+      reply,
+      name.cast(),
+      generated.mpv_format.MPV_FORMAT_NONE,
+    );
+    calloc.free(name);
+  }
+
+  /// Unobserves property for the internal libmpv instance of this [Player].
+  /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
+  ///
+  /// See:
+  /// * https://mpv.io/manual/master/#options
+  /// * https://mpv.io/manual/master/#properties
+  ///
+  Future<void> unobserveProperty(String property) async {
+    if (disposed) {
+      throw AssertionError('[Player] has been disposed');
+    }
+    await waitForPlayerInitialization;
+    await waitForVideoControllerInitializationIfAttached;
+
+    if (!observed.containsKey(property)) {
+      throw ArgumentError.value(
+        property,
+        'property',
+        'Not observed',
+      );
+    }
+    final reply = property.hashCode;
+    observed.remove(property);
+    mpv.mpv_unobserve_property(ctx, reply);
+  }
+
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
     if (event.ref.event_id ==
         generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
@@ -1858,7 +1919,7 @@ class NativePlayer extends PlatformPlayer {
         if (dw is int && dh is int) {
           final int width;
           final int height;
-          if (sin(rotate * pi / 180).round() == 0) {
+          if (rotate == 0 || rotate == 180) {
             width = dw;
             height = dh;
           } else {
@@ -1875,6 +1936,18 @@ class NativePlayer extends PlatformPlayer {
           }
           if (!heightController.isClosed) {
             heightController.add(height);
+          }
+        }
+      }
+      if (observed.containsKey(prop.ref.name.cast<Utf8>().toDartString())) {
+        if (prop.ref.format == generated.mpv_format.MPV_FORMAT_NONE) {
+          final fn = observed[prop.ref.name.cast<Utf8>().toDartString()];
+          if (fn != null) {
+            final data = mpv.mpv_get_property_string(ctx, prop.ref.name);
+            if (data != nullptr) {
+              await fn.call(data.cast<Utf8>().toDartString());
+              mpv.mpv_free(data.cast());
+            }
           }
         }
       }
@@ -1916,6 +1989,11 @@ class NativePlayer extends PlatformPlayer {
             }
           }
           if (prefix == 'ad') {
+            if (!errorController.isClosed) {
+              errorController.add(text);
+            }
+          }
+          if (prefix == 'cplayer') {
             if (!errorController.isClosed) {
               errorController.add(text);
             }
@@ -2098,6 +2176,7 @@ class NativePlayer extends PlatformPlayer {
           if (configuration.title != null) 'title': '${configuration.title}',
           'demuxer-lavf-o': [
             'strict=experimental',
+            'allowed_extensions=ALL',
             'protocol_whitelist=[${configuration.protocolWhitelist.join(',')}]'
           ].join(','),
           'sub-ass': configuration.libass ? 'yes' : 'no',
@@ -2248,6 +2327,10 @@ class NativePlayer extends PlatformPlayer {
   /// In summary, after loading a [Media] uri into libmpv, `playlist` is used to observe any changes & notify event [Stream].
   /// When receiving `playlist`, the URIs are looked up internally to fetch [Media.extras] & [Media.httpHeaders] etc.
   final HashSet<Media> current = HashSet<Media>();
+
+  /// Currently observed properties through [observeProperty].
+  final HashMap<String, Future<void> Function(String)> observed =
+      HashMap<String, Future<void> Function(String)>();
 
   /// Synchronization & mutual exclusion between methods of this class.
   static final Lock lock = Lock();
