@@ -5,7 +5,6 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:io';
 import 'dart:ffi';
-import 'dart:math';
 import 'dart:async';
 import 'dart:collection';
 import 'dart:typed_data';
@@ -1350,7 +1349,7 @@ class NativePlayer extends PlatformPlayer {
   /// * https://mpv.io/manual/master/#options
   /// * https://mpv.io/manual/master/#properties
   ///
-  Future<int> observeProperty(
+  Future<void> observeProperty(
     String property,
     Future<void> Function(String) listener,
   ) async {
@@ -1367,8 +1366,8 @@ class NativePlayer extends PlatformPlayer {
         'Already observed',
       );
     }
-    final reply = Random().nextInt(1 << 16) + 1;
-    observed[property] = ObservedProperty(reply, listener);
+    final reply = property.hashCode;
+    observed[property] = listener;
     final name = property.toNativeUtf8();
     mpv.mpv_observe_property(
       ctx,
@@ -1377,7 +1376,6 @@ class NativePlayer extends PlatformPlayer {
       generated.mpv_format.MPV_FORMAT_NONE,
     );
     calloc.free(name);
-    return reply;
   }
 
   /// Unobserves property for the internal libmpv instance of this [Player].
@@ -1401,11 +1399,9 @@ class NativePlayer extends PlatformPlayer {
         'Not observed',
       );
     }
-    final reply = observed[property]?.reply;
-    if (reply != null) {
-      observed.remove(property);
-      mpv.mpv_unobserve_property(ctx, reply);
-    }
+    final reply = property.hashCode;
+    observed.remove(property);
+    mpv.mpv_unobserve_property(ctx, reply);
   }
 
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
@@ -1923,7 +1919,7 @@ class NativePlayer extends PlatformPlayer {
         if (dw is int && dh is int) {
           final int width;
           final int height;
-          if (sin(rotate * pi / 180).round() == 0) {
+          if (rotate == 0 || rotate == 180) {
             width = dw;
             height = dh;
           } else {
@@ -1949,7 +1945,7 @@ class NativePlayer extends PlatformPlayer {
           if (fn != null) {
             final data = mpv.mpv_get_property_string(ctx, prop.ref.name);
             if (data != nullptr) {
-              await fn.listener.call(data.cast<Utf8>().toDartString());
+              await fn.call(data.cast<Utf8>().toDartString());
               mpv.mpv_free(data.cast());
             }
           }
@@ -2175,6 +2171,7 @@ class NativePlayer extends PlatformPlayer {
           if (configuration.title != null) 'title': '${configuration.title}',
           'demuxer-lavf-o': [
             'strict=experimental',
+            'allowed_extensions=ALL',
             'protocol_whitelist=[${configuration.protocolWhitelist.join(',')}]'
           ].join(','),
           'sub-ass': configuration.libass ? 'yes' : 'no',
@@ -2327,8 +2324,8 @@ class NativePlayer extends PlatformPlayer {
   final HashSet<Media> current = HashSet<Media>();
 
   /// Currently observed properties through [observeProperty].
-  final HashMap<String, ObservedProperty> observed =
-      HashMap<String, ObservedProperty>();
+  final HashMap<String, Future<void> Function(String)> observed =
+      HashMap<String, Future<void> Function(String)>();
 
   /// Synchronization & mutual exclusion between methods of this class.
   static final Lock lock = Lock();
@@ -2340,13 +2337,6 @@ class NativePlayer extends PlatformPlayer {
   /// Whether the [NativePlayer] is initialized for unit-testing.
   @visibleForTesting
   static bool test = false;
-}
-
-class ObservedProperty {
-  final int reply;
-  final Future<void> Function(String) listener;
-
-  ObservedProperty(this.reply, this.listener);
 }
 
 // --------------------------------------------------
