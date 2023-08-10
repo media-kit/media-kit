@@ -1993,6 +1993,11 @@ class NativePlayer extends PlatformPlayer {
               errorController.add(text);
             }
           }
+          if (prefix == 'cplayer') {
+            if (!errorController.isClosed) {
+              errorController.add(text);
+            }
+          }
         }
         // --------------------------------------------------
       }
