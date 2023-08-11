@@ -297,14 +297,18 @@ typedef VideoControlsBuilder = Widget Function(VideoState state);
 Future<void> defaultEnterNativeFullscreen() async {
   try {
     if (Platform.isAndroid || Platform.isIOS) {
-      await SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.immersiveSticky,
-        overlays: [],
-      );
-      await SystemChrome.setPreferredOrientations(
+      await Future.wait(
         [
-          DeviceOrientation.landscapeLeft,
-          DeviceOrientation.landscapeRight,
+          SystemChrome.setEnabledSystemUIMode(
+            SystemUiMode.immersiveSticky,
+            overlays: [],
+          ),
+          SystemChrome.setPreferredOrientations(
+            [
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ],
+          ),
         ],
       );
     } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
@@ -323,11 +327,17 @@ Future<void> defaultEnterNativeFullscreen() async {
 Future<void> defaultExitNativeFullscreen() async {
   try {
     if (Platform.isAndroid || Platform.isIOS) {
-      await SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.manual,
-        overlays: SystemUiOverlay.values,
+      await Future.wait(
+        [
+          SystemChrome.setEnabledSystemUIMode(
+            SystemUiMode.manual,
+            overlays: SystemUiOverlay.values,
+          ),
+          SystemChrome.setPreferredOrientations(
+            [],
+          ),
+        ],
       );
-      await SystemChrome.setPreferredOrientations([]);
     } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
       await const MethodChannel('com.alexmercerind/media_kit_video')
           .invokeMethod(
