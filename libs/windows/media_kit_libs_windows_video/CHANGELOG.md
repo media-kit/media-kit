@@ -5,7 +5,7 @@
 - MSVCRT
 - UCRT
 - fix: DASH having BaseURL(s) with special characters not loading ([#353](https://github.com/media-kit/media-kit/issues/353))
-- fix: AV1 support ([#351](https://github.com/media-kit/media-kit/issues/353))
+- fix: AV1 support ([#351](https://github.com/media-kit/media-kit/issues/351))
 
 ## 1.0.6
 

@@ -51,7 +51,7 @@ target_link_libraries(
 set(LIBMPV "mpv-dev-x86_64-20230811-git-140ec21.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-build/releases/download/2023-08-11/${LIBMPV}")
+set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-08-11/${LIBMPV}")
 set(LIBMPV_MD5 "c7d1d766a6404d58a876aca403e0f53a")
 
 # Download location of the libmpv archive.
