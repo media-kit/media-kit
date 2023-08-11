@@ -1,3 +1,7 @@
+## 1.1.3
+
+- fix: DASH having BaseURL(s) with special characters not loading ([#353](https://github.com/media-kit/media-kit/issues/353))
+
 ## 1.1.2
 
 - build: bump dependencies
