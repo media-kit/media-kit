@@ -1747,13 +1747,72 @@ class NativePlayer extends PlatformPlayer {
               String id = '';
               String type = '';
               String? title;
-              String? lang;
+              String? language;
+              bool? image;
+              bool? albumart;
+              String? codec;
+              String? decoder;
+              int? w;
+              int? h;
+              int? channelscount;
+              String? channels;
+              int? samplerate;
+              double? fps;
+              int? bitrate;
+              int? rotate;
+              double? par;
+              int? audiochannels;
               for (int j = 0; j < map.num; j++) {
                 final property = map.keys[j].cast<Utf8>().toDartString();
                 if (map.values[j].format ==
                     generated.mpv_format.MPV_FORMAT_INT64) {
-                  if (property == 'id') {
-                    id = map.values[j].u.int64.toString();
+                  switch (property) {
+                    case 'id':
+                      id = map.values[j].u.int64.toString();
+                      break;
+                    case 'demux-w':
+                      w = map.values[j].u.int64;
+                      break;
+                    case 'demux-h':
+                      h = map.values[j].u.int64;
+                      break;
+                    case 'demux-channel-count':
+                      channelscount = map.values[j].u.int64;
+                      break;
+                    case 'demux-samplerate':
+                      samplerate = map.values[j].u.int64;
+                      break;
+                    case 'demux-bitrate':
+                      bitrate = map.values[j].u.int64;
+                      break;
+                    case 'demux-rotate':
+                      rotate = map.values[j].u.int64;
+                      break;
+                    case 'audio-channels':
+                      audiochannels = map.values[j].u.int64;
+                      break;
+                  }
+                }
+                if (map.values[j].format ==
+                    generated.mpv_format.MPV_FORMAT_FLAG) {
+                  switch (property) {
+                    case 'image':
+                      image = map.values[j].u.flag > 0;
+                      break;
+                    case 'albumart':
+                      albumart = map.values[j].u.flag > 0;
+                      break;
+                  }
+                }
+                if (map.values[j].format ==
+                    generated.mpv_format.MPV_FORMAT_DOUBLE) {
+                  switch (property) {
+                    case 'demux-fps':
+                      fps = map.values[j].u.double_;
+                      break;
+                    case 'demux-par':
+                      par = map.values[j].u.double_;
+                      break;
                   }
                 }
                 if (map.values[j].format ==
@@ -1768,20 +1827,89 @@ class NativePlayer extends PlatformPlayer {
                       title = value;
                       break;
                     case 'lang':
-                      lang = value;
+                      language = value;
+                      break;
+                    case 'codec':
+                      codec = value;
+                      break;
+                    case 'decoder-desc':
+                      decoder = value;
+                      break;
+                    case 'demux-channels':
+                      channels = value;
                       break;
                   }
                 }
               }
               switch (type) {
                 case 'video':
-                  video.add(VideoTrack(id, title, lang));
+                  video.add(
+                    VideoTrack(
+                      id,
+                      title,
+                      language,
+                      image: image,
+                      albumart: albumart,
+                      codec: codec,
+                      decoder: decoder,
+                      w: w,
+                      h: h,
+                      channelscount: channelscount,
+                      channels: channels,
+                      samplerate: samplerate,
+                      fps: fps,
+                      bitrate: bitrate,
+                      rotate: rotate,
+                      par: par,
+                      audiochannels: audiochannels,
+                    ),
+                  );
                   break;
                 case 'audio':
-                  audio.add(AudioTrack(id, title, lang));
+                  audio.add(
+                    AudioTrack(
+                      id,
+                      title,
+                      language,
+                      image: image,
+                      albumart: albumart,
+                      codec: codec,
+                      decoder: decoder,
+                      w: w,
+                      h: h,
+                      channelscount: channelscount,
+                      channels: channels,
+                      samplerate: samplerate,
+                      fps: fps,
+                      bitrate: bitrate,
+                      rotate: rotate,
+                      par: par,
+                      audiochannels: audiochannels,
+                    ),
+                  );
                   break;
                 case 'sub':
-                  subtitle.add(SubtitleTrack(id, title, lang));
+                  subtitle.add(
+                    SubtitleTrack(
+                      id,
+                      title,
+                      language,
+                      image: image,
+                      albumart: albumart,
+                      codec: codec,
+                      decoder: decoder,
+                      w: w,
+                      h: h,
+                      channelscount: channelscount,
+                      channels: channels,
+                      samplerate: samplerate,
+                      fps: fps,
+                      bitrate: bitrate,
+                      rotate: rotate,
+                      par: par,
+                      audiochannels: audiochannels,
+                    ),
+                  );
                   break;
               }
             }
