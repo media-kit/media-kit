@@ -247,7 +247,8 @@ class AndroidVideoController extends PlatformVideoController {
         'sub-use-margins': 'no',
         'sub-font-provider': 'none',
         'sub-scale-with-window': 'yes',
-        'hwdec-codecs': 'h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1',
+        // NOTE(AV1): av1_mediacodec seems to be unreliable; fallback to libdav1d.
+        'hwdec-codecs': 'h264,hevc,mpeg4,mpeg2video,vp8,vp9',
       },
     );
 

@@ -1,3 +1,12 @@
+## 1.0.7
+
+- [mpv-player/mpv@`140ec21`](https://github.com/mpv-player/mpv/commit/140ec21c89d671d392877a7f3b91d67e7d7b9239)
+- [ANGLE 2.1.18844 git hash: 2693b03eba82](https://github.com/google/angle)
+- MSVCRT
+- UCRT
+- fix: DASH having BaseURL(s) with special characters not loading ([#353](https://github.com/media-kit/media-kit/issues/353))
+- fix: AV1 support ([#351](https://github.com/media-kit/media-kit/issues/351))
+
 ## 1.0.6
 
 - [mpv-player/mpv@`140ec21`](https://github.com/mpv-player/mpv/commit/140ec21c89d671d392877a7f3b91d67e7d7b9239)
