@@ -18,9 +18,43 @@ abstract class _Track {
   final String id;
   final String? title;
   final String? language;
+  // ----------------------------------------
+  final bool? image; /* image */
+  final bool? albumart; /* albumart */
+  final String? codec; /* codec */
+  final String? decoder; /* decoder-desc */
+  final int? w; /* demux-w */
+  final int? h; /* demux-h */
+  final int? channelscount; /* demux-channel-count */
+  final String? channels; /* demux-channels */
+  final int? samplerate; /* demux-samplerate */
+  final double? fps; /* demux-fps */
+  final int? bitrate; /* demux-bitrate */
+  final int? rotate; /* demux-rotate */
+  final double? par; /* demux-par */
+  final int? audiochannels; /* audio-channels */
+  // ----------------------------------------
 
   /// {@macro _track}
-  const _Track(this.id, this.title, this.language);
+  const _Track(
+    this.id,
+    this.title,
+    this.language, {
+    this.image,
+    this.albumart,
+    this.codec,
+    this.decoder,
+    this.w,
+    this.h,
+    this.channelscount,
+    this.channels,
+    this.samplerate,
+    this.fps,
+    this.bitrate,
+    this.rotate,
+    this.par,
+    this.audiochannels,
+  });
 
   @override
   bool operator ==(Object other) {
@@ -40,7 +74,25 @@ abstract class _Track {
   }
 
   @override
-  String toString() => 'Track($id, $title, $language)';
+  String toString() => '$runtimeType('
+      '$id, '
+      '$title, '
+      '$language, '
+      'image: $image, '
+      'albumart: $albumart, '
+      'codec: $codec, '
+      'decoder: $decoder, '
+      'w: $w, '
+      'h: $h, '
+      'channelscount: $channelscount, '
+      'channels: $channels, '
+      'samplerate: $samplerate, '
+      'fps: $fps, '
+      'bitrate: $bitrate, '
+      'rotate: $rotate, '
+      'par: $par, '
+      'audiochannels: $audiochannels'
+      ')';
 }
 
 /// {@template video_track}
@@ -53,16 +105,31 @@ abstract class _Track {
 /// {@endtemplate}
 class VideoTrack extends _Track {
   /// {@macro video_track}
-  const VideoTrack(super.id, super.title, super.language);
+  const VideoTrack(
+    super.id,
+    super.title,
+    super.language, {
+    super.image,
+    super.albumart,
+    super.codec,
+    super.decoder,
+    super.w,
+    super.h,
+    super.channelscount,
+    super.channels,
+    super.samplerate,
+    super.fps,
+    super.bitrate,
+    super.rotate,
+    super.par,
+    super.audiochannels,
+  });
 
   /// No video track. Disables video output.
   factory VideoTrack.no() => VideoTrack('no', null, null);
 
   /// Default video track. Selects the first video track.
   factory VideoTrack.auto() => VideoTrack('auto', null, null);
-
-  @override
-  String toString() => 'VideoTrack($id, $title, $language)';
 }
 
 /// {@template audio_track}
@@ -81,9 +148,23 @@ class AudioTrack extends _Track {
   const AudioTrack(
     super.id,
     super.title,
-    super.language, [
+    super.language, {
+    super.image,
+    super.albumart,
+    super.codec,
+    super.decoder,
+    super.w,
+    super.h,
+    super.channelscount,
+    super.channels,
+    super.samplerate,
+    super.fps,
+    super.bitrate,
+    super.rotate,
+    super.par,
+    super.audiochannels,
     this.uri = false,
-  ]);
+  });
 
   /// No audio track. Disables audio output.
   factory AudioTrack.no() => AudioTrack('no', null, null);
@@ -101,7 +182,12 @@ class AudioTrack extends _Track {
     String? title,
     String? language,
   }) =>
-      AudioTrack(uri, title, language, true);
+      AudioTrack(
+        uri,
+        title,
+        language,
+        uri: true,
+      );
 
   @override
   bool operator ==(Object other) {
@@ -116,9 +202,6 @@ class AudioTrack extends _Track {
 
   @override
   int get hashCode => 0x3 ^ id.hashCode ^ uri.hashCode;
-
-  @override
-  String toString() => 'AudioTrack($id, $title, $language)';
 }
 
 /// {@template subtitle_track}
@@ -140,10 +223,24 @@ class SubtitleTrack extends _Track {
   const SubtitleTrack(
     super.id,
     super.title,
-    super.language, [
+    super.language, {
+    super.image,
+    super.albumart,
+    super.codec,
+    super.decoder,
+    super.w,
+    super.h,
+    super.channelscount,
+    super.channels,
+    super.samplerate,
+    super.fps,
+    super.bitrate,
+    super.rotate,
+    super.par,
+    super.audiochannels,
     this.uri = false,
     this.data = false,
-  ]);
+  });
 
   /// No subtitle track. Disables subtitle output.
   factory SubtitleTrack.no() => SubtitleTrack('no', null, null);
@@ -161,7 +258,7 @@ class SubtitleTrack extends _Track {
     String? title,
     String? language,
   }) =>
-      SubtitleTrack(uri, title, language, true, false);
+      SubtitleTrack(uri, title, language, uri: true);
 
   /// [SubtitleTrack] loaded with data.
   ///
@@ -173,7 +270,7 @@ class SubtitleTrack extends _Track {
     String? title,
     String? language,
   }) =>
-      SubtitleTrack(data, title, language, false, true);
+      SubtitleTrack(data, title, language, data: true);
 
   @override
   bool operator ==(Object other) {
@@ -188,9 +285,6 @@ class SubtitleTrack extends _Track {
 
   @override
   int get hashCode => 0x3 ^ id.hashCode ^ uri.hashCode ^ data.hashCode;
-
-  @override
-  String toString() => 'SubtitleTrack($id, $title, $language, $data)';
 }
 
 // For composition in [PlayerState] & [PlayerStreams] classes.
