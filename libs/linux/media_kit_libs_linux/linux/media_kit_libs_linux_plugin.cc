@@ -7,10 +7,13 @@
 
 #include "include/media_kit_libs_linux/media_kit_libs_linux_plugin.h"
 
+#include <media_kit.h>
+
 #include <stdio.h>
 #include <locale.h>
 
 void media_kit_libs_linux_plugin_register_with_registrar(FlPluginRegistrar* registrar) {
+  MediaKit::GetInstance().FindPackages();
   printf("package:media_kit_libs_linux registered.\n");
   fflush(stdout);
   setlocale(LC_NUMERIC, "C");

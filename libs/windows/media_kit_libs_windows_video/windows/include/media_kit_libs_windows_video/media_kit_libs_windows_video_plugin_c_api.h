@@ -13,7 +13,8 @@
 extern "C" {
 #endif
 
-FLUTTER_PLUGIN_EXPORT void MediaKitLibsWindowsVideoPluginCApiRegisterWithRegistrar(
+FLUTTER_PLUGIN_EXPORT void
+MediaKitLibsWindowsVideoPluginCApiRegisterWithRegistrar(
     FlutterDesktopPluginRegistrarRef registrar);
 
 #if defined(__cplusplus)

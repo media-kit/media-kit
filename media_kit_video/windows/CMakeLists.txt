@@ -12,17 +12,17 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 
 set(PLUGIN_NAME "media_kit_video_plugin")
 
-# Set the path to libmpv & ANGLE source code.
 # This is shipped as part of package:media_kit_libs_*** package(s).
 # Must be built before this target.
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
 set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
+set(INFLATECPP_SRC "${CMAKE_BINARY_DIR}/inflatecpp")
 
 if(MEDIA_KIT_LIBS_AVAILABLE)
-  # Add libmpv & ANGLE headers to the include path.
   include_directories(
     "${LIBMPV_SRC}/include"
     "${ANGLE_SRC}/include"
+    "${INFLATECPP_SRC}/include"
   )
 
   add_library(
