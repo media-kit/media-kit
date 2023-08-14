@@ -8,6 +8,8 @@ import 'dart:collection';
 
 import 'package:media_kit/src/models/playable.dart';
 
+import 'package:media_kit/src/player/web/utils/asset_loader.dart';
+
 /// {@template media}
 ///
 /// Media
@@ -76,19 +78,9 @@ class Media extends Playable {
   static String normalizeURI(String uri) {
     if (uri.startsWith(_kAssetScheme)) {
       // Handle asset:// scheme. Only for Flutter.
-      final key = encodeAssetKey(uri);
-      return key;
+      return AssetLoader.load(uri);
     }
     return uri;
-  }
-
-  static String encodeAssetKey(String uri) {
-    String key = uri.split(_kAssetScheme).last;
-    if (key.startsWith('/')) {
-      key = key.substring(1);
-    }
-    // https://github.com/media-kit/media-kit/issues/121
-    return key.split('/').map((e) => Uri.encodeComponent(e)).join('/');
   }
 
   /// For comparing with other [Media] instances.

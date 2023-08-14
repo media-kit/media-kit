@@ -122,28 +122,6 @@ void main() {
     skip: UniversalPlatform.isWeb || !UniversalPlatform.isWindows,
   );
   test(
-    'media-uri-normalization-encode-asset-key',
-    () {
-      expect(
-        Media.encodeAssetKey('asset://videos/video_0.mp4'),
-        equals('videos/video_0.mp4'),
-      );
-      expect(
-        Media.encodeAssetKey('asset:///videos/video_0.mp4'),
-        equals('videos/video_0.mp4'),
-      );
-      // Non ASCII characters.
-      expect(
-        Media.encodeAssetKey('asset://audios/う.wav'),
-        equals('audios/%E3%81%86.wav'),
-      );
-      expect(
-        Media.encodeAssetKey('asset:///audios/う.wav'),
-        equals('audios/%E3%81%86.wav'),
-      );
-    },
-  );
-  test(
     'media-extras-propagate',
     () {
       Media.cache.clear();

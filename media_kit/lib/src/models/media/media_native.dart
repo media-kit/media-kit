@@ -6,12 +6,11 @@
 // ignore_for_file: library_private_types_in_public_api
 import 'dart:io';
 import 'dart:collection';
-import 'package:path/path.dart' as path;
 import 'package:uri_parser/uri_parser.dart';
-import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/src/models/playable.dart';
-import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
+
+import 'package:media_kit/src/player/native/utils/asset_loader.dart';
 import 'package:media_kit/src/player/native/utils/android_content_uri_provider.dart';
 
 /// {@template media}
@@ -89,66 +88,7 @@ class Media extends Playable {
   static String normalizeURI(String uri) {
     if (uri.startsWith(_kAssetScheme)) {
       // Handle asset:// scheme. Only for Flutter.
-      final key = encodeAssetKey(uri);
-      final String asset;
-      if (Platform.isWindows) {
-        asset = path.normalize(
-          path.join(
-            path.dirname(Platform.resolvedExecutable),
-            'data',
-            'flutter_assets',
-            key,
-          ),
-        );
-      } else if (Platform.isLinux) {
-        asset = path.normalize(
-          path.join(
-            path.dirname(Platform.resolvedExecutable),
-            'data',
-            'flutter_assets',
-            key,
-          ),
-        );
-      } else if (Platform.isMacOS) {
-        asset = path.normalize(
-          path.join(
-            path.dirname(Platform.resolvedExecutable),
-            '..',
-            'Frameworks',
-            'App.framework',
-            'Resources',
-            'flutter_assets',
-            key,
-          ),
-        );
-      } else if (Platform.isIOS) {
-        asset = path.normalize(
-          path.join(
-            path.dirname(Platform.resolvedExecutable),
-            'Frameworks',
-            'App.framework',
-            'flutter_assets',
-            key,
-          ),
-        );
-      } else if (Platform.isAndroid) {
-        asset = path.normalize(
-          AndroidAssetLoader.loadSync(
-            path.join(
-              'flutter_assets',
-              key,
-            ),
-          ),
-        );
-      } else {
-        throw UnimplementedError(
-          '$_kAssetScheme is not supported on ${Platform.operatingSystem}',
-        );
-      }
-      if (!File(asset).existsSync_()) {
-        throw Exception('Unable to load asset: $asset');
-      }
-      uri = asset;
+      return AssetLoader.load(uri);
     }
     // content:// URI support for Android.
     try {
@@ -179,15 +119,6 @@ class Media extends Playable {
       default:
         return uri;
     }
-  }
-
-  static String encodeAssetKey(String uri) {
-    String key = uri.split(_kAssetScheme).last;
-    if (key.startsWith('/')) {
-      key = key.substring(1);
-    }
-    // https://github.com/media-kit/media-kit/issues/121
-    return key.split('/').map((e) => Uri.encodeComponent(e)).join('/');
   }
 
   /// For comparing with other [Media] instances.
