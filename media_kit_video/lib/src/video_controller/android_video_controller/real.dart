@@ -50,14 +50,6 @@ class AndroidVideoController extends PlatformVideoController {
     super.player,
     super.configuration,
   ) {
-    // Notify about the first frame being rendered.
-    // Case: If some [Media] is already playing when [VideoController] is created.
-    if (player.state.width != null && player.state.height != null) {
-      if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
-        waitUntilFirstFrameRenderedCompleter.complete();
-      }
-    }
-
     // Merge the width & height [Stream]s into a single [Stream] of [Rect]s.
     double w = -1.0;
     double h = -1.0;
@@ -147,11 +139,6 @@ class AndroidVideoController extends PlatformVideoController {
           }
           calloc.free(property);
           mpv.mpv_free(vo.cast());
-
-          // Notify about the first frame being rendered.
-          if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
-            waitUntilFirstFrameRenderedCompleter.complete();
-          }
 
           // ----------------------------------------------
         } catch (exception, stacktrace) {
@@ -331,5 +318,42 @@ class AndroidVideoController extends PlatformVideoController {
   static final _controllers = HashMap<int, AndroidVideoController>();
 
   /// [MethodChannel] for invoking platform specific native implementation.
-  static const _channel = MethodChannel('com.alexmercerind/media_kit_video');
+  static final _channel =
+      const MethodChannel('com.alexmercerind/media_kit_video')
+        ..setMethodCallHandler(
+          (MethodCall call) async {
+            try {
+              debugPrint(call.method.toString());
+              debugPrint(call.arguments.toString());
+              switch (call.method) {
+                case 'VideoOutput.WaitUntilFirstFrameRenderedNotify':
+                  {
+                    // Notify about updated texture ID & [Rect].
+                    final int id = call.arguments['id'];
+                    final int wid = call.arguments['wid'];
+                    final int handle = call.arguments['handle'];
+
+                    debugPrint(id.toString());
+                    debugPrint(wid.toString());
+                    debugPrint(handle.toString());
+
+                    // Notify about the first frame being rendered.
+                    final completer = _controllers[handle]
+                        ?.waitUntilFirstFrameRenderedCompleter;
+                    if (!(completer?.isCompleted ?? true)) {
+                      completer?.complete();
+                    }
+                    break;
+                  }
+                default:
+                  {
+                    break;
+                  }
+              }
+            } catch (exception, stacktrace) {
+              debugPrint(exception.toString());
+              debugPrint(stacktrace.toString());
+            }
+          },
+        );
 }

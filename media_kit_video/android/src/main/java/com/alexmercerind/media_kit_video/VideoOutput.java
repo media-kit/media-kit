@@ -7,29 +7,39 @@
  */
 package com.alexmercerind.media_kit_video;
 
+import android.os.Build;
 import android.util.Log;
 import android.os.Looper;
 import android.os.Handler;
 import android.view.Surface;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
+import java.util.HashMap;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import io.flutter.view.TextureRegistry;
+import io.flutter.plugin.common.MethodChannel;
+import io.flutter.embedding.engine.FlutterJNI;
+import io.flutter.embedding.android.FlutterView;
+import io.flutter.embedding.engine.FlutterEngine;
+import io.flutter.embedding.android.FlutterActivity;
+
 
 public class VideoOutput {
+    static private boolean flutterJNIAPIAvailable;
     private final Surface surface;
     private final TextureRegistry.SurfaceTextureEntry surfaceTextureEntry;
-
+    private final Method newGlobalObjectRef;
+    private final Method deleteGlobalObjectRef;
+    private boolean waitUntilFirstFrameRenderedNotify;
     public long id;
     public long wid;
 
-    private final Method newGlobalObjectRef;
-    private final Method deleteGlobalObjectRef;
-
-    VideoOutput(TextureRegistry textureRegistryReference) {
+    VideoOutput(long handle, MethodChannel channelReference, TextureRegistry textureRegistryReference) {
         try {
+            flutterJNIAPIAvailable = false;
+            waitUntilFirstFrameRenderedNotify = false;
             // com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper is part of package:media_kit_libs_android_video & package:media_kit_libs_android_audio packages.
             // Use reflection to invoke methods of com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.
             Class<?> mediaKitAndroidHelperClass = Class.forName("com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper");
@@ -44,19 +54,68 @@ public class VideoOutput {
 
         surfaceTextureEntry = textureRegistryReference.createSurfaceTexture();
         surface = new Surface(surfaceTextureEntry.surfaceTexture());
+
+        // If we call setOnFrameAvailableListener after creating SurfaceTextureEntry, the texture won't be displayed inside Flutter UI, because callback set by us will override the Flutter engine's own registered callback:
+        // https://github.com/flutter/engine/blob/f47e864f2dcb9c299a3a3ed22300a1dcacbdf1fe/shell/platform/android/io/flutter/view/FlutterView.java#L942-L958
+        try {
+            if (!flutterJNIAPIAvailable) {
+                flutterJNIAPIAvailable = getFlutterJNIReference() != null;
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        Log.i("media_kit", String.format(Locale.ENGLISH, "flutterJNIAPIAvailable = %b", flutterJNIAPIAvailable));
+        if (flutterJNIAPIAvailable) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                surfaceTextureEntry.surfaceTexture().setOnFrameAvailableListener((texture) -> {
+                    try {
+                        if (!waitUntilFirstFrameRenderedNotify) {
+                            waitUntilFirstFrameRenderedNotify = true;
+                            final HashMap<String, Object> data = new HashMap<>();
+                            data.put("id", id);
+                            data.put("wid", wid);
+                            data.put("handle", handle);
+                            channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
+                        }
+
+                        FlutterJNI flutterJNI = null;
+                        while (flutterJNI == null) {
+                            flutterJNI = getFlutterJNIReference();
+                            flutterJNI.markTextureFrameAvailable(id);
+                        }
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                }, new Handler());
+            } else {
+                surfaceTextureEntry.surfaceTexture().setOnFrameAvailableListener((texture) -> {
+                    try {
+                        if (!waitUntilFirstFrameRenderedNotify) {
+                            waitUntilFirstFrameRenderedNotify = true;
+                            final HashMap<String, Object> data = new HashMap<>();
+                            data.put("id", id);
+                            data.put("wid", wid);
+                            data.put("handle", handle);
+                            channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
+                        }
+
+                        FlutterJNI flutterJNI = null;
+                        while (flutterJNI == null) {
+                            flutterJNI = getFlutterJNIReference();
+                            flutterJNI.markTextureFrameAvailable(id);
+                        }
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+        }
+
         try {
             id = surfaceTextureEntry.id();
             wid = (long) newGlobalObjectRef.invoke(null, surface);
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutput: id = %d", id));
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutput: wid = %d", wid));
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void setSurfaceTextureSize(int width, int height) {
-        try {
-            surfaceTextureEntry.surfaceTexture().setDefaultBufferSize(width, height);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -86,6 +145,26 @@ public class VideoOutput {
             }, 5000);
         } catch (Throwable e) {
             e.printStackTrace();
+        }
+    }
+
+    public void setSurfaceTextureSize(int width, int height) {
+        try {
+            surfaceTextureEntry.surfaceTexture().setDefaultBufferSize(width, height);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    private FlutterJNI getFlutterJNIReference() {
+        try {
+            final FlutterView view = MediaKitVideoPlugin.activity.findViewById(FlutterActivity.FLUTTER_VIEW_ID);
+            final FlutterEngine engine = view.getAttachedFlutterEngine();
+            final Field field = engine.getClass().getDeclaredField("flutterJNI");
+            field.setAccessible(true);
+            return (FlutterJNI)field.get(engine);
+        } catch (Throwable e) {
+            return null;
         }
     }
 }
