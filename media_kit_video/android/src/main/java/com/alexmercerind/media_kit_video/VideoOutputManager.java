@@ -13,14 +13,17 @@ import java.util.Locale;
 import java.util.HashMap;
 import java.util.Objects;
 
+import io.flutter.plugin.common.MethodChannel;
 import io.flutter.view.TextureRegistry;
 
 public class VideoOutputManager {
     private final HashMap<Long, VideoOutput> videoOutputs = new HashMap<>();
+    private final MethodChannel channelReference;
     private final TextureRegistry textureRegistryReference;
     private final Object lock = new Object();
 
-    VideoOutputManager(TextureRegistry textureRegistryReference) {
+    VideoOutputManager(MethodChannel channelReference, TextureRegistry textureRegistryReference) {
+        this.channelReference = channelReference;
         this.textureRegistryReference = textureRegistryReference;
     }
 
@@ -28,19 +31,10 @@ public class VideoOutputManager {
         synchronized (lock) {
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.create: %d", handle));
             if (!videoOutputs.containsKey(handle)) {
-                final VideoOutput videoOutput = new VideoOutput(textureRegistryReference);
+                final VideoOutput videoOutput = new VideoOutput(handle, channelReference, textureRegistryReference);
                 videoOutputs.put(handle, videoOutput);
             }
             return videoOutputs.get(handle);
-        }
-    }
-
-    public void setSurfaceTextureSize(long handle, int width, int height) {
-        synchronized (lock) {
-            Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.setSurfaceTextureSize: %d %d %d", handle, width, height));
-            if (videoOutputs.containsKey(handle)) {
-                Objects.requireNonNull(videoOutputs.get(handle)).setSurfaceTextureSize(width, height);
-            }
         }
     }
 
@@ -50,6 +44,15 @@ public class VideoOutputManager {
             if (videoOutputs.containsKey(handle)) {
                 Objects.requireNonNull(videoOutputs.get(handle)).dispose();
                 videoOutputs.remove(handle);
+            }
+        }
+    }
+
+    public void setSurfaceTextureSize(long handle, int width, int height) {
+        synchronized (lock) {
+            Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.setSurfaceTextureSize: %d %d %d", handle, width, height));
+            if (videoOutputs.containsKey(handle)) {
+                Objects.requireNonNull(videoOutputs.get(handle)).setSurfaceTextureSize(width, height);
             }
         }
     }

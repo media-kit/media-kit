@@ -25,6 +25,7 @@ import 'package:media_kit/src/player/native/core/initializer_native_event_loop.d
 
 import 'package:media_kit/src/player/native/utils/isolates.dart';
 import 'package:media_kit/src/player/native/utils/temp_file.dart';
+import 'package:media_kit/src/player/native/utils/find_packages.dart';
 import 'package:media_kit/src/player/native/utils/android_helper.dart';
 import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
 
@@ -43,6 +44,7 @@ import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 
 /// Initializes the native backend for package:media_kit.
 void nativeEnsureInitialized({String? libmpv}) {
+  FindPackages.ensureInitialized();
   AndroidHelper.ensureInitialized();
   NativeLibrary.ensureInitialized(libmpv: libmpv);
   InitializerNativeEventLoop.ensureInitialized();
