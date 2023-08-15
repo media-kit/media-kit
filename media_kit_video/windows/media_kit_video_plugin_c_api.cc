@@ -7,11 +7,11 @@
 // LICENSE file.
 #include "include/media_kit_video/media_kit_video_plugin_c_api.h"
 
-#include <media_kit.h>
-
 #include <flutter/plugin_registrar_windows.h>
 
 #ifndef MEDIA_KIT_LIBS_NOT_FOUND
+
+#include <media_kit.h>
 
 #include "media_kit_video_plugin.h"
 
