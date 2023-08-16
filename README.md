@@ -48,7 +48,7 @@
 dependencies:
   media_kit: ^1.1.4                              # Primary package.
   
-  media_kit_video: ^1.1.4                        # For video rendering.
+  media_kit_video: ^1.1.5                        # For video rendering.
   
   media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
   

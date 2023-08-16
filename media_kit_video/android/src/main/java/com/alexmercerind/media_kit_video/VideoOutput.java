@@ -109,6 +109,15 @@ public class VideoOutput {
                     }
                 });
             }
+        } else {
+            if (!waitUntilFirstFrameRenderedNotify) {
+                waitUntilFirstFrameRenderedNotify = true;
+                final HashMap<String, Object> data = new HashMap<>();
+                data.put("id", id);
+                data.put("wid", wid);
+                data.put("handle", handle);
+                channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
+            }
         }
 
         try {
@@ -164,6 +173,7 @@ public class VideoOutput {
             field.setAccessible(true);
             return (FlutterJNI)field.get(engine);
         } catch (Throwable e) {
+            e.printStackTrace();
             return null;
         }
     }
