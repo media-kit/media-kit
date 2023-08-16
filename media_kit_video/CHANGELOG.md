@@ -1,3 +1,8 @@
+## 1.1.4
+
+- feat: `Video` `resumeUponEnteringForegroundMode`
+- feat(android): `waitUntilFirstFrameRenderedNotify` implementation
+
 ## 1.1.3
 
 - feat(android): `VideoControllerConfiguration.scale`
