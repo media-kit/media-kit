@@ -2133,6 +2133,11 @@ class NativePlayer extends PlatformPlayer {
               errorController.add(text);
             }
           }
+          if (prefix == 'stream') {
+            if (!errorController.isClosed) {
+              errorController.add(text);
+            }
+          }
         }
         // --------------------------------------------------
       }
