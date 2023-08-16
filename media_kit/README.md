@@ -1,6 +1,6 @@
 # [package:media_kit](https://github.com/media-kit/media-kit)
 
-A cross-platform video player & audio player for Flutter & Dart.
+#### A cross-platform video player & audio player for Flutter & Dart.
 
 [![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/media-kit/media-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/media-kit/media-kit/actions/workflows/ci.yml)
 
@@ -38,32 +38,32 @@ A cross-platform video player & audio player for Flutter & Dart.
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.3                              # Primary package.
+  media_kit: ^1.1.4                              # Primary package.
   
-  media_kit_video: ^1.1.3                        # For video rendering.
+  media_kit_video: ^1.1.4                        # For video rendering.
   
   media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_android_video: ^1.3.1           # Android package for video native libraries.
-  media_kit_libs_ios_video: ^1.1.3               # iOS package for video native libraries.
-  media_kit_libs_macos_video: ^1.1.3             # macOS package for video native libraries.
-  media_kit_libs_windows_video: ^1.0.6           # Windows package for video native libraries.
-  media_kit_libs_linux: ^1.1.0                   # GNU/Linux dependency package.
+  media_kit_libs_android_video: ^1.3.2           # Android package for video native libraries.
+  media_kit_libs_ios_video: ^1.1.4               # iOS package for video native libraries.
+  media_kit_libs_macos_video: ^1.1.4             # macOS package for video native libraries.
+  media_kit_libs_windows_video: ^1.0.7           # Windows package for video native libraries.
+  media_kit_libs_linux: ^1.1.1                   # GNU/Linux dependency package.
 ```
 
 #### For apps that need audio playback:
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.3                              # Primary package.
+  media_kit: ^1.1.4                              # Primary package.
   
   media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
   
-  media_kit_libs_android_audio: ^1.3.1           # Android package for audio native libraries.
-  media_kit_libs_ios_audio: ^1.1.3               # iOS package for audio native libraries.
-  media_kit_libs_macos_audio: ^1.1.3             # macOS package for audio native libraries.
-  media_kit_libs_windows_audio: ^1.0.6           # Windows package for audio native libraries.
-  media_kit_libs_linux: ^1.1.0                   # GNU/Linux dependency package.
+  media_kit_libs_android_audio: ^1.3.2           # Android package for audio native libraries.
+  media_kit_libs_ios_audio: ^1.1.4               # iOS package for audio native libraries.
+  media_kit_libs_macos_audio: ^1.1.4             # macOS package for audio native libraries.
+  media_kit_libs_windows_audio: ^1.0.7           # Windows package for audio native libraries.
+  media_kit_libs_linux: ^1.1.1                   # GNU/Linux dependency package.
 ```
 
 **Notes:**
@@ -78,11 +78,11 @@ dependencies:
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.3/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.3/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.3/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.3/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.3/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.4/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.4/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.4/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.4/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.4/media_kit_test_linux_x64.7z)          |
 | Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://media-kit.github.io/media-kit/)                                                                            |
 
 
