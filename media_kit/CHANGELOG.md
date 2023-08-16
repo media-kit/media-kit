@@ -1,3 +1,8 @@
+## 1.1.4+1
+
+- docs: document updated
+  - `media_kit_video`
+
 ## 1.1.4
 
 - feat: `VideoTrack`/`AudioTrack`/`SubtitleTrack` expose more parameters

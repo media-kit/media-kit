@@ -1,3 +1,7 @@
+## 1.1.5
+
+- fix(android): `waitUntilFirstFrameRenderedNotify` fallback & release-mode
+
 ## 1.1.4
 
 - feat: `Video` `resumeUponEnteringForegroundMode`
