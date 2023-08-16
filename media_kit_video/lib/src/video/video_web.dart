@@ -95,6 +95,12 @@ class Video extends StatefulWidget {
   /// Whether to pause the video when application enters background mode.
   final bool pauseUponEnteringBackgroundMode;
 
+  /// Whether to resume the video when application enters foreground mode.
+  ///
+  /// This attribute is only applicable if [pauseUponEnteringBackgroundMode] is `true`.
+  ///
+  final bool resumeUponEnteringForegroundMode;
+
   /// The configuration for subtitles e.g. [TextStyle] & padding etc.
   final SubtitleViewConfiguration subtitleViewConfiguration;
 
@@ -118,6 +124,7 @@ class Video extends StatefulWidget {
     this.controls = media_kit_video_controls.AdaptiveVideoControls,
     this.wakelock = true,
     this.pauseUponEnteringBackgroundMode = true,
+    this.resumeUponEnteringForegroundMode = false,
     this.subtitleViewConfiguration = const SubtitleViewConfiguration(),
     this.onEnterFullscreen = defaultEnterNativeFullscreen,
     this.onExitFullscreen = defaultExitNativeFullscreen,
@@ -132,6 +139,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       GlobalKey<SubtitleViewState>();
   final Wakelock _wakelock = Wakelock();
   StreamSubscription? _playingSubscription;
+  bool _pauseDueToPauseUponEnteringBackgroundMode = false;
 
   ValueKey _key = const ValueKey(true);
 
@@ -171,7 +179,17 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
         AppLifecycleState.inactive,
         AppLifecycleState.detached,
       ].contains(state)) {
-        widget.controller.player.pause();
+        if (widget.controller.player.state.playing &&
+            !_pauseDueToPauseUponEnteringBackgroundMode) {
+          _pauseDueToPauseUponEnteringBackgroundMode = true;
+          widget.controller.player.pause();
+        }
+      } else {
+        if (widget.resumeUponEnteringForegroundMode &&
+            _pauseDueToPauseUponEnteringBackgroundMode) {
+          _pauseDueToPauseUponEnteringBackgroundMode = false;
+          widget.controller.player.play();
+        }
       }
     }
   }

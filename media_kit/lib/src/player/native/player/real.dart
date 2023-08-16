@@ -1530,15 +1530,20 @@ class NativePlayer extends PlatformPlayer {
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
         // Check for [isBufferingStateChangeAllowed] because `pause` causes `core-idle` to be fired.
         final buffering = prop.ref.data.cast<Int8>().value == 1;
-        if (isBufferingStateChangeAllowed) {
-          state = state.copyWith(buffering: buffering);
+        if (buffering) {
+          if (isBufferingStateChangeAllowed) {
+            state = state.copyWith(buffering: true);
+            if (!bufferingController.isClosed) {
+              bufferingController.add(true);
+            }
+          }
+        } else {
+          state = state.copyWith(buffering: false);
           if (!bufferingController.isClosed) {
-            bufferingController.add(buffering);
+            bufferingController.add(false);
           }
         }
-        if (buffering) {
-          isBufferingStateChangeAllowed = true;
-        }
+        isBufferingStateChangeAllowed = true;
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
@@ -2124,6 +2129,11 @@ class NativePlayer extends PlatformPlayer {
             }
           }
           if (prefix == 'cplayer') {
+            if (!errorController.isClosed) {
+              errorController.add(text);
+            }
+          }
+          if (prefix == 'stream') {
             if (!errorController.isClosed) {
               errorController.add(text);
             }
