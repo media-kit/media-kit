@@ -7,7 +7,6 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 
 import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'

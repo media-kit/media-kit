@@ -232,5 +232,5 @@ class _MediaFinalizerContext {
   const _MediaFinalizerContext(this.uri, this.memory);
 
   @override
-  String toString() => '_MediaFinalizerContext(uri: $uri)';
+  String toString() => '_MediaFinalizerContext(uri: $uri, memory: $memory)';
 }
