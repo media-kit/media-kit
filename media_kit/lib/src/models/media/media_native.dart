@@ -6,10 +6,13 @@
 // ignore_for_file: library_private_types_in_public_api
 import 'dart:io';
 import 'dart:collection';
+import 'dart:typed_data';
 import 'package:uri_parser/uri_parser.dart';
+import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/src/models/playable.dart';
 
+import 'package:media_kit/src/player/native/utils/temp_file.dart';
 import 'package:media_kit/src/player/native/utils/asset_loader.dart';
 import 'package:media_kit/src/player/native/utils/android_content_uri_provider.dart';
 
@@ -32,24 +35,43 @@ class Media extends Playable {
   /// This has been done to:
   /// 1. Evict the [Media] instance from [cache].
   /// 2. Close the file descriptor created by [AndroidContentUriProvider] to handle content:// URIs on Android.
-  static final Finalizer<String> _finalizer = Finalizer<String>((uri) async {
-    // Decrement reference count.
-    ref[uri] = ((ref[uri] ?? 0) - 1).clamp(0, 1 << 32);
-    // Remove [Media] instance from [cache] if reference count is 0.
-    if (ref[uri] == 0) {
-      cache.remove(uri);
-    }
-    // Close the possible file descriptor on Android.
-    if (Platform.isAndroid) {
-      final data = Uri.parse(uri);
-      if (data.isScheme('FD')) {
-        final fd = int.parse(data.authority);
-        if (fd > 0) {
-          await AndroidContentUriProvider.closeFileDescriptor(uri);
-        }
+  static final Finalizer<_MediaFinalizerContext> _finalizer =
+      Finalizer<_MediaFinalizerContext>(
+    (context) async {
+      final uri = context.uri;
+      final memory = context.memory;
+      // Decrement reference count.
+      ref[uri] = ((ref[uri] ?? 0) - 1).clamp(0, 1 << 32);
+      // Remove [Media] instance from [cache] if reference count is 0.
+      if (ref[uri] == 0) {
+        cache.remove(uri);
       }
-    }
-  });
+      // content:// : Close the possible file descriptor on Android.
+      try {
+        if (Platform.isAndroid) {
+          final data = Uri.parse(uri);
+          if (data.isScheme('FD')) {
+            final fd = int.parse(data.authority);
+            if (fd > 0) {
+              await AndroidContentUriProvider.closeFileDescriptor(uri);
+            }
+          }
+        }
+      } catch (exeception, stacktrace) {
+        print(exeception);
+        print(stacktrace);
+      }
+      // Media.memory : Delete the temporary file.
+      try {
+        if (memory) {
+          await File(uri).delete_();
+        }
+      } catch (exeception, stacktrace) {
+        print(exeception);
+        print(stacktrace);
+      }
+    },
+  );
 
   /// URI of the [Media].
   final String uri;
@@ -63,6 +85,9 @@ class Media extends Playable {
   ///
   /// Default: `null`.
   final Map<String, String>? httpHeaders;
+
+  /// Whether instance is instantiated from [Media.memory].
+  bool _memory = false;
 
   /// {@macro media}
   Media(
@@ -81,7 +106,27 @@ class Media extends Playable {
       httpHeaders: this.httpHeaders,
     );
     // Attach [this] instance to [Finalizer].
-    _finalizer.attach(this, uri);
+    _finalizer.attach(
+      this,
+      _MediaFinalizerContext(
+        uri,
+        _memory,
+      ),
+    );
+  }
+
+  /// Creates a [Media] instance from [Uint8List].
+  ///
+  /// The [type] parameter is optional and is used to specify the MIME type of the media on web.
+  static Future<Media> memory(
+    Uint8List data, {
+    String? type,
+  }) async {
+    final file = await TempFile.create();
+    await file.write_(data);
+    final instance = Media(file.path);
+    instance._memory = true;
+    return instance;
   }
 
   /// Normalizes the passed URI.
@@ -175,4 +220,17 @@ class _MediaCache {
       'extras: $extras, '
       'httpHeaders: $httpHeaders'
       ')';
+}
+
+/// {@template _media_finalizer_context}
+/// A simple class to pack the required attributes into [Finalizer] argument.
+/// {@endtemplate}
+class _MediaFinalizerContext {
+  final String uri;
+  final bool memory;
+
+  const _MediaFinalizerContext(this.uri, this.memory);
+
+  @override
+  String toString() => '_MediaFinalizerContext(uri: $uri)';
 }
