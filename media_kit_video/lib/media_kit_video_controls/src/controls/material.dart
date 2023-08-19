@@ -11,9 +11,7 @@ import 'package:volume_controller/volume_controller.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_controller.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_state_inherited_widget.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 
 /// {@template material_video_controls}
 ///
@@ -23,18 +21,16 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/vi
 Widget MaterialVideoControls(VideoState state) {
   final theme = MaterialVideoControlsTheme.maybeOf(state.context);
   if (theme == null) {
-    return VideoStateInheritedWidget(
-      state: state,
+    return const ControlsThemeDataBuilderInheritedWidget(
       controlsThemeDataBuilder: null,
-      child: const MaterialVideoControlsTheme(
+      child: MaterialVideoControlsTheme(
         normal: kDefaultMaterialVideoControlsThemeData,
         fullscreen: kDefaultMaterialVideoControlsThemeDataFullscreen,
         child: _MaterialVideoControls(),
       ),
     );
   } else {
-    return VideoStateInheritedWidget(
-      state: state,
+    return ControlsThemeDataBuilderInheritedWidget(
       controlsThemeDataBuilder: (child) {
         return MaterialVideoControlsTheme(
           normal: theme.normal,
