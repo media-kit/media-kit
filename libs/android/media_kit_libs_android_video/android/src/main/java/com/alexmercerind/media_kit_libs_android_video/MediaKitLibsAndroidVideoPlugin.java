@@ -82,7 +82,6 @@ public class MediaKitLibsAndroidVideoPlugin implements FlutterPlugin {
                 names.addAll(current);
             }
 
-            boolean success = true;
             final HashSet<String> supported = new HashSet<>(
                 Arrays.asList(
                     "media_kit",
@@ -94,20 +93,15 @@ public class MediaKitLibsAndroidVideoPlugin implements FlutterPlugin {
                 if (!flutterPluginBinding.getApplicationContext().getPackageName().contains(name)) {
                     if (name.contains("media_kit")) {
                         if (!supported.contains(name) && !name.startsWith("media_kit_libs")) {
-                            success = false;
-                            break;
+                            Log.w("media_kit", "The name \"" + name + "\" is not officially supported by media_kit");
                         }
                     } else if (name.contains("video") && name.contains("player")) {
                         if (!name.contains("video_player") &&
                             !name.contains("-")) {
-                            success = false;
-                            break;
+                            Log.w("media_kit", "The name \"" + name + "\" is not officially supported by media_kit");
                         }
                     }
                 }
-            }
-            if (!success) {
-                System.exit(0);
             }
 
             try {

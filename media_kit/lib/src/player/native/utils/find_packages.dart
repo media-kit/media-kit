@@ -31,7 +31,7 @@ abstract class FindPackages {
     }
   }
 
-  static Future<void> _ensureInitialized(_) async {
+ static Future<void> _ensureInitialized(_) async {
     try {
       final script = basename(Platform.script.toFilePath());
       final executable = basename(Platform.resolvedExecutable);
@@ -65,29 +65,24 @@ abstract class FindPackages {
           ],
         );
 
-        bool success = true;
 
         for (final name in names) {
           if (!script.contains(name) && !executable.contains(name)) {
             if (name.contains('media_kit')) {
               if (!name.startsWith('media_kit') && !supported.contains(name)) {
-                success = false;
-                break;
+                print('The name ' + name + ' is not officially supported by media_kit');
               }
             } else if (name.contains('video') && name.contains('player')) {
               if (!name.contains('video_player') && !name.contains('-')) {
-                success = false;
-                break;
+                print('The name ' + name + ' is not officially supported by media_kit');
               }
             }
           }
         }
 
-        if (!success) {
-          exit(0);
-        }
       }
     } catch (_) {}
+
   }
 
   static bool _initialized = false;
