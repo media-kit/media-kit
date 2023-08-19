@@ -38,9 +38,9 @@
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.4                              # Primary package.
+  media_kit: ^1.1.5                              # Primary package.
   
-  media_kit_video: ^1.1.5                        # For video rendering.
+  media_kit_video: ^1.1.6                        # For video rendering.
   
   media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
   
@@ -55,7 +55,7 @@ dependencies:
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.4                              # Primary package.
+  media_kit: ^1.1.5                              # Primary package.
   
   media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
   
@@ -78,11 +78,11 @@ dependencies:
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.4/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.4/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.4/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.4/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.4/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.5/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.5/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.5/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.5/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.5/media_kit_test_linux_x64.7z)          |
 | Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://media-kit.github.io/media-kit/)                                                                            |
 
 
