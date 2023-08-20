@@ -59,4 +59,4 @@ ffigen:
   
 flutter:
   assets:
-    - assets/
+    - assets/web/
