@@ -9,6 +9,8 @@ import 'dart:js' as js;
 import 'dart:typed_data';
 import 'dart:collection';
 import 'dart:html' as html;
+import 'dart:math';
+import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
 import 'package:collection/collection.dart';
 import 'package:synchronized/synchronized.dart';
@@ -28,14 +30,15 @@ import 'package:media_kit/src/models/video_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/player/web/utils/hls.dart';
 
-void _loadHlsJs(){
+void _loadHlsJs() {
   final script = html.ScriptElement()
     ..async = true
     ..charset = 'utf-8'
     ..type = 'text/javascript'
     ..src = 'assets/packages/media_kit/assets/web/hls1.4.10.js';
-    html.querySelector('head')!.children.add(script);
+  html.querySelector('head')!.children.add(script);
 }
+
 /// Initializes the web backend for package:media_kit.
 void webEnsureInitialized({String? libmpv}) {
   _loadHlsJs();
@@ -150,7 +153,7 @@ class WebPlayer extends PlatformPlayer {
                 if (_index < _playlist.length - 1) {
                   _index = _index + 1;
                   final current = _playlist[_index];
-                  _loadResource(current.uri);
+                  await _loadResource(current.uri);
                   await play(synchronized: false);
                 } else {
                   // Playback must end.
@@ -160,7 +163,7 @@ class WebPlayer extends PlatformPlayer {
             case PlaylistMode.single:
               {
                 final current = _playlist[_index];
-                _loadResource(current.uri);
+                await _loadResource(current.uri);
                 await play(synchronized: false);
                 break;
               }
@@ -168,7 +171,7 @@ class WebPlayer extends PlatformPlayer {
               {
                 _index = (_index + 1) % _playlist.length;
                 final current = _playlist[_index];
-                _loadResource(current.uri);
+                await _loadResource(current.uri);
                 await play(synchronized: false);
                 break;
               }
@@ -379,12 +382,44 @@ class WebPlayer extends PlatformPlayer {
     }
   }
 
-  void _loadResource(String src) {
+  Future<bool> _testIfM3u8(
+    String src, {
+    Map<String, String> userHeaders = const {},
+  }) async {
     try {
-      if (src.contains('.m3u8') == false ||
-          element.canPlayType('application/vnd.apple.mpegurl') != '') {
-        element.src = src;
-      } else if (isHlsSupported()) {
+      final Map<String, String> headers = Map<String, String>.of(userHeaders);
+      if (headers.containsKey('Range') || headers.containsKey('range')) {
+        final List<int> range = (headers['Range'] ?? headers['range'])!
+            .split('bytes')[1]
+            .split('-')
+            .map((String e) => int.parse(e))
+            .toList();
+        range[1] = min(range[0] + 1023, range[1]);
+        headers['Range'] = 'bytes=${range[0]}-${range[1]}';
+      } else {
+        headers['Range'] = 'bytes=0-1023';
+      }
+      final http.Response response =
+          await http.get(Uri.parse(src), headers: headers);
+      final String body = response.body;
+      if (!body.contains('#EXTM3U')) {
+        return false;
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> _shouldUseHlsLibrary(String src) async {
+    return isHlsSupported() &&
+        (src.contains('.m3u8') && await _testIfM3u8(src));
+  }
+
+  Future<void> _loadResource(String src) async {
+    try {
+      var isHls = await _shouldUseHlsLibrary(src);
+      if (isHls && element.canPlayType('application/vnd.apple.mpegurl') == '') {
         final hls = Hls();
         hls.loadSource(src);
         hls.attachMedia(element);
@@ -450,7 +485,7 @@ class WebPlayer extends PlatformPlayer {
         );
       }
 
-      _loadResource(_playlist[_index].uri);
+      await _loadResource(_playlist[_index].uri);
 
       if (play) {
         element.play().catchError(
@@ -732,7 +767,7 @@ class WebPlayer extends PlatformPlayer {
         }
 
         _index = 0;
-        _loadResource(_playlist[_index].uri);
+        await _loadResource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(
@@ -807,7 +842,7 @@ class WebPlayer extends PlatformPlayer {
         if (!trackController.isClosed) {
           trackController.add(Track());
         }
-        _loadResource(_playlist[_index].uri); 
+        await _loadResource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(playing: true);
@@ -879,7 +914,7 @@ class WebPlayer extends PlatformPlayer {
         if (!trackController.isClosed) {
           trackController.add(Track());
         }
-_loadResource(_playlist[_index].uri);
+        await _loadResource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(playing: true);
@@ -944,7 +979,7 @@ _loadResource(_playlist[_index].uri);
       if (!trackController.isClosed) {
         trackController.add(Track());
       }
-_loadResource(_playlist[_index].uri);
+      await _loadResource(_playlist[_index].uri);
       await play(synchronized: false);
 
       state = state.copyWith(playing: true);
