@@ -1,3 +1,9 @@
+## 1.1.6
+
+- fix: programmatic fullscreen API
+- fix(android): pause upon entering fullscreen
+- fix(android): `waitUntilFirstFrameRenderedNotify` in `FlutterFragmentActivity`
+
 ## 1.1.5
 
 - fix(android): `waitUntilFirstFrameRenderedNotify` fallback & release-mode

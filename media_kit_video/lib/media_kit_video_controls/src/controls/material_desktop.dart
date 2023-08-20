@@ -11,9 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_controller.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_state_inherited_widget.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 
 /// {@template material_desktop_video_controls}
 ///
@@ -23,18 +21,16 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/vi
 Widget MaterialDesktopVideoControls(VideoState state) {
   final theme = MaterialDesktopVideoControlsTheme.maybeOf(state.context);
   if (theme == null) {
-    return VideoStateInheritedWidget(
-      state: state,
+    return const ControlsThemeDataBuilderInheritedWidget(
       controlsThemeDataBuilder: null,
-      child: const MaterialDesktopVideoControlsTheme(
+      child: MaterialDesktopVideoControlsTheme(
         normal: kDefaultMaterialDesktopVideoControlsThemeData,
         fullscreen: kDefaultMaterialDesktopVideoControlsThemeDataFullscreen,
         child: _MaterialDesktopVideoControls(),
       ),
     );
   } else {
-    return VideoStateInheritedWidget(
-      state: state,
+    return ControlsThemeDataBuilderInheritedWidget(
       controlsThemeDataBuilder: (child) {
         return MaterialDesktopVideoControlsTheme(
           normal: theme.normal,

@@ -1,3 +1,7 @@
+## 1.1.5
+
+- feat: `Media.memory`
+
 ## 1.1.4+1
 
 - docs: document updated

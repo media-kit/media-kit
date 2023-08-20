@@ -12,6 +12,8 @@ import android.util.Log;
 import android.os.Looper;
 import android.os.Handler;
 import android.view.Surface;
+import android.view.View;
+import android.widget.FrameLayout;
 
 import java.util.Locale;
 import java.util.HashMap;
@@ -24,6 +26,7 @@ import io.flutter.embedding.engine.FlutterJNI;
 import io.flutter.embedding.android.FlutterView;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.embedding.android.FlutterActivity;
+import io.flutter.embedding.android.FlutterFragmentActivity;
 
 
 public class VideoOutput {
@@ -76,6 +79,7 @@ public class VideoOutput {
                             data.put("wid", wid);
                             data.put("handle", handle);
                             channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
+                            Log.i("media_kit", String.format(Locale.ENGLISH, "VideoOutput.WaitUntilFirstFrameRenderedNotify = %d", handle));
                         }
 
                         FlutterJNI flutterJNI = null;
@@ -97,6 +101,7 @@ public class VideoOutput {
                             data.put("wid", wid);
                             data.put("handle", handle);
                             channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
+                            Log.i("media_kit", String.format(Locale.ENGLISH, "VideoOutput.WaitUntilFirstFrameRenderedNotify = %d", handle));
                         }
 
                         FlutterJNI flutterJNI = null;
@@ -167,7 +172,22 @@ public class VideoOutput {
 
     private FlutterJNI getFlutterJNIReference() {
         try {
-            final FlutterView view = MediaKitVideoPlugin.activity.findViewById(FlutterActivity.FLUTTER_VIEW_ID);
+            FlutterView view = null;
+            // io.flutter.embedding.android.FlutterActivity
+            if (view == null) {
+                view = MediaKitVideoPlugin.activity.findViewById(FlutterActivity.FLUTTER_VIEW_ID);
+            }
+            // io.flutter.embedding.android.FlutterFragmentActivity
+            if (view == null) {
+                final FrameLayout layout = (FrameLayout)MediaKitVideoPlugin.activity.findViewById(FlutterFragmentActivity.FRAGMENT_CONTAINER_ID);
+                for (int i = 0; i < layout.getChildCount(); i++) {
+                    final View child = layout.getChildAt(i);
+                    if (child instanceof FlutterView) {
+                        view = (FlutterView)child;
+                        break;
+                    }
+                }
+            }
             final FlutterEngine engine = view.getAttachedFlutterEngine();
             final Field field = engine.getClass().getDeclaredField("flutterJNI");
             field.setAccessible(true);
