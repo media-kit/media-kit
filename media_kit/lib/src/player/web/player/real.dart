@@ -9,6 +9,7 @@ import 'dart:js' as js;
 import 'dart:typed_data';
 import 'dart:collection';
 import 'dart:html' as html;
+import 'package:media_kit/src/player/web/player/hls.dart';
 import 'package:meta/meta.dart';
 import 'package:collection/collection.dart';
 import 'package:synchronized/synchronized.dart';
@@ -419,7 +420,17 @@ class WebPlayer extends PlatformPlayer {
       }
 
       try {
-        element.src = _playlist[_index].uri;
+        var src = _playlist[_index].uri;
+        if (src.contains(".m3u8") == false ||
+            element.canPlayType('application/vnd.apple.mpegurl') != "") {
+          element.src = src;
+        } else if (isHlsSupported()) {
+          final hls = Hls();
+          hls.loadSource(src);
+          hls.attachMedia(element);
+        } else {
+          element.src = src;
+        }
       } catch (exception) {
         // PlayerStream.error
         final e = exception as html.DomException;
