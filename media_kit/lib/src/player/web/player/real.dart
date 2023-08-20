@@ -140,7 +140,7 @@ class WebPlayer extends PlatformPlayer {
                 if (_index < _playlist.length - 1) {
                   _index = _index + 1;
                   final current = _playlist[_index];
-                  element.src = current.uri;
+                  loadResource(current.uri);
                   await play(synchronized: false);
                 } else {
                   // Playback must end.
@@ -150,7 +150,7 @@ class WebPlayer extends PlatformPlayer {
             case PlaylistMode.single:
               {
                 final current = _playlist[_index];
-                element.src = current.uri;
+                loadResource(current.uri);
                 await play(synchronized: false);
                 break;
               }
@@ -158,7 +158,7 @@ class WebPlayer extends PlatformPlayer {
               {
                 _index = (_index + 1) % _playlist.length;
                 final current = _playlist[_index];
-                element.src = current.uri;
+                loadResource(current.uri);
                 await play(synchronized: false);
                 break;
               }
@@ -369,6 +369,27 @@ class WebPlayer extends PlatformPlayer {
     }
   }
 
+  void loadResource(src) {
+    try {
+      if (src.contains(".m3u8") == false ||
+          element.canPlayType('application/vnd.apple.mpegurl') != "") {
+        element.src = src;
+      } else if (isHlsSupported()) {
+        final hls = Hls();
+        hls.loadSource(src);
+        hls.attachMedia(element);
+      } else {
+        element.src = src;
+      }
+    } catch (exception) {
+      // PlayerStream.error
+      final e = exception as html.DomException;
+      if (!errorController.isClosed) {
+        errorController.add(e.message ?? '');
+      }
+    }
+  }
+
   @override
   Future<void> open(
     Playable playable, {
@@ -419,25 +440,7 @@ class WebPlayer extends PlatformPlayer {
         );
       }
 
-      try {
-        var src = _playlist[_index].uri;
-        if (src.contains(".m3u8") == false ||
-            element.canPlayType('application/vnd.apple.mpegurl') != "") {
-          element.src = src;
-        } else if (isHlsSupported()) {
-          final hls = Hls();
-          hls.loadSource(src);
-          hls.attachMedia(element);
-        } else {
-          element.src = src;
-        }
-      } catch (exception) {
-        // PlayerStream.error
-        final e = exception as html.DomException;
-        if (!errorController.isClosed) {
-          errorController.add(e.message ?? '');
-        }
-      }
+      loadResource(_playlist[_index].uri);
 
       if (play) {
         element.play().catchError(
@@ -719,7 +722,7 @@ class WebPlayer extends PlatformPlayer {
         }
 
         _index = 0;
-        element.src = _playlist[_index].uri;
+        loadResource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(
@@ -794,8 +797,7 @@ class WebPlayer extends PlatformPlayer {
         if (!trackController.isClosed) {
           trackController.add(Track());
         }
-
-        element.src = _playlist[_index].uri;
+        loadResource(_playlist[_index].uri); 
         await play(synchronized: false);
 
         state = state.copyWith(playing: true);
@@ -867,8 +869,7 @@ class WebPlayer extends PlatformPlayer {
         if (!trackController.isClosed) {
           trackController.add(Track());
         }
-
-        element.src = _playlist[_index].uri;
+loadResource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(playing: true);
@@ -933,8 +934,7 @@ class WebPlayer extends PlatformPlayer {
       if (!trackController.isClosed) {
         trackController.add(Track());
       }
-
-      element.src = _playlist[_index].uri;
+loadResource(_playlist[_index].uri);
       await play(synchronized: false);
 
       state = state.copyWith(playing: true);
