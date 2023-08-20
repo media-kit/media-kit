@@ -2310,10 +2310,10 @@ class NativePlayer extends PlatformPlayer {
             'osc': 'no',
             'osd-level': '0',
           },
+          'title': configuration.title,
           'demuxer-max-bytes': configuration.bufferSize.toString(),
           'demuxer-max-back-bytes': configuration.bufferSize.toString(),
           if (configuration.vo != null) 'vo': '${configuration.vo}',
-          if (configuration.title != null) 'title': '${configuration.title}',
           'demuxer-lavf-o': [
             'strict=experimental',
             'allowed_extensions=ALL',

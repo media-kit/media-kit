@@ -8,7 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:media_kit_video/media_kit_video.dart' show VideoState;
 
 import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_state_inherited_widget.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/controls_theme_data_builder_inherited_widget.dart';
 
 /// {@template cupertino_video_controls}
 ///
@@ -18,18 +18,16 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/vi
 Widget CupertinoVideoControls(VideoState state) {
   final theme = CupertinoVideoControlsTheme.maybeOf(state.context);
   if (theme == null) {
-    return VideoStateInheritedWidget(
-      state: state,
+    return const ControlsThemeDataBuilderInheritedWidget(
       controlsThemeDataBuilder: null,
-      child: const CupertinoVideoControlsTheme(
+      child: CupertinoVideoControlsTheme(
         normal: kDefaultCupertinoVideoControlsThemeData,
         fullscreen: kDefaultCupertinoVideoControlsThemeDataFullscreen,
         child: _CupertinoVideoControls(),
       ),
     );
   } else {
-    return VideoStateInheritedWidget(
-      state: state,
+    return ControlsThemeDataBuilderInheritedWidget(
       controlsThemeDataBuilder: (child) {
         return CupertinoVideoControlsTheme(
           normal: theme.normal,

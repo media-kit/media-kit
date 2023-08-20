@@ -5,7 +5,8 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_controller.dart';
+
+import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 
 /// {@template fullscreen_inherited_widget}
 ///
@@ -48,9 +49,8 @@ class FullscreenInheritedWidget extends InheritedWidget {
 class _FullscreenInheritedWidgetPopScope extends StatefulWidget {
   final Widget child;
   const _FullscreenInheritedWidgetPopScope({
-    Key? key,
     required this.child,
-  }) : super(key: key);
+  });
 
   @override
   State<_FullscreenInheritedWidgetPopScope> createState() =>

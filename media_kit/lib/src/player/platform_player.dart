@@ -403,7 +403,7 @@ class PlayerConfiguration {
   /// This is visible inside the Windows' volume mixer.
   ///
   /// Default: `null`.
-  final String? title;
+  final String title;
 
   /// Optional callback invoked when the internals of the [Player] are initialized & ready for playback.
   ///
@@ -443,7 +443,7 @@ class PlayerConfiguration {
     this.vo = 'null',
     this.osc = false,
     this.pitch = false,
-    this.title,
+    this.title = 'package:media_kit',
     this.ready,
     this.libass = false,
     this.libassAndroidFont,
