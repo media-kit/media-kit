@@ -9,7 +9,6 @@ import 'dart:js' as js;
 import 'dart:typed_data';
 import 'dart:collection';
 import 'dart:html' as html;
-import 'package:media_kit/src/player/web/player/hls.dart';
 import 'package:meta/meta.dart';
 import 'package:collection/collection.dart';
 import 'package:synchronized/synchronized.dart';
@@ -27,14 +26,14 @@ import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/video_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
-
+import 'package:media_kit/src/player/web/utils/hls.dart';
 
 void _loadHlsJs(){
   final script = html.ScriptElement()
-    ..type = 'text/javascript'
-    ..charset = 'utf-8'
     ..async = true
-    ..src = 'assets/packages/media_kit/assets/hls1.4.10.js';
+    ..charset = 'utf-8'
+    ..type = 'text/javascript'
+    ..src = 'assets/packages/media_kit/assets/web/hls1.4.10.js';
     html.querySelector('head')!.children.add(script);
 }
 /// Initializes the web backend for package:media_kit.
@@ -151,7 +150,7 @@ class WebPlayer extends PlatformPlayer {
                 if (_index < _playlist.length - 1) {
                   _index = _index + 1;
                   final current = _playlist[_index];
-                  loadResource(current.uri);
+                  _loadResource(current.uri);
                   await play(synchronized: false);
                 } else {
                   // Playback must end.
@@ -161,7 +160,7 @@ class WebPlayer extends PlatformPlayer {
             case PlaylistMode.single:
               {
                 final current = _playlist[_index];
-                loadResource(current.uri);
+                _loadResource(current.uri);
                 await play(synchronized: false);
                 break;
               }
@@ -169,7 +168,7 @@ class WebPlayer extends PlatformPlayer {
               {
                 _index = (_index + 1) % _playlist.length;
                 final current = _playlist[_index];
-                loadResource(current.uri);
+                _loadResource(current.uri);
                 await play(synchronized: false);
                 break;
               }
@@ -380,10 +379,10 @@ class WebPlayer extends PlatformPlayer {
     }
   }
 
-  void loadResource(src) {
+  void _loadResource(String src) {
     try {
-      if (src.contains(".m3u8") == false ||
-          element.canPlayType('application/vnd.apple.mpegurl') != "") {
+      if (src.contains('.m3u8') == false ||
+          element.canPlayType('application/vnd.apple.mpegurl') != '') {
         element.src = src;
       } else if (isHlsSupported()) {
         final hls = Hls();
@@ -451,7 +450,7 @@ class WebPlayer extends PlatformPlayer {
         );
       }
 
-      loadResource(_playlist[_index].uri);
+      _loadResource(_playlist[_index].uri);
 
       if (play) {
         element.play().catchError(
@@ -733,7 +732,7 @@ class WebPlayer extends PlatformPlayer {
         }
 
         _index = 0;
-        loadResource(_playlist[_index].uri);
+        _loadResource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(
@@ -808,7 +807,7 @@ class WebPlayer extends PlatformPlayer {
         if (!trackController.isClosed) {
           trackController.add(Track());
         }
-        loadResource(_playlist[_index].uri); 
+        _loadResource(_playlist[_index].uri); 
         await play(synchronized: false);
 
         state = state.copyWith(playing: true);
@@ -880,7 +879,7 @@ class WebPlayer extends PlatformPlayer {
         if (!trackController.isClosed) {
           trackController.add(Track());
         }
-loadResource(_playlist[_index].uri);
+_loadResource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(playing: true);
@@ -945,7 +944,7 @@ loadResource(_playlist[_index].uri);
       if (!trackController.isClosed) {
         trackController.add(Track());
       }
-loadResource(_playlist[_index].uri);
+_loadResource(_playlist[_index].uri);
       await play(synchronized: false);
 
       state = state.copyWith(playing: true);
