@@ -28,8 +28,19 @@ import 'package:media_kit/src/models/audio_params.dart';
 import 'package:media_kit/src/models/video_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 
+
+void _loadHlsJs(){
+  final script = html.ScriptElement()
+    ..type = 'text/javascript'
+    ..charset = 'utf-8'
+    ..async = true
+    ..src = 'assets/packages/media_kit/assets/hls1.4.10.js';
+    html.querySelector('head')!.children.add(script);
+}
 /// Initializes the web backend for package:media_kit.
-void webEnsureInitialized({String? libmpv}) {}
+void webEnsureInitialized({String? libmpv}) {
+  _loadHlsJs();
+}
 
 /// {@template web_player}
 ///

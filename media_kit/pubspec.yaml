@@ -56,3 +56,6 @@ ffigen:
     entry-points:
       - headers/client.h
   dart-bool: true
+flutter:
+  assets:
+    - assets/
