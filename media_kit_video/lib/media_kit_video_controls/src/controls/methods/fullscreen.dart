@@ -73,7 +73,7 @@ Future<void> exitFullscreen(BuildContext context) {
   return lock.synchronized(() async {
     if (isFullscreen(context)) {
       if (context.mounted) {
-        Navigator.of(context).maybePop();
+        await Navigator.of(context).maybePop();
         // It is known that this [context] will have a [FullscreenInheritedWidget] above it.
         FullscreenInheritedWidget.of(context).parent.refreshView();
       }

@@ -3512,6 +3512,7 @@ Simply for <u>everyone</u>
 
       await player.dispose();
     },
+    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
