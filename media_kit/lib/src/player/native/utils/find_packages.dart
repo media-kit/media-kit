@@ -74,11 +74,6 @@ abstract class FindPackages {
                 success = false;
                 break;
               }
-            } else if (name.contains('video') && name.contains('player')) {
-              if (!name.contains('video_player') && !name.contains('-')) {
-                success = false;
-                break;
-              }
             }
           }
         }
