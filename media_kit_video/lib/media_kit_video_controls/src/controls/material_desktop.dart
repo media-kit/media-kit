@@ -900,6 +900,10 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
       click = false;
     });
     controller(context).player.seek(duration * slider);
+    setState(() {
+      // Explicitly set the position to prevent the slider from jumping.
+      position = duration * slider;
+    });
   }
 
   void onHover(PointerHoverEvent e, BoxConstraints constraints) {

@@ -1161,6 +1161,10 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
       tapped = false;
     });
     controller(context).player.seek(duration * slider);
+    setState(() {
+      // Explicitly set the position to prevent the slider from jumping.
+      position = duration * slider;
+    });
   }
 
   void onPanStart(DragStartDetails e, BoxConstraints constraints) {
