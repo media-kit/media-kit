@@ -43,6 +43,7 @@ dependencies:
   http: ">=0.13.0 <2.0.0"
   safe_local_storage: ^1.0.2
   universal_platform: ^1.0.0+1
+  js: ^0.6.7
 
 dev_dependencies:
   test: ^1.24.1
@@ -55,3 +56,7 @@ ffigen:
     entry-points:
       - headers/client.h
   dart-bool: true
+  
+flutter:
+  assets:
+    - assets/web/

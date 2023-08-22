@@ -15,6 +15,7 @@ import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/src/player/platform_player.dart';
 
+import 'package:media_kit/src/player/web/utils/hls.dart';
 import 'package:media_kit/src/player/web/utils/duration.dart';
 
 import 'package:media_kit/src/models/track.dart';
@@ -43,7 +44,7 @@ class WebPlayer extends PlatformPlayer {
   WebPlayer({required super.configuration})
       : id = js.context[kInstanceCount] ?? 0,
         element = html.VideoElement() {
-    lock.synchronized(() {
+    lock.synchronized(() async {
       element
         // Do not add autoplay=false attribute: https://stackoverflow.com/a/19664804/12825435
         /* ..autoplay = false */
@@ -139,7 +140,7 @@ class WebPlayer extends PlatformPlayer {
                 if (_index < _playlist.length - 1) {
                   _index = _index + 1;
                   final current = _playlist[_index];
-                  element.src = current.uri;
+                  _loadSource(current.uri);
                   await play(synchronized: false);
                 } else {
                   // Playback must end.
@@ -149,7 +150,7 @@ class WebPlayer extends PlatformPlayer {
             case PlaylistMode.single:
               {
                 final current = _playlist[_index];
-                element.src = current.uri;
+                _loadSource(current.uri);
                 await play(synchronized: false);
                 break;
               }
@@ -157,7 +158,7 @@ class WebPlayer extends PlatformPlayer {
               {
                 _index = (_index + 1) % _playlist.length;
                 final current = _playlist[_index];
-                element.src = current.uri;
+                _loadSource(current.uri);
                 await play(synchronized: false);
                 break;
               }
@@ -302,6 +303,7 @@ class WebPlayer extends PlatformPlayer {
           }
         });
       });
+      await HLS.ensureInitialized(hls: test ? HLS.kHLSCDN : null);
       completer.complete();
       try {
         configuration.ready?.call();
@@ -418,15 +420,7 @@ class WebPlayer extends PlatformPlayer {
         );
       }
 
-      try {
-        element.src = _playlist[_index].uri;
-      } catch (exception) {
-        // PlayerStream.error
-        final e = exception as html.DomException;
-        if (!errorController.isClosed) {
-          errorController.add(e.message ?? '');
-        }
-      }
+      _loadSource(_playlist[_index].uri);
 
       if (play) {
         element.play().catchError(
@@ -708,7 +702,7 @@ class WebPlayer extends PlatformPlayer {
         }
 
         _index = 0;
-        element.src = _playlist[_index].uri;
+        _loadSource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(
@@ -783,8 +777,7 @@ class WebPlayer extends PlatformPlayer {
         if (!trackController.isClosed) {
           trackController.add(Track());
         }
-
-        element.src = _playlist[_index].uri;
+        _loadSource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(playing: true);
@@ -856,8 +849,7 @@ class WebPlayer extends PlatformPlayer {
         if (!trackController.isClosed) {
           trackController.add(Track());
         }
-
-        element.src = _playlist[_index].uri;
+        _loadSource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(playing: true);
@@ -922,8 +914,7 @@ class WebPlayer extends PlatformPlayer {
       if (!trackController.isClosed) {
         trackController.add(Track());
       }
-
-      element.src = _playlist[_index].uri;
+      _loadSource(_playlist[_index].uri);
       await play(synchronized: false);
 
       state = state.copyWith(playing: true);
@@ -1414,6 +1405,35 @@ class WebPlayer extends PlatformPlayer {
     } else {
       return function();
     }
+  }
+
+  void _loadSource(String src) {
+    try {
+      if (_isHLS(src)) {
+        final hls = Hls();
+        hls.loadSource(src);
+        hls.attachMedia(element);
+      } else {
+        // Default
+        element.src = src;
+      }
+    } catch (exception) {
+      // PlayerStream.error
+      final e = exception as html.DomException;
+      if (!errorController.isClosed) {
+        errorController.add(e.message ?? '');
+      }
+    }
+  }
+
+  bool _isHLS(String src) {
+    if (element.canPlayType('application/vnd.apple.mpegurl') != '') {
+      return false;
+    }
+    if (isHLSSupported() && src.toLowerCase().contains('m3u8')) {
+      return true;
+    }
+    return false;
   }
 
   // --------------------------------------------------
