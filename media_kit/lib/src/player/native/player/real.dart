@@ -2315,6 +2315,7 @@ class NativePlayer extends PlatformPlayer {
           'demuxer-max-back-bytes': configuration.bufferSize.toString(),
           if (configuration.vo != null) 'vo': '${configuration.vo}',
           'demuxer-lavf-o': [
+            'seg_max_retry=5',
             'strict=experimental',
             'allowed_extensions=ALL',
             'protocol_whitelist=[${configuration.protocolWhitelist.join(',')}]'
