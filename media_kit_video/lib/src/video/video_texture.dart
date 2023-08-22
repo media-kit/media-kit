@@ -176,8 +176,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
         AppLifecycleState.paused,
         AppLifecycleState.detached,
       ].contains(state)) {
-        if (widget.controller.player.state.playing &&
-            !_pauseDueToPauseUponEnteringBackgroundMode) {
+        if (widget.controller.player.state.playing) {
           _pauseDueToPauseUponEnteringBackgroundMode = true;
           widget.controller.player.pause();
         }
