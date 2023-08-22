@@ -29,9 +29,7 @@ import 'package:media_kit/src/models/video_params.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
 
 /// Initializes the web backend for package:media_kit.
-void webEnsureInitialized({String? libmpv}) {
-  HLS.ensureInitialized();
-}
+void webEnsureInitialized({String? libmpv}) {}
 
 /// {@template web_player}
 ///
@@ -46,7 +44,7 @@ class WebPlayer extends PlatformPlayer {
   WebPlayer({required super.configuration})
       : id = js.context[kInstanceCount] ?? 0,
         element = html.VideoElement() {
-    lock.synchronized(() {
+    lock.synchronized(() async {
       element
         // Do not add autoplay=false attribute: https://stackoverflow.com/a/19664804/12825435
         /* ..autoplay = false */
@@ -142,7 +140,7 @@ class WebPlayer extends PlatformPlayer {
                 if (_index < _playlist.length - 1) {
                   _index = _index + 1;
                   final current = _playlist[_index];
-                  await _loadSource(current.uri);
+                  _loadSource(current.uri);
                   await play(synchronized: false);
                 } else {
                   // Playback must end.
@@ -152,7 +150,7 @@ class WebPlayer extends PlatformPlayer {
             case PlaylistMode.single:
               {
                 final current = _playlist[_index];
-                await _loadSource(current.uri);
+                _loadSource(current.uri);
                 await play(synchronized: false);
                 break;
               }
@@ -160,7 +158,7 @@ class WebPlayer extends PlatformPlayer {
               {
                 _index = (_index + 1) % _playlist.length;
                 final current = _playlist[_index];
-                await _loadSource(current.uri);
+                _loadSource(current.uri);
                 await play(synchronized: false);
                 break;
               }
@@ -305,6 +303,7 @@ class WebPlayer extends PlatformPlayer {
           }
         });
       });
+      await HLS.ensureInitialized(hls: test ? HLS.kHLSCDN : null);
       completer.complete();
       try {
         configuration.ready?.call();
@@ -421,7 +420,7 @@ class WebPlayer extends PlatformPlayer {
         );
       }
 
-      await _loadSource(_playlist[_index].uri);
+      _loadSource(_playlist[_index].uri);
 
       if (play) {
         element.play().catchError(
@@ -703,7 +702,7 @@ class WebPlayer extends PlatformPlayer {
         }
 
         _index = 0;
-        await _loadSource(_playlist[_index].uri);
+        _loadSource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(
@@ -778,7 +777,7 @@ class WebPlayer extends PlatformPlayer {
         if (!trackController.isClosed) {
           trackController.add(Track());
         }
-        await _loadSource(_playlist[_index].uri);
+        _loadSource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(playing: true);
@@ -850,7 +849,7 @@ class WebPlayer extends PlatformPlayer {
         if (!trackController.isClosed) {
           trackController.add(Track());
         }
-        await _loadSource(_playlist[_index].uri);
+        _loadSource(_playlist[_index].uri);
         await play(synchronized: false);
 
         state = state.copyWith(playing: true);
@@ -915,7 +914,7 @@ class WebPlayer extends PlatformPlayer {
       if (!trackController.isClosed) {
         trackController.add(Track());
       }
-      await _loadSource(_playlist[_index].uri);
+      _loadSource(_playlist[_index].uri);
       await play(synchronized: false);
 
       state = state.copyWith(playing: true);
@@ -1408,7 +1407,7 @@ class WebPlayer extends PlatformPlayer {
     }
   }
 
-  Future<void> _loadSource(String src) async {
+  void _loadSource(String src) {
     try {
       if (_isHLS(src)) {
         final hls = Hls();
@@ -1428,16 +1427,12 @@ class WebPlayer extends PlatformPlayer {
   }
 
   bool _isHLS(String src) {
-    try {
-      if (element.canPlayType('application/vnd.apple.mpegurl') != '') {
-        return false;
-      }
-    } catch (_) {}
-    try {
-      if (isHLSSupported() && src.toLowerCase().contains('m3u8')) {
-        return true;
-      }
-    } catch (_) {}
+    if (element.canPlayType('application/vnd.apple.mpegurl') != '') {
+      return false;
+    }
+    if (isHLSSupported() && src.toLowerCase().contains('m3u8')) {
+      return true;
+    }
     return false;
   }
 
