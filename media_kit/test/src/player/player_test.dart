@@ -486,8 +486,10 @@ void main() {
       );
 
       player.stream.position.listen((event) async {
-        print(event);
-        expectPosition(event);
+        if (event > Duration.zero) {
+          print(event);
+          expectPosition(event);
+        }
       });
 
       final playable = await Media.memory(sources.bytes[0]);
@@ -835,8 +837,10 @@ void main() {
       );
 
       player.stream.position.listen((event) async {
-        print(event);
-        expectPosition(event);
+        if (event > Duration.zero) {
+          print(event);
+          expectPosition(event);
+        }
       });
 
       await Future.delayed(const Duration(seconds: 5));
@@ -2643,8 +2647,10 @@ void main() {
       );
 
       player.stream.position.listen((event) async {
-        print(event);
-        expectPosition(event);
+        if (event > Duration.zero) {
+          print(event);
+          expectPosition(event);
+        }
       });
 
       await player.open(Media(sources.platform[0]));
@@ -3513,6 +3519,45 @@ Simply for <u>everyone</u>
       await player.dispose();
     },
     skip: kSkipFlakyTests,
+    timeout: Timeout(const Duration(minutes: 2)),
+  );
+  test(
+    'player-web-player-hls',
+    () async {
+      final player = Player();
+
+      final expectPosition = expectAsync1(
+        (value) {
+          print(value);
+          expect(value, isA<Duration>());
+        },
+        count: 1,
+        max: -1,
+      );
+
+      player.stream.position.listen((event) async {
+        if (event > Duration.zero) {
+          expectPosition(event);
+        }
+      });
+      player.stream.duration.listen((event) async {
+        print(event);
+      });
+
+      // Ensure successful playback of a .m3u8 stream.
+      // https://github.com/video-dev/hls.js/blob/master/tests/test-streams.js
+
+      await player.open(
+        Media(
+          'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+        ),
+      );
+
+      await Future.delayed(const Duration(minutes: 1));
+
+      await player.dispose();
+    },
+    skip: !UniversalPlatform.isWeb,
     timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
