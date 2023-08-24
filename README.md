@@ -12,7 +12,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/28951144/204903234-4a64b63c-2fc2-4eef-be44-d287d27021e5.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
-    <img alt="Stream Chat" width="250" height="auto" src="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
+    <img alt="Stream Chat" width="200" height="auto" src="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
   </picture>
 </a>
 <br></br>
@@ -28,7 +28,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/28951144/228648854-e5d7c557-ee92-47b2-a037-17b447873e1c.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
-    <img alt="Stream Chat" width="250" height="auto" src="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
+    <img alt="Stream Chat" width="200" height="auto" src="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
   </picture>
 </a>
 <br></br>
@@ -40,47 +40,31 @@
 
 ## Installation
 
-[package:media_kit](https://github.com/media-kit/media-kit) is split into number of packages to improve modularity & reduce bundle size.
+[package:media_kit](https://github.com/media-kit/media-kit) is split into multiple packages to improve modularity & reduce bundle size.
 
 #### For apps that need video playback:
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.5                              # Primary package.
-  
-  media_kit_video: ^1.1.6                        # For video rendering.
-  
-  media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
-  
-  media_kit_libs_android_video: ^1.3.2           # Android package for video native libraries.
-  media_kit_libs_ios_video: ^1.1.3               # iOS package for video native libraries.
-  media_kit_libs_macos_video: ^1.1.3             # macOS package for video native libraries.
-  media_kit_libs_windows_video: ^1.0.7           # Windows package for video native libraries.
-  media_kit_libs_linux: ^1.1.1                   # GNU/Linux dependency package.
+  media_kit: ^1.1.6                              # Primary package.
+  media_kit_video: ^1.1.7                        # For video rendering.
+  media_kit_libs_video: ^1.0.0                   # Native video dependencies.
 ```
 
 #### For apps that need audio playback:
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.5                              # Primary package.
-  
-  media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
-  
-  media_kit_libs_android_audio: ^1.3.2           # Android package for audio native libraries.
-  media_kit_libs_ios_audio: ^1.1.3               # iOS package for audio native libraries.
-  media_kit_libs_macos_audio: ^1.1.3             # macOS package for audio native libraries.
-  media_kit_libs_windows_audio: ^1.0.7           # Windows package for audio native libraries.
-  media_kit_libs_linux: ^1.1.1                   # GNU/Linux dependency package.
+  media_kit: ^1.1.6                              # Primary package.  
+  media_kit_libs_audio: ^1.0.0                   # Native audio dependencies.
 ```
 
 **Notes:**
 
-- [Enable --split-per-abi](https://docs.flutter.dev/deployment/android#what-is-a-fat-apk) or [use app bundle (instead of APK)](https://docs.flutter.dev/deployment/android#when-should-i-build-app-bundles-versus-apks) on Android.
 - The video libraries should be selected if both video & audio support is needed.
-- The performance in ["Release" mode](https://docs.flutter.dev/testing/build-modes#debug) is substantially higher than in ["Debug" mode](https://docs.flutter.dev/testing/build-modes#debug).
-- The media\_kit\_libs\_\*\*\*\_video & media\_kit\_libs\_\*\*\*\_audio packages should not be mixed.
-- The media\_kit\_libs\_\*\*\* packages may be omitted depending upon the platforms your project targets.
+- The `media_kit_libs_video` & `media_kit_libs_audio` packages should not be mixed.
+- The performance in ["Release" mode](https://docs.flutter.dev/testing/build-modes#release) is substantially higher than in ["Debug" mode](https://docs.flutter.dev/testing/build-modes#debug).
+- [Enable --split-per-abi](https://docs.flutter.dev/deployment/android#what-is-a-fat-apk) or [use app bundle (instead of APK)](https://docs.flutter.dev/deployment/android#when-should-i-build-app-bundles-versus-apks) on Android.
 
 ## Platforms
 
@@ -166,6 +150,10 @@ A quick usage example.
 ```dart
 import 'package:flutter/material.dart';
 
+// Make sure to add following packages to pubspec.yaml:
+// * media_kit
+// * media_kit_video
+// * media_kit_libs_video
 import 'package:media_kit/media_kit.dart';                      // Provides [Player], [Media], [Playlist] etc.
 import 'package:media_kit_video/media_kit_video.dart';          // Provides [VideoController] & [Video] etc.        
 
@@ -219,7 +207,7 @@ class MyScreenState extends State<MyScreen> {
 }
 ```
 
-**Note:** You may need to add required [permissions](#permissions) to your project.
+**Note:** You may need to add required [permissions](#permissions) to your project (only if required).
 
 ## Guide
 
@@ -260,7 +248,9 @@ A usage guide for [package:media_kit](https://github.com/media-kit/media-kit).
 ```dart
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize:
+  // Make sure to add the required packages to pubspec.yaml:
+  // * https://github.com/media-kit/media-kit#installation
+  // * https://pub.dev/packages/media_kit#installation
   MediaKit.ensureInitialized();
   runApp(const MyApp());
 }
