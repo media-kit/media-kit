@@ -1973,27 +1973,40 @@ classDiagram
   VideoOutput <.. MediaKitAndroidHelper: Create & dispose JNI global object reference to android.view.Surface (for --wid)
   
   class MediaKitVideoPlugin {
+    +Activity activity$
     -MethodChannel channel
+    -TextureRegistry textureRegistry
     -VideoOutputManager videoOutputManager
   }
   
   class VideoOutputManager {
     -HashMap<Long, VideoOutput> videoOutputs
+    -MethodChannel channelReference
     -TextureRegistry textureRegistryReference
     -Object lock
     
-    +create(long handle): VideoOutput
-    +dispose(long handle): void
+    +create(handle: long): VideoOutput
+    +dispose(handle: long): void
+    +createSurface(handle: long): long
+    +setSurfaceTextureSize(handle: long, width: int, height: int): void
   }
   
   class VideoOutput {
-    -Surface surface
-    -TextureRegistry.SurfaceTextureEntry surfaceTextureEntry
-    
     +long id
     +long wid
+
+    -Surface surface
+    -TextureRegistry.SurfaceTextureEntry surfaceTextureEntry
+    -Method newGlobalObjectRef
+    -Method deleteGlobalObjectRef
+
+    -long handle
+    -MethodChannel channelReference
+    -TextureRegistry textureRegistryReference
     
     +dispose()
+    +createSurface(): long
+    +setSurfaceTextureSize(width: int, height: int)
   }
   
   class MediaKitAndroidHelper {
@@ -2091,27 +2104,25 @@ classDiagram
     +HandleResize(width: int32_t, height: int32_t)
     +Draw(draw_callback: std::function<void()>)
     +Read()
-    +SwapBuffers()
     +MakeCurrent(value: bool)
     -CreateEGLDisplay()
-    -Initialize()
-    -InitializeD3D11()
-    -InitializeD3D9()
+    -SwapBuffers()
+    -Create()
     -CleanUp(release_context: bool)
+    -CreateD3DTexture()
     -CreateEGLDisplay()
-    -ShowFailureMessage(message: wchar_t[])
+    -CreateAndBindEGLSurface()
 
     -IDXGIAdapter* adapter_
     -int32_t width_
     -int32_t height_
+    -HANDLE internal_handle_
+    -HANDLE handle_
+    -HANDLE mutex_
     -ID3D11Device* d3d_11_device_
     -ID3D11DeviceContext* d3d_11_device_context_
-    -Microsoft::WRL::ComPtr<ID3D11Texture2D>
-    -Microsoft::WRL::ComPtr<IDXGISwapChain>
-    -IDirect3D9Ex* d3d_9_ex_
-    -IDirect3DDevice9Ex* d3d_9_device_ex_
-    -IDirect3DTexture9* d3d_9_texture_
-    -HANDLE handle_
+    -Microsoft::WRL::ComPtr<ID3D11Texture2D> internal_d3d_11_texture_2D_
+    -Microsoft::WRL::ComPtr<IDXGISwapChain> d3d_11_texture_2D_
     -EGLSurface surface_
     -EGLDisplay display_
     -EGLContext context_
