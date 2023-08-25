@@ -150,7 +150,10 @@ class NativePlayer extends PlatformPlayer {
       current.addAll(playlist);
 
       // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, etc.
-      await stop(synchronized: false);
+      await stop(
+        open: true,
+        synchronized: false,
+      );
 
       // Enter paused state.
       {
