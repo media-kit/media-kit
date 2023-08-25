@@ -12,7 +12,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/28951144/204903234-4a64b63c-2fc2-4eef-be44-d287d27021e5.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
-    <img alt="Stream Chat" width="250" height="auto" src="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
+    <img alt="Stream Chat" width="200" height="auto" src="https://user-images.githubusercontent.com/28951144/204903022-bbaa49ca-74c2-4a8f-a05d-af8314bfd2cc.svg">
   </picture>
 </a>
 <br></br>
@@ -28,7 +28,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/28951144/228648854-e5d7c557-ee92-47b2-a037-17b447873e1c.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
-    <img alt="Stream Chat" width="250" height="auto" src="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
+    <img alt="Stream Chat" width="200" height="auto" src="https://user-images.githubusercontent.com/28951144/228648844-f2a59ab1-12cd-4fee-bc8d-b2d332033c45.svg">
   </picture>
 </a>
 <br></br>
@@ -40,57 +40,41 @@
 
 ## Installation
 
-[package:media_kit](https://github.com/media-kit/media-kit) is split into number of packages to improve modularity & reduce bundle size.
+[package:media_kit](https://github.com/media-kit/media-kit) is split into multiple packages to improve modularity & reduce bundle size.
 
 #### For apps that need video playback:
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.5                              # Primary package.
-  
-  media_kit_video: ^1.1.6                        # For video rendering.
-  
-  media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
-  
-  media_kit_libs_android_video: ^1.3.2           # Android package for video native libraries.
-  media_kit_libs_ios_video: ^1.1.3               # iOS package for video native libraries.
-  media_kit_libs_macos_video: ^1.1.3             # macOS package for video native libraries.
-  media_kit_libs_windows_video: ^1.0.7           # Windows package for video native libraries.
-  media_kit_libs_linux: ^1.1.1                   # GNU/Linux dependency package.
+  media_kit: ^1.1.6                              # Primary package.
+  media_kit_video: ^1.1.7                        # For video rendering.
+  media_kit_libs_video: ^1.0.0                   # Native video dependencies.
 ```
 
 #### For apps that need audio playback:
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.5                              # Primary package.
-  
-  media_kit_native_event_loop: ^1.0.7            # Support for higher number of concurrent instances & better performance.
-  
-  media_kit_libs_android_audio: ^1.3.2           # Android package for audio native libraries.
-  media_kit_libs_ios_audio: ^1.1.3               # iOS package for audio native libraries.
-  media_kit_libs_macos_audio: ^1.1.3             # macOS package for audio native libraries.
-  media_kit_libs_windows_audio: ^1.0.7           # Windows package for audio native libraries.
-  media_kit_libs_linux: ^1.1.1                   # GNU/Linux dependency package.
+  media_kit: ^1.1.6                              # Primary package.  
+  media_kit_libs_audio: ^1.0.0                   # Native audio dependencies.
 ```
 
 **Notes:**
 
-- [Enable --split-per-abi](https://docs.flutter.dev/deployment/android#what-is-a-fat-apk) or [use app bundle (instead of APK)](https://docs.flutter.dev/deployment/android#when-should-i-build-app-bundles-versus-apks) on Android.
 - The video libraries should be selected if both video & audio support is needed.
-- The performance in ["Release" mode](https://docs.flutter.dev/testing/build-modes#debug) is substantially higher than in ["Debug" mode](https://docs.flutter.dev/testing/build-modes#debug).
-- The media\_kit\_libs\_\*\*\*\_video & media\_kit\_libs\_\*\*\*\_audio packages should not be mixed.
-- The media\_kit\_libs\_\*\*\* packages may be omitted depending upon the platforms your project targets.
+- The `media_kit_libs_video` & `media_kit_libs_audio` packages should not be mixed.
+- The performance in ["Release" mode](https://docs.flutter.dev/testing/build-modes#release) is substantially higher than in ["Debug" mode](https://docs.flutter.dev/testing/build-modes#debug).
+- [Enable --split-per-abi](https://docs.flutter.dev/deployment/android#what-is-a-fat-apk) or [use app bundle (instead of APK)](https://docs.flutter.dev/deployment/android#when-should-i-build-app-bundles-versus-apks) on Android.
 
 ## Platforms
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.5/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.5/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.5/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.5/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.5/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.6/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.6/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.6/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.6/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.6/media_kit_test_linux_x64.7z)          |
 | Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://media-kit.github.io/media-kit/)                                                                            |
 
 <table>
@@ -166,6 +150,10 @@ A quick usage example.
 ```dart
 import 'package:flutter/material.dart';
 
+// Make sure to add following packages to pubspec.yaml:
+// * media_kit
+// * media_kit_video
+// * media_kit_libs_video
 import 'package:media_kit/media_kit.dart';                      // Provides [Player], [Media], [Playlist] etc.
 import 'package:media_kit_video/media_kit_video.dart';          // Provides [VideoController] & [Video] etc.        
 
@@ -219,7 +207,7 @@ class MyScreenState extends State<MyScreen> {
 }
 ```
 
-**Note:** You may need to add required [permissions](#permissions) to your project.
+**Note:** You may need to add required [permissions](#permissions) to your project (only if required).
 
 ## Guide
 
@@ -260,7 +248,9 @@ A usage guide for [package:media_kit](https://github.com/media-kit/media-kit).
 ```dart
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize:
+  // Make sure to add the required packages to pubspec.yaml:
+  // * https://github.com/media-kit/media-kit#installation
+  // * https://pub.dev/packages/media_kit#installation
   MediaKit.ensureInitialized();
   runApp(const MyApp());
 }
@@ -1724,7 +1714,7 @@ classDiagram
   PlatformPlayer <|-- NativePlayer
   PlatformPlayer <|-- WebPlayer
   PlatformPlayer *-- PlayerState
-  PlatformPlayer *-- PlayerStreams
+  PlatformPlayer *-- PlayerStream
   PlatformPlayer o-- PlayerConfiguration
 
   NativePlayer <.. NativeLibrary
@@ -1753,6 +1743,9 @@ classDiagram
 
   class Playable {
   }
+
+  class AudioDevice {
+  }
   
   class Media {
     +String uri
@@ -1764,7 +1757,7 @@ classDiagram
     +index index
   }
 
-  class PlayerStreams {
+  class PlayerStream {
     +Stream<Playlist> playlist
     +Stream<bool> playing
     +Stream<bool> completed
@@ -1775,9 +1768,9 @@ classDiagram
     +Stream<double> rate
     +Stream<double> pitch
     +Stream<bool> buffering
-    +Stream<PlayerLog> log
-    +Stream<PlayerError> error
+    +Stream<Duration> buffer
     +Stream<AudioParams> audioParams
+    +Stream<VideoParams> videoParams
     +Stream<double?> audioBitrate
     +Stream<AudioDevice> audioDevice
     +Stream<List<AudioDevice>> audioDevices
@@ -1785,6 +1778,9 @@ classDiagram
     +Stream<Tracks> tracks
     +Stream<int> width
     +Stream<int> height
+    +Stream<List<String>> subtitle
+    +Stream<PlayerLog> log
+    +Stream<String> error
   }
 
   class PlayerState {
@@ -1798,9 +1794,9 @@ classDiagram
     +double rate
     +double pitch
     +bool buffering
-    +PlayerLog log
-    +PlayerError error
+    +Duration buffer
     +AudioParams audioParams
+    +VideoParams videoParams
     +double? audioBitrate
     +AudioDevice audioDevice
     +List<AudioDevice audioDevices
@@ -1808,17 +1804,19 @@ classDiagram
     +Tracks tracks
     +int width
     +int height
+    +List<String> subtitle
   }
 
   class Player {
     +PlatformPlayer? platform
 
     +«get» PlayerState state
-    +«get» PlayerStreams stream
+    +«get» PlayerStream stream
 
     +dispose()
     +open(playable: Playable)
     +play()
+    +stop()
     +pause()
     +playOrPause()
     +add(media: Media)
@@ -1833,19 +1831,22 @@ classDiagram
     +setRate(rate: double)
     +setPitch(pitch: double)
     +setShuffle(bool: double)
+    +setAudioDevice(device: AudioDevice)
     +setVideoTrack(track: VideoTrack)
     +setAudioTrack(track: AudioTrack)
     +setSubtitleTrack(track: SubtitleTrack)
+    +screenshot(): Uint8List
   }
 
   class PlatformPlayer {
     +PlayerState state
-    +PlayerStreams stream
+    +PlayerStream stream
     +PlayerConfiguration configuration
     
     +dispose()*
     +open(playable: Playable)*
     +play()*
+    +stop()*
     +pause()*
     +playOrPause()*
     +add(media: Media)*
@@ -1860,9 +1861,11 @@ classDiagram
     +setRate(rate: double)*
     +setPitch(pitch: double)*
     +setShuffle(bool: double)*
+    +setAudioDevice(device: AudioDevice)*
     +setVideoTrack(track: VideoTrack)*
     +setAudioTrack(track: AudioTrack)*
     +setSubtitleTrack(track: SubtitleTrack)*
+    +screenshot(): Uint8List*
 
     +«get» handle: Future<int>*
 
@@ -1892,6 +1895,7 @@ classDiagram
     +dispose()
     +open(playable: Playable)
     +play()
+    +stop()
     +pause()
     +playOrPause()
     +add(media: Media)
@@ -1906,9 +1910,11 @@ classDiagram
     +setRate(rate: double)
     +setPitch(pitch: double)
     +setShuffle(bool: double)
+    +setAudioDevice(device: AudioDevice)
     +setVideoTrack(track: VideoTrack)
     +setAudioTrack(track: AudioTrack)
     +setSubtitleTrack(track: SubtitleTrack)
+    +screenshot(): Uint8List
 
     +«get» handle: Future<int>
   }
@@ -1917,6 +1923,7 @@ classDiagram
     +dispose()
     +open(playable: Playable)
     +play()
+    +stop()
     +pause()
     +playOrPause()
     +add(media: Media)
@@ -1931,9 +1938,11 @@ classDiagram
     +setRate(rate: double)
     +setPitch(pitch: double)
     +setShuffle(bool: double)
+    +setAudioDevice(device: AudioDevice)
     +setVideoTrack(track: VideoTrack)
     +setAudioTrack(track: AudioTrack)
     +setSubtitleTrack(track: SubtitleTrack)
+    +screenshot(): Uint8List
 
     +«get» handle: Future<int>
   }
@@ -1964,27 +1973,40 @@ classDiagram
   VideoOutput <.. MediaKitAndroidHelper: Create & dispose JNI global object reference to android.view.Surface (for --wid)
   
   class MediaKitVideoPlugin {
+    +Activity activity$
     -MethodChannel channel
+    -TextureRegistry textureRegistry
     -VideoOutputManager videoOutputManager
   }
   
   class VideoOutputManager {
     -HashMap<Long, VideoOutput> videoOutputs
+    -MethodChannel channelReference
     -TextureRegistry textureRegistryReference
     -Object lock
     
-    +create(long handle): VideoOutput
-    +dispose(long handle): void
+    +create(handle: long): VideoOutput
+    +dispose(handle: long): void
+    +createSurface(handle: long): long
+    +setSurfaceTextureSize(handle: long, width: int, height: int): void
   }
   
   class VideoOutput {
-    -Surface surface
-    -TextureRegistry.SurfaceTextureEntry surfaceTextureEntry
-    
     +long id
     +long wid
+
+    -Surface surface
+    -TextureRegistry.SurfaceTextureEntry surfaceTextureEntry
+    -Method newGlobalObjectRef
+    -Method deleteGlobalObjectRef
+
+    -long handle
+    -MethodChannel channelReference
+    -TextureRegistry textureRegistryReference
     
     +dispose()
+    +createSurface(): long
+    +setSurfaceTextureSize(width: int, height: int)
   }
   
   class MediaKitAndroidHelper {
@@ -2082,27 +2104,25 @@ classDiagram
     +HandleResize(width: int32_t, height: int32_t)
     +Draw(draw_callback: std::function<void()>)
     +Read()
-    +SwapBuffers()
     +MakeCurrent(value: bool)
     -CreateEGLDisplay()
-    -Initialize()
-    -InitializeD3D11()
-    -InitializeD3D9()
+    -SwapBuffers()
+    -Create()
     -CleanUp(release_context: bool)
+    -CreateD3DTexture()
     -CreateEGLDisplay()
-    -ShowFailureMessage(message: wchar_t[])
+    -CreateAndBindEGLSurface()
 
     -IDXGIAdapter* adapter_
     -int32_t width_
     -int32_t height_
+    -HANDLE internal_handle_
+    -HANDLE handle_
+    -HANDLE mutex_
     -ID3D11Device* d3d_11_device_
     -ID3D11DeviceContext* d3d_11_device_context_
-    -Microsoft::WRL::ComPtr<ID3D11Texture2D>
-    -Microsoft::WRL::ComPtr<IDXGISwapChain>
-    -IDirect3D9Ex* d3d_9_ex_
-    -IDirect3DDevice9Ex* d3d_9_device_ex_
-    -IDirect3DTexture9* d3d_9_texture_
-    -HANDLE handle_
+    -Microsoft::WRL::ComPtr<ID3D11Texture2D> internal_d3d_11_texture_2D_
+    -Microsoft::WRL::ComPtr<IDXGISwapChain> d3d_11_texture_2D_
     -EGLSurface surface_
     -EGLDisplay display_
     -EGLContext context_

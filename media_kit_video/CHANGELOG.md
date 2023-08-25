@@ -1,3 +1,10 @@
+## 1.1.7
+
+- fix: add `await` to `maybePop` when exiting fullscreen
+- fix: `MaterialVideoControls`/`MaterialDesktopVideoControls` seekbar glitch
+- fix(android): S/W rendering fallback
+- fix(android): create fresh `android.view.Surface` for every video output
+
 ## 1.1.6
 
 - fix: programmatic fullscreen API
