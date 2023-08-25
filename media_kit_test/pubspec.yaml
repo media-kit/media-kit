@@ -16,8 +16,8 @@ dependencies:
     path: ../media_kit
   media_kit_video:
     path: ../media_kit_video
-  media_kit_libs_audio:
-    path: ../libs/universal/media_kit_libs_audio
+  media_kit_libs_video:
+    path: ../libs/universal/media_kit_libs_video
 
   path: ^1.8.2
   file_picker: ^5.2.4
@@ -35,17 +35,17 @@ dependency_overrides:
   media_kit_native_event_loop:
     path: ../media_kit_native_event_loop
 
-  media_kit_libs_audio:
-    path: ../libs/universal/media_kit_libs_audio
+  media_kit_libs_video:
+    path: ../libs/universal/media_kit_libs_video
 
-  media_kit_libs_android_audio:
-    path: ../libs/android/media_kit_libs_android_audio
-  media_kit_libs_ios_audio:
-    path: ../libs/ios/media_kit_libs_ios_audio
-  media_kit_libs_macos_audio:
-    path: ../libs/macos/media_kit_libs_macos_audio
-  media_kit_libs_windows_audio:
-    path: ../libs/windows/media_kit_libs_windows_audio
+  media_kit_libs_android_video:
+    path: ../libs/android/media_kit_libs_android_video
+  media_kit_libs_ios_video:
+    path: ../libs/ios/media_kit_libs_ios_video
+  media_kit_libs_macos_video:
+    path: ../libs/macos/media_kit_libs_macos_video
+  media_kit_libs_windows_video:
+    path: ../libs/windows/media_kit_libs_windows_video
   media_kit_libs_linux:
     path: ../libs/linux/media_kit_libs_linux
 
