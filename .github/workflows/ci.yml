@@ -361,7 +361,7 @@ jobs:
           channel: "stable"
       - name: Remove `media_kit_libs_*` dependencies
         run: |
-          "C:\Program Files\Git\usr\bin\sed.exe" -i "s/\bmedia_kit_libs_\([^[:space:]_]*\)_video\b/media_kit_libs_\1_audio/g" pubspec.yaml
+          "C:\Program Files\Git\usr\bin\sed.exe" -i "s/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g" pubspec.yaml
           type pubspec.yaml
         shell: cmd
       - run: flutter pub get
@@ -386,7 +386,7 @@ jobs:
           channel: "stable"
       - name: Remove `media_kit_libs_*` dependencies
         run: |
-          sed -i 's/\bmedia_kit_libs_\([^[:space:]_]*\)_video\b/media_kit_libs_\1_audio/g' pubspec.yaml
+          sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
           cat pubspec.yaml
       - run: flutter pub get
       - run: flutter build linux --verbose
@@ -406,7 +406,7 @@ jobs:
           channel: "stable"
       - name: Remove `media_kit_libs_*` dependencies
         run: |
-          sed -i '' 's/\bmedia_kit_libs_\([^[:space:]_]*\)_video\b/media_kit_libs_\1_audio/g' pubspec.yaml
+          sed -i '' 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
           cat pubspec.yaml
       - run: flutter pub get
       - run: flutter build macos --verbose
@@ -426,7 +426,7 @@ jobs:
           channel: "stable"
       - name: Remove `media_kit_libs_*` dependencies
         run: |
-          sed -i '' 's/\bmedia_kit_libs_\([^[:space:]_]*\)_video\b/media_kit_libs_\1_audio/g' pubspec.yaml
+          sed -i '' 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
           cat pubspec.yaml
       - run: flutter pub get
       - run: flutter build ios --verbose --no-codesign
@@ -446,7 +446,7 @@ jobs:
           channel: "stable"
       - name: Remove `media_kit_libs_*` dependencies
         run: |
-          sed -i 's/\bmedia_kit_libs_\([^[:space:]_]*\)_video\b/media_kit_libs_\1_audio/g' pubspec.yaml
+          sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
           cat pubspec.yaml
       - run: flutter pub get
       - run: flutter build apk --split-per-abi --verbose

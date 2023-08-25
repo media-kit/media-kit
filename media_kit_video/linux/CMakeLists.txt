@@ -12,15 +12,7 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 
 set(PLUGIN_NAME "media_kit_video_plugin")
 
-# This is shipped as part of package:media_kit_libs_*** package(s).
-# Must be built before this target.
-set(INFLATECPP_SRC "${CMAKE_BINARY_DIR}/inflatecpp")
-
 if(MEDIA_KIT_LIBS_AVAILABLE)
-  include_directories(
-    "${INFLATECPP_SRC}/include"
-  )
-
   add_library(
     ${PLUGIN_NAME} SHARED
     "media_kit_video_plugin.cc"
@@ -82,6 +74,7 @@ else()
   target_compile_definitions(
     ${PLUGIN_NAME} PRIVATE
     FLUTTER_PLUGIN_IMPL
+
     # Add macro to indicate that package:media_kit_libs_*** is not available.
     "MEDIA_KIT_LIBS_NOT_FOUND=1"
   )

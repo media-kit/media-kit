@@ -11,13 +11,10 @@
 
 #ifndef MEDIA_KIT_LIBS_NOT_FOUND
 
-#include <media_kit.h>
-
 #include "media_kit_video_plugin.h"
 
 void MediaKitVideoPluginCApiRegisterWithRegistrar(
     FlutterDesktopPluginRegistrarRef registrar) {
-  MediaKit::GetInstance().FindPackages();
   media_kit_video::MediaKitVideoPlugin::RegisterWithRegistrar(
       flutter::PluginRegistrarManager::GetInstance()
           ->GetRegistrar<flutter::PluginRegistrarWindows>(registrar));

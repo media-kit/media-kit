@@ -1,3 +1,7 @@
+## 1.0.8
+
+- [mpv-player/mpv@`ce79976`](https://github.com/mpv-player/mpv/commit/ce7997649816e4d6c05071fbd4ecac0557120720)
+
 ## 1.0.7
 
 - [mpv-player/mpv@`140ec21`](https://github.com/mpv-player/mpv/commit/140ec21c89d671d392877a7f3b91d67e7d7b9239)

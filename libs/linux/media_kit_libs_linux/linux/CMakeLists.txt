@@ -66,50 +66,6 @@ endif()
 add_custom_target("MIMALLOC_TARGET" ALL DEPENDS ${MIMALLOC_LIB})
 
 # ------------------------------------------------------------------------------
-
-# inflatecpp archive containing headers.
-set(INFLATECPP "inflatecpp-a70d5fbbbfb2bd403f6d56796cebc0833ba04195")
-
-# Download URL & MD5 hash of the inflatecpp archive.
-set(INFLATECPP_URL "https://github.com/media-kit/inflatecpp/archive/a70d5fbbbfb2bd403f6d56796cebc0833ba04195.zip")
-set(INFLATECPP_MD5 "a80999592d3288cdbf80e77ecf616282")
-
-# Download location of the inflatecpp archive.
-set(INFLATECPP_ARCHIVE "${CMAKE_BINARY_DIR}/${INFLATECPP}.zip")
-set(INFLATECPP_SRC "${CMAKE_BINARY_DIR}/inflatecpp")
-
-# Download the inflatecpp archive if it doesn't exist.
-if(NOT EXISTS "${INFLATECPP_ARCHIVE}")
-  message(STATUS "Downloading ${INFLATECPP}...")
-  file(DOWNLOAD "${INFLATECPP_URL}" "${INFLATECPP_ARCHIVE}")
-  message(STATUS "Downloaded ${INFLATECPP}...")
-endif()
-
-# Match the MD5 hash of the downloaded inflatecpp archive. Exit on failure.
-file(MD5 "${INFLATECPP_ARCHIVE}" INFLATECPP_ARCHIVE_MD5)
-
-if(INFLATECPP_MD5 STREQUAL INFLATECPP_ARCHIVE_MD5)
-  message(STATUS "${INFLATECPP} verification successful.")
-else()
-  message(FATAL_ERROR "${INFLATECPP} integrity check failed.")
-endif()
-
-# Extract the inflatecpp archive.
-if(NOT EXISTS "${INFLATECPP_SRC}")
-  message(STATUS "Extracting ${INFLATECPP}...")
-  make_directory("${INFLATECPP_SRC}")
-  add_custom_target("${PROJECT_NAME}_INFLATECPP_EXTRACT" ALL)
-  add_custom_command(
-    TARGET "${PROJECT_NAME}_INFLATECPP_EXTRACT"
-    COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${INFLATECPP_ARCHIVE}\""
-    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${INFLATECPP_SRC}/${INFLATECPP}" "${INFLATECPP_SRC}"
-    WORKING_DIRECTORY "${INFLATECPP_SRC}"
-  )
-endif()
-
-# ------------------------------------------------------------------------------
-include_directories("${INFLATECPP_SRC}/include")
-
 set(PLUGIN_NAME "media_kit_libs_linux_plugin")
 
 add_library(

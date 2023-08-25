@@ -19,18 +19,37 @@ import 'package:media_kit/src/player/web/player/player.dart';
 abstract class MediaKit {
   /// {@macro media_kit}
   static void ensureInitialized({String? libmpv}) {
-    if (UniversalPlatform.isWindows) {
-      nativeEnsureInitialized(libmpv: libmpv);
-    } else if (UniversalPlatform.isLinux) {
-      nativeEnsureInitialized(libmpv: libmpv);
-    } else if (UniversalPlatform.isMacOS) {
-      nativeEnsureInitialized(libmpv: libmpv);
-    } else if (UniversalPlatform.isIOS) {
-      nativeEnsureInitialized(libmpv: libmpv);
-    } else if (UniversalPlatform.isAndroid) {
-      nativeEnsureInitialized(libmpv: libmpv);
-    } else if (UniversalPlatform.isWeb) {
-      webEnsureInitialized(libmpv: libmpv);
+    try {
+      if (UniversalPlatform.isWindows) {
+        nativeEnsureInitialized(libmpv: libmpv);
+      } else if (UniversalPlatform.isLinux) {
+        nativeEnsureInitialized(libmpv: libmpv);
+      } else if (UniversalPlatform.isMacOS) {
+        nativeEnsureInitialized(libmpv: libmpv);
+      } else if (UniversalPlatform.isIOS) {
+        nativeEnsureInitialized(libmpv: libmpv);
+      } else if (UniversalPlatform.isAndroid) {
+        nativeEnsureInitialized(libmpv: libmpv);
+      } else if (UniversalPlatform.isWeb) {
+        webEnsureInitialized(libmpv: libmpv);
+      }
+    } catch (_) {
+      print(
+        '\n'
+        '${'-' * 80}\n'
+        'media_kit: ERROR: MediaKit.ensureInitialized\n'
+        'This indicates that one or more required dependencies could not be located.\n'
+        '\n'
+        'Refer to "Installation" section of the README for further details:\n'
+        'GitHub  : https://github.com/media-kit/media-kit#installation\n'
+        'pub.dev : https://pub.dev/packages/media_kit#installation\n'
+        '\n'
+        'TIP: Copy-paste required packages from the above link to your pubspec.yaml.\n'
+        '\n'
+        'If you recently added the packages, make sure to re-run the project ("hot-restart" & "hot-reload" is not sufficient for native plugins).\n'
+        '${'-' * 80}\n',
+      );
+      rethrow;
     }
   }
 }
