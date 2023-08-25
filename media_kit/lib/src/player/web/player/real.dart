@@ -395,10 +395,10 @@ class WebPlayer extends PlatformPlayer {
         index = -1;
       }
 
-      state = state.copyWith(playing: false);
-      if (!playingController.isClosed) {
-        playingController.add(false);
-      }
+      await stop(
+        open: true,
+        synchronized: false,
+      );
 
       _index = index;
       _playlist = playlist;
@@ -454,7 +454,10 @@ class WebPlayer extends PlatformPlayer {
   /// Stops the [Player].
   /// Unloads the current [Media] or [Playlist] from the [Player]. This method is similar to [dispose] but does not release the resources & [Player] is still usable.
   @override
-  Future<void> stop({bool synchronized = true}) async {
+  Future<void> stop({
+    bool open = false,
+    bool synchronized = true,
+  }) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -485,8 +488,11 @@ class WebPlayer extends PlatformPlayer {
         audioDevice: state.audioDevice,
         audioDevices: state.audioDevices,
       );
-      if (!playlistController.isClosed) {
-        playlistController.add(Playlist([]));
+      if (open) {
+        // Do not emit PlayerStream.playlist if invoked from [open].
+        if (!playlistController.isClosed) {
+          playlistController.add(Playlist([]));
+        }
       }
       if (!playingController.isClosed) {
         playingController.add(false);
