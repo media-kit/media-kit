@@ -1714,7 +1714,7 @@ classDiagram
   PlatformPlayer <|-- NativePlayer
   PlatformPlayer <|-- WebPlayer
   PlatformPlayer *-- PlayerState
-  PlatformPlayer *-- PlayerStreams
+  PlatformPlayer *-- PlayerStream
   PlatformPlayer o-- PlayerConfiguration
 
   NativePlayer <.. NativeLibrary
@@ -1743,6 +1743,9 @@ classDiagram
 
   class Playable {
   }
+
+  class AudioDevice {
+  }
   
   class Media {
     +String uri
@@ -1754,7 +1757,7 @@ classDiagram
     +index index
   }
 
-  class PlayerStreams {
+  class PlayerStream {
     +Stream<Playlist> playlist
     +Stream<bool> playing
     +Stream<bool> completed
@@ -1765,9 +1768,9 @@ classDiagram
     +Stream<double> rate
     +Stream<double> pitch
     +Stream<bool> buffering
-    +Stream<PlayerLog> log
-    +Stream<PlayerError> error
+    +Stream<Duration> buffer
     +Stream<AudioParams> audioParams
+    +Stream<VideoParams> videoParams
     +Stream<double?> audioBitrate
     +Stream<AudioDevice> audioDevice
     +Stream<List<AudioDevice>> audioDevices
@@ -1775,6 +1778,9 @@ classDiagram
     +Stream<Tracks> tracks
     +Stream<int> width
     +Stream<int> height
+    +Stream<List<String>> subtitle
+    +Stream<PlayerLog> log
+    +Stream<String> error
   }
 
   class PlayerState {
@@ -1788,9 +1794,9 @@ classDiagram
     +double rate
     +double pitch
     +bool buffering
-    +PlayerLog log
-    +PlayerError error
+    +Duration buffer
     +AudioParams audioParams
+    +VideoParams videoParams
     +double? audioBitrate
     +AudioDevice audioDevice
     +List<AudioDevice audioDevices
@@ -1798,17 +1804,19 @@ classDiagram
     +Tracks tracks
     +int width
     +int height
+    +List<String> subtitle
   }
 
   class Player {
     +PlatformPlayer? platform
 
     +«get» PlayerState state
-    +«get» PlayerStreams stream
+    +«get» PlayerStream stream
 
     +dispose()
     +open(playable: Playable)
     +play()
+    +stop()
     +pause()
     +playOrPause()
     +add(media: Media)
@@ -1823,19 +1831,22 @@ classDiagram
     +setRate(rate: double)
     +setPitch(pitch: double)
     +setShuffle(bool: double)
+    +setAudioDevice(device: AudioDevice)
     +setVideoTrack(track: VideoTrack)
     +setAudioTrack(track: AudioTrack)
     +setSubtitleTrack(track: SubtitleTrack)
+    +screenshot(): Uint8List
   }
 
   class PlatformPlayer {
     +PlayerState state
-    +PlayerStreams stream
+    +PlayerStream stream
     +PlayerConfiguration configuration
     
     +dispose()*
     +open(playable: Playable)*
     +play()*
+    +stop()*
     +pause()*
     +playOrPause()*
     +add(media: Media)*
@@ -1850,9 +1861,11 @@ classDiagram
     +setRate(rate: double)*
     +setPitch(pitch: double)*
     +setShuffle(bool: double)*
+    +setAudioDevice(device: AudioDevice)*
     +setVideoTrack(track: VideoTrack)*
     +setAudioTrack(track: AudioTrack)*
     +setSubtitleTrack(track: SubtitleTrack)*
+    +screenshot(): Uint8List*
 
     +«get» handle: Future<int>*
 
@@ -1882,6 +1895,7 @@ classDiagram
     +dispose()
     +open(playable: Playable)
     +play()
+    +stop()
     +pause()
     +playOrPause()
     +add(media: Media)
@@ -1896,9 +1910,11 @@ classDiagram
     +setRate(rate: double)
     +setPitch(pitch: double)
     +setShuffle(bool: double)
+    +setAudioDevice(device: AudioDevice)
     +setVideoTrack(track: VideoTrack)
     +setAudioTrack(track: AudioTrack)
     +setSubtitleTrack(track: SubtitleTrack)
+    +screenshot(): Uint8List
 
     +«get» handle: Future<int>
   }
@@ -1907,6 +1923,7 @@ classDiagram
     +dispose()
     +open(playable: Playable)
     +play()
+    +stop()
     +pause()
     +playOrPause()
     +add(media: Media)
@@ -1921,9 +1938,11 @@ classDiagram
     +setRate(rate: double)
     +setPitch(pitch: double)
     +setShuffle(bool: double)
+    +setAudioDevice(device: AudioDevice)
     +setVideoTrack(track: VideoTrack)
     +setAudioTrack(track: AudioTrack)
     +setSubtitleTrack(track: SubtitleTrack)
+    +screenshot(): Uint8List
 
     +«get» handle: Future<int>
   }
