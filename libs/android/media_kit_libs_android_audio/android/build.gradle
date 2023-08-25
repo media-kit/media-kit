@@ -104,10 +104,10 @@ task downloadDependencies(type: Exec) {
     if (md5DefaultARMEABI != "21584c9df210dc5d3006b4ca135c8277") {
         throw new GradleException("media_kit: armeabi-v7a JAR verification failed.")
     }
-    if (md5DefaultX86_64 != "4dfaeadd63b370d04995eb5157b2aae0") {
+    if (md5DefaultX86_64 != "ea568e2763ec2296133562bd6440c16f") {
         throw new GradleException("media_kit: x86_64 JAR verification failed.")
     }
-    if (md5DefaultX86 != "ea568e2763ec2296133562bd6440c16f") {
+    if (md5DefaultX86 != "4dfaeadd63b370d04995eb5157b2aae0") {
         throw new GradleException("media_kit: x86 JAR verification failed.")
     }
 
