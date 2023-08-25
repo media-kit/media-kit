@@ -101,7 +101,18 @@ public class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler, Ac
                         final VideoOutput videoOutput = videoOutputManager.create(Long.parseLong(handle));
                         final HashMap<String, Long> data = new HashMap<>();
                         data.put("id", videoOutput.id);
-                        data.put("wid", videoOutput.wid);
+                        result.success(data);
+                    } else {
+                        result.success(null);
+                    }
+                    break;
+                }
+                case "VideoOutputManager.CreateSurface": {
+                    final String handle = call.argument("handle");
+                    if (handle != null) {
+                        final long wid = videoOutputManager.createSurface(Long.parseLong(handle));
+                        final HashMap<String, Long> data = new HashMap<>();
+                        data.put("wid", wid);
                         result.success(data);
                     } else {
                         result.success(null);
