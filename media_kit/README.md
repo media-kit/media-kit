@@ -240,7 +240,9 @@ A usage guide for [package:media_kit](https://github.com/media-kit/media-kit).
 ```dart
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize:
+  // Make sure to add the required packages to pubspec.yaml:
+  // * https://github.com/media-kit/media-kit#installation
+  // * https://pub.dev/packages/media_kit#installation
   MediaKit.ensureInitialized();
   runApp(const MyApp());
 }
