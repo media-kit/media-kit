@@ -16,13 +16,11 @@ set(PLUGIN_NAME "media_kit_video_plugin")
 # Must be built before this target.
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
 set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
-set(INFLATECPP_SRC "${CMAKE_BINARY_DIR}/inflatecpp")
 
 if(MEDIA_KIT_LIBS_AVAILABLE)
   include_directories(
     "${LIBMPV_SRC}/include"
     "${ANGLE_SRC}/include"
-    "${INFLATECPP_SRC}/include"
   )
 
   add_library(
