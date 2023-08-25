@@ -1,3 +1,12 @@
+## 1.1.6
+
+- feat: HLS support for web
+- fix: movtext subtitles not working
+- fix: expose composition model classes
+- fix: increase default demuxer cache size to 128 MB
+- fix(android): S/W rendering fallback
+- fix(android): create fresh `android.view.Surface` for every video output
+
 ## 1.1.5
 
 - feat: `Media.memory`

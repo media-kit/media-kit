@@ -1,4 +1,8 @@
 ```dart
+// Make sure to add following packages to pubspec.yaml:
+// * media_kit
+// * media_kit_video
+// * media_kit_libs_video
 import 'package:flutter/material.dart';
 
 import 'package:media_kit/media_kit.dart';                      // Provides [Player], [Media], [Playlist] etc.
