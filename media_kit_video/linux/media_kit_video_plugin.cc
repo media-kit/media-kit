@@ -10,8 +10,6 @@
 
 #ifndef MEDIA_KIT_LIBS_NOT_FOUND
 
-#include <media_kit.h>
-
 #include <gtk/gtk.h>
 
 #include "include/media_kit_video/utils.h"
@@ -178,7 +176,6 @@ static MediaKitVideoPlugin* media_kit_video_plugin_new(
 
 void media_kit_video_plugin_register_with_registrar(
     FlPluginRegistrar* registrar) {
-  MediaKit::GetInstance().FindPackages();
   media_kit_video_plugin_new(registrar);
 }
 
