@@ -16,6 +16,11 @@ import 'dart:ffi';
 abstract class NativeLibrary {
   /// The resolved libmpv dynamic library.
   static String get path {
+    if (_resolved == null) {
+      throw Exception(
+        'MediaKit.ensureInitialized must be called before using any API from package:media_kit.',
+      );
+    }
     return _resolved!;
   }
 
