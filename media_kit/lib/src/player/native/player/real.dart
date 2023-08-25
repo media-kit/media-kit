@@ -149,11 +149,21 @@ class NativePlayer extends PlatformPlayer {
       current.clear();
       current.addAll(playlist);
 
-      // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, etc.
-      await stop(
-        open: true,
-        synchronized: false,
-      );
+      final commands = [
+        // Clear existing playlist & change currently playing index to none.
+        // This causes playback to stop & player to enter the idle state.
+        'stop',
+        'playlist-clear',
+        'playlist-play-index none',
+      ];
+      for (final command in commands) {
+        final args = command.toNativeUtf8();
+        mpv.mpv_command_string(
+          ctx,
+          args.cast(),
+        );
+        calloc.free(args);
+      }
 
       // Enter paused state.
       {
@@ -173,7 +183,16 @@ class NativePlayer extends PlatformPlayer {
             command.cast(),
           );
         }
+        calloc.free(name);
+        calloc.free(value);
+        state = state.copyWith(playing: false);
+        if (!playingController.isClosed) {
+          playingController.add(false);
+        }
       }
+
+      isShuffleEnabled = false;
+      isPlayingStateChangeAllowed = false;
 
       for (int i = 0; i < playlist.length; i++) {
         await _command(
@@ -237,10 +256,7 @@ class NativePlayer extends PlatformPlayer {
   /// Stops the [Player].
   /// Unloads the current [Media] or [Playlist] from the [Player]. This method is similar to [dispose] but does not release the resources & [Player] is still usable.
   @override
-  Future<void> stop({
-    bool open = false,
-    bool synchronized = true,
-  }) async {
+  Future<void> stop({bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -275,11 +291,8 @@ class NativePlayer extends PlatformPlayer {
         audioDevice: state.audioDevice,
         audioDevices: state.audioDevices,
       );
-      if (open) {
-        // Do not emit PlayerStream.playlist if invoked from [open].
-        if (!playlistController.isClosed) {
-          playlistController.add(Playlist([]));
-        }
+      if (!playlistController.isClosed) {
+        playlistController.add(Playlist([]));
       }
       if (!playingController.isClosed) {
         playingController.add(false);
@@ -713,7 +726,7 @@ class NativePlayer extends PlatformPlayer {
       );
       calloc.free(args);
 
-      // It is self explanatory that PlayerState.completed & PlayerStream.completed must enter the false state if seek is called. Typically after EOF.
+      // It is self explanatory that PlayerState.completed & PlayerStreams.completed must enter the false state if seek is called. Typically after EOF.
       // https://github.com/media-kit/media-kit/issues/221
       state = state.copyWith(completed: false);
       if (!completedController.isClosed) {
