@@ -1,3 +1,7 @@
+## 1.1.2
+
+- build: bump libraries
+
 ## 1.1.1
 
 - build: bump libraries
