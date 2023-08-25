@@ -53,8 +53,10 @@ abstract class PlatformPlayer {
     bufferingController.stream.distinct(),
     bufferController.stream.distinct(),
     playlistModeController.stream.distinct(),
-    audioParamsController.stream.distinct(),
-    videoParamsController.stream.distinct(),
+    /* AUDIO-PARAMS STREAM SHOULD NOT BE DISTINCT */
+    audioParamsController.stream,
+    /* VIDEO-PARAMS STREAM SHOULD NOT BE DISTINCT */
+    videoParamsController.stream,
     audioBitrateController.stream.distinct(),
     audioDeviceController.stream.distinct(),
     audioDevicesController.stream.distinct(),
@@ -64,7 +66,8 @@ abstract class PlatformPlayer {
     heightController.stream.distinct(),
     subtitleController.stream.distinct(),
     logController.stream.distinct(),
-    errorController.stream /* ERROR STREAM SHOULD NOT BE DISTINCT */,
+    /* ERROR STREAM SHOULD NOT BE DISTINCT */
+    errorController.stream,
   );
 
   @mustCallSuper

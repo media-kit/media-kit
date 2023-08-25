@@ -30,16 +30,27 @@ import io.flutter.embedding.android.FlutterFragmentActivity;
 
 
 public class VideoOutput {
-    static private boolean flutterJNIAPIAvailable;
-    private final Surface surface;
+    public long id = 0;
+    public long wid = 0;
+
+    private Surface surface;
     private final TextureRegistry.SurfaceTextureEntry surfaceTextureEntry;
+
+    private boolean flutterJNIAPIAvailable;
     private final Method newGlobalObjectRef;
     private final Method deleteGlobalObjectRef;
     private boolean waitUntilFirstFrameRenderedNotify;
-    public long id;
-    public long wid;
+
+    private long handle;
+    private MethodChannel channelReference;
+    private TextureRegistry textureRegistryReference;
+
+    private final Object lock = new Object();
 
     VideoOutput(long handle, MethodChannel channelReference, TextureRegistry textureRegistryReference) {
+        this.handle = handle;
+        this.channelReference = channelReference;
+        this.textureRegistryReference = textureRegistryReference;
         try {
             flutterJNIAPIAvailable = false;
             waitUntilFirstFrameRenderedNotify = false;
@@ -56,7 +67,6 @@ public class VideoOutput {
         }
 
         surfaceTextureEntry = textureRegistryReference.createSurfaceTexture();
-        surface = new Surface(surfaceTextureEntry.surfaceTexture());
 
         // If we call setOnFrameAvailableListener after creating SurfaceTextureEntry, the texture won't be displayed inside Flutter UI, because callback set by us will override the Flutter engine's own registered callback:
         // https://github.com/flutter/engine/blob/f47e864f2dcb9c299a3a3ed22300a1dcacbdf1fe/shell/platform/android/io/flutter/view/FlutterView.java#L942-L958
@@ -71,46 +81,46 @@ public class VideoOutput {
         if (flutterJNIAPIAvailable) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 surfaceTextureEntry.surfaceTexture().setOnFrameAvailableListener((texture) -> {
-                    try {
-                        if (!waitUntilFirstFrameRenderedNotify) {
-                            waitUntilFirstFrameRenderedNotify = true;
-                            final HashMap<String, Object> data = new HashMap<>();
-                            data.put("id", id);
-                            data.put("wid", wid);
-                            data.put("handle", handle);
-                            channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
-                            Log.i("media_kit", String.format(Locale.ENGLISH, "VideoOutput.WaitUntilFirstFrameRenderedNotify = %d", handle));
-                        }
+                    synchronized (lock) {
+                        try {
+                            if (!waitUntilFirstFrameRenderedNotify) {
+                                waitUntilFirstFrameRenderedNotify = true;
+                                final HashMap<String, Object> data = new HashMap<>();
+                                data.put("handle", handle);
+                                channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
+                                Log.i("media_kit", String.format(Locale.ENGLISH, "VideoOutput.WaitUntilFirstFrameRenderedNotify = %d", handle));
+                            }
 
-                        FlutterJNI flutterJNI = null;
-                        while (flutterJNI == null) {
-                            flutterJNI = getFlutterJNIReference();
-                            flutterJNI.markTextureFrameAvailable(id);
+                            FlutterJNI flutterJNI = null;
+                            while (flutterJNI == null) {
+                                flutterJNI = getFlutterJNIReference();
+                                flutterJNI.markTextureFrameAvailable(id);
+                            }
+                        } catch (Throwable e) {
+                            e.printStackTrace();
                         }
-                    } catch (Throwable e) {
-                        e.printStackTrace();
                     }
                 }, new Handler());
             } else {
                 surfaceTextureEntry.surfaceTexture().setOnFrameAvailableListener((texture) -> {
-                    try {
-                        if (!waitUntilFirstFrameRenderedNotify) {
-                            waitUntilFirstFrameRenderedNotify = true;
-                            final HashMap<String, Object> data = new HashMap<>();
-                            data.put("id", id);
-                            data.put("wid", wid);
-                            data.put("handle", handle);
-                            channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
-                            Log.i("media_kit", String.format(Locale.ENGLISH, "VideoOutput.WaitUntilFirstFrameRenderedNotify = %d", handle));
-                        }
+                    synchronized (lock) {
+                        try {
+                            if (!waitUntilFirstFrameRenderedNotify) {
+                                waitUntilFirstFrameRenderedNotify = true;
+                                final HashMap<String, Object> data = new HashMap<>();
+                                data.put("handle", handle);
+                                channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
+                                Log.i("media_kit", String.format(Locale.ENGLISH, "VideoOutput.WaitUntilFirstFrameRenderedNotify = %d", handle));
+                            }
 
-                        FlutterJNI flutterJNI = null;
-                        while (flutterJNI == null) {
-                            flutterJNI = getFlutterJNIReference();
-                            flutterJNI.markTextureFrameAvailable(id);
+                            FlutterJNI flutterJNI = null;
+                            while (flutterJNI == null) {
+                                flutterJNI = getFlutterJNIReference();
+                                flutterJNI.markTextureFrameAvailable(id);
+                            }
+                        } catch (Throwable e) {
+                            e.printStackTrace();
                         }
-                    } catch (Throwable e) {
-                        e.printStackTrace();
                     }
                 });
             }
@@ -127,9 +137,7 @@ public class VideoOutput {
 
         try {
             id = surfaceTextureEntry.id();
-            wid = (long) newGlobalObjectRef.invoke(null, surface);
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutput: id = %d", id));
-            Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutput: wid = %d", wid));
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -159,6 +167,32 @@ public class VideoOutput {
             }, 5000);
         } catch (Throwable e) {
             e.printStackTrace();
+        }
+    }
+
+    public long createSurface() {
+        synchronized (lock) {
+            // Delete previous android.view.Surface & object reference.
+            try {
+                if (surface != null) {
+                    surface.release();
+                    surface = null;
+                }
+                if (wid != 0) {
+                    deleteGlobalObjectRef.invoke(null, wid);
+                    wid = 0;
+                }
+            } catch(Throwable e) {
+                e.printStackTrace();
+            }
+            // Create new android.view.Surface & object reference.
+            try {
+                surface = new Surface(surfaceTextureEntry.surfaceTexture());
+                wid = (long) newGlobalObjectRef.invoke(null, surface);
+            } catch(Throwable e) {
+                e.printStackTrace();
+            }
+            return wid;
         }
     }
 

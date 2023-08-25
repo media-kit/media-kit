@@ -2140,10 +2140,20 @@ class NativePlayer extends PlatformPlayer {
         // --------------------------------------------------
       }
     }
-    // Handle HTTP headers specified in the [Media].
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_HOOK) {
       final prop = event.ref.data.cast<generated.mpv_event_hook>();
       if (prop.ref.name.cast<Utf8>().toDartString() == 'on_load') {
+        // --------------------------------------------------
+        for (final hook in onLoadHooks) {
+          try {
+            await hook.call();
+          } catch (exception, stacktrace) {
+            print(exception);
+            print(stacktrace);
+          }
+        }
+        // --------------------------------------------------
+        // Handle HTTP headers specified in the [Media].
         try {
           final name = 'path'.toNativeUtf8();
           final uri = mpv.mpv_get_property_string(
@@ -2198,8 +2208,18 @@ class NativePlayer extends PlatformPlayer {
         );
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'on_unload') {
+        // --------------------------------------------------
+        for (final hook in onUnloadHooks) {
+          try {
+            await hook.call();
+          } catch (exception, stacktrace) {
+            print(exception);
+            print(stacktrace);
+          }
+        }
+        // --------------------------------------------------
+        // Set http-header-fields as empty [generated.mpv_node].
         try {
-          // Set http-header-fields as empty [generated.mpv_node].
           final property = 'http-header-fields'.toNativeUtf8();
           final value = calloc<generated.mpv_node>();
           mpv.mpv_set_property(
@@ -2214,6 +2234,7 @@ class NativePlayer extends PlatformPlayer {
           print(exception);
           print(stacktrace);
         }
+        // --------------------------------------------------
         mpv.mpv_hook_continue(
           ctx,
           prop.ref.id,
@@ -2470,6 +2491,12 @@ class NativePlayer extends PlatformPlayer {
   /// Currently observed properties through [observeProperty].
   final HashMap<String, Future<void> Function(String)> observed =
       HashMap<String, Future<void> Function(String)>();
+
+  /// The methods which must execute synchronously before playback of a source can begin.
+  final List<Future<void> Function()> onLoadHooks = [];
+
+  /// The methods which must execute synchronously before playback of a source can end.
+  final List<Future<void> Function()> onUnloadHooks = [];
 
   /// Synchronization & mutual exclusion between methods of this class.
   static final Lock lock = Lock();
