@@ -60,8 +60,10 @@ download_and_verify(
   ${LIBMPV_ARCHIVE}
 )
 
+check_directory_exists_and_not_empty(${LIBMPV_SRC} LIBMPV_SRC_VALID)
+
 # Extract the libmpv archive.
-if(NOT EXISTS "${LIBMPV_SRC}")
+if(NOT LIBMPV_SRC_VALID)
   message(STATUS "Extracting ${LIBMPV}...")
   make_directory("${LIBMPV_SRC}")
   add_custom_target("${PROJECT_NAME}_LIBMPV_EXTRACT" ALL)
@@ -94,8 +96,10 @@ download_and_verify(
   ${ANGLE_ARCHIVE}
 )
 
+check_directory_exists_and_not_empty(${ANGLE_SRC} ANGLE_SRC_VALID)
+
 # Extract the ANGLE archive.
-if(NOT EXISTS "${ANGLE_SRC}")
+if(NOT ANGLE_SRC_VALID)
   message(STATUS "Extracting ${ANGLE}...")
   make_directory("${ANGLE_SRC}")
   add_custom_target("${PROJECT_NAME}_ANGLE_EXTRACT" ALL)

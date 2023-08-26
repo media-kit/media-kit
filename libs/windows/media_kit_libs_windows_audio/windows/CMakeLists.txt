@@ -42,6 +42,23 @@ function(download_and_verify url md5 locationForArchive)
 
 endfunction()
 
+function(check_directory_exists_and_not_empty dir result_var)
+    # Check if the directory exists
+    if(EXISTS "${dir}")
+        # Check if the directory is not empty
+        file(GLOB dir_contents "${dir}/*")
+        if(dir_contents)
+            set(${result_var} TRUE PARENT_SCOPE)
+        else()
+            set(${result_var} FALSE PARENT_SCOPE)
+            message(STATUS "Directory ${dir} exists but is empty!")
+        endif()
+    else()
+        set(${result_var} FALSE PARENT_SCOPE)
+        message(STATUS "Directory ${dir} does not exist!")
+    endif()
+endfunction()
+
 # Thanks to Mitchel Stewart (https://github.com/Quackdoc) for providing patches to generate minimal libmpv & FFmpeg audio specific builds.
 
 # libmpv archive containing the pre-built shared libraries & headers.
@@ -61,8 +78,10 @@ download_and_verify(
   ${LIBMPV_ARCHIVE}
 )
 
+check_directory_exists_and_not_empty(${LIBMPV_SRC} LIBMPV_SRC_VALID)
+
 # Extract the libmpv archive.
-if(NOT EXISTS "${LIBMPV_SRC}")
+if(NOT LIBMPV_SRC_VALID)
   message(STATUS "Extracting ${LIBMPV}...")
   make_directory("${LIBMPV_SRC}")
   add_custom_target("${PROJECT_NAME}_LIBMPV_EXTRACT" ALL)

@@ -62,12 +62,30 @@ download_and_verify(
   ${MIMALLOC_ARCHIVE}
 )
 
+function(check_directory_exists_and_not_empty dir result_var)
+    # Check if the directory exists
+    if(EXISTS "${dir}")
+        # Check if the directory is not empty
+        file(GLOB dir_contents "${dir}/*")
+        if(dir_contents)
+            set(${result_var} TRUE PARENT_SCOPE)
+        else()
+            set(${result_var} FALSE PARENT_SCOPE)
+            message(STATUS "Directory ${dir} exists but is empty!")
+        endif()
+    else()
+        set(${result_var} FALSE PARENT_SCOPE)
+        message(STATUS "Directory ${dir} does not exist!")
+    endif()
+endfunction()
 
 # Extract
 # https://stackoverflow.com/a/19859882/12825435
 set(MIMALLOC_LIB "${MIMALLOC_SRC}/out/release/mimalloc.o" CACHE INTERNAL "")
 
-if(NOT EXISTS ${MIMALLOC_SRC})
+check_directory_exists_and_not_empty(${MIMALLOC_SRC} MIMALLOC_VALID)
+
+if(NOT MIMALLOC_VALID)
   message(STATUS "Extracting ${MIMALLOC}...")
   make_directory("${MIMALLOC_SRC}")
   add_custom_command(
