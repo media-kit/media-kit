@@ -8,7 +8,8 @@ import 'package:synchronized/synchronized.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/controls_theme_data.dart';
+
+import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_controls_theme_data_injector.dart';
 
 /// Whether a [Video] present in the current [BuildContext] is in fullscreen or not.
 bool isFullscreen(BuildContext context) =>
@@ -22,12 +23,12 @@ Future<void> enterFullscreen(BuildContext context) {
         final stateValue = state(context);
         final contextNotiferValue = contextNotifier(context);
         final controllerValue = controller(context);
-        final controlsThemeDataBuilderValue = controlsThemeDataBuilder(context);
         Navigator.of(context, rootNavigator: true).push(
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) =>
-                (controlsThemeDataBuilderValue ?? (e) => e).call(
-              VideoStateInheritedWidget(
+            pageBuilder: (_, __, ___) => VideoControlsThemeDataInjector(
+              // NOTE: Make various *VideoControlsThemeData from the parent context available in the fullscreen context.
+              context: context,
+              child: VideoStateInheritedWidget(
                 state: stateValue,
                 contextNotifier: contextNotiferValue,
                 child: FullscreenInheritedWidget(
@@ -36,23 +37,20 @@ Future<void> enterFullscreen(BuildContext context) {
                   child: VideoStateInheritedWidget(
                     state: stateValue,
                     contextNotifier: contextNotiferValue,
-                    child: ControlsThemeDataBuilderInheritedWidget(
-                      controlsThemeDataBuilder: controlsThemeDataBuilderValue,
-                      child: Video(
-                        controller: controllerValue,
-                        // Not required in fullscreen mode:
-                        // width: null,
-                        // height: null,
-                        // Inherit following properties from the parent [Video]:
-                        fit: stateValue.widget.fit,
-                        fill: stateValue.widget.fill,
-                        alignment: stateValue.widget.alignment,
-                        aspectRatio: stateValue.widget.aspectRatio,
-                        filterQuality: stateValue.widget.filterQuality,
-                        controls: stateValue.widget.controls,
-                        // Do not acquire or modify existing wakelock in fullscreen mode:
-                        wakelock: false,
-                      ),
+                    child: Video(
+                      controller: controllerValue,
+                      // Not required in fullscreen mode:
+                      // width: null,
+                      // height: null,
+                      // Inherit following properties from the parent [Video]:
+                      fit: stateValue.widget.fit,
+                      fill: stateValue.widget.fill,
+                      alignment: stateValue.widget.alignment,
+                      aspectRatio: stateValue.widget.aspectRatio,
+                      filterQuality: stateValue.widget.filterQuality,
+                      controls: stateValue.widget.controls,
+                      // Do not acquire or modify existing wakelock in fullscreen mode:
+                      wakelock: false,
                     ),
                   ),
                 ),
@@ -75,7 +73,9 @@ Future<void> exitFullscreen(BuildContext context) {
       if (context.mounted) {
         await Navigator.of(context).maybePop();
         // It is known that this [context] will have a [FullscreenInheritedWidget] above it.
-        FullscreenInheritedWidget.of(context).parent.refreshView();
+        if (context.mounted) {
+          FullscreenInheritedWidget.of(context).parent.refreshView();
+        }
       }
       // [exitNativeFullscreen] is moved to [WillPopScope] in [FullscreenInheritedWidget].
       // This is because [exitNativeFullscreen] needs to be called when the user presses the back button.
