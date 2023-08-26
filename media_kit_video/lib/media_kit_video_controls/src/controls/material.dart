@@ -1447,7 +1447,7 @@ class MaterialFullscreenButton extends StatelessWidget {
 
 // BUTTON: CUSTOM
 
-/// Material design fullscreen button.
+/// Material design custom button.
 class MaterialCustomButton extends StatelessWidget {
   /// Icon for [MaterialCustomButton].
   final Widget? icon;
