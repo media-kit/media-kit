@@ -1,6 +1,6 @@
 ## 1.1.8
 
-- feat: allow all themes to be passed to fullscreen
+- fix: pass all `*VideoControlsTheme`(s) to fullscreen `context`
 
 ## 1.1.7
 
