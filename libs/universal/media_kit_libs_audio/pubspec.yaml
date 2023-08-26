@@ -1,6 +1,6 @@
 name: media_kit_libs_audio
 description: package:media_kit audio (only) playback native libraries for all platforms.
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/media-kit/media-kit.git
 repository: https://github.com/media-kit/media-kit.git
 funding:
@@ -8,6 +8,7 @@ funding:
 
 environment:
   sdk: ">=2.17.0 <4.0.0"
+  flutter: ">=3.7.0"
 
 dependencies:
   media_kit_native_event_loop: ^1.0.7
