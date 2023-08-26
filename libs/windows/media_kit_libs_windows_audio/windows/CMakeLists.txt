@@ -56,9 +56,9 @@ set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
 
 download_and_verify(
-  LIBMPV_URL
-  LIBMPV_MD5
-  LIBMPV_ARCHIVE
+  ${LIBMPV_URL}
+  ${LIBMPV_MD5}
+  ${LIBMPV_ARCHIVE}
 )
 
 # Extract the libmpv archive.
