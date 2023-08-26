@@ -1,3 +1,7 @@
+## 1.1.7
+
+fix: close `PlatformPlayer.playlistModeController`
+
 ## 1.1.6
 
 - feat: HLS support for web

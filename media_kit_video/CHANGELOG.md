@@ -1,3 +1,7 @@
+## 1.1.8
+
+- feat: allow all themes to be passed to fullscreen
+
 ## 1.1.7
 
 - fix: add `await` to `maybePop` when exiting fullscreen
