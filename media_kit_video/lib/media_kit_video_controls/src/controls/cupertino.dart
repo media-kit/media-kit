@@ -5,7 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: non_constant_identifier_names
 import 'package:flutter/cupertino.dart';
-import 'package:media_kit_video/media_kit_video.dart' show VideoState;
+import 'package:media_kit_video/media_kit_video.dart';
 
 import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/controls_theme_data_builder_inherited_widget.dart';
@@ -16,28 +16,34 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/co
 ///
 /// {@endtemplate}
 Widget CupertinoVideoControls(VideoState state) {
-  final theme = CupertinoVideoControlsTheme.maybeOf(state.context);
-  if (theme == null) {
-    return const ControlsThemeDataBuilderInheritedWidget(
-      controlsThemeDataBuilder: null,
-      child: CupertinoVideoControlsTheme(
-        normal: kDefaultCupertinoVideoControlsThemeData,
-        fullscreen: kDefaultCupertinoVideoControlsThemeDataFullscreen,
-        child: _CupertinoVideoControls(),
-      ),
-    );
-  } else {
-    return ControlsThemeDataBuilderInheritedWidget(
-      controlsThemeDataBuilder: (child) {
-        return CupertinoVideoControlsTheme(
-          normal: theme.normal,
-          fullscreen: theme.fullscreen,
-          child: child,
-        );
-      },
-      child: const _CupertinoVideoControls(),
-    );
-  }
+  final theme = MaterialDesktopVideoControlsTheme.maybeOf(state.context);
+  final materialTheme = MaterialVideoControlsTheme.maybeOf(state.context);
+  final cupertinoTheme = CupertinoVideoControlsTheme.maybeOf(state.context);
+
+  return ControlsThemeDataBuilderInheritedWidget(
+    controlsThemeDataBuilder: (child) {
+      return CupertinoVideoControlsTheme(
+        normal:
+            cupertinoTheme?.normal ?? kDefaultCupertinoVideoControlsThemeData,
+        fullscreen: cupertinoTheme?.fullscreen ??
+            kDefaultCupertinoVideoControlsThemeDataFullscreen,
+        child: MaterialVideoControlsTheme(
+          normal:
+              materialTheme?.normal ?? kDefaultMaterialVideoControlsThemeData,
+          fullscreen: materialTheme?.fullscreen ??
+              kDefaultMaterialVideoControlsThemeDataFullscreen,
+          child: MaterialDesktopVideoControlsTheme(
+            normal:
+                theme?.normal ?? kDefaultMaterialDesktopVideoControlsThemeData,
+            fullscreen: theme?.fullscreen ??
+                kDefaultMaterialDesktopVideoControlsThemeDataFullscreen,
+            child: child,
+          ),
+        ),
+      );
+    },
+    child: const _CupertinoVideoControls(),
+  );
 }
 
 /// [MaterialDesktopVideoControlsThemeData] available in this [context].

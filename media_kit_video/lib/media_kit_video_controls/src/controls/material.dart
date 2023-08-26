@@ -19,28 +19,34 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/vi
 ///
 /// {@endtemplate}
 Widget MaterialVideoControls(VideoState state) {
-  final theme = MaterialVideoControlsTheme.maybeOf(state.context);
-  if (theme == null) {
-    return const ControlsThemeDataBuilderInheritedWidget(
-      controlsThemeDataBuilder: null,
-      child: MaterialVideoControlsTheme(
-        normal: kDefaultMaterialVideoControlsThemeData,
-        fullscreen: kDefaultMaterialVideoControlsThemeDataFullscreen,
-        child: _MaterialVideoControls(),
-      ),
-    );
-  } else {
-    return ControlsThemeDataBuilderInheritedWidget(
-      controlsThemeDataBuilder: (child) {
-        return MaterialVideoControlsTheme(
-          normal: theme.normal,
-          fullscreen: theme.fullscreen,
-          child: child,
-        );
-      },
-      child: const _MaterialVideoControls(),
-    );
-  }
+  final theme = MaterialDesktopVideoControlsTheme.maybeOf(state.context);
+  final materialTheme = MaterialVideoControlsTheme.maybeOf(state.context);
+  final cupertinoTheme = CupertinoVideoControlsTheme.maybeOf(state.context);
+
+  return ControlsThemeDataBuilderInheritedWidget(
+    controlsThemeDataBuilder: (child) {
+      return CupertinoVideoControlsTheme(
+        normal:
+            cupertinoTheme?.normal ?? kDefaultCupertinoVideoControlsThemeData,
+        fullscreen: cupertinoTheme?.fullscreen ??
+            kDefaultCupertinoVideoControlsThemeDataFullscreen,
+        child: MaterialVideoControlsTheme(
+          normal:
+              materialTheme?.normal ?? kDefaultMaterialVideoControlsThemeData,
+          fullscreen: materialTheme?.fullscreen ??
+              kDefaultMaterialVideoControlsThemeDataFullscreen,
+          child: MaterialDesktopVideoControlsTheme(
+            normal:
+                theme?.normal ?? kDefaultMaterialDesktopVideoControlsThemeData,
+            fullscreen: theme?.fullscreen ??
+                kDefaultMaterialDesktopVideoControlsThemeDataFullscreen,
+            child: child,
+          ),
+        ),
+      );
+    },
+    child: const _MaterialVideoControls(),
+  );
 }
 
 /// [MaterialVideoControlsThemeData] available in this [context].
