@@ -13,6 +13,35 @@ set(PROJECT_NAME "media_kit_libs_windows_video")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 # ------------------------------------------------------------------------------
+function(download_and_verify url md5 locationForArchive)
+    # Check if the archive exists.
+    if(EXISTS "${locationForArchive}")
+        file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+
+        # If MD5 doesn't match, delete the archive to download again.
+        if(NOT md5 STREQUAL ARCHIVE_MD5)
+            file(REMOVE "${locationForArchive}")
+            message(STATUS "MD5 mismatch. File deleted.")
+        endif()
+    endif()
+
+    # Download the archive if it doesn't exist.
+    if(NOT EXISTS "${locationForArchive}")
+        message(STATUS "Downloading archive from ${url}...")
+        file(DOWNLOAD "${url}" "${locationForArchive}")
+        message(STATUS "Downloaded archive to ${locationForArchive}.")
+
+        # Verify MD5 of the newly downloaded file.
+        file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+        if(md5 STREQUAL ARCHIVE_MD5)
+            message(STATUS "Verification successful.")
+        else()
+            message(FATAL_ERROR "${locationForArchive} Integrity check failed.")
+        endif()
+    endif()
+
+endfunction()
+
 
 # libmpv archive containing the pre-built shared libraries & headers.
 set(LIBMPV "mpv-dev-x86_64-20230825-git-c0fb9b4.7z")
@@ -25,21 +54,11 @@ set(LIBMPV_MD5 "cab756b2491897f7cc5e4f17fddf6793")
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
 
-# Download the libmpv archive if it doesn't exist.
-if(NOT EXISTS "${LIBMPV_ARCHIVE}")
-  message(STATUS "Downloading ${LIBMPV}...")
-  file(DOWNLOAD "${LIBMPV_URL}" "${LIBMPV_ARCHIVE}")
-  message(STATUS "Downloaded ${LIBMPV}...")
-endif()
-
-# Match the MD5 hash of the downloaded libmpv archive. Exit on failure.
-file(MD5 "${LIBMPV_ARCHIVE}" LIBMPV_ARCHIVE_MD5)
-
-if(LIBMPV_MD5 STREQUAL LIBMPV_ARCHIVE_MD5)
-  message(STATUS "${LIBMPV} verification successful.")
-else()
-  message(FATAL_ERROR "${LIBMPV} integrity check failed.")
-endif()
+download_and_verify(
+  LIBMPV_URL
+  LIBMPV_MD5
+  LIBMPV_ARCHIVE
+)
 
 # Extract the libmpv archive.
 if(NOT EXISTS "${LIBMPV_SRC}")
@@ -69,21 +88,11 @@ set(ANGLE_MD5 "e5be38d0e1c5cbe5f70e53701ea8b6c9")
 set(ANGLE_ARCHIVE "${CMAKE_BINARY_DIR}/${ANGLE}")
 set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
 
-# Download the ANGLE archive if it doesn't exist.
-if(NOT EXISTS "${ANGLE_ARCHIVE}")
-  message(STATUS "Downloading ${ANGLE}...")
-  file(DOWNLOAD "${ANGLE_URL}" "${ANGLE_ARCHIVE}")
-  message(STATUS "Downloaded ${ANGLE}...")
-endif()
-
-# Match the MD5 hash of the downloaded ANGLE archive. Exit on failure.
-file(MD5 "${ANGLE_ARCHIVE}" ANGLE_ARCHIVE_MD5)
-
-if(ANGLE_MD5 STREQUAL ANGLE_ARCHIVE_MD5)
-  message(STATUS "${ANGLE} verification successful.")
-else()
-  message(FATAL_ERROR "${ANGLE} integrity check failed.")
-endif()
+download_and_verify(
+  ANGLE_URL
+  ANGLE_MD5
+  ANGLE_ARCHIVE
+)
 
 # Extract the ANGLE archive.
 if(NOT EXISTS "${ANGLE_SRC}")

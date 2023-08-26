@@ -18,6 +18,35 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 # Refer to "Static Override" section in mimalloc's documentation:
 # https://github.com/microsoft/mimalloc#static-override
 
+
+function(download_and_verify url md5 locationForArchive)
+    # Check if the archive exists.
+    if(EXISTS "${locationForArchive}")
+        file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+
+        # If MD5 doesn't match, delete the archive to download again.
+        if(NOT md5 STREQUAL ARCHIVE_MD5)
+            file(REMOVE "${locationForArchive}")
+            message(STATUS "MD5 mismatch. File deleted.")
+        endif()
+    endif()
+
+    # Download the archive if it doesn't exist.
+    if(NOT EXISTS "${locationForArchive}")
+        message(STATUS "Downloading archive from ${url}...")
+        file(DOWNLOAD "${url}" "${locationForArchive}")
+        message(STATUS "Downloaded archive to ${locationForArchive}.")
+
+        # Verify MD5 of the newly downloaded file.
+        file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+        if(md5 STREQUAL ARCHIVE_MD5)
+            message(STATUS "Verification successful.")
+        else()
+            message(FATAL_ERROR "${locationForArchive} Integrity check failed.")
+        endif()
+    endif()
+
+endfunction()
 # ------------------------------------------------------------------------------
 set(MIMALLOC "mimalloc-2.1.2.tar.gz")
 
@@ -27,21 +56,12 @@ set(MIMALLOC_MD5 "5179c8f5cf1237d2300e2d8559a7bc55")
 set(MIMALLOC_ARCHIVE "${CMAKE_BINARY_DIR}/${MIMALLOC}")
 set(MIMALLOC_SRC "${CMAKE_BINARY_DIR}/mimalloc")
 
-# Download
-if(NOT EXISTS ${MIMALLOC_ARCHIVE})
-  message(STATUS "Downloading ${MIMALLOC}...")
-  file(DOWNLOAD ${MIMALLOC_URL} ${MIMALLOC_ARCHIVE})
-  message(STATUS "Downloaded ${MIMALLOC}...")
-endif()
+download_and_verify(
+  MIMALLOC_URL
+  MIMALLOC_MD5
+  MIMALLOC_ARCHIVE
+)
 
-# Verify
-file(MD5 ${MIMALLOC_ARCHIVE} MIMALLOC_ARCHIVE_MD5)
-
-if(MIMALLOC_MD5 STREQUAL MIMALLOC_ARCHIVE_MD5)
-  message(STATUS "${MIMALLOC} verification successful.")
-else()
-  message(FATAL_ERROR "${MIMALLOC} integrity check failed.")
-endif()
 
 # Extract
 # https://stackoverflow.com/a/19859882/12825435

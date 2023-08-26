@@ -13,6 +13,34 @@ set(PROJECT_NAME "media_kit_libs_windows_audio")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 # ------------------------------------------------------------------------------
+function(download_and_verify url md5 locationForArchive)
+    # Check if the archive exists.
+    if(EXISTS "${locationForArchive}")
+        file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+
+        # If MD5 doesn't match, delete the archive to download again.
+        if(NOT md5 STREQUAL ARCHIVE_MD5)
+            file(REMOVE "${locationForArchive}")
+            message(STATUS "MD5 mismatch. File deleted.")
+        endif()
+    endif()
+
+    # Download the archive if it doesn't exist.
+    if(NOT EXISTS "${locationForArchive}")
+        message(STATUS "Downloading archive from ${url}...")
+        file(DOWNLOAD "${url}" "${locationForArchive}")
+        message(STATUS "Downloaded archive to ${locationForArchive}.")
+
+        # Verify MD5 of the newly downloaded file.
+        file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+        if(md5 STREQUAL ARCHIVE_MD5)
+            message(STATUS "Verification successful.")
+        else()
+            message(FATAL_ERROR "${locationForArchive} Integrity check failed.")
+        endif()
+    endif()
+
+endfunction()
 
 # Thanks to Mitchel Stewart (https://github.com/Quackdoc) for providing patches to generate minimal libmpv & FFmpeg audio specific builds.
 
@@ -27,21 +55,11 @@ set(LIBMPV_MD5 "fbe60253954772dde967f52723198523")
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
 
-# Download the libmpv archive if it doesn't exist.
-if(NOT EXISTS "${LIBMPV_ARCHIVE}")
-  message(STATUS "Downloading ${LIBMPV}...")
-  file(DOWNLOAD "${LIBMPV_URL}" "${LIBMPV_ARCHIVE}")
-  message(STATUS "Downloaded ${LIBMPV}...")
-endif()
-
-# Match the MD5 hash of the downloaded libmpv archive. Exit on failure.
-file(MD5 "${LIBMPV_ARCHIVE}" LIBMPV_ARCHIVE_MD5)
-
-if(LIBMPV_MD5 STREQUAL LIBMPV_ARCHIVE_MD5)
-  message(STATUS "${LIBMPV} verification successful.")
-else()
-  message(FATAL_ERROR "${LIBMPV} integrity check failed.")
-endif()
+download_and_verify(
+  LIBMPV_URL
+  LIBMPV_MD5
+  LIBMPV_ARCHIVE
+)
 
 # Extract the libmpv archive.
 if(NOT EXISTS "${LIBMPV_SRC}")
