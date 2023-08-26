@@ -42,6 +42,22 @@ function(download_and_verify url md5 locationForArchive)
 
 endfunction()
 
+function(check_directory_exists_and_not_empty dir result_var)
+    # Check if the directory exists
+    if(EXISTS "${dir}")
+        # Check if the directory is not empty
+        file(GLOB dir_contents "${dir}/*")
+        if(dir_contents)
+            set(${result_var} TRUE PARENT_SCOPE)
+        else()
+            set(${result_var} FALSE PARENT_SCOPE)
+            message(STATUS "Directory ${dir} exists but is empty!")
+        endif()
+    else()
+        set(${result_var} FALSE PARENT_SCOPE)
+        message(STATUS "Directory ${dir} does not exist!")
+    endif()
+endfunction()
 
 # libmpv archive containing the pre-built shared libraries & headers.
 set(LIBMPV "mpv-dev-x86_64-20230825-git-c0fb9b4.7z")
