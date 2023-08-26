@@ -10,8 +10,9 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:volume_controller/volume_controller.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
-import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_controls_theme_data_injector.dart';
 
 /// {@template material_video_controls}
 ///
@@ -19,41 +20,18 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/vi
 ///
 /// {@endtemplate}
 Widget MaterialVideoControls(VideoState state) {
-  final theme = MaterialDesktopVideoControlsTheme.maybeOf(state.context);
-  final materialTheme = MaterialVideoControlsTheme.maybeOf(state.context);
-  final cupertinoTheme = CupertinoVideoControlsTheme.maybeOf(state.context);
-
-  return ControlsThemeDataBuilderInheritedWidget(
-    controlsThemeDataBuilder: (child) {
-      return CupertinoVideoControlsTheme(
-        normal:
-            cupertinoTheme?.normal ?? kDefaultCupertinoVideoControlsThemeData,
-        fullscreen: cupertinoTheme?.fullscreen ??
-            kDefaultCupertinoVideoControlsThemeDataFullscreen,
-        child: MaterialVideoControlsTheme(
-          normal:
-              materialTheme?.normal ?? kDefaultMaterialVideoControlsThemeData,
-          fullscreen: materialTheme?.fullscreen ??
-              kDefaultMaterialVideoControlsThemeDataFullscreen,
-          child: MaterialDesktopVideoControlsTheme(
-            normal:
-                theme?.normal ?? kDefaultMaterialDesktopVideoControlsThemeData,
-            fullscreen: theme?.fullscreen ??
-                kDefaultMaterialDesktopVideoControlsThemeDataFullscreen,
-            child: child,
-          ),
-        ),
-      );
-    },
-    child: const _MaterialVideoControls(),
+  return const VideoControlsThemeDataInjector(
+    child: _MaterialVideoControls(),
   );
 }
 
 /// [MaterialVideoControlsThemeData] available in this [context].
 MaterialVideoControlsThemeData _theme(BuildContext context) =>
     FullscreenInheritedWidget.maybeOf(context) == null
-        ? MaterialVideoControlsTheme.of(context).normal
-        : MaterialVideoControlsTheme.of(context).fullscreen;
+        ? MaterialVideoControlsTheme.maybeOf(context)?.normal ??
+            kDefaultMaterialVideoControlsThemeData
+        : MaterialVideoControlsTheme.maybeOf(context)?.fullscreen ??
+            kDefaultMaterialVideoControlsThemeDataFullscreen;
 
 /// Default [MaterialVideoControlsThemeData].
 const kDefaultMaterialVideoControlsThemeData = MaterialVideoControlsThemeData();
@@ -1495,7 +1473,7 @@ class MaterialCustomButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed,
-      icon: icon ?? const Icon(Icons.fullscreen),
+      icon: icon ?? const Icon(Icons.settings),
       padding: EdgeInsets.zero,
       iconSize: iconSize ?? _theme(context).buttonBarButtonSize,
       color: iconColor ?? _theme(context).buttonBarButtonColor,
