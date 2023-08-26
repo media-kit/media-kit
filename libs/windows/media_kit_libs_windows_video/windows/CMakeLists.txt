@@ -13,6 +13,51 @@ set(PROJECT_NAME "media_kit_libs_windows_video")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 # ------------------------------------------------------------------------------
+function(download_and_verify url md5 locationForArchive)
+    # Check if the archive exists.
+    if(EXISTS "${locationForArchive}")
+        file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+
+        # If MD5 doesn't match, delete the archive to download again.
+        if(NOT md5 STREQUAL ARCHIVE_MD5)
+            file(REMOVE "${locationForArchive}")
+            message(STATUS "MD5 mismatch. File deleted.")
+        endif()
+    endif()
+
+    # Download the archive if it doesn't exist.
+    if(NOT EXISTS "${locationForArchive}")
+        message(STATUS "Downloading archive from ${url}...")
+        file(DOWNLOAD "${url}" "${locationForArchive}")
+        message(STATUS "Downloaded archive to ${locationForArchive}.")
+
+        # Verify MD5 of the newly downloaded file.
+        file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+        if(md5 STREQUAL ARCHIVE_MD5)
+            message(STATUS "${locationForArchive} Verification successful.")
+        else()
+            message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to rebuild project again.")
+        endif()
+    endif()
+
+endfunction()
+
+function(check_directory_exists_and_not_empty dir result_var)
+    # Check if the directory exists
+    if(EXISTS "${dir}")
+        # Check if the directory is not empty
+        file(GLOB dir_contents "${dir}/*")
+        if(dir_contents)
+            set(${result_var} TRUE PARENT_SCOPE)
+        else()
+            set(${result_var} FALSE PARENT_SCOPE)
+            message(STATUS "Directory ${dir} exists but is empty!")
+        endif()
+    else()
+        set(${result_var} FALSE PARENT_SCOPE)
+        message(STATUS "Directory ${dir} does not exist!")
+    endif()
+endfunction()
 
 # libmpv archive containing the pre-built shared libraries & headers.
 set(LIBMPV "mpv-dev-x86_64-20230825-git-c0fb9b4.7z")
@@ -25,24 +70,16 @@ set(LIBMPV_MD5 "cab756b2491897f7cc5e4f17fddf6793")
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
 
-# Download the libmpv archive if it doesn't exist.
-if(NOT EXISTS "${LIBMPV_ARCHIVE}")
-  message(STATUS "Downloading ${LIBMPV}...")
-  file(DOWNLOAD "${LIBMPV_URL}" "${LIBMPV_ARCHIVE}")
-  message(STATUS "Downloaded ${LIBMPV}...")
-endif()
+download_and_verify(
+  ${LIBMPV_URL}
+  ${LIBMPV_MD5}
+  ${LIBMPV_ARCHIVE}
+)
 
-# Match the MD5 hash of the downloaded libmpv archive. Exit on failure.
-file(MD5 "${LIBMPV_ARCHIVE}" LIBMPV_ARCHIVE_MD5)
-
-if(LIBMPV_MD5 STREQUAL LIBMPV_ARCHIVE_MD5)
-  message(STATUS "${LIBMPV} verification successful.")
-else()
-  message(FATAL_ERROR "${LIBMPV} integrity check failed.")
-endif()
+check_directory_exists_and_not_empty(${LIBMPV_SRC} LIBMPV_SRC_VALID)
 
 # Extract the libmpv archive.
-if(NOT EXISTS "${LIBMPV_SRC}")
+if(NOT LIBMPV_SRC_VALID)
   message(STATUS "Extracting ${LIBMPV}...")
   make_directory("${LIBMPV_SRC}")
   add_custom_target("${PROJECT_NAME}_LIBMPV_EXTRACT" ALL)
@@ -69,24 +106,16 @@ set(ANGLE_MD5 "e5be38d0e1c5cbe5f70e53701ea8b6c9")
 set(ANGLE_ARCHIVE "${CMAKE_BINARY_DIR}/${ANGLE}")
 set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
 
-# Download the ANGLE archive if it doesn't exist.
-if(NOT EXISTS "${ANGLE_ARCHIVE}")
-  message(STATUS "Downloading ${ANGLE}...")
-  file(DOWNLOAD "${ANGLE_URL}" "${ANGLE_ARCHIVE}")
-  message(STATUS "Downloaded ${ANGLE}...")
-endif()
+download_and_verify(
+  ${ANGLE_URL}
+  ${ANGLE_MD5}
+  ${ANGLE_ARCHIVE}
+)
 
-# Match the MD5 hash of the downloaded ANGLE archive. Exit on failure.
-file(MD5 "${ANGLE_ARCHIVE}" ANGLE_ARCHIVE_MD5)
-
-if(ANGLE_MD5 STREQUAL ANGLE_ARCHIVE_MD5)
-  message(STATUS "${ANGLE} verification successful.")
-else()
-  message(FATAL_ERROR "${ANGLE} integrity check failed.")
-endif()
+check_directory_exists_and_not_empty(${ANGLE_SRC} ANGLE_SRC_VALID)
 
 # Extract the ANGLE archive.
-if(NOT EXISTS "${ANGLE_SRC}")
+if(NOT ANGLE_SRC_VALID)
   message(STATUS "Extracting ${ANGLE}...")
   make_directory("${ANGLE_SRC}")
   add_custom_target("${PROJECT_NAME}_ANGLE_EXTRACT" ALL)
