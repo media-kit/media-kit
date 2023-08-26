@@ -18,6 +18,8 @@ dependencies:
 
   video_player_platform_interface: ^6.2.0
   stream_transform: ^2.1.0
+  
+# NOTE: Remove before publishing to pub.dev
 dependency_overrides: 
   media_kit:
     path: ../media_kit
