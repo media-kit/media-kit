@@ -42,7 +42,7 @@ function(download_and_verify url md5 locationForArchive)
         if(md5 STREQUAL ARCHIVE_MD5)
             message(STATUS "${locationForArchive} Verification successful.")
         else()
-            message(FATAL_ERROR "${locationForArchive} Integrity check failed.")
+            message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to rebuild project again.")
         endif()
     endif()
 
