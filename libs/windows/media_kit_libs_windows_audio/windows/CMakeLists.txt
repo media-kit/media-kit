@@ -34,7 +34,7 @@ function(download_and_verify url md5 locationForArchive)
         # Verify MD5 of the newly downloaded file.
         file(MD5 "${locationForArchive}" ARCHIVE_MD5)
         if(md5 STREQUAL ARCHIVE_MD5)
-            message(STATUS "Verification successful.")
+            message(STATUS "${locationForArchive} Verification successful.")
         else()
             message(FATAL_ERROR "${locationForArchive} Integrity check failed.")
         endif()
