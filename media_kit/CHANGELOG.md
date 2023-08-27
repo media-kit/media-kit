@@ -1,6 +1,6 @@
 ## 1.1.7
 
-fix: close `PlatformPlayer.playlistModeController`
+- fix: close `PlatformPlayer.playlistModeController`
 
 ## 1.1.6
 

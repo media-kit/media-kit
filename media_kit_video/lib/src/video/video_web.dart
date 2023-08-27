@@ -138,7 +138,10 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   final _contextNotifier = ValueNotifier<BuildContext?>(null);
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();
   final _wakelock = Wakelock();
-  StreamSubscription? _playingSubscription;
+  final _subscriptions = <StreamSubscription>[];
+  late int? _width = widget.controller.player.state.width;
+  late int? _height = widget.controller.player.state.height;
+  late bool _visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
   bool _pauseDueToPauseUponEnteringBackgroundMode = false;
 
   ValueKey _key = const ValueKey(true);
@@ -196,21 +199,51 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // --------------------------------------------------
+    // Do not show the video frame until width & height are available.
+    // Since [ValueNotifier<Rect?>] inside [VideoController] only gets updated by the render loop (i.e. it will not fire when video's width & height are not available etc.), it's important to handle this separately here.
+    _subscriptions.addAll(
+      [
+        widget.controller.player.stream.width.listen(
+          (value) {
+            _width = value;
+            final visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
+            if (_visible != visible) {
+              setState(() {
+                _visible = visible;
+              });
+            }
+          },
+        ),
+        widget.controller.player.stream.height.listen(
+          (value) {
+            _height = value;
+            final visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
+            if (_visible != visible) {
+              setState(() {
+                _visible = visible;
+              });
+            }
+          },
+        ),
+      ],
+    );
+    // --------------------------------------------------
     if (widget.wakelock) {
-      if (widget.wakelock) {
-        if (widget.controller.player.state.playing) {
-          _wakelock.enable();
-        }
-        _playingSubscription = widget.controller.player.stream.playing.listen(
-          (playing) {
-            if (playing) {
+      if (widget.controller.player.state.playing) {
+        _wakelock.enable();
+      }
+      _subscriptions.add(
+        widget.controller.player.stream.playing.listen(
+          (value) {
+            if (value) {
               _wakelock.enable();
             } else {
               _wakelock.disable();
             }
           },
-        );
-      }
+        ),
+      );
     }
   }
 
@@ -218,7 +251,9 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _wakelock.disable();
-    _playingSubscription?.cancel();
+    for (final subscription in _subscriptions) {
+      subscription.cancel();
+    }
     super.dispose();
   }
 
@@ -259,7 +294,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                             return ValueListenableBuilder<Rect?>(
                               valueListenable: notifier.rect,
                               builder: (context, rect, _) {
-                                if (id != null && rect != null) {
+                                if (id != null && rect != null && _visible) {
                                   return SizedBox(
                                     // Apply aspect ratio if provided.
                                     width: aspectRatio == null

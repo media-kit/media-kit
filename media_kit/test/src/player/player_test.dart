@@ -2261,6 +2261,8 @@ void main() {
         player.stream.buffering,
         emitsInOrder(
           [
+            // Player.open: buffering = false
+            false,
             // Player.open: buffering = true
             true,
             // Player.open: buffering = false
@@ -2294,6 +2296,8 @@ void main() {
         player.stream.buffering,
         emitsInOrder(
           [
+            // Player.open: buffering = false
+            false,
             // Player.open: buffering = true
             true,
             // Player.open: buffering = false
@@ -2326,6 +2330,8 @@ void main() {
         player.stream.buffering,
         emitsInOrder(
           [
+            // Player.open: buffering = false
+            false,
             // Player.open: buffering = true
             true,
             // Player.open: buffering = false
@@ -2359,6 +2365,8 @@ void main() {
         player.stream.buffering,
         emitsInOrder(
           [
+            // Player.open: buffering = false
+            false,
             // Player.open: buffering = true
             true,
             // Player.open: buffering = false
@@ -2390,6 +2398,8 @@ void main() {
         player.stream.buffering,
         emitsInOrder(
           [
+            // Player.open: buffering = false
+            false,
             // Player.open: buffering = true
             true,
             // Player.open: buffering = false
@@ -2444,6 +2454,8 @@ void main() {
         player.stream.buffering,
         emitsInOrder(
           [
+            // Player.open: buffering = false
+            false,
             // Player.open: buffering = true
             true,
             // Player.open: buffering = false
@@ -2516,6 +2528,9 @@ void main() {
         emitsInOrder(
           [
             // 0
+
+            // Player.open: buffering = false
+            false,
             // Player.open: buffering = true
             true,
             // Player.open: buffering = false
@@ -2525,6 +2540,10 @@ void main() {
             false,
 
             // 1
+
+            // Player.open: buffering = false
+            // false,
+
             // Player.open: buffering = true
             true,
             // Player.open: buffering = false
@@ -2534,6 +2553,10 @@ void main() {
             false,
 
             // 2
+
+            // Player.open: buffering = false
+            // false,
+
             // Player.open: buffering = true
             true,
             // Player.open: buffering = false
@@ -2543,6 +2566,10 @@ void main() {
             false,
 
             // 3
+
+            // Player.open: buffering = false
+            // false,
+
             // Player.open: buffering = true
             true,
             // Player.open: buffering = false
@@ -2805,6 +2832,8 @@ void main() {
         player.stream.tracks,
         emitsInOrder(
           [
+            // Player.open
+            Tracks(),
             Tracks(
               video: [
                 VideoTrack('auto', null, null),
@@ -2830,6 +2859,7 @@ void main() {
                 SubtitleTrack('8', null, 'null'),
               ],
             ),
+            // EOF
             Tracks(),
             emitsDone,
           ],
@@ -2840,6 +2870,14 @@ void main() {
         player.stream.subtitle,
         emitsInOrder(
           [
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['', ''],
+              ),
+              '',
+              isTrue,
+            ),
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
@@ -2954,6 +2992,8 @@ void main() {
         player.stream.tracks,
         emitsInOrder(
           [
+            // Player.open
+            Tracks(),
             Tracks(
               video: [
                 VideoTrack('auto', null, null),
@@ -3005,6 +3045,7 @@ void main() {
                 SubtitleTrack('8', null, 'null'),
               ],
             ),
+            // EOF
             Tracks(),
             emitsDone,
           ],
@@ -3100,6 +3141,15 @@ void main() {
               'subtitle',
               isTrue,
             ),
+            // SAME VALUE!
+            // TypeMatcher<List<String>>().having(
+            //   (subtitle) => ListEquality().equals(
+            //     subtitle,
+            //     ['', ''],
+            //   ),
+            //   'subtitle',
+            //   isTrue,
+            // ),
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
@@ -3359,6 +3409,15 @@ Simply for <u>everyone</u>
               'subtitle',
               isTrue,
             ),
+            // SAME VALUE!
+            // TypeMatcher<List<String>>().having(
+            //   (subtitle) => ListEquality().equals(
+            //     subtitle,
+            //     ['', ''],
+            //   ),
+            //   'subtitle',
+            //   isTrue,
+            // ),
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
