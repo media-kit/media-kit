@@ -97,14 +97,26 @@ public class VideoOutput: NSObject {
       texture = SafeResizableTexture(
         TextureHW(
           handle: handle,
-          updateCallback: updateCallback
+          // Use `weak self` to prevent memory leaks
+          updateCallback: { [weak self]() in
+            guard let that = self else {
+              return
+            }
+            that.updateCallback()
+          }
         )
       )
     } else {
       texture = SafeResizableTexture(
         TextureSW(
           handle: handle,
-          updateCallback: updateCallback
+          // Use `weak self` to prevent memory leaks
+          updateCallback: { [weak self]() in
+            guard let that = self else {
+              return
+            }
+            that.updateCallback()
+          }
         )
       )
     }
