@@ -6,10 +6,16 @@ class Worker {
   private let lock = NSRecursiveLock()
   private var thread: Thread!
   private var queue = [Job]()
+  private var canceled: Bool = false
 
   init() {
     thread = Thread(block: loop)
     thread.start()
+  }
+
+  public func cancel() {
+    signalCancel()
+    thread.cancel()
   }
 
   public func enqueue(_ job: @escaping Job) {
@@ -24,12 +30,37 @@ class Worker {
     while true {
       semaphore.wait()
 
-      let job = locked {
-        queue.removeFirst()
+      if isCanceled() {
+        return
       }
 
+      let job = getFirstJob()
       job()
     }
+  }
+
+  private func signalCancel() {
+    locked {
+      canceled = true
+    }
+
+    semaphore.signal()
+  }
+
+  private func isCanceled() -> Bool {
+    let c = locked {
+      canceled
+    }
+
+    return c
+  }
+
+  private func getFirstJob() -> Job {
+    let job = locked {
+      queue.removeFirst()
+    }
+
+    return job
   }
 
   private func locked<T>(do block: () -> T) -> T {

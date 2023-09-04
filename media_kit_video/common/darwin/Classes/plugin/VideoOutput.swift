@@ -67,14 +67,9 @@ public class VideoOutput: NSObject {
   }
 
   public func dispose() {
-    worker.enqueue {
-      self._dispose()
-    }
-  }
+    worker.cancel()
 
-  private func _dispose() {
     disposed = true
-
     disposeTextureId()
   }
 
