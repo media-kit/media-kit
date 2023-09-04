@@ -59,18 +59,18 @@ public class VideoOutput: NSObject {
     }
   }
 
+  deinit {
+    worker.cancel()
+
+    disposed = true
+    disposeTextureId()
+  }
+
   public func setSize(width: Int64?, height: Int64?) {
     worker.enqueue {
       self.width = width
       self.height = height
     }
-  }
-
-  public func dispose() {
-    worker.cancel()
-
-    disposed = true
-    disposeTextureId()
   }
 
   private func _init() {
