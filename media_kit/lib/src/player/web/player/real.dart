@@ -303,7 +303,9 @@ class WebPlayer extends PlatformPlayer {
           }
         });
       });
-      await HLS.ensureInitialized(hls: test ? HLS.kHLSCDN : null);
+      await HLS.ensureInitialized(
+        hls: test ? HLS.kHLSCDN : null,
+      );
       completer.complete();
       try {
         configuration.ready?.call();
@@ -395,11 +397,19 @@ class WebPlayer extends PlatformPlayer {
         index = -1;
       }
 
-      // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, subtitles=['', ''] etc.
+      // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, subtitle=['', ''] etc.
       await stop(
         open: true,
         synchronized: false,
       );
+
+      element.pause();
+      // Enter paused state.
+      // NOTE: Handled as part of [stop] logic.
+      // state = state.copyWith(playing: false);
+      // if (!playingController.isClosed) {
+      //   playingController.add(false);
+      // }
 
       _index = index;
       _playlist = playlist;

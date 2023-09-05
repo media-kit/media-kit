@@ -149,7 +149,24 @@ class NativePlayer extends PlatformPlayer {
       current.clear();
       current.addAll(playlist);
 
-      // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, subtitles=['', ''] etc.
+      // NOTE: Handled as part of [stop] logic.
+      // final commands = [
+      //   // Clear existing playlist & change currently playing index to none.
+      //   // This causes playback to stop & player to enter the idle state.
+      //   'stop',
+      //   'playlist-clear',
+      //   'playlist-play-index none',
+      // ];
+      // for (final command in commands) {
+      //   final args = command.toNativeUtf8();
+      //   mpv.mpv_command_string(
+      //     ctx,
+      //     args.cast(),
+      //   );
+      //   calloc.free(args);
+      // }
+
+      // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, subtitle=['', ''] etc.
       await stop(
         open: true,
         synchronized: false,
@@ -172,8 +189,19 @@ class NativePlayer extends PlatformPlayer {
             ctx,
             command.cast(),
           );
+          calloc.free(name);
+          calloc.free(value);
+          // NOTE: Handled as part of [stop] logic.
+          // state = state.copyWith(playing: false);
+          // if (!playingController.isClosed) {
+          //   playingController.add(false);
+          // }
         }
       }
+
+      // NOTE: Handled as part of [stop] logic.
+      // isShuffleEnabled = false;
+      // isPlayingStateChangeAllowed = false;
 
       for (int i = 0; i < playlist.length; i++) {
         await _command(

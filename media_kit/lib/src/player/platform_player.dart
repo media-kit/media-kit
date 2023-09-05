@@ -101,7 +101,7 @@ abstract class PlatformPlayer {
     );
     for (final callback in release) {
       try {
-        callback.call();
+        await callback.call();
       } catch (exception, stacktrace) {
         print(exception.toString());
         print(stacktrace.toString());
@@ -118,8 +118,6 @@ abstract class PlatformPlayer {
     );
   }
 
-  /// Stops the [Player].
-  /// Unloads the current [Media] or [Playlist] from the [Player]. This method is similar to [dispose] but does not release the resources & [Player] is still usable.
   Future<void> stop() {
     throw UnimplementedError(
       '[PlatformPlayer.stop] is not implemented',

@@ -38,8 +38,8 @@ void Utils::EnterNativeFullscreen(HWND window) {
                      &monitor);
     ::SetWindowLongPtr(window, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
     ::SetWindowPos(window, HWND_TOP, monitor.rcMonitor.left,
-                   monitor.rcMonitor.top, monitor.rcMonitor.right,
-                   monitor.rcMonitor.bottom,
+                   monitor.rcMonitor.top, monitor.rcMonitor.right - monitor.rcMonitor.left,
+                   monitor.rcMonitor.bottom - monitor.rcMonitor.top,
                    SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
   }
 }

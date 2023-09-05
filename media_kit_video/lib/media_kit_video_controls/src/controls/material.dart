@@ -600,7 +600,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: ThemeData(
+      data: Theme.of(context).copyWith(
         focusColor: const Color(0x00000000),
         hoverColor: const Color(0x00000000),
         splashColor: const Color(0x00000000),
