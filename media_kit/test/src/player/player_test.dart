@@ -3734,7 +3734,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
               isTrue,
             ),
             // MUST BE RESET!
-            // Player.open
+            // Player.setSubtitleTrack
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
