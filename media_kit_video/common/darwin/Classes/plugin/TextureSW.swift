@@ -29,6 +29,11 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
     }
   }
 
+  deinit {
+    disposePixelBuffer()
+    disposeMPV()
+  }
+
   public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
     let textureContext = textureContexts.current
     if textureContext == nil {
@@ -36,11 +41,6 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
     }
 
     return Unmanaged.passRetained(textureContext!.pixelBuffer)
-  }
-
-  public func dispose() {
-    disposePixelBuffer()
-    disposeMPV()
   }
 
   private func initMPV() {
