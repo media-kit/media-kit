@@ -719,7 +719,25 @@ class _MaterialDesktopVideoControlsState
                                                 .isNotEmpty
                                             ? const Offset(0.0, 16.0)
                                             : Offset.zero,
-                                        child: const MaterialDesktopSeekBar(),
+                                        child: MaterialDesktopSeekBar(
+                                          onSeekStart: () {
+                                            _timer?.cancel();
+                                          },
+                                          onSeekEnd: () {
+                                            _timer = Timer(
+                                              _theme(context)
+                                                  .controlsHoverDuration,
+                                              () {
+                                                if (mounted) {
+                                                  setState(() {
+                                                    visible = false;
+                                                  });
+                                                  unshiftSubtitle();
+                                                }
+                                              },
+                                            );
+                                          },
+                                        ),
                                       ),
                                     if (_theme(context)
                                         .bottomButtonBar
@@ -801,8 +819,13 @@ class _MaterialDesktopVideoControlsState
 
 /// Material design seek bar.
 class MaterialDesktopSeekBar extends StatefulWidget {
+  final VoidCallback? onSeekStart;
+  final VoidCallback? onSeekEnd;
+
   const MaterialDesktopSeekBar({
     Key? key,
+    this.onSeekStart,
+    this.onSeekEnd,
   }) : super(key: key);
 
   @override
@@ -874,12 +897,14 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
   }
 
   void onPointerDown() {
+    widget.onSeekStart?.call();
     setState(() {
       click = true;
     });
   }
 
   void onPointerUp() {
+    widget.onSeekEnd?.call();
     setState(() {
       click = false;
     });
