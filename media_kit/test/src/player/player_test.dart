@@ -3620,6 +3620,150 @@ Simply for <u>everyone</u>
     timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
+    'player-subtitle-reset-open',
+    () async {
+      final player = Player();
+
+      final subtitle = '''WEBVTT FILE
+
+1
+00:00:00.000 --> 00:00:15.000
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+''';
+
+      player.stream.subtitle.listen((event) => print(event));
+
+      expect(
+        player.stream.subtitle,
+        emitsInOrder(
+          [
+            // Player.open
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  '',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            // Player.setSubtitleTrack
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            // MUST BE RESET!
+            // Player.open
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  '',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+          ],
+        ),
+      );
+
+      await player.open(Media(sources.platform[0]));
+      await player.setSubtitleTrack(SubtitleTrack.data(subtitle));
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      // Player.state.subtitle & Player.stream.subtitle must be reset.
+      await player.open(Media(sources.platform[0]));
+
+      await Future.delayed(const Duration(seconds: 15));
+
+      await player.dispose();
+    },
+  );
+  test(
+    'player-subtitle-reset-set-subtitle-track-subtitle-track-no',
+    () async {
+      final player = Player();
+
+      final subtitle = '''WEBVTT FILE
+
+1
+00:00:00.000 --> 00:00:15.000
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+''';
+
+      player.stream.subtitle.listen((event) => print(event));
+
+      expect(
+        player.stream.subtitle,
+        emitsInOrder(
+          [
+            // Player.open
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  '',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            // Player.setSubtitleTrack
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+            // MUST BE RESET!
+            // Player.open
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                [
+                  '',
+                  '',
+                ],
+              ),
+              'subtitle',
+              isTrue,
+            ),
+          ],
+        ),
+      );
+
+      await player.open(Media(sources.platform[0]));
+      await player.setSubtitleTrack(SubtitleTrack.data(subtitle));
+
+      await Future.delayed(const Duration(seconds: 5));
+
+      // Player.state.subtitle & Player.stream.subtitle must be reset.
+      await player.setSubtitleTrack(SubtitleTrack.no());
+
+      await Future.delayed(const Duration(seconds: 15));
+
+      await player.dispose();
+    },
+  );
+  test(
     'player-native-player-set-property',
     () async {
       final player = Player();
