@@ -1299,7 +1299,9 @@ class WebPlayer extends PlatformPlayer {
         subtitleController.add(state.subtitle);
       }
 
-      if (track.uri || track.data) {
+      if (['no', 'auto'].contains(track.id)) {
+        // N / A
+      } else if (track.uri || track.data) {
         final String uri;
         if (track.uri) {
           uri = track.id;
