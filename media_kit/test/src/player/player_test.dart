@@ -2962,6 +2962,14 @@ void main() {
               'subtitle',
               isTrue,
             ),
+            TypeMatcher<List<String>>().having(
+              (subtitle) => ListEquality().equals(
+                subtitle,
+                ['', ''],
+              ),
+              'subtitle',
+              isTrue,
+            ),
             emitsDone,
           ],
         ),
