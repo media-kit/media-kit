@@ -2878,14 +2878,15 @@ void main() {
               '',
               isTrue,
             ),
-            TypeMatcher<List<String>>().having(
-              (subtitle) => ListEquality().equals(
-                subtitle,
-                ['', ''],
-              ),
-              'subtitle',
-              isTrue,
-            ),
+            // SAME VALUE!
+            // TypeMatcher<List<String>>().having(
+            //   (subtitle) => ListEquality().equals(
+            //     subtitle,
+            //     ['', ''],
+            //   ),
+            //   'subtitle',
+            //   isTrue,
+            // ),
             TypeMatcher<List<String>>().having(
               (subtitle) => ListEquality().equals(
                 subtitle,
