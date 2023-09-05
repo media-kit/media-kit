@@ -1217,6 +1217,14 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
+      // Reset existing Player.state.subtitle & Player.stream.subtitle.
+      state = state.copyWith(
+        subtitle: const PlayerState().subtitle,
+      );
+      if (!subtitleController.isClosed) {
+        subtitleController.add(state.subtitle);
+      }
+
       if (track.uri || track.data) {
         final String uri;
         if (track.uri) {
@@ -2537,7 +2545,7 @@ class _ScreenshotData {
   final String lib;
   final String? format;
 
-  _ScreenshotData(
+  const _ScreenshotData(
     this.ctx,
     this.lib,
     this.format,
