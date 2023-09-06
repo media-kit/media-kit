@@ -189,14 +189,15 @@ class NativePlayer extends PlatformPlayer {
             ctx,
             command.cast(),
           );
-          calloc.free(name);
-          calloc.free(value);
           // NOTE: Handled as part of [stop] logic.
           // state = state.copyWith(playing: false);
           // if (!playingController.isClosed) {
           //   playingController.add(false);
           // }
         }
+
+          calloc.free(name);
+          calloc.free(value);
       }
 
       // NOTE: Handled as part of [stop] logic.
