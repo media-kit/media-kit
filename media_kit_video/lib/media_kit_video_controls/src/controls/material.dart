@@ -46,6 +46,7 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   brightnessGesture: true,
   seekOnDoubleTap: true,
   visibleOnMount: false,
+  showBackdropWithControls: true,
   padding: null,
   controlsHoverDuration: Duration(seconds: 3),
   controlsTransitionDuration: Duration(milliseconds: 300),
@@ -120,6 +121,9 @@ class MaterialVideoControlsThemeData {
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
 
+   /// Whether to show a backdrop when controls are visible.
+  final bool showBackdropWithControls;
+  
   // GENERIC
 
   /// Padding around the controls.
@@ -209,6 +213,7 @@ class MaterialVideoControlsThemeData {
     this.brightnessGesture = false,
     this.seekOnDoubleTap = true,
     this.visibleOnMount = false,
+    this.showBackdropWithControls = true,
     this.padding,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 300),
@@ -255,6 +260,7 @@ class MaterialVideoControlsThemeData {
     bool? brightnessGesture,
     bool? seekOnDoubleTap,
     bool? visibleOnMount,
+    bool? showBackdropWithControls,
     Duration? controlsHoverDuration,
     Duration? controlsTransitionDuration,
     Widget Function(BuildContext)? bufferingIndicatorBuilder,
@@ -289,6 +295,8 @@ class MaterialVideoControlsThemeData {
       brightnessGesture: brightnessGesture ?? this.brightnessGesture,
       seekOnDoubleTap: seekOnDoubleTap ?? this.seekOnDoubleTap,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
+      showBackdropWithControls:
+          showBackdropWithControls ?? this.showBackdropWithControls,
       controlsHoverDuration:
           controlsHoverDuration ?? this.controlsHoverDuration,
       controlsTransitionDuration:
@@ -746,8 +754,10 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                         onHorizontalDragUpdate: (e) {
                           onTap();
                         },
-                        child: Container(
-                          color: const Color(0x66000000),
+                         child: Container(
+                          color: _theme(context).showBackdropWithControls
+                              ? const Color(0x66000000)
+                              : null,
                         ),
                       ),
                     ),
