@@ -1204,6 +1204,7 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
         builder: (context, constraints) => MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
+            onHorizontalDragUpdate: (_){},
             onPanStart: (e) => onPanStart(e, constraints),
             onPanDown: (e) => onPanDown(e, constraints),
             onPanUpdate: (e) => onPanUpdate(e, constraints),
