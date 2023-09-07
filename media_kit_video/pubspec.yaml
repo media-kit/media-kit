@@ -3,8 +3,7 @@ description: Native implementation for video playback in package:media_kit.
 homepage: https://github.com/media-kit/media-kit
 repository: https://github.com/media-kit/media-kit
 version: 1.1.8
-funding:
-  - https://www.github.com/sponsors/alexmercerind
+
 topics:
   - video
   - video-player

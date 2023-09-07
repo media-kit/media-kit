@@ -3,8 +3,6 @@ description: package:media_kit audio (only) playback native libraries for all pl
 version: 1.0.1
 homepage: https://github.com/media-kit/media-kit.git
 repository: https://github.com/media-kit/media-kit.git
-funding:
-  - https://www.github.com/sponsors/alexmercerind
 
 environment:
   sdk: ">=2.17.0 <4.0.0"

@@ -1134,19 +1134,6 @@ The project aims to meet demands of the community, this includes:
 1. Holding accountability.
 2. Ensuring timely maintenance.
 
-## Fund Development
-
-If you find [package:media_kit](https://github.com/media-kit/media-kit) package(s) useful, please consider sponsoring me.
-
-Since this is first of a kind project, it takes a lot of time to experiment & develop. It's a very tedious process to write code, document, maintain & provide support for free. Your support can ensure the quality of the package your project depends upon. I will feel rewarded for my hard-work & research.
-
-- **[GitHub Sponsors](https://github.com/sponsors/alexmercerind)**
-- **[PayPal](https://paypal.me/alexmercerind)**
-
-<a href='https://github.com/sponsors/alexmercerind'><img src='https://github.githubassets.com/images/modules/site/sponsors/sponsors-mona.svg' width='240'></a>
-
-Thanks!
-
 ## Supported Formats
 
 A wide variety of formats & codecs are supported. Complete list may be found below:

@@ -3,8 +3,6 @@ description: Platform specific threaded event handling for media_kit. Enables su
 homepage: https://github.com/media-kit/media-kit
 repository: https://github.com/media-kit/media-kit
 version: 1.0.7
-funding:
-  - https://www.github.com/sponsors/alexmercerind
 
 environment:
   sdk: ">=2.17.0 <4.0.0"
