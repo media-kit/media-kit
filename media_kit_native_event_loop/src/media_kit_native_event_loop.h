@@ -36,7 +36,7 @@ class MediaKitEventLoopHandler {
 
   void Notify(int64_t handle);
 
-  void Dispose(int64_t handle);
+  void Dispose(int64_t handle, bool clean = true);
 
   void Initialize();
 

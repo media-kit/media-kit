@@ -85,12 +85,12 @@ class _SeamlessState extends State<Seamless> {
               // Play the current page's video.
               players[i]?.play();
               // Pause other pages' videos.
-              Future.wait(players.entries.map((e) async {
+              for (final e in players.entries) {
                 if (e.key != i) {
-                  await e.value.pause();
-                  await e.value.seek(Duration.zero);
+                  e.value.pause();
+                  e.value.seek(Duration.zero);
                 }
-              }));
+              }
 
               // Create the [Player]s & [VideoController]s for the next & previous page.
               // It is obvious that current page's [Player] & [VideoController] will already exist, still checking it redundantly

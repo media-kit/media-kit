@@ -852,7 +852,24 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                               alignment: Alignment.bottomCenter,
                               children: [
                                 if (_theme(context).displaySeekBar)
-                                  const MaterialSeekBar(),
+                                  MaterialSeekBar(
+                                    onSeekStart: () {
+                                      _timer?.cancel();
+                                    },
+                                    onSeekEnd: () {
+                                      _timer = Timer(
+                                        _theme(context).controlsHoverDuration,
+                                        () {
+                                          if (mounted) {
+                                            setState(() {
+                                              visible = false;
+                                            });
+                                            unshiftSubtitle();
+                                          }
+                                        },
+                                      );
+                                    },
+                                  ),
                                 Container(
                                   height: _theme(context).buttonBarHeight,
                                   margin: _theme(context).bottomButtonBarMargin,
@@ -1048,8 +1065,15 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 /// Material design seek bar.
 class MaterialSeekBar extends StatefulWidget {
   final ValueNotifier<Duration>? delta;
+  final VoidCallback? onSeekStart;
+  final VoidCallback? onSeekEnd;
 
-  const MaterialSeekBar({Key? key, this.delta}) : super(key: key);
+  const MaterialSeekBar({
+    Key? key,
+    this.delta,
+    this.onSeekStart,
+    this.onSeekEnd,
+  }) : super(key: key);
 
   @override
   MaterialSeekBarState createState() => MaterialSeekBarState();
@@ -1135,12 +1159,14 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   }
 
   void onPointerDown() {
+    widget.onSeekStart?.call();
     setState(() {
       tapped = true;
     });
   }
 
   void onPointerUp() {
+    widget.onSeekEnd?.call();
     setState(() {
       tapped = false;
     });

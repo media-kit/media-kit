@@ -727,20 +727,18 @@ class NativePlayer extends PlatformPlayer {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
       }
+
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      // Raw `mpv_command` calls cause crash on Windows.
-      final args = [
-        'seek',
-        (duration.inMilliseconds / 1000).toStringAsFixed(4),
-        'absolute',
-      ].join(' ').toNativeUtf8();
-      mpv.mpv_command_string(
-        ctx,
-        args.cast(),
+      await compute(
+        _seek,
+        _SeekData(
+          ctx.address,
+          NativeLibrary.path,
+          duration,
+        ),
       );
-      calloc.free(args);
 
       // It is self explanatory that PlayerState.completed & PlayerStream.completed must enter the false state if seek is called. Typically after EOF.
       // https://github.com/media-kit/media-kit/issues/221
@@ -2530,8 +2528,37 @@ class NativePlayer extends PlatformPlayer {
 // Performance sensitive methods in [Player] are executed in an [Isolate].
 // This avoids blocking the Dart event loop for long periods of time.
 //
-// TBD(@alexmercerind): Maybe eventually move all methods to [Isolate]?
+// TODO: Maybe eventually move all methods to [Isolate]?
 // --------------------------------------------------
+
+class _SeekData {
+  final int ctx;
+  final String lib;
+  final Duration duration;
+
+  _SeekData(
+    this.ctx,
+    this.lib,
+    this.duration,
+  );
+}
+
+/// [NativePlayer.seek]
+void _seek(_SeekData data) {
+  // ---------
+  final mpv = generated.MPV(DynamicLibrary.open(data.lib));
+  final ctx = Pointer<generated.mpv_handle>.fromAddress(data.ctx);
+  // ---------
+  final duration = data.duration;
+  // ---------
+  final value = duration.inMilliseconds / 1000;
+  final command = 'seek ${value.toStringAsFixed(4)} absolute'.toNativeUtf8();
+  mpv.mpv_command_string(
+    ctx,
+    command.cast(),
+  );
+  calloc.free(command);
+}
 
 class _ScreenshotData {
   final int ctx;
@@ -2545,6 +2572,7 @@ class _ScreenshotData {
   );
 }
 
+/// [NativePlayer.screenshot]
 Uint8List? _screenshot(_ScreenshotData data) {
   // ---------
   final mpv = generated.MPV(DynamicLibrary.open(data.lib));
