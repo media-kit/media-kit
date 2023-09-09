@@ -55,7 +55,7 @@ class _SeamlessState extends State<Seamless> {
       player,
       configuration: configuration.value,
     );
-    await player.setVolume(0.0);
+    await player.setAudioTrack(AudioTrack.no());
     await player.setPlaylistMode(PlaylistMode.loop);
     await player.open(
       // Load a random video from the list of sources.

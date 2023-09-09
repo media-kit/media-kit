@@ -32,7 +32,7 @@ class _StressTestScreenState extends State<StressTestScreen> {
       controllers.add(controller);
     }
     for (int i = 0; i < count; i++) {
-      players[i].setVolume(0.0);
+      players[i].setAudioTrack(AudioTrack.no());
       players[i].setPlaylistMode(PlaylistMode.loop);
       players[i].open(Media(sources[i % sources.length]));
       players[i].stream.error.listen((error) => debugPrint(error));
