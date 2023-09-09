@@ -84,6 +84,24 @@ class _SeamlessState extends State<Seamless> {
             onPageChanged: (i) {
               // Play the current page's video.
               players[i]?.play();
+
+              // Dispose the [Player]s & [VideoController]s of the pages that are not visible & not adjacent to the current page.
+              players.removeWhere(
+                (page, player) {
+                  final remove = ![i, i - 1, i + 1].contains(page);
+                  if (remove) {
+                    player.dispose();
+                  }
+                  return remove;
+                },
+              );
+              controllers.removeWhere(
+                (page, controller) {
+                  final remove = ![i, i - 1, i + 1].contains(page);
+                  return remove;
+                },
+              );
+
               // Pause other pages' videos.
               for (final e in players.entries) {
                 if (e.key != i) {
@@ -103,23 +121,6 @@ class _SeamlessState extends State<Seamless> {
               if (!players.containsKey(i - 1)) {
                 createPlayer(i - 1);
               }
-
-              // Dispose the [Player]s & [VideoController]s of the pages that are not visible & not adjacent to the current page.
-              players.removeWhere(
-                (page, player) {
-                  final remove = ![i, i - 1, i + 1].contains(page);
-                  if (remove) {
-                    player.dispose();
-                  }
-                  return remove;
-                },
-              );
-              controllers.removeWhere(
-                (page, controller) {
-                  final remove = ![i, i - 1, i + 1].contains(page);
-                  return remove;
-                },
-              );
 
               debugPrint('players: ${players.keys}');
               debugPrint('controllers: ${controllers.keys}');
