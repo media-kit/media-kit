@@ -46,6 +46,7 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   brightnessGesture: true,
   seekOnDoubleTap: true,
   visibleOnMount: false,
+  backdropColor: Color(0x66000000),
   padding: null,
   controlsHoverDuration: Duration(seconds: 3),
   controlsTransitionDuration: Duration(milliseconds: 300),
@@ -119,6 +120,9 @@ class MaterialVideoControlsThemeData {
 
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
+
+  /// Color of backdrop that comes up when controls are visible.
+  final Color? backdropColor;
 
   // GENERIC
 
@@ -209,6 +213,7 @@ class MaterialVideoControlsThemeData {
     this.brightnessGesture = false,
     this.seekOnDoubleTap = true,
     this.visibleOnMount = false,
+    this.backdropColor = const Color(0x66000000),
     this.padding,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 300),
@@ -255,6 +260,7 @@ class MaterialVideoControlsThemeData {
     bool? brightnessGesture,
     bool? seekOnDoubleTap,
     bool? visibleOnMount,
+    Color? backdropColor,
     Duration? controlsHoverDuration,
     Duration? controlsTransitionDuration,
     Widget Function(BuildContext)? bufferingIndicatorBuilder,
@@ -289,6 +295,7 @@ class MaterialVideoControlsThemeData {
       brightnessGesture: brightnessGesture ?? this.brightnessGesture,
       seekOnDoubleTap: seekOnDoubleTap ?? this.seekOnDoubleTap,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
+      backdropColor: backdropColor ?? this.backdropColor,
       controlsHoverDuration:
           controlsHoverDuration ?? this.controlsHoverDuration,
       controlsTransitionDuration:
@@ -747,7 +754,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           onTap();
                         },
                         child: Container(
-                          color: const Color(0x66000000),
+                          color: _theme(context).backdropColor,
                         ),
                       ),
                     ),
@@ -1230,7 +1237,7 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
         builder: (context, constraints) => MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
-            onHorizontalDragUpdate: (_){},
+            onHorizontalDragUpdate: (_) {},
             onPanStart: (e) => onPanStart(e, constraints),
             onPanDown: (e) => onPanDown(e, constraints),
             onPanUpdate: (e) => onPanUpdate(e, constraints),
