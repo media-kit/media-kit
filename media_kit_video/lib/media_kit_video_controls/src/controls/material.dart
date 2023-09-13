@@ -942,10 +942,18 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                             child: _theme(context)
                                     .bufferingIndicatorBuilder
                                     ?.call(context) ??
-                                const Center(
-                                  child: CircularProgressIndicator(
-                                    color: Color(0xFFFFFFFF),
-                                  ),
+                                TweenAnimationBuilder<double>(
+                                  tween: Tween<double>(begin: 0.4, end: 1.0),
+                                  duration: _theme(context)
+                                      .controlsTransitionDuration, // adjust as needed
+                                  builder: (BuildContext context, double value,
+                                      Widget? child) {
+                                    return Center(
+                                        child: CircularProgressIndicator(
+                                      value: buffering ? null : value,
+                                      color: const Color(0xFFFFFFFF),
+                                    ));
+                                  },
                                 ),
                           ),
                         ),
