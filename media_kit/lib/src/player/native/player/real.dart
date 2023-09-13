@@ -196,8 +196,8 @@ class NativePlayer extends PlatformPlayer {
           // }
         }
 
-          calloc.free(name);
-          calloc.free(value);
+        calloc.free(name);
+        calloc.free(value);
       }
 
       // NOTE: Handled as part of [stop] logic.
