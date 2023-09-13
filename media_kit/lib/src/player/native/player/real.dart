@@ -2313,7 +2313,7 @@ class NativePlayer extends PlatformPlayer {
       //
       // ANDROID (Physical Device OR API Level > 25):
       //
-      // ao = opensles
+      // ao = audiotrack,opensles
       //
       // ANDROID (Emulator AND API Level <= 25):
       //
@@ -2325,10 +2325,8 @@ class NativePlayer extends PlatformPlayer {
         'keep-open': 'yes',
         'audio-display': 'no',
         'network-timeout': '5',
-        // On Android, prefer OpenSL ES audio output.
-        // AudioTrack audio output is prone to crashes in some rare cases.
         if (AndroidHelper.isPhysicalDevice || AndroidHelper.APILevel > 25)
-          'ao': 'opensles'
+          'ao': 'audiotrack,opensles'
         // Disable audio output on older Android emulators with API Level < 25.
         // OpenSL ES audio output seems to be broken on some of these.
         else if (AndroidHelper.isEmulator && AndroidHelper.APILevel <= 25)
