@@ -58,8 +58,8 @@ class AndroidVideoController extends PlatformVideoController {
       debugPrint('media_kit: AndroidVideoController: Enforcing S/W rendering.');
       enableHardwareAcceleration = false;
     }
-    _hwdec =
-        configuration.hwdec ?? (enableHardwareAcceleration ? 'auto' : 'no');
+    _hwdec = configuration.hwdec ??
+        (enableHardwareAcceleration ? 'auto-safe' : 'no');
     return _hwdec!;
   }
 
