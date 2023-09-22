@@ -98,6 +98,13 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   private func disposeMPV() {
+    EAGLContext.setCurrent(context)
+    defer {
+      OpenGLESHelpers.checkError("disposeMPV")
+      EAGLContext.setCurrent(nil)
+    }
+
+    mpv_render_context_set_update_callback(renderContext, nil, nil)
     mpv_render_context_free(renderContext)
   }
 
