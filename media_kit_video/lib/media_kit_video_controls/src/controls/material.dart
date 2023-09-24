@@ -934,27 +934,30 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       ),
                       Expanded(
                         child: Center(
-                          child: AnimatedOpacity(
-                            curve: Curves.easeInOut,
-                            opacity: buffering ? 1.0 : 0.0,
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween<double>(
+                              begin: 0.0,
+                              end: buffering ? 1.0 : 0.0,
+                            ),
                             duration:
                                 _theme(context).controlsTransitionDuration,
-                            child: _theme(context)
-                                    .bufferingIndicatorBuilder
-                                    ?.call(context) ??
-                                TweenAnimationBuilder<double>(
-                                  tween: Tween<double>(begin: 0.4, end: 1.0),
-                                  duration: _theme(context)
-                                      .controlsTransitionDuration, // adjust as needed
-                                  builder: (BuildContext context, double value,
-                                      Widget? child) {
-                                    return Center(
-                                        child: CircularProgressIndicator(
-                                      value: buffering ? null : value,
-                                      color: const Color(0xFFFFFFFF),
-                                    ));
-                                  },
-                                ),
+                            builder: (context, value, child) {
+                              // Only mount the buffering indicator if the opacity is greater than 0.0.
+                              // This has been done to prevent redundant resource usage in [CircularProgressIndicator].
+                              if (value > 0.0) {
+                                return Opacity(
+                                  opacity: value,
+                                  child: _theme(context)
+                                          .bufferingIndicatorBuilder
+                                          ?.call(context) ??
+                                      child!,
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                            child: const CircularProgressIndicator(
+                              color: Color(0xFFFFFFFF),
+                            ),
                           ),
                         ),
                       ),

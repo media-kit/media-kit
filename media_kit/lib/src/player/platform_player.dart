@@ -7,6 +7,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:meta/meta.dart';
+import 'package:collection/collection.dart';
 
 import 'package:media_kit/src/models/track.dart';
 import 'package:media_kit/src/models/playable.dart';
@@ -42,30 +43,70 @@ abstract class PlatformPlayer {
 
   /// Current state of the player available as listenable [Stream]s.
   late PlayerStream stream = PlayerStream(
-    playlistController.stream.distinct(),
-    playingController.stream.distinct(),
-    completedController.stream.distinct(),
-    positionController.stream.distinct(),
-    durationController.stream.distinct(),
-    volumeController.stream.distinct(),
-    rateController.stream.distinct(),
-    pitchController.stream.distinct(),
-    bufferingController.stream.distinct(),
-    bufferController.stream.distinct(),
-    playlistModeController.stream.distinct(),
+    playlistController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    playingController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    completedController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    positionController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    durationController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    volumeController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    rateController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    pitchController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    bufferingController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    bufferController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    playlistModeController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
     /* AUDIO-PARAMS STREAM SHOULD NOT BE DISTINCT */
     audioParamsController.stream,
     /* VIDEO-PARAMS STREAM SHOULD NOT BE DISTINCT */
     videoParamsController.stream,
-    audioBitrateController.stream.distinct(),
-    audioDeviceController.stream.distinct(),
-    audioDevicesController.stream.distinct(),
-    trackController.stream.distinct(),
-    tracksController.stream.distinct(),
-    widthController.stream.distinct(),
-    heightController.stream.distinct(),
-    subtitleController.stream.distinct(),
-    logController.stream.distinct(),
+    audioBitrateController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    audioDeviceController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    audioDevicesController.stream.distinct(
+      (previous, current) => ListEquality().equals(previous, current),
+    ),
+    trackController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    tracksController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    widthController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    heightController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
+    subtitleController.stream.distinct(
+      (previous, current) => ListEquality().equals(previous, current),
+    ),
+    logController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
     /* ERROR STREAM SHOULD NOT BE DISTINCT */
     errorController.stream,
   );
@@ -452,13 +493,15 @@ class PlayerConfiguration {
     this.logLevel = MPVLogLevel.error,
     this.bufferSize = 128 * 1024 * 1024,
     this.protocolWhitelist = const [
-      'file',
+      'udp',
+      'rtp',
       'tcp',
       'tls',
+      'data',
+      'file',
       'http',
       'https',
       'crypto',
-      'data',
     ],
   });
 }

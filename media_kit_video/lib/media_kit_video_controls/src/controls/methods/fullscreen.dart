@@ -39,7 +39,6 @@ Future<void> enterFullscreen(BuildContext context) {
                     contextNotifier: contextNotiferValue,
                     child: Video(
                       controller: controllerValue,
-                      // Not required in fullscreen mode:
                       // width: null,
                       // height: null,
                       // Inherit following properties from the parent [Video]:
@@ -51,6 +50,14 @@ Future<void> enterFullscreen(BuildContext context) {
                       controls: stateValue.widget.controls,
                       // Do not acquire or modify existing wakelock in fullscreen mode:
                       wakelock: false,
+                      pauseUponEnteringBackgroundMode:
+                          stateValue.widget.pauseUponEnteringBackgroundMode,
+                      resumeUponEnteringForegroundMode:
+                          stateValue.widget.resumeUponEnteringForegroundMode,
+                      subtitleViewConfiguration:
+                          stateValue.widget.subtitleViewConfiguration,
+                      onEnterFullscreen: stateValue.widget.onEnterFullscreen,
+                      onExitFullscreen: stateValue.widget.onExitFullscreen,
                     ),
                   ),
                 ),

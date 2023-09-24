@@ -196,8 +196,8 @@ class NativePlayer extends PlatformPlayer {
           // }
         }
 
-          calloc.free(name);
-          calloc.free(value);
+        calloc.free(name);
+        calloc.free(value);
       }
 
       // NOTE: Handled as part of [stop] logic.
@@ -1215,6 +1215,14 @@ class NativePlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      // Reset existing Player.state.subtitle & Player.stream.subtitle.
+      state = state.copyWith(
+        subtitle: const PlayerState().subtitle,
+      );
+      if (!subtitleController.isClosed) {
+        subtitleController.add(state.subtitle);
+      }
 
       if (track.uri || track.data) {
         final String uri;
@@ -2325,8 +2333,6 @@ class NativePlayer extends PlatformPlayer {
         'keep-open': 'yes',
         'audio-display': 'no',
         'network-timeout': '5',
-        // On Android, prefer OpenSL ES audio output.
-        // AudioTrack audio output is prone to crashes in some rare cases.
         if (AndroidHelper.isPhysicalDevice || AndroidHelper.APILevel > 25)
           'ao': 'opensles'
         // Disable audio output on older Android emulators with API Level < 25.
@@ -2565,7 +2571,7 @@ class _ScreenshotData {
   final String lib;
   final String? format;
 
-  _ScreenshotData(
+  const _ScreenshotData(
     this.ctx,
     this.lib,
     this.format,

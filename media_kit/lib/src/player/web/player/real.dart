@@ -1291,7 +1291,17 @@ class WebPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      if (track.uri || track.data) {
+      // Reset existing Player.state.subtitle & Player.stream.subtitle.
+      state = state.copyWith(
+        subtitle: const PlayerState().subtitle,
+      );
+      if (!subtitleController.isClosed) {
+        subtitleController.add(state.subtitle);
+      }
+
+      if (['no', 'auto'].contains(track.id)) {
+        // N / A
+      } else if (track.uri || track.data) {
         final String uri;
         if (track.uri) {
           uri = track.id;
