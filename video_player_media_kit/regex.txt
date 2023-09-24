@@ -1,3 +1,0 @@
-media_kit_libs_android_video: \^?\d+\.\d+\.\d+
-
-media_kit_libs_ios_video: \^\d+\.\d+\.\d+

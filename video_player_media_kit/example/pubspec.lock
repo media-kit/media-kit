@@ -240,46 +240,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.3"
-  media_kit_libs_linux:
-    dependency: transitive
-    description:
-      name: media_kit_libs_linux
-      sha256: "3b7c272179639a914dc8a50bf8a3f2df0e9a503bd727c88fab499dbdf6cb1eb8"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.2"
-  media_kit_libs_macos_video:
-    dependency: transitive
-    description:
-      name: media_kit_libs_macos_video
-      sha256: c06e831f3c22a45296d375788d9bc07871b448f8e9ec98d77b11e5e118a83fb2
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.3"
-  media_kit_libs_video:
-    dependency: transitive
-    description:
-      name: media_kit_libs_video
-      sha256: "48c8ace458f340e6b930c89c48141ea727b80aa0878f7a01904d7d439865f162"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.0"
-  media_kit_libs_windows_video:
-    dependency: transitive
-    description:
-      name: media_kit_libs_windows_video
-      sha256: "923f068344d7d200184e0aaa2597f3de6c05982a3b1f18035d842ab53f2a1350"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.8"
-  media_kit_native_event_loop:
-    dependency: transitive
-    description:
-      name: media_kit_native_event_loop
-      sha256: e37ce6fb5fa71b8cf513c6a6cd591367743a342a385e7da621a047dd8ef6f4a4
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.7"
   media_kit_video:
     dependency: transitive
     description:
@@ -429,14 +389,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
-  stream_transform:
-    dependency: transitive
-    description:
-      name: stream_transform
-      sha256: "14a00e794c7c11aa145a170587321aedce29769c08d7f58b1d141da75e3b1c6f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.0"
   string_scanner:
     dependency: transitive
     description:
@@ -539,7 +491,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.0.26"
+    version: "1.0.0"
   video_player_platform_interface:
     dependency: transitive
     description:

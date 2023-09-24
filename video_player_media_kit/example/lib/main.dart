@@ -1,29 +1,18 @@
 // Copyright 2013 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-// ignore_for_file: public_member_api_docs
-
-/// An example of using the plugin, controlling lifecycle and playback of the
-/// video.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
-import 'package:video_player_media_kit/video_player_media_kit.dart';
 
 void main() {
-  initVideoPlayerMediaKitIfNeeded(
-      androidUseMediaKit: true, logLevel: MPVLogLevel.warn);
   runApp(
-    const MaterialApp(
-      home: App(),
+    MaterialApp(
+      home: _App(),
     ),
   );
 }
 
-class App extends StatelessWidget {
-  const App({Key? key}) : super(key: key);
-
+class _App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -222,8 +211,10 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.network(
-      'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+    _controller = VideoPlayerController.networkUrl(
+      Uri.parse(
+        'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+      ),
       closedCaptionFile: _loadCaptions(),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
