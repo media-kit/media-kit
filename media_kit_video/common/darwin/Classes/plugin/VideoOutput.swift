@@ -59,24 +59,18 @@ public class VideoOutput: NSObject {
     }
   }
 
+  deinit {
+    worker.cancel()
+
+    disposed = true
+    disposeTextureId()
+  }
+
   public func setSize(width: Int64?, height: Int64?) {
     worker.enqueue {
       self.width = width
       self.height = height
     }
-  }
-
-  public func dispose() {
-    worker.enqueue {
-      self._dispose()
-    }
-  }
-
-  private func _dispose() {
-    disposed = true
-
-    disposeTextureId()
-    texture.dispose()
   }
 
   private func _init() {
@@ -97,14 +91,26 @@ public class VideoOutput: NSObject {
       texture = SafeResizableTexture(
         TextureHW(
           handle: handle,
-          updateCallback: updateCallback
+          // Use `weak self` to prevent memory leaks
+          updateCallback: { [weak self]() in
+            guard let that = self else {
+              return
+            }
+            that.updateCallback()
+          }
         )
       )
     } else {
       texture = SafeResizableTexture(
         TextureSW(
           handle: handle,
-          updateCallback: updateCallback
+          // Use `weak self` to prevent memory leaks
+          updateCallback: { [weak self]() in
+            guard let that = self else {
+              return
+            }
+            that.updateCallback()
+          }
         )
       )
     }

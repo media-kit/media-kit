@@ -55,7 +55,7 @@ class _SeamlessState extends State<Seamless> {
       player,
       configuration: configuration.value,
     );
-    await player.setVolume(0.0);
+    await player.setAudioTrack(AudioTrack.no());
     await player.setPlaylistMode(PlaylistMode.loop);
     await player.open(
       // Load a random video from the list of sources.
@@ -84,25 +84,6 @@ class _SeamlessState extends State<Seamless> {
             onPageChanged: (i) {
               // Play the current page's video.
               players[i]?.play();
-              // Pause other pages' videos.
-              Future.wait(players.entries.map((e) async {
-                if (e.key != i) {
-                  await e.value.pause();
-                  await e.value.seek(Duration.zero);
-                }
-              }));
-
-              // Create the [Player]s & [VideoController]s for the next & previous page.
-              // It is obvious that current page's [Player] & [VideoController] will already exist, still checking it redundantly
-              if (!players.containsKey(i)) {
-                createPlayer(i);
-              }
-              if (!players.containsKey(i + 1)) {
-                createPlayer(i + 1);
-              }
-              if (!players.containsKey(i - 1)) {
-                createPlayer(i - 1);
-              }
 
               // Dispose the [Player]s & [VideoController]s of the pages that are not visible & not adjacent to the current page.
               players.removeWhere(
@@ -120,6 +101,26 @@ class _SeamlessState extends State<Seamless> {
                   return remove;
                 },
               );
+
+              // Pause other pages' videos.
+              for (final e in players.entries) {
+                if (e.key != i) {
+                  e.value.pause();
+                  e.value.seek(Duration.zero);
+                }
+              }
+
+              // Create the [Player]s & [VideoController]s for the next & previous page.
+              // It is obvious that current page's [Player] & [VideoController] will already exist, still checking it redundantly
+              if (!players.containsKey(i)) {
+                createPlayer(i);
+              }
+              if (!players.containsKey(i + 1)) {
+                createPlayer(i + 1);
+              }
+              if (!players.containsKey(i - 1)) {
+                createPlayer(i - 1);
+              }
 
               debugPrint('players: ${players.keys}');
               debugPrint('controllers: ${controllers.keys}');

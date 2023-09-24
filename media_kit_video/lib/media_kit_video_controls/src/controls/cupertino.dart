@@ -5,10 +5,9 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: non_constant_identifier_names
 import 'package:flutter/cupertino.dart';
-import 'package:media_kit_video/media_kit_video.dart' show VideoState;
+import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/fullscreen_inherited_widget.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/controls_theme_data_builder_inherited_widget.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_controls_theme_data_injector.dart';
 
 /// {@template cupertino_video_controls}
 ///
@@ -16,35 +15,18 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/co
 ///
 /// {@endtemplate}
 Widget CupertinoVideoControls(VideoState state) {
-  final theme = CupertinoVideoControlsTheme.maybeOf(state.context);
-  if (theme == null) {
-    return const ControlsThemeDataBuilderInheritedWidget(
-      controlsThemeDataBuilder: null,
-      child: CupertinoVideoControlsTheme(
-        normal: kDefaultCupertinoVideoControlsThemeData,
-        fullscreen: kDefaultCupertinoVideoControlsThemeDataFullscreen,
-        child: _CupertinoVideoControls(),
-      ),
-    );
-  } else {
-    return ControlsThemeDataBuilderInheritedWidget(
-      controlsThemeDataBuilder: (child) {
-        return CupertinoVideoControlsTheme(
-          normal: theme.normal,
-          fullscreen: theme.fullscreen,
-          child: child,
-        );
-      },
-      child: const _CupertinoVideoControls(),
-    );
-  }
+  return const VideoControlsThemeDataInjector(
+    child: _CupertinoVideoControls(),
+  );
 }
 
 /// [MaterialDesktopVideoControlsThemeData] available in this [context].
 CupertinoVideoControlsThemeData _theme(BuildContext context) =>
     FullscreenInheritedWidget.maybeOf(context) == null
-        ? CupertinoVideoControlsTheme.of(context).normal
-        : CupertinoVideoControlsTheme.of(context).fullscreen;
+        ? CupertinoVideoControlsTheme.maybeOf(context)?.normal ??
+            kDefaultCupertinoVideoControlsThemeData
+        : CupertinoVideoControlsTheme.maybeOf(context)?.fullscreen ??
+            kDefaultCupertinoVideoControlsThemeDataFullscreen;
 
 /// Default [CupertinoVideoControlsThemeData].
 const kDefaultCupertinoVideoControlsThemeData =

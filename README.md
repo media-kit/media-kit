@@ -46,17 +46,17 @@
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.6                              # Primary package.
-  media_kit_video: ^1.1.7                        # For video rendering.
-  media_kit_libs_video: ^1.0.0                   # Native video dependencies.
+  media_kit: ^1.1.7                              # Primary package.
+  media_kit_video: ^1.1.8                        # For video rendering.
+  media_kit_libs_video: ^1.0.1                   # Native video dependencies.
 ```
 
 #### For apps that need audio playback:
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.6                              # Primary package.  
-  media_kit_libs_audio: ^1.0.0                   # Native audio dependencies.
+  media_kit: ^1.1.7                              # Primary package.  
+  media_kit_libs_audio: ^1.0.1                   # Native audio dependencies.
 ```
 
 **Notes:**
@@ -70,11 +70,11 @@ dependencies:
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.6/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.6/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.6/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.6/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.6/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.7/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.7/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.7/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.7/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.7/media_kit_test_linux_x64.7z)          |
 | Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://media-kit.github.io/media-kit/)                                                                            |
 
 <table>
@@ -1140,19 +1140,6 @@ You may see project's [architecture](https://github.com/media-kit/media-kit#arch
 The project aims to meet demands of the community, this includes:
 1. Holding accountability.
 2. Ensuring timely maintenance.
-
-## Fund Development
-
-If you find [package:media_kit](https://github.com/media-kit/media-kit) package(s) useful, please consider sponsoring me.
-
-Since this is first of a kind project, it takes a lot of time to experiment & develop. It's a very tedious process to write code, document, maintain & provide support for free. Your support can ensure the quality of the package your project depends upon. I will feel rewarded for my hard-work & research.
-
-- **[GitHub Sponsors](https://github.com/sponsors/alexmercerind)**
-- **[PayPal](https://paypal.me/alexmercerind)**
-
-<a href='https://github.com/sponsors/alexmercerind'><img src='https://github.githubassets.com/images/modules/site/sponsors/sponsors-mona.svg' width='240'></a>
-
-Thanks!
 
 ## Supported Formats
 
