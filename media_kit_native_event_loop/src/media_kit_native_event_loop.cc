@@ -96,7 +96,7 @@ void MediaKitEventLoopHandler::Notify(int64_t handle) {
   }
 }
 
-void MediaKitEventLoopHandler::Dispose(int64_t handle) {
+void MediaKitEventLoopHandler::Dispose(int64_t handle, bool clean) {
   auto context = reinterpret_cast<mpv_handle*>(handle);
   if (IsRegistered(handle)) {
     mutex_.lock();
@@ -119,6 +119,10 @@ void MediaKitEventLoopHandler::Dispose(int64_t handle) {
       }
     } catch (std::system_error& e) {
       std::cout << "MediaKitEventLoopHandler::Dispose: " << e.code() << " " << e.what() << std::endl;
+    }
+
+    if (!clean) {
+      return;
     }
 
     std::thread([&, context]() {
@@ -182,7 +186,13 @@ MediaKitEventLoopHandler::~MediaKitEventLoopHandler() {
   mutex_.unlock();
 
   for (auto& context : contexts) {
-    Dispose(reinterpret_cast<int64_t>(context));
+    // Here, clean argument is `false` for avoiding redundant removal of entries from |mutexes_|, |threads_| &
+    // |condition_variables_| |std::unordered_map|s. Since, this destructor is only called upon process termination, it
+    // is not an issue.
+    // Specifically on Windows, this is done to prevent a crash because the detached thread (used to clean up the
+    // entries inside |Dispose| after a voluntary delay) fails to launch/clean-before-exit. Overall, this solution
+    // ensures a graceful exit.
+    Dispose(reinterpret_cast<int64_t>(context), false);
   }
 }
 

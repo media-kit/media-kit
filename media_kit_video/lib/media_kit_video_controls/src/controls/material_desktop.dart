@@ -719,7 +719,25 @@ class _MaterialDesktopVideoControlsState
                                                 .isNotEmpty
                                             ? const Offset(0.0, 16.0)
                                             : Offset.zero,
-                                        child: const MaterialDesktopSeekBar(),
+                                        child: MaterialDesktopSeekBar(
+                                          onSeekStart: () {
+                                            _timer?.cancel();
+                                          },
+                                          onSeekEnd: () {
+                                            _timer = Timer(
+                                              _theme(context)
+                                                  .controlsHoverDuration,
+                                              () {
+                                                if (mounted) {
+                                                  setState(() {
+                                                    visible = false;
+                                                  });
+                                                  unshiftSubtitle();
+                                                }
+                                              },
+                                            );
+                                          },
+                                        ),
                                       ),
                                     if (_theme(context)
                                         .bottomButtonBar
@@ -761,19 +779,32 @@ class _MaterialDesktopVideoControlsState
                               ),
                               Expanded(
                                 child: Center(
-                                  child: AnimatedOpacity(
-                                    curve: Curves.easeInOut,
-                                    opacity: buffering ? 1.0 : 0.0,
-                                    duration: _theme(context)
-                                        .controlsTransitionDuration,
-                                    child: _theme(context)
-                                            .bufferingIndicatorBuilder
-                                            ?.call(context) ??
-                                        const Center(
-                                          child: CircularProgressIndicator(
-                                            color: Color(0xFFFFFFFF),
-                                          ),
-                                        ),
+                                  child: Center(
+                                    child: TweenAnimationBuilder<double>(
+                                      tween: Tween<double>(
+                                        begin: 0.0,
+                                        end: buffering ? 1.0 : 0.0,
+                                      ),
+                                      duration: _theme(context)
+                                          .controlsTransitionDuration,
+                                      builder: (context, value, child) {
+                                        // Only mount the buffering indicator if the opacity is greater than 0.0.
+                                        // This has been done to prevent redundant resource usage in [CircularProgressIndicator].
+                                        if (value > 0.0) {
+                                          return Opacity(
+                                            opacity: value,
+                                            child: _theme(context)
+                                                    .bufferingIndicatorBuilder
+                                                    ?.call(context) ??
+                                                child!,
+                                          );
+                                        }
+                                        return const SizedBox.shrink();
+                                      },
+                                      child: const CircularProgressIndicator(
+                                        color: Color(0xFFFFFFFF),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -801,8 +832,13 @@ class _MaterialDesktopVideoControlsState
 
 /// Material design seek bar.
 class MaterialDesktopSeekBar extends StatefulWidget {
+  final VoidCallback? onSeekStart;
+  final VoidCallback? onSeekEnd;
+
   const MaterialDesktopSeekBar({
     Key? key,
+    this.onSeekStart,
+    this.onSeekEnd,
   }) : super(key: key);
 
   @override
@@ -874,12 +910,14 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
   }
 
   void onPointerDown() {
+    widget.onSeekStart?.call();
     setState(() {
       click = true;
     });
   }
 
   void onPointerUp() {
+    widget.onSeekEnd?.call();
     setState(() {
       click = false;
     });

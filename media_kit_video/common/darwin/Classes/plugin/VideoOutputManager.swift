@@ -51,7 +51,6 @@ public class VideoOutputManager: NSObject {
       return
     }
 
-    videoOutput!.dispose()
     self.videoOutputs[handle] = nil
   }
 }
