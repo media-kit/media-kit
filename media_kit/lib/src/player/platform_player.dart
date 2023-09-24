@@ -493,6 +493,7 @@ class PlayerConfiguration {
     this.logLevel = MPVLogLevel.error,
     this.bufferSize = 128 * 1024 * 1024,
     this.protocolWhitelist = const [
+      'udp',
       'rtp',
       'tcp',
       'tls',
