@@ -149,7 +149,6 @@ class _ButterFlyAssetVideoState extends State<_ButterFlyAssetVideo> {
   void initState() {
     super.initState();
     _controller = VideoPlayerController.asset('assets/Butterfly-209.mp4');
-
     _controller.addListener(() {
       setState(() {});
     });
