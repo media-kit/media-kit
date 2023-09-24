@@ -3,8 +3,24 @@
 
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:video_player_media_kit/video_player_media_kit.dart';
 
 void main() {
+  // --------------------------------------------------
+  // Make sure to add the respective packages to pubspec.yaml. e.g.
+  //
+  // dependencies:
+  //   media_kit_libs_macos_video: any
+  //   media_kit_libs_windows_video: any
+  //   media_kit_libs_linux: any
+  VideoPlayerMediaKit.ensureInitialized(
+    macOS: true,
+    windows: true,
+    linux: true,
+  );
+  // --------------------------------------------------
+
+  // Use package:video_player normally!
   runApp(
     MaterialApp(
       home: _App(),
@@ -149,6 +165,7 @@ class _ButterFlyAssetVideoState extends State<_ButterFlyAssetVideo> {
   void initState() {
     super.initState();
     _controller = VideoPlayerController.asset('assets/Butterfly-209.mp4');
+
     _controller.addListener(() {
       setState(() {});
     });
@@ -212,8 +229,7 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
     super.initState();
     _controller = VideoPlayerController.networkUrl(
       Uri.parse(
-        'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
-      ),
+          'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'),
       closedCaptionFile: _loadCaptions(),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );

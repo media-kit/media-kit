@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.zezo357" "\0"
-            VALUE "FileDescription", "flutter_meedu_videoplayer_example" "\0"
+            VALUE "CompanyName", "io.flutter.plugins" "\0"
+            VALUE "FileDescription", "example" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "flutter_meedu_videoplayer_example" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2023 com.zezo357. All rights reserved." "\0"
-            VALUE "OriginalFilename", "flutter_meedu_videoplayer_example.exe" "\0"
-            VALUE "ProductName", "flutter_meedu_videoplayer_example" "\0"
+            VALUE "InternalName", "example" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2023 io.flutter.plugins. All rights reserved." "\0"
+            VALUE "OriginalFilename", "example.exe" "\0"
+            VALUE "ProductName", "example" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

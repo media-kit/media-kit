@@ -1,7 +1,6 @@
-name: flutter_meedu_videoplayer_example
-description: Demonstrates how to use the flutter_meedu_videoplayer plugin.
-
-publish_to: "none"
+name: video_player_example
+description: Demonstrates how to use the video_player plugin.
+publish_to: none
 
 environment:
   sdk: ">=2.16.2 <3.0.0"
@@ -9,21 +8,25 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
   video_player: ^2.6.0
+
   video_player_media_kit:
     path: ../
-  file_picker: ^5.2.4
-  visibility_detector: ^0.3.3
-  media_kit_libs_ios_video: ^1.1.1
-  media_kit_libs_android_video: ^1.3.2
 
-  cupertino_icons: ^1.0.2
+  media_kit_libs_macos_video: any
+  media_kit_libs_windows_video: any
+  media_kit_libs_linux: any
 
 dev_dependencies:
+  test: any
   flutter_test:
     sdk: flutter
-
+  integration_test:
+    sdk: flutter
+  build_runner: ^2.1.10
   flutter_lints: ^2.0.1
+  path_provider: ^2.0.6
 
 flutter:
   uses-material-design: true
