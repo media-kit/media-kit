@@ -1,5 +1,5 @@
 name: video_player_media_kit
-description: this package allows video_player to work across platforms by using media_kit
+description: package:video_player support for all platforms. Based on package:media_kit.
 homepage: https://github.com/media-kit/media-kit
 repository: https://github.com/media-kit/media-kit
 version: 1.0.0
