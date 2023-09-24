@@ -1016,7 +1016,6 @@ void main() {
 
       addTearDown(player.dispose);
     },
-    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
@@ -2183,7 +2182,6 @@ void main() {
 
       await player.dispose();
     },
-    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
@@ -2247,7 +2245,6 @@ void main() {
 
       await player.dispose();
     },
-    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
@@ -2646,7 +2643,6 @@ void main() {
 
       await player.dispose();
     },
-    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
@@ -3318,7 +3314,6 @@ void main() {
 
       await player.dispose();
     },
-    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
@@ -3586,7 +3581,6 @@ Simply for <u>everyone</u>
 
       await player.dispose();
     },
-    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 2)),
   );
   test(
@@ -3882,5 +3876,3 @@ List<T> move<T>(List<T> list, int from, int to) {
   }
   return map.values.toList();
 }
-
-const kSkipFlakyTests = true;
