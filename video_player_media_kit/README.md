@@ -78,6 +78,6 @@ void main() {
 
 ## License
 
-Copyright © 2021 & onwards, Abdelaziz Mahdy <abdelaziz.h.mahdy@gmail.com>
+Copyright © 2023 & onwards, Abdelaziz Mahdy <abdelaziz.h.mahdy@gmail.com>
 
 This project & the work under this repository is governed by MIT license that can be found in the [LICENSE](./LICENSE) file.
