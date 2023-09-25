@@ -1,6 +1,6 @@
 /// This file is a part of media_kit (https://github.com/media-kit/media-kit).
 ///
-/// Copyright © 2023 & onwards, Abdelaziz Mahdy <zezohassam@gmail.com>.
+/// Copyright © 2023 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:async';
@@ -19,8 +19,8 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 ///
 class MediaKitVideoPlayer extends VideoPlayerPlatform {
   // The implementation uses [Player.hashCode] as texture ID.
-
   final _players = HashMap<int, Player>();
+  final _completers = HashMap<int, Completer<void>>();
   final _videoControllers = HashMap<int, VideoController>();
   final _streamControllers = HashMap<int, StreamController<VideoEvent>>();
   final _streamSubscriptions = HashMap<int, List<StreamSubscription>>();
@@ -35,7 +35,7 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
   /// This method is called when the plugin is first initialized and on every full restart.
   @override
   Future<void> init() async {
-    for (final int textureId in _players.keys) {
+    for (final textureId in _players.keys) {
       await dispose(textureId);
     }
 
@@ -65,11 +65,13 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
   @override
   Future<int?> create(DataSource dataSource) async {
     final player = Player();
+    final completer = Completer();
     final videoController = VideoController(player);
 
     final textureId = player.hashCode;
 
     _players[textureId] = player;
+    _completers[textureId] = completer;
     _videoControllers[textureId] = videoController;
 
     // --------------------------------------------------
@@ -105,7 +107,7 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
         resource,
         httpHeaders: httpHeaders,
       ),
-      play: true,
+      play: false,
     );
 
     return textureId;
@@ -164,6 +166,7 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
   @override
   Widget buildView(int textureId) {
     return Video(
+      key: ValueKey(_videoControllers[textureId]!),
       controller: _videoControllers[textureId]!,
       wakelock: true,
       controls: NoVideoControls,
@@ -187,41 +190,94 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
     if (_streamControllers[textureId] != null) {
       return;
     }
+
+    // NOTE: [StreamController] without broadcast buffers events.
     _streamControllers[textureId] = StreamController<VideoEvent>();
     _streamSubscriptions[textureId] = <StreamSubscription>[];
 
     final player = _players[textureId];
+    final completer = _completers[textureId];
     final streamController = _streamControllers[textureId];
     final streamSubscriptions = _streamSubscriptions[textureId];
 
     if (player != null &&
+        completer != null &&
         streamController != null &&
         streamSubscriptions != null) {
       // VideoEventType.initialized
+
+      int? width;
+      int? height;
+      Duration? duration;
+
+      void notify() {
+        if (!completer.isCompleted) {
+          if (width != null && height != null && duration != null) {
+            streamController.add(
+              VideoEvent(
+                eventType: VideoEventType.initialized,
+                size: Size(
+                  (width ?? 0) * 1.0,
+                  (height ?? 0) * 1.0,
+                ),
+                duration: player.state.duration,
+              ),
+            );
+            completer.complete();
+          }
+        }
+      }
+
+      streamSubscriptions.add(
+        player.stream.duration.listen(
+          (event) {
+            duration = event;
+            notify();
+          },
+        ),
+      );
       streamSubscriptions.add(
         player.stream.videoParams.listen(
           (event) {
-            final width = event.dw ?? 0;
-            final height = event.dh ?? 0;
-            if (width > 0 && height > 0) {
-              streamController.add(
-                VideoEvent(
-                  eventType: VideoEventType.initialized,
-                  size: Size(
-                    width * 1.0,
-                    height * 1.0,
-                  ),
-                  duration: player.state.duration,
-                ),
-              );
+            width = event.dw ?? 0;
+            height = event.dh ?? 0;
+            if ((width ?? 0) > 0 && (height ?? 0) > 0) {
+              notify();
             }
+          },
+        ),
+      );
+      streamSubscriptions.add(
+        player.stream.tracks.listen(
+          (event) {
+            // No video track is available i.e. an audio file.
+            if (event.video.length == 2) {
+              width = 0;
+              height = 0;
+              notify();
+            }
+          },
+        ),
+      );
+      // VideoEventType.isPlayingStateUpdate
+      streamSubscriptions.add(
+        player.stream.playing.listen(
+          (event) async {
+            await completer.future;
+            streamController.add(
+              VideoEvent(
+                eventType: VideoEventType.isPlayingStateUpdate,
+                isPlaying: event,
+              ),
+            );
           },
         ),
       );
       // VideoEventType.completed
       streamSubscriptions.add(
         player.stream.completed.listen(
-          (event) {
+          (event) async {
+            await completer.future;
             if (event) {
               streamController.add(
                 VideoEvent(
@@ -235,7 +291,8 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
       // VideoEventType.bufferingStart
       streamSubscriptions.add(
         player.stream.buffering.listen(
-          (event) {
+          (event) async {
+            await completer.future;
             streamController.add(
               VideoEvent(
                 eventType: event
@@ -249,7 +306,8 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
       // VideoEventType.bufferingUpdate
       streamSubscriptions.add(
         player.stream.buffer.listen(
-          (event) {
+          (event) async {
+            await completer.future;
             streamController.add(
               VideoEvent(
                 eventType: VideoEventType.bufferingUpdate,
@@ -267,7 +325,8 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
 
       streamSubscriptions.add(
         player.stream.error.listen(
-          (event) {
+          (event) async {
+            await completer.future;
             streamController.addError(
               PlatformException(
                 code: '',
