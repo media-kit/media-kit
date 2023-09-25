@@ -138,6 +138,10 @@ public class OpenGLESHelpers {
     // automatically memory managed
   }
 
+  // BUG: `glDeleteTextures` does not release `CVOpenGLESTexture`.
+  // `CVOpenGLESTextureCache` retains a direct or indirect reference to
+  // `IOSurface`, which causes a memory leak until `CVOpenGLESTextureCache` is
+  // released.
   static public func deleteTexture(
     _ context: EAGLContext,
     _ texture: CVOpenGLESTexture

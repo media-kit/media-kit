@@ -42,6 +42,9 @@ class AndroidVideoController extends PlatformVideoController {
 
   // ----------------------------------------------
 
+  bool get androidAttachSurfaceAfterVideoParameters =>
+      configuration.androidAttachSurfaceAfterVideoParameters ?? vo == 'gpu';
+
   /// --vo
   String get vo => configuration.vo ?? 'gpu';
 
@@ -58,8 +61,8 @@ class AndroidVideoController extends PlatformVideoController {
       debugPrint('media_kit: AndroidVideoController: Enforcing S/W rendering.');
       enableHardwareAcceleration = false;
     }
-    _hwdec =
-        configuration.hwdec ?? (enableHardwareAcceleration ? 'auto' : 'no');
+    _hwdec = configuration.hwdec ??
+        (enableHardwareAcceleration ? 'auto-safe' : 'no');
     return _hwdec!;
   }
 
@@ -99,7 +102,7 @@ class AndroidVideoController extends PlatformVideoController {
           // Assign --wid here if --vo is not "gpu" or "null" i.e. custom vo/hwdec was passed through [VideoControllerConfiguration].
           try {
             // ----------------------------------------------
-            if (vo != 'gpu') {
+            if (!androidAttachSurfaceAfterVideoParameters) {
               NativeLibrary.ensureInitialized();
               final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
               final values = {

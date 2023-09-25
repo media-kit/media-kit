@@ -303,7 +303,9 @@ class WebPlayer extends PlatformPlayer {
           }
         });
       });
-      await HLS.ensureInitialized(hls: test ? HLS.kHLSCDN : null);
+      await HLS.ensureInitialized(
+        hls: test ? HLS.kHLSCDN : null,
+      );
       completer.complete();
       try {
         configuration.ready?.call();
@@ -395,10 +397,19 @@ class WebPlayer extends PlatformPlayer {
         index = -1;
       }
 
-      state = state.copyWith(playing: false);
-      if (!playingController.isClosed) {
-        playingController.add(false);
-      }
+      // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, subtitle=['', ''] etc.
+      await stop(
+        open: true,
+        synchronized: false,
+      );
+
+      element.pause();
+      // Enter paused state.
+      // NOTE: Handled as part of [stop] logic.
+      // state = state.copyWith(playing: false);
+      // if (!playingController.isClosed) {
+      //   playingController.add(false);
+      // }
 
       _index = index;
       _playlist = playlist;
@@ -454,7 +465,10 @@ class WebPlayer extends PlatformPlayer {
   /// Stops the [Player].
   /// Unloads the current [Media] or [Playlist] from the [Player]. This method is similar to [dispose] but does not release the resources & [Player] is still usable.
   @override
-  Future<void> stop({bool synchronized = true}) async {
+  Future<void> stop({
+    bool open = false,
+    bool synchronized = true,
+  }) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -485,8 +499,11 @@ class WebPlayer extends PlatformPlayer {
         audioDevice: state.audioDevice,
         audioDevices: state.audioDevices,
       );
-      if (!playlistController.isClosed) {
-        playlistController.add(Playlist([]));
+      if (!open) {
+        // Do not emit PlayerStream.playlist if invoked from [open].
+        if (!playlistController.isClosed) {
+          playlistController.add(Playlist([]));
+        }
       }
       if (!playingController.isClosed) {
         playingController.add(false);
@@ -1274,7 +1291,17 @@ class WebPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      if (track.uri || track.data) {
+      // Reset existing Player.state.subtitle & Player.stream.subtitle.
+      state = state.copyWith(
+        subtitle: const PlayerState().subtitle,
+      );
+      if (!subtitleController.isClosed) {
+        subtitleController.add(state.subtitle);
+      }
+
+      if (['no', 'auto'].contains(track.id)) {
+        // N / A
+      } else if (track.uri || track.data) {
         final String uri;
         if (track.uri) {
           uri = track.id;

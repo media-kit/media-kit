@@ -80,8 +80,14 @@ class VideoControllerConfiguration {
   ///
   /// Default: Platform specific.
   /// * Windows, GNU/Linux, macOS & iOS : `auto`
-  /// * Android: `mediacodec-copy`
+  /// * Android: `auto-safe`
   final String? hwdec;
+
+  /// The scale for the video output.
+  /// This may be used for performance reasons. Specifying this option will cause [width] & [height] to be ignored.
+  ///
+  /// Default: `1.0`
+  final double scale;
 
   /// The fixed width for the video output.
   /// This may be used for performance reasons.
@@ -95,16 +101,17 @@ class VideoControllerConfiguration {
   /// Default: `null`
   final int? height;
 
-  /// The scale for the video output.
-  /// This may be used for performance reasons. Specifying this option will cause [width] & [height] to be ignored.
-  ///
-  /// Default: `1.0`
-  final double scale;
-
   /// Whether to enable hardware acceleration.
   ///
   /// Default: `true`
   final bool enableHardwareAcceleration;
+
+  /// Whether to attach `android.view.Surface` after video parameters are known.
+  ///
+  /// Default:
+  /// * [vo] == gpu : `true`
+  /// * [vo] != gpu : `false`
+  final bool? androidAttachSurfaceAfterVideoParameters;
 
   /// {@macro video_controller_configuration}
   const VideoControllerConfiguration({
@@ -114,5 +121,6 @@ class VideoControllerConfiguration {
     this.height,
     this.scale = 1.0,
     this.enableHardwareAcceleration = true,
+    this.androidAttachSurfaceAfterVideoParameters,
   });
 }

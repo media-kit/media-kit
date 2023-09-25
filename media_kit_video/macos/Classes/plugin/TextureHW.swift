@@ -31,16 +31,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
     self.initMPV()
   }
 
-  public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
-    let textureContext = textureContexts.current
-    if textureContext == nil {
-      return nil
-    }
-
-    return Unmanaged.passRetained(textureContext!.pixelBuffer)
-  }
-
-  public func dispose() {
+  deinit {
     disposePixelBuffer()
     disposeMPV()
     OpenGLHelpers.deleteTextureCache(textureCache)
@@ -51,6 +42,15 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
     // Potential fix: use a counter, and delete it only when the counter reaches
     // zero
     OpenGLHelpers.deleteContext(context)
+  }
+
+  public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
+    let textureContext = textureContexts.current
+    if textureContext == nil {
+      return nil
+    }
+
+    return Unmanaged.passRetained(textureContext!.pixelBuffer)
   }
 
   private func initMPV() {
@@ -102,6 +102,13 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   private func disposeMPV() {
+    CGLSetCurrentContext(context)
+    defer {
+      OpenGLHelpers.checkError("disposeMPV")
+      CGLSetCurrentContext(nil)
+    }
+
+    mpv_render_context_set_update_callback(renderContext, nil, nil)
     mpv_render_context_free(renderContext)
   }
 

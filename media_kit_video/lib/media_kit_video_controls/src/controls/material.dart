@@ -10,8 +10,9 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:volume_controller/volume_controller.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
-import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_controls_theme_data_injector.dart';
 
 /// {@template material_video_controls}
 ///
@@ -19,35 +20,18 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/vi
 ///
 /// {@endtemplate}
 Widget MaterialVideoControls(VideoState state) {
-  final theme = MaterialVideoControlsTheme.maybeOf(state.context);
-  if (theme == null) {
-    return const ControlsThemeDataBuilderInheritedWidget(
-      controlsThemeDataBuilder: null,
-      child: MaterialVideoControlsTheme(
-        normal: kDefaultMaterialVideoControlsThemeData,
-        fullscreen: kDefaultMaterialVideoControlsThemeDataFullscreen,
-        child: _MaterialVideoControls(),
-      ),
-    );
-  } else {
-    return ControlsThemeDataBuilderInheritedWidget(
-      controlsThemeDataBuilder: (child) {
-        return MaterialVideoControlsTheme(
-          normal: theme.normal,
-          fullscreen: theme.fullscreen,
-          child: child,
-        );
-      },
-      child: const _MaterialVideoControls(),
-    );
-  }
+  return const VideoControlsThemeDataInjector(
+    child: _MaterialVideoControls(),
+  );
 }
 
 /// [MaterialVideoControlsThemeData] available in this [context].
 MaterialVideoControlsThemeData _theme(BuildContext context) =>
     FullscreenInheritedWidget.maybeOf(context) == null
-        ? MaterialVideoControlsTheme.of(context).normal
-        : MaterialVideoControlsTheme.of(context).fullscreen;
+        ? MaterialVideoControlsTheme.maybeOf(context)?.normal ??
+            kDefaultMaterialVideoControlsThemeData
+        : MaterialVideoControlsTheme.maybeOf(context)?.fullscreen ??
+            kDefaultMaterialVideoControlsThemeDataFullscreen;
 
 /// Default [MaterialVideoControlsThemeData].
 const kDefaultMaterialVideoControlsThemeData = MaterialVideoControlsThemeData();
@@ -62,6 +46,7 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   brightnessGesture: true,
   seekOnDoubleTap: true,
   visibleOnMount: false,
+  backdropColor: Color(0x66000000),
   padding: null,
   controlsHoverDuration: Duration(seconds: 3),
   controlsTransitionDuration: Duration(milliseconds: 300),
@@ -135,6 +120,9 @@ class MaterialVideoControlsThemeData {
 
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
+
+  /// Color of backdrop that comes up when controls are visible.
+  final Color? backdropColor;
 
   // GENERIC
 
@@ -225,6 +213,7 @@ class MaterialVideoControlsThemeData {
     this.brightnessGesture = false,
     this.seekOnDoubleTap = true,
     this.visibleOnMount = false,
+    this.backdropColor = const Color(0x66000000),
     this.padding,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 300),
@@ -271,6 +260,7 @@ class MaterialVideoControlsThemeData {
     bool? brightnessGesture,
     bool? seekOnDoubleTap,
     bool? visibleOnMount,
+    Color? backdropColor,
     Duration? controlsHoverDuration,
     Duration? controlsTransitionDuration,
     Widget Function(BuildContext)? bufferingIndicatorBuilder,
@@ -305,6 +295,7 @@ class MaterialVideoControlsThemeData {
       brightnessGesture: brightnessGesture ?? this.brightnessGesture,
       seekOnDoubleTap: seekOnDoubleTap ?? this.seekOnDoubleTap,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
+      backdropColor: backdropColor ?? this.backdropColor,
       controlsHoverDuration:
           controlsHoverDuration ?? this.controlsHoverDuration,
       controlsTransitionDuration:
@@ -616,7 +607,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: ThemeData(
+      data: Theme.of(context).copyWith(
         focusColor: const Color(0x00000000),
         hoverColor: const Color(0x00000000),
         splashColor: const Color(0x00000000),
@@ -763,7 +754,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           onTap();
                         },
                         child: Container(
-                          color: const Color(0x66000000),
+                          color: _theme(context).backdropColor,
                         ),
                       ),
                     ),
@@ -868,7 +859,24 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                               alignment: Alignment.bottomCenter,
                               children: [
                                 if (_theme(context).displaySeekBar)
-                                  const MaterialSeekBar(),
+                                  MaterialSeekBar(
+                                    onSeekStart: () {
+                                      _timer?.cancel();
+                                    },
+                                    onSeekEnd: () {
+                                      _timer = Timer(
+                                        _theme(context).controlsHoverDuration,
+                                        () {
+                                          if (mounted) {
+                                            setState(() {
+                                              visible = false;
+                                            });
+                                            unshiftSubtitle();
+                                          }
+                                        },
+                                      );
+                                    },
+                                  ),
                                 Container(
                                   height: _theme(context).buttonBarHeight,
                                   margin: _theme(context).bottomButtonBarMargin,
@@ -926,19 +934,30 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       ),
                       Expanded(
                         child: Center(
-                          child: AnimatedOpacity(
-                            curve: Curves.easeInOut,
-                            opacity: buffering ? 1.0 : 0.0,
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween<double>(
+                              begin: 0.0,
+                              end: buffering ? 1.0 : 0.0,
+                            ),
                             duration:
                                 _theme(context).controlsTransitionDuration,
-                            child: _theme(context)
-                                    .bufferingIndicatorBuilder
-                                    ?.call(context) ??
-                                const Center(
-                                  child: CircularProgressIndicator(
-                                    color: Color(0xFFFFFFFF),
-                                  ),
-                                ),
+                            builder: (context, value, child) {
+                              // Only mount the buffering indicator if the opacity is greater than 0.0.
+                              // This has been done to prevent redundant resource usage in [CircularProgressIndicator].
+                              if (value > 0.0) {
+                                return Opacity(
+                                  opacity: value,
+                                  child: _theme(context)
+                                          .bufferingIndicatorBuilder
+                                          ?.call(context) ??
+                                      child!,
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                            child: const CircularProgressIndicator(
+                              color: Color(0xFFFFFFFF),
+                            ),
                           ),
                         ),
                       ),
@@ -1064,8 +1083,15 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 /// Material design seek bar.
 class MaterialSeekBar extends StatefulWidget {
   final ValueNotifier<Duration>? delta;
+  final VoidCallback? onSeekStart;
+  final VoidCallback? onSeekEnd;
 
-  const MaterialSeekBar({Key? key, this.delta}) : super(key: key);
+  const MaterialSeekBar({
+    Key? key,
+    this.delta,
+    this.onSeekStart,
+    this.onSeekEnd,
+  }) : super(key: key);
 
   @override
   MaterialSeekBarState createState() => MaterialSeekBarState();
@@ -1151,12 +1177,14 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   }
 
   void onPointerDown() {
+    widget.onSeekStart?.call();
     setState(() {
       tapped = true;
     });
   }
 
   void onPointerUp() {
+    widget.onSeekEnd?.call();
     setState(() {
       tapped = false;
     });
@@ -1220,6 +1248,7 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
         builder: (context, constraints) => MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
+            onHorizontalDragUpdate: (_) {},
             onPanStart: (e) => onPanStart(e, constraints),
             onPanDown: (e) => onPanDown(e, constraints),
             onPanUpdate: (e) => onPanUpdate(e, constraints),
@@ -1463,7 +1492,7 @@ class MaterialFullscreenButton extends StatelessWidget {
 
 // BUTTON: CUSTOM
 
-/// Material design fullscreen button.
+/// Material design custom button.
 class MaterialCustomButton extends StatelessWidget {
   /// Icon for [MaterialCustomButton].
   final Widget? icon;
@@ -1489,7 +1518,7 @@ class MaterialCustomButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed,
-      icon: icon ?? const Icon(Icons.fullscreen),
+      icon: icon ?? const Icon(Icons.settings),
       padding: EdgeInsets.zero,
       iconSize: iconSize ?? _theme(context).buttonBarButtonSize,
       color: iconColor ?? _theme(context).buttonBarButtonColor,

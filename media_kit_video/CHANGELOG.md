@@ -1,3 +1,7 @@
+## 1.1.8
+
+- fix: pass all `*VideoControlsTheme`(s) to fullscreen `context`
+
 ## 1.1.7
 
 - fix: add `await` to `maybePop` when exiting fullscreen

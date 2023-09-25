@@ -1,7 +1,7 @@
 all: Frameworks/*.xcframework Frameworks/.symlinks
 
-MPV_XCFRAMEWORKS_VERSION=v0.5.3
-MPV_XCFRAMEWORKS_SHA256SUM=c061bfdf74812d15abdc01c6d38b8015a26311a8faf188fdf2e6b66aa5ae6c73
+MPV_XCFRAMEWORKS_VERSION=v0.5.8
+MPV_XCFRAMEWORKS_SHA256SUM=87e3c46ec05bc72cb39c6b920942857c8e0bcccba27c88619f118ec4f66a7168
 
 .cache/xcframeworks/libmpv-xcframeworks-${MPV_XCFRAMEWORKS_VERSION}-macos-universal.tar.gz:
 	mkdir -p .cache/xcframeworks

@@ -149,21 +149,28 @@ class NativePlayer extends PlatformPlayer {
       current.clear();
       current.addAll(playlist);
 
-      final commands = [
-        // Clear existing playlist & change currently playing index to none.
-        // This causes playback to stop & player to enter the idle state.
-        'stop',
-        'playlist-clear',
-        'playlist-play-index none',
-      ];
-      for (final command in commands) {
-        final args = command.toNativeUtf8();
-        mpv.mpv_command_string(
-          ctx,
-          args.cast(),
-        );
-        calloc.free(args);
-      }
+      // NOTE: Handled as part of [stop] logic.
+      // final commands = [
+      //   // Clear existing playlist & change currently playing index to none.
+      //   // This causes playback to stop & player to enter the idle state.
+      //   'stop',
+      //   'playlist-clear',
+      //   'playlist-play-index none',
+      // ];
+      // for (final command in commands) {
+      //   final args = command.toNativeUtf8();
+      //   mpv.mpv_command_string(
+      //     ctx,
+      //     args.cast(),
+      //   );
+      //   calloc.free(args);
+      // }
+
+      // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, subtitle=['', ''] etc.
+      await stop(
+        open: true,
+        synchronized: false,
+      );
 
       // Enter paused state.
       {
@@ -182,17 +189,20 @@ class NativePlayer extends PlatformPlayer {
             ctx,
             command.cast(),
           );
+          // NOTE: Handled as part of [stop] logic.
+          // state = state.copyWith(playing: false);
+          // if (!playingController.isClosed) {
+          //   playingController.add(false);
+          // }
         }
+
         calloc.free(name);
         calloc.free(value);
-        state = state.copyWith(playing: false);
-        if (!playingController.isClosed) {
-          playingController.add(false);
-        }
       }
 
-      isShuffleEnabled = false;
-      isPlayingStateChangeAllowed = false;
+      // NOTE: Handled as part of [stop] logic.
+      // isShuffleEnabled = false;
+      // isPlayingStateChangeAllowed = false;
 
       for (int i = 0; i < playlist.length; i++) {
         await _command(
@@ -256,7 +266,10 @@ class NativePlayer extends PlatformPlayer {
   /// Stops the [Player].
   /// Unloads the current [Media] or [Playlist] from the [Player]. This method is similar to [dispose] but does not release the resources & [Player] is still usable.
   @override
-  Future<void> stop({bool synchronized = true}) async {
+  Future<void> stop({
+    bool open = false,
+    bool synchronized = true,
+  }) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -291,8 +304,11 @@ class NativePlayer extends PlatformPlayer {
         audioDevice: state.audioDevice,
         audioDevices: state.audioDevices,
       );
-      if (!playlistController.isClosed) {
-        playlistController.add(Playlist([]));
+      if (!open) {
+        // Do not emit PlayerStream.playlist if invoked from [open].
+        if (!playlistController.isClosed) {
+          playlistController.add(Playlist([]));
+        }
       }
       if (!playingController.isClosed) {
         playingController.add(false);
@@ -711,22 +727,20 @@ class NativePlayer extends PlatformPlayer {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
       }
+
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      // Raw `mpv_command` calls cause crash on Windows.
-      final args = [
-        'seek',
-        (duration.inMilliseconds / 1000).toStringAsFixed(4),
-        'absolute',
-      ].join(' ').toNativeUtf8();
-      mpv.mpv_command_string(
-        ctx,
-        args.cast(),
+      await compute(
+        _seek,
+        _SeekData(
+          ctx.address,
+          NativeLibrary.path,
+          duration,
+        ),
       );
-      calloc.free(args);
 
-      // It is self explanatory that PlayerState.completed & PlayerStreams.completed must enter the false state if seek is called. Typically after EOF.
+      // It is self explanatory that PlayerState.completed & PlayerStream.completed must enter the false state if seek is called. Typically after EOF.
       // https://github.com/media-kit/media-kit/issues/221
       state = state.copyWith(completed: false);
       if (!completedController.isClosed) {
@@ -1201,6 +1215,14 @@ class NativePlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      // Reset existing Player.state.subtitle & Player.stream.subtitle.
+      state = state.copyWith(
+        subtitle: const PlayerState().subtitle,
+      );
+      if (!subtitleController.isClosed) {
+        subtitleController.add(state.subtitle);
+      }
 
       if (track.uri || track.data) {
         final String uri;
@@ -2311,8 +2333,6 @@ class NativePlayer extends PlatformPlayer {
         'keep-open': 'yes',
         'audio-display': 'no',
         'network-timeout': '5',
-        // On Android, prefer OpenSL ES audio output.
-        // AudioTrack audio output is prone to crashes in some rare cases.
         if (AndroidHelper.isPhysicalDevice || AndroidHelper.APILevel > 25)
           'ao': 'opensles'
         // Disable audio output on older Android emulators with API Level < 25.
@@ -2514,21 +2534,51 @@ class NativePlayer extends PlatformPlayer {
 // Performance sensitive methods in [Player] are executed in an [Isolate].
 // This avoids blocking the Dart event loop for long periods of time.
 //
-// TBD(@alexmercerind): Maybe eventually move all methods to [Isolate]?
+// TODO: Maybe eventually move all methods to [Isolate]?
 // --------------------------------------------------
+
+class _SeekData {
+  final int ctx;
+  final String lib;
+  final Duration duration;
+
+  _SeekData(
+    this.ctx,
+    this.lib,
+    this.duration,
+  );
+}
+
+/// [NativePlayer.seek]
+void _seek(_SeekData data) {
+  // ---------
+  final mpv = generated.MPV(DynamicLibrary.open(data.lib));
+  final ctx = Pointer<generated.mpv_handle>.fromAddress(data.ctx);
+  // ---------
+  final duration = data.duration;
+  // ---------
+  final value = duration.inMilliseconds / 1000;
+  final command = 'seek ${value.toStringAsFixed(4)} absolute'.toNativeUtf8();
+  mpv.mpv_command_string(
+    ctx,
+    command.cast(),
+  );
+  calloc.free(command);
+}
 
 class _ScreenshotData {
   final int ctx;
   final String lib;
   final String? format;
 
-  _ScreenshotData(
+  const _ScreenshotData(
     this.ctx,
     this.lib,
     this.format,
   );
 }
 
+/// [NativePlayer.screenshot]
 Uint8List? _screenshot(_ScreenshotData data) {
   // ---------
   final mpv = generated.MPV(DynamicLibrary.open(data.lib));
