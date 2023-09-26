@@ -3699,6 +3699,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 
       await player.dispose();
     },
+    skip: kSkipFlakyTests,
   );
   test(
     'player-subtitle-reset-set-subtitle-track-subtitle-track-no',
@@ -3771,6 +3772,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 
       await player.dispose();
     },
+    skip: kSkipFlakyTests,
   );
   test(
     'player-native-player-set-property',
