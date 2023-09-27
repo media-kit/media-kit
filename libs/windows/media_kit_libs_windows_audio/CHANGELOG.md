@@ -1,3 +1,8 @@
+## 1.0.9
+
+- [mpv-player/mpv@`652a1dd`](https://github.com/mpv-player/mpv/commit/652a1dd90711839acdccc08004056d25514ef2d8)
+- feat: improve compile-time failure handling
+
 ## 1.0.8
 
 - [mpv-player/mpv@`ce79976`](https://github.com/mpv-player/mpv/commit/ce7997649816e4d6c05071fbd4ecac0557120720)

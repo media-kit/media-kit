@@ -17,36 +17,35 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 #
 # Refer to "Static Override" section in mimalloc's documentation:
 # https://github.com/microsoft/mimalloc#static-override
-
-
 function(download_and_verify url md5 locationForArchive)
-    # Check if the archive exists.
-    if(EXISTS "${locationForArchive}")
-        file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+  # Check if the archive exists.
+  if(EXISTS "${locationForArchive}")
+    file(MD5 "${locationForArchive}" ARCHIVE_MD5)
 
-        # If MD5 doesn't match, delete the archive to download again.
-        if(NOT md5 STREQUAL ARCHIVE_MD5)
-            file(REMOVE "${locationForArchive}")
-            message(STATUS "MD5 mismatch. File deleted.")
-        endif()
+    # If MD5 doesn't match, delete the archive to download again.
+    if(NOT md5 STREQUAL ARCHIVE_MD5)
+      file(REMOVE "${locationForArchive}")
+      message(STATUS "MD5 mismatch. File deleted.")
     endif()
+  endif()
 
-    # Download the archive if it doesn't exist.
-    if(NOT EXISTS "${locationForArchive}")
-        message(STATUS "Downloading archive from ${url}...")
-        file(DOWNLOAD "${url}" "${locationForArchive}")
-        message(STATUS "Downloaded archive to ${locationForArchive}.")
+  # Download the archive if it doesn't exist.
+  if(NOT EXISTS "${locationForArchive}")
+    message(STATUS "Downloading archive from ${url}...")
+    file(DOWNLOAD "${url}" "${locationForArchive}")
+    message(STATUS "Downloaded archive to ${locationForArchive}.")
 
-        # Verify MD5 of the newly downloaded file.
-        file(MD5 "${locationForArchive}" ARCHIVE_MD5)
-        if(md5 STREQUAL ARCHIVE_MD5)
-            message(STATUS "${locationForArchive} Verification successful.")
-        else()
-            message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to rebuild project again.")
-        endif()
+    # Verify MD5 of the newly downloaded file.
+    file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+
+    if(md5 STREQUAL ARCHIVE_MD5)
+      message(STATUS "${locationForArchive} Verification successful.")
+    else()
+      message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to rebuild project again.")
     endif()
-
+  endif()
 endfunction()
+
 # ------------------------------------------------------------------------------
 set(MIMALLOC "mimalloc-2.1.2.tar.gz")
 
@@ -63,20 +62,21 @@ download_and_verify(
 )
 
 function(check_directory_exists_and_not_empty dir result_var)
-    # Check if the directory exists
-    if(EXISTS "${dir}")
-        # Check if the directory is not empty
-        file(GLOB dir_contents "${dir}/*")
-        if(dir_contents)
-            set(${result_var} TRUE PARENT_SCOPE)
-        else()
-            set(${result_var} FALSE PARENT_SCOPE)
-            message(STATUS "Directory ${dir} exists but is empty!")
-        endif()
+  # Check if the directory exists
+  if(EXISTS "${dir}")
+    # Check if the directory is not empty
+    file(GLOB dir_contents "${dir}/*")
+
+    if(dir_contents)
+      set(${result_var} TRUE PARENT_SCOPE)
     else()
-        set(${result_var} FALSE PARENT_SCOPE)
-        message(STATUS "Directory ${dir} does not exist!")
+      set(${result_var} FALSE PARENT_SCOPE)
+      message(STATUS "Directory ${dir} exists but is empty!")
     endif()
+  else()
+    set(${result_var} FALSE PARENT_SCOPE)
+    message(STATUS "Directory ${dir} does not exist!")
+  endif()
 endfunction()
 
 # Extract
