@@ -1,3 +1,7 @@
+## 1.0.2
+
+- build: bump dependencies
+
 ## 1.0.1
 
 - chore: declare `flutter` as `environment` in `pubspec.yaml`

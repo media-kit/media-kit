@@ -14,57 +14,58 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 
 # ------------------------------------------------------------------------------
 function(download_and_verify url md5 locationForArchive)
-    # Check if the archive exists.
-    if(EXISTS "${locationForArchive}")
-        file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+  # Check if the archive exists.
+  if(EXISTS "${locationForArchive}")
+    file(MD5 "${locationForArchive}" ARCHIVE_MD5)
 
-        # If MD5 doesn't match, delete the archive to download again.
-        if(NOT md5 STREQUAL ARCHIVE_MD5)
-            file(REMOVE "${locationForArchive}")
-            message(STATUS "MD5 mismatch. File deleted.")
-        endif()
+    # If MD5 doesn't match, delete the archive to download again.
+    if(NOT md5 STREQUAL ARCHIVE_MD5)
+      file(REMOVE "${locationForArchive}")
+      message(STATUS "MD5 mismatch. File deleted.")
     endif()
+  endif()
 
-    # Download the archive if it doesn't exist.
-    if(NOT EXISTS "${locationForArchive}")
-        message(STATUS "Downloading archive from ${url}...")
-        file(DOWNLOAD "${url}" "${locationForArchive}")
-        message(STATUS "Downloaded archive to ${locationForArchive}.")
+  # Download the archive if it doesn't exist.
+  if(NOT EXISTS "${locationForArchive}")
+    message(STATUS "Downloading archive from ${url}...")
+    file(DOWNLOAD "${url}" "${locationForArchive}")
+    message(STATUS "Downloaded archive to ${locationForArchive}.")
 
-        # Verify MD5 of the newly downloaded file.
-        file(MD5 "${locationForArchive}" ARCHIVE_MD5)
-        if(md5 STREQUAL ARCHIVE_MD5)
-            message(STATUS "${locationForArchive} Verification successful.")
-        else()
-            message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to rebuild project again.")
-        endif()
+    # Verify MD5 of the newly downloaded file.
+    file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+
+    if(md5 STREQUAL ARCHIVE_MD5)
+      message(STATUS "${locationForArchive} Verification successful.")
+    else()
+      message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to re-build project again.")
     endif()
-
+  endif()
 endfunction()
 
 function(check_directory_exists_and_not_empty dir result_var)
-    # Check if the directory exists
-    if(EXISTS "${dir}")
-        # Check if the directory is not empty
-        file(GLOB dir_contents "${dir}/*")
-        if(dir_contents)
-            set(${result_var} TRUE PARENT_SCOPE)
-        else()
-            set(${result_var} FALSE PARENT_SCOPE)
-            message(STATUS "Directory ${dir} exists but is empty!")
-        endif()
+  # Check if the directory exists
+  if(EXISTS "${dir}")
+    # Check if the directory is not empty
+    file(GLOB dir_contents "${dir}/*")
+
+    if(dir_contents)
+      set(${result_var} TRUE PARENT_SCOPE)
     else()
-        set(${result_var} FALSE PARENT_SCOPE)
-        message(STATUS "Directory ${dir} does not exist!")
+      set(${result_var} FALSE PARENT_SCOPE)
+      message(STATUS "Directory ${dir} exists but is empty!")
     endif()
+  else()
+    set(${result_var} FALSE PARENT_SCOPE)
+    message(STATUS "Directory ${dir} does not exist!")
+  endif()
 endfunction()
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20230825-git-c0fb9b4.7z")
+set(LIBMPV "mpv-dev-x86_64-20230924-git-652a1dd.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-08-25/${LIBMPV}")
-set(LIBMPV_MD5 "cab756b2491897f7cc5e4f17fddf6793")
+set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-09-24/${LIBMPV}")
+set(LIBMPV_MD5 "a832ef24b3a6ff97cd2560b5b9d04cd8")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")

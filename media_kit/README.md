@@ -38,17 +38,17 @@
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.7                              # Primary package.
-  media_kit_video: ^1.1.8                        # For video rendering.
-  media_kit_libs_video: ^1.0.1                   # Native video dependencies.
+  media_kit: ^1.1.8                              # Primary package.
+  media_kit_video: ^1.1.9                        # For video rendering.
+  media_kit_libs_video: ^1.0.2                   # Native video dependencies.
 ```
 
 #### For apps that need audio playback:
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.7                              # Primary package.  
-  media_kit_libs_audio: ^1.0.1                   # Native audio dependencies.
+  media_kit: ^1.1.8                              # Primary package.  
+  media_kit_libs_audio: ^1.0.2                   # Native audio dependencies.
 ```
 
 **Notes:**
@@ -62,11 +62,11 @@ dependencies:
 
 | Platform | Video | Audio | Notes | Demo |
 | -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.7/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.7/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.7/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.7/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.7/media_kit_test_linux_x64.7z)          |
+| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.8/media_kit_test_android-arm64-v8a.apk) |
+| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.8/media_kit_test_ios_arm64.7z)          |
+| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.8/media_kit_test_macos_universal.7z)    |
+| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.8/media_kit_test_win32_x64.7z)          |
+| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.8/media_kit_test_linux_x64.7z)          |
 | Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://media-kit.github.io/media-kit/)                                                                            |
 
 
@@ -1521,18 +1521,18 @@ Edit `android/app/src/main/AndroidManifest.xml` to add the following permissions
       -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!--
-      Storage access permissions.
-      Android 12 or lower.
-      -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <!--
       Media access permissions.
       Android 13 or higher.
       https://developer.android.com/about/versions/13/behavior-changes-13#granular-media-permissions
       -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <!--
+      Storage access permissions.
+      Android 12 or lower.
+      -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 </manifest>
 ```
 
@@ -1540,21 +1540,23 @@ Use [`package:permission_handler`](https://pub.dev/packages/permission_handler) 
 
 ```dart
 if (/* Android 13 or higher. */) {
-  if (await Permission.storage.isDenied || await Permission.storage.isPermanentlyDenied) {
-    final state = await Permission.storage.request();
+  // Video permissions.
+  if (await Permission.videos.isDenied || await Permission.videos.isPermanentlyDenied) {
+    final state = await Permission.videos.request();
     if (!state.isGranted) {
       await SystemNavigator.pop();
     }
   }
-} else {
+  // Audio permissions.
   if (await Permission.audio.isDenied || await Permission.audio.isPermanentlyDenied) {
     final state = await Permission.audio.request();
     if (!state.isGranted) {
       await SystemNavigator.pop();
     }
   }
-  if (await Permission.videos.isDenied || await Permission.videos.isPermanentlyDenied) {
-    final state = await Permission.videos.request();
+} else {
+  if (await Permission.storage.isDenied || await Permission.storage.isPermanentlyDenied) {
+    final state = await Permission.storage.request();
     if (!state.isGranted) {
       await SystemNavigator.pop();
     }

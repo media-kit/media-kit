@@ -1,3 +1,7 @@
+## 1.1.3
+
+- feat: improve compile-time failure handling
+
 ## 1.1.2
 
 - build: bump libraries
