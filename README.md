@@ -1528,18 +1528,18 @@ Edit `android/app/src/main/AndroidManifest.xml` to add the following permissions
       -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!--
-      Storage access permissions.
-      Android 12 or lower.
-      -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <!--
       Media access permissions.
       Android 13 or higher.
       https://developer.android.com/about/versions/13/behavior-changes-13#granular-media-permissions
       -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <!--
+      Storage access permissions.
+      Android 12 or lower.
+      -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 </manifest>
 ```
 
@@ -1547,21 +1547,23 @@ Use [`package:permission_handler`](https://pub.dev/packages/permission_handler) 
 
 ```dart
 if (/* Android 13 or higher. */) {
-  if (await Permission.storage.isDenied || await Permission.storage.isPermanentlyDenied) {
-    final state = await Permission.storage.request();
+  // Video permissions.
+  if (await Permission.videos.isDenied || await Permission.videos.isPermanentlyDenied) {
+    final state = await Permission.videos.request();
     if (!state.isGranted) {
       await SystemNavigator.pop();
     }
   }
-} else {
+  // Audio permissions.
   if (await Permission.audio.isDenied || await Permission.audio.isPermanentlyDenied) {
     final state = await Permission.audio.request();
     if (!state.isGranted) {
       await SystemNavigator.pop();
     }
   }
-  if (await Permission.videos.isDenied || await Permission.videos.isPermanentlyDenied) {
-    final state = await Permission.videos.request();
+} else {
+  if (await Permission.storage.isDenied || await Permission.storage.isPermanentlyDenied) {
+    final state = await Permission.storage.request();
     if (!state.isGranted) {
       await SystemNavigator.pop();
     }
