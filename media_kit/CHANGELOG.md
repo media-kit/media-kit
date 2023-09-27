@@ -1,3 +1,7 @@
+## 1.1.8+1
+
+- docs: document updated `media_kit_video`, `media_kit_libs_video` & `media_kit_libs_audio`
+
 ## 1.1.8
 
 - fix: reset subtitle state/stream in `Player.setSubtitleTrack`

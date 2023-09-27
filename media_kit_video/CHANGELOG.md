@@ -1,3 +1,7 @@
+## 1.2.0
+
+- fix: `MaterialVideoControls` layout
+
 ## 1.1.9
 
 - fix: unmount `CircularProgressIndicator` buffering indicator if invisible
