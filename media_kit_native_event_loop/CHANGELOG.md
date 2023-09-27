@@ -1,3 +1,7 @@
+## 1.0.8
+
+- fix(windows): graceful process exit
+
 ## 1.0.7
 
 - build(darwin): bump `mpv` headers to `0.36.0`

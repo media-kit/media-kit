@@ -1,3 +1,19 @@
+## 1.1.9
+
+- fix: unmount `CircularProgressIndicator` buffering indicator if invisible
+- fix: pass all video attributes to fullscreen route
+- fix: prevent controls from hiding during seek
+- fix: hide last video's frame upon `Player.open`
+- fix: `ThemeData.copyWith` override
+- fix(android): `hwdec=auto-safe` w/ `enableHardwareAcceleration=true`
+- fix(windows): fullscreen for non-primary monitors
+- fix(darwin): `mpv_render_context_free` call
+- fix(darwin): memory leaks
+- fix(ios): fix `disposeMPV`
+- feat: `VideoControllerConfiguration.androidAttachSurfaceAfterVideoParameters`
+- feat: center the seek-bar within its parent `Container` for improved tap area
+- feat: `backdropColor` argument in `MaterialVideoControlsThemeData`
+
 ## 1.1.8
 
 - fix: pass all `*VideoControlsTheme`(s) to fullscreen `context`
