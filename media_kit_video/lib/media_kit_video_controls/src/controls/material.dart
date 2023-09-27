@@ -1260,56 +1260,54 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
                 color: Colors.transparent,
                 width: constraints.maxWidth,
                 height: _theme(context).seekBarContainerHeight,
-                child: Center(
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.bottomLeft,
-                    children: [
-                      Container(
-                        width: constraints.maxWidth,
-                        height: _theme(context).seekBarHeight,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.bottomLeft,
+                  children: [
+                    Container(
+                      width: constraints.maxWidth,
+                      height: _theme(context).seekBarHeight,
+                      alignment: Alignment.bottomLeft,
+                      color: _theme(context).seekBarColor,
+                      child: Stack(
+                        clipBehavior: Clip.none,
                         alignment: Alignment.bottomLeft,
-                        color: _theme(context).seekBarColor,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          alignment: Alignment.bottomLeft,
-                          children: [
-                            Container(
-                              width: constraints.maxWidth * bufferPercent,
-                              color: _theme(context).seekBarBufferColor,
-                            ),
-                            Container(
-                              width: tapped
-                                  ? constraints.maxWidth * slider
-                                  : constraints.maxWidth * positionPercent,
-                              color: _theme(context).seekBarPositionColor,
-                            ),
-                          ],
-                        ),
+                        children: [
+                          Container(
+                            width: constraints.maxWidth * bufferPercent,
+                            color: _theme(context).seekBarBufferColor,
+                          ),
+                          Container(
+                            width: tapped
+                                ? constraints.maxWidth * slider
+                                : constraints.maxWidth * positionPercent,
+                            color: _theme(context).seekBarPositionColor,
+                          ),
+                        ],
                       ),
-                      Positioned(
-                        left: tapped
-                            ? (constraints.maxWidth -
-                                    _theme(context).seekBarThumbSize / 2) *
-                                slider
-                            : (constraints.maxWidth -
-                                    _theme(context).seekBarThumbSize / 2) *
-                                positionPercent,
-                        bottom: -1.0 * _theme(context).seekBarThumbSize / 2 +
-                            _theme(context).seekBarHeight / 2,
-                        child: Container(
-                          width: _theme(context).seekBarThumbSize,
-                          height: _theme(context).seekBarThumbSize,
-                          decoration: BoxDecoration(
-                            color: _theme(context).seekBarThumbColor,
-                            borderRadius: BorderRadius.circular(
-                              _theme(context).seekBarThumbSize / 2,
-                            ),
+                    ),
+                    Positioned(
+                      left: tapped
+                          ? (constraints.maxWidth -
+                                  _theme(context).seekBarThumbSize / 2) *
+                              slider
+                          : (constraints.maxWidth -
+                                  _theme(context).seekBarThumbSize / 2) *
+                              positionPercent,
+                      bottom: -1.0 * _theme(context).seekBarThumbSize / 2 +
+                          _theme(context).seekBarHeight / 2,
+                      child: Container(
+                        width: _theme(context).seekBarThumbSize,
+                        height: _theme(context).seekBarThumbSize,
+                        decoration: BoxDecoration(
+                          color: _theme(context).seekBarThumbColor,
+                          borderRadius: BorderRadius.circular(
+                            _theme(context).seekBarThumbSize / 2,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
