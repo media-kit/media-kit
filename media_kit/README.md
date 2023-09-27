@@ -39,8 +39,8 @@
 ```yaml
 dependencies:
   media_kit: ^1.1.8                              # Primary package.
-  media_kit_video: ^1.1.9                        # For video rendering.
-  media_kit_libs_video: ^1.0.2                   # Native video dependencies.
+  media_kit_video: ^1.2.0                        # For video rendering.
+  media_kit_libs_video: ^1.0.3                   # Native video dependencies.
 ```
 
 #### For apps that need audio playback:
@@ -48,7 +48,7 @@ dependencies:
 ```yaml
 dependencies:
   media_kit: ^1.1.8                              # Primary package.  
-  media_kit_libs_audio: ^1.0.2                   # Native audio dependencies.
+  media_kit_libs_audio: ^1.0.3                   # Native audio dependencies.
 ```
 
 **Notes:**
