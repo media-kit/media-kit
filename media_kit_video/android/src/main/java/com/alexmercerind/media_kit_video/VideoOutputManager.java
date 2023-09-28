@@ -1,6 +1,6 @@
 /**
  * This file is a part of media_kit (https://github.com/media-kit/media-kit).
- *
+ * <p>
  * Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
  * All rights reserved.
  * Use of this source code is governed by MIT license that can be found in the LICENSE file.
@@ -9,8 +9,8 @@ package com.alexmercerind.media_kit_video;
 
 import android.util.Log;
 
-import java.util.Locale;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Objects;
 
 import io.flutter.plugin.common.MethodChannel;

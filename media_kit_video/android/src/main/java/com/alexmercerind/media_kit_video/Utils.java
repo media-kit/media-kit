@@ -1,6 +1,6 @@
 /**
  * This file is a part of media_kit (https://github.com/media-kit/media-kit).
- *
+ * <p>
  * Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
  * All rights reserved.
  * Use of this source code is governed by MIT license that can be found in the LICENSE file.
@@ -29,7 +29,7 @@ public abstract class Utils {
                     || Build.PRODUCT.contains("vbox86p")
                     || Build.PRODUCT.contains("emulator")
                     || Build.PRODUCT.contains("simulator");
-        } catch(Throwable e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return false;

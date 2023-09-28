@@ -70,6 +70,8 @@ class AndroidVideoController extends PlatformVideoController {
 
   // ----------------------------------------------
 
+  String? _current;
+
   /// {@macro android_video_controller}
   AndroidVideoController._(
     super.player,
@@ -79,22 +81,41 @@ class AndroidVideoController extends PlatformVideoController {
     platform.onLoadHooks.add(() {
       return _lock.synchronized(
         () async {
-          // It is important to use a new android.view.Surface each time a new video-output is created because: https://stackoverflow.com/a/21564236
-          // Not doing so will cause MediaCodec usage inside libavcodec to incorrectly fail with error (because this android.view.Surface would be used twice):
-          // "native_window_api_connect returned an error: Invalid argument (-22)" & next less-efficient hwdec will be used redundantly.
-
-          // Create a new android.view.Surface & obtain object reference to it.
-          // NOTE: Previous android.view.Surface & object reference is internally released/destroyed by the method.
           final handle = await player.handle;
-          final data = await _channel.invokeMethod(
-            'VideoOutputManager.CreateSurface',
-            {
-              'handle': handle.toString(),
-            },
+          NativeLibrary.ensureInitialized();
+          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+
+          // Skip surface re-creation if same resource.
+          final name = 'path'.toNativeUtf8();
+          final path = mpv.mpv_get_property_string(
+            Pointer.fromAddress(handle),
+            name.cast(),
           );
-          debugPrint(data.toString());
-          // Save the android.view.Surface object reference for usage inside player.stream.videoParams.listen.
-          _wid = data['wid'];
+          final current = path.cast<Utf8>().toDartString();
+          calloc.free(name.cast());
+          mpv.mpv_free(path.cast());
+
+          bool refresh = _current != current;
+
+          _current = current;
+
+          if (refresh) {
+            // It is important to use a new android.view.Surface each time a new video-output is created because: https://stackoverflow.com/a/21564236
+            // Not doing so will cause MediaCodec usage inside libavcodec to incorrectly fail with error (because this android.view.Surface would be used twice):
+            // "native_window_api_connect returned an error: Invalid argument (-22)" & next less-efficient hwdec will be used redundantly.
+
+            // Create a new android.view.Surface & obtain object reference to it.
+            // NOTE: Previous android.view.Surface & object reference is internally released/destroyed by the method.
+            final data = await _channel.invokeMethod(
+              'VideoOutputManager.CreateSurface',
+              {
+                'handle': handle.toString(),
+              },
+            );
+            debugPrint(data.toString());
+            // Save the android.view.Surface object reference for usage inside player.stream.videoParams.listen.
+            _wid = data['wid'];
+          }
 
           // By default, android.view.Surface has a size of 1x1. If we assign --wid here, libmpv will internally start rendering & the first frame will be drawn as a solid color: https://github.com/media-kit/media-kit/issues/339
           // The solution is to assign --wid after android.graphics.SurfaceTexture.setDefaultBufferSize has been called & --android-surface-size has been updated (see inside player.stream.videoParams.listen).
@@ -103,8 +124,6 @@ class AndroidVideoController extends PlatformVideoController {
           try {
             // ----------------------------------------------
             if (!androidAttachSurfaceAfterVideoParameters) {
-              NativeLibrary.ensureInitialized();
-              final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
               final values = {
                 // NOTE: ORDER IS IMPORTANT.
                 'wid': _wid.toString(),
@@ -133,6 +152,9 @@ class AndroidVideoController extends PlatformVideoController {
     platform.onUnloadHooks.add(() {
       return _lock.synchronized(
         () async {
+          final handle = await player.handle;
+          NativeLibrary.ensureInitialized();
+          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
           // Release any references to current android.view.Surface.
           //
           // It is important to set --vo=null here for 2 reasons:
@@ -140,9 +162,6 @@ class AndroidVideoController extends PlatformVideoController {
           // 2. Resize the android.graphics.SurfaceTexture to next video's resolution before setting --vo=gpu.
           try {
             // ----------------------------------------------
-            final handle = await player.handle;
-            NativeLibrary.ensureInitialized();
-            final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
             final values = {
               // NOTE: ORDER IS IMPORTANT.
               'vo': 'null',
@@ -189,11 +208,11 @@ class AndroidVideoController extends PlatformVideoController {
 
         rect.value = Rect.zero;
         try {
-          // ----------------------------------------------
           final handle = await player.handle;
+          NativeLibrary.ensureInitialized();
+          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+
           if (vo == 'gpu') {
-            NativeLibrary.ensureInitialized();
-            final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
             // NOTE: Only required for --vo=gpu
             // With --vo=gpu, we need to update the android.graphics.SurfaceTexture size & notify libmpv to re-create vo.
             // In native Android, this kind of rendering is done with android.view.SurfaceView + android.view.SurfaceHolder, which offers onSurfaceChanged to handle this.
@@ -206,6 +225,7 @@ class AndroidVideoController extends PlatformVideoController {
               },
             );
 
+            // ----------------------------------------------
             final values = {
               // NOTE: ORDER IS IMPORTANT.
               'android-surface-size': [width, height].join('x'),
