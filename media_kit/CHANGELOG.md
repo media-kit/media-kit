@@ -1,3 +1,7 @@
+## 1.1.8+2
+
+- docs: document updated `media_kit_video`
+
 ## 1.1.8+1
 
 - docs: document updated `media_kit_video`, `media_kit_libs_video` & `media_kit_libs_audio`

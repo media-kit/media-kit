@@ -1,3 +1,8 @@
+## 1.2.1
+
+- fix(android): clear `android.view.Surface` before playback
+- feat: `MaterialVideoControlsThemeData.seekBarAlignment`
+
 ## 1.2.0
 
 - fix: `MaterialVideoControls` layout
