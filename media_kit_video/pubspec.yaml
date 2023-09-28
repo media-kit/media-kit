@@ -18,11 +18,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  media_kit:
-    git: 
-      url: https://github.com/ente-io/media-kit.git
-      ref: improved_seekbar_on_tap_area
-      path: media_kit
+  media_kit: ^1.1.8
 
   synchronized: ^3.1.0
   wakelock_plus: ^1.1.1
