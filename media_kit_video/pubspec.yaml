@@ -18,7 +18,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # NOTE: Bump before publishing to pub.dev
   media_kit: ^1.1.8
 
   synchronized: ^3.1.0
