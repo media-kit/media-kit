@@ -1,32 +1,35 @@
 /**
  * This file is a part of media_kit (https://github.com/media-kit/media-kit).
- *
+ * <p>
  * Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
  * All rights reserved.
  * Use of this source code is governed by MIT license that can be found in the LICENSE file.
  */
 package com.alexmercerind.media_kit_video;
 
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Build;
-import android.util.Log;
-import android.os.Looper;
 import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.Surface;
 import android.view.View;
 import android.widget.FrameLayout;
 
-import java.util.Locale;
-import java.util.HashMap;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Locale;
 
-import io.flutter.view.TextureRegistry;
-import io.flutter.plugin.common.MethodChannel;
-import io.flutter.embedding.engine.FlutterJNI;
-import io.flutter.embedding.android.FlutterView;
-import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.android.FlutterFragmentActivity;
+import io.flutter.embedding.android.FlutterView;
+import io.flutter.embedding.engine.FlutterEngine;
+import io.flutter.embedding.engine.FlutterJNI;
+import io.flutter.plugin.common.MethodChannel;
+import io.flutter.view.TextureRegistry;
 
 
 public class VideoOutput {
@@ -175,6 +178,7 @@ public class VideoOutput {
             // Delete previous android.view.Surface & object reference.
             try {
                 if (surface != null) {
+                    clearSurface();
                     surface.release();
                     surface = null;
                 }
@@ -182,14 +186,14 @@ public class VideoOutput {
                     deleteGlobalObjectRef.invoke(null, wid);
                     wid = 0;
                 }
-            } catch(Throwable e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
             // Create new android.view.Surface & object reference.
             try {
                 surface = new Surface(surfaceTextureEntry.surfaceTexture());
                 wid = (long) newGlobalObjectRef.invoke(null, surface);
-            } catch(Throwable e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
             return wid;
@@ -204,6 +208,16 @@ public class VideoOutput {
         }
     }
 
+    private void clearSurface() {
+        try {
+            final Canvas canvas = surface.lockCanvas(null);
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+            surface.unlockCanvasAndPost(canvas);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
     private FlutterJNI getFlutterJNIReference() {
         try {
             FlutterView view = null;
@@ -213,11 +227,11 @@ public class VideoOutput {
             }
             // io.flutter.embedding.android.FlutterFragmentActivity
             if (view == null) {
-                final FrameLayout layout = (FrameLayout)MediaKitVideoPlugin.activity.findViewById(FlutterFragmentActivity.FRAGMENT_CONTAINER_ID);
+                final FrameLayout layout = (FrameLayout) MediaKitVideoPlugin.activity.findViewById(FlutterFragmentActivity.FRAGMENT_CONTAINER_ID);
                 for (int i = 0; i < layout.getChildCount(); i++) {
                     final View child = layout.getChildAt(i);
                     if (child instanceof FlutterView) {
-                        view = (FlutterView)child;
+                        view = (FlutterView) child;
                         break;
                     }
                 }
@@ -225,7 +239,7 @@ public class VideoOutput {
             final FlutterEngine engine = view.getAttachedFlutterEngine();
             final Field field = engine.getClass().getDeclaredField("flutterJNI");
             field.setAccessible(true);
-            return (FlutterJNI)field.get(engine);
+            return (FlutterJNI) field.get(engine);
         } catch (Throwable e) {
             e.printStackTrace();
             return null;
