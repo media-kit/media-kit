@@ -14,13 +14,13 @@ package:video_player_media_kit allows [package:video_player](https://pub.dev/pac
 <table>
   <tr>
     <td>
-      TODO:
+      <img height="320" src="https://github.com/media-kit/media-kit/assets/28951144/72f553e2-1c29-4268-92dc-0c295df0a67f">
     </td>
     <td>
-      <img height="320" src="https://github.com/zezo357/media_kit/assets/28951144/b0677b4a-7f2b-476d-98b8-d72e3218f749">
+      <img height="320" src="https://github.com/media-kit/media-kit/assets/28951144/7cc3f7f0-801a-4ee7-be9d-58bec7821a54">
     </td>
     <td>
-      TODO:
+      <img height="320" src="https://github.com/media-kit/media-kit/assets/28951144/4cd5e4f6-1716-40e0-9a6b-21759b0a30f4">
     </td>
     
   </tr>
