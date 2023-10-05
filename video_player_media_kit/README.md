@@ -5,6 +5,7 @@
 [![](https://img.shields.io/discord/1079685977523617792?color=33cd57&label=Discord&logo=discord&logoColor=discord)](https://discord.gg/h7qf2R9n57) [![Github Actions](https://github.com/media-kit/media-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/media-kit/media-kit/actions/workflows/ci.yml)
 
 After a single line initialization, you can normally use [package:video_player](https://pub.dev/packages/video_player) & enjoy:
+
 - Support for all platforms _i.e_ Android, iOS, macOS, Windows, GNU/Linux & web.
 - Support for more video/audio formats & codecs.
 - ...
@@ -46,10 +47,10 @@ dependencies:
   # NOTE:
   # It is not necessary to select all.
   # Select based on your usage:
-  media_kit_libs_android_audio: any
-  media_kit_libs_ios_audio: any
-  media_kit_libs_macos_audio: any
-  media_kit_libs_windows_audio: any
+  media_kit_libs_android_video: any
+  media_kit_libs_ios_video: any
+  media_kit_libs_macos_video: any
+  media_kit_libs_windows_video: any
   media_kit_libs_linux: any
 ```
 
@@ -60,10 +61,10 @@ A quick usage example.
 ```dart
 void main() {
   VideoPlayerMediaKit.ensureInitialized(
-    android: true,          // default: false    -    dependency: media_kit_libs_android_audio
-    iOS: true,              // default: false    -    dependency: media_kit_libs_ios_audio
-    macOS: true,            // default: false    -    dependency: media_kit_libs_macos_audio
-    windows: true,          // default: false    -    dependency: media_kit_libs_windows_audio
+    android: true,          // default: false    -    dependency: media_kit_libs_android_video
+    iOS: true,              // default: false    -    dependency: media_kit_libs_ios_video
+    macOS: true,            // default: false    -    dependency: media_kit_libs_macos_video
+    windows: true,          // default: false    -    dependency: media_kit_libs_windows_video
     linux: true,            // default: false    -    dependency: media_kit_libs_linux
   );
 
