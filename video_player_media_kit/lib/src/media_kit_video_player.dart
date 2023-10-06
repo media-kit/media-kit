@@ -67,12 +67,17 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
     final player = Player();
     final completer = Completer();
     final videoController = VideoController(player);
+    // NOTE: [StreamController] without broadcast buffers events.
+    final streamController = StreamController<VideoEvent>();
+    final streamSubscriptions = <StreamSubscription>[];
 
     final textureId = player.hashCode;
 
     _players[textureId] = player;
     _completers[textureId] = completer;
     _videoControllers[textureId] = videoController;
+    _streamControllers[textureId] = streamController;
+    _streamSubscriptions[textureId] = streamSubscriptions;
 
     // --------------------------------------------------
     _initialize(textureId);
@@ -187,13 +192,9 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
 
   /// Initialize the [Stream]s for a given textureId.
   void _initialize(int textureId) {
-    if (_streamControllers[textureId] != null) {
+    if (_streamSubscriptions[textureId]?.isNotEmpty ?? false) {
       return;
     }
-
-    // NOTE: [StreamController] without broadcast buffers events.
-    _streamControllers[textureId] = StreamController<VideoEvent>();
-    _streamSubscriptions[textureId] = <StreamSubscription>[];
 
     final player = _players[textureId];
     final completer = _completers[textureId];
@@ -231,8 +232,10 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
       streamSubscriptions.add(
         player.stream.duration.listen(
           (event) {
-            duration = event;
-            notify();
+            if (event > Duration.zero) {
+              duration = event;
+              notify();
+            }
           },
         ),
       );
