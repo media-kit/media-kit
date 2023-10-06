@@ -427,10 +427,10 @@ packages:
     dependency: transitive
     description:
       name: media_kit_native_event_loop
-      sha256: e37ce6fb5fa71b8cf513c6a6cd591367743a342a385e7da621a047dd8ef6f4a4
+      sha256: a605cf185499d14d58935b8784955a92a4bf0ff4e19a23de3d17a9106303930e
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.7"
+    version: "1.0.8"
   media_kit_video:
     dependency: transitive
     description:
@@ -882,7 +882,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.0.0"
+    version: "1.0.0+1"
   video_player_platform_interface:
     dependency: transitive
     description:
