@@ -27,13 +27,13 @@ package:video_player_media_kit allows [package:video_player](https://pub.dev/pac
   </tr>
   <tr>
     <td>
-      package:video_player on macOS
+      video_player on macOS
     </td>
     <td>
-      package:video_player on Windows
+      video_player on Windows
     </td>
     <td>
-      package:video_player on GNU/Linux
+      video_player on GNU/Linux
     </td>
   </tr>
 </table>
