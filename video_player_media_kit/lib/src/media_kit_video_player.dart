@@ -11,6 +11,9 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
+// https://github.com/dart-lang/linter/issues/1381
+// ignore_for_file: close_sinks
+
 /// package:media_kit implementation of [VideoPlayerPlatform].
 ///
 /// References:
@@ -173,7 +176,7 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
     return Video(
       key: ValueKey(_videoControllers[textureId]!),
       controller: _videoControllers[textureId]!,
-      wakelock: true,
+      wakelock: false,
       controls: NoVideoControls,
       fill: const Color(0x00000000),
       pauseUponEnteringBackgroundMode: false,

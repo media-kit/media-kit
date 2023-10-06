@@ -1,3 +1,7 @@
+## 1.0.2
+
+- fix: do not acquire wakelock by default
+
 ## 1.0.1
 
 - fix: possible `Duration.zero` duration after `VideoEventType.initialized`
