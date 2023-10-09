@@ -471,7 +471,7 @@ class PlayerConfiguration {
 
   /// Sets the demuxer cache size (in bytes) for native backend.
   ///
-  /// Default: `32` MB or `32 * 1024 * 1024` bytes.
+  /// Default: `128` MB or `128 * 1024 * 1024` bytes.
   final int bufferSize;
 
   /// Sets the list of allowed protocols for native backend.
@@ -480,6 +480,16 @@ class PlayerConfiguration {
   ///
   /// Learn more: https://ffmpeg.org/ffmpeg-protocols.html#Protocol-Options
   final List<String> protocolWhitelist;
+
+  /// Sets the map for the optional configuration.
+  ///
+  /// Learn more: https://mpv.io/manual/master/#options
+  final Map<String, String>? options;
+
+  /// Sets the MPV profile.
+  ///
+  /// Learn more: https://mpv.io/manual/master/#profiles
+  final MPVProfile? profile;
 
   /// {@macro player_configuration}
   const PlayerConfiguration({
@@ -503,6 +513,8 @@ class PlayerConfiguration {
       'https',
       'crypto',
     ],
+    this.options,
+    this.profile,
   });
 }
 
@@ -539,4 +551,28 @@ enum MPVLogLevel {
 
   /// Extremely noisy.
   trace,
+}
+
+/// MPVProfile
+/// --------------------
+/// Options to customize the build in profile for [Player] native backend.
+enum MPVProfile {
+  highQuality,
+  bigCache,
+  lowLatency,
+}
+
+extension MPVProfileExtension on MPVProfile {
+  String? get name {
+    switch (this) {
+      case MPVProfile.highQuality:
+        return 'high-quality';
+      case MPVProfile.bigCache:
+        return 'big-cache';
+      case MPVProfile.lowLatency:
+        return 'low-latency';
+      default:
+        return null;
+    }
+  }
 }

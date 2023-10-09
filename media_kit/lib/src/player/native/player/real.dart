@@ -2362,8 +2362,13 @@ class NativePlayer extends PlatformPlayer {
           'sub-ass': configuration.libass ? 'yes' : 'no',
           'sub-visibility': configuration.libass ? 'yes' : 'no',
           'secondary-sub-visibility': configuration.libass ? 'yes' : 'no',
+          if (configuration.profile?.name != null)
+            'profile': configuration.profile?.name ?? 'null',
         },
       );
+
+      properties
+          .addEntries((configuration.options ?? <String, String>{}).entries);
 
       if (test) {
         properties['vo'] = 'null';
