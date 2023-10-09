@@ -2367,8 +2367,7 @@ class NativePlayer extends PlatformPlayer {
         },
       );
 
-      properties
-          .addEntries((configuration.options ?? <String, String>{}).entries);
+      properties.addAll(configuration.options ?? <String, String>{});
 
       if (test) {
         properties['vo'] = 'null';
