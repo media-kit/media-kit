@@ -144,6 +144,11 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   late bool _visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
   bool _pauseDueToPauseUponEnteringBackgroundMode = false;
 
+  final _fitNotifier = ValueNotifier<BoxFit?>(null);
+  final _fillNotifier = ValueNotifier<Color?>(null);
+  final _alignmentNotifier = ValueNotifier<Alignment?>(null);
+  final _aspectRatioNotifier = ValueNotifier<double?>(null);
+
   // Public API:
 
   bool isFullscreen() {
@@ -172,6 +177,18 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     );
   }
 
+  void update({
+    BoxFit? fit,
+    Color? fill,
+    Alignment? alignment,
+    double? aspectRatio,
+  }) {
+    if (fit != null) _fitNotifier.value = fit;
+    if (fill != null) _fillNotifier.value = fill;
+    if (alignment != null) _alignmentNotifier.value = alignment;
+    if (aspectRatio != null) _aspectRatioNotifier.value = aspectRatio;
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (widget.pauseUponEnteringBackgroundMode) {
@@ -197,6 +214,13 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // set initial values
+    _fitNotifier.value = widget.fit;
+    _fillNotifier.value = widget.fill;
+    _alignmentNotifier.value = widget.alignment;
+    _aspectRatioNotifier.value = widget.aspectRatio;
+
     // --------------------------------------------------
     // Do not show the video frame until width & height are available.
     // Since [ValueNotifier<Rect?>] inside [VideoController] only gets updated by the render loop (i.e. it will not fire when video's width & height are not available etc.), it's important to handle this separately here.
@@ -261,88 +285,127 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final controls = widget.controls;
     final controller = widget.controller;
-    final aspectRatio = widget.aspectRatio;
+    // final aspectRatio = widget.aspectRatio;
     final subtitleViewConfiguration = widget.subtitleViewConfiguration;
     return media_kit_video_controls.VideoStateInheritedWidget(
-      state: this as dynamic,
-      contextNotifier: _contextNotifier,
-      child: Container(
-        clipBehavior: Clip.none,
-        width: widget.width ?? double.infinity,
-        height: widget.height ?? double.infinity,
-        color: widget.fill,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            ClipRect(
-              child: FittedBox(
-                alignment: widget.alignment,
-                fit: widget.fit,
-                child: ValueListenableBuilder<PlatformVideoController?>(
-                  valueListenable: controller.notifier,
-                  builder: (context, notifier, _) => notifier == null
-                      ? const SizedBox.shrink()
-                      : ValueListenableBuilder<int?>(
-                          valueListenable: notifier.id,
-                          builder: (context, id, _) {
-                            return ValueListenableBuilder<Rect?>(
-                              valueListenable: notifier.rect,
-                              builder: (context, rect, _) {
-                                if (id != null && rect != null && _visible) {
-                                  return SizedBox(
-                                    // Apply aspect ratio if provided.
-                                    width: aspectRatio == null
-                                        ? rect.width
-                                        : rect.height * aspectRatio,
-                                    height: rect.height,
-                                    child: Stack(
-                                      children: [
-                                        const SizedBox(),
-                                        Positioned.fill(
-                                          child: Texture(
-                                            textureId: id,
-                                            filterQuality: widget.filterQuality,
-                                          ),
-                                        ),
-                                        // Keep the |Texture| hidden before the first frame renders. In native implementation, if no default frame size is passed (through VideoController), a starting 1 pixel sized texture/surface is created to initialize the render context & check for H/W support.
-                                        // This is then resized based on the video dimensions & accordingly texture ID, texture, EGLDisplay, EGLSurface etc. (depending upon platform) are also changed. Just don't show that 1 pixel texture to the UI.
-                                        // NOTE: Unmounting |Texture| causes the |MarkTextureFrameAvailable| to not do anything on GNU/Linux.
-                                        if (rect.width <= 1.0 &&
-                                            rect.height <= 1.0)
-                                          Positioned.fill(
-                                            child: Container(
-                                              color: widget.fill,
-                                            ),
-                                          ),
-                                      ],
+        state: this as dynamic,
+        contextNotifier: _contextNotifier,
+        child: ValueListenableBuilder<Color?>(
+            valueListenable: _fillNotifier,
+            builder: (context, fill, _) {
+              return Container(
+                clipBehavior: Clip.none,
+                width: widget.width ?? double.infinity,
+                height: widget.height ?? double.infinity,
+                color: fill,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ClipRect(
+                      child: ValueListenableBuilder<Alignment?>(
+                          valueListenable: _alignmentNotifier,
+                          builder: (context, alignment, _) {
+                            return ValueListenableBuilder<BoxFit?>(
+                                valueListenable: _fitNotifier,
+                                builder: (context, fit, _) {
+                                  return FittedBox(
+                                    alignment: alignment!,
+                                    fit: fit!,
+                                    child: ValueListenableBuilder<
+                                        PlatformVideoController?>(
+                                      valueListenable: controller.notifier,
+                                      builder: (context, notifier, _) =>
+                                          notifier == null
+                                              ? const SizedBox.shrink()
+                                              : ValueListenableBuilder<int?>(
+                                                  valueListenable: notifier.id,
+                                                  builder: (context, id, _) {
+                                                    return ValueListenableBuilder<
+                                                        double?>(
+                                                      valueListenable:
+                                                          _aspectRatioNotifier,
+                                                      builder: (context,
+                                                          aspectRatio, _) {
+                                                        return ValueListenableBuilder<
+                                                            Rect?>(
+                                                          valueListenable:
+                                                              notifier.rect,
+                                                          builder: (context,
+                                                              rect, _) {
+                                                            if (id != null &&
+                                                                rect != null &&
+                                                                _visible) {
+                                                              return SizedBox(
+                                                                // Apply aspect ratio if provided.
+                                                                width: aspectRatio ==
+                                                                        null
+                                                                    ? rect.width
+                                                                    : rect.height *
+                                                                        aspectRatio,
+                                                                height:
+                                                                    rect.height,
+                                                                child: Stack(
+                                                                  children: [
+                                                                    const SizedBox(),
+                                                                    Positioned
+                                                                        .fill(
+                                                                      child:
+                                                                          Texture(
+                                                                        textureId:
+                                                                            id,
+                                                                        filterQuality:
+                                                                            widget.filterQuality,
+                                                                      ),
+                                                                    ),
+                                                                    // Keep the |Texture| hidden before the first frame renders. In native implementation, if no default frame size is passed (through VideoController), a starting 1 pixel sized texture/surface is created to initialize the render context & check for H/W support.
+                                                                    // This is then resized based on the video dimensions & accordingly texture ID, texture, EGLDisplay, EGLSurface etc. (depending upon platform) are also changed. Just don't show that 1 pixel texture to the UI.
+                                                                    // NOTE: Unmounting |Texture| causes the |MarkTextureFrameAvailable| to not do anything on GNU/Linux.
+                                                                    if (rect.width <=
+                                                                            1.0 &&
+                                                                        rect.height <=
+                                                                            1.0)
+                                                                      Positioned
+                                                                          .fill(
+                                                                        child:
+                                                                            Container(
+                                                                          color:
+                                                                              widget.fill,
+                                                                        ),
+                                                                      ),
+                                                                  ],
+                                                                ),
+                                                              );
+                                                            }
+                                                            return const SizedBox
+                                                                .shrink();
+                                                          },
+                                                        );
+                                                      },
+                                                    );
+                                                  }),
                                     ),
                                   );
-                                }
-                                return const SizedBox.shrink();
-                              },
-                            );
-                          },
+                                });
+                          }),
+                    ),
+                    if (subtitleViewConfiguration.visible &&
+                        !(controller.player.platform?.configuration.libass ??
+                            false))
+                      Positioned.fill(
+                        child: SubtitleView(
+                          controller: controller,
+                          key: _subtitleViewKey,
+                          configuration: subtitleViewConfiguration,
                         ),
+                      ),
+                    if (controls != null)
+                      Positioned.fill(
+                        child: controls.call(this),
+                      ),
+                  ],
                 ),
-              ),
-            ),
-            if (subtitleViewConfiguration.visible &&
-                !(controller.player.platform?.configuration.libass ?? false))
-              Positioned.fill(
-                child: SubtitleView(
-                  controller: controller,
-                  key: _subtitleViewKey,
-                  configuration: subtitleViewConfiguration,
-                ),
-              ),
-            if (controls != null)
-              Positioned.fill(
-                child: controls.call(this),
-              ),
-          ],
-        ),
-      ),
-    );
+              );
+            }));
   }
 }
 
