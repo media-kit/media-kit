@@ -487,6 +487,7 @@ class NativePlayer extends PlatformPlayer {
 
       // This condition is specifically for the case when the internal playlist is ended (with [PlaylistLoopMode.none]), and we want to play the playlist again if play/pause is pressed.
       if (state.completed) {
+        await seek(Duration.zero, synchronized: false);
         final name = 'playlist-pos'.toNativeUtf8();
         final value = calloc<Int64>()..value = 0;
         mpv.mpv_set_property(
