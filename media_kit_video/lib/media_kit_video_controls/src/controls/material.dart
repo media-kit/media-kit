@@ -419,6 +419,13 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
           : 0.0);
 
   @override
+  void setState(VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (subscriptions.isEmpty) {
@@ -1115,6 +1122,13 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
 
   final List<StreamSubscription> subscriptions = [];
 
+  @override
+  void setState(VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
   void listener() {
     setState(() {
       final delta = widget.delta?.value ?? Duration.zero;
@@ -1358,6 +1372,13 @@ class MaterialPlayOrPauseButtonState extends State<MaterialPlayOrPauseButton>
   StreamSubscription<bool>? subscription;
 
   @override
+  void setState(VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     subscription ??= controller(context).player.stream.playing.listen((event) {
@@ -1554,6 +1575,13 @@ class MaterialPositionIndicatorState extends State<MaterialPositionIndicator> {
   final List<StreamSubscription> subscriptions = [];
 
   @override
+  void setState(VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (subscriptions.isEmpty) {
@@ -1613,6 +1641,13 @@ class _BackwardSeekIndicatorState extends State<_BackwardSeekIndicator> {
   Duration value = const Duration(seconds: 10);
 
   Timer? timer;
+
+  @override
+  void setState(VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
 
   @override
   void initState() {
@@ -1693,6 +1728,13 @@ class _ForwardSeekIndicatorState extends State<_ForwardSeekIndicator> {
   Duration value = const Duration(seconds: 10);
 
   Timer? timer;
+
+  @override
+  void setState(VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
 
   @override
   void initState() {
