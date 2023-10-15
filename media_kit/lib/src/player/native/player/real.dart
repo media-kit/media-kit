@@ -2454,15 +2454,13 @@ class NativePlayer extends PlatformPlayer {
     }
   }
 
-  /// Calls mpv command passed as [args]. Automatically freeds memory after command sending.
-  Future<void> _command(List<String?> args) async {
-    final List<Pointer<Utf8>> pointers = args.map<Pointer<Utf8>>((e) {
-      if (e == null) return nullptr.cast();
-      return e.toNativeUtf8();
-    }).toList();
-    final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join().length);
+  /// Calls mpv command passed as [args].
+  /// Automatically freeds memory after command sending.
+  Future<void> _command(List<String> args) async {
+    final pointers = args.map<Pointer<Utf8>>((e) => e.toNativeUtf8()).toList();
+    final arr = calloc<Pointer<Utf8>>(128);
     for (int i = 0; i < args.length; i++) {
-      arr[i] = pointers[i];
+      arr.elementAt(i).value = pointers[i];
     }
     mpv.mpv_command(
       ctx,
