@@ -2315,6 +2315,7 @@ class NativePlayer extends PlatformPlayer {
       //
       // idle = yes
       // pause = yes
+      // profile = fast
       // keep-open = yes
       // audio-display = no
       // network-timeout = 5
@@ -2330,6 +2331,8 @@ class NativePlayer extends PlatformPlayer {
       final properties = <String, String>{
         'idle': 'yes',
         'pause': 'yes',
+        // https://github.com/mpv-android/mpv-android/commit/9e5c3d8a630290fc41edb8b03aeafa3bc4c45955
+        'profile': 'fast',
         'keep-open': 'yes',
         'audio-display': 'no',
         'network-timeout': '5',
