@@ -16,15 +16,27 @@ import 'package:media_kit_video/media_kit_video.dart';
 class VideoStateInheritedWidget extends InheritedWidget {
   final VideoState state;
   final ValueNotifier<BuildContext?> contextNotifier;
+  final ValueNotifier<BoxFit?> fitNotifier;
+  final ValueNotifier<Color?> fillNotifier;
+  final ValueNotifier<Alignment?> alignmentNotifier;
+  final ValueNotifier<double?> aspectRatioNotifier;
   VideoStateInheritedWidget({
     super.key,
     required this.state,
     required this.contextNotifier,
+    required this.fitNotifier,
+    required this.fillNotifier,
+    required this.alignmentNotifier,
+    required this.aspectRatioNotifier,
     required Widget child,
   }) : super(
           child: _VideoStateInheritedWidgetContextNotifier(
             state: state,
             contextNotifier: contextNotifier,
+            fitNotifier: fitNotifier,
+            fillNotifier: fillNotifier,
+            alignmentNotifier: alignmentNotifier,
+            aspectRatioNotifier: aspectRatioNotifier,
             child: child,
           ),
         );
@@ -57,11 +69,20 @@ class VideoStateInheritedWidget extends InheritedWidget {
 class _VideoStateInheritedWidgetContextNotifier extends StatefulWidget {
   final VideoState state;
   final ValueNotifier<BuildContext?> contextNotifier;
+  final ValueNotifier<BoxFit?> fitNotifier;
+  final ValueNotifier<Color?> fillNotifier;
+  final ValueNotifier<Alignment?> alignmentNotifier;
+  final ValueNotifier<double?> aspectRatioNotifier;
+
   final Widget child;
 
   const _VideoStateInheritedWidgetContextNotifier({
     required this.state,
     required this.contextNotifier,
+    required this.fitNotifier,
+    required this.fillNotifier,
+    required this.alignmentNotifier,
+    required this.aspectRatioNotifier,
     required this.child,
   });
 
@@ -89,6 +110,23 @@ class _VideoStateInheritedWidgetContextNotifierState
       widget.contextNotifier.value = context;
       _fallback[widget.state] ??= context;
     }
-    return widget.child;
+
+    return ValueListenableBuilder<BoxFit?>(
+        valueListenable: widget.fitNotifier,
+        builder: (context, fit, _) {
+          return ValueListenableBuilder<Color?>(
+              valueListenable: widget.fillNotifier,
+              builder: (context, fill, _) {
+                return ValueListenableBuilder<Alignment?>(
+                    valueListenable: widget.alignmentNotifier,
+                    builder: (context, alignment, _) {
+                      return ValueListenableBuilder<double?>(
+                          valueListenable: widget.aspectRatioNotifier,
+                          builder: (context, aspectRatio, _) {
+                            return widget.child;
+                          });
+                    });
+              });
+        });
   }
 }

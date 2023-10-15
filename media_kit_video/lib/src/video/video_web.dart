@@ -144,10 +144,11 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   late bool _visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
   bool _pauseDueToPauseUponEnteringBackgroundMode = false;
 
-  final _fitNotifier = ValueNotifier<BoxFit?>(null);
-  final _fillNotifier = ValueNotifier<Color?>(null);
-  final _alignmentNotifier = ValueNotifier<Alignment?>(null);
-  final _aspectRatioNotifier = ValueNotifier<double?>(null);
+  ValueNotifier<BoxFit?> _fitNotifier = ValueNotifier<BoxFit?>(null);
+  ValueNotifier<Color?> _fillNotifier = ValueNotifier<Color?>(null);
+  ValueNotifier<Alignment?> _alignmentNotifier =
+      ValueNotifier<Alignment?>(null);
+  ValueNotifier<double?> _aspectRatioNotifier = ValueNotifier<double?>(null);
 
   ValueKey _key = const ValueKey(true);
 
@@ -210,6 +211,20 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
         }
       }
     }
+  }
+  @override
+  void didChangeDependencies() {
+    media_kit_video_controls.VideoStateInheritedWidget? wrapping =
+        media_kit_video_controls.VideoStateInheritedWidget.maybeOf(context);
+
+    // set same notifiers as normal video widget
+    if (wrapping != null) {
+      _fitNotifier = wrapping.fitNotifier;
+      _fillNotifier = wrapping.fillNotifier;
+      _alignmentNotifier = wrapping.alignmentNotifier;
+      _aspectRatioNotifier = wrapping.aspectRatioNotifier;
+    }
+    super.didChangeDependencies();
   }
 
   @override
@@ -296,6 +311,10 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     return media_kit_video_controls.VideoStateInheritedWidget(
         state: this as dynamic,
         contextNotifier: _contextNotifier,
+        fitNotifier: _fitNotifier,
+        fillNotifier: _fillNotifier,
+        alignmentNotifier: _alignmentNotifier,
+        aspectRatioNotifier: _aspectRatioNotifier,
         child: ValueListenableBuilder<Color?>(
             valueListenable: _fillNotifier,
             builder: (context, fill, _) {

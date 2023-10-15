@@ -22,7 +22,8 @@ Future<void> enterFullscreen(BuildContext context) {
     if (!isFullscreen(context)) {
       if (context.mounted) {
         final stateValue = state(context);
-        final contextNotiferValue = contextNotifier(context);
+        final VideoStateInheritedWidget videoStateInheritedWidget =
+            VideoStateInheritedWidget.of(context);
         final controllerValue = controller(context);
         Navigator.of(context, rootNavigator: true).push(
           PageRouteBuilder(
@@ -32,13 +33,26 @@ Future<void> enterFullscreen(BuildContext context) {
                 context: context,
                 child: VideoStateInheritedWidget(
                   state: stateValue,
-                  contextNotifier: contextNotiferValue,
+                  contextNotifier: videoStateInheritedWidget.contextNotifier,
+                  fitNotifier: videoStateInheritedWidget.fitNotifier,
+                  fillNotifier: videoStateInheritedWidget.fillNotifier,
+                  alignmentNotifier:
+                      videoStateInheritedWidget.alignmentNotifier,
+                  aspectRatioNotifier:
+                      videoStateInheritedWidget.aspectRatioNotifier,
                   child: FullscreenInheritedWidget(
                     parent: stateValue,
                     // Another [VideoStateInheritedWidget] inside [FullscreenInheritedWidget] is important to notify about the fullscreen [BuildContext].
                     child: VideoStateInheritedWidget(
                       state: stateValue,
-                      contextNotifier: contextNotiferValue,
+                      contextNotifier:
+                          videoStateInheritedWidget.contextNotifier,
+                      fitNotifier: videoStateInheritedWidget.fitNotifier,
+                      fillNotifier: videoStateInheritedWidget.fillNotifier,
+                      alignmentNotifier:
+                          videoStateInheritedWidget.alignmentNotifier,
+                      aspectRatioNotifier:
+                          videoStateInheritedWidget.aspectRatioNotifier,
                       child: Video(
                         controller: controllerValue,
                         // width: null,
