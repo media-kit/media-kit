@@ -31,6 +31,7 @@ class Media extends Playable {
   /// This has been done to:
   /// 1. Evict the [Media] instance from [cache].
   /// 2. Close the file descriptor created by [AndroidContentUriProvider] to handle content:// URIs on Android.
+  /// 3. Revoke the object URL created by [Media.memory] on web.
   static final Finalizer<_MediaFinalizerContext> _finalizer =
       Finalizer<_MediaFinalizerContext>((context) async {
     final uri = context.uri;
