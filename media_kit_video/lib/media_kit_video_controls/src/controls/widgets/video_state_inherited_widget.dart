@@ -97,10 +97,6 @@ class _VideoStateInheritedWidgetContextNotifierState
       _fallback[widget.state] ??= context;
     }
 
-    return ValueListenableBuilder<VideoViewParameters?>(
-        valueListenable: widget.videoViewParametersNotifier,
-        builder: (context, fit, _) {
-          return widget.child;
-        });
+    return widget.child;
   }
 }
