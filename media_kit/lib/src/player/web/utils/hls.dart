@@ -75,7 +75,7 @@ abstract class HLS {
 
 // --------------------------------------------------
 
-@js.JS("Hls.isSupported")
+@js.JS('Hls.isSupported')
 external bool isHLSSupported();
 
 @js.JS()

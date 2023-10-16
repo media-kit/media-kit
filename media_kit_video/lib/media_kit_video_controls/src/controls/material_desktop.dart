@@ -381,6 +381,13 @@ class _MaterialDesktopVideoControlsState
           : 0.0);
 
   @override
+  void setState(VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (subscriptions.isEmpty) {
@@ -858,6 +865,13 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
   final List<StreamSubscription> subscriptions = [];
 
   @override
+  void setState(VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (subscriptions.isEmpty) {
@@ -1090,6 +1104,13 @@ class MaterialDesktopPlayOrPauseButtonState
   StreamSubscription<bool>? subscription;
 
   @override
+  void setState(VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     subscription ??= controller(context).player.stream.playing.listen((event) {
@@ -1315,6 +1336,13 @@ class MaterialDesktopVolumeButtonState
   double _volume = 0.0;
 
   @override
+  void setState(VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     subscription ??= controller(context).player.stream.volume.listen((event) {
@@ -1478,6 +1506,13 @@ class MaterialDesktopPositionIndicatorState
   late Duration duration = controller(context).player.state.duration;
 
   final List<StreamSubscription> subscriptions = [];
+
+  @override
+  void setState(VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
 
   @override
   void didChangeDependencies() {

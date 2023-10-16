@@ -303,6 +303,15 @@ class WebPlayer extends PlatformPlayer {
           }
         });
       });
+
+      if (configuration.muted) {
+        element.muted = true;
+        state = state.copyWith(volume: 0.0);
+        if (!volumeController.isClosed) {
+          volumeController.add(0.0);
+        }
+      }
+
       await HLS.ensureInitialized(
         hls: test ? HLS.kHLSCDN : null,
       );
@@ -1070,6 +1079,12 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
+
+      // Unmute the player before setting the volume.
+      if (element.muted) {
+        element.muted = false;
+      }
+
       element.volume = volume / 100.0;
     }
 
