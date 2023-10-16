@@ -13,7 +13,7 @@ import 'package:media_kit_video/media_kit_video_controls/media_kit_video_control
     as media_kit_video_controls;
 
 import 'package:media_kit_video/src/utils/wakelock.dart';
-import 'package:media_kit_video/src/video/video_view_parameters.dart';
+import 'package:media_kit_video/src/video_view_parameters.dart';
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 
@@ -327,9 +327,6 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final controls = widget.controls;
-    final controller = widget.controller;
-    final subtitleViewConfiguration = widget.subtitleViewConfiguration;
     return media_kit_video_controls.VideoStateInheritedWidget(
         state: this as dynamic,
         contextNotifier: _contextNotifier,
@@ -339,8 +336,8 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
             builder: (context, videoViewParametersNotifier, _) {
               return Container(
                 clipBehavior: Clip.none,
-                width: widget.width ?? double.infinity,
-                height: widget.height ?? double.infinity,
+                width: videoViewParametersNotifier?.width ?? double.infinity,
+                height: videoViewParametersNotifier?.height ?? double.infinity,
                 color: videoViewParametersNotifier?.fill,
                 child: Stack(
                   fit: StackFit.expand,
@@ -351,7 +348,8 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                           fit: videoViewParametersNotifier.fit,
                           child: ValueListenableBuilder<
                                   PlatformVideoController?>(
-                              valueListenable: controller.notifier,
+                              valueListenable: videoViewParametersNotifier
+                                  .controller.notifier,
                               builder: (context, notifier, _) => notifier ==
                                       null
                                   ? const SizedBox.shrink()
@@ -380,8 +378,9 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                                                     Positioned.fill(
                                                       child: Texture(
                                                         textureId: id,
-                                                        filterQuality: widget
-                                                            .filterQuality,
+                                                        filterQuality:
+                                                            videoViewParametersNotifier
+                                                                .filterQuality,
                                                       ),
                                                     ),
                                                     // Keep the |Texture| hidden before the first frame renders. In native implementation, if no default frame size is passed (through VideoController), a starting 1 pixel sized texture/surface is created to initialize the render context & check for H/W support.
@@ -406,19 +405,22 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                                       },
                                     ))),
                     ),
-                    if (subtitleViewConfiguration.visible &&
-                        !(controller.player.platform?.configuration.libass ??
+                    if (videoViewParametersNotifier
+                            .subtitleViewConfiguration.visible &&
+                        !(videoViewParametersNotifier.controller.player.platform
+                                ?.configuration.libass ??
                             false))
                       Positioned.fill(
                         child: SubtitleView(
-                          controller: controller,
+                          controller: videoViewParametersNotifier.controller,
                           key: _subtitleViewKey,
-                          configuration: subtitleViewConfiguration,
+                          configuration: videoViewParametersNotifier
+                              .subtitleViewConfiguration,
                         ),
                       ),
-                    if (controls != null)
+                    if (videoViewParametersNotifier.controls != null)
                       Positioned.fill(
-                        child: controls.call(this),
+                        child: videoViewParametersNotifier.controls!.call(this),
                       ),
                   ],
                 ),
