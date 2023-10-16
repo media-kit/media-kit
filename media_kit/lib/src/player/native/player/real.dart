@@ -2316,10 +2316,16 @@ class NativePlayer extends PlatformPlayer {
       //
       // idle = yes
       // pause = yes
-      // profile = fast
       // keep-open = yes
       // audio-display = no
       // network-timeout = 5
+      // scale=bilinear
+      // dscale=bilinear
+      // dither=no
+      // correct-downscaling=no
+      // linear-downscaling=no
+      // sigmoid-upscaling=no
+      // hdr-compute-peak=no
       //
       // ANDROID (Physical Device OR API Level > 25):
       //
@@ -2332,11 +2338,18 @@ class NativePlayer extends PlatformPlayer {
       final properties = <String, String>{
         'idle': 'yes',
         'pause': 'yes',
-        // https://github.com/mpv-android/mpv-android/commit/9e5c3d8a630290fc41edb8b03aeafa3bc4c45955
-        'profile': 'fast',
         'keep-open': 'yes',
         'audio-display': 'no',
         'network-timeout': '5',
+        // https://github.com/mpv-player/mpv/commit/703f1588803eaa428e09c0e5547b26c0fff476a7
+        // https://github.com/mpv-android/mpv-android/commit/9e5c3d8a630290fc41edb8b03aeafa3bc4c45955
+        'scale': 'bilinear',
+        'dscale': 'bilinear',
+        'dither': 'no',
+        'correct-downscaling': 'no',
+        'linear-downscaling': 'no',
+        'sigmoid-upscaling': 'no',
+        'hdr-compute-peak': 'no',
         if (AndroidHelper.isPhysicalDevice || AndroidHelper.APILevel > 25)
           'ao': 'opensles'
         // Disable audio output on older Android emulators with API Level < 25.
