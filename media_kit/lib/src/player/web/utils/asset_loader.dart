@@ -23,13 +23,13 @@ class AssetLoader {
     if (key.startsWith('/')) {
       key = key.substring(1);
     }
-    return [
-      // https://github.com/media-kit/media-kit/issues/531
-      if (kReleaseMode) 'assets',
-      // https://github.com/media-kit/media-kit/issues/121
-      for (final e in key.split('/'))
-        Uri.encodeComponent(Uri.encodeComponent(e)),
-    ].join('/');
+
+    // https://github.com/media-kit/media-kit/issues/531
+    // https://github.com/media-kit/media-kit/issues/121
+    if (kReleaseMode) {
+      return 'assets/${key.split('/').map((e) => Uri.encodeComponent(Uri.encodeComponent(e))).join('/')}';
+    }
+    return key.split('/').map(Uri.encodeComponent).join('/');
   }
 
   /// URI scheme used to identify Flutter assets.
