@@ -845,17 +845,40 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      final name = 'volume'.toNativeUtf8();
-      final value = calloc<Double>();
-      value.value = volume;
-      mpv.mpv_set_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_DOUBLE,
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
+      {
+        final name = 'mute'.toNativeUtf8();
+        final value = calloc<Bool>();
+        mpv.mpv_get_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_FLAG,
+          value.cast(),
+        );
+        if (value.value) {
+          // Unmute the player before setting the volume.
+          final command = 'cycle mute'.toNativeUtf8();
+          mpv.mpv_command_string(
+            ctx,
+            command.cast(),
+          );
+          calloc.free(command);
+        }
+        calloc.free(name);
+        calloc.free(value);
+      }
+      {
+        final name = 'volume'.toNativeUtf8();
+        final value = calloc<Double>();
+        value.value = volume;
+        mpv.mpv_set_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_DOUBLE,
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      }
     }
 
     if (synchronized) {
@@ -2316,10 +2339,16 @@ class NativePlayer extends PlatformPlayer {
       //
       // idle = yes
       // pause = yes
-      // profile = fast
       // keep-open = yes
       // audio-display = no
       // network-timeout = 5
+      // scale=bilinear
+      // dscale=bilinear
+      // dither=no
+      // correct-downscaling=no
+      // linear-downscaling=no
+      // sigmoid-upscaling=no
+      // hdr-compute-peak=no
       //
       // ANDROID (Physical Device OR API Level > 25):
       //
@@ -2332,11 +2361,18 @@ class NativePlayer extends PlatformPlayer {
       final properties = <String, String>{
         'idle': 'yes',
         'pause': 'yes',
-        // https://github.com/mpv-android/mpv-android/commit/9e5c3d8a630290fc41edb8b03aeafa3bc4c45955
-        'profile': 'fast',
         'keep-open': 'yes',
         'audio-display': 'no',
         'network-timeout': '5',
+        // https://github.com/mpv-player/mpv/commit/703f1588803eaa428e09c0e5547b26c0fff476a7
+        // https://github.com/mpv-android/mpv-android/commit/9e5c3d8a630290fc41edb8b03aeafa3bc4c45955
+        'scale': 'bilinear',
+        'dscale': 'bilinear',
+        'dither': 'no',
+        'correct-downscaling': 'no',
+        'linear-downscaling': 'no',
+        'sigmoid-upscaling': 'no',
+        'hdr-compute-peak': 'no',
         if (AndroidHelper.isPhysicalDevice || AndroidHelper.APILevel > 25)
           'ao': 'opensles'
         // Disable audio output on older Android emulators with API Level < 25.
@@ -2384,6 +2420,24 @@ class NativePlayer extends PlatformPlayer {
         );
         calloc.free(name);
         calloc.free(value);
+      }
+
+      if (configuration.muted) {
+        final name = 'mute'.toNativeUtf8();
+        final value = calloc<Bool>()..value = true;
+        mpv.mpv_set_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_FLAG,
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+
+        state = state.copyWith(volume: 0.0);
+        if (!volumeController.isClosed) {
+          volumeController.add(0.0);
+        }
       }
 
       // Observe the properties to update the state & feed event stream.
