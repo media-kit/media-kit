@@ -1,3 +1,7 @@
+## 1.3.6
+
+- build: bump dependencies
+
 ## 1.3.5
 
 - build: revert dependencies
