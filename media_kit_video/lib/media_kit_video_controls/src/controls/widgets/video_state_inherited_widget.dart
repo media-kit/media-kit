@@ -7,6 +7,7 @@ import 'dart:collection';
 
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:media_kit_video/src/video/video_view_parameters.dart';
 
 /// {@template video_state_inherited_widget}
 ///
@@ -16,27 +17,18 @@ import 'package:media_kit_video/media_kit_video.dart';
 class VideoStateInheritedWidget extends InheritedWidget {
   final VideoState state;
   final ValueNotifier<BuildContext?> contextNotifier;
-  final ValueNotifier<BoxFit?> fitNotifier;
-  final ValueNotifier<Color?> fillNotifier;
-  final ValueNotifier<Alignment?> alignmentNotifier;
-  final ValueNotifier<double?> aspectRatioNotifier;
+  final ValueNotifier<VideoViewParameters?> videoViewParametersNotifier;
   VideoStateInheritedWidget({
     super.key,
     required this.state,
     required this.contextNotifier,
-    required this.fitNotifier,
-    required this.fillNotifier,
-    required this.alignmentNotifier,
-    required this.aspectRatioNotifier,
+    required this.videoViewParametersNotifier,
     required Widget child,
   }) : super(
           child: _VideoStateInheritedWidgetContextNotifier(
             state: state,
             contextNotifier: contextNotifier,
-            fitNotifier: fitNotifier,
-            fillNotifier: fillNotifier,
-            alignmentNotifier: alignmentNotifier,
-            aspectRatioNotifier: aspectRatioNotifier,
+            videoViewParametersNotifier: videoViewParametersNotifier,
             child: child,
           ),
         );
@@ -69,20 +61,14 @@ class VideoStateInheritedWidget extends InheritedWidget {
 class _VideoStateInheritedWidgetContextNotifier extends StatefulWidget {
   final VideoState state;
   final ValueNotifier<BuildContext?> contextNotifier;
-  final ValueNotifier<BoxFit?> fitNotifier;
-  final ValueNotifier<Color?> fillNotifier;
-  final ValueNotifier<Alignment?> alignmentNotifier;
-  final ValueNotifier<double?> aspectRatioNotifier;
+  final ValueNotifier<VideoViewParameters?> videoViewParametersNotifier;
 
   final Widget child;
 
   const _VideoStateInheritedWidgetContextNotifier({
     required this.state,
     required this.contextNotifier,
-    required this.fitNotifier,
-    required this.fillNotifier,
-    required this.alignmentNotifier,
-    required this.aspectRatioNotifier,
+    required this.videoViewParametersNotifier,
     required this.child,
   });
 
@@ -111,22 +97,10 @@ class _VideoStateInheritedWidgetContextNotifierState
       _fallback[widget.state] ??= context;
     }
 
-    return ValueListenableBuilder<BoxFit?>(
-        valueListenable: widget.fitNotifier,
+    return ValueListenableBuilder<VideoViewParameters?>(
+        valueListenable: widget.videoViewParametersNotifier,
         builder: (context, fit, _) {
-          return ValueListenableBuilder<Color?>(
-              valueListenable: widget.fillNotifier,
-              builder: (context, fill, _) {
-                return ValueListenableBuilder<Alignment?>(
-                    valueListenable: widget.alignmentNotifier,
-                    builder: (context, alignment, _) {
-                      return ValueListenableBuilder<double?>(
-                          valueListenable: widget.aspectRatioNotifier,
-                          builder: (context, aspectRatio, _) {
-                            return widget.child;
-                          });
-                    });
-              });
+          return widget.child;
         });
   }
 }

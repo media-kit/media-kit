@@ -34,12 +34,8 @@ Future<void> enterFullscreen(BuildContext context) {
                 child: VideoStateInheritedWidget(
                   state: stateValue,
                   contextNotifier: videoStateInheritedWidget.contextNotifier,
-                  fitNotifier: videoStateInheritedWidget.fitNotifier,
-                  fillNotifier: videoStateInheritedWidget.fillNotifier,
-                  alignmentNotifier:
-                      videoStateInheritedWidget.alignmentNotifier,
-                  aspectRatioNotifier:
-                      videoStateInheritedWidget.aspectRatioNotifier,
+                  videoViewParametersNotifier:
+                      videoStateInheritedWidget.videoViewParametersNotifier,
                   child: FullscreenInheritedWidget(
                     parent: stateValue,
                     // Another [VideoStateInheritedWidget] inside [FullscreenInheritedWidget] is important to notify about the fullscreen [BuildContext].
@@ -47,12 +43,8 @@ Future<void> enterFullscreen(BuildContext context) {
                       state: stateValue,
                       contextNotifier:
                           videoStateInheritedWidget.contextNotifier,
-                      fitNotifier: videoStateInheritedWidget.fitNotifier,
-                      fillNotifier: videoStateInheritedWidget.fillNotifier,
-                      alignmentNotifier:
-                          videoStateInheritedWidget.alignmentNotifier,
-                      aspectRatioNotifier:
-                          videoStateInheritedWidget.aspectRatioNotifier,
+                      videoViewParametersNotifier:
+                          videoStateInheritedWidget.videoViewParametersNotifier,
                       child: Video(
                         controller: controllerValue,
                         // width: null,
