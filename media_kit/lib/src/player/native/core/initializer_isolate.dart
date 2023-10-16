@@ -9,7 +9,7 @@ import 'dart:isolate';
 import 'dart:collection';
 
 import 'package:media_kit/ffi/ffi.dart';
-
+import 'package:media_kit/src/values.dart';
 import 'package:media_kit/generated/libmpv/bindings.dart';
 
 /// InitializerIsolate
@@ -194,7 +194,7 @@ abstract class InitializerIsolate {
     // Ensuring the successful sending of the last event before moving to next [MPV.mpv_wait_event].
     while (true) {
       completer = Completer();
-      final event = mpv.mpv_wait_event(handle, _isReleaseMode ? -1 : 0.1);
+      final event = mpv.mpv_wait_event(handle, kReleaseMode ? -1 : 0.1);
 
       if (disposed) {
         break;
@@ -214,7 +214,4 @@ abstract class InitializerIsolate {
 
   /// Associated [Isolate] of the [Pointer<mpv_handle>], if events are enabled.
   static final _isolates = HashMap<int, Isolate>();
-
-  /// Detect if app running in release mode.
-  static const _isReleaseMode = bool.fromEnvironment('dart.vm.product');
 }
