@@ -487,6 +487,7 @@ class NativePlayer extends PlatformPlayer {
 
       // This condition is specifically for the case when the internal playlist is ended (with [PlaylistLoopMode.none]), and we want to play the playlist again if play/pause is pressed.
       if (state.completed) {
+        await seek(Duration.zero, synchronized: false);
         final name = 'playlist-pos'.toNativeUtf8();
         final value = calloc<Int64>()..value = 0;
         mpv.mpv_set_property(
@@ -2315,6 +2316,7 @@ class NativePlayer extends PlatformPlayer {
       //
       // idle = yes
       // pause = yes
+      // profile = fast
       // keep-open = yes
       // audio-display = no
       // network-timeout = 5
@@ -2330,6 +2332,8 @@ class NativePlayer extends PlatformPlayer {
       final properties = <String, String>{
         'idle': 'yes',
         'pause': 'yes',
+        // https://github.com/mpv-android/mpv-android/commit/9e5c3d8a630290fc41edb8b03aeafa3bc4c45955
+        'profile': 'fast',
         'keep-open': 'yes',
         'audio-display': 'no',
         'network-timeout': '5',
@@ -2450,15 +2454,13 @@ class NativePlayer extends PlatformPlayer {
     }
   }
 
-  /// Calls mpv command passed as [args]. Automatically freeds memory after command sending.
-  Future<void> _command(List<String?> args) async {
-    final List<Pointer<Utf8>> pointers = args.map<Pointer<Utf8>>((e) {
-      if (e == null) return nullptr.cast();
-      return e.toNativeUtf8();
-    }).toList();
-    final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join().length);
+  /// Calls mpv command passed as [args].
+  /// Automatically freeds memory after command sending.
+  Future<void> _command(List<String> args) async {
+    final pointers = args.map<Pointer<Utf8>>((e) => e.toNativeUtf8()).toList();
+    final arr = calloc<Pointer<Utf8>>(128);
     for (int i = 0; i < args.length; i++) {
-      arr[i] = pointers[i];
+      arr.elementAt(i).value = pointers[i];
     }
     mpv.mpv_command(
       ctx,
