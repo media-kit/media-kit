@@ -1,3 +1,7 @@
+## 1.2.2
+
+- fix: override `setState` & check `mounted` in `MaterialVideoControls` & `MaterialDesktopVideoControls`
+
 ## 1.2.1
 
 - fix(android): clear `android.view.Surface` before playback

@@ -1,3 +1,11 @@
+## 1.1.9
+
+- fix: `NativePlayer._command`
+- fix: `NativePlayer` play after completed
+- fix(web): `AssetLoader` in release mode
+- chore: reduce demuxer cache size to 32MB
+- feat: `PlayerConfiguration.muted` for `NativePlayer` & `WebPlayer`
+
 ## 1.1.8+2
 
 - docs: document updated `media_kit_video`
