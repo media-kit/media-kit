@@ -453,6 +453,11 @@ class PlayerConfiguration {
   /// Default: `null`.
   final void Function()? ready;
 
+  /// Whether [Player] must be started in muted state.
+  ///
+  /// Default: `false`.
+  final bool muted;
+
   /// Whether to use [libass](https://github.com/libass/libass) based subtitle rendering for native backend.
   ///
   /// By default, subtitles rendering is Flutter `Widget` based.
@@ -488,6 +493,7 @@ class PlayerConfiguration {
     this.pitch = false,
     this.title = 'package:media_kit',
     this.ready,
+    this.muted = false,
     this.libass = false,
     this.libassAndroidFont,
     this.logLevel = MPVLogLevel.error,

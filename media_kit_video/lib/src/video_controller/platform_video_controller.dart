@@ -69,14 +69,14 @@ abstract class PlatformVideoController {
 ///
 /// {@endtemplate}
 class VideoControllerConfiguration {
-  /// Sets the [`--vo`](https://mpv.io/manual/stable/#options-vo) property on libmpv backend.
+  /// Sets the [`--vo`](https://mpv.io/manual/stable/#options-vo) property on native backend.
   ///
   /// Default: Platform specific.
   /// * Windows, GNU/Linux, macOS & iOS: `libmpv`
   /// * Android: `gpu`
   final String? vo;
 
-  /// Sets the [`--hwdec`](https://mpv.io/manual/stable/#options-hwdec) property on libmpv backend.
+  /// Sets the [`--hwdec`](https://mpv.io/manual/stable/#options-hwdec) property on native backend.
   ///
   /// Default: Platform specific.
   /// * Windows, GNU/Linux, macOS & iOS : `auto`

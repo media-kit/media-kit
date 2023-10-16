@@ -845,17 +845,40 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      final name = 'volume'.toNativeUtf8();
-      final value = calloc<Double>();
-      value.value = volume;
-      mpv.mpv_set_property(
-        ctx,
-        name.cast(),
-        generated.mpv_format.MPV_FORMAT_DOUBLE,
-        value.cast(),
-      );
-      calloc.free(name);
-      calloc.free(value);
+      {
+        final name = 'mute'.toNativeUtf8();
+        final value = calloc<Bool>();
+        mpv.mpv_get_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_FLAG,
+          value.cast(),
+        );
+        if (value.value) {
+          // Unmute the player before setting the volume.
+          final command = 'cycle mute'.toNativeUtf8();
+          mpv.mpv_command_string(
+            ctx,
+            command.cast(),
+          );
+          calloc.free(command);
+        }
+        calloc.free(name);
+        calloc.free(value);
+      }
+      {
+        final name = 'volume'.toNativeUtf8();
+        final value = calloc<Double>();
+        value.value = volume;
+        mpv.mpv_set_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_DOUBLE,
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+      }
     }
 
     if (synchronized) {
@@ -2397,6 +2420,24 @@ class NativePlayer extends PlatformPlayer {
         );
         calloc.free(name);
         calloc.free(value);
+      }
+
+      if (configuration.muted) {
+        final name = 'mute'.toNativeUtf8();
+        final value = calloc<Bool>()..value = true;
+        mpv.mpv_set_property(
+          ctx,
+          name.cast(),
+          generated.mpv_format.MPV_FORMAT_FLAG,
+          value.cast(),
+        );
+        calloc.free(name);
+        calloc.free(value);
+
+        state = state.copyWith(volume: 0.0);
+        if (!volumeController.isClosed) {
+          volumeController.add(0.0);
+        }
       }
 
       // Observe the properties to update the state & feed event stream.
