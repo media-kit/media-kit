@@ -144,7 +144,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   late int? _height = widget.controller.player.state.height;
   late bool _visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
   bool _pauseDueToPauseUponEnteringBackgroundMode = false;
-  ValueNotifier<VideoViewParameters?> _videoViewParametersNotifier =
+  ValueNotifier<VideoViewParameters?> videoViewParametersNotifier =
       ValueNotifier<VideoViewParameters?>(null);
 
   // Public API:
@@ -185,16 +185,15 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     double? aspectRatio,
     FilterQuality? filterQuality,
     VideoControlsBuilder? controls,
-    bool? wakelock,
+    // bool? wakelock,
     bool? pauseUponEnteringBackgroundMode,
     bool? resumeUponEnteringForegroundMode,
     SubtitleViewConfiguration? subtitleViewConfiguration,
     Future<void> Function()? onEnterFullscreen,
     Future<void> Function()? onExitFullscreen,
   }) {
-    _videoViewParametersNotifier.value =
-        _videoViewParametersNotifier.value?.copyWith(
-      controller: controller,
+    videoViewParametersNotifier.value =
+        videoViewParametersNotifier.value?.copyWith(
       width: width,
       height: height,
       fit: fit,
@@ -203,7 +202,6 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       aspectRatio: aspectRatio,
       filterQuality: filterQuality,
       controls: controls,
-      wakelock: wakelock,
       pauseUponEnteringBackgroundMode: pauseUponEnteringBackgroundMode,
       resumeUponEnteringForegroundMode: resumeUponEnteringForegroundMode,
       subtitleViewConfiguration: subtitleViewConfiguration,
@@ -214,7 +212,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (widget.pauseUponEnteringBackgroundMode) {
+    if (videoViewParametersNotifier.value!.pauseUponEnteringBackgroundMode) {
       if ([
         AppLifecycleState.paused,
         AppLifecycleState.detached,
@@ -224,7 +222,8 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
           widget.controller.player.pause();
         }
       } else {
-        if (widget.resumeUponEnteringForegroundMode &&
+        if (videoViewParametersNotifier
+                .value!.resumeUponEnteringForegroundMode &&
             _pauseDueToPauseUponEnteringBackgroundMode) {
           _pauseDueToPauseUponEnteringBackgroundMode = false;
           widget.controller.player.play();
@@ -233,6 +232,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     }
   }
 
+
   @override
   void didChangeDependencies() {
     media_kit_video_controls.VideoStateInheritedWidget? wrapping =
@@ -240,7 +240,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
 
     // set initial values
     if (wrapping != null) {
-      _videoViewParametersNotifier = wrapping.videoViewParametersNotifier;
+      videoViewParametersNotifier = wrapping.videoViewParametersNotifier;
     }
     super.didChangeDependencies();
   }
@@ -251,13 +251,11 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     // set initial values
-    _videoViewParametersNotifier.value = VideoViewParameters(
-        controller: widget.controller,
+    videoViewParametersNotifier.value = VideoViewParameters(
         fit: widget.fit,
         fill: widget.fill,
         alignment: widget.alignment,
         filterQuality: widget.filterQuality,
-        wakelock: widget.wakelock,
         pauseUponEnteringBackgroundMode: widget.pauseUponEnteringBackgroundMode,
         resumeUponEnteringForegroundMode:
             widget.resumeUponEnteringForegroundMode,
@@ -330,9 +328,9 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     return media_kit_video_controls.VideoStateInheritedWidget(
         state: this as dynamic,
         contextNotifier: _contextNotifier,
-        videoViewParametersNotifier: _videoViewParametersNotifier,
+        videoViewParametersNotifier: videoViewParametersNotifier,
         child: ValueListenableBuilder<VideoViewParameters?>(
-            valueListenable: _videoViewParametersNotifier,
+            valueListenable: videoViewParametersNotifier,
             builder: (context, videoViewParametersNotifier, _) {
               return Container(
                 clipBehavior: Clip.none,
@@ -348,7 +346,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                           fit: videoViewParametersNotifier.fit,
                           child: ValueListenableBuilder<
                                   PlatformVideoController?>(
-                              valueListenable: videoViewParametersNotifier
+                              valueListenable: widget
                                   .controller.notifier,
                               builder: (context, notifier, _) => notifier ==
                                       null
@@ -407,12 +405,12 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                     ),
                     if (videoViewParametersNotifier
                             .subtitleViewConfiguration.visible &&
-                        !(videoViewParametersNotifier.controller.player.platform
+                        !(widget.controller.player.platform
                                 ?.configuration.libass ??
                             false))
                       Positioned.fill(
                         child: SubtitleView(
-                          controller: videoViewParametersNotifier.controller,
+                          controller: widget.controller,
                           key: _subtitleViewKey,
                           configuration: videoViewParametersNotifier
                               .subtitleViewConfiguration,

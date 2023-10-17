@@ -5,7 +5,6 @@ import 'package:media_kit_video/src/video/video_texture.dart';
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
 class VideoViewParameters {
-  final VideoController controller;
   final double? width;
   final double? height;
   final BoxFit fit;
@@ -14,7 +13,6 @@ class VideoViewParameters {
   final double? aspectRatio;
   final FilterQuality filterQuality;
   final VideoControlsBuilder? controls;
-  final bool wakelock;
   final bool pauseUponEnteringBackgroundMode;
   final bool resumeUponEnteringForegroundMode;
   final SubtitleViewConfiguration subtitleViewConfiguration;
@@ -22,7 +20,6 @@ class VideoViewParameters {
   final Future<void> Function() onExitFullscreen;
 
   VideoViewParameters({
-    required this.controller,
     this.width,
     this.height,
     required this.fit,
@@ -31,7 +28,6 @@ class VideoViewParameters {
     this.aspectRatio,
     required this.filterQuality,
     this.controls,
-    required this.wakelock,
     required this.pauseUponEnteringBackgroundMode,
     required this.resumeUponEnteringForegroundMode,
     required this.subtitleViewConfiguration,
@@ -40,7 +36,6 @@ class VideoViewParameters {
   });
 
   VideoViewParameters copyWith({
-    VideoController? controller,
     double? width,
     double? height,
     BoxFit? fit,
@@ -49,7 +44,6 @@ class VideoViewParameters {
     double? aspectRatio,
     FilterQuality? filterQuality,
     VideoControlsBuilder? controls,
-    bool? wakelock,
     bool? pauseUponEnteringBackgroundMode,
     bool? resumeUponEnteringForegroundMode,
     SubtitleViewConfiguration? subtitleViewConfiguration,
@@ -57,7 +51,6 @@ class VideoViewParameters {
     Future<void> Function()? onExitFullscreen,
   }) {
     return VideoViewParameters(
-      controller: controller ?? this.controller,
       width: width ?? this.width,
       height: height ?? this.height,
       fit: fit ?? this.fit,
@@ -66,7 +59,6 @@ class VideoViewParameters {
       aspectRatio: aspectRatio ?? this.aspectRatio,
       filterQuality: filterQuality ?? this.filterQuality,
       controls: controls ?? this.controls,
-      wakelock: wakelock ?? this.wakelock,
       pauseUponEnteringBackgroundMode: pauseUponEnteringBackgroundMode ??
           this.pauseUponEnteringBackgroundMode,
       resumeUponEnteringForegroundMode: resumeUponEnteringForegroundMode ??
@@ -83,7 +75,6 @@ class VideoViewParameters {
     if (identical(this, other)) return true;
 
     return other is VideoViewParameters &&
-        other.controller == controller &&
         other.width == width &&
         other.height == height &&
         other.fit == fit &&
@@ -92,7 +83,6 @@ class VideoViewParameters {
         other.aspectRatio == aspectRatio &&
         other.filterQuality == filterQuality &&
         other.controls == controls &&
-        other.wakelock == wakelock &&
         other.pauseUponEnteringBackgroundMode ==
             pauseUponEnteringBackgroundMode &&
         other.resumeUponEnteringForegroundMode ==
@@ -104,7 +94,7 @@ class VideoViewParameters {
 
   @override
   int get hashCode {
-    return controller.hashCode ^
+    return 
         width.hashCode ^
         height.hashCode ^
         fit.hashCode ^
@@ -113,7 +103,6 @@ class VideoViewParameters {
         aspectRatio.hashCode ^
         filterQuality.hashCode ^
         controls.hashCode ^
-        wakelock.hashCode ^
         pauseUponEnteringBackgroundMode.hashCode ^
         resumeUponEnteringForegroundMode.hashCode ^
         subtitleViewConfiguration.hashCode ^
