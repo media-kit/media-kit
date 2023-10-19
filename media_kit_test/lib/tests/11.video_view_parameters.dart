@@ -9,14 +9,15 @@ import '../common/globals.dart';
 import '../common/widgets.dart';
 import '../common/sources/sources.dart';
 
-class VideoViewParameters extends StatefulWidget {
-  const VideoViewParameters({Key? key}) : super(key: key);
+class VideoViewParametersScreen extends StatefulWidget {
+  const VideoViewParametersScreen({Key? key}) : super(key: key);
 
   @override
-  State<VideoViewParameters> createState() => _VideoViewParametersState();
+  State<VideoViewParametersScreen> createState() =>
+      _VideoViewParametersScreenState();
 }
 
-class _VideoViewParametersState extends State<VideoViewParameters> {
+class _VideoViewParametersScreenState extends State<VideoViewParametersScreen> {
   late final Player player = Player();
   late final VideoController controller = VideoController(
     player,

@@ -247,7 +247,7 @@ class PrimaryScreen extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => const VideoViewParameters(),
+                  builder: (context) => const VideoViewParametersScreen(),
                 ),
               );
             },
