@@ -4,7 +4,6 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -22,8 +21,9 @@ Future<void> enterFullscreen(BuildContext context) {
     if (!isFullscreen(context)) {
       if (context.mounted) {
         final stateValue = state(context);
-        final VideoStateInheritedWidget videoStateInheritedWidget =
-            VideoStateInheritedWidget.of(context);
+        final contextNotifierValue = contextNotifier(context);
+        final videoViewParametersNotifierValue =
+            videoViewParametersNotifier(context);
         final controllerValue = controller(context);
         Navigator.of(context, rootNavigator: true).push(
           PageRouteBuilder(
@@ -33,39 +33,46 @@ Future<void> enterFullscreen(BuildContext context) {
                 context: context,
                 child: VideoStateInheritedWidget(
                   state: stateValue,
-                  contextNotifier: videoStateInheritedWidget.contextNotifier,
-                  videoViewParametersNotifier:
-                      videoStateInheritedWidget.videoViewParametersNotifier,
+                  contextNotifier: contextNotifierValue,
+                  videoViewParametersNotifier: videoViewParametersNotifierValue,
                   child: FullscreenInheritedWidget(
                     parent: stateValue,
                     // Another [VideoStateInheritedWidget] inside [FullscreenInheritedWidget] is important to notify about the fullscreen [BuildContext].
                     child: VideoStateInheritedWidget(
                       state: stateValue,
-                      contextNotifier:
-                          videoStateInheritedWidget.contextNotifier,
+                      contextNotifier: contextNotifierValue,
                       videoViewParametersNotifier:
-                          videoStateInheritedWidget.videoViewParametersNotifier,
+                          videoViewParametersNotifierValue,
                       child: Video(
                         controller: controllerValue,
-                        // width: null,
-                        // height: null,
-                        // Inherit following properties from the parent [Video]:
-                        fit: stateValue.widget.fit,
-                        fill: stateValue.widget.fill,
-                        alignment: stateValue.widget.alignment,
-                        aspectRatio: stateValue.widget.aspectRatio,
-                        filterQuality: stateValue.widget.filterQuality,
-                        controls: stateValue.widget.controls,
+                        // Do not restrict the video's width & height in fullscreen mode:
+                        width: null,
+                        height: null,
+                        fit: videoViewParametersNotifierValue.value.fit,
+                        fill: videoViewParametersNotifierValue.value.fill,
+                        alignment:
+                            videoViewParametersNotifierValue.value.alignment,
+                        aspectRatio:
+                            videoViewParametersNotifierValue.value.aspectRatio,
+                        filterQuality: videoViewParametersNotifierValue
+                            .value.filterQuality,
+                        controls:
+                            videoViewParametersNotifierValue.value.controls,
                         // Do not acquire or modify existing wakelock in fullscreen mode:
                         wakelock: false,
                         pauseUponEnteringBackgroundMode:
-                            stateValue.widget.pauseUponEnteringBackgroundMode,
+                            videoViewParametersNotifierValue
+                                .value.pauseUponEnteringBackgroundMode,
                         resumeUponEnteringForegroundMode:
-                            stateValue.widget.resumeUponEnteringForegroundMode,
+                            videoViewParametersNotifierValue
+                                .value.resumeUponEnteringForegroundMode,
                         subtitleViewConfiguration:
-                            stateValue.widget.subtitleViewConfiguration,
-                        onEnterFullscreen: stateValue.widget.onEnterFullscreen,
-                        onExitFullscreen: stateValue.widget.onExitFullscreen,
+                            videoViewParametersNotifierValue
+                                .value.subtitleViewConfiguration,
+                        onEnterFullscreen: videoViewParametersNotifierValue
+                            .value.onEnterFullscreen,
+                        onExitFullscreen: videoViewParametersNotifierValue
+                            .value.onExitFullscreen,
                       ),
                     ),
                   ),

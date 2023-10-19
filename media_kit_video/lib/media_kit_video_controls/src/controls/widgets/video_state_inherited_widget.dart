@@ -17,7 +17,7 @@ import 'package:media_kit_video/src/video_view_parameters.dart';
 class VideoStateInheritedWidget extends InheritedWidget {
   final VideoState state;
   final ValueNotifier<BuildContext?> contextNotifier;
-  final ValueNotifier<VideoViewParameters?> videoViewParametersNotifier;
+  final ValueNotifier<VideoViewParameters> videoViewParametersNotifier;
   VideoStateInheritedWidget({
     super.key,
     required this.state,
