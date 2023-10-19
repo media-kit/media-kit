@@ -135,23 +135,23 @@ class Video extends StatefulWidget {
 
 class VideoState extends State<Video> with WidgetsBindingObserver {
   late final _contextNotifier = ValueNotifier<BuildContext?>(null);
-  late final _videoViewParametersNotifier = ValueNotifier<VideoViewParameters>(
-    VideoViewParameters(
-      width: widget.width,
-      height: widget.height,
-      fit: widget.fit,
-      fill: widget.fill,
-      alignment: widget.alignment,
-      aspectRatio: widget.aspectRatio,
-      filterQuality: widget.filterQuality,
-      controls: widget.controls,
-      pauseUponEnteringBackgroundMode: widget.pauseUponEnteringBackgroundMode,
-      resumeUponEnteringForegroundMode: widget.resumeUponEnteringForegroundMode,
-      subtitleViewConfiguration: widget.subtitleViewConfiguration,
-      onEnterFullscreen: widget.onEnterFullscreen,
-      onExitFullscreen: widget.onExitFullscreen,
-    ),
-  );
+  late final ValueNotifier<VideoViewParameters> _videoViewParametersNotifier =
+      media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+            context,
+          )?.videoViewParametersNotifier ??
+          ValueNotifier<VideoViewParameters>(
+            VideoViewParameters(
+              width: widget.width,
+              height: widget.height,
+              fit: widget.fit,
+              fill: widget.fill,
+              alignment: widget.alignment,
+              aspectRatio: widget.aspectRatio,
+              filterQuality: widget.filterQuality,
+              controls: widget.controls,
+              subtitleViewConfiguration: widget.subtitleViewConfiguration,
+            ),
+          );
 
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();
   final _wakelock = Wakelock();
@@ -200,11 +200,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     double? aspectRatio,
     FilterQuality? filterQuality,
     VideoControlsBuilder? controls,
-    bool? pauseUponEnteringBackgroundMode,
-    bool? resumeUponEnteringForegroundMode,
     SubtitleViewConfiguration? subtitleViewConfiguration,
-    Future<void> Function()? onEnterFullscreen,
-    Future<void> Function()? onExitFullscreen,
   }) {
     _videoViewParametersNotifier.value =
         _videoViewParametersNotifier.value.copyWith(
@@ -216,17 +212,13 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       aspectRatio: aspectRatio,
       filterQuality: filterQuality,
       controls: controls,
-      pauseUponEnteringBackgroundMode: pauseUponEnteringBackgroundMode,
-      resumeUponEnteringForegroundMode: resumeUponEnteringForegroundMode,
       subtitleViewConfiguration: subtitleViewConfiguration,
-      onEnterFullscreen: onEnterFullscreen,
-      onExitFullscreen: onExitFullscreen,
     );
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_videoViewParametersNotifier.value.pauseUponEnteringBackgroundMode) {
+    if (widget.pauseUponEnteringBackgroundMode) {
       if ([
         AppLifecycleState.paused,
         AppLifecycleState.detached,
@@ -236,8 +228,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
           widget.controller.player.pause();
         }
       } else {
-        if (_videoViewParametersNotifier
-                .value.resumeUponEnteringForegroundMode &&
+        if (widget.resumeUponEnteringForegroundMode &&
             _pauseDueToPauseUponEnteringBackgroundMode) {
           _pauseDueToPauseUponEnteringBackgroundMode = false;
           widget.controller.player.play();

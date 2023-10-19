@@ -61,18 +61,14 @@ Future<void> enterFullscreen(BuildContext context) {
                         // Do not acquire or modify existing wakelock in fullscreen mode:
                         wakelock: false,
                         pauseUponEnteringBackgroundMode:
-                            videoViewParametersNotifierValue
-                                .value.pauseUponEnteringBackgroundMode,
+                            stateValue.widget.pauseUponEnteringBackgroundMode,
                         resumeUponEnteringForegroundMode:
-                            videoViewParametersNotifierValue
-                                .value.resumeUponEnteringForegroundMode,
+                            stateValue.widget.resumeUponEnteringForegroundMode,
                         subtitleViewConfiguration:
                             videoViewParametersNotifierValue
                                 .value.subtitleViewConfiguration,
-                        onEnterFullscreen: videoViewParametersNotifierValue
-                            .value.onEnterFullscreen,
-                        onExitFullscreen: videoViewParametersNotifierValue
-                            .value.onExitFullscreen,
+                        onEnterFullscreen: stateValue.widget.onEnterFullscreen,
+                        onExitFullscreen: stateValue.widget.onExitFullscreen,
                       ),
                     ),
                   ),

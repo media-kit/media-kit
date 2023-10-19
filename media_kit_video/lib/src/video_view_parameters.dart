@@ -26,11 +26,7 @@ class VideoViewParameters {
   final double? aspectRatio;
   final FilterQuality filterQuality;
   final VideoControlsBuilder? controls;
-  final bool pauseUponEnteringBackgroundMode;
-  final bool resumeUponEnteringForegroundMode;
   final SubtitleViewConfiguration subtitleViewConfiguration;
-  final Future<void> Function() onEnterFullscreen;
-  final Future<void> Function() onExitFullscreen;
 
   /// {@macro video_view_parameters}
   VideoViewParameters({
@@ -42,11 +38,7 @@ class VideoViewParameters {
     required this.aspectRatio,
     required this.filterQuality,
     required this.controls,
-    required this.pauseUponEnteringBackgroundMode,
-    required this.resumeUponEnteringForegroundMode,
     required this.subtitleViewConfiguration,
-    required this.onEnterFullscreen,
-    required this.onExitFullscreen,
   });
 
   VideoViewParameters copyWith({
@@ -73,14 +65,8 @@ class VideoViewParameters {
       aspectRatio: aspectRatio ?? this.aspectRatio,
       filterQuality: filterQuality ?? this.filterQuality,
       controls: controls ?? this.controls,
-      pauseUponEnteringBackgroundMode: pauseUponEnteringBackgroundMode ??
-          this.pauseUponEnteringBackgroundMode,
-      resumeUponEnteringForegroundMode: resumeUponEnteringForegroundMode ??
-          this.resumeUponEnteringForegroundMode,
       subtitleViewConfiguration:
           subtitleViewConfiguration ?? this.subtitleViewConfiguration,
-      onEnterFullscreen: onEnterFullscreen ?? this.onEnterFullscreen,
-      onExitFullscreen: onExitFullscreen ?? this.onExitFullscreen,
     );
   }
 
@@ -96,13 +82,7 @@ class VideoViewParameters {
           other.aspectRatio == aspectRatio &&
           other.filterQuality == filterQuality &&
           other.controls == controls &&
-          other.pauseUponEnteringBackgroundMode ==
-              pauseUponEnteringBackgroundMode &&
-          other.resumeUponEnteringForegroundMode ==
-              resumeUponEnteringForegroundMode &&
-          other.subtitleViewConfiguration == subtitleViewConfiguration &&
-          other.onEnterFullscreen == onEnterFullscreen &&
-          other.onExitFullscreen == onExitFullscreen;
+          other.subtitleViewConfiguration == subtitleViewConfiguration;
 
   @override
   int get hashCode =>
@@ -114,9 +94,5 @@ class VideoViewParameters {
       aspectRatio.hashCode ^
       filterQuality.hashCode ^
       controls.hashCode ^
-      pauseUponEnteringBackgroundMode.hashCode ^
-      resumeUponEnteringForegroundMode.hashCode ^
-      subtitleViewConfiguration.hashCode ^
-      onEnterFullscreen.hashCode ^
-      onExitFullscreen.hashCode;
+      subtitleViewConfiguration.hashCode;
 }
