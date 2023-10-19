@@ -1,3 +1,7 @@
+## 1.2.3
+
+- feat: `VideoState.update` & `VideoViewParameters`
+
 ## 1.2.2
 
 - fix: override `setState` & check `mounted` in `MaterialVideoControls` & `MaterialDesktopVideoControls`
