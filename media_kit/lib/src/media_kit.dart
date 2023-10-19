@@ -17,8 +17,12 @@ import 'package:media_kit/src/player/web/player/player.dart';
 ///
 /// {@endtemplate}
 abstract class MediaKit {
+  static bool _initialized = false;
+
   /// {@macro media_kit}
   static void ensureInitialized({String? libmpv}) {
+    if (_initialized) return;
+
     try {
       if (UniversalPlatform.isWindows) {
         nativeEnsureInitialized(libmpv: libmpv);
@@ -33,6 +37,7 @@ abstract class MediaKit {
       } else if (UniversalPlatform.isWeb) {
         webEnsureInitialized(libmpv: libmpv);
       }
+      _initialized = true;
     } catch (_) {
       print(
         '\n'
