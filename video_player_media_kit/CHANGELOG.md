@@ -1,3 +1,7 @@
+## 1.0.3
+
+- build: bump `media_kit` & `media_kit_video`
+
 ## 1.0.2
 
 - fix: do not acquire wakelock by default
