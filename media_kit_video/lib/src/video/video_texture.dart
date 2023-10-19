@@ -403,7 +403,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   }
 }
 
-typedef VideoControlsBuilder = Widget Function(VideoState state);
+
 
 // --------------------------------------------------
 
