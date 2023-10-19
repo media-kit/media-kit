@@ -7,14 +7,13 @@
 import 'dart:html';
 import 'dart:async';
 import 'package:flutter/widgets.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
 
 import 'package:media_kit_video/src/utils/wakelock.dart';
-import 'package:media_kit_video/src/video_controller/video_controller.dart';
-import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
+import 'package:media_kit_video/src/video_view_parameters.dart';
 
 /// {@template video}
 ///
@@ -135,7 +134,25 @@ class Video extends StatefulWidget {
 }
 
 class VideoState extends State<Video> with WidgetsBindingObserver {
-  final _contextNotifier = ValueNotifier<BuildContext?>(null);
+  late final _contextNotifier = ValueNotifier<BuildContext?>(null);
+  late final ValueNotifier<VideoViewParameters> _videoViewParametersNotifier =
+      media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+            context,
+          )?.videoViewParametersNotifier ??
+          ValueNotifier<VideoViewParameters>(
+            VideoViewParameters(
+              width: widget.width,
+              height: widget.height,
+              fit: widget.fit,
+              fill: widget.fill,
+              alignment: widget.alignment,
+              aspectRatio: widget.aspectRatio,
+              filterQuality: widget.filterQuality,
+              controls: widget.controls,
+              subtitleViewConfiguration: widget.subtitleViewConfiguration,
+            ),
+          );
+
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();
   final _wakelock = Wakelock();
   final _subscriptions = <StreamSubscription>[];
@@ -171,6 +188,31 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     return _subtitleViewKey.currentState?.setPadding(
       padding,
       duration: duration,
+    );
+  }
+
+  void update({
+    double? width,
+    double? height,
+    BoxFit? fit,
+    Color? fill,
+    Alignment? alignment,
+    double? aspectRatio,
+    FilterQuality? filterQuality,
+    VideoControlsBuilder? controls,
+    SubtitleViewConfiguration? subtitleViewConfiguration,
+  }) {
+    _videoViewParametersNotifier.value =
+        _videoViewParametersNotifier.value.copyWith(
+      width: width,
+      height: height,
+      fit: fit,
+      fill: fill,
+      alignment: alignment,
+      aspectRatio: aspectRatio,
+      filterQuality: filterQuality,
+      controls: controls,
+      subtitleViewConfiguration: subtitleViewConfiguration,
     );
   }
 
@@ -265,72 +307,82 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final controls = widget.controls;
-    final controller = widget.controller;
-    final aspectRatio = widget.aspectRatio;
-    final subtitleViewConfiguration = widget.subtitleViewConfiguration;
     return media_kit_video_controls.VideoStateInheritedWidget(
       state: this as dynamic,
       contextNotifier: _contextNotifier,
-      child: Container(
-        clipBehavior: Clip.none,
-        width: widget.width ?? double.infinity,
-        height: widget.height ?? double.infinity,
-        color: widget.fill,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            ClipRect(
-              child: FittedBox(
-                alignment: widget.alignment,
-                fit: widget.fit,
-                child: ValueListenableBuilder<PlatformVideoController?>(
-                  valueListenable: controller.notifier,
-                  builder: (context, notifier, _) => notifier == null
-                      ? const SizedBox.shrink()
-                      : ValueListenableBuilder<int?>(
-                          valueListenable: notifier.id,
-                          builder: (context, id, _) {
-                            return ValueListenableBuilder<Rect?>(
-                              valueListenable: notifier.rect,
-                              builder: (context, rect, _) {
-                                if (id != null && rect != null && _visible) {
-                                  return SizedBox(
-                                    // Apply aspect ratio if provided.
-                                    width: aspectRatio == null
-                                        ? rect.width
-                                        : rect.height * aspectRatio,
-                                    height: rect.height,
-                                    child: HtmlElementView(
-                                      key: _key,
-                                      viewType:
-                                          'com.alexmercerind.media_kit_video.$id',
-                                    ),
-                                  );
-                                }
-                                return const SizedBox.shrink();
+      videoViewParametersNotifier: _videoViewParametersNotifier,
+      child: ValueListenableBuilder<VideoViewParameters>(
+        valueListenable: _videoViewParametersNotifier,
+        builder: (context, videoViewParameters, _) {
+          return Container(
+            clipBehavior: Clip.none,
+            width: videoViewParameters.width,
+            height: videoViewParameters.height,
+            color: videoViewParameters.fill,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRect(
+                  child: FittedBox(
+                    fit: videoViewParameters.fit,
+                    alignment: videoViewParameters.alignment,
+                    child: ValueListenableBuilder<PlatformVideoController?>(
+                      valueListenable: widget.controller.notifier,
+                      builder: (context, notifier, _) => notifier == null
+                          ? const SizedBox.shrink()
+                          : ValueListenableBuilder<int?>(
+                              valueListenable: notifier.id,
+                              builder: (context, id, _) {
+                                return ValueListenableBuilder<Rect?>(
+                                  valueListenable: notifier.rect,
+                                  builder: (context, rect, _) {
+                                    if (id != null &&
+                                        rect != null &&
+                                        _visible) {
+                                      return SizedBox(
+                                        // Apply aspect ratio if provided.
+                                        width:
+                                            videoViewParameters.aspectRatio ==
+                                                    null
+                                                ? rect.width
+                                                : rect.height *
+                                                    videoViewParameters
+                                                        .aspectRatio!,
+                                        height: rect.height,
+                                        child: HtmlElementView(
+                                          key: _key,
+                                          viewType:
+                                              'com.alexmercerind.media_kit_video.$id',
+                                        ),
+                                      );
+                                    }
+                                    return const SizedBox.shrink();
+                                  },
+                                );
                               },
-                            );
-                          },
-                        ),
+                            ),
+                    ),
+                  ),
                 ),
-              ),
+                if (videoViewParameters.subtitleViewConfiguration.visible &&
+                    !(widget.controller.player.platform?.configuration.libass ??
+                        false))
+                  Positioned.fill(
+                    child: SubtitleView(
+                      controller: widget.controller,
+                      key: _subtitleViewKey,
+                      configuration:
+                          videoViewParameters.subtitleViewConfiguration,
+                    ),
+                  ),
+                if (videoViewParameters.controls != null)
+                  Positioned.fill(
+                    child: videoViewParameters.controls!.call(this as dynamic),
+                  ),
+              ],
             ),
-            if (subtitleViewConfiguration.visible &&
-                !(controller.player.platform?.configuration.libass ?? false))
-              Positioned.fill(
-                child: SubtitleView(
-                  controller: controller,
-                  key: _subtitleViewKey,
-                  configuration: subtitleViewConfiguration,
-                ),
-              ),
-            if (controls != null)
-              Positioned.fill(
-                child: controls.call(this),
-              ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

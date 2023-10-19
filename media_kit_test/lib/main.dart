@@ -14,6 +14,7 @@ import 'tests/07.video_controller_set_size.dart';
 import 'tests/08.screenshot.dart';
 import 'tests/09.seamless.dart';
 import 'tests/10.programmatic_fullscreen.dart';
+import 'tests/11.video_view_parameters.dart';
 
 import 'common/globals.dart';
 import 'common/sources/sources.dart';
@@ -232,6 +233,21 @@ class PrimaryScreen extends StatelessWidget {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => const ProgrammaticFullscreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            title: const Text(
+              'video_view_parameters.dart',
+              style: TextStyle(fontSize: 14.0),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const VideoViewParametersScreen(),
                 ),
               );
             },

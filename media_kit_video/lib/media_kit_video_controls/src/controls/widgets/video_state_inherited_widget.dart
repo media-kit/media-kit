@@ -7,6 +7,7 @@ import 'dart:collection';
 
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:media_kit_video/src/video_view_parameters.dart';
 
 /// {@template video_state_inherited_widget}
 ///
@@ -16,15 +17,18 @@ import 'package:media_kit_video/media_kit_video.dart';
 class VideoStateInheritedWidget extends InheritedWidget {
   final VideoState state;
   final ValueNotifier<BuildContext?> contextNotifier;
+  final ValueNotifier<VideoViewParameters> videoViewParametersNotifier;
   VideoStateInheritedWidget({
     super.key,
     required this.state,
     required this.contextNotifier,
+    required this.videoViewParametersNotifier,
     required Widget child,
   }) : super(
           child: _VideoStateInheritedWidgetContextNotifier(
             state: state,
             contextNotifier: contextNotifier,
+            videoViewParametersNotifier: videoViewParametersNotifier,
             child: child,
           ),
         );
@@ -57,11 +61,14 @@ class VideoStateInheritedWidget extends InheritedWidget {
 class _VideoStateInheritedWidgetContextNotifier extends StatefulWidget {
   final VideoState state;
   final ValueNotifier<BuildContext?> contextNotifier;
+  final ValueNotifier<VideoViewParameters?> videoViewParametersNotifier;
+
   final Widget child;
 
   const _VideoStateInheritedWidgetContextNotifier({
     required this.state,
     required this.contextNotifier,
+    required this.videoViewParametersNotifier,
     required this.child,
   });
 
@@ -89,6 +96,7 @@ class _VideoStateInheritedWidgetContextNotifierState
       widget.contextNotifier.value = context;
       _fallback[widget.state] ??= context;
     }
+
     return widget.child;
   }
 }
