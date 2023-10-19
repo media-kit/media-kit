@@ -1,9 +1,22 @@
+/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+///
+/// Copyright © 2023 & onwards, Abdelaziz Mahdy <abdelaziz.h.mahdy@gmail.com>.
+/// All rights reserved.
+/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:async';
 import 'package:flutter/widgets.dart';
-import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
-import 'package:media_kit_video/src/video/video_texture.dart';
-import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
+import 'package:media_kit_video/src/video/video_texture.dart';
+import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
+
+/// {@template video_view_parameters}
+///
+/// VideoViewParameters
+/// -------------------
+///
+/// The attributes of a [Video] widget composed into a single class.
+///
+/// {@endtemplate}
 class VideoViewParameters {
   final double? width;
   final double? height;
@@ -19,15 +32,16 @@ class VideoViewParameters {
   final Future<void> Function() onEnterFullscreen;
   final Future<void> Function() onExitFullscreen;
 
+  /// {@macro video_view_parameters}
   VideoViewParameters({
-    this.width,
-    this.height,
+    required this.width,
+    required this.height,
     required this.fit,
     required this.fill,
     required this.alignment,
-    this.aspectRatio,
+    required this.aspectRatio,
     required this.filterQuality,
-    this.controls,
+    required this.controls,
     required this.pauseUponEnteringBackgroundMode,
     required this.resumeUponEnteringForegroundMode,
     required this.subtitleViewConfiguration,
@@ -71,42 +85,38 @@ class VideoViewParameters {
   }
 
   @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-
-    return other is VideoViewParameters &&
-        other.width == width &&
-        other.height == height &&
-        other.fit == fit &&
-        other.fill == fill &&
-        other.alignment == alignment &&
-        other.aspectRatio == aspectRatio &&
-        other.filterQuality == filterQuality &&
-        other.controls == controls &&
-        other.pauseUponEnteringBackgroundMode ==
-            pauseUponEnteringBackgroundMode &&
-        other.resumeUponEnteringForegroundMode ==
-            resumeUponEnteringForegroundMode &&
-        other.subtitleViewConfiguration == subtitleViewConfiguration &&
-        other.onEnterFullscreen == onEnterFullscreen &&
-        other.onExitFullscreen == onExitFullscreen;
-  }
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VideoViewParameters &&
+          other.width == width &&
+          other.height == height &&
+          other.fit == fit &&
+          other.fill == fill &&
+          other.alignment == alignment &&
+          other.aspectRatio == aspectRatio &&
+          other.filterQuality == filterQuality &&
+          other.controls == controls &&
+          other.pauseUponEnteringBackgroundMode ==
+              pauseUponEnteringBackgroundMode &&
+          other.resumeUponEnteringForegroundMode ==
+              resumeUponEnteringForegroundMode &&
+          other.subtitleViewConfiguration == subtitleViewConfiguration &&
+          other.onEnterFullscreen == onEnterFullscreen &&
+          other.onExitFullscreen == onExitFullscreen;
 
   @override
-  int get hashCode {
-    return 
-        width.hashCode ^
-        height.hashCode ^
-        fit.hashCode ^
-        fill.hashCode ^
-        alignment.hashCode ^
-        aspectRatio.hashCode ^
-        filterQuality.hashCode ^
-        controls.hashCode ^
-        pauseUponEnteringBackgroundMode.hashCode ^
-        resumeUponEnteringForegroundMode.hashCode ^
-        subtitleViewConfiguration.hashCode ^
-        onEnterFullscreen.hashCode ^
-        onExitFullscreen.hashCode;
-  }
+  int get hashCode =>
+      width.hashCode ^
+      height.hashCode ^
+      fit.hashCode ^
+      fill.hashCode ^
+      alignment.hashCode ^
+      aspectRatio.hashCode ^
+      filterQuality.hashCode ^
+      controls.hashCode ^
+      pauseUponEnteringBackgroundMode.hashCode ^
+      resumeUponEnteringForegroundMode.hashCode ^
+      subtitleViewConfiguration.hashCode ^
+      onEnterFullscreen.hashCode ^
+      onExitFullscreen.hashCode;
 }
