@@ -13,7 +13,6 @@ import 'package:media_kit_video/media_kit_video_controls/media_kit_video_control
     as media_kit_video_controls;
 
 import 'package:media_kit_video/src/utils/wakelock.dart';
-import 'package:media_kit_video/src/video_view_parameters.dart';
 
 /// {@template video}
 ///
@@ -86,7 +85,7 @@ class Video extends StatefulWidget {
   final FilterQuality filterQuality;
 
   /// Video controls builder.
-  final dynamic /* VideoControlsBuilder? */ controls;
+  final /* VideoControlsBuilder? */ dynamic controls;
 
   /// Whether to acquire wake lock while playing the video.
   final bool wakelock;
@@ -199,7 +198,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     Alignment? alignment,
     double? aspectRatio,
     FilterQuality? filterQuality,
-    VideoControlsBuilder? controls,
+    /* VideoControlsBuilder? */ dynamic controls,
     SubtitleViewConfiguration? subtitleViewConfiguration,
   }) {
     _videoViewParametersNotifier.value =
