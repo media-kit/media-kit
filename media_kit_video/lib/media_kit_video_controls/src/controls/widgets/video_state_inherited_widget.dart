@@ -7,7 +7,6 @@ import 'dart:collection';
 
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:media_kit_video/src/video_view_parameters.dart';
 
 /// {@template video_state_inherited_widget}
 ///

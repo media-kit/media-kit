@@ -6,7 +6,7 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 
-import 'package:media_kit_video/src/video/video_texture.dart';
+import 'package:media_kit_video/src/video/video.dart';
 import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 
 /// {@template video_view_parameters}
@@ -25,7 +25,7 @@ class VideoViewParameters {
   final Alignment alignment;
   final double? aspectRatio;
   final FilterQuality filterQuality;
-  final VideoControlsBuilder? controls;
+  final /* VideoControlsBuilder? */ dynamic controls;
   final SubtitleViewConfiguration subtitleViewConfiguration;
 
   /// {@macro video_view_parameters}
@@ -49,7 +49,7 @@ class VideoViewParameters {
     Alignment? alignment,
     double? aspectRatio,
     FilterQuality? filterQuality,
-    VideoControlsBuilder? controls,
+    /* VideoControlsBuilder? */ dynamic controls,
     bool? pauseUponEnteringBackgroundMode,
     bool? resumeUponEnteringForegroundMode,
     SubtitleViewConfiguration? subtitleViewConfiguration,
