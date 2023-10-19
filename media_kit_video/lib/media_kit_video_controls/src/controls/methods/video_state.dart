@@ -6,8 +6,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:media_kit_video/src/video_view_parameters.dart';
-
 /// Returns the [VideoState] associated with the [Video] present in the current [BuildContext].
 VideoState state(BuildContext context) =>
     VideoStateInheritedWidget.of(context).state;

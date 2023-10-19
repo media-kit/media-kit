@@ -198,7 +198,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     Alignment? alignment,
     double? aspectRatio,
     FilterQuality? filterQuality,
-    VideoControlsBuilder? controls,
+    /* VideoControlsBuilder? */ dynamic controls,
     SubtitleViewConfiguration? subtitleViewConfiguration,
   }) {
     _videoViewParametersNotifier.value =

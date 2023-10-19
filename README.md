@@ -47,7 +47,7 @@
 ```yaml
 dependencies:
   media_kit: ^1.1.10                             # Primary package.
-  media_kit_video: ^1.2.3                        # For video rendering.
+  media_kit_video: ^1.2.4                        # For video rendering.
   media_kit_libs_video: ^1.0.4                   # Native video dependencies.
 ```
 
