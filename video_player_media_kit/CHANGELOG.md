@@ -1,3 +1,7 @@
+## 1.0.4
+
+- build: bump `media_kit_video`
+
 ## 1.0.3
 
 - build: bump `media_kit` & `media_kit_video`
