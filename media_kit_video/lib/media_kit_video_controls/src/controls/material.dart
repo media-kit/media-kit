@@ -950,7 +950,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                 ),
               ),
               // Double-Tap Seek Seek-Bar:
-              if (!mount || seekOnDoubleTapEnabledWhileControlsAreVisible)
+              if (!mount)
                 if (_mountSeekBackwardButton || _mountSeekForwardButton)
                   Column(
                     children: [
