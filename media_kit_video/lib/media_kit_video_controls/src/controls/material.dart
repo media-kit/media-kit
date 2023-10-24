@@ -142,7 +142,7 @@ class MaterialVideoControlsThemeData {
   ///
   /// * Default: `EdgeInsets.zero`
   /// * FullScreen: `MediaQuery.of(context).padding`
-  /// 
+  ///
   /// on FullScreen this will be safe area (set [padding] to [EdgeInsets.zero] to disable safe area)
   final EdgeInsets? padding;
 
@@ -424,6 +424,11 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   // The default event stream in package:volume_controller is buggy.
   bool _volumeInterceptEventStream = false;
 
+  Offset _dragInitialDelta =
+      Offset.zero; // Initial position for horizontal drag
+  int swipeDuration = 0; // Duration to seek in video
+  bool showSwipeDuration = false; // Whether to show the seek duration overlay
+
   late /* private */ var playlist = controller(context).player.state.playlist;
   late bool buffering = controller(context).player.state.buffering;
 
@@ -443,6 +448,36 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       (_theme(context).bottomButtonBar.isNotEmpty
           ? _theme(context).buttonBarHeight
           : 0.0);
+  Offset? _tapPosition;
+
+  void _handleTapDown(TapDownDetails details) {
+    setState(() {
+      _tapPosition = details.localPosition;
+      print("new tap position: ${_tapPosition?.dx}");
+    });
+  }
+
+  /// Converts a [Duration] to a formatted string representation in MM:SS format.
+  /// Returns '--:--' if the duration is null.
+  ///
+  /// [duration] - The duration to be formatted.
+  ///
+  /// Returns the formatted string representation of the duration.
+  String printDuration(Duration? duration) {
+    // Handle null duration
+    if (duration == null) return "--:--";
+
+    // Pad single-digit numbers with a leading '0'
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+
+    // Format minutes and seconds, remove any negative sign if present
+    String twoDigitMinutes = twoDigits(duration.inMinutes).replaceAll("-", "");
+    String twoDigitSeconds =
+        twoDigits(duration.inSeconds.remainder(60)).replaceAll("-", "");
+
+    // Construct the MM:SS format string
+    return "$twoDigitMinutes:$twoDigitSeconds";
+  }
 
   @override
   void setState(VoidCallback fn) {
@@ -562,6 +597,40 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   void onDoubleTapSeekForward() {
     setState(() {
       _mountSeekForwardButton = true;
+    });
+  }
+
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    if (_dragInitialDelta == Offset.zero) {
+      _dragInitialDelta = details.localPosition;
+      return;
+    }
+
+    final double diff = _dragInitialDelta.dx - details.localPosition.dx;
+    final int duration = controller(context).player.state.duration.inSeconds;
+    final int position = controller(context).player.state.position.inSeconds;
+
+    final int seconds = -(diff * duration / 5000).round();
+    final int relativePosition = position + seconds;
+
+    if (relativePosition <= duration && relativePosition >= 0) {
+      setState(() {
+        swipeDuration = seconds;
+        showSwipeDuration = true;
+      });
+    }
+  }
+
+  void _onHorizontalDragEnd() {
+    if (swipeDuration != 0) {
+      final newPosition = controller(context).player.state.position +
+          Duration(seconds: swipeDuration);
+      controller(context).player.seek(newPosition);
+    }
+
+    setState(() {
+      _dragInitialDelta = Offset.zero;
+      showSwipeDuration = false;
     });
   }
 
@@ -808,63 +877,65 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       top: 16.0,
                       right: 16.0,
                       bottom: 16.0,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: onTap,
-                              onDoubleTap:
-                                  !mount && _theme(context).seekOnDoubleTap
-                                      ? onDoubleTapSeekBackward
-                                      : () {},
-                              onVerticalDragUpdate: (!mount &&
-                                          _theme(context).brightnessGesture) ||
-                                      (_theme(context).brightnessGesture &&
-                                          _theme(context)
-                                              .gesturesEnabledWhileControlsVisible)
-                                  ? (e) async {
-                                      final delta = e.delta.dy;
-                                      final brightness = _brightnessValue -
-                                          delta /
-                                              _theme(context)
-                                                  .gestureSensitivity;
-                                      final result = brightness.clamp(0.0, 1.0);
-                                      setBrightness(result);
-                                    }
-                                  : null,
-                              child: Container(
-                                color: const Color(0x00000000),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: onTap,
-                              onDoubleTap:
-                                  !mount && _theme(context).seekOnDoubleTap
-                                      ? onDoubleTapSeekForward
-                                      : () {},
-                              onVerticalDragUpdate: (!mount &&
-                                          _theme(context).volumeGesture) ||
-                                      (_theme(context).volumeGesture &&
-                                          _theme(context)
-                                              .gesturesEnabledWhileControlsVisible)
-                                  ? (e) async {
-                                      final delta = e.delta.dy;
-                                      final volume = _volumeValue -
-                                          delta /
-                                              _theme(context)
-                                                  .gestureSensitivity;
-                                      final result = volume.clamp(0.0, 1.0);
-                                      setVolume(result);
-                                    }
-                                  : null,
-                              child: Container(
-                                color: const Color(0x00000000),
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: GestureDetector(
+                        onTap: onTap,
+                        onDoubleTapDown: (details) => _handleTapDown,
+                        onDoubleTap: () {
+                          if (_tapPosition != null &&
+                              _tapPosition!.dx >
+                                  MediaQuery.of(context).size.width / 2) {
+                            if ((!mount && _theme(context).seekOnDoubleTap) ||
+                                seekOnDoubleTapEnabledWhileControlsAreVisible) {
+                              onDoubleTapSeekForward();
+                            }
+                          } else {
+                            if ((!mount && _theme(context).seekOnDoubleTap) ||
+                                seekOnDoubleTapEnabledWhileControlsAreVisible) {
+                              onDoubleTapSeekBackward();
+                            }
+                          }
+                        },
+                        onTapDown: _handleTapDown,
+                        onHorizontalDragUpdate: (details) {
+                          _onHorizontalDragUpdate(details);
+                        },
+                        onHorizontalDragEnd: (details) {
+                          _onHorizontalDragEnd();
+                        },
+                        onVerticalDragUpdate: (e) async {
+                          final delta = e.delta.dy;
+                          final Offset position = e.localPosition;
+
+                          if (position.dx <=
+                              MediaQuery.of(context).size.width / 2) {
+                            // Left side of screen swiped
+
+                            if ((!mount && _theme(context).brightnessGesture) ||
+                                (_theme(context).brightnessGesture &&
+                                    _theme(context)
+                                        .gesturesEnabledWhileControlsVisible)) {
+                              final brightness = _brightnessValue -
+                                  delta / _theme(context).gestureSensitivity;
+                              final result = brightness.clamp(0.0, 1.0);
+                              setBrightness(result);
+                            }
+                          } else {
+                            // Right side of screen swiped
+
+                            if ((!mount && _theme(context).volumeGesture) ||
+                                (_theme(context).volumeGesture &&
+                                    _theme(context)
+                                        .gesturesEnabledWhileControlsVisible)) {
+                              final volume = _volumeValue -
+                                  delta / _theme(context).gestureSensitivity;
+                              final result = volume.clamp(0.0, 1.0);
+                              setVolume(result);
+                            }
+                          }
+                        },
+                        child: Container(
+                          color: const Color(0x00000000),
+                        ),
                       ),
                     ),
                     if (mount)
@@ -1022,6 +1093,28 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                   ),
                 ),
               ),
+              if (showSwipeDuration)
+                Align(
+                  alignment: Alignment.center,
+                  child: AnimatedOpacity(
+                    duration: Duration(milliseconds: 300),
+                    opacity: showSwipeDuration ? 1 : 0,
+                    child: Container(
+                      color: Colors.grey[900],
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          swipeDuration > 0
+                              ? "+ ${printDuration(Duration(seconds: swipeDuration))}"
+                              : "- ${printDuration(Duration(seconds: swipeDuration))}",
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
               // Double-Tap Seek Button(s):
               if (!mount || seekOnDoubleTapEnabledWhileControlsAreVisible)
                 if (_mountSeekBackwardButton || _mountSeekForwardButton)
