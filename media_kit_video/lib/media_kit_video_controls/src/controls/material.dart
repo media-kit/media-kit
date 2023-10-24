@@ -141,7 +141,9 @@ class MaterialVideoControlsThemeData {
   /// Padding around the controls.
   ///
   /// * Default: `EdgeInsets.zero`
-  /// * Fullscreen: `MediaQuery.of(context).padding`
+  /// * FullScreen: `MediaQuery.of(context).padding`
+  /// 
+  /// on FullScreen this will be safe area (set [padding] to [EdgeInsets.zero] to disable safe area)
   final EdgeInsets? padding;
 
   /// [Duration] after which the controls will be hidden when there is no mouse movement.
