@@ -116,8 +116,16 @@ class MaterialVideoControlsThemeData {
   /// Whether to modify screen brightness on vertical drag gesture on the left side of the screen.
   final bool brightnessGesture;
 
+  /// Whether to allow gesture controls to work while controls are visible.
+  /// Note: This option is ignored when gestures are false.
+  final bool gesturesEnabledWhileControlsVisible;
+
   /// Whether to enable double tap to seek on left or right side of the screen.
   final bool seekOnDoubleTap;
+
+  /// Whether to allow double tap to seek on left or right side of the screen to work while controls are visible.
+  /// Note: This option is ignored when [seekOnDoubleTap] is false.
+  final bool seekOnDoubleTapEnabledWhileControlsVisible;
 
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
@@ -218,8 +226,10 @@ class MaterialVideoControlsThemeData {
     this.automaticallyImplySkipPreviousButton = true,
     this.volumeGesture = false,
     this.brightnessGesture = false,
+    this.gesturesEnabledWhileControlsVisible = false,
     this.gestureSensitivity = 100,
     this.seekOnDoubleTap = true,
+    this.seekOnDoubleTapEnabledWhileControlsVisible = false,
     this.visibleOnMount = false,
     this.backdropColor = const Color(0x66000000),
     this.padding,
@@ -265,9 +275,12 @@ class MaterialVideoControlsThemeData {
     bool? displaySeekBar,
     bool? automaticallyImplySkipNextButton,
     bool? automaticallyImplySkipPreviousButton,
+    bool? gesturesEnabledWhileControlsVisible,
+    double? gestureSensitivity,
     bool? volumeGesture,
     bool? brightnessGesture,
     bool? seekOnDoubleTap,
+    bool? seekOnDoubleTapEnabledWhileControlsVisible,
     bool? visibleOnMount,
     Color? backdropColor,
     Duration? controlsHoverDuration,
@@ -303,7 +316,14 @@ class MaterialVideoControlsThemeData {
               this.automaticallyImplySkipPreviousButton,
       volumeGesture: volumeGesture ?? this.volumeGesture,
       brightnessGesture: brightnessGesture ?? this.brightnessGesture,
+      gesturesEnabledWhileControlsVisible:
+          gesturesEnabledWhileControlsVisible ??
+              this.gesturesEnabledWhileControlsVisible,
+      gestureSensitivity: gestureSensitivity ?? this.gestureSensitivity,
       seekOnDoubleTap: seekOnDoubleTap ?? this.seekOnDoubleTap,
+      seekOnDoubleTapEnabledWhileControlsVisible:
+          seekOnDoubleTapEnabledWhileControlsVisible ??
+              this.seekOnDoubleTapEnabledWhileControlsVisible,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
       backdropColor: backdropColor ?? this.backdropColor,
       controlsHoverDuration:
@@ -624,6 +644,9 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   @override
   Widget build(BuildContext context) {
+    var seekOnDoubleTapEnabledWhileControlsAreVisible =
+        (_theme(context).seekOnDoubleTap &&
+            _theme(context).seekOnDoubleTapEnabledWhileControlsVisible);
     return Theme(
       data: Theme.of(context).copyWith(
         focusColor: const Color(0x00000000),
@@ -792,8 +815,11 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                   !mount && _theme(context).seekOnDoubleTap
                                       ? onDoubleTapSeekBackward
                                       : () {},
-                              onVerticalDragUpdate: !mount &&
-                                      _theme(context).brightnessGesture
+                              onVerticalDragUpdate: (!mount &&
+                                          _theme(context).brightnessGesture) ||
+                                      (_theme(context).brightnessGesture &&
+                                          _theme(context)
+                                              .gesturesEnabledWhileControlsVisible)
                                   ? (e) async {
                                       final delta = e.delta.dy;
                                       final brightness = _brightnessValue -
@@ -816,18 +842,21 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                   !mount && _theme(context).seekOnDoubleTap
                                       ? onDoubleTapSeekForward
                                       : () {},
-                              onVerticalDragUpdate:
-                                  !mount && _theme(context).volumeGesture
-                                      ? (e) async {
-                                          final delta = e.delta.dy;
-                                          final volume = _volumeValue -
-                                              delta /
-                                                  _theme(context)
-                                                      .gestureSensitivity;
-                                          final result = volume.clamp(0.0, 1.0);
-                                          setVolume(result);
-                                        }
-                                      : null,
+                              onVerticalDragUpdate: (!mount &&
+                                          _theme(context).volumeGesture) ||
+                                      (_theme(context).volumeGesture &&
+                                          _theme(context)
+                                              .gesturesEnabledWhileControlsVisible)
+                                  ? (e) async {
+                                      final delta = e.delta.dy;
+                                      final volume = _volumeValue -
+                                          delta /
+                                              _theme(context)
+                                                  .gestureSensitivity;
+                                      final result = volume.clamp(0.0, 1.0);
+                                      setVolume(result);
+                                    }
+                                  : null,
                               child: Container(
                                 color: const Color(0x00000000),
                               ),
@@ -919,7 +948,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                 ),
               ),
               // Double-Tap Seek Seek-Bar:
-              if (!mount)
+              if (!mount || seekOnDoubleTapEnabledWhileControlsAreVisible)
                 if (_mountSeekBackwardButton || _mountSeekForwardButton)
                   Column(
                     children: [
@@ -992,7 +1021,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                 ),
               ),
               // Double-Tap Seek Button(s):
-              if (!mount)
+              if (!mount || seekOnDoubleTapEnabledWhileControlsAreVisible)
                 if (_mountSeekBackwardButton || _mountSeekForwardButton)
                   Positioned.fill(
                     child: Row(
