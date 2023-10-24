@@ -122,6 +122,9 @@ class MaterialVideoControlsThemeData {
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
 
+  /// Gesture sensitivity the higher the value is the less sensitive the gesture.
+  final double gestureSensitivity;
+
   /// Color of backdrop that comes up when controls are visible.
   final Color? backdropColor;
 
@@ -215,6 +218,7 @@ class MaterialVideoControlsThemeData {
     this.automaticallyImplySkipPreviousButton = true,
     this.volumeGesture = false,
     this.brightnessGesture = false,
+    this.gestureSensitivity = 100,
     this.seekOnDoubleTap = true,
     this.visibleOnMount = false,
     this.backdropColor = const Color(0x66000000),
@@ -792,8 +796,10 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                       _theme(context).brightnessGesture
                                   ? (e) async {
                                       final delta = e.delta.dy;
-                                      final brightness =
-                                          _brightnessValue - delta / 100.0;
+                                      final brightness = _brightnessValue -
+                                          delta /
+                                              _theme(context)
+                                                  .gestureSensitivity;
                                       final result = brightness.clamp(0.0, 1.0);
                                       setBrightness(result);
                                     }
@@ -814,8 +820,10 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                   !mount && _theme(context).volumeGesture
                                       ? (e) async {
                                           final delta = e.delta.dy;
-                                          final volume =
-                                              _volumeValue - delta / 100.0;
+                                          final volume = _volumeValue -
+                                              delta /
+                                                  _theme(context)
+                                                      .gestureSensitivity;
                                           final result = volume.clamp(0.0, 1.0);
                                           setVolume(result);
                                         }
