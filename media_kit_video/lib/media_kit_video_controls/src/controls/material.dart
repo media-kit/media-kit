@@ -589,14 +589,14 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       });
       shiftSubtitle();
       _timer?.cancel();
-      // _timer = Timer(_theme(context).controlsHoverDuration, () {
-      //   if (mounted) {
-      //     setState(() {
-      //       visible = false;
-      //     });
-      //     unshiftSubtitle();
-      //   }
-      // });
+      _timer = Timer(_theme(context).controlsHoverDuration, () {
+        if (mounted) {
+          setState(() {
+            visible = false;
+          });
+          unshiftSubtitle();
+        }
+      });
     } else {
       setState(() {
         visible = false;
