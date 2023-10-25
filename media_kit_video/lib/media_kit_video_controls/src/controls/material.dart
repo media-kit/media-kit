@@ -870,7 +870,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       bottom: 16.0,
                       child: GestureDetector(
                         onTap: onTap,
-                        onTapDown: _handleTapDown,
                         onDoubleTapDown: _handleTapDown,
                         onDoubleTap: () {
                           if (_tapPosition != null &&
