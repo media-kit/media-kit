@@ -856,18 +856,9 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                   clipBehavior: Clip.none,
                   alignment: Alignment.center,
                   children: [
-                    // Fallback from the controls to the video & show/hide controls on tap.
                     Positioned.fill(
-                      child: GestureDetector(
-                        onVerticalDragUpdate: (e) {
-                          onTap();
-                        },
-                        onHorizontalDragUpdate: (e) {
-                          onTap();
-                        },
-                        child: Container(
-                          color: _theme(context).backdropColor,
-                        ),
+                      child: Container(
+                        color: _theme(context).backdropColor,
                       ),
                     ),
                     // We are adding 16.0 boundary around the actual controls (which contain the vertical drag gesture detectors).
@@ -879,7 +870,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       bottom: 16.0,
                       child: GestureDetector(
                         onTap: onTap,
-                        onDoubleTapDown: (details) => _handleTapDown,
+                        onTapDown: _handleTapDown,
+                        onDoubleTapDown: _handleTapDown,
                         onDoubleTap: () {
                           if (_tapPosition != null &&
                               _tapPosition!.dx >
@@ -895,7 +887,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                             }
                           }
                         },
-                        onTapDown: _handleTapDown,
                         onHorizontalDragUpdate: (details) {
                           _onHorizontalDragUpdate(details);
                         },
