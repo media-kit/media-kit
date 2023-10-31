@@ -643,8 +643,12 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   void _onHorizontalDragEnd() {
     if (swipeDuration != 0) {
-      final newPosition = controller(context).player.state.position +
+      Duration newPosition = controller(context).player.state.position +
           Duration(seconds: swipeDuration);
+      newPosition = newPosition.clamp(
+        Duration.zero,
+        controller(context).player.state.duration,
+      );
       controller(context).player.seek(newPosition);
     }
 
@@ -1135,15 +1139,21 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           .seekIndicatorBuilder
                           ?.call(context, Duration(seconds: swipeDuration)) ??
                       Container(
-                        color: Colors.grey[900],
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            swipeDuration > 0
-                                ? "+ ${printDuration(Duration(seconds: swipeDuration))}"
-                                : "- ${printDuration(Duration(seconds: swipeDuration))}",
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 16),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0x88000000),
+                          borderRadius: BorderRadius.circular(64.0),
+                        ),
+                        height: 52.0,
+                        width: 108.0,
+                        child: Text(
+                          swipeDuration > 0
+                              ? "+ ${printDuration(Duration(seconds: swipeDuration))}"
+                              : "- ${printDuration(Duration(seconds: swipeDuration))}",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 14.0,
+                            color: Color(0xFFFFFFFF),
                           ),
                         ),
                       ),
