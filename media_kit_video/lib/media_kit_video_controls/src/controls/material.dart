@@ -637,6 +637,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       setState(() {
         swipeDuration = seconds;
         showSwipeDuration = true;
+        _seekBarDeltaValueNotifier.value = Duration(seconds: seconds);
       });
     }
   }
@@ -944,7 +945,9 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
               ),
               // Double-Tap Seek Seek-Bar:
               if (!mount)
-                if (_mountSeekBackwardButton || _mountSeekForwardButton)
+                if (_mountSeekBackwardButton ||
+                    _mountSeekForwardButton ||
+                    showSwipeDuration)
                   Column(
                     children: [
                       const Spacer(),
