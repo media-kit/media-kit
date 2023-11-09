@@ -44,13 +44,21 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   automaticallyImplySkipPreviousButton: true,
   volumeGesture: true,
   brightnessGesture: true,
+  seekGesture: true,
+  gesturesEnabledWhileControlsVisible: true,
   seekOnDoubleTap: true,
+  seekOnDoubleTapEnabledWhileControlsVisible: true,
   visibleOnMount: false,
+  verticalGestureSensitivity: 100,
+  horizontalGestureSensitivity: 1000,
   backdropColor: Color(0x66000000),
   padding: null,
   controlsHoverDuration: Duration(seconds: 3),
   controlsTransitionDuration: Duration(milliseconds: 300),
   bufferingIndicatorBuilder: null,
+  volumeIndicatorBuilder: null,
+  brightnessIndicatorBuilder: null,
+  seekIndicatorBuilder: null,
   primaryButtonBar: [
     Spacer(flex: 2),
     MaterialSkipPreviousButton(),
@@ -120,14 +128,14 @@ class MaterialVideoControlsThemeData {
   final bool seekGesture;
 
   /// Whether to allow gesture controls to work while controls are visible.
-  /// Note: This option is ignored when gestures are false.
+  /// NOTE: This option is ignored when gestures are false.
   final bool gesturesEnabledWhileControlsVisible;
 
   /// Whether to enable double tap to seek on left or right side of the screen.
   final bool seekOnDoubleTap;
 
   /// Whether to allow double tap to seek on left or right side of the screen to work while controls are visible.
-  /// Note: This option is ignored when [seekOnDoubleTap] is false.
+  /// NOTE: This option is ignored when [seekOnDoubleTap] is false.
   final bool seekOnDoubleTapEnabledWhileControlsVisible;
 
   /// Whether the controls are initially visible.
@@ -149,7 +157,7 @@ class MaterialVideoControlsThemeData {
   /// * Default: `EdgeInsets.zero`
   /// * FullScreen: `MediaQuery.of(context).padding`
   ///
-  /// on FullScreen this will be safe area (set [padding] to [EdgeInsets.zero] to disable safe area)
+  /// NOTE: In fullscreen, this will be safe area (set [padding] to [EdgeInsets.zero] to disable safe area)
   final EdgeInsets? padding;
 
   /// [Duration] after which the controls will be hidden when there is no mouse movement.
@@ -169,6 +177,7 @@ class MaterialVideoControlsThemeData {
 
   /// Custom builder for seek indicator.
   final Widget Function(BuildContext, Duration)? seekIndicatorBuilder;
+
   // BUTTON BAR
 
   /// Buttons to be displayed in the primary button bar.
@@ -237,12 +246,12 @@ class MaterialVideoControlsThemeData {
     this.volumeGesture = false,
     this.brightnessGesture = false,
     this.seekGesture = false,
-    this.gesturesEnabledWhileControlsVisible = false,
-    this.verticalGestureSensitivity = 100,
-    this.horizontalGestureSensitivity = 5000,
-    this.seekOnDoubleTap = true,
-    this.seekOnDoubleTapEnabledWhileControlsVisible = false,
+    this.gesturesEnabledWhileControlsVisible = true,
+    this.seekOnDoubleTap = false,
+    this.seekOnDoubleTapEnabledWhileControlsVisible = true,
     this.visibleOnMount = false,
+    this.verticalGestureSensitivity = 100,
+    this.horizontalGestureSensitivity = 1000,
     this.backdropColor = const Color(0x66000000),
     this.padding,
     this.controlsHoverDuration = const Duration(seconds: 3),
@@ -288,15 +297,15 @@ class MaterialVideoControlsThemeData {
     bool? displaySeekBar,
     bool? automaticallyImplySkipNextButton,
     bool? automaticallyImplySkipPreviousButton,
-    bool? gesturesEnabledWhileControlsVisible,
-    double? verticalGestureSensitivity,
-    double? horizontalGestureSensitivity,
     bool? volumeGesture,
     bool? brightnessGesture,
     bool? seekGesture,
+    bool? gesturesEnabledWhileControlsVisible,
     bool? seekOnDoubleTap,
     bool? seekOnDoubleTapEnabledWhileControlsVisible,
     bool? visibleOnMount,
+    double? verticalGestureSensitivity,
+    double? horizontalGestureSensitivity,
     Color? backdropColor,
     Duration? controlsHoverDuration,
     Duration? controlsTransitionDuration,
@@ -336,15 +345,15 @@ class MaterialVideoControlsThemeData {
       gesturesEnabledWhileControlsVisible:
           gesturesEnabledWhileControlsVisible ??
               this.gesturesEnabledWhileControlsVisible,
-      verticalGestureSensitivity:
-          verticalGestureSensitivity ?? this.verticalGestureSensitivity,
-      horizontalGestureSensitivity:
-          horizontalGestureSensitivity ?? this.horizontalGestureSensitivity,
       seekOnDoubleTap: seekOnDoubleTap ?? this.seekOnDoubleTap,
       seekOnDoubleTapEnabledWhileControlsVisible:
           seekOnDoubleTapEnabledWhileControlsVisible ??
               this.seekOnDoubleTapEnabledWhileControlsVisible,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
+      verticalGestureSensitivity:
+          verticalGestureSensitivity ?? this.verticalGestureSensitivity,
+      horizontalGestureSensitivity:
+          horizontalGestureSensitivity ?? this.horizontalGestureSensitivity,
       backdropColor: backdropColor ?? this.backdropColor,
       controlsHoverDuration:
           controlsHoverDuration ?? this.controlsHoverDuration,
@@ -475,28 +484,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     });
   }
 
-  /// Converts a [Duration] to a formatted string representation in MM:SS format.
-  /// Returns '--:--' if the duration is null.
-  ///
-  /// [duration] - The duration to be formatted.
-  ///
-  /// Returns the formatted string representation of the duration.
-  String printDuration(Duration? duration) {
-    // Handle null duration
-    if (duration == null) return "--:--";
-
-    // Pad single-digit numbers with a leading '0'
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-
-    // Format minutes and seconds, remove any negative sign if present
-    String twoDigitMinutes = twoDigits(duration.inMinutes).replaceAll("-", "");
-    String twoDigitSeconds =
-        twoDigits(duration.inSeconds.remainder(60)).replaceAll("-", "");
-
-    // Construct the MM:SS format string
-    return "$twoDigitMinutes:$twoDigitSeconds";
-  }
-
   @override
   void setState(VoidCallback fn) {
     if (mounted) {
@@ -618,20 +605,20 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     });
   }
 
-  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+  void onHorizontalDragUpdate(DragUpdateDetails details) {
     if (_dragInitialDelta == Offset.zero) {
       _dragInitialDelta = details.localPosition;
       return;
     }
 
-    final double diff = _dragInitialDelta.dx - details.localPosition.dx;
-    final int duration = controller(context).player.state.duration.inSeconds;
-    final int position = controller(context).player.state.position.inSeconds;
+    final diff = _dragInitialDelta.dx - details.localPosition.dx;
+    final duration = controller(context).player.state.duration.inSeconds;
+    final position = controller(context).player.state.position.inSeconds;
 
-    final int seconds =
+    final seconds =
         -(diff * duration / _theme(context).horizontalGestureSensitivity)
             .round();
-    final int relativePosition = position + seconds;
+    final relativePosition = position + seconds;
 
     if (relativePosition <= duration && relativePosition >= 0) {
       setState(() {
@@ -642,7 +629,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     }
   }
 
-  void _onHorizontalDragEnd() {
+  void onHorizontalDragEnd() {
     if (swipeDuration != 0) {
       Duration newPosition = controller(context).player.state.position +
           Duration(seconds: swipeDuration);
@@ -792,7 +779,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       right: 16.0,
                       bottom: 16.0,
                       child: GestureDetector(
-                        // behavior: HitTestBehavior.deferToChild,
                         onTap: onTap,
                         onDoubleTapDown: _handleTapDown,
                         onDoubleTap: () {
@@ -815,11 +801,11 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                               (_theme(context).seekGesture &&
                                   _theme(context)
                                       .gesturesEnabledWhileControlsVisible)) {
-                            _onHorizontalDragUpdate(details);
+                            onHorizontalDragUpdate(details);
                           }
                         },
                         onHorizontalDragEnd: (details) {
-                          _onHorizontalDragEnd();
+                          onHorizontalDragEnd();
                         },
                         onVerticalDragUpdate: (e) async {
                           final delta = e.delta.dy;
@@ -1151,8 +1137,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                         width: 108.0,
                         child: Text(
                           swipeDuration > 0
-                              ? "+ ${printDuration(Duration(seconds: swipeDuration))}"
-                              : "- ${printDuration(Duration(seconds: swipeDuration))}",
+                              ? "+ ${Duration(seconds: swipeDuration).label()}"
+                              : "- ${Duration(seconds: swipeDuration).label()}",
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 14.0,
