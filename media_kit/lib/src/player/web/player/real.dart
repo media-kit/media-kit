@@ -978,6 +978,7 @@ class WebPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
+      // ---------------------------------------------
       final map = SplayTreeMap<double, Media>.from(
         _playlist.asMap().map((key, value) => MapEntry(key * 1.0, value)),
       );
@@ -994,6 +995,7 @@ class WebPlayer extends PlatformPlayer {
           ? keys.indexOf(current * 1.0)
           : keys.indexOf(to - 0.5);
       _playlist = values;
+      // ---------------------------------------------
 
       state = state.copyWith(
         playlist: Playlist(

@@ -66,6 +66,16 @@ class Media extends Playable {
   /// Default: `null`.
   final Map<String, String>? httpHeaders;
 
+  /// Start position.
+  ///
+  /// Default: `null`.
+  final Duration? start;
+
+  /// End position.
+  ///
+  /// Default: `null`.
+  final Duration? end;
+
   /// Whether instance is instantiated from [Media.memory].
   bool _memory = false;
 
@@ -74,6 +84,8 @@ class Media extends Playable {
     String resource, {
     Map<String, dynamic>? extras,
     Map<String, String>? httpHeaders,
+    this.start,
+    this.end,
   })  : uri = normalizeURI(resource),
         extras = extras ?? cache[normalizeURI(resource)]?.extras,
         httpHeaders =
