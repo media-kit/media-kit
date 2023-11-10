@@ -100,86 +100,40 @@ class WebPlayer extends PlatformPlayer {
       });
       element.onEnded.listen((_) {
         lock.synchronized(() async {
-          // PlayerState.state.playing & PlayerState.stream.playing
-          // PlayerState.state.completed & PlayerState.stream.completed
-          // PlayerState.state.buffering & PlayerState.stream.buffering
-
-          // A minimal quirk to match the NativePlayer behavior.
-          state = state.copyWith(
-            buffering: true,
-          );
-          if (!bufferingController.isClosed) {
-            bufferingController.add(true);
-          }
-
-          state = state.copyWith(
-            playing: false,
-            completed: true,
-            buffering: false,
-          );
-          if (!playingController.isClosed) {
-            playingController.add(false);
-          }
-          if (!completedController.isClosed) {
-            completedController.add(true);
-          }
-          if (!bufferingController.isClosed) {
-            bufferingController.add(false);
-          }
-
-          element.children.clear();
-          state = state.copyWith(track: Track());
-          if (!trackController.isClosed) {
-            trackController.add(Track());
-          }
-
-          // PlayerState.state.playlist.index & PlayerState.stream.playlist.index
-          switch (_playlistMode) {
-            case PlaylistMode.none:
-              {
-                if (_index < _playlist.length - 1) {
-                  _index = _index + 1;
-                  final current = _playlist[_index];
-                  _loadSource(current.uri);
-                  await play(synchronized: false);
-                } else {
-                  // Playback must end.
-                }
-                break;
-              }
-            case PlaylistMode.single:
-              {
-                final current = _playlist[_index];
-                _loadSource(current.uri);
-                await play(synchronized: false);
-                break;
-              }
-            case PlaylistMode.loop:
-              {
-                _index = (_index + 1) % _playlist.length;
-                final current = _playlist[_index];
-                _loadSource(current.uri);
-                await play(synchronized: false);
-                break;
-              }
-          }
-          // Update:
-          state = state.copyWith(
-            playlist: state.playlist.copyWith(
-              index: _index,
-            ),
-          );
-          if (!playlistController.isClosed) {
-            playlistController.add(state.playlist);
-          }
+          // NOTE: Playlist index transition.
+          await _transition();
         });
       });
       element.onTimeUpdate.listen((_) {
         lock.synchronized(() async {
           // PlayerState.state.position & PlayerState.stream.position
-          final position = convertNumVideoDurationToPluginDuration(
+          Duration? position = convertNumVideoDurationToPluginDuration(
             element.currentTime,
           );
+
+          // Clamp between current [Media]'s start & end.
+          try {
+            final start = _playlist[_index].start?.inMilliseconds;
+            final end = _playlist[_index].end?.inMilliseconds;
+            if (position != null) {
+              position = Duration(
+                milliseconds: position.inMilliseconds.clamp(
+                  start ?? 0,
+                  end ?? 1 << 32,
+                ),
+              );
+
+              if (position == _playlist[_index].end) {
+                // NOTE: Playlist index transition. onEnded callback will not be invoked.
+                await _transition();
+                return;
+              }
+            }
+          } catch (exception, stacktrace) {
+            print(exception.toString());
+            print(stacktrace.toString());
+          }
+
           if (position != null) {
             state = state.copyWith(position: position);
             if (!positionController.isClosed) {
@@ -440,7 +394,7 @@ class WebPlayer extends PlatformPlayer {
         );
       }
 
-      _loadSource(_playlist[_index].uri);
+      _loadSource(_playlist[_index]);
 
       if (play) {
         element.play().catchError(
@@ -728,7 +682,7 @@ class WebPlayer extends PlatformPlayer {
         }
 
         _index = 0;
-        _loadSource(_playlist[_index].uri);
+        _loadSource(_playlist[_index]);
         await play(synchronized: false);
 
         state = state.copyWith(
@@ -803,7 +757,7 @@ class WebPlayer extends PlatformPlayer {
         if (!trackController.isClosed) {
           trackController.add(Track());
         }
-        _loadSource(_playlist[_index].uri);
+        _loadSource(_playlist[_index]);
         await play(synchronized: false);
 
         state = state.copyWith(playing: true);
@@ -875,7 +829,7 @@ class WebPlayer extends PlatformPlayer {
         if (!trackController.isClosed) {
           trackController.add(Track());
         }
-        _loadSource(_playlist[_index].uri);
+        _loadSource(_playlist[_index]);
         await play(synchronized: false);
 
         state = state.copyWith(playing: true);
@@ -940,7 +894,7 @@ class WebPlayer extends PlatformPlayer {
       if (!trackController.isClosed) {
         trackController.add(Track());
       }
-      _loadSource(_playlist[_index].uri);
+      _loadSource(_playlist[_index]);
       await play(synchronized: false);
 
       state = state.copyWith(playing: true);
@@ -1451,14 +1405,24 @@ class WebPlayer extends PlatformPlayer {
     }
   }
 
-  void _loadSource(String src) {
+  void _loadSource(Media media) {
     try {
-      if (_isHLS(src)) {
+      if (_isHLS(media.uri)) {
         final hls = Hls();
-        hls.loadSource(src);
+        hls.loadSource(media.uri);
         hls.attachMedia(element);
       } else {
         // Default
+        String src = media.uri;
+
+        // https://www.w3.org/TR/media-frags/
+        if (media.start != null || media.end != null) {
+          src += '#t=';
+          final start = media.start?.inSeconds ?? 0;
+          final end = media.end?.inSeconds ?? 0;
+          src += [start, if (end != 0) end].join(',');
+        }
+
         element.src = src;
       }
     } catch (exception) {
@@ -1478,6 +1442,81 @@ class WebPlayer extends PlatformPlayer {
       return true;
     }
     return false;
+  }
+
+  Future<void> _transition() async {
+    // PlayerState.state.playing & PlayerState.stream.playing
+    // PlayerState.state.completed & PlayerState.stream.completed
+    // PlayerState.state.buffering & PlayerState.stream.buffering
+
+    // A minimal quirk to match the NativePlayer behavior.
+    state = state.copyWith(
+      buffering: true,
+    );
+    if (!bufferingController.isClosed) {
+      bufferingController.add(true);
+    }
+
+    state = state.copyWith(
+      playing: false,
+      completed: true,
+      buffering: false,
+    );
+    if (!playingController.isClosed) {
+      playingController.add(false);
+    }
+    if (!completedController.isClosed) {
+      completedController.add(true);
+    }
+    if (!bufferingController.isClosed) {
+      bufferingController.add(false);
+    }
+
+    element.children.clear();
+    state = state.copyWith(track: Track());
+    if (!trackController.isClosed) {
+      trackController.add(Track());
+    }
+
+    // PlayerState.state.playlist.index & PlayerState.stream.playlist.index
+    switch (_playlistMode) {
+      case PlaylistMode.none:
+        {
+          if (_index < _playlist.length - 1) {
+            _index = _index + 1;
+            final current = _playlist[_index];
+            _loadSource(current);
+            await play(synchronized: false);
+          } else {
+            // Playback must end.
+          }
+          break;
+        }
+      case PlaylistMode.single:
+        {
+          final current = _playlist[_index];
+          _loadSource(current);
+          await play(synchronized: false);
+          break;
+        }
+      case PlaylistMode.loop:
+        {
+          _index = (_index + 1) % _playlist.length;
+          final current = _playlist[_index];
+          _loadSource(current);
+          await play(synchronized: false);
+          break;
+        }
+    }
+    // Update:
+    state = state.copyWith(
+      playlist: state.playlist.copyWith(
+        index: _index,
+      ),
+    );
+    if (!playlistController.isClosed) {
+      playlistController.add(state.playlist);
+    }
   }
 
   // --------------------------------------------------

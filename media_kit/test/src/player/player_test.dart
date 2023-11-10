@@ -637,7 +637,7 @@ void main() {
             expect(position, const Duration(seconds: 2));
           } else {
             expect(position, greaterThan(const Duration(seconds: 2)));
-            expect(position, lessThan(const Duration(seconds: 5)));
+            expect(position, lessThanOrEqualTo(const Duration(seconds: 5)));
           }
 
           i++;
@@ -716,7 +716,7 @@ void main() {
                   expect(position, e.medias[e.index].start);
                 } else {
                   expect(position, greaterThan(e.medias[e.index].start!));
-                  expect(position, lessThan(e.medias[e.index].end!));
+                  expect(position, lessThanOrEqualTo(e.medias[e.index].end!));
                 }
 
                 i++;
