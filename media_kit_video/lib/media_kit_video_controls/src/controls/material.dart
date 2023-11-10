@@ -44,13 +44,21 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   automaticallyImplySkipPreviousButton: true,
   volumeGesture: true,
   brightnessGesture: true,
+  seekGesture: true,
+  gesturesEnabledWhileControlsVisible: true,
   seekOnDoubleTap: true,
+  seekOnDoubleTapEnabledWhileControlsVisible: true,
   visibleOnMount: false,
+  verticalGestureSensitivity: 100,
+  horizontalGestureSensitivity: 1000,
   backdropColor: Color(0x66000000),
   padding: null,
   controlsHoverDuration: Duration(seconds: 3),
   controlsTransitionDuration: Duration(milliseconds: 300),
   bufferingIndicatorBuilder: null,
+  volumeIndicatorBuilder: null,
+  brightnessIndicatorBuilder: null,
+  seekIndicatorBuilder: null,
   primaryButtonBar: [
     Spacer(flex: 2),
     MaterialSkipPreviousButton(),
@@ -116,11 +124,28 @@ class MaterialVideoControlsThemeData {
   /// Whether to modify screen brightness on vertical drag gesture on the left side of the screen.
   final bool brightnessGesture;
 
+  /// Whether to seek on horizontal drag gesture.
+  final bool seekGesture;
+
+  /// Whether to allow gesture controls to work while controls are visible.
+  /// NOTE: This option is ignored when gestures are false.
+  final bool gesturesEnabledWhileControlsVisible;
+
   /// Whether to enable double tap to seek on left or right side of the screen.
   final bool seekOnDoubleTap;
 
+  /// Whether to allow double tap to seek on left or right side of the screen to work while controls are visible.
+  /// NOTE: This option is ignored when [seekOnDoubleTap] is false.
+  final bool seekOnDoubleTapEnabledWhileControlsVisible;
+
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
+
+  /// Gesture sensitivity on vertical drag gestures, the higher the value is the less sensitive the gesture.
+  final double verticalGestureSensitivity;
+
+  /// Gesture sensitivity on horizontal drag gestures, the higher the value is the less sensitive the gesture.
+  final double horizontalGestureSensitivity;
 
   /// Color of backdrop that comes up when controls are visible.
   final Color? backdropColor;
@@ -130,7 +155,9 @@ class MaterialVideoControlsThemeData {
   /// Padding around the controls.
   ///
   /// * Default: `EdgeInsets.zero`
-  /// * Fullscreen: `MediaQuery.of(context).padding`
+  /// * FullScreen: `MediaQuery.of(context).padding`
+  ///
+  /// NOTE: In fullscreen, this will be safe area (set [padding] to [EdgeInsets.zero] to disable safe area)
   final EdgeInsets? padding;
 
   /// [Duration] after which the controls will be hidden when there is no mouse movement.
@@ -147,6 +174,9 @@ class MaterialVideoControlsThemeData {
 
   /// Custom builder for brightness indicator.
   final Widget Function(BuildContext, double)? brightnessIndicatorBuilder;
+
+  /// Custom builder for seek indicator.
+  final Widget Function(BuildContext, Duration)? seekIndicatorBuilder;
 
   // BUTTON BAR
 
@@ -215,8 +245,13 @@ class MaterialVideoControlsThemeData {
     this.automaticallyImplySkipPreviousButton = true,
     this.volumeGesture = false,
     this.brightnessGesture = false,
-    this.seekOnDoubleTap = true,
+    this.seekGesture = false,
+    this.gesturesEnabledWhileControlsVisible = true,
+    this.seekOnDoubleTap = false,
+    this.seekOnDoubleTapEnabledWhileControlsVisible = true,
     this.visibleOnMount = false,
+    this.verticalGestureSensitivity = 100,
+    this.horizontalGestureSensitivity = 1000,
     this.backdropColor = const Color(0x66000000),
     this.padding,
     this.controlsHoverDuration = const Duration(seconds: 3),
@@ -224,6 +259,7 @@ class MaterialVideoControlsThemeData {
     this.bufferingIndicatorBuilder,
     this.volumeIndicatorBuilder,
     this.brightnessIndicatorBuilder,
+    this.seekIndicatorBuilder,
     this.primaryButtonBar = const [
       Spacer(flex: 2),
       MaterialSkipPreviousButton(),
@@ -263,14 +299,20 @@ class MaterialVideoControlsThemeData {
     bool? automaticallyImplySkipPreviousButton,
     bool? volumeGesture,
     bool? brightnessGesture,
+    bool? seekGesture,
+    bool? gesturesEnabledWhileControlsVisible,
     bool? seekOnDoubleTap,
+    bool? seekOnDoubleTapEnabledWhileControlsVisible,
     bool? visibleOnMount,
+    double? verticalGestureSensitivity,
+    double? horizontalGestureSensitivity,
     Color? backdropColor,
     Duration? controlsHoverDuration,
     Duration? controlsTransitionDuration,
     Widget Function(BuildContext)? bufferingIndicatorBuilder,
     Widget Function(BuildContext, double)? volumeIndicatorBuilder,
     Widget Function(BuildContext, double)? brightnessIndicatorBuilder,
+    Widget Function(BuildContext, Duration)? seekIndicatorBuilder,
     List<Widget>? primaryButtonBar,
     List<Widget>? topButtonBar,
     EdgeInsets? topButtonBarMargin,
@@ -299,8 +341,19 @@ class MaterialVideoControlsThemeData {
               this.automaticallyImplySkipPreviousButton,
       volumeGesture: volumeGesture ?? this.volumeGesture,
       brightnessGesture: brightnessGesture ?? this.brightnessGesture,
+      seekGesture: seekGesture ?? this.seekGesture,
+      gesturesEnabledWhileControlsVisible:
+          gesturesEnabledWhileControlsVisible ??
+              this.gesturesEnabledWhileControlsVisible,
       seekOnDoubleTap: seekOnDoubleTap ?? this.seekOnDoubleTap,
+      seekOnDoubleTapEnabledWhileControlsVisible:
+          seekOnDoubleTapEnabledWhileControlsVisible ??
+              this.seekOnDoubleTapEnabledWhileControlsVisible,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
+      verticalGestureSensitivity:
+          verticalGestureSensitivity ?? this.verticalGestureSensitivity,
+      horizontalGestureSensitivity:
+          horizontalGestureSensitivity ?? this.horizontalGestureSensitivity,
       backdropColor: backdropColor ?? this.backdropColor,
       controlsHoverDuration:
           controlsHoverDuration ?? this.controlsHoverDuration,
@@ -312,6 +365,7 @@ class MaterialVideoControlsThemeData {
           volumeIndicatorBuilder ?? this.volumeIndicatorBuilder,
       brightnessIndicatorBuilder:
           brightnessIndicatorBuilder ?? this.brightnessIndicatorBuilder,
+      seekIndicatorBuilder: seekIndicatorBuilder ?? this.seekIndicatorBuilder,
       primaryButtonBar: primaryButtonBar ?? this.primaryButtonBar,
       topButtonBar: topButtonBar ?? this.topButtonBar,
       topButtonBarMargin: topButtonBarMargin ?? this.topButtonBarMargin,
@@ -398,6 +452,11 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   // The default event stream in package:volume_controller is buggy.
   bool _volumeInterceptEventStream = false;
 
+  Offset _dragInitialDelta =
+      Offset.zero; // Initial position for horizontal drag
+  int swipeDuration = 0; // Duration to seek in video
+  bool showSwipeDuration = false; // Whether to show the seek duration overlay
+
   late /* private */ var playlist = controller(context).player.state.playlist;
   late bool buffering = controller(context).player.state.buffering;
 
@@ -417,6 +476,13 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       (_theme(context).bottomButtonBar.isNotEmpty
           ? _theme(context).buttonBarHeight
           : 0.0);
+  Offset? _tapPosition;
+
+  void _handleTapDown(TapDownDetails details) {
+    setState(() {
+      _tapPosition = details.localPosition;
+    });
+  }
 
   @override
   void setState(VoidCallback fn) {
@@ -539,6 +605,47 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     });
   }
 
+  void onHorizontalDragUpdate(DragUpdateDetails details) {
+    if (_dragInitialDelta == Offset.zero) {
+      _dragInitialDelta = details.localPosition;
+      return;
+    }
+
+    final diff = _dragInitialDelta.dx - details.localPosition.dx;
+    final duration = controller(context).player.state.duration.inSeconds;
+    final position = controller(context).player.state.position.inSeconds;
+
+    final seconds =
+        -(diff * duration / _theme(context).horizontalGestureSensitivity)
+            .round();
+    final relativePosition = position + seconds;
+
+    if (relativePosition <= duration && relativePosition >= 0) {
+      setState(() {
+        swipeDuration = seconds;
+        showSwipeDuration = true;
+        _seekBarDeltaValueNotifier.value = Duration(seconds: seconds);
+      });
+    }
+  }
+
+  void onHorizontalDragEnd() {
+    if (swipeDuration != 0) {
+      Duration newPosition = controller(context).player.state.position +
+          Duration(seconds: swipeDuration);
+      newPosition = newPosition.clamp(
+        Duration.zero,
+        controller(context).player.state.duration,
+      );
+      controller(context).player.seek(newPosition);
+    }
+
+    setState(() {
+      _dragInitialDelta = Offset.zero;
+      showSwipeDuration = false;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -620,6 +727,9 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   @override
   Widget build(BuildContext context) {
+    var seekOnDoubleTapEnabledWhileControlsAreVisible =
+        (_theme(context).seekOnDoubleTap &&
+            _theme(context).seekOnDoubleTapEnabledWhileControlsVisible);
     return Theme(
       data: Theme.of(context).copyWith(
         focusColor: const Color(0x00000000),
@@ -640,108 +750,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
-              // Volume Indicator.
-              AnimatedOpacity(
-                curve: Curves.easeInOut,
-                opacity: !mount && _volumeIndicator ? 1.0 : 0.0,
-                duration: _theme(context).controlsTransitionDuration,
-                child: _theme(context)
-                        .volumeIndicatorBuilder
-                        ?.call(context, _volumeValue) ??
-                    Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0x88000000),
-                        borderRadius: BorderRadius.circular(64.0),
-                      ),
-                      height: 52.0,
-                      width: 108.0,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            height: 52.0,
-                            width: 42.0,
-                            alignment: Alignment.centerRight,
-                            child: Icon(
-                              _volumeValue == 0.0
-                                  ? Icons.volume_off
-                                  : _volumeValue < 0.5
-                                      ? Icons.volume_down
-                                      : Icons.volume_up,
-                              color: const Color(0xFFFFFFFF),
-                              size: 24.0,
-                            ),
-                          ),
-                          const SizedBox(width: 8.0),
-                          Expanded(
-                            child: Text(
-                              '${(_volumeValue * 100.0).round()}%',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 14.0,
-                                color: Color(0xFFFFFFFF),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16.0),
-                        ],
-                      ),
-                    ),
-              ),
-              // Brightness Indicator.
-              AnimatedOpacity(
-                curve: Curves.easeInOut,
-                opacity: !mount && _brightnessIndicator ? 1.0 : 0.0,
-                duration: _theme(context).controlsTransitionDuration,
-                child: _theme(context)
-                        .brightnessIndicatorBuilder
-                        ?.call(context, _volumeValue) ??
-                    Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0x88000000),
-                        borderRadius: BorderRadius.circular(64.0),
-                      ),
-                      height: 52.0,
-                      width: 108.0,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            height: 52.0,
-                            width: 42.0,
-                            alignment: Alignment.centerRight,
-                            child: Icon(
-                              _brightnessValue < 1.0 / 3.0
-                                  ? Icons.brightness_low
-                                  : _brightnessValue < 2.0 / 3.0
-                                      ? Icons.brightness_medium
-                                      : Icons.brightness_high,
-                              color: const Color(0xFFFFFFFF),
-                              size: 24.0,
-                            ),
-                          ),
-                          const SizedBox(width: 8.0),
-                          Expanded(
-                            child: Text(
-                              '${(_brightnessValue * 100.0).round()}%',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 14.0,
-                                color: Color(0xFFFFFFFF),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16.0),
-                        ],
-                      ),
-                    ),
-              ),
               // Controls:
               AnimatedOpacity(
                 curve: Curves.easeInOut,
@@ -758,18 +766,9 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                   clipBehavior: Clip.none,
                   alignment: Alignment.center,
                   children: [
-                    // Fallback from the controls to the video & show/hide controls on tap.
                     Positioned.fill(
-                      child: GestureDetector(
-                        onVerticalDragUpdate: (e) {
-                          onTap();
-                        },
-                        onHorizontalDragUpdate: (e) {
-                          onTap();
-                        },
-                        child: Container(
-                          color: _theme(context).backdropColor,
-                        ),
+                      child: Container(
+                        color: _theme(context).backdropColor,
                       ),
                     ),
                     // We are adding 16.0 boundary around the actual controls (which contain the vertical drag gesture detectors).
@@ -779,53 +778,73 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       top: 16.0,
                       right: 16.0,
                       bottom: 16.0,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: onTap,
-                              onDoubleTap:
-                                  !mount && _theme(context).seekOnDoubleTap
-                                      ? onDoubleTapSeekBackward
-                                      : () {},
-                              onVerticalDragUpdate: !mount &&
-                                      _theme(context).brightnessGesture
-                                  ? (e) async {
-                                      final delta = e.delta.dy;
-                                      final brightness =
-                                          _brightnessValue - delta / 100.0;
-                                      final result = brightness.clamp(0.0, 1.0);
-                                      setBrightness(result);
-                                    }
-                                  : null,
-                              child: Container(
-                                color: const Color(0x00000000),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: onTap,
-                              onDoubleTap:
-                                  !mount && _theme(context).seekOnDoubleTap
-                                      ? onDoubleTapSeekForward
-                                      : () {},
-                              onVerticalDragUpdate:
-                                  !mount && _theme(context).volumeGesture
-                                      ? (e) async {
-                                          final delta = e.delta.dy;
-                                          final volume =
-                                              _volumeValue - delta / 100.0;
-                                          final result = volume.clamp(0.0, 1.0);
-                                          setVolume(result);
-                                        }
-                                      : null,
-                              child: Container(
-                                color: const Color(0x00000000),
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: GestureDetector(
+                        onTap: onTap,
+                        onDoubleTapDown: _handleTapDown,
+                        onDoubleTap: () {
+                          if (_tapPosition != null &&
+                              _tapPosition!.dx >
+                                  MediaQuery.of(context).size.width / 2) {
+                            if ((!mount && _theme(context).seekOnDoubleTap) ||
+                                seekOnDoubleTapEnabledWhileControlsAreVisible) {
+                              onDoubleTapSeekForward();
+                            }
+                          } else {
+                            if ((!mount && _theme(context).seekOnDoubleTap) ||
+                                seekOnDoubleTapEnabledWhileControlsAreVisible) {
+                              onDoubleTapSeekBackward();
+                            }
+                          }
+                        },
+                        onHorizontalDragUpdate: (details) {
+                          if ((!mount && _theme(context).seekGesture) ||
+                              (_theme(context).seekGesture &&
+                                  _theme(context)
+                                      .gesturesEnabledWhileControlsVisible)) {
+                            onHorizontalDragUpdate(details);
+                          }
+                        },
+                        onHorizontalDragEnd: (details) {
+                          onHorizontalDragEnd();
+                        },
+                        onVerticalDragUpdate: (e) async {
+                          final delta = e.delta.dy;
+                          final Offset position = e.localPosition;
+
+                          if (position.dx <=
+                              MediaQuery.of(context).size.width / 2) {
+                            // Left side of screen swiped
+
+                            if ((!mount && _theme(context).brightnessGesture) ||
+                                (_theme(context).brightnessGesture &&
+                                    _theme(context)
+                                        .gesturesEnabledWhileControlsVisible)) {
+                              final brightness = _brightnessValue -
+                                  delta /
+                                      _theme(context)
+                                          .verticalGestureSensitivity;
+                              final result = brightness.clamp(0.0, 1.0);
+                              setBrightness(result);
+                            }
+                          } else {
+                            // Right side of screen swiped
+
+                            if ((!mount && _theme(context).volumeGesture) ||
+                                (_theme(context).volumeGesture &&
+                                    _theme(context)
+                                        .gesturesEnabledWhileControlsVisible)) {
+                              final volume = _volumeValue -
+                                  delta /
+                                      _theme(context)
+                                          .verticalGestureSensitivity;
+                              final result = volume.clamp(0.0, 1.0);
+                              setVolume(result);
+                            }
+                          }
+                        },
+                        child: Container(
+                          color: const Color(0x00000000),
+                        ),
                       ),
                     ),
                     if (mount)
@@ -912,7 +931,9 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
               ),
               // Double-Tap Seek Seek-Bar:
               if (!mount)
-                if (_mountSeekBackwardButton || _mountSeekForwardButton)
+                if (_mountSeekBackwardButton ||
+                    _mountSeekForwardButton ||
+                    showSwipeDuration)
                   Column(
                     children: [
                       const Spacer(),
@@ -983,8 +1004,153 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                   ),
                 ),
               ),
+              // Volume Indicator.
+              IgnorePointer(
+                child: AnimatedOpacity(
+                  curve: Curves.easeInOut,
+                  opacity: (!mount ||
+                              _theme(context)
+                                  .gesturesEnabledWhileControlsVisible) &&
+                          _volumeIndicator
+                      ? 1.0
+                      : 0.0,
+                  duration: _theme(context).controlsTransitionDuration,
+                  child: _theme(context)
+                          .volumeIndicatorBuilder
+                          ?.call(context, _volumeValue) ??
+                      Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0x88000000),
+                          borderRadius: BorderRadius.circular(64.0),
+                        ),
+                        height: 52.0,
+                        width: 108.0,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              height: 52.0,
+                              width: 42.0,
+                              alignment: Alignment.centerRight,
+                              child: Icon(
+                                _volumeValue == 0.0
+                                    ? Icons.volume_off
+                                    : _volumeValue < 0.5
+                                        ? Icons.volume_down
+                                        : Icons.volume_up,
+                                color: const Color(0xFFFFFFFF),
+                                size: 24.0,
+                              ),
+                            ),
+                            const SizedBox(width: 8.0),
+                            Expanded(
+                              child: Text(
+                                '${(_volumeValue * 100.0).round()}%',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 14.0,
+                                  color: Color(0xFFFFFFFF),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16.0),
+                          ],
+                        ),
+                      ),
+                ),
+              ),
+              // Brightness Indicator.
+              IgnorePointer(
+                child: AnimatedOpacity(
+                  curve: Curves.easeInOut,
+                  opacity: (!mount ||
+                              _theme(context)
+                                  .gesturesEnabledWhileControlsVisible) &&
+                          _brightnessIndicator
+                      ? 1.0
+                      : 0.0,
+                  duration: _theme(context).controlsTransitionDuration,
+                  child: _theme(context)
+                          .brightnessIndicatorBuilder
+                          ?.call(context, _volumeValue) ??
+                      Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0x88000000),
+                          borderRadius: BorderRadius.circular(64.0),
+                        ),
+                        height: 52.0,
+                        width: 108.0,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              height: 52.0,
+                              width: 42.0,
+                              alignment: Alignment.centerRight,
+                              child: Icon(
+                                _brightnessValue < 1.0 / 3.0
+                                    ? Icons.brightness_low
+                                    : _brightnessValue < 2.0 / 3.0
+                                        ? Icons.brightness_medium
+                                        : Icons.brightness_high,
+                                color: const Color(0xFFFFFFFF),
+                                size: 24.0,
+                              ),
+                            ),
+                            const SizedBox(width: 8.0),
+                            Expanded(
+                              child: Text(
+                                '${(_brightnessValue * 100.0).round()}%',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 14.0,
+                                  color: Color(0xFFFFFFFF),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16.0),
+                          ],
+                        ),
+                      ),
+                ),
+              ),
+              IgnorePointer(
+                child: AnimatedOpacity(
+                  duration: _theme(context).controlsTransitionDuration,
+                  opacity: showSwipeDuration ? 1 : 0,
+                  child: _theme(context)
+                          .seekIndicatorBuilder
+                          ?.call(context, Duration(seconds: swipeDuration)) ??
+                      Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0x88000000),
+                          borderRadius: BorderRadius.circular(64.0),
+                        ),
+                        height: 52.0,
+                        width: 108.0,
+                        child: Text(
+                          swipeDuration > 0
+                              ? "+ ${Duration(seconds: swipeDuration).label()}"
+                              : "- ${Duration(seconds: swipeDuration).label()}",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 14.0,
+                            color: Color(0xFFFFFFFF),
+                          ),
+                        ),
+                      ),
+                ),
+              ),
+
               // Double-Tap Seek Button(s):
-              if (!mount)
+              if (!mount || seekOnDoubleTapEnabledWhileControlsAreVisible)
                 if (_mountSeekBackwardButton || _mountSeekForwardButton)
                   Positioned.fill(
                     child: Row(
@@ -1403,11 +1569,13 @@ class MaterialPlayOrPauseButtonState extends State<MaterialPlayOrPauseButton>
       onPressed: controller(context).player.playOrPause,
       iconSize: widget.iconSize ?? _theme(context).buttonBarButtonSize,
       color: widget.iconColor ?? _theme(context).buttonBarButtonColor,
-      icon: AnimatedIcon(
-        progress: animation,
-        icon: AnimatedIcons.play_pause,
-        size: widget.iconSize ?? _theme(context).buttonBarButtonSize,
-        color: widget.iconColor ?? _theme(context).buttonBarButtonColor,
+      icon: IgnorePointer(
+        child: AnimatedIcon(
+          progress: animation,
+          icon: AnimatedIcons.play_pause,
+          size: widget.iconSize ?? _theme(context).buttonBarButtonSize,
+          color: widget.iconColor ?? _theme(context).buttonBarButtonColor,
+        ),
       ),
     );
   }

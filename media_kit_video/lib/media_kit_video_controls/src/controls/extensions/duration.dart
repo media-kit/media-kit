@@ -16,6 +16,12 @@ extension DurationExtension on Duration {
   /// Returns a [String] representation of [Duration].
   String label({Duration? reference}) {
     reference ??= this;
+    reference = reference.abs();
+
+    if (isNegative) {
+      return abs().label(reference: reference);
+    }
+
     if (reference > const Duration(days: 1)) {
       final days = inDays.toString().padLeft(3, '0');
       final hours = (inHours - (inDays * 24)).toString().padLeft(2, '0');
