@@ -2243,7 +2243,7 @@ class NativePlayer extends PlatformPlayer {
 
           final index = value.value;
 
-          if (index > 0) {
+          if (index >= 0) {
             final start = current[index].start;
             final end = current[index].end;
 
