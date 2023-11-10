@@ -192,9 +192,26 @@ class Media extends Playable {
   @override
   int get hashCode => uri.hashCode;
 
+  /// Creates a copy of [this] instance with the given fields replaced with the new values.
+  Media copyWith({
+    String? uri,
+    Map<String, dynamic>? extras,
+    Map<String, String>? httpHeaders,
+    Duration? start,
+    Duration? end,
+  }) {
+    return Media(
+      uri ?? this.uri,
+      extras: extras ?? this.extras,
+      httpHeaders: httpHeaders ?? this.httpHeaders,
+      start: start ?? this.start,
+      end: end ?? this.end,
+    );
+  }
+
   @override
   String toString() =>
-      'Media($uri, extras: $extras, httpHeaders: $httpHeaders)';
+      'Media($uri, extras: $extras, httpHeaders: $httpHeaders, start: $start, end: $end)';
 
   /// URI scheme used to identify Flutter assets.
   static const String _kAssetScheme = 'asset://';
