@@ -36,7 +36,7 @@ void webEnsureInitialized({String? libmpv}) {}
 /// WebPlayer
 /// ---------
 ///
-/// HTML `<video>` based implementation of [PlatformPlayer].
+/// HTML `<video>` implementation of [PlatformPlayer].
 ///
 /// {@endtemplate}
 class WebPlayer extends PlatformPlayer {

@@ -53,7 +53,7 @@ void nativeEnsureInitialized({String? libmpv}) {
 /// NativePlayer
 /// ------------
 ///
-/// Native based implementation of [PlatformPlayer].
+/// Native implementation of [PlatformPlayer].
 ///
 /// {@endtemplate}
 class NativePlayer extends PlatformPlayer {
@@ -523,8 +523,10 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      // Keep this [Media] object in memory.
+      // External List<Media>:
+      // ---------------------------------------------
       current.add(media);
+      // ---------------------------------------------
 
       final command = 'loadfile ${media.uri} append'.toNativeUtf8();
       mpv.mpv_command_string(
@@ -551,7 +553,7 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      // Update [current].
+      // External List<Media>:
       // ---------------------------------------------
       current.removeAt(index);
       // ---------------------------------------------
@@ -710,7 +712,7 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      // Update [current].
+      // External List<Media>:
       // ---------------------------------------------
       final map = SplayTreeMap<double, Media>.from(
         current.asMap().map((key, value) => MapEntry(key * 1.0, value)),
@@ -1662,14 +1664,69 @@ class NativePlayer extends PlatformPlayer {
           }
         }
       }
-      if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-playing-pos' &&
-          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
-        final index = prop.ref.data.cast<Int64>().value;
-        final playlist = Playlist(current, index: index);
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
+        final data = prop.ref.data.cast<generated.mpv_node>();
+        final list = data.ref.u.list.ref;
+        int index = -1;
+        List<Media> playlist = [];
+        for (int i = 0; i < list.num; i++) {
+          if (list.values[i].format ==
+              generated.mpv_format.MPV_FORMAT_NODE_MAP) {
+            final map = list.values[i].u.list.ref;
+            for (int j = 0; j < map.num; j++) {
+              final property = map.keys[j].cast<Utf8>().toDartString();
+              if (map.values[j].format ==
+                  generated.mpv_format.MPV_FORMAT_FLAG) {
+                if (property == 'playing') {
+                  final value = map.values[j].u.flag;
+                  if (value == 1) {
+                    index = i;
+                  }
+                }
+              }
+              if (map.values[j].format ==
+                  generated.mpv_format.MPV_FORMAT_STRING) {
+                if (property == 'filename') {
+                  final v = map.values[j].u.string.cast<Utf8>().toDartString();
+                  playlist.add(Media(v));
+                }
+              }
+            }
+          }
+        }
+
+        // Populate start & end attributes from [current].
+        try {
+          playlist = playlist
+              .asMap()
+              .map(
+                (i, e) => MapEntry(
+                  i,
+                  e.copyWith(start: current[i].start, end: current[i].end),
+                ),
+              )
+              .values
+              .toList();
+        } catch (exception, stacktrace) {
+          print(exception.toString());
+          print(stacktrace.toString());
+        }
+
         if (index >= 0) {
-          state = state.copyWith(playlist: playlist);
+          state = state.copyWith(
+            playlist: Playlist(
+              playlist,
+              index: index,
+            ),
+          );
           if (!playlistController.isClosed) {
-            playlistController.add(playlist);
+            playlistController.add(
+              Playlist(
+                playlist,
+                index: index,
+              ),
+            );
           }
         }
       }
@@ -2230,7 +2287,7 @@ class NativePlayer extends PlatformPlayer {
         }
         // Handle start & end position specified in the [Media].
         try {
-          final name = 'playlist-playing-pos'.toNativeUtf8();
+          final name = 'playlist-pos'.toNativeUtf8();
           final value = calloc<Int64>();
           value.value = -1;
 
@@ -2242,6 +2299,9 @@ class NativePlayer extends PlatformPlayer {
           );
 
           final index = value.value;
+
+          calloc.free(name.cast());
+          calloc.free(value.cast());
 
           if (index >= 0) {
             final start = current[index].start;
@@ -2513,7 +2573,7 @@ class NativePlayer extends PlatformPlayer {
         'pause': generated.mpv_format.MPV_FORMAT_FLAG,
         'time-pos': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
-        'playlist-playing-pos': generated.mpv_format.MPV_FORMAT_INT64,
+        'playlist': generated.mpv_format.MPV_FORMAT_NODE,
         'volume': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'speed': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'core-idle': generated.mpv_format.MPV_FORMAT_FLAG,
