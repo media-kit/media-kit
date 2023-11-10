@@ -113,20 +113,23 @@ class WebPlayer extends PlatformPlayer {
 
           // Clamp between current [Media]'s start & end.
           try {
-            final start = _playlist[_index].start?.inMilliseconds;
-            final end = _playlist[_index].end?.inMilliseconds;
-            if (position != null) {
-              position = Duration(
-                milliseconds: position.inMilliseconds.clamp(
-                  start ?? 0,
-                  end ?? 1 << 32,
-                ),
-              );
+            if (_index >= 0 && _index < _playlist.length) {
+              final start = _playlist[_index].start?.inMilliseconds;
+              final end = _playlist[_index].end?.inMilliseconds;
+              if (position != null) {
+                position = Duration(
+                  milliseconds: position.inMilliseconds.clamp(
+                    start ?? 0,
+                    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+                    end ?? 9007199254740991,
+                  ),
+                );
 
-              if (position == _playlist[_index].end) {
-                // NOTE: Playlist index transition. onEnded callback will not be invoked.
-                await _transition();
-                return;
+                if (position == _playlist[_index].end) {
+                  // NOTE: Playlist index transition. onEnded callback will not be invoked.
+                  await _transition();
+                  return;
+                }
               }
             }
           } catch (exception, stacktrace) {
