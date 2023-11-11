@@ -497,11 +497,11 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   }
 
   void _handleLongPress() {
-    controller(context).player.setPitch(_theme(context).speedUpFactor);
+    controller(context).player.setRate(_theme(context).speedUpFactor);
   }
 
   void _handleLongPressEnd(LongPressEndDetails details) {
-    controller(context).player.setPitch(1.0);
+    controller(context).player.setRate(1.0);
   }
 
   @override
