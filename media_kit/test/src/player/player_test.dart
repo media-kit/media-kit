@@ -604,6 +604,161 @@ void main() {
     timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
   );
   test(
+    'player-open-playable-media-start-end',
+    () async {
+      final player = Player();
+
+      final expectStart = expectAsync1(
+        (value) {
+          expect(value, isA<Duration>());
+          final start = value as Duration;
+          expect(start, const Duration(seconds: 2));
+        },
+      );
+      final expectEnd = expectAsync1(
+        (value) {
+          expect(value, isA<Duration>());
+          final end = value as Duration;
+          expect(end, const Duration(seconds: 5));
+        },
+      );
+
+      int i = 0;
+      final expectPosition = expectAsync1(
+        (value) {
+          print(value);
+
+          expect(value, isA<Duration>());
+          final position = value as Duration;
+
+          if (i == 0) {
+            expect(position, Duration.zero);
+          } else if (i == 1) {
+            expect(position, const Duration(seconds: 2));
+          } else {
+            expect(position, greaterThan(const Duration(seconds: 2)));
+            expect(position, lessThanOrEqualTo(const Duration(seconds: 5)));
+          }
+
+          i++;
+        },
+        count: 1,
+        max: -1,
+      );
+
+      player.stream.playlist.listen((e) {
+        if (e.index >= 0) {
+          expectStart(e.medias[0].start);
+          expectEnd(e.medias[0].end);
+        }
+      });
+
+      player.stream.position.listen((e) {
+        expectPosition(e);
+      });
+
+      await player.open(
+        Media(
+          sources.platform[0],
+          start: const Duration(seconds: 2),
+          end: const Duration(seconds: 5),
+        ),
+      );
+
+      await Future.delayed(const Duration(seconds: 30));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1)),
+  );
+  test(
+    'player-open-playable-playlist-start-end',
+    () async {
+      final player = Player();
+
+      final expectStart = expectAsync2(
+        (value, i) {
+          print('----- start: $value');
+          expect(value, isA<Duration>());
+          final start = value as Duration;
+          expect(start, Duration(seconds: ((i as int) + 1)));
+        },
+        count: sources.platform.length,
+      );
+      final expectEnd = expectAsync2(
+        (value, i) {
+          print('----- end: $value');
+          expect(value, isA<Duration>());
+          final end = value as Duration;
+          expect(end, Duration(seconds: ((i as int) + 1) * 2));
+        },
+        count: sources.platform.length,
+      );
+
+      StreamSubscription<Duration>? subscription;
+
+      player.stream.playlist.listen(
+        (e) {
+          if (e.index >= 0) {
+            expectStart(e.medias[e.index].start, e.index);
+            expectEnd(e.medias[e.index].end, e.index);
+
+            // Check for position updates of this [Media].
+            int i = 0;
+            final expectPosition = expectAsync1(
+              (value) {
+                print(value);
+
+                expect(value, isA<Duration>());
+                final position = value as Duration;
+
+                if (i == 0) {
+                  expect(position, e.medias[e.index].start);
+                } else {
+                  expect(position, greaterThan(e.medias[e.index].start!));
+                  expect(position, lessThanOrEqualTo(e.medias[e.index].end!));
+                }
+
+                i++;
+              },
+              count: 1,
+              max: -1,
+            );
+
+            // NOTE: Make sure to unsubscribe at EOF.
+            subscription = player.stream.position.listen((e) {
+              expectPosition(e);
+            });
+          }
+        },
+      );
+
+      player.stream.completed.listen((e) {
+        if (e) {
+          subscription?.cancel();
+        }
+      });
+
+      await player.open(
+        Playlist(
+          [
+            for (int i = 0; i < sources.platform.length; i++)
+              Media(
+                sources.platform[i],
+                start: Duration(seconds: (i + 1)),
+                end: Duration(seconds: (i + 1) * 2),
+              ),
+          ],
+        ),
+      );
+
+      await Future.delayed(const Duration(minutes: 1));
+
+      await player.dispose();
+    },
+    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
+  );
+  test(
     'player-open-playable-media-http-headers',
     () async {
       final player = Player();

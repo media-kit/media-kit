@@ -8,7 +8,7 @@ import 'dart:async';
 import 'dart:js' as js;
 import 'dart:html' as html;
 
-import 'dart_ui/dart_ui.dart';
+import 'dart:ui_web';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';

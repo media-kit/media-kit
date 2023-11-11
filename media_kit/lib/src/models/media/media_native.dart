@@ -87,6 +87,16 @@ class Media extends Playable {
   /// Default: `null`.
   final Map<String, String>? httpHeaders;
 
+  /// Start position.
+  ///
+  /// Default: `null`.
+  final Duration? start;
+
+  /// End position.
+  ///
+  /// Default: `null`.
+  final Duration? end;
+
   /// Whether instance is instantiated from [Media.memory].
   bool _memory = false;
 
@@ -95,6 +105,8 @@ class Media extends Playable {
     String resource, {
     Map<String, dynamic>? extras,
     Map<String, String>? httpHeaders,
+    this.start,
+    this.end,
   })  : uri = normalizeURI(resource),
         extras = extras ?? cache[normalizeURI(resource)]?.extras,
         httpHeaders =
@@ -180,9 +192,26 @@ class Media extends Playable {
   @override
   int get hashCode => uri.hashCode;
 
+  /// Creates a copy of [this] instance with the given fields replaced with the new values.
+  Media copyWith({
+    String? uri,
+    Map<String, dynamic>? extras,
+    Map<String, String>? httpHeaders,
+    Duration? start,
+    Duration? end,
+  }) {
+    return Media(
+      uri ?? this.uri,
+      extras: extras ?? this.extras,
+      httpHeaders: httpHeaders ?? this.httpHeaders,
+      start: start ?? this.start,
+      end: end ?? this.end,
+    );
+  }
+
   @override
   String toString() =>
-      'Media($uri, extras: $extras, httpHeaders: $httpHeaders)';
+      'Media($uri, extras: $extras, httpHeaders: $httpHeaders, start: $start, end: $end)';
 
   /// URI scheme used to identify Flutter assets.
   static const String _kAssetScheme = 'asset://';
