@@ -141,6 +141,12 @@ class MaterialVideoControlsThemeData {
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
 
+  /// Whether to speed up on long press.
+  final bool speedUpOnLongPress;
+
+  /// Factor to speed up on long press.
+  final double speedUpFactor;
+
   /// Gesture sensitivity on vertical drag gestures, the higher the value is the less sensitive the gesture.
   final double verticalGestureSensitivity;
 
@@ -250,6 +256,8 @@ class MaterialVideoControlsThemeData {
     this.seekOnDoubleTap = false,
     this.seekOnDoubleTapEnabledWhileControlsVisible = true,
     this.visibleOnMount = false,
+    this.speedUpOnLongPress = false,
+    this.speedUpFactor = 2.0,
     this.verticalGestureSensitivity = 100,
     this.horizontalGestureSensitivity = 1000,
     this.backdropColor = const Color(0x66000000),
@@ -304,6 +312,8 @@ class MaterialVideoControlsThemeData {
     bool? seekOnDoubleTap,
     bool? seekOnDoubleTapEnabledWhileControlsVisible,
     bool? visibleOnMount,
+    bool? speedUpOnLongPress,
+    double? speedUpFactor,
     double? verticalGestureSensitivity,
     double? horizontalGestureSensitivity,
     Color? backdropColor,
@@ -350,6 +360,8 @@ class MaterialVideoControlsThemeData {
           seekOnDoubleTapEnabledWhileControlsVisible ??
               this.seekOnDoubleTapEnabledWhileControlsVisible,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
+      speedUpOnLongPress: speedUpOnLongPress ?? this.speedUpOnLongPress,
+      speedUpFactor: speedUpFactor ?? this.speedUpFactor,
       verticalGestureSensitivity:
           verticalGestureSensitivity ?? this.verticalGestureSensitivity,
       horizontalGestureSensitivity:
@@ -482,6 +494,14 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     setState(() {
       _tapPosition = details.localPosition;
     });
+  }
+
+  void _handleLongPress() {
+    controller(context).player.setPitch(_theme(context).speedUpFactor);
+  }
+
+  void _handleLongPressEnd(LongPressEndDetails details) {
+    controller(context).player.setPitch(1.0);
   }
 
   @override
@@ -781,6 +801,12 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       child: GestureDetector(
                         onTap: onTap,
                         onDoubleTapDown: _handleTapDown,
+                        onLongPress: _theme(context).speedUpOnLongPress
+                            ? _handleLongPress
+                            : null,
+                        onLongPressEnd: _theme(context).speedUpOnLongPress
+                            ? _handleLongPressEnd
+                            : null,
                         onDoubleTap: () {
                           if (_tapPosition != null &&
                               _tapPosition!.dx >
