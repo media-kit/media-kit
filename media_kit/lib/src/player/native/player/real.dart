@@ -1469,6 +1469,22 @@ class NativePlayer extends PlatformPlayer {
     mpv.mpv_unobserve_property(ctx, reply);
   }
 
+  /// Invokes command for the internal libmpv instance of this [Player].
+  /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
+  ///
+  /// See:
+  /// * https://mpv.io/manual/master/#list-of-input-commands
+  ///
+  Future<void> command(List<String> command) async {
+    if (disposed) {
+      throw AssertionError('[Player] has been disposed');
+    }
+    await waitForPlayerInitialization;
+    await waitForVideoControllerInitializationIfAttached;
+
+    await _command(command);
+  }
+
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
     if (event.ref.event_id ==
         generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
