@@ -184,6 +184,9 @@ class MaterialVideoControlsThemeData {
   /// Custom builder for seek indicator.
   final Widget Function(BuildContext, Duration)? seekIndicatorBuilder;
 
+  /// Custom builder for seek indicator.
+  final Widget Function(BuildContext, double)? speedUpIndicatorBuilder;
+
   // BUTTON BAR
 
   /// Buttons to be displayed in the primary button bar.
@@ -268,6 +271,7 @@ class MaterialVideoControlsThemeData {
     this.volumeIndicatorBuilder,
     this.brightnessIndicatorBuilder,
     this.seekIndicatorBuilder,
+    this.speedUpIndicatorBuilder,
     this.primaryButtonBar = const [
       Spacer(flex: 2),
       MaterialSkipPreviousButton(),
@@ -323,6 +327,7 @@ class MaterialVideoControlsThemeData {
     Widget Function(BuildContext, double)? volumeIndicatorBuilder,
     Widget Function(BuildContext, double)? brightnessIndicatorBuilder,
     Widget Function(BuildContext, Duration)? seekIndicatorBuilder,
+    Widget Function(BuildContext, double)? speedUpIndicatorBuilder,
     List<Widget>? primaryButtonBar,
     List<Widget>? topButtonBar,
     EdgeInsets? topButtonBarMargin,
@@ -378,6 +383,8 @@ class MaterialVideoControlsThemeData {
       brightnessIndicatorBuilder:
           brightnessIndicatorBuilder ?? this.brightnessIndicatorBuilder,
       seekIndicatorBuilder: seekIndicatorBuilder ?? this.seekIndicatorBuilder,
+      speedUpIndicatorBuilder:
+          speedUpIndicatorBuilder ?? this.speedUpIndicatorBuilder,
       primaryButtonBar: primaryButtonBar ?? this.primaryButtonBar,
       topButtonBar: topButtonBar ?? this.topButtonBar,
       topButtonBarMargin: topButtonBarMargin ?? this.topButtonBarMargin,
@@ -469,6 +476,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   int swipeDuration = 0; // Duration to seek in video
   bool showSwipeDuration = false; // Whether to show the seek duration overlay
 
+  bool _speedUpIndicator = false;
   late /* private */ var playlist = controller(context).player.state.playlist;
   late bool buffering = controller(context).player.state.buffering;
 
@@ -497,10 +505,16 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   }
 
   void _handleLongPress() {
+    setState(() {
+      _speedUpIndicator = true;
+    });
     controller(context).player.setRate(_theme(context).speedUpFactor);
   }
 
   void _handleLongPressEnd(LongPressEndDetails details) {
+    setState(() {
+      _speedUpIndicator = false;
+    });
     controller(context).player.setRate(1.0);
   }
 
@@ -1146,6 +1160,55 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       ),
                 ),
               ),
+              // Speedup Indicator.
+              IgnorePointer(
+                child: AnimatedOpacity(
+                  duration: _theme(context).controlsTransitionDuration,
+                  opacity: _speedUpIndicator ? 1 : 0,
+                  child: _theme(context)
+                          .speedUpIndicatorBuilder
+                          ?.call(context, _theme(context).speedUpFactor) ??
+                      Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0x88000000),
+                          borderRadius: BorderRadius.circular(64.0),
+                        ),
+                        height: 52.0,
+                        width: 108.0,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const SizedBox(width: 16.0),
+                            Expanded(
+                              child: Text(
+                                '${_theme(context).speedUpFactor}x',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 14.0,
+                                  color: Color(0xFFFFFFFF),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              height: 52.0,
+                              width: 42.0,
+                              alignment: Alignment.centerRight,
+                              child: Icon(
+                                Icons.fast_forward,
+                                color: const Color(0xFFFFFFFF),
+                                size: 24.0,
+                              ),
+                            ),
+                            const SizedBox(width: 16.0),
+                          ],
+                        ),
+                      ),
+                ),
+              ),
+              // Seek Indicator.
               IgnorePointer(
                 child: AnimatedOpacity(
                   duration: _theme(context).controlsTransitionDuration,
