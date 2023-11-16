@@ -49,6 +49,8 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   seekOnDoubleTap: true,
   seekOnDoubleTapEnabledWhileControlsVisible: true,
   visibleOnMount: false,
+  speedUpOnLongPress: false,
+  speedUpFactor: 2.0,
   verticalGestureSensitivity: 100,
   horizontalGestureSensitivity: 1000,
   backdropColor: Color(0x66000000),
@@ -59,6 +61,7 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   volumeIndicatorBuilder: null,
   brightnessIndicatorBuilder: null,
   seekIndicatorBuilder: null,
+  speedUpIndicatorBuilder: null,
   primaryButtonBar: [
     Spacer(flex: 2),
     MaterialSkipPreviousButton(),
@@ -1162,50 +1165,76 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
               ),
               // Speedup Indicator.
               IgnorePointer(
-                child: AnimatedOpacity(
-                  duration: _theme(context).controlsTransitionDuration,
-                  opacity: _speedUpIndicator ? 1 : 0,
-                  child: _theme(context)
-                          .speedUpIndicatorBuilder
-                          ?.call(context, _theme(context).speedUpFactor) ??
+                child: Padding(
+                  padding: _theme(context).padding ??
+                      (
+                          // Add padding in fullscreen!
+                          isFullscreen(context)
+                              ? MediaQuery.of(context).padding
+                              : EdgeInsets.zero),
+                  child: Column(
+                    children: [
                       Container(
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: const Color(0x88000000),
-                          borderRadius: BorderRadius.circular(64.0),
-                        ),
-                        height: 52.0,
-                        width: 108.0,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const SizedBox(width: 16.0),
-                            Expanded(
-                              child: Text(
-                                '${_theme(context).speedUpFactor}x',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 14.0,
-                                  color: Color(0xFFFFFFFF),
+                        height: _theme(context).buttonBarHeight,
+                        margin: _theme(context).topButtonBarMargin,
+                      ),
+                      Expanded(
+                        child: AnimatedOpacity(
+                          duration: _theme(context).controlsTransitionDuration,
+                          opacity: _speedUpIndicator ? 1 : 0,
+                          child: _theme(context).speedUpIndicatorBuilder?.call(
+                                  context, _theme(context).speedUpFactor) ??
+                              Container(
+                                alignment: Alignment.topCenter,
+                                child: Container(
+                                  margin: const EdgeInsets.all(16.0),
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0x88000000),
+                                    borderRadius: BorderRadius.circular(64.0),
+                                  ),
+                                  height: 48.0,
+                                  width: 108.0,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      const SizedBox(width: 16.0),
+                                      Expanded(
+                                        child: Text(
+                                          '${_theme(context).speedUpFactor.toStringAsFixed(1)}x',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontSize: 14.0,
+                                            color: Color(0xFFFFFFFF),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        height: 48.0,
+                                        width: 48.0 - 16.0,
+                                        alignment: Alignment.centerRight,
+                                        child: const Icon(
+                                          Icons.fast_forward,
+                                          color: Color(0xFFFFFFFF),
+                                          size: 24.0,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16.0),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            Container(
-                              height: 52.0,
-                              width: 42.0,
-                              alignment: Alignment.centerRight,
-                              child: Icon(
-                                Icons.fast_forward,
-                                color: const Color(0xFFFFFFFF),
-                                size: 24.0,
-                              ),
-                            ),
-                            const SizedBox(width: 16.0),
-                          ],
                         ),
                       ),
+                      Container(
+                        height: _theme(context).buttonBarHeight,
+                        margin: _theme(context).bottomButtonBarMargin,
+                      ),
+                    ],
+                  ),
                 ),
               ),
               // Seek Indicator.
