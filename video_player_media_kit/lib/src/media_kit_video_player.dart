@@ -149,7 +149,8 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
   /// Sets the volume to a range between 0.0 and 1.0.
   @override
   Future<void> setVolume(int textureId, double volume) async {
-    return _players[textureId]?.setVolume(volume);
+    // NOTE: [volume] is in the range of 0.0 to 1.0 while [setVolume] expects 0.0 to 100.
+    return _players[textureId]?.setVolume(volume * 100);
   }
 
   /// Sets the video position to a [Duration] from the start.
