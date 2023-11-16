@@ -98,7 +98,7 @@ jobs:
           channel: "stable"
       - run: flutter pub get
       - run: flutter build windows --verbose
-      - run: cmake -E tar "cfv" "media_kit_test_win32_x64.7z" --format=7zip "build\windows\runner\Release"
+      - run: cmake -E tar "cfv" "media_kit_test_win32_x64.7z" --format=7zip "build\windows\x64\runner\Release"
       - uses: actions/upload-artifact@v1
         with:
           name: media_kit_test_win32_x64

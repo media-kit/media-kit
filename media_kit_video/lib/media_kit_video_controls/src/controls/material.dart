@@ -49,6 +49,8 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   seekOnDoubleTap: true,
   seekOnDoubleTapEnabledWhileControlsVisible: true,
   visibleOnMount: false,
+  speedUpOnLongPress: false,
+  speedUpFactor: 2.0,
   verticalGestureSensitivity: 100,
   horizontalGestureSensitivity: 1000,
   backdropColor: Color(0x66000000),
@@ -59,6 +61,7 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
   volumeIndicatorBuilder: null,
   brightnessIndicatorBuilder: null,
   seekIndicatorBuilder: null,
+  speedUpIndicatorBuilder: null,
   primaryButtonBar: [
     Spacer(flex: 2),
     MaterialSkipPreviousButton(),
@@ -141,6 +144,12 @@ class MaterialVideoControlsThemeData {
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
 
+  /// Whether to speed up on long press.
+  final bool speedUpOnLongPress;
+
+  /// Factor to speed up on long press.
+  final double speedUpFactor;
+
   /// Gesture sensitivity on vertical drag gestures, the higher the value is the less sensitive the gesture.
   final double verticalGestureSensitivity;
 
@@ -177,6 +186,9 @@ class MaterialVideoControlsThemeData {
 
   /// Custom builder for seek indicator.
   final Widget Function(BuildContext, Duration)? seekIndicatorBuilder;
+
+  /// Custom builder for seek indicator.
+  final Widget Function(BuildContext, double)? speedUpIndicatorBuilder;
 
   // BUTTON BAR
 
@@ -250,6 +262,8 @@ class MaterialVideoControlsThemeData {
     this.seekOnDoubleTap = false,
     this.seekOnDoubleTapEnabledWhileControlsVisible = true,
     this.visibleOnMount = false,
+    this.speedUpOnLongPress = false,
+    this.speedUpFactor = 2.0,
     this.verticalGestureSensitivity = 100,
     this.horizontalGestureSensitivity = 1000,
     this.backdropColor = const Color(0x66000000),
@@ -260,6 +274,7 @@ class MaterialVideoControlsThemeData {
     this.volumeIndicatorBuilder,
     this.brightnessIndicatorBuilder,
     this.seekIndicatorBuilder,
+    this.speedUpIndicatorBuilder,
     this.primaryButtonBar = const [
       Spacer(flex: 2),
       MaterialSkipPreviousButton(),
@@ -304,6 +319,8 @@ class MaterialVideoControlsThemeData {
     bool? seekOnDoubleTap,
     bool? seekOnDoubleTapEnabledWhileControlsVisible,
     bool? visibleOnMount,
+    bool? speedUpOnLongPress,
+    double? speedUpFactor,
     double? verticalGestureSensitivity,
     double? horizontalGestureSensitivity,
     Color? backdropColor,
@@ -313,6 +330,7 @@ class MaterialVideoControlsThemeData {
     Widget Function(BuildContext, double)? volumeIndicatorBuilder,
     Widget Function(BuildContext, double)? brightnessIndicatorBuilder,
     Widget Function(BuildContext, Duration)? seekIndicatorBuilder,
+    Widget Function(BuildContext, double)? speedUpIndicatorBuilder,
     List<Widget>? primaryButtonBar,
     List<Widget>? topButtonBar,
     EdgeInsets? topButtonBarMargin,
@@ -350,6 +368,8 @@ class MaterialVideoControlsThemeData {
           seekOnDoubleTapEnabledWhileControlsVisible ??
               this.seekOnDoubleTapEnabledWhileControlsVisible,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
+      speedUpOnLongPress: speedUpOnLongPress ?? this.speedUpOnLongPress,
+      speedUpFactor: speedUpFactor ?? this.speedUpFactor,
       verticalGestureSensitivity:
           verticalGestureSensitivity ?? this.verticalGestureSensitivity,
       horizontalGestureSensitivity:
@@ -366,6 +386,8 @@ class MaterialVideoControlsThemeData {
       brightnessIndicatorBuilder:
           brightnessIndicatorBuilder ?? this.brightnessIndicatorBuilder,
       seekIndicatorBuilder: seekIndicatorBuilder ?? this.seekIndicatorBuilder,
+      speedUpIndicatorBuilder:
+          speedUpIndicatorBuilder ?? this.speedUpIndicatorBuilder,
       primaryButtonBar: primaryButtonBar ?? this.primaryButtonBar,
       topButtonBar: topButtonBar ?? this.topButtonBar,
       topButtonBarMargin: topButtonBarMargin ?? this.topButtonBarMargin,
@@ -457,6 +479,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   int swipeDuration = 0; // Duration to seek in video
   bool showSwipeDuration = false; // Whether to show the seek duration overlay
 
+  bool _speedUpIndicator = false;
   late /* private */ var playlist = controller(context).player.state.playlist;
   late bool buffering = controller(context).player.state.buffering;
 
@@ -482,6 +505,20 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     setState(() {
       _tapPosition = details.localPosition;
     });
+  }
+
+  void _handleLongPress() {
+    setState(() {
+      _speedUpIndicator = true;
+    });
+    controller(context).player.setRate(_theme(context).speedUpFactor);
+  }
+
+  void _handleLongPressEnd(LongPressEndDetails details) {
+    setState(() {
+      _speedUpIndicator = false;
+    });
+    controller(context).player.setRate(1.0);
   }
 
   @override
@@ -781,6 +818,12 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       child: GestureDetector(
                         onTap: onTap,
                         onDoubleTapDown: _handleTapDown,
+                        onLongPress: _theme(context).speedUpOnLongPress
+                            ? _handleLongPress
+                            : null,
+                        onLongPressEnd: _theme(context).speedUpOnLongPress
+                            ? _handleLongPressEnd
+                            : null,
                         onDoubleTap: () {
                           if (_tapPosition != null &&
                               _tapPosition!.dx >
@@ -1120,6 +1163,81 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       ),
                 ),
               ),
+              // Speedup Indicator.
+              IgnorePointer(
+                child: Padding(
+                  padding: _theme(context).padding ??
+                      (
+                          // Add padding in fullscreen!
+                          isFullscreen(context)
+                              ? MediaQuery.of(context).padding
+                              : EdgeInsets.zero),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: _theme(context).buttonBarHeight,
+                        margin: _theme(context).topButtonBarMargin,
+                      ),
+                      Expanded(
+                        child: AnimatedOpacity(
+                          duration: _theme(context).controlsTransitionDuration,
+                          opacity: _speedUpIndicator ? 1 : 0,
+                          child: _theme(context).speedUpIndicatorBuilder?.call(
+                                  context, _theme(context).speedUpFactor) ??
+                              Container(
+                                alignment: Alignment.topCenter,
+                                child: Container(
+                                  margin: const EdgeInsets.all(16.0),
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0x88000000),
+                                    borderRadius: BorderRadius.circular(64.0),
+                                  ),
+                                  height: 48.0,
+                                  width: 108.0,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      const SizedBox(width: 16.0),
+                                      Expanded(
+                                        child: Text(
+                                          '${_theme(context).speedUpFactor.toStringAsFixed(1)}x',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontSize: 14.0,
+                                            color: Color(0xFFFFFFFF),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        height: 48.0,
+                                        width: 48.0 - 16.0,
+                                        alignment: Alignment.centerRight,
+                                        child: const Icon(
+                                          Icons.fast_forward,
+                                          color: Color(0xFFFFFFFF),
+                                          size: 24.0,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16.0),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                        ),
+                      ),
+                      Container(
+                        height: _theme(context).buttonBarHeight,
+                        margin: _theme(context).bottomButtonBarMargin,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Seek Indicator.
               IgnorePointer(
                 child: AnimatedOpacity(
                   duration: _theme(context).controlsTransitionDuration,
