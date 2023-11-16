@@ -2,7 +2,7 @@ name: video_player_media_kit
 description: package:video_player support for all platforms, based on package:media_kit.
 homepage: https://github.com/media-kit/media-kit
 repository: https://github.com/media-kit/media-kit
-version: 1.0.4
+version: 1.0.5
 topics:
   - video
   - video-player

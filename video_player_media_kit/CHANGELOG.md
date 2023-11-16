@@ -1,3 +1,8 @@
+## 1.0.5
+
+- fix: `setVolume` implementation
+- fix: `VideoPlayerValue.size` stuck at `Size.zero` after `VideoEventType.initialized`
+
 ## 1.0.4
 
 - build: bump `media_kit_video`

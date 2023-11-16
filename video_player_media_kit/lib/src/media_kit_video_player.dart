@@ -246,8 +246,8 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
       streamSubscriptions.add(
         player.stream.videoParams.listen(
           (event) {
-            width = event.dw ?? 0;
-            height = event.dh ?? 0;
+            width = event.dw;
+            height = event.dh;
             if ((width ?? 0) > 0 && (height ?? 0) > 0) {
               notify();
             }
@@ -258,7 +258,7 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
         player.stream.tracks.listen(
           (event) {
             // No video track is available i.e. an audio file.
-            if (event.video.length == 2) {
+            if (event.video.length == 2 && event.audio.length > 2) {
               width = 0;
               height = 0;
               notify();
