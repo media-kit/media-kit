@@ -42,7 +42,7 @@ package:video_player_media_kit allows [package:video_player](https://pub.dev/pac
 
 ```yaml
 dependencies:
-  video_player_media_kit: ^1.0.3
+  video_player_media_kit: ^1.0.5
 
   # NOTE:
   # It is not necessary to select all.
