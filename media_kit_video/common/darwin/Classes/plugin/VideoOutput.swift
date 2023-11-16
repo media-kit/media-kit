@@ -115,6 +115,15 @@ public class VideoOutput: NSObject {
       )
     }
 
+    DispatchQueue.main.async { [weak self]() in
+      guard let that = self else {
+        return
+      }
+      that.registerTextureId()
+    }
+  }
+
+  private func registerTextureId() {
     textureId = registry.register(texture)
     textureUpdateCallback(textureId, CGSize(width: 0, height: 0))
   }
