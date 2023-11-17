@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
 
 enum LogType {
   info,
@@ -36,11 +35,6 @@ class LogsManager {
         .join('\n');
   }
 
-  // Share logs, filtered by type if specified
-  void shareLogs({LogType? type}) {
-    final logsString = getAllLogsAsString(type: type);
-    Share.share(logsString, subject: 'Media Kit Logs');
-  }
 
   // Copy logs to clipboard, filtered by type if specified
   void copyLogs({LogType? type}) {

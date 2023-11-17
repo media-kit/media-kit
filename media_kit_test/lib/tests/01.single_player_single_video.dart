@@ -63,26 +63,16 @@ class _SinglePlayerSingleVideoScreenState
       appBar: AppBar(
         title: const Text('package:media_kit'),
         actions: [
-          PopupMenuButton<String>(
-            child: const Text('Logs'),
-            onSelected: (String value) async {
-              if (value == 'Copy Logs') {
-                // Assuming you have a method in logsManager to handle copying of logs
-                logsManager.copyLogs();
-              } else if (value == 'Share Logs') {
-                logsManager.shareLogs();
-              }
+          TextButton(
+            onPressed: () {
+              logsManager.copyLogs();
             },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'Copy Logs',
-                child: Text('Copy Logs'),
+            child: const Text(
+              'Copy Logs',
+              style: TextStyle(
+                color: Colors.black,
               ),
-              const PopupMenuItem<String>(
-                value: 'Share Logs',
-                child: Text('Share Logs'),
-              ),
-            ],
+            ),
           ),
           const SizedBox(width: 16.0),
         ],

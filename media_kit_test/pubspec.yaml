@@ -24,7 +24,6 @@ dependencies:
   path_provider: ^2.0.14
   http: ">=0.13.0 <2.0.0"
   universal_platform: ^1.0.0+1
-  share_plus: ^7.2.1
 
 
 dependency_overrides:
