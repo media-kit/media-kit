@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_test/tests/15.full_screen_player.dart';
 
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
@@ -283,7 +284,7 @@ class PrimaryScreen extends StatelessWidget {
                   builder: (context) => const CustomDesktopControls(),
                 ));
               }),
-                        ListTile(
+          ListTile(
               title: const Text(
                 'custom_adaptive_controls.dart',
                 style: TextStyle(fontSize: 14.0),
@@ -293,6 +294,18 @@ class PrimaryScreen extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => const CustomAdaptiveControls(),
+                ));
+              }),
+          ListTile(
+              title: const Text(
+                'full_screen_player.dart',
+                style: TextStyle(fontSize: 14.0),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const FullScreenPlayer(),
                 ));
               }),
         ],
