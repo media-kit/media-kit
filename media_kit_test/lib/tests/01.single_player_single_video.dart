@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_test/common/logs_manager/logs_manager.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../common/globals.dart';
@@ -22,12 +23,13 @@ class _SinglePlayerSingleVideoScreenState
     player,
     configuration: configuration.value,
   );
-
+  LogsManager logsManager = LogsManager();
   @override
   void initState() {
     super.initState();
     player.open(Media(sources[0]));
-    player.stream.error.listen((error) => debugPrint(error));
+    player.stream.error.listen((error) => logsManager.addErrorLog(error));
+    player.stream.log.listen((log) => logsManager.addInfoLog(log.toString()));
   }
 
   @override
@@ -60,6 +62,30 @@ class _SinglePlayerSingleVideoScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
+        actions: [
+          PopupMenuButton<String>(
+            child: const Text('Logs'),
+            onSelected: (String value) async {
+              if (value == 'Copy Logs') {
+                // Assuming you have a method in logsManager to handle copying of logs
+                logsManager.copyLogs();
+              } else if (value == 'Share Logs') {
+                logsManager.shareLogs();
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'Copy Logs',
+                child: Text('Copy Logs'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'Share Logs',
+                child: Text('Share Logs'),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16.0),
+        ],
       ),
       floatingActionButton: Row(
         mainAxisSize: MainAxisSize.min,
