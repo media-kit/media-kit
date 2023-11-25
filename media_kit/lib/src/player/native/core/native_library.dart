@@ -71,6 +71,7 @@ abstract class NativeLibrary {
         try {
           DynamicLibrary.open(name);
           _resolved = name;
+          return;
         } catch (_) {}
       }
       // If the dynamic library is not loaded, throw an [Exception].
