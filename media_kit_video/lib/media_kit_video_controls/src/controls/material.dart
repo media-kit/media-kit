@@ -1278,7 +1278,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                               ? TweenAnimationBuilder<double>(
                                   tween: Tween<double>(
                                     begin: 0.0,
-                                    end: _hideSeekBackwardButton ? 0.0 : 1.0,
+                                    end: _hideSeekBackwardButton ? 0.000001 : 1.0,
                                   ),
                                   duration: const Duration(milliseconds: 200),
                                   builder: (context, value, child) => Opacity(
@@ -1324,7 +1324,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                               ? TweenAnimationBuilder<double>(
                                   tween: Tween<double>(
                                     begin: 0.0,
-                                    end: _hideSeekForwardButton ? 0.0 : 1.0,
+                                    end: _hideSeekForwardButton ? 0.000001 : 1.0,
                                   ),
                                   duration: const Duration(milliseconds: 200),
                                   builder: (context, value, child) => Opacity(
@@ -1347,6 +1347,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                       setState(() {
                                         _hideSeekForwardButton = true;
                                       });
+
                                       var result = controller(context)
                                               .player
                                               .state
