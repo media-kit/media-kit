@@ -11,6 +11,7 @@
 // To improve the user experience, a worker is used to execute heavy tasks on a
 // dedicated thread.
 public class VideoOutput: NSObject {
+  // Will be called on the main thread
   public typealias TextureUpdateCallback = (Int64, CGSize) -> Void
 
   private static let isSimulator: Bool = {
@@ -115,7 +116,7 @@ public class VideoOutput: NSObject {
       )
     }
 
-    DispatchQueue.main.async { [weak self]() in
+    DispatchQueue.main.sync { [weak self]() in
       guard let that = self else {
         return
       }
@@ -123,14 +124,22 @@ public class VideoOutput: NSObject {
     }
   }
 
+  // Must be run on the main thread
   private func registerTextureId() {
+    // Textures must be registered on the platform thread.
     textureId = registry.register(texture)
+    // textureUpdateCallback must run on the main thread
     textureUpdateCallback(textureId, CGSize(width: 0, height: 0))
   }
 
   private func disposeTextureId() {
-    registry.unregisterTexture(textureId)
+    let registry_ = self.registry
+    let textureId_ = self.textureId
     textureId = -1
+    DispatchQueue.main.async {
+      // Textures must be unregistered on the platform thread
+      registry_.unregisterTexture(textureId_)
+    }
   }
 
   public func updateCallback() {
@@ -157,7 +166,11 @@ public class VideoOutput: NSObject {
       currentHeight = height
 
       texture.resize(size)
-      textureUpdateCallback(textureId, size)
+      DispatchQueue.main.sync { [weak self] in
+        guard let that = self else { return }
+        // textureUpdateCallback must run on the main thread
+        that.textureUpdateCallback(that.textureId, size)
+      }
     }
 
     if disposed {
@@ -165,7 +178,11 @@ public class VideoOutput: NSObject {
     }
 
     texture.render(size)
-    registry.textureFrameAvailable(textureId)
+    DispatchQueue.main.sync { [weak self] in
+      guard let that = self else { return }
+      // Textures must be marked as available from the main thread
+      that.registry.textureFrameAvailable(that.textureId)
+    }
   }
 
   private var videoWidth: Int64 {
