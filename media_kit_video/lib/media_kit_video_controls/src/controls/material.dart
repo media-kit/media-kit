@@ -722,7 +722,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     }
 
     onTap();
-    print("_handlePointerDown onTap");
   }
 
   void _handleTapDown(TapDownDetails details) {
@@ -731,7 +730,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     }
 
     onTap();
-    print("_handleTapDown onTap");
   }
 
   @override
@@ -874,7 +872,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           onPointerDown: (event) => _handlePointerDown(event),
                           child: GestureDetector(
                             onTapDown: (details) => _handleTapDown(details),
-                            // onTap: onTap,
                             onDoubleTapDown: _handleDoubleTapDown,
                             onLongPress: _theme(context).speedUpOnLongPress
                                 ? _handleLongPress
