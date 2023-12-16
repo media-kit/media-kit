@@ -461,7 +461,7 @@ class _MaterialVideoControls extends StatefulWidget {
 class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   late bool mount = _theme(context).visibleOnMount;
   late bool visible = _theme(context).visibleOnMount;
-
+  late double _widgetWidth;
   Timer? _timer;
 
   double _brightnessValue = 0.0;
@@ -683,26 +683,55 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     });
   }
 
-  void _handlePointerDown(PointerDownEvent event, double widgetWidth) {
-    // Calculate the third of the widget width
-    double thirdWidth = widgetWidth / 3;
+  bool _isInSegment(double localX, int segmentIndex) {
+    double segmentWidth = _widgetWidth / 5; // Split into [2, 1, 2] segments
+    double start, end;
 
-    // Check if the click is in the center third of the widget
-    if (event.position.dx >= thirdWidth &&
-        event.position.dx <= 2 * thirdWidth) {
-      onTap();
+    if (segmentIndex == 0) {
+      start = 0;
+      end = 2 * segmentWidth;
+    } else if (segmentIndex == 1) {
+      start = 2 * segmentWidth;
+      end = 3 * segmentWidth;
+    } else if (segmentIndex == 2) {
+      start = 3 * segmentWidth;
+      end = _widgetWidth;
+    } else {
+      // Handle an invalid segmentIndex gracefully
+      return false;
     }
+
+    return localX >= start && localX <= end;
   }
 
-  void _handleTapDown(TapDownDetails details, double widgetWidth) {
-    // Calculate the third of the widget width
-    double thirdWidth = widgetWidth / 3;
+  bool _isInRightSegment(double localX) {
+    return _isInSegment(localX, 2);
+  }
 
-    // Check if the click is in the center third of the widget
-    if (!(details.localPosition.dx >= thirdWidth &&
-        details.localPosition.dx <= 2 * thirdWidth)) {
-      onTap();
+  bool _isInCenterSegment(double localX) {
+    return _isInSegment(localX, 1);
+  }
+
+  bool _isInLeftSegment(double localX) {
+    return _isInSegment(localX, 0);
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (!(_isInCenterSegment(event.position.dx))) {
+      return;
     }
+
+    onTap();
+    print("_handlePointerDown onTap");
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    if ((_isInCenterSegment(details.localPosition.dx))) {
+      return;
+    }
+
+    onTap();
+    print("_handleTapDown onTap");
   }
 
   @override
@@ -798,8 +827,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       ),
       child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-        double widgetWidth = constraints.maxWidth;
-        double widgetHeight = constraints.maxHeight;
+        _widgetWidth = constraints.maxWidth;
+        // double widgetHeight = constraints.maxHeight;
         return Focus(
           autofocus: true,
           child: Material(
@@ -842,11 +871,9 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                         right: 16.0,
                         bottom: 16.0,
                         child: Listener(
-                          onPointerDown: (event) =>
-                              _handlePointerDown(event, widgetWidth),
+                          onPointerDown: (event) => _handlePointerDown(event),
                           child: GestureDetector(
-                            onTapDown: (details) =>
-                                _handleTapDown(details, widgetWidth),
+                            onTapDown: (details) => _handleTapDown(details),
                             // onTap: onTap,
                             onDoubleTapDown: _handleDoubleTapDown,
                             onLongPress: _theme(context).speedUpOnLongPress
@@ -856,18 +883,22 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 ? _handleLongPressEnd
                                 : null,
                             onDoubleTap: () {
-                              if (_tapPosition != null &&
-                                  _tapPosition!.dx > widgetWidth / 2) {
+                              if (_tapPosition == null) {
+                                return;
+                              }
+                              if (_isInRightSegment(_tapPosition!.dx)) {
                                 if ((!mount &&
                                         _theme(context).seekOnDoubleTap) ||
                                     seekOnDoubleTapEnabledWhileControlsAreVisible) {
                                   onDoubleTapSeekForward();
                                 }
                               } else {
-                                if ((!mount &&
-                                        _theme(context).seekOnDoubleTap) ||
-                                    seekOnDoubleTapEnabledWhileControlsAreVisible) {
-                                  onDoubleTapSeekBackward();
+                                if (_isInLeftSegment(_tapPosition!.dx)) {
+                                  if ((!mount &&
+                                          _theme(context).seekOnDoubleTap) ||
+                                      seekOnDoubleTapEnabledWhileControlsAreVisible) {
+                                    onDoubleTapSeekBackward();
+                                  }
                                 }
                               }
                             },
@@ -886,7 +917,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                               final delta = e.delta.dy;
                               final Offset position = e.localPosition;
 
-                              if (position.dx <= widgetWidth / 2) {
+                              if (position.dx <= _widgetWidth / 2) {
                                 // Left side of screen swiped
                                 if ((!mount &&
                                         _theme(context).brightnessGesture) ||
@@ -1314,11 +1345,14 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       child: Row(
                         children: [
                           Expanded(
+                            flex: 2,
                             child: _mountSeekBackwardButton
                                 ? TweenAnimationBuilder<double>(
                                     tween: Tween<double>(
                                       begin: 0.0,
-                                      end: _hideSeekBackwardButton ? 0.0 : 1.0,
+                                      end: _hideSeekBackwardButton
+                                          ? 0.0
+                                          : 1.0,
                                     ),
                                     duration: const Duration(milliseconds: 200),
                                     builder: (context, value, child) => Opacity(
@@ -1360,12 +1394,17 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                   )
                                 : const SizedBox(),
                           ),
+                          //Area in the middle where the double-tap seek buttons are ignored in
+                          const Expanded(child: SizedBox()),
                           Expanded(
+                            flex: 2,
                             child: _mountSeekForwardButton
                                 ? TweenAnimationBuilder<double>(
                                     tween: Tween<double>(
                                       begin: 0.0,
-                                      end: _hideSeekForwardButton ? 0.0 : 1.0,
+                                      end: _hideSeekForwardButton
+                                          ? 0.0
+                                          : 1.0,
                                     ),
                                     duration: const Duration(milliseconds: 200),
                                     builder: (context, value, child) => Opacity(
