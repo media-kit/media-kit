@@ -143,7 +143,11 @@ class MaterialVideoControlsThemeData {
 
   /// Defines widget's width proportions for double tap actions: `[left seek, instant tap, forward seek]`.
   /// Each integer represents segment width ratio. Default `[1, 1, 1]` means equal segments.
-  final List<int> seekOnDoubleTapLayoutRatios;
+  final List<int> seekOnDoubleTapLayoutTapsRatios;
+
+  /// Defines widget's width proportions for double tap actions: `[left seek, instant tap, forward seek]`.
+  /// Each integer represents segment width ratio. Default `[1, 1, 1]` means equal segments.
+  final List<int> seekOnDoubleTapLayoutWidgetRatios;
 
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
@@ -265,7 +269,8 @@ class MaterialVideoControlsThemeData {
     this.gesturesEnabledWhileControlsVisible = true,
     this.seekOnDoubleTap = false,
     this.seekOnDoubleTapEnabledWhileControlsVisible = true,
-    this.seekOnDoubleTapLayoutRatios = const [1, 1, 1],
+    this.seekOnDoubleTapLayoutTapsRatios = const [1, 1, 1],
+    this.seekOnDoubleTapLayoutWidgetRatios = const [1, 1, 1],
     this.visibleOnMount = false,
     this.speedUpOnLongPress = false,
     this.speedUpFactor = 2.0,
@@ -323,7 +328,8 @@ class MaterialVideoControlsThemeData {
     bool? gesturesEnabledWhileControlsVisible,
     bool? seekOnDoubleTap,
     bool? seekOnDoubleTapEnabledWhileControlsVisible,
-    List<int>? seekOnDoubleTapLayoutRatios,
+    List<int>? seekOnDoubleTapLayoutTapsRatios,
+    List<int>? seekOnDoubleTapLayoutWidgetRatios,
     bool? visibleOnMount,
     bool? speedUpOnLongPress,
     double? speedUpFactor,
@@ -373,8 +379,10 @@ class MaterialVideoControlsThemeData {
       seekOnDoubleTapEnabledWhileControlsVisible:
           seekOnDoubleTapEnabledWhileControlsVisible ??
               this.seekOnDoubleTapEnabledWhileControlsVisible,
-      seekOnDoubleTapLayoutRatios:
-          seekOnDoubleTapLayoutRatios ?? this.seekOnDoubleTapLayoutRatios,
+      seekOnDoubleTapLayoutTapsRatios: seekOnDoubleTapLayoutTapsRatios ??
+          this.seekOnDoubleTapLayoutTapsRatios,
+      seekOnDoubleTapLayoutWidgetRatios: seekOnDoubleTapLayoutWidgetRatios ??
+          this.seekOnDoubleTapLayoutWidgetRatios,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
       speedUpOnLongPress: speedUpOnLongPress ?? this.speedUpOnLongPress,
       speedUpFactor: speedUpFactor ?? this.speedUpFactor,
@@ -692,8 +700,10 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   }
 
   bool _isInSegment(double localX, int segmentIndex) {
+    assert(_theme(context).seekOnDoubleTapLayoutTapsRatios.length == 3,
+        "The number of seekOnDoubleTapLayoutRatios must be 3, i.e. [1, 1, 1]");
     // Local variable with the list of ratios
-    List<int> segmentRatios = _theme(context).seekOnDoubleTapLayoutRatios;
+    List<int> segmentRatios = _theme(context).seekOnDoubleTapLayoutTapsRatios;
 
     int totalRatios = segmentRatios.reduce((a, b) => a + b);
 
@@ -1355,7 +1365,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       child: Row(
                         children: [
                           Expanded(
-                            flex: 2,
+                            flex: _theme(context)
+                                .seekOnDoubleTapLayoutWidgetRatios[0],
                             child: _mountSeekBackwardButton
                                 ? TweenAnimationBuilder<double>(
                                     tween: Tween<double>(
@@ -1403,9 +1414,13 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 : const SizedBox(),
                           ),
                           //Area in the middle where the double-tap seek buttons are ignored in
-                          const Expanded(child: SizedBox()),
+                          if (_theme(context)
+                                  .seekOnDoubleTapLayoutWidgetRatios[1] >
+                              0)
+                            const Expanded(child: SizedBox()),
                           Expanded(
-                            flex: 2,
+                            flex: _theme(context)
+                                .seekOnDoubleTapLayoutWidgetRatios[2],
                             child: _mountSeekForwardButton
                                 ? TweenAnimationBuilder<double>(
                                     tween: Tween<double>(
