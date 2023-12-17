@@ -495,6 +495,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   bool _mountSeekForwardButton = false;
   bool _hideSeekBackwardButton = false;
   bool _hideSeekForwardButton = false;
+  Timer? _timerSeekBackwardButton;
+  Timer? _timerSeekForwardButton;
 
   final ValueNotifier<Duration> _seekBarDeltaValueNotifier =
       ValueNotifier<Duration>(Duration.zero);
@@ -588,6 +590,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       } catch (_) {}
     });
     // --------------------------------------------------
+    _timerSeekBackwardButton?.cancel();
+    _timerSeekForwardButton?.cancel();
     super.dispose();
   }
 
@@ -1348,96 +1352,78 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                   ),
                 ),
 
-                // Double-Tap Seek Button(s):
-                if (!mount || seekOnDoubleTapEnabledWhileControlsAreVisible)
-                  if (_mountSeekBackwardButton || _mountSeekForwardButton)
-                    Positioned.fill(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: _mountSeekBackwardButton
-                                ? TweenAnimationBuilder<double>(
-                                    tween: Tween<double>(
-                                      begin: 0.0,
-                                      end: _hideSeekBackwardButton
-                                          ? 0.000001
-                                          : 1.0,
-                                    ),
-                                    duration: const Duration(milliseconds: 200),
-                                    builder: (context, value, child) => Opacity(
-                                      opacity: value,
-                                      child: child,
-                                    ),
-                                    onEnd: () {
-                                      if (_hideSeekBackwardButton) {
-                                        setState(() {
-                                          _hideSeekBackwardButton = false;
-                                          _mountSeekBackwardButton = false;
-                                        });
-                                      }
+              // Double-Tap Seek Button(s):
+              if (!mount || seekOnDoubleTapEnabledWhileControlsAreVisible)
+                if (_mountSeekBackwardButton || _mountSeekForwardButton)
+                  Positioned.fill(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _mountSeekBackwardButton
+                              ? AnimatedOpacity(
+                                  opacity: _hideSeekBackwardButton ? 0 : 1.0,
+                                  duration: const Duration(milliseconds: 200),
+                                  child: _BackwardSeekIndicator(
+                                    onChanged: (value) {
+                                      _seekBarDeltaValueNotifier.value = -value;
                                     },
-                                    child: _BackwardSeekIndicator(
-                                      onChanged: (value) {
-                                        _seekBarDeltaValueNotifier.value =
-                                            -value;
-                                      },
-                                      onSubmitted: (value) {
-                                        setState(() {
-                                          _hideSeekBackwardButton = true;
-                                        });
-                                        var result = controller(context)
-                                                .player
-                                                .state
-                                                .position -
-                                            value;
-                                        result = result.clamp(
-                                          Duration.zero,
-                                          controller(context)
+                                    onSubmitted: (value) {
+                                      _timerSeekBackwardButton?.cancel();
+                                      _timerSeekBackwardButton = Timer(
+                                        const Duration(milliseconds: 200),
+                                        () {
+                                          setState(() {
+                                            _hideSeekBackwardButton = false;
+                                            _mountSeekBackwardButton = false;
+                                          });
+                                        },
+                                      );
+
+                                      setState(() {
+                                        _hideSeekBackwardButton = true;
+                                      });
+                                      var result = controller(context)
                                               .player
                                               .state
-                                              .duration,
-                                        );
-                                        controller(context).player.seek(result);
-                                      },
-                                    ),
-                                  )
-                                : const SizedBox(),
-                          ),
-                          //Area in the middle where the double-tap seek buttons are ignored in
-                          const Expanded(child: SizedBox()),
-                          Expanded(
-                            flex: 2,
-                            child: _mountSeekForwardButton
-                                ? TweenAnimationBuilder<double>(
-                                    tween: Tween<double>(
-                                      begin: 0.0,
-                                      end: _hideSeekForwardButton
-                                          ? 0.000001
-                                          : 1.0,
-                                    ),
-                                    duration: const Duration(milliseconds: 200),
-                                    builder: (context, value, child) => Opacity(
-                                      opacity: value,
-                                      child: child,
-                                    ),
-                                    onEnd: () {
-                                      if (_hideSeekForwardButton) {
-                                        setState(() {
-                                          _hideSeekForwardButton = false;
-                                          _mountSeekForwardButton = false;
-                                        });
-                                      }
+                                              .position -
+                                          value;
+                                      result = result.clamp(
+                                        Duration.zero,
+                                        controller(context)
+                                            .player
+                                            .state
+                                            .duration,
+                                      );
+                                      controller(context).player.seek(result);
                                     },
-                                    child: _ForwardSeekIndicator(
-                                      onChanged: (value) {
-                                        _seekBarDeltaValueNotifier.value =
-                                            value;
-                                      },
-                                      onSubmitted: (value) {
-                                        setState(() {
-                                          _hideSeekForwardButton = true;
-                                        });
+                                  ),
+                                )
+                              : const SizedBox(),
+                        ),
+                        Expanded(
+                          child: _mountSeekForwardButton
+                              ? AnimatedOpacity(
+                                  opacity: _hideSeekForwardButton ? 0 : 1.0,
+                                  duration: const Duration(milliseconds: 200),
+                                  child: _ForwardSeekIndicator(
+                                    onChanged: (value) {
+                                      _seekBarDeltaValueNotifier.value = value;
+                                    },
+                                    onSubmitted: (value) {
+                                      _timerSeekForwardButton?.cancel();
+                                      _timerSeekForwardButton = Timer(
+                                          const Duration(milliseconds: 200),
+                                          () {
+                                        if (_hideSeekForwardButton) {
+                                          setState(() {
+                                            _hideSeekForwardButton = false;
+                                            _mountSeekForwardButton = false;
+                                          });
+                                        }
+                                      });
+                                      setState(() {
+                                        _hideSeekForwardButton = true;
+                                      });
 
                                         var result = controller(context)
                                                 .player
