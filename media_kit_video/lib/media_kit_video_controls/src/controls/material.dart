@@ -141,12 +141,23 @@ class MaterialVideoControlsThemeData {
   /// NOTE: This option is ignored when [seekOnDoubleTap] is false.
   final bool seekOnDoubleTapEnabledWhileControlsVisible;
 
-  /// Defines widget's width proportions for double tap actions: `[left seek, instant tap, forward seek]`.
-  /// Each integer represents segment width ratio. Default `[1, 1, 1]` means equal segments.
+  /// `seekOnDoubleTapLayoutTapsRatios` defines the width proportions for the interactive areas
+  /// responsible for seek actions (backward seek, instant tap, forward seek) when a double tap
+  /// occurs on the video widget. This property divides the video widget into three segments
+  /// horizontally. Each integer in the list represents the relative width of each segment.
+  /// By default, the value `[1, 1, 1]` means that the video widget is equally divided into three
+  /// segments: the left segment for backward seek, the middle segment for instant tap (usually show and hide controls),
+  /// and the right segment for forward seek. Adjusting these values changes the width of the interactive areas
+  /// for each double tap action.
   final List<int> seekOnDoubleTapLayoutTapsRatios;
 
-  /// Defines widget's width proportions for double tap actions: `[left seek, instant tap, forward seek]`.
-  /// Each integer represents segment width ratio. Default `[1, 1, 1]` means equal segments.
+  /// `seekOnDoubleTapLayoutWidgetRatios` defines the width proportions for the visual indicators or
+  /// widgets that appear during the double tap actions (backward seek, instant tap, forward seek).
+  /// Similar to `seekOnDoubleTapLayoutTapsRatios`, it divides the area where these indicators are
+  /// displayed into three segments. Each integer in the list represents the relative width of each
+  /// segment where the corresponding indicators will be shown. The default `[1, 1, 1]` equally divides
+  /// the space for each indicator. Modifying these values can change the layout of the seek indicators,
+  /// giving more or less space to each one based on the specified ratios.
   final List<int> seekOnDoubleTapLayoutWidgetRatios;
 
   /// Whether the controls are initially visible.
