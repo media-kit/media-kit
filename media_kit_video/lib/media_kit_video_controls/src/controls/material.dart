@@ -141,6 +141,10 @@ class MaterialVideoControlsThemeData {
   /// NOTE: This option is ignored when [seekOnDoubleTap] is false.
   final bool seekOnDoubleTapEnabledWhileControlsVisible;
 
+  /// Defines widget's width proportions for double tap actions: `[left seek, instant tap, forward seek]`.
+  /// Each integer represents segment width ratio. Default `[1, 1, 1]` means equal segments.
+  final List<int> seekOnDoubleTapLayoutRatios;
+
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
 
@@ -261,6 +265,7 @@ class MaterialVideoControlsThemeData {
     this.gesturesEnabledWhileControlsVisible = true,
     this.seekOnDoubleTap = false,
     this.seekOnDoubleTapEnabledWhileControlsVisible = true,
+    this.seekOnDoubleTapLayoutRatios = const [1, 1, 1],
     this.visibleOnMount = false,
     this.speedUpOnLongPress = false,
     this.speedUpFactor = 2.0,
@@ -318,6 +323,7 @@ class MaterialVideoControlsThemeData {
     bool? gesturesEnabledWhileControlsVisible,
     bool? seekOnDoubleTap,
     bool? seekOnDoubleTapEnabledWhileControlsVisible,
+    List<int>? seekOnDoubleTapLayoutRatios,
     bool? visibleOnMount,
     bool? speedUpOnLongPress,
     double? speedUpFactor,
@@ -367,6 +373,8 @@ class MaterialVideoControlsThemeData {
       seekOnDoubleTapEnabledWhileControlsVisible:
           seekOnDoubleTapEnabledWhileControlsVisible ??
               this.seekOnDoubleTapEnabledWhileControlsVisible,
+      seekOnDoubleTapLayoutRatios:
+          seekOnDoubleTapLayoutRatios ?? this.seekOnDoubleTapLayoutRatios,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
       speedUpOnLongPress: speedUpOnLongPress ?? this.speedUpOnLongPress,
       speedUpFactor: speedUpFactor ?? this.speedUpFactor,
@@ -684,24 +692,29 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   }
 
   bool _isInSegment(double localX, int segmentIndex) {
-    double segmentWidth = _widgetWidth / 5; // Split into [2, 1, 2] segments
-    double start, end;
+    // Local variable with the list of ratios
+    List<int> segmentRatios = _theme(context).seekOnDoubleTapLayoutRatios;
 
-    if (segmentIndex == 0) {
-      start = 0;
-      end = 2 * segmentWidth;
-    } else if (segmentIndex == 1) {
-      start = 2 * segmentWidth;
-      end = 3 * segmentWidth;
-    } else if (segmentIndex == 2) {
-      start = 3 * segmentWidth;
-      end = _widgetWidth;
-    } else {
-      // Handle an invalid segmentIndex gracefully
-      return false;
+    int totalRatios = segmentRatios.reduce((a, b) => a + b);
+
+    double segmentWidthMultiplier = _widgetWidth / totalRatios;
+    double start = 0;
+    double end;
+
+    for (int i = 0; i < segmentRatios.length; i++) {
+      end = start + (segmentWidthMultiplier * segmentRatios[i]);
+
+      // Check if the current index matches the segmentIndex and if localX falls within it
+      if (i == segmentIndex && localX >= start && localX <= end) {
+        return true;
+      }
+
+      // Set the start of the next segment
+      start = end;
     }
 
-    return localX >= start && localX <= end;
+    // If localX does not fall within the specified segment
+    return false;
   }
 
   bool _isInRightSegment(double localX) {
