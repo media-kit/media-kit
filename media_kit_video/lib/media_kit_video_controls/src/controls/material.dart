@@ -1430,7 +1430,10 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           if (_theme(context)
                                   .seekOnDoubleTapLayoutWidgetRatios[1] >
                               0)
-                            const Expanded(child: SizedBox()),
+                            Expanded(
+                                flex: _theme(context)
+                                    .seekOnDoubleTapLayoutWidgetRatios[1],
+                                child: const SizedBox()),
                           Expanded(
                             flex: _theme(context)
                                 .seekOnDoubleTapLayoutWidgetRatios[2],
