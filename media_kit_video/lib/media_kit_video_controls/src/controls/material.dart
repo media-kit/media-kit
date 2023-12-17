@@ -141,9 +141,24 @@ class MaterialVideoControlsThemeData {
   /// NOTE: This option is ignored when [seekOnDoubleTap] is false.
   final bool seekOnDoubleTapEnabledWhileControlsVisible;
 
-  /// Defines widget's width proportions for double tap actions: `[left seek, instant tap, forward seek]`.
-  /// Each integer represents segment width ratio. Default `[1, 1, 1]` means equal segments.
-  final List<int> seekOnDoubleTapLayoutRatios;
+  /// `seekOnDoubleTapLayoutTapsRatios` defines the width proportions for the interactive areas
+  /// responsible for seek actions (backward seek, instant tap, forward seek) when a double tap
+  /// occurs on the video widget. This property divides the video widget into three segments
+  /// horizontally. Each integer in the list represents the relative width of each segment.
+  /// By default, the value `[1, 1, 1]` means that the video widget is equally divided into three
+  /// segments: the left segment for backward seek, the middle segment for instant tap (usually show and hide controls),
+  /// and the right segment for forward seek. Adjusting these values changes the width of the interactive areas
+  /// for each double tap action.
+  final List<int> seekOnDoubleTapLayoutTapsRatios;
+
+  /// `seekOnDoubleTapLayoutWidgetRatios` defines the width proportions for the visual indicators or
+  /// widgets that appear during the double tap actions (backward seek, instant tap, forward seek).
+  /// Similar to `seekOnDoubleTapLayoutTapsRatios`, it divides the area where these indicators are
+  /// displayed into three segments. Each integer in the list represents the relative width of each
+  /// segment where the corresponding indicators will be shown. The default `[1, 1, 1]` equally divides
+  /// the space for each indicator. Modifying these values can change the layout of the seek indicators,
+  /// giving more or less space to each one based on the specified ratios.
+  final List<int> seekOnDoubleTapLayoutWidgetRatios;
 
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
@@ -265,7 +280,8 @@ class MaterialVideoControlsThemeData {
     this.gesturesEnabledWhileControlsVisible = true,
     this.seekOnDoubleTap = false,
     this.seekOnDoubleTapEnabledWhileControlsVisible = true,
-    this.seekOnDoubleTapLayoutRatios = const [1, 1, 1],
+    this.seekOnDoubleTapLayoutTapsRatios = const [1, 1, 1],
+    this.seekOnDoubleTapLayoutWidgetRatios = const [1, 1, 1],
     this.visibleOnMount = false,
     this.speedUpOnLongPress = false,
     this.speedUpFactor = 2.0,
@@ -323,7 +339,8 @@ class MaterialVideoControlsThemeData {
     bool? gesturesEnabledWhileControlsVisible,
     bool? seekOnDoubleTap,
     bool? seekOnDoubleTapEnabledWhileControlsVisible,
-    List<int>? seekOnDoubleTapLayoutRatios,
+    List<int>? seekOnDoubleTapLayoutTapsRatios,
+    List<int>? seekOnDoubleTapLayoutWidgetRatios,
     bool? visibleOnMount,
     bool? speedUpOnLongPress,
     double? speedUpFactor,
@@ -373,8 +390,10 @@ class MaterialVideoControlsThemeData {
       seekOnDoubleTapEnabledWhileControlsVisible:
           seekOnDoubleTapEnabledWhileControlsVisible ??
               this.seekOnDoubleTapEnabledWhileControlsVisible,
-      seekOnDoubleTapLayoutRatios:
-          seekOnDoubleTapLayoutRatios ?? this.seekOnDoubleTapLayoutRatios,
+      seekOnDoubleTapLayoutTapsRatios: seekOnDoubleTapLayoutTapsRatios ??
+          this.seekOnDoubleTapLayoutTapsRatios,
+      seekOnDoubleTapLayoutWidgetRatios: seekOnDoubleTapLayoutWidgetRatios ??
+          this.seekOnDoubleTapLayoutWidgetRatios,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
       speedUpOnLongPress: speedUpOnLongPress ?? this.speedUpOnLongPress,
       speedUpFactor: speedUpFactor ?? this.speedUpFactor,
@@ -697,7 +716,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   bool _isInSegment(double localX, int segmentIndex) {
     // Local variable with the list of ratios
-    List<int> segmentRatios = _theme(context).seekOnDoubleTapLayoutRatios;
+    List<int> segmentRatios = _theme(context).seekOnDoubleTapLayoutTapsRatios;
 
     int totalRatios = segmentRatios.reduce((a, b) => a + b);
 
@@ -833,6 +852,10 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     var seekOnDoubleTapEnabledWhileControlsAreVisible =
         (_theme(context).seekOnDoubleTap &&
             _theme(context).seekOnDoubleTapEnabledWhileControlsVisible);
+    assert(_theme(context).seekOnDoubleTapLayoutTapsRatios.length == 3,
+        "The number of seekOnDoubleTapLayoutTapsRatios must be 3, i.e. [1, 1, 1]");
+    assert(_theme(context).seekOnDoubleTapLayoutWidgetRatios.length == 3,
+        "The number of seekOnDoubleTapLayoutWidgetRatios must be 3, i.e. [1, 1, 1]");
     return Theme(
       data: Theme.of(context).copyWith(
         focusColor: const Color(0x00000000),
@@ -1352,79 +1375,97 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                   ),
                 ),
 
-              // Double-Tap Seek Button(s):
-              if (!mount || seekOnDoubleTapEnabledWhileControlsAreVisible)
-                if (_mountSeekBackwardButton || _mountSeekForwardButton)
-                  Positioned.fill(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _mountSeekBackwardButton
-                              ? AnimatedOpacity(
-                                  opacity: _hideSeekBackwardButton ? 0 : 1.0,
-                                  duration: const Duration(milliseconds: 200),
-                                  child: _BackwardSeekIndicator(
-                                    onChanged: (value) {
-                                      _seekBarDeltaValueNotifier.value = -value;
+                // Double-Tap Seek Button(s):
+                if (!mount || seekOnDoubleTapEnabledWhileControlsAreVisible)
+                  if (_mountSeekBackwardButton || _mountSeekForwardButton)
+                    Positioned.fill(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: _theme(context)
+                                .seekOnDoubleTapLayoutWidgetRatios[0],
+                            child: _mountSeekBackwardButton
+                                ? TweenAnimationBuilder<double>(
+                                    tween: Tween<double>(
+                                      begin: 0.0,
+                                      end: _hideSeekBackwardButton ? 0.0 : 1.0,
+                                    ),
+                                    duration: const Duration(milliseconds: 200),
+                                    builder: (context, value, child) => Opacity(
+                                      opacity: value,
+                                      child: child,
+                                    ),
+                                    onEnd: () {
+                                      if (_hideSeekBackwardButton) {
+                                        setState(() {
+                                          _hideSeekBackwardButton = false;
+                                          _mountSeekBackwardButton = false;
+                                        });
+                                      }
                                     },
-                                    onSubmitted: (value) {
-                                      _timerSeekBackwardButton?.cancel();
-                                      _timerSeekBackwardButton = Timer(
-                                        const Duration(milliseconds: 200),
-                                        () {
-                                          setState(() {
-                                            _hideSeekBackwardButton = false;
-                                            _mountSeekBackwardButton = false;
-                                          });
-                                        },
-                                      );
-
-                                      setState(() {
-                                        _hideSeekBackwardButton = true;
-                                      });
-                                      var result = controller(context)
+                                    child: _BackwardSeekIndicator(
+                                      onChanged: (value) {
+                                        _seekBarDeltaValueNotifier.value =
+                                            -value;
+                                      },
+                                      onSubmitted: (value) {
+                                        setState(() {
+                                          _hideSeekBackwardButton = true;
+                                        });
+                                        var result = controller(context)
+                                                .player
+                                                .state
+                                                .position -
+                                            value;
+                                        result = result.clamp(
+                                          Duration.zero,
+                                          controller(context)
                                               .player
                                               .state
-                                              .position -
-                                          value;
-                                      result = result.clamp(
-                                        Duration.zero,
-                                        controller(context)
-                                            .player
-                                            .state
-                                            .duration,
-                                      );
-                                      controller(context).player.seek(result);
+                                              .duration,
+                                        );
+                                        controller(context).player.seek(result);
+                                      },
+                                    ),
+                                  )
+                                : const SizedBox(),
+                          ),
+                          //Area in the middle where the double-tap seek buttons are ignored in
+                             if (_theme(context)
+                                  .seekOnDoubleTapLayoutWidgetRatios[1] >
+                              0)
+                            const Expanded(child: SizedBox()),
+                          Expanded(
+                             flex: _theme(context)
+                                .seekOnDoubleTapLayoutWidgetRatios[2],
+                            child: _mountSeekForwardButton
+                                ? TweenAnimationBuilder<double>(
+                                    tween: Tween<double>(
+                                      begin: 0.0,
+                                      end: _hideSeekForwardButton ? 0.0 : 1.0,
+                                    ),
+                                    duration: const Duration(milliseconds: 200),
+                                    builder: (context, value, child) => Opacity(
+                                      opacity: value,
+                                      child: child,
+                                    ),
+                                    onEnd: () {
+                                      if (_hideSeekForwardButton) {
+                                        setState(() {
+                                          _hideSeekForwardButton = false;
+                                          _mountSeekForwardButton = false;
+                                        });
+                                      }
                                     },
-                                  ),
-                                )
-                              : const SizedBox(),
-                        ),
-                        Expanded(
-                          child: _mountSeekForwardButton
-                              ? AnimatedOpacity(
-                                  opacity: _hideSeekForwardButton ? 0 : 1.0,
-                                  duration: const Duration(milliseconds: 200),
-                                  child: _ForwardSeekIndicator(
-                                    onChanged: (value) {
-                                      _seekBarDeltaValueNotifier.value = value;
-                                    },
-                                    onSubmitted: (value) {
-                                      _timerSeekForwardButton?.cancel();
-                                      _timerSeekForwardButton = Timer(
-                                          const Duration(milliseconds: 200),
-                                          () {
-                                        if (_hideSeekForwardButton) {
-                                          setState(() {
-                                            _hideSeekForwardButton = false;
-                                            _mountSeekForwardButton = false;
-                                          });
-                                        }
-                                      });
-                                      setState(() {
-                                        _hideSeekForwardButton = true;
-                                      });
-
+                                    child: _ForwardSeekIndicator(
+                                      onChanged: (value) {
+                                        _seekBarDeltaValueNotifier.value =
+                                            value;
+                                      },
+                                      onSubmitted: (value) {
+                                        setState(() {
+                                          _hideSeekForwardButton = true;
+                                        });
                                         var result = controller(context)
                                                 .player
                                                 .state
