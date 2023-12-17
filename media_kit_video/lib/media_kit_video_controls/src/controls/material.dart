@@ -1431,12 +1431,12 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 : const SizedBox(),
                           ),
                           //Area in the middle where the double-tap seek buttons are ignored in
-                             if (_theme(context)
+                          if (_theme(context)
                                   .seekOnDoubleTapLayoutWidgetRatios[1] >
                               0)
                             const Expanded(child: SizedBox()),
                           Expanded(
-                             flex: _theme(context)
+                            flex: _theme(context)
                                 .seekOnDoubleTapLayoutWidgetRatios[2],
                             child: _mountSeekForwardButton
                                 ? TweenAnimationBuilder<double>(
