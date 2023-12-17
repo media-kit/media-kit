@@ -700,8 +700,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   }
 
   bool _isInSegment(double localX, int segmentIndex) {
-    assert(_theme(context).seekOnDoubleTapLayoutTapsRatios.length == 3,
-        "The number of seekOnDoubleTapLayoutRatios must be 3, i.e. [1, 1, 1]");
     // Local variable with the list of ratios
     List<int> segmentRatios = _theme(context).seekOnDoubleTapLayoutTapsRatios;
 
@@ -839,6 +837,10 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     var seekOnDoubleTapEnabledWhileControlsAreVisible =
         (_theme(context).seekOnDoubleTap &&
             _theme(context).seekOnDoubleTapEnabledWhileControlsVisible);
+    assert(_theme(context).seekOnDoubleTapLayoutTapsRatios.length == 3,
+        "The number of seekOnDoubleTapLayoutTapsRatios must be 3, i.e. [1, 1, 1]");
+    assert(_theme(context).seekOnDoubleTapLayoutWidgetRatios.length == 3,
+        "The number of seekOnDoubleTapLayoutWidgetRatios must be 3, i.e. [1, 1, 1]");
     return Theme(
       data: Theme.of(context).copyWith(
         focusColor: const Color(0x00000000),
