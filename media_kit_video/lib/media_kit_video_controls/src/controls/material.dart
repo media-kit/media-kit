@@ -1385,30 +1385,26 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                             flex: _theme(context)
                                 .seekOnDoubleTapLayoutWidgetRatios[0],
                             child: _mountSeekBackwardButton
-                                ? TweenAnimationBuilder<double>(
-                                    tween: Tween<double>(
-                                      begin: 0.0,
-                                      end: _hideSeekBackwardButton ? 0.0 : 1.0,
-                                    ),
+                                ? AnimatedOpacity(
+                                    opacity: _hideSeekBackwardButton ? 0 : 1.0,
                                     duration: const Duration(milliseconds: 200),
-                                    builder: (context, value, child) => Opacity(
-                                      opacity: value,
-                                      child: child,
-                                    ),
-                                    onEnd: () {
-                                      if (_hideSeekBackwardButton) {
-                                        setState(() {
-                                          _hideSeekBackwardButton = false;
-                                          _mountSeekBackwardButton = false;
-                                        });
-                                      }
-                                    },
                                     child: _BackwardSeekIndicator(
                                       onChanged: (value) {
                                         _seekBarDeltaValueNotifier.value =
                                             -value;
                                       },
                                       onSubmitted: (value) {
+                                        _timerSeekBackwardButton?.cancel();
+                                        _timerSeekBackwardButton = Timer(
+                                          const Duration(milliseconds: 200),
+                                          () {
+                                            setState(() {
+                                              _hideSeekBackwardButton = false;
+                                              _mountSeekBackwardButton = false;
+                                            });
+                                          },
+                                        );
+
                                         setState(() {
                                           _hideSeekBackwardButton = true;
                                         });
@@ -1434,38 +1430,38 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           if (_theme(context)
                                   .seekOnDoubleTapLayoutWidgetRatios[1] >
                               0)
-                            const Expanded(child: SizedBox()),
+                            Expanded(
+                                flex: _theme(context)
+                                    .seekOnDoubleTapLayoutWidgetRatios[1],
+                                child: SizedBox()),
                           Expanded(
                             flex: _theme(context)
                                 .seekOnDoubleTapLayoutWidgetRatios[2],
                             child: _mountSeekForwardButton
-                                ? TweenAnimationBuilder<double>(
-                                    tween: Tween<double>(
-                                      begin: 0.0,
-                                      end: _hideSeekForwardButton ? 0.0 : 1.0,
-                                    ),
+                                ? AnimatedOpacity(
+                                    opacity: _hideSeekForwardButton ? 0 : 1.0,
                                     duration: const Duration(milliseconds: 200),
-                                    builder: (context, value, child) => Opacity(
-                                      opacity: value,
-                                      child: child,
-                                    ),
-                                    onEnd: () {
-                                      if (_hideSeekForwardButton) {
-                                        setState(() {
-                                          _hideSeekForwardButton = false;
-                                          _mountSeekForwardButton = false;
-                                        });
-                                      }
-                                    },
                                     child: _ForwardSeekIndicator(
                                       onChanged: (value) {
                                         _seekBarDeltaValueNotifier.value =
                                             value;
                                       },
                                       onSubmitted: (value) {
+                                        _timerSeekForwardButton?.cancel();
+                                        _timerSeekForwardButton = Timer(
+                                            const Duration(milliseconds: 200),
+                                            () {
+                                          if (_hideSeekForwardButton) {
+                                            setState(() {
+                                              _hideSeekForwardButton = false;
+                                              _mountSeekForwardButton = false;
+                                            });
+                                          }
+                                        });
                                         setState(() {
                                           _hideSeekForwardButton = true;
                                         });
+
                                         var result = controller(context)
                                                 .player
                                                 .state
