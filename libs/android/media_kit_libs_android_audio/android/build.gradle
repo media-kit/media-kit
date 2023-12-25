@@ -55,15 +55,8 @@ task downloadDependencies(type: Exec)  {
             outputDir.deleteDir()
         }
         outputDir.mkdirs()
-        // Define the md5Matches function within the task
 
-            boolean md5Matches(File file, String expectedMD5) {
-                def md5Bytes = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(file.toPath()))
-                def calculatedMD5 = md5Bytes.encodeHex().toString()
-                return calculatedMD5 == expectedMD5
-            }
         // Download all *.jar dependencies & verify their MD5 checksums.
-
         def filesToDownload = [
             ["url": "https://github.com/media-kit/libmpv-android-audio-build/releases/download/v1.1.5/default-arm64-v8a.jar", "md5": "46f80b1f48ec7df4b5232b2f183ef012", "destination": file("$buildDir/v1.1.5/default-arm64-v8a.jar")],
             ["url": "https://github.com/media-kit/libmpv-android-audio-build/releases/download/v1.1.5/default-armeabi-v7a.jar", "md5": "5655d8b66001ba374ca73e6205f62737", "destination": file("$buildDir/v1.1.5/default-armeabi-v7a.jar")],
@@ -73,7 +66,9 @@ task downloadDependencies(type: Exec)  {
 
         filesToDownload.each { fileInfo ->
             def destFile = fileInfo.destination
-            if (destFile.exists() && !md5Matches(destFile, fileInfo.md5)) {
+            def calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
+
+            if (destFile.exists() && calculatedMD5 != fileInfo.md5) {
                 destFile.delete()
                 println "MD5 mismatch. File deleted: ${destFile}"
             }
@@ -84,10 +79,11 @@ task downloadDependencies(type: Exec)  {
                 destFile.withOutputStream { os ->
                     os << new URL(fileInfo.url).openStream()
                 }
-
-                if (!md5Matches(destFile, fileInfo.md5)) {
+                calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
+                if (calculatedMD5 != fileInfo.md5) {
                     throw new GradleException("MD5 verification failed for ${destFile}")
                 }
+               
             }
 
             copy {

@@ -48,20 +48,15 @@ android {
 }
 
 task downloadDependencies(type: Exec) {   
-    // Delete previously created /output subdirectory.
+        // Delete previously created /output subdirectory.
 
-def outputDir = file("$buildDir/output")
+        def outputDir = file("$buildDir/output")
         if (outputDir.exists()) {
             outputDir.deleteDir()
         }
         outputDir.mkdirs()
-                // Define the md5Matches function within the task
-boolean md5Matches(File file, String expectedMD5) {
-    def md5Bytes = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(file.toPath()))
-    def calculatedMD5 = md5Bytes.encodeHex().toString()
-    return calculatedMD5 == expectedMD5
-}
-    // Download all *.jar dependencies & verify their MD5 checksums.
+
+        // Download all *.jar dependencies & verify their MD5 checksums.
         def filesToDownload = [
             ["url": "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-arm64-v8a.jar", "md5": "5f521b08692d7fef73c5df9bcc00ca4d", "destination": file("$buildDir/v1.1.5/default-arm64-v8a.jar")],
             ["url": "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-armeabi-v7a.jar", "md5": "08d500ca1116c13e9c1296cc6f2207b0", "destination": file("$buildDir/v1.1.5/default-armeabi-v7a.jar")],
@@ -71,7 +66,9 @@ boolean md5Matches(File file, String expectedMD5) {
 
         filesToDownload.each { fileInfo ->
             def destFile = fileInfo.destination
-            if (destFile.exists() && calculateMD5(destFile) != fileInfo.md5) {
+            def calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
+
+            if (destFile.exists() && calculatedMD5 != fileInfo.md5) {
                 destFile.delete()
                 println "MD5 mismatch. File deleted: ${destFile}"
             }
@@ -83,7 +80,8 @@ boolean md5Matches(File file, String expectedMD5) {
                     os << new URL(fileInfo.url).openStream()
                 }
 
-                if (calculateMD5(destFile) != fileInfo.md5) {
+                calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
+                if (calculatedMD5 != fileInfo.md5) {
                     throw new GradleException("MD5 verification failed for ${destFile}")
                 }
             }
