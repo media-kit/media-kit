@@ -55,8 +55,13 @@ def outputDir = file("$buildDir/output")
             outputDir.deleteDir()
         }
         outputDir.mkdirs()
+                // Define the md5Matches function within the task
+boolean md5Matches(File file, String expectedMD5) {
+    def md5Bytes = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(file.toPath()))
+    def calculatedMD5 = md5Bytes.encodeHex().toString()
+    return calculatedMD5 == expectedMD5
+}
     // Download all *.jar dependencies & verify their MD5 checksums.
-
         def filesToDownload = [
             ["url": "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-arm64-v8a.jar", "md5": "5f521b08692d7fef73c5df9bcc00ca4d", "destination": file("$buildDir/v1.1.5/default-arm64-v8a.jar")],
             ["url": "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-armeabi-v7a.jar", "md5": "08d500ca1116c13e9c1296cc6f2207b0", "destination": file("$buildDir/v1.1.5/default-armeabi-v7a.jar")],
@@ -89,9 +94,5 @@ def outputDir = file("$buildDir/output")
             }
         }
 }
-boolean md5Matches(File file, String expectedMD5) {
-    def md5Bytes = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(file.toPath()))
-    def calculatedMD5 = md5Bytes.encodeHex().toString()
-    return calculatedMD5 == expectedMD5
-}
+
 assemble.dependsOn(downloadDependencies)
