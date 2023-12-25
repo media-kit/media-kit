@@ -66,11 +66,14 @@ task downloadDependencies(type: Exec) {
 
         filesToDownload.each { fileInfo ->
             def destFile = fileInfo.destination
-            def calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
+            if (destFile.exists()) {
+                def calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
 
-            if (destFile.exists() && calculatedMD5 != fileInfo.md5) {
-                destFile.delete()
-                println "MD5 mismatch. File deleted: ${destFile}"
+                if (calculatedMD5 != fileInfo.md5) {
+                    destFile.delete()
+                    println "MD5 mismatch. File deleted: ${destFile}"
+                }
+
             }
 
             if (!destFile.exists()) {
