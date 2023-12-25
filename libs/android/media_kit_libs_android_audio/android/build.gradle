@@ -83,7 +83,7 @@ task downloadDependencies(type: Exec)  {
                 destFile.withOutputStream { os ->
                     os << new URL(fileInfo.url).openStream()
                 }
-                calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
+                def calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
                 if (calculatedMD5 != fileInfo.md5) {
                     throw new GradleException("MD5 verification failed for ${destFile}")
                 }
