@@ -2460,8 +2460,8 @@ class NativePlayer extends PlatformPlayer {
             // Use it if located inside the application bundle, otherwise no worries.
             options.addAll(
               {
-                'config': 'yes',
-                'config-dir': directory,
+                'sub-fonts-dir': directory,
+                'sub-font': configuration.libassAndroidFontFamilyName.toString(),
               },
             );
             print(subfont);

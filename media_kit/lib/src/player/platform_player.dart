@@ -6,20 +6,20 @@
 
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:meta/meta.dart';
-import 'package:collection/collection.dart';
 
-import 'package:media_kit/src/models/track.dart';
-import 'package:media_kit/src/models/playable.dart';
-import 'package:media_kit/src/models/playlist.dart';
-import 'package:media_kit/src/models/player_log.dart';
-import 'package:media_kit/src/models/media/media.dart';
+import 'package:collection/collection.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
-import 'package:media_kit/src/models/video_params.dart';
+import 'package:media_kit/src/models/media/media.dart';
+import 'package:media_kit/src/models/playable.dart';
+import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/player_state.dart';
-import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_stream.dart';
+import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/playlist_mode.dart';
+import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/video_params.dart';
+import 'package:meta/meta.dart';
 
 /// {@template platform_player}
 /// PlatformPlayer
@@ -463,12 +463,17 @@ class PlayerConfiguration {
   /// By default, subtitles rendering is Flutter `Widget` based.
   ///
   /// On Android, this option requires [libassAndroidFont] to be set.
+  ///
+  /// On Android, this option requires [libassAndroidFontFamilyName] to be set.
   final bool libass;
 
   /// Asset name of the `.ttf` font file to be used for [libass](https://github.com/libass/libass) based subtitle rendering on Android.
   ///
   /// e.g. `assets/fonts/subtitle.ttf`
   final String? libassAndroidFont;
+
+  /// e.g. the name of `subtitle.ttf` displayed in the system is the font name, not the file name!
+  final String? libassAndroidFontFamilyName;
 
   /// Sets the log level on native backend.
   /// Default: `none`.
@@ -496,6 +501,7 @@ class PlayerConfiguration {
     this.muted = false,
     this.libass = false,
     this.libassAndroidFont,
+    this.libassAndroidFontFamilyName,
     this.logLevel = MPVLogLevel.error,
     this.bufferSize = 32 * 1024 * 1024,
     this.protocolWhitelist = const [
