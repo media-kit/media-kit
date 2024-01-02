@@ -210,7 +210,6 @@ class AndroidVideoController extends PlatformVideoController {
         try {
           final handle = await player.handle;
           NativeLibrary.ensureInitialized();
-          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
 
           if (vo == 'gpu') {
             // NOTE: Only required for --vo=gpu
@@ -226,23 +225,16 @@ class AndroidVideoController extends PlatformVideoController {
             );
 
             // ----------------------------------------------
-            final values = {
-              // NOTE: ORDER IS IMPORTANT.
-              'android-surface-size': [width, height].join('x'),
-              'wid': _wid.toString(),
-              'vo': 'gpu',
-            };
-            for (final entry in values.entries) {
-              final name = entry.key.toNativeUtf8();
-              final value = entry.value.toNativeUtf8();
-              mpv.mpv_set_option_string(
-                Pointer.fromAddress(handle),
-                name.cast(),
-                value.cast(),
-              );
-              calloc.free(name);
-              calloc.free(value);
-            }
+           await compute(
+               _setAndroidSurfaceOptions,
+               _SurfaceOptionsData(
+                   NativeLibrary.path,
+                   handle,
+                   width,
+                   height,
+                   _wid!,
+               ),
+           );
           }
           // ----------------------------------------------
         } catch (exception, stacktrace) {
@@ -431,4 +423,53 @@ class AndroidVideoController extends PlatformVideoController {
             }
           },
         );
+}
+
+class _SurfaceOptionsData{
+  /// Library path from [NativeLibrary.path].
+  final String lib;
+
+  /// Player handle form [Player.handle].
+  final int handle;
+
+  /// Surface width.
+  final int width;
+
+  /// Surface height.
+  final int height;
+
+  /// Pointer address to the global object reference of `android.view.Surface` i.e. `(intptr_t)(*android.view.Surface)`.
+  final int wid;
+
+  const _SurfaceOptionsData(
+      this.lib,
+      this.handle,
+      this.width,
+      this.height,
+      this.wid,
+  );
+}
+
+/// Notify libmpv to re-create vo.
+void _setAndroidSurfaceOptions(_SurfaceOptionsData data){
+  final values = {
+    // NOTE: ORDER IS IMPORTANT.
+    'android-surface-size': [data.width, data.height].join('x'),
+    'wid': data.wid.toString(),
+    'vo': 'gpu',
+  };
+  // ---------
+  final mpv = MPV(DynamicLibrary.open(data.lib));
+  // ---------
+  for (final entry in values.entries) {
+    final name = entry.key.toNativeUtf8();
+    final value = entry.value.toNativeUtf8();
+    mpv.mpv_set_option_string(
+      Pointer.fromAddress(data.handle),
+      name.cast(),
+      value.cast(),
+    );
+    calloc.free(name);
+    calloc.free(value);
+  }
 }
