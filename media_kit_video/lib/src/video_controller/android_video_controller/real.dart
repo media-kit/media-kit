@@ -154,7 +154,6 @@ class AndroidVideoController extends PlatformVideoController {
         () async {
           final handle = await player.handle;
           NativeLibrary.ensureInitialized();
-          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
           // Release any references to current android.view.Surface.
           //
           // It is important to set --vo=null here for 2 reasons:
@@ -162,22 +161,10 @@ class AndroidVideoController extends PlatformVideoController {
           // 2. Resize the android.graphics.SurfaceTexture to next video's resolution before setting --vo=gpu.
           try {
             // ----------------------------------------------
-            final values = {
-              // NOTE: ORDER IS IMPORTANT.
-              'vo': 'null',
-              'wid': '0',
-            };
-            for (final entry in values.entries) {
-              final name = entry.key.toNativeUtf8();
-              final value = entry.value.toNativeUtf8();
-              mpv.mpv_set_option_string(
-                Pointer.fromAddress(handle),
-                name.cast(),
-                value.cast(),
-              );
-              calloc.free(name);
-              calloc.free(value);
-            }
+            await compute(
+              _clearAndroidSurfaceOptions,
+              _ClearSurfaceOptionsData(NativeLibrary.path, handle),
+            );
             // ----------------------------------------------
           } catch (exception, stacktrace) {
             debugPrint(exception.toString());
@@ -461,6 +448,39 @@ void _setAndroidSurfaceOptions(_SurfaceOptionsData data){
   // ---------
   final mpv = MPV(DynamicLibrary.open(data.lib));
   // ---------
+  for (final entry in values.entries) {
+    final name = entry.key.toNativeUtf8();
+    final value = entry.value.toNativeUtf8();
+    mpv.mpv_set_option_string(
+      Pointer.fromAddress(data.handle),
+      name.cast(),
+      value.cast(),
+    );
+    calloc.free(name);
+    calloc.free(value);
+  }
+}
+
+class _ClearSurfaceOptionsData{
+  /// Library path from [NativeLibrary.path].
+  final String lib;
+
+  /// Player handle form [Player.handle].
+  final int handle;
+
+  const _ClearSurfaceOptionsData(this.lib, this.handle);
+}
+
+/// Notify libmpv to re-create vo.
+void _clearAndroidSurfaceOptions(_ClearSurfaceOptionsData data){
+  // ---------
+  final mpv = MPV(DynamicLibrary.open(data.lib));
+  // ---------
+  final values = {
+    // NOTE: ORDER IS IMPORTANT.
+    'vo': 'null',
+    'wid': '0',
+  };
   for (final entry in values.entries) {
     final name = entry.key.toNativeUtf8();
     final value = entry.value.toNativeUtf8();
