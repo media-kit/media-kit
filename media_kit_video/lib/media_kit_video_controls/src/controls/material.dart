@@ -5,14 +5,14 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: non_constant_identifier_names
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:volume_controller/volume_controller.dart';
-import 'package:screen_brightness/screen_brightness.dart';
-
-import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_controls_theme_data_injector.dart';
+import 'package:screen_brightness/screen_brightness.dart';
+import 'package:volume_controller/volume_controller.dart';
 
 /// {@template material_video_controls}
 ///
@@ -825,18 +825,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                             ? _handleLongPressEnd
                             : null,
                         onDoubleTap: () {
-                          if (_tapPosition != null &&
-                              _tapPosition!.dx >
-                                  MediaQuery.of(context).size.width / 2) {
-                            if ((!mount && _theme(context).seekOnDoubleTap) ||
-                                seekOnDoubleTapEnabledWhileControlsAreVisible) {
-                              onDoubleTapSeekForward();
-                            }
-                          } else {
-                            if ((!mount && _theme(context).seekOnDoubleTap) ||
-                                seekOnDoubleTapEnabledWhileControlsAreVisible) {
-                              onDoubleTapSeekBackward();
-                            }
+                          if (!mount && _theme(context).seekOnDoubleTap) {
+                            controller(context).player.playOrPause();
                           }
                         },
                         onHorizontalDragUpdate: (details) {
