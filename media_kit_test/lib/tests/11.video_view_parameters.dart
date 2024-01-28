@@ -98,11 +98,7 @@ class _VideoViewParametersScreenState extends State<VideoViewParametersScreen> {
                         subtitleViewConfiguration: SubtitleViewConfiguration(
                             style: TextStyle(
                           // font size increases every 3 seconds
-                          fontSize: 20.0 +
-                              (timer.tick % 6 < 3
-                                      ? timer.tick % 6
-                                      : 6 - timer.tick % 6) *
-                                  10.0,
+                          fontSize: fontSizeFromTick(timer.tick),
                         )),
                       );
                     }
@@ -120,7 +116,7 @@ class _VideoViewParametersScreenState extends State<VideoViewParametersScreen> {
               setState(() {});
             },
             child: Text(
-              fitTimer == null
+              fontSizeTimer == null
                   ? 'Cycle Font'
                   : 'Font: ${fontSizeFromTick(fontSizeTick)}',
             ),
@@ -128,7 +124,8 @@ class _VideoViewParametersScreenState extends State<VideoViewParametersScreen> {
         ),
       ];
 
-  double fontSizeFromTick(int tick) => 20.0 + (tick % 6 < 3 ? tick % 6 : 6 - tick % 6) * 10.0;
+  double fontSizeFromTick(int tick) =>
+      20.0 + (tick % 6 < 3 ? tick % 6 : 6 - tick % 6) * 10.0;
 
   @override
   Widget build(BuildContext context) {
