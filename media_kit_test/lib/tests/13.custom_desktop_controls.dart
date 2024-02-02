@@ -75,6 +75,7 @@ class _CustomDesktopControlsState extends State<CustomDesktopControls> {
           Spacer(),
           MaterialDesktopPlayOrPauseButton(),
           Spacer(),
+          MaterialFullscreenButton()
         ],
       ),
       fullscreen: const MaterialDesktopVideoControlsThemeData(),

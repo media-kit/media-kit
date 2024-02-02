@@ -98,6 +98,7 @@ class _CustomAdaptiveControlsState extends State<CustomAdaptiveControls> {
                   Spacer(),
                   MaterialDesktopPlayOrPauseButton(),
                   Spacer(),
+                  MaterialFullscreenButton()
                 ],
               ),
               fullscreen: const MaterialDesktopVideoControlsThemeData(),
