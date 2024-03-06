@@ -64,6 +64,9 @@ class MaterialDesktopVideoControlsThemeData {
   /// Whether to toggle fullscreen on double press.
   final bool toggleFullscreenOnDoublePress;
 
+  /// Whether to hide mouse on controls removal.(will need to move the mouse to be hidden check issue: https://github.com/flutter/flutter/issues/76622) works on macos without moving the mouse
+  final bool hideMouseOnControlsRemoval;
+
   /// Keyboards shortcuts.
   final Map<ShortcutActivator, VoidCallback>? keyboardShortcuts;
 
@@ -182,6 +185,7 @@ class MaterialDesktopVideoControlsThemeData {
     this.modifyVolumeOnScroll = true,
     this.keyboardShortcuts,
     this.visibleOnMount = false,
+    this.hideMouseOnControlsRemoval = false,
     this.padding,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 150),
@@ -231,6 +235,7 @@ class MaterialDesktopVideoControlsThemeData {
     bool? modifyVolumeOnScroll,
     Map<ShortcutActivator, VoidCallback>? keyboardShortcuts,
     bool? visibleOnMount,
+    bool? hideMouseOnControlsRemoval,
     Duration? controlsHoverDuration,
     Duration? controlsTransitionDuration,
     Widget Function(BuildContext)? bufferingIndicatorBuilder,
@@ -272,6 +277,8 @@ class MaterialDesktopVideoControlsThemeData {
       modifyVolumeOnScroll: modifyVolumeOnScroll ?? this.modifyVolumeOnScroll,
       keyboardShortcuts: keyboardShortcuts ?? this.keyboardShortcuts,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
+      hideMouseOnControlsRemoval:
+          hideMouseOnControlsRemoval ?? this.hideMouseOnControlsRemoval,
       controlsHoverDuration:
           controlsHoverDuration ?? this.controlsHoverDuration,
       bufferingIndicatorBuilder:
@@ -617,6 +624,9 @@ class _MaterialDesktopVideoControlsState
                       }
                     : null,
                 child: MouseRegion(
+                  cursor: (_theme(context).hideMouseOnControlsRemoval && !mount)
+                      ? SystemMouseCursors.none
+                      : SystemMouseCursors.basic,
                   onHover: (_) => onHover(),
                   onEnter: (_) => onEnter(),
                   onExit: (_) => onExit(),
