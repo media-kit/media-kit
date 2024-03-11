@@ -76,7 +76,7 @@ class PrimaryScreen extends StatelessWidget {
               child: Text(
                 value.enableHardwareAcceleration ? 'H/W' : 'S/W',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Colors.black,
                 ),
               ),
             ),
