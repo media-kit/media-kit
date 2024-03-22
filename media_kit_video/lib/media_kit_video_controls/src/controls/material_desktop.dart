@@ -588,6 +588,16 @@ class _MaterialDesktopVideoControlsState
                     }
                   : null,
               child: GestureDetector(
+                onTapDown: (TapDownDetails details) {
+                  final RenderBox box = context.findRenderObject() as RenderBox;
+                  final Offset localPosition = box.globalToLocal(details.globalPosition);
+                  const double tapPadding = 10.0;
+                  if (!mount || localPosition.dy < box.size.height - subtitleVerticalShiftOffset - tapPadding) {
+                    // Only play and pause when the bottom seek bar is visible
+                    // and when clicking outside of the bottom seek bar region
+                    controller(context).player.playOrPause();
+                  }
+                },
                 onTapUp: !_theme(context).toggleFullscreenOnDoublePress
                     ? null
                     : (e) {
