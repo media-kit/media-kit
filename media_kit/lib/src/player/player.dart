@@ -311,9 +311,16 @@ class Player {
   /// * `image/jpeg`: Returns a JPEG encoded image.
   /// * `image/png`: Returns a PNG encoded image.
   /// * `null`: Returns BGRA pixel buffer.
-  Future<Uint8List?> screenshot({String? format = 'image/jpeg'}) async {
+  ///
+  /// On the native backend, if [includeLibassSubtitles] is `true` *and*
+  /// [PlayerConfiguration.libass] is `true`, then the screenshot will include
+  /// the on-screen subtitles. This option is ignored by the web backend.
+  Future<Uint8List?> screenshot(
+      {String? format = 'image/jpeg',
+      bool includeLibassSubtitles = false}) async {
     return platform?.screenshot(
       format: format,
+      includeLibassSubtitles: includeLibassSubtitles,
     );
   }
 
