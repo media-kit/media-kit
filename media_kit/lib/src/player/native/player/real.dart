@@ -2846,7 +2846,7 @@ Uint8List? _screenshot(_ScreenshotData data) {
             final pixels = Image(
               width: w,
               height: h,
-              numChannels: 4,
+              numChannels: 3,
             );
             for (final pixel in pixels) {
               final x = pixel.x;
@@ -2855,7 +2855,6 @@ Uint8List? _screenshot(_ScreenshotData data) {
               pixel.b = bytes[i];
               pixel.g = bytes[i + 1];
               pixel.r = bytes[i + 2];
-              pixel.a = bytes[i + 3];
             }
             image = encodeJpg(pixels);
             break;
@@ -2865,7 +2864,7 @@ Uint8List? _screenshot(_ScreenshotData data) {
             final pixels = Image(
               width: w,
               height: h,
-              numChannels: 4,
+              numChannels: 3,
             );
             for (final pixel in pixels) {
               final x = pixel.x;
@@ -2874,7 +2873,6 @@ Uint8List? _screenshot(_ScreenshotData data) {
               pixel.b = bytes[i];
               pixel.g = bytes[i + 1];
               pixel.r = bytes[i + 2];
-              pixel.a = bytes[i + 3];
             }
             image = encodePng(pixels);
             break;
