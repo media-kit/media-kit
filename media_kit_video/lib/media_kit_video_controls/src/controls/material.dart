@@ -1296,6 +1296,11 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                   child: _BackwardSeekIndicator(
                                     onChanged: (value) {
                                       _seekBarDeltaValueNotifier.value = -value;
+                                      if (_hideSeekBackwardButton) {
+                                        setState(() {
+                                          _hideSeekBackwardButton = false;
+                                        });
+                                      }
                                     },
                                     onSubmitted: (value) {
                                       setState(() {
@@ -1342,6 +1347,11 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                   child: _ForwardSeekIndicator(
                                     onChanged: (value) {
                                       _seekBarDeltaValueNotifier.value = value;
+                                      if (_hideSeekForwardButton) {
+                                        setState(() {
+                                          _hideSeekForwardButton = false;
+                                        });
+                                      }
                                     },
                                     onSubmitted: (value) {
                                       setState(() {
