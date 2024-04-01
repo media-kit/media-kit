@@ -564,6 +564,7 @@ class NativePlayer extends PlatformPlayer {
           [
             PlaylistMode.none,
             PlaylistMode.single,
+            PlaylistMode.loop,
           ].contains(state.playlistMode)) {
         state = state.copyWith(
           // Allow playOrPause /w state.completed code-path to play the playlist again.
