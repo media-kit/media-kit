@@ -25,7 +25,7 @@ import '../../common/sources.dart';
 
 void main() {
   setUp(() async {
-    MediaKit.ensureInitialized();
+    MediaKit.ensureInitialized(windowId: 0);
 
     await sources.prepare();
 

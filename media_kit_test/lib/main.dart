@@ -21,7 +21,7 @@ import 'common/sources/sources.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  MediaKit.ensureInitialized();
+  MediaKit.ensureInitialized(windowId: 0);
   await SystemChrome.setPreferredOrientations(
     [
       DeviceOrientation.portraitUp,

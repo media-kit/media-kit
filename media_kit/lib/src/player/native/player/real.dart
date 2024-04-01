@@ -42,10 +42,10 @@ import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 
 /// Initializes the native backend for package:media_kit.
-void nativeEnsureInitialized({String? libmpv}) {
+void nativeEnsureInitialized({String? libmpv, required int windowId}) {
   AndroidHelper.ensureInitialized();
   NativeLibrary.ensureInitialized(libmpv: libmpv);
-  InitializerNativeEventLoop.ensureInitialized();
+  InitializerNativeEventLoop.ensureInitialized(windowId: windowId);
 }
 
 /// {@template native_player}

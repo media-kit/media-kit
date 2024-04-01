@@ -48,6 +48,7 @@ class VideoPlayerMediaKit {
     bool windows = false,
     bool linux = false,
     bool web = false,
+    required int windowId,
   }) {
     if ((UniversalPlatform.isAndroid && android) ||
         (UniversalPlatform.isIOS && iOS) ||
@@ -55,7 +56,7 @@ class VideoPlayerMediaKit {
         (UniversalPlatform.isWindows && windows) ||
         (UniversalPlatform.isLinux && linux) ||
         (UniversalPlatform.isWeb && web)) {
-      MediaKit.ensureInitialized();
+      MediaKit.ensureInitialized(windowId: windowId);
       MediaKitVideoPlayer.registerWith();
     }
   }

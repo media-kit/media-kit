@@ -148,7 +148,20 @@ void MediaKitEventLoopHandler::Dispose(int64_t handle, bool clean) {
   std::cout << "MediaKitEventLoopHandler::Dispose: " << handle << std::endl;
 }
 
-void MediaKitEventLoopHandler::Initialize() {}
+void MediaKitEventLoopHandler::Initialize(int64_t windowId) {
+  auto contexts = std::vector<mpv_handle*>();
+
+  mutex_.lock();
+  for (auto& [context, _] : threads_) {
+    contexts.push_back(context);
+  }
+  mutex_.unlock();
+
+  for (auto& context : contexts) {
+    Dispose(reinterpret_cast<int64_t>(context));
+    mpv_command_string(context, "quit");
+  }
+}
 
 bool MediaKitEventLoopHandler::IsRegistered(int64_t handle) {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -199,6 +212,6 @@ void MediaKitEventLoopHandlerDispose(int64_t handle) {
   MediaKitEventLoopHandler::GetInstance().Dispose(handle);
 }
 
-void MediaKitEventLoopHandlerInitialize() {
-  MediaKitEventLoopHandler::GetInstance().Initialize();
+void MediaKitEventLoopHandlerInitialize(int64_t windowId) {
+  MediaKitEventLoopHandler::GetInstance().Initialize(windowId);
 }
