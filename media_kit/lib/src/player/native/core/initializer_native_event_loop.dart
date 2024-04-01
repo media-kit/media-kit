@@ -26,7 +26,7 @@ import 'package:media_kit/generated/libmpv/bindings.dart';
 ///
 abstract class InitializerNativeEventLoop {
   /// Initializes the |InitializerNativeEventLoop| class for usage.
-  static void ensureInitialized() {
+  static void ensureInitialized({required int windowId}) {
     try {
       final dylib = () {
         if (Platform.isMacOS || Platform.isIOS) {
@@ -57,7 +57,7 @@ abstract class InitializerNativeEventLoop {
           MediaKitEventLoopHandlerInitializeDart>(
         'MediaKitEventLoopHandlerInitialize',
       );
-      _initialize?.call();
+      _initialize?.call(windowId);
     } catch (_) {
       print(
         'media_kit: WARNING: package:media_kit_native_event_loop not found.',
@@ -170,7 +170,7 @@ typedef MediaKitEventLoopHandlerRegisterCXX = Void Function(
 );
 typedef MediaKitEventLoopHandlerNotifyCXX = Void Function(Int64 handle);
 typedef MediaKitEventLoopHandlerDisposeCXX = Void Function(Int64 handle);
-typedef MediaKitEventLoopHandlerInitializeCXX = Void Function();
+typedef MediaKitEventLoopHandlerInitializeCXX = Void Function(Int64 windowId);
 
 // Dart:
 
@@ -181,4 +181,4 @@ typedef MediaKitEventLoopHandlerRegisterDart = void Function(
 );
 typedef MediaKitEventLoopHandlerNotifyDart = void Function(int handle);
 typedef MediaKitEventLoopHandlerDisposeDart = void Function(int handle);
-typedef MediaKitEventLoopHandlerInitializeDart = void Function();
+typedef MediaKitEventLoopHandlerInitializeDart = void Function(int windowId);

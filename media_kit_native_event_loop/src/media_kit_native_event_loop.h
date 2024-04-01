@@ -80,7 +80,7 @@ DLLEXPORT void MediaKitEventLoopHandlerNotify(int64_t handle);
 
 DLLEXPORT void MediaKitEventLoopHandlerDispose(int64_t handle);
 
-DLLEXPORT void MediaKitEventLoopHandlerInitialize();
+DLLEXPORT void MediaKitEventLoopHandlerInitialize(int64_t windowId);
 
 #ifdef __cplusplus
 }
