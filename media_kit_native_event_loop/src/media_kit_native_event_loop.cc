@@ -149,6 +149,8 @@ void MediaKitEventLoopHandler::Dispose(int64_t handle, bool clean) {
 }
 
 void MediaKitEventLoopHandler::Initialize(int64_t windowId) {
+  // If |windowId| is non-zero, then return; MPV cleanup should only happen when main window (id=0) is initialized
+  if (windowId) { return; }
   auto contexts = std::vector<mpv_handle*>();
 
   mutex_.lock();
