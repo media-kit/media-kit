@@ -528,12 +528,11 @@ class NativePlayer extends PlatformPlayer {
       current.add(media);
       // ---------------------------------------------
 
-      final command = 'loadfile ${media.uri} append'.toNativeUtf8();
-      mpv.mpv_command_string(
-        ctx,
-        command.cast(),
-      );
-      calloc.free(command.cast());
+      await _command([
+        'loadfile',
+        media.uri,
+        'append',
+      ]);
     }
 
     if (synchronized) {
