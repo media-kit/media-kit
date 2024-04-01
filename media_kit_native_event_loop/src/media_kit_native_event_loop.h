@@ -38,7 +38,7 @@ class MediaKitEventLoopHandler {
 
   void Dispose(int64_t handle, bool clean = true);
 
-  void Initialize();
+  void Initialize(int64_t windowId);
 
   MediaKitEventLoopHandler(const MediaKitEventLoopHandler&) = delete;
 
