@@ -4,7 +4,11 @@ Add in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  media_kit_native_event_loop: ^1.0.8
+  media_kit_native_event_loop:
+    git:
+      url: https://github.com/isaacy13/media-kit-themedeck
+      ref: main
+      path: media_kit_native_event_loop
 ```
 
 This will automatically allow using higher number of concurrent instances.
