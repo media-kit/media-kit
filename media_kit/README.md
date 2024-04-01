@@ -38,8 +38,16 @@
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.10                             # Primary package.
-  media_kit_video: ^1.2.4                        # For video rendering.
+  media_kit:
+    git:
+      url: https://github.com/isaacy13/media-kit-themedeck
+      ref: main
+      path: media_kit                             # Primary package.
+  media_kit_video:
+    git:
+      url: https://github.com/isaacy13/media-kit-themedeck
+      ref: main
+      path: media_kit_video                        # For video rendering.
   media_kit_libs_video: ^1.0.4                   # Native video dependencies.
 ```
 
@@ -47,7 +55,11 @@ dependencies:
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.10                             # Primary package.  
+  media_kit:
+    git:
+      url: https://github.com/isaacy13/media-kit-themedeck
+      ref: main
+      path: media_kit                             # Primary package.  
   media_kit_libs_audio: ^1.0.4                   # Native audio dependencies.
 ```
 
