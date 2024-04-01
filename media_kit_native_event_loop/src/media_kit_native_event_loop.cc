@@ -148,20 +148,7 @@ void MediaKitEventLoopHandler::Dispose(int64_t handle, bool clean) {
   std::cout << "MediaKitEventLoopHandler::Dispose: " << handle << std::endl;
 }
 
-void MediaKitEventLoopHandler::Initialize() {
-  auto contexts = std::vector<mpv_handle*>();
-
-  mutex_.lock();
-  for (auto& [context, _] : threads_) {
-    contexts.push_back(context);
-  }
-  mutex_.unlock();
-
-  for (auto& context : contexts) {
-    Dispose(reinterpret_cast<int64_t>(context));
-    mpv_command_string(context, "quit");
-  }
-}
+void MediaKitEventLoopHandler::Initialize() {}
 
 bool MediaKitEventLoopHandler::IsRegistered(int64_t handle) {
   std::lock_guard<std::mutex> lock(mutex_);
