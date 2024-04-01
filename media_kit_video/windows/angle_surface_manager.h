@@ -71,7 +71,7 @@ class ANGLESurfaceManager {
   HANDLE handle_ = nullptr;
 
   // Sync |Draw| & |Read| calls.
-  HANDLE mutex_ = nullptr;
+  static HANDLE mutex_;
   // D3D 11
   ID3D11Device* d3d_11_device_ = nullptr;
   ID3D11DeviceContext* d3d_11_device_context_ = nullptr;
