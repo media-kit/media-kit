@@ -21,14 +21,14 @@ dependencies:
   media_kit: ^1.1.10
 
   synchronized: ^3.1.0
-  wakelock_plus: ^1.1.1
-  screen_brightness: ^0.2.2
+  wakelock_plus: ^1.2.2
+  screen_brightness: ^1.0.0
   volume_controller: ^2.0.7
   universal_platform: ^1.0.0+1
   plugin_platform_interface: ^2.0.2
 
 dev_dependencies:
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.2
 
 # NOTE: Remove before publishing to pub.dev
 dependency_overrides:
