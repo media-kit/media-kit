@@ -907,7 +907,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                         left: 16.0,
                         top: 16.0,
                         right: 16.0,
-                        bottom: 16.0,
+                        bottom: 16.0 +
+                            _theme(context).bottomButtonBarMargin.vertical,
                         child: Listener(
                           onPointerDown: (event) => _handlePointerDown(event),
                           child: GestureDetector(
