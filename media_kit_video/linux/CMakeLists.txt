@@ -38,9 +38,10 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
   target_compile_definitions(
     ${PLUGIN_NAME} PRIVATE
     FLUTTER_PLUGIN_IMPL
-    "${mpv_CFLAGS_OTHER}"
-    "${epoxy_CFLAGS_OTHER}"
   )
+  
+  target_compile_options(${PLUGIN_NAME} PRIVATE "${mpv_CFLAGS_OTHER}")
+  target_compile_options(${PLUGIN_NAME} PRIVATE "${epoxy_CFLAGS_OTHER}")
 
   target_include_directories(
     ${PLUGIN_NAME} INTERFACE
