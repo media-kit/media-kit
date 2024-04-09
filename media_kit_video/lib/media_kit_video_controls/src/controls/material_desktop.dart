@@ -601,26 +601,6 @@ class _MaterialDesktopVideoControlsState
                     }
                   : null,
               child: GestureDetector(
-                onTapDown: (TapDownDetails details) {
-                  final RenderBox box = context.findRenderObject() as RenderBox;
-                  final Offset localPosition = box.globalToLocal(details.globalPosition);
-                  const double tapPadding = 10.0;
-                  if (!mount || localPosition.dy < box.size.height - subtitleVerticalShiftOffset - tapPadding) {
-                    // Only play and pause when the bottom seek bar is visible
-                    // and when clicking outside of the bottom seek bar region
-                    controller(context).player.playOrPause();
-                  }
-                },
-                onTapUp: !_theme(context).toggleFullscreenOnDoublePress
-                    ? null
-                    : (e) {
-                        final now = DateTime.now();
-                        final difference = now.difference(last);
-                        last = now;
-                        if (difference < const Duration(milliseconds: 400)) {
-                          toggleFullscreen(context);
-                        }
-                      },
                 onTapDown: !_theme(context).playAndPauseOnTap
                     ? null
                     : (TapDownDetails details) {
@@ -639,6 +619,17 @@ class _MaterialDesktopVideoControlsState
                           controller(context).player.playOrPause();
                         }
                       },
+                onTapUp: !_theme(context).toggleFullscreenOnDoublePress
+                    ? null
+                    : (e) {
+                        final now = DateTime.now();
+                        final difference = now.difference(last);
+                        last = now;
+                        if (difference < const Duration(milliseconds: 400)) {
+                          toggleFullscreen(context);
+                        }
+                      },
+
                 onPanUpdate: _theme(context).modifyVolumeOnScroll
                     ? (e) {
                         if (e.delta.dy > 0) {
