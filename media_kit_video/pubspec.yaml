@@ -25,7 +25,7 @@ dependencies:
   screen_brightness: ^0.2.2
   volume_controller: ^2.0.7
   universal_platform: ^1.0.0+1
-  plugin_platform_interface: ^2.18.0
+  plugin_platform_interface: ^2.1.8
 
 dev_dependencies:
   flutter_lints: ^2.0.0
