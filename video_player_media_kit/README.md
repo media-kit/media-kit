@@ -61,6 +61,7 @@ A quick usage example.
 ```dart
 void main() {
   VideoPlayerMediaKit.ensureInitialized(
+    web: true,              // default:false
     android: true,          // default: false    -    dependency: media_kit_libs_android_video
     iOS: true,              // default: false    -    dependency: media_kit_libs_ios_video
     macOS: true,            // default: false    -    dependency: media_kit_libs_macos_video
