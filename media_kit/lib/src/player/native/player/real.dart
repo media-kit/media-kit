@@ -2326,7 +2326,7 @@ class NativePlayer extends PlatformPlayer {
             if (start != null) {
               try {
                 final property = 'start'.toNativeUtf8();
-                final value = start.inSeconds.toString().toNativeUtf8();
+                final value = (start.inMilliseconds / 1000).toStringAsFixed(3).toNativeUtf8();
                 mpv.mpv_set_property_string(
                   ctx,
                   property.cast(),
@@ -2343,7 +2343,7 @@ class NativePlayer extends PlatformPlayer {
             if (end != null) {
               try {
                 final property = 'end'.toNativeUtf8();
-                final value = end.inSeconds.toString().toNativeUtf8();
+                final value = (end.inMilliseconds / 1000).toStringAsFixed(3).toNativeUtf8();
                 mpv.mpv_set_property_string(
                   ctx,
                   property.cast(),
