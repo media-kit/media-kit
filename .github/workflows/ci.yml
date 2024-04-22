@@ -12,9 +12,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
 
       - name: Setup libmpv for Windows
         run: |
@@ -38,9 +39,10 @@ jobs:
           submodules: "true"
       - run: sudo apt-get update
       - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - run: dart pub get
       - run: dart test
 
@@ -75,9 +77,10 @@ jobs:
           submodules: "true"
       - run: sudo apt-get update
       - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       # Delete tests which import native code & depend upon dart:ffi
       - run: rm -r test/src/player/native
       - run: dart pub get
@@ -93,9 +96,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - run: flutter pub get
       - run: flutter build windows --verbose
       - run: cmake -E tar "cfv" "media_kit_test_win32_x64.7z" --format=7zip "build\windows\x64\runner\Release"
@@ -124,9 +128,10 @@ jobs:
           submodules: "true"
       - run: sudo apt-get update
       - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - run: flutter pub get
       - run: flutter build linux --verbose
       - run: 7z a media_kit_test_linux_x64.7z build/linux/x64/release/bundle
@@ -153,9 +158,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - run: flutter pub get
       - run: flutter build macos --verbose
       - run: 7z a media_kit_test_macos_universal.7z build/macos/Build/Products/Release/media_kit_test.app
@@ -182,9 +188,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - run: flutter pub get
       - run: flutter build ios --verbose --no-codesign
       - run: 7z a media_kit_test_ios_arm64.7z build/ios/iphoneos/Runner.app
@@ -211,9 +218,17 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'zulu'
+            java-version: '17'
+            # cache: 'gradle'
+            # check-latest: true
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - run: flutter pub get
       - run: flutter build apk --split-per-abi --verbose
       - run: |
@@ -253,9 +268,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - name: Remove `media_kit_libs_*` dependencies
         run: |
           "C:\Program Files\Git\usr\bin\sed.exe" -i "/media_kit_libs_/d" pubspec.yaml
@@ -276,9 +292,10 @@ jobs:
           submodules: "true"
       - run: sudo apt-get update
       - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - name: Remove `media_kit_libs_*` dependencies
         run: |
           sed -i '/media_kit_libs_/d' pubspec.yaml
@@ -296,9 +313,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - name: Remove `media_kit_libs_*` dependencies
         run: |
           sed -i '' '/media_kit_libs_/d' pubspec.yaml
@@ -316,9 +334,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - name: Remove `media_kit_libs_*` dependencies
         run: |
           sed -i '' '/media_kit_libs_/d' pubspec.yaml
@@ -336,9 +355,17 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'zulu'
+            java-version: '17'
+            # cache: 'gradle'
+            # check-latest: true
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - name: Remove `media_kit_libs_*` dependencies
         run: |
           sed -i '/media_kit_libs_/d' pubspec.yaml
@@ -356,9 +383,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - name: Remove `media_kit_libs_*` dependencies
         run: |
           "C:\Program Files\Git\usr\bin\sed.exe" -i "s/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g" pubspec.yaml
@@ -381,9 +409,10 @@ jobs:
           submodules: "true"
       - run: sudo apt-get update
       - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - name: Remove `media_kit_libs_*` dependencies
         run: |
           sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
@@ -401,9 +430,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - name: Remove `media_kit_libs_*` dependencies
         run: |
           sed -i '' 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
@@ -421,9 +451,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - name: Remove `media_kit_libs_*` dependencies
         run: |
           sed -i '' 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
@@ -441,9 +472,17 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: subosito/flutter-action@v1
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'zulu'
+            java-version: '17'
+            # cache: 'gradle'
+            # check-latest: true
+      - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          cache: true
       - name: Remove `media_kit_libs_*` dependencies
         run: |
           sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
