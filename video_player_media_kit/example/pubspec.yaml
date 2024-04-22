@@ -9,7 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  video_player: ^2.6.0
+  video_player: ^2.8.6
 
   video_player_media_kit:
     path: ../
