@@ -5,11 +5,10 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: library_private_types_in_public_api
 import 'dart:collection';
-import 'dart:typed_data';
 import 'dart:html' as html;
+import 'dart:typed_data';
 
 import 'package:media_kit/src/models/playable.dart';
-
 import 'package:media_kit/src/player/web/utils/asset_loader.dart';
 
 /// {@template media}
@@ -91,7 +90,8 @@ class Media extends Playable {
         httpHeaders =
             httpHeaders ?? cache[normalizeURI(resource)]?.httpHeaders {
     if (httpHeaders != null) {
-      throw UnsupportedError('HTTP headers are not supported on web');
+      print('Warning! HTTP headers are not supported on web');
+      return;
     }
     // Increment reference count.
     ref[uri] = ((ref[uri] ?? 0) + 1).clamp(0, 1 << 32);
