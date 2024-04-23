@@ -90,9 +90,11 @@ class Media extends Playable {
         extras = extras ?? cache[normalizeURI(resource)]?.extras,
         httpHeaders =
             httpHeaders ?? cache[normalizeURI(resource)]?.httpHeaders {
-    if (httpHeaders != null) {
+    // Ensure httpHeaders are not null or empty to prevent using unsupported HTTP headers on the web
+    if (httpHeaders != null && httpHeaders.isNotEmpty) {
       throw UnsupportedError('HTTP headers are not supported on web');
     }
+
     // Increment reference count.
     ref[uri] = ((ref[uri] ?? 0) + 1).clamp(0, 1 << 32);
     // Store [this] instance in [cache].
