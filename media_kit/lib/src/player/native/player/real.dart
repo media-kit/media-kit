@@ -2513,7 +2513,7 @@ class NativePlayer extends PlatformPlayer {
         'scale': 'bilinear',
         'dscale': 'bilinear',
         'dither': 'no',
-        'cache': "yes",
+        'cache': 'yes',
         'correct-downscaling': 'no',
         'linear-downscaling': 'no',
         'sigmoid-upscaling': 'no',
