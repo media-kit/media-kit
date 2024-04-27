@@ -753,11 +753,7 @@ class NativePlayer extends PlatformPlayer {
 
       await compute(
         _seek,
-        _SeekData(
-          ctx.address,
-          NativeLibrary.path,
-          duration,
-        ),
+        _SeekData(ctx.address, NativeLibrary.path, duration, state.position),
       );
 
       // It is self explanatory that PlayerState.completed & PlayerStream.completed must enter the false state if seek is called. Typically after EOF.
@@ -2736,12 +2732,14 @@ class NativePlayer extends PlatformPlayer {
 class _SeekData {
   final int ctx;
   final String lib;
-  final Duration duration;
+  final Duration videoPosition;
+  final Duration seekDuration;
 
   _SeekData(
     this.ctx,
     this.lib,
-    this.duration,
+    this.seekDuration,
+    this.videoPosition,
   );
 }
 
@@ -2751,10 +2749,11 @@ void _seek(_SeekData data) {
   final mpv = generated.MPV(DynamicLibrary.open(data.lib));
   final ctx = Pointer<generated.mpv_handle>.fromAddress(data.ctx);
   // ---------
-  final duration = data.duration;
+  final duration = data.seekDuration - data.videoPosition;
   // ---------
   final value = duration.inMilliseconds / 1000;
-  final command = 'seek ${value.toStringAsFixed(4)} absolute'.toNativeUtf8();
+
+  final command = 'seek ${value.toStringAsFixed(4)}'.toNativeUtf8();
   mpv.mpv_command_string(
     ctx,
     command.cast(),
