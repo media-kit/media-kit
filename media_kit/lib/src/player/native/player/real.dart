@@ -769,6 +769,10 @@ class NativePlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
+       if (duration == lastSeekPosition) {
+        return Future.value();
+      }
+      lastSeekPosition = duration;
       return lock.synchronized(function);
     } else {
       return function();
@@ -2701,6 +2705,10 @@ class NativePlayer extends PlatformPlayer {
   /// This is used to prevent [state.buffering] being set to `true` when [pause] or [playOrPause] is called.
   bool isBufferingStateChangeAllowed = true;
 
+ /// last seek position
+  /// this is used to prevent seeking to the same position twice
+  Duration? lastSeekPosition;
+  
   /// Current loaded [Media] queue.
   List<Media> current = <Media>[];
 
