@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-LIBS_VERSION=v0.5.1
+LIBS_VERSION=v0.6.1
 
 case $( uname -m ) in
 x86_64) LIBS_ARCH=amd64;;
