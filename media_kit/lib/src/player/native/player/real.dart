@@ -1407,6 +1407,33 @@ class NativePlayer extends PlatformPlayer {
     calloc.free(data);
   }
 
+  /// Retrieves the value of a property from the internal libmpv instance of this [Player].
+  /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
+  ///
+  /// See:
+  /// * https://mpv.io/manual/master/#options
+  /// * https://mpv.io/manual/master/#properties
+  ///
+  Future<String> getProperty(String property) async {
+    if (disposed) {
+      throw AssertionError('[Player] has been disposed');
+    }
+    await waitForPlayerInitialization;
+    await waitForVideoControllerInitializationIfAttached;
+
+    final name = property.toNativeUtf8();
+    final value = mpv.mpv_get_property_string(ctx, name.cast());
+    if (value != nullptr) {
+      final result = value.cast<Utf8>().toDartString();
+      calloc.free(name);
+      mpv.mpv_free(value.cast());
+
+      return result;
+    }
+
+    return "";
+  }
+
   /// Observes property for the internal libmpv instance of this [Player].
   /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
   ///
