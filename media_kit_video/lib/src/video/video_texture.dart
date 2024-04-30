@@ -66,10 +66,10 @@ class Video extends StatefulWidget {
   /// The [VideoController] reference to control this [Video] output.
   final VideoController controller;
 
-  /// Height of this viewport.
+  /// Width of this viewport.
   final double? width;
 
-  /// Width of this viewport.
+  /// Height of this viewport.
   final double? height;
 
   /// Fit of the viewport.
