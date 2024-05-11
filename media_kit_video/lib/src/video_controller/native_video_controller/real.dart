@@ -92,23 +92,13 @@ class NativeVideoController extends PlatformVideoController {
     _controllers[handle] = controller;
 
     // ----------------------------------------------
-    NativeLibrary.ensureInitialized();
-    final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
     final values = {
       'vo': configuration.vo ?? 'libmpv',
       'hwdec': configuration.hwdec ?? 'auto',
       'vid': 'auto',
     };
     for (final entry in values.entries) {
-      final property = entry.key.toNativeUtf8();
-      final value = entry.value.toNativeUtf8();
-      mpv.mpv_set_property_string(
-        Pointer.fromAddress(handle),
-        property.cast(),
-        value.cast(),
-      );
-      calloc.free(property);
-      calloc.free(value);
+      await (player.platform as NativePlayer).setProperty(entry.key, entry.value, synchronized: false);
     }
     // ----------------------------------------------
 
