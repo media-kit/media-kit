@@ -360,7 +360,7 @@ class NativePlayer extends PlatformPlayer {
         playingController.add(false);
       }
 
-      await _setPropertyFlag('pause', false);
+      await _setPropertyFlag('pause', true);
     }
 
     if (synchronized) {
