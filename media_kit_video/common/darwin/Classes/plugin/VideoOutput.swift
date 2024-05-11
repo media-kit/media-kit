@@ -188,12 +188,12 @@ public class VideoOutput: NSObject {
         
         let params = MPVHelpers.getVideoOutParams(handle)
         return CGSize(
-            width: width ?? Double(params.rotate == 0 || params.rotate == 180
-                                   ? params.dh
-                                   : params.dw),
-            height: height ?? Double(params.rotate == 0 || params.rotate == 180
-                                     ? params.dw
-                                     : params.dh)
+            width: Double(width ?? (params.rotate == 0 || params.rotate == 180
+                                    ? params.dh
+                                    : params.dw)),
+            height: Double(height ?? (params.rotate == 0 || params.rotate == 180
+                                      ? params.dw
+                                      : params.dh))
         )
   }
 }
