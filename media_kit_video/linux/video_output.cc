@@ -98,6 +98,8 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   }
   self->configuration.enable_hardware_acceleration = TRUE;
 #endif
+  // Apply --hwdec=VAAPI option for fixing missign HW acceleration on Intel GPU. Not tested with NVidia or AMD!
+  mpv_set_option_string(self->handle, "hwdec", "vaapi");
   mpv_set_option_string(self->handle, "video-sync", "audio");
   mpv_set_option_string(self->handle, "video-timing-offset", "0");
   gboolean hardware_acceleration_supported = FALSE;
