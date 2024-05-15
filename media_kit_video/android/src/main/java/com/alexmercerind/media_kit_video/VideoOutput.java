@@ -83,7 +83,7 @@ public class VideoOutput {
         Log.i("media_kit", String.format(Locale.ENGLISH, "flutterJNIAPIAvailable = %b", flutterJNIAPIAvailable));
         if (flutterJNIAPIAvailable) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                surfaceProducer.surfaceTexture.setOnFrameAvailableListener((texture) -> {
+                surfaceProducer.surfaceTexture().setOnFrameAvailableListener((texture) -> {
                     synchronized (lock) {
                         try {
                             if (!waitUntilFirstFrameRenderedNotify) {
