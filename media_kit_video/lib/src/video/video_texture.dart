@@ -138,35 +138,14 @@ class Video extends StatefulWidget {
 
 class VideoState extends State<Video> with WidgetsBindingObserver {
   late final _contextNotifier = ValueNotifier<BuildContext?>(null);
-  late final ValueNotifier<VideoViewParameters> _videoViewParametersNotifier =
-      media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
-            context,
-          )?.videoViewParametersNotifier ??
-          ValueNotifier<VideoViewParameters>(
-            VideoViewParameters(
-              width: widget.width,
-              height: widget.height,
-              fit: widget.fit,
-              fill: widget.fill,
-              alignment: widget.alignment,
-              aspectRatio: widget.aspectRatio,
-              filterQuality: widget.filterQuality,
-              controls: widget.controls,
-              subtitleViewConfiguration: widget.subtitleViewConfiguration,
-            ),
-          );
-  late final bool _disposeNotifiers =
-      media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
-            context,
-          )?.disposeNotifiers ??
-          true;
+  late ValueNotifier<VideoViewParameters> _videoViewParametersNotifier;
+  late bool _disposeNotifiers;
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();
   final _wakelock = Wakelock();
   final _subscriptions = <StreamSubscription>[];
   late int? _width = widget.controller.player.state.width;
   late int? _height = widget.controller.player.state.height;
   late bool _visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
-
 
   bool _pauseDueToPauseUponEnteringBackgroundMode = false;
   // Public API:
@@ -219,6 +198,33 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       controls: controls,
       subtitleViewConfiguration: subtitleViewConfiguration,
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    _videoViewParametersNotifier =
+        media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+              context,
+            )?.videoViewParametersNotifier ??
+            ValueNotifier<VideoViewParameters>(
+              VideoViewParameters(
+                width: widget.width,
+                height: widget.height,
+                fit: widget.fit,
+                fill: widget.fill,
+                alignment: widget.alignment,
+                aspectRatio: widget.aspectRatio,
+                filterQuality: widget.filterQuality,
+                controls: widget.controls,
+                subtitleViewConfiguration: widget.subtitleViewConfiguration,
+              ),
+            );
+    _disposeNotifiers =
+        media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+              context,
+            )?.disposeNotifiers ??
+            true;
+    super.didChangeDependencies();
   }
 
   @override
@@ -302,6 +308,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       subscription.cancel();
     }
     if (_disposeNotifiers) {
+      print("_disposeNotifiers: $_disposeNotifiers");
       _videoViewParametersNotifier.dispose();
       _contextNotifier.dispose();
     }

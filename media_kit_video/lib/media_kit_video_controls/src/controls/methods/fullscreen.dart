@@ -44,6 +44,7 @@ Future<void> enterFullscreen(BuildContext context) {
                       contextNotifier: contextNotifierValue,
                       videoViewParametersNotifier:
                           videoViewParametersNotifierValue,
+                          disposeNotifiers: false,
                       child: Video(
                         controller: controllerValue,
                         // Do not restrict the video's width & height in fullscreen mode:
