@@ -1985,7 +1985,7 @@ classDiagram
     +long wid
 
     -Surface surface
-    -TextureRegistry.SurfaceTextureEntry surfaceTextureEntry
+    -TextureRegistry.SurfaceProducer surfaceProducer
     -Method newGlobalObjectRef
     -Method deleteGlobalObjectRef
 
