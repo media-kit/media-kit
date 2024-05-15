@@ -158,6 +158,11 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   late int? _width = widget.controller.player.state.width;
   late int? _height = widget.controller.player.state.height;
   late bool _visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
+  late final bool _disposeNotifiers =
+      media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+            context,
+          )?.disposeNotifiers ??
+          true;
   bool _pauseDueToPauseUponEnteringBackgroundMode = false;
 
   ValueKey _key = const ValueKey(true);
@@ -295,8 +300,11 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     for (final subscription in _subscriptions) {
       subscription.cancel();
     }
-    _videoViewParametersNotifier.dispose();
-    _contextNotifier.dispose();
+    if (_disposeNotifiers) {
+      _videoViewParametersNotifier.dispose();
+      _contextNotifier.dispose();
+    }
+
     super.dispose();
   }
 

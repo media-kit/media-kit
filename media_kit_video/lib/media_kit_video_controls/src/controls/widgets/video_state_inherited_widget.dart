@@ -17,12 +17,14 @@ class VideoStateInheritedWidget extends InheritedWidget {
   final VideoState state;
   final ValueNotifier<BuildContext?> contextNotifier;
   final ValueNotifier<VideoViewParameters> videoViewParametersNotifier;
+  final bool disposeNotifiers;
   VideoStateInheritedWidget({
     super.key,
     required this.state,
     required this.contextNotifier,
     required this.videoViewParametersNotifier,
     required Widget child,
+    this.disposeNotifiers = true,
   }) : super(
           child: _VideoStateInheritedWidgetContextNotifier(
             state: state,

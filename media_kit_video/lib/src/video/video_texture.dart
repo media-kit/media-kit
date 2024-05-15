@@ -7,6 +7,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 
 import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
@@ -154,17 +155,21 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
               subtitleViewConfiguration: widget.subtitleViewConfiguration,
             ),
           );
-
+  late final bool _disposeNotifiers =
+      media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+            context,
+          )?.disposeNotifiers ??
+          true;
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();
   final _wakelock = Wakelock();
   final _subscriptions = <StreamSubscription>[];
   late int? _width = widget.controller.player.state.width;
   late int? _height = widget.controller.player.state.height;
   late bool _visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
+
+
   bool _pauseDueToPauseUponEnteringBackgroundMode = false;
-
   // Public API:
-
   bool isFullscreen() {
     return media_kit_video_controls.isFullscreen(_contextNotifier.value!);
   }
@@ -296,8 +301,11 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     for (final subscription in _subscriptions) {
       subscription.cancel();
     }
-    _videoViewParametersNotifier.dispose();
-    _contextNotifier.dispose();
+    if (_disposeNotifiers) {
+      _videoViewParametersNotifier.dispose();
+      _contextNotifier.dispose();
+    }
+
     super.dispose();
   }
 
