@@ -295,6 +295,8 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     for (final subscription in _subscriptions) {
       subscription.cancel();
     }
+    _videoViewParametersNotifier.dispose();
+    _contextNotifier.dispose();
     super.dispose();
   }
 
