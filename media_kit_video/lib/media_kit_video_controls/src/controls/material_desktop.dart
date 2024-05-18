@@ -64,6 +64,9 @@ class MaterialDesktopVideoControlsThemeData {
   /// Whether to toggle fullscreen on double press.
   final bool toggleFullscreenOnDoublePress;
 
+  /// Whether or not to play and pause the video on single press
+  final bool playPauseOnSinglePress;
+
   /// Keyboards shortcuts.
   final Map<ShortcutActivator, VoidCallback>? keyboardShortcuts;
 
@@ -179,6 +182,7 @@ class MaterialDesktopVideoControlsThemeData {
     this.automaticallyImplySkipNextButton = true,
     this.automaticallyImplySkipPreviousButton = true,
     this.toggleFullscreenOnDoublePress = true,
+    this.playPauseOnSinglePress = false,
     this.modifyVolumeOnScroll = true,
     this.keyboardShortcuts,
     this.visibleOnMount = false,
@@ -228,6 +232,7 @@ class MaterialDesktopVideoControlsThemeData {
     bool? automaticallyImplySkipNextButton,
     bool? automaticallyImplySkipPreviousButton,
     bool? toggleFullscreenOnDoublePress,
+    bool? playPauseOnSinglePress,
     bool? modifyVolumeOnScroll,
     Map<ShortcutActivator, VoidCallback>? keyboardShortcuts,
     bool? visibleOnMount,
@@ -269,6 +274,8 @@ class MaterialDesktopVideoControlsThemeData {
               this.automaticallyImplySkipPreviousButton,
       toggleFullscreenOnDoublePress:
           toggleFullscreenOnDoublePress ?? this.toggleFullscreenOnDoublePress,
+      playPauseOnSinglePress:
+          playPauseOnSinglePress ?? this.playPauseOnSinglePress,
       modifyVolumeOnScroll: modifyVolumeOnScroll ?? this.modifyVolumeOnScroll,
       keyboardShortcuts: keyboardShortcuts ?? this.keyboardShortcuts,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
@@ -588,16 +595,24 @@ class _MaterialDesktopVideoControlsState
                     }
                   : null,
               child: GestureDetector(
-                onTapDown: (TapDownDetails details) {
-                  final RenderBox box = context.findRenderObject() as RenderBox;
-                  final Offset localPosition = box.globalToLocal(details.globalPosition);
-                  const double tapPadding = 10.0;
-                  if (!mount || localPosition.dy < box.size.height - subtitleVerticalShiftOffset - tapPadding) {
-                    // Only play and pause when the bottom seek bar is visible
-                    // and when clicking outside of the bottom seek bar region
-                    controller(context).player.playOrPause();
-                  }
-                },
+                onTapDown: !_theme(context).playPauseOnSinglePress
+                    ? null
+                    : (TapDownDetails details) {
+                        final RenderBox box =
+                            context.findRenderObject() as RenderBox;
+                        final Offset localPosition =
+                            box.globalToLocal(details.globalPosition);
+                        const double tapPadding = 10.0;
+                        if (!mount ||
+                            localPosition.dy <
+                                box.size.height -
+                                    subtitleVerticalShiftOffset -
+                                    tapPadding) {
+                          // Only play and pause when the bottom seek bar is visible
+                          // and when clicking outside of the bottom seek bar region
+                          controller(context).player.playOrPause();
+                        }
+                      },
                 onTapUp: !_theme(context).toggleFullscreenOnDoublePress
                     ? null
                     : (e) {
