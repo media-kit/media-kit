@@ -30,7 +30,7 @@ public class VideoOutput {
     public long wid = 0;
 
     private Surface surface;
-    private final TextureRegistry.SurfaceTextureEntry surfaceTextureEntry;
+    private final TextureRegistry.SurfaceProducer surfaceProducer;
 
     private boolean flutterJNIAPIAvailable;
     private final Method newGlobalObjectRef;
@@ -63,7 +63,7 @@ public class VideoOutput {
             throw new RuntimeException("Failed to initialize com.alexmercerind.media_kit_video.VideoOutput.");
         }
 
-        surfaceTextureEntry = textureRegistryReference.createSurfaceTexture();
+        surfaceProducer = textureRegistryReference.createSurfaceProducer();
 
         // Initialize Choreographer FrameCallback for frame updates
         frameCallback = new Choreographer.FrameCallback() {
@@ -92,7 +92,7 @@ public class VideoOutput {
             }
         };
 
-        // If we call setOnFrameAvailableListener after creating SurfaceTextureEntry, the texture won't be displayed inside Flutter UI, because callback set by us will override the Flutter engine's own registered callback:
+        // If we call setOnFrameAvailableListener after creating SurfaceProducer, the texture won't be displayed inside Flutter UI, because callback set by us will override the Flutter engine's own registered callback:
         // https://github.com/flutter/engine/blob/f47e864f2dcb9c299a3a3ed22300a1dcacbdf1fe/shell/platform/android/io/flutter/view/FlutterView.java#L942-L958
         try {
             if (!flutterJNIAPIAvailable) {
@@ -116,7 +116,7 @@ public class VideoOutput {
         }
 
         try {
-            id = surfaceTextureEntry.id();
+            id = surfaceProducer.id();
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutput: id = %d", id));
         } catch (Throwable e) {
             e.printStackTrace();
@@ -125,7 +125,7 @@ public class VideoOutput {
 
     public void dispose() {
         try {
-            surfaceTextureEntry.release();
+            surfaceProducer.release();
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -171,7 +171,7 @@ public class VideoOutput {
             }
             // Create new android.view.Surface & object reference.
             try {
-                surface = new Surface(surfaceTextureEntry.surfaceTexture());
+                surface = surfaceProducer.getSurface();
                 wid = (long) newGlobalObjectRef.invoke(null, surface);
             } catch (Throwable e) {
                 e.printStackTrace();
@@ -182,7 +182,7 @@ public class VideoOutput {
 
     public void setSurfaceTextureSize(int width, int height) {
         try {
-            surfaceTextureEntry.surfaceTexture().setDefaultBufferSize(width, height);
+            surfaceProducer.setSize(width, height);
         } catch (Throwable e) {
             e.printStackTrace();
         }
