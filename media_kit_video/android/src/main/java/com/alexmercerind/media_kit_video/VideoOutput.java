@@ -1,10 +1,3 @@
-/**
- * This file is a part of media_kit (https://github.com/media-kit/media-kit).
- * <p>
- * Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
- * All rights reserved.
- * Use of this source code is governed by MIT license that can be found in the LICENSE file.
- */
 package com.alexmercerind.media_kit_video;
 
 import android.graphics.Canvas;
@@ -14,6 +7,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Choreographer;
 import android.view.Surface;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -30,7 +24,6 @@ import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.embedding.engine.FlutterJNI;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.view.TextureRegistry;
-
 
 public class VideoOutput {
     public long id = 0;
@@ -49,6 +42,7 @@ public class VideoOutput {
     private TextureRegistry textureRegistryReference;
 
     private final Object lock = new Object();
+    private Choreographer.FrameCallback frameCallback;
 
     VideoOutput(long handle, MethodChannel channelReference, TextureRegistry textureRegistryReference) {
         this.handle = handle;
@@ -71,6 +65,33 @@ public class VideoOutput {
 
         surfaceTextureEntry = textureRegistryReference.createSurfaceTexture();
 
+        // Initialize Choreographer FrameCallback for frame updates
+        frameCallback = new Choreographer.FrameCallback() {
+            @Override
+            public void doFrame(long frameTimeNanos) {
+                synchronized (lock) {
+                    try {
+                        if (!waitUntilFirstFrameRenderedNotify) {
+                            waitUntilFirstFrameRenderedNotify = true;
+                            final HashMap<String, Object> data = new HashMap<>();
+                            data.put("handle", handle);
+                            channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
+                            Log.i("media_kit", String.format(Locale.ENGLISH, "VideoOutput.WaitUntilFirstFrameRenderedNotify = %d", handle));
+                        }
+
+                        FlutterJNI flutterJNI = null;
+                        while (flutterJNI == null) {
+                            flutterJNI = getFlutterJNIReference();
+                            flutterJNI.markTextureFrameAvailable(id);
+                        }
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                }
+                Choreographer.getInstance().postFrameCallback(this); // Post callback again for the next frame
+            }
+        };
+
         // If we call setOnFrameAvailableListener after creating SurfaceTextureEntry, the texture won't be displayed inside Flutter UI, because callback set by us will override the Flutter engine's own registered callback:
         // https://github.com/flutter/engine/blob/f47e864f2dcb9c299a3a3ed22300a1dcacbdf1fe/shell/platform/android/io/flutter/view/FlutterView.java#L942-L958
         try {
@@ -82,51 +103,7 @@ public class VideoOutput {
         }
         Log.i("media_kit", String.format(Locale.ENGLISH, "flutterJNIAPIAvailable = %b", flutterJNIAPIAvailable));
         if (flutterJNIAPIAvailable) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                surfaceTextureEntry.surfaceTexture().setOnFrameAvailableListener((texture) -> {
-                    synchronized (lock) {
-                        try {
-                            if (!waitUntilFirstFrameRenderedNotify) {
-                                waitUntilFirstFrameRenderedNotify = true;
-                                final HashMap<String, Object> data = new HashMap<>();
-                                data.put("handle", handle);
-                                channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
-                                Log.i("media_kit", String.format(Locale.ENGLISH, "VideoOutput.WaitUntilFirstFrameRenderedNotify = %d", handle));
-                            }
-
-                            FlutterJNI flutterJNI = null;
-                            while (flutterJNI == null) {
-                                flutterJNI = getFlutterJNIReference();
-                                flutterJNI.markTextureFrameAvailable(id);
-                            }
-                        } catch (Throwable e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Handler());
-            } else {
-                surfaceTextureEntry.surfaceTexture().setOnFrameAvailableListener((texture) -> {
-                    synchronized (lock) {
-                        try {
-                            if (!waitUntilFirstFrameRenderedNotify) {
-                                waitUntilFirstFrameRenderedNotify = true;
-                                final HashMap<String, Object> data = new HashMap<>();
-                                data.put("handle", handle);
-                                channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
-                                Log.i("media_kit", String.format(Locale.ENGLISH, "VideoOutput.WaitUntilFirstFrameRenderedNotify = %d", handle));
-                            }
-
-                            FlutterJNI flutterJNI = null;
-                            while (flutterJNI == null) {
-                                flutterJNI = getFlutterJNIReference();
-                                flutterJNI.markTextureFrameAvailable(id);
-                            }
-                        } catch (Throwable e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-            }
+            Choreographer.getInstance().postFrameCallback(frameCallback);
         } else {
             if (!waitUntilFirstFrameRenderedNotify) {
                 waitUntilFirstFrameRenderedNotify = true;
@@ -158,8 +135,8 @@ public class VideoOutput {
             e.printStackTrace();
         }
         try {
-            final Handler handler = new Handler(Looper.getMainLooper());
-            handler.postDelayed(() -> {
+            final Handler mainHandler = new Handler(Looper.getMainLooper());
+            mainHandler.postDelayed(() -> {
                 try {
                     // Invoke DeleteGlobalRef after a voluntary delay to eliminate possibility of libmpv referencing it sometime in the near future.
                     deleteGlobalObjectRef.invoke(null, wid);
@@ -171,6 +148,9 @@ public class VideoOutput {
         } catch (Throwable e) {
             e.printStackTrace();
         }
+
+        // Remove Choreographer callback
+        Choreographer.getInstance().removeFrameCallback(frameCallback);
     }
 
     public long createSurface() {
