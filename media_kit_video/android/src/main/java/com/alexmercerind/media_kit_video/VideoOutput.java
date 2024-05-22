@@ -3,7 +3,6 @@ package com.alexmercerind.media_kit_video;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -60,11 +59,10 @@ public class VideoOutput {
             deleteGlobalObjectRef.setAccessible(true);
         } catch (Throwable e) {
             Log.i("media_kit", "package:media_kit_libs_android_video missing. Make sure you have added it to pubspec.yaml.");
-            throw new RuntimeException("Failed to initialize com.alexmercerind.media_kit_video.VideoOutput.");
+            throw new RuntimeException("Failed to initialize com.alexmercerind.media_kit_video.VideoOutput.", e);
         }
 
         surfaceProducer = textureRegistryReference.createSurfaceProducer();
-
         // Initialize Choreographer FrameCallback for frame updates
         frameCallback = new Choreographer.FrameCallback() {
             @Override
@@ -78,7 +76,6 @@ public class VideoOutput {
                             channelReference.invokeMethod("VideoOutput.WaitUntilFirstFrameRenderedNotify", data);
                             Log.i("media_kit", String.format(Locale.ENGLISH, "VideoOutput.WaitUntilFirstFrameRenderedNotify = %d", handle));
                         }
-
                         FlutterJNI flutterJNI = null;
                         while (flutterJNI == null) {
                             flutterJNI = getFlutterJNIReference();
@@ -92,8 +89,6 @@ public class VideoOutput {
             }
         };
 
-        // If we call setOnFrameAvailableListener after creating SurfaceProducer, the texture won't be displayed inside Flutter UI, because callback set by us will override the Flutter engine's own registered callback:
-        // https://github.com/flutter/engine/blob/f47e864f2dcb9c299a3a3ed22300a1dcacbdf1fe/shell/platform/android/io/flutter/view/FlutterView.java#L942-L958
         try {
             if (!flutterJNIAPIAvailable) {
                 flutterJNIAPIAvailable = getFlutterJNIReference() != null;
@@ -124,33 +119,36 @@ public class VideoOutput {
     }
 
     public void dispose() {
-        try {
-            surfaceProducer.release();
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-        try {
-            surface.release();
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-        try {
-            final Handler mainHandler = new Handler(Looper.getMainLooper());
-            mainHandler.postDelayed(() -> {
-                try {
-                    // Invoke DeleteGlobalRef after a voluntary delay to eliminate possibility of libmpv referencing it sometime in the near future.
-                    deleteGlobalObjectRef.invoke(null, wid);
-                    Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.deleteGlobalObjectRef: %d", wid));
-                } catch (Throwable e) {
-                    e.printStackTrace();
+        synchronized (lock) {
+            try {
+                surfaceProducer.release();
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+            try {
+                if (surface != null) {
+                    surface.release();
                 }
-            }, 5000);
-        } catch (Throwable e) {
-            e.printStackTrace();
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+            try {
+                final Handler mainHandler = new Handler(Looper.getMainLooper());
+                mainHandler.postDelayed(() -> {
+                    try {
+                        // Invoke DeleteGlobalRef after a voluntary delay to eliminate possibility of libmpv referencing it sometime in the near future.
+                        deleteGlobalObjectRef.invoke(null, wid);
+                        Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.deleteGlobalObjectRef: %d", wid));
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                }, 5000);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+            // Remove Choreographer callback
+            Choreographer.getInstance().removeFrameCallback(frameCallback);
         }
-
-        // Remove Choreographer callback
-        Choreographer.getInstance().removeFrameCallback(frameCallback);
     }
 
     public long createSurface() {
@@ -189,12 +187,17 @@ public class VideoOutput {
     }
 
     private void clearSurface() {
-        try {
-            final Canvas canvas = surface.lockCanvas(null);
-            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-            surface.unlockCanvasAndPost(canvas);
-        } catch (Throwable e) {
-            e.printStackTrace();
+        synchronized (lock) {
+            if (surface == null || !surface.isValid()) {
+                return;
+            }
+            try {
+                final Canvas canvas = surface.lockCanvas(null);
+                canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                surface.unlockCanvasAndPost(canvas);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
         }
     }
 
