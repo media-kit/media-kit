@@ -189,6 +189,7 @@ public class VideoOutput {
     private void clearSurface() {
         synchronized (lock) {
             if (surface == null || !surface.isValid()) {
+                Log.w("media_kit", "Attempt to clear an invalid or null Surface.");
                 return;
             }
             try {
@@ -218,6 +219,10 @@ public class VideoOutput {
                         break;
                     }
                 }
+            }
+            if (view == null) {
+                Log.w("media_kit", "FlutterView not found.");
+                return null;
             }
             final FlutterEngine engine = view.getAttachedFlutterEngine();
             final Field field = engine.getClass().getDeclaredField("flutterJNI");
