@@ -37,7 +37,6 @@ public class VideoOutput {
 
     private Surface surface;
     private final TextureRegistry.SurfaceProducer surfaceProducer;
-    private final TextureRegistry.SurfaceProducer surfaceProducer;
 
     private boolean flutterJNIAPIAvailable;
     private final Method newGlobalObjectRef;
