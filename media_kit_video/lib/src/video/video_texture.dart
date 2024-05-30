@@ -308,7 +308,6 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       subscription.cancel();
     }
     if (_disposeNotifiers) {
-      print("_disposeNotifiers: $_disposeNotifiers");
       _videoViewParametersNotifier.dispose();
       _contextNotifier.dispose();
     }
