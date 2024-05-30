@@ -34,8 +34,6 @@ class SubtitleView extends StatefulWidget {
 
 class SubtitleViewState extends State<SubtitleView> {
   late List<String> subtitle = widget.controller.player.state.subtitle;
-  late TextStyle style = widget.configuration.style;
-  late TextAlign textAlign = widget.configuration.textAlign;
   late EdgeInsets padding = widget.configuration.padding;
   late Duration duration = const Duration(milliseconds: 100);
 
@@ -83,6 +81,7 @@ class SubtitleViewState extends State<SubtitleView> {
   /// {@macro subtitle_view}
   @override
   Widget build(BuildContext context) {
+    padding = widget.configuration.padding;
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate the visible text scale factor.
@@ -105,8 +104,8 @@ class SubtitleViewState extends State<SubtitleView> {
                 for (final line in subtitle)
                   if (line.trim().isNotEmpty) line.trim(),
               ].join('\n'),
-              style: style,
-              textAlign: textAlign,
+              style: widget.configuration.style,
+              textAlign: widget.configuration.textAlign,
               textScaleFactor: textScaleFactor,
             ),
           ),
