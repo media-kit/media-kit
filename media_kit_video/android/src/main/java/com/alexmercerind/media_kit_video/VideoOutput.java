@@ -63,6 +63,16 @@ public class VideoOutput {
         }
 
         surfaceProducer = textureRegistryReference.createSurfaceProducer();
+
+        // If we call setOnFrameAvailableListener after creating SurfaceTextureEntry, the texture won't be displayed inside Flutter UI, because callback set by us will override the Flutter engine's own registered callback:
+        // https://github.com/flutter/engine/blob/f47e864f2dcb9c299a3a3ed22300a1dcacbdf1fe/shell/platform/android/io/flutter/view/FlutterView.java#L942-L958
+        try {
+            if (!flutterJNIAPIAvailable) {
+                flutterJNIAPIAvailable = getFlutterJNIReference() != null;
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
         // Initialize Choreographer FrameCallback for frame updates
         frameCallback = new Choreographer.FrameCallback() {
             @Override
@@ -89,13 +99,6 @@ public class VideoOutput {
             }
         };
 
-        try {
-            if (!flutterJNIAPIAvailable) {
-                flutterJNIAPIAvailable = getFlutterJNIReference() != null;
-            }
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
         Log.i("media_kit", String.format(Locale.ENGLISH, "flutterJNIAPIAvailable = %b", flutterJNIAPIAvailable));
         if (flutterJNIAPIAvailable) {
             Choreographer.getInstance().postFrameCallback(frameCallback);
