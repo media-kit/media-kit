@@ -202,30 +202,18 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     VideoControlsBuilder? controls,
     SubtitleViewConfiguration? subtitleViewConfiguration,
   }) {
-    if (widget.width != _videoViewParametersNotifier.value.width ||
-        widget.height != _videoViewParametersNotifier.value.height ||
-        widget.fit != _videoViewParametersNotifier.value.fit ||
-        widget.fill != _videoViewParametersNotifier.value.fill ||
-        widget.alignment != _videoViewParametersNotifier.value.alignment ||
-        widget.aspectRatio != _videoViewParametersNotifier.value.aspectRatio ||
-        widget.filterQuality !=
-            _videoViewParametersNotifier.value.filterQuality ||
-        widget.controls != _videoViewParametersNotifier.value.controls ||
-        widget.subtitleViewConfiguration !=
-            _videoViewParametersNotifier.value.subtitleViewConfiguration) {
-      _videoViewParametersNotifier.value =
-          _videoViewParametersNotifier.value.copyWith(
-        width: width,
-        height: height,
-        fit: fit,
-        fill: fill,
-        alignment: alignment,
-        aspectRatio: aspectRatio,
-        filterQuality: filterQuality,
-        controls: controls,
-        subtitleViewConfiguration: subtitleViewConfiguration,
-      );
-    }
+    _videoViewParametersNotifier.value =
+        _videoViewParametersNotifier.value.copyWith(
+      width: width,
+      height: height,
+      fit: fit,
+      fill: fill,
+      alignment: alignment,
+      aspectRatio: aspectRatio,
+      filterQuality: filterQuality,
+      controls: controls,
+      subtitleViewConfiguration: subtitleViewConfiguration,
+    );
   }
 
   @override
@@ -315,17 +303,6 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    update(
-      width: widget.width,
-      height: widget.height,
-      fit: widget.fit,
-      fill: widget.fill,
-      alignment: widget.alignment,
-      aspectRatio: widget.aspectRatio,
-      filterQuality: widget.filterQuality,
-      controls: widget.controls,
-      subtitleViewConfiguration: widget.subtitleViewConfiguration,
-    );
     return media_kit_video_controls.VideoStateInheritedWidget(
       state: this as dynamic,
       contextNotifier: _contextNotifier,
