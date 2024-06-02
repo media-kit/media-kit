@@ -86,6 +86,7 @@ class _VideoStateInheritedWidgetContextNotifierState
   void dispose() {
     // Restore the original [BuildContext] associated with this [Video] widget.
     widget.contextNotifier.value = _fallback[widget.state];
+    _fallback.clear();
     super.dispose();
   }
 
