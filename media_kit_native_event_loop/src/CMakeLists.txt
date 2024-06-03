@@ -52,7 +52,7 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_library(${TARGET_NAME} SHARED "${TARGET_NAME}.cc")
 
     # Include libmpv headers & link to the library.
-    target_compile_definitions(
+    target_compile_options(
       ${TARGET_NAME} PRIVATE
       "${mpv_CFLAGS_OTHER}"
     )

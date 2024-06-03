@@ -1407,6 +1407,33 @@ class NativePlayer extends PlatformPlayer {
     calloc.free(data);
   }
 
+  /// Retrieves the value of a property from the internal libmpv instance of this [Player].
+  /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
+  ///
+  /// See:
+  /// * https://mpv.io/manual/master/#options
+  /// * https://mpv.io/manual/master/#properties
+  ///
+  Future<String> getProperty(String property) async {
+    if (disposed) {
+      throw AssertionError('[Player] has been disposed');
+    }
+    await waitForPlayerInitialization;
+    await waitForVideoControllerInitializationIfAttached;
+
+    final name = property.toNativeUtf8();
+    final value = mpv.mpv_get_property_string(ctx, name.cast());
+    if (value != nullptr) {
+      final result = value.cast<Utf8>().toDartString();
+      calloc.free(name);
+      mpv.mpv_free(value.cast());
+
+      return result;
+    }
+
+    return "";
+  }
+
   /// Observes property for the internal libmpv instance of this [Player].
   /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
   ///
@@ -2326,7 +2353,7 @@ class NativePlayer extends PlatformPlayer {
             if (start != null) {
               try {
                 final property = 'start'.toNativeUtf8();
-                final value = start.inSeconds.toString().toNativeUtf8();
+                final value = (start.inMilliseconds / 1000).toStringAsFixed(3).toNativeUtf8();
                 mpv.mpv_set_property_string(
                   ctx,
                   property.cast(),
@@ -2343,7 +2370,7 @@ class NativePlayer extends PlatformPlayer {
             if (end != null) {
               try {
                 final property = 'end'.toNativeUtf8();
-                final value = end.inSeconds.toString().toNativeUtf8();
+                final value = (end.inMilliseconds / 1000).toStringAsFixed(3).toNativeUtf8();
                 mpv.mpv_set_property_string(
                   ctx,
                   property.cast(),
@@ -2513,6 +2540,7 @@ class NativePlayer extends PlatformPlayer {
         'scale': 'bilinear',
         'dscale': 'bilinear',
         'dither': 'no',
+        'cache': 'yes',
         'correct-downscaling': 'no',
         'linear-downscaling': 'no',
         'sigmoid-upscaling': 'no',
@@ -2846,7 +2874,7 @@ Uint8List? _screenshot(_ScreenshotData data) {
             final pixels = Image(
               width: w,
               height: h,
-              numChannels: 4,
+              numChannels: 3,
             );
             for (final pixel in pixels) {
               final x = pixel.x;
@@ -2855,7 +2883,6 @@ Uint8List? _screenshot(_ScreenshotData data) {
               pixel.b = bytes[i];
               pixel.g = bytes[i + 1];
               pixel.r = bytes[i + 2];
-              pixel.a = bytes[i + 3];
             }
             image = encodeJpg(pixels);
             break;
@@ -2865,7 +2892,7 @@ Uint8List? _screenshot(_ScreenshotData data) {
             final pixels = Image(
               width: w,
               height: h,
-              numChannels: 4,
+              numChannels: 3,
             );
             for (final pixel in pixels) {
               final x = pixel.x;
@@ -2874,7 +2901,6 @@ Uint8List? _screenshot(_ScreenshotData data) {
               pixel.b = bytes[i];
               pixel.g = bytes[i + 1];
               pixel.r = bytes[i + 2];
-              pixel.a = bytes[i + 3];
             }
             image = encodePng(pixels);
             break;

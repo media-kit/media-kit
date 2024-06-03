@@ -134,24 +134,8 @@ class Video extends StatefulWidget {
 
 class VideoState extends State<Video> with WidgetsBindingObserver {
   late final _contextNotifier = ValueNotifier<BuildContext?>(null);
-  late final ValueNotifier<VideoViewParameters> _videoViewParametersNotifier =
-      media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
-            context,
-          )?.videoViewParametersNotifier ??
-          ValueNotifier<VideoViewParameters>(
-            VideoViewParameters(
-              width: widget.width,
-              height: widget.height,
-              fit: widget.fit,
-              fill: widget.fill,
-              alignment: widget.alignment,
-              aspectRatio: widget.aspectRatio,
-              filterQuality: widget.filterQuality,
-              controls: widget.controls,
-              subtitleViewConfiguration: widget.subtitleViewConfiguration,
-            ),
-          );
-
+  late ValueNotifier<VideoViewParameters> _videoViewParametersNotifier;
+  late bool _disposeNotifiers;
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();
   final _wakelock = Wakelock();
   final _subscriptions = <StreamSubscription>[];
@@ -213,6 +197,33 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       controls: controls,
       subtitleViewConfiguration: subtitleViewConfiguration,
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    _videoViewParametersNotifier =
+        media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+              context,
+            )?.videoViewParametersNotifier ??
+            ValueNotifier<VideoViewParameters>(
+              VideoViewParameters(
+                width: widget.width,
+                height: widget.height,
+                fit: widget.fit,
+                fill: widget.fill,
+                alignment: widget.alignment,
+                aspectRatio: widget.aspectRatio,
+                filterQuality: widget.filterQuality,
+                controls: widget.controls,
+                subtitleViewConfiguration: widget.subtitleViewConfiguration,
+              ),
+            );
+    _disposeNotifiers =
+        media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+              context,
+            )?.disposeNotifiers ??
+            true;
+    super.didChangeDependencies();
   }
 
   @override
@@ -295,6 +306,11 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     for (final subscription in _subscriptions) {
       subscription.cancel();
     }
+    if (_disposeNotifiers) {
+      _videoViewParametersNotifier.dispose();
+      _contextNotifier.dispose();
+    }
+
     super.dispose();
   }
 

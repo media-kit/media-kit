@@ -11,6 +11,7 @@
 // To improve the user experience, a worker is used to execute heavy tasks on a
 // dedicated thread.
 public class VideoOutput: NSObject {
+  // Will be called on the main thread
   public typealias TextureUpdateCallback = (Int64, CGSize) -> Void
 
   private static let isSimulator: Bool = {
@@ -32,8 +33,7 @@ public class VideoOutput: NSObject {
   private var height: Int64?
   private var texture: ResizableTextureProtocol!
   private var textureId: Int64 = -1
-  private var currentWidth: Int64 = 0
-  private var currentHeight: Int64 = 0
+  private var currentSize: CGSize = CGSize.zero
   private var disposed: Bool = false
 
   init(
@@ -115,7 +115,7 @@ public class VideoOutput: NSObject {
       )
     }
 
-    DispatchQueue.main.async { [weak self]() in
+    DispatchQueue.main.sync { [weak self]() in
       guard let that = self else {
         return
       }
@@ -123,14 +123,22 @@ public class VideoOutput: NSObject {
     }
   }
 
+  // Must be run on the main thread
   private func registerTextureId() {
+    // Textures must be registered on the platform thread.
     textureId = registry.register(texture)
+    // textureUpdateCallback must run on the main thread
     textureUpdateCallback(textureId, CGSize(width: 0, height: 0))
   }
 
   private func disposeTextureId() {
-    registry.unregisterTexture(textureId)
+    let registry_ = self.registry
+    let textureId_ = self.textureId
     textureId = -1
+    DispatchQueue.main.async {
+      // Textures must be unregistered on the platform thread
+      registry_.unregisterTexture(textureId_)
+    }
   }
 
   public func updateCallback() {
@@ -140,24 +148,21 @@ public class VideoOutput: NSObject {
   }
 
   private func _updateCallback() {
-    let width = videoWidth
-    let height = videoHeight
+    let size = videoSize
 
-    let size = CGSize(
-      width: Double(width),
-      height: Double(height)
-    )
-
-    if width == 0 || height == 0 {
+    if size.width == 0 || size.height == 0 {
       return
     }
 
-    if currentWidth != width || currentHeight != height {
-      currentWidth = width
-      currentHeight = height
+    if currentSize != size {
+      currentSize = size
 
       texture.resize(size)
-      textureUpdateCallback(textureId, size)
+      DispatchQueue.main.sync { [weak self] in
+        guard let that = self else { return }
+        // textureUpdateCallback must run on the main thread
+        that.textureUpdateCallback(that.textureId, size)
+      }
     }
 
     if disposed {
@@ -165,34 +170,30 @@ public class VideoOutput: NSObject {
     }
 
     texture.render(size)
-    registry.textureFrameAvailable(textureId)
+    DispatchQueue.main.sync { [weak self] in
+      guard let that = self else { return }
+      // Textures must be marked as available from the main thread
+      that.registry.textureFrameAvailable(that.textureId)
+    }
   }
 
-  private var videoWidth: Int64 {
-    // fixed width
-    if width != nil {
-      return width!
-    }
-
-    let params = MPVHelpers.getVideoOutParams(handle)
-    let width = params.rotate == 0 || params.rotate == 180
-      ? params.dw
-      : params.dh
-
-    return width
-  }
-
-  private var videoHeight: Int64 {
-    // fixed height
-    if height != nil {
-      return height!
-    }
-
-    let params = MPVHelpers.getVideoOutParams(handle)
-    let height = params.rotate == 0 || params.rotate == 180
-      ? params.dh
-      : params.dw
-
-    return height
+    private var videoSize: CGSize {
+        // fixed size
+        if width != nil && height != nil {
+            return CGSize(
+                width: Double(width!),
+                height: Double(height!)
+            )
+        }
+        
+        let params = MPVHelpers.getVideoOutParams(handle)
+        return CGSize(
+            width: Double(width ?? (params.rotate == 0 || params.rotate == 180
+                                    ? params.dw
+                                    : params.dh)),
+            height: Double(height ?? (params.rotate == 0 || params.rotate == 180
+                                      ? params.dh
+                                      : params.dw))
+        )
   }
 }

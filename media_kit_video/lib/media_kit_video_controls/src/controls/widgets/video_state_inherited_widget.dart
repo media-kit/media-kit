@@ -17,12 +17,14 @@ class VideoStateInheritedWidget extends InheritedWidget {
   final VideoState state;
   final ValueNotifier<BuildContext?> contextNotifier;
   final ValueNotifier<VideoViewParameters> videoViewParametersNotifier;
+  final bool disposeNotifiers;
   VideoStateInheritedWidget({
     super.key,
     required this.state,
     required this.contextNotifier,
     required this.videoViewParametersNotifier,
     required Widget child,
+    this.disposeNotifiers = true,
   }) : super(
           child: _VideoStateInheritedWidgetContextNotifier(
             state: state,
@@ -84,6 +86,7 @@ class _VideoStateInheritedWidgetContextNotifierState
   void dispose() {
     // Restore the original [BuildContext] associated with this [Video] widget.
     widget.contextNotifier.value = _fallback[widget.state];
+    _fallback.clear();
     super.dispose();
   }
 
