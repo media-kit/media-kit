@@ -11,6 +11,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
+import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
 
 import 'package:media_kit_video/src/utils/wakelock.dart';
 
@@ -133,7 +134,7 @@ class Video extends StatefulWidget {
 }
 
 class VideoState extends State<Video> with WidgetsBindingObserver {
-  late final _contextNotifier = ValueNotifier<BuildContext?>(null);
+  late final _contextNotifier = DisposeSafeNotifier<BuildContext?>(null);
   late ValueNotifier<VideoViewParameters> _videoViewParametersNotifier;
   late bool _disposeNotifiers;
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();

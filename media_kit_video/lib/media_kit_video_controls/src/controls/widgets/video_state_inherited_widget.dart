@@ -7,6 +7,7 @@ import 'dart:collection';
 
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
 
 /// {@template video_state_inherited_widget}
 ///
@@ -15,8 +16,9 @@ import 'package:media_kit_video/media_kit_video.dart';
 /// {@endtemplate}
 class VideoStateInheritedWidget extends InheritedWidget {
   final VideoState state;
-  final ValueNotifier<BuildContext?> contextNotifier;
+  final DisposeSafeNotifier<BuildContext?> contextNotifier;
   final ValueNotifier<VideoViewParameters> videoViewParametersNotifier;
+
   final bool disposeNotifiers;
   VideoStateInheritedWidget({
     super.key,
@@ -30,6 +32,7 @@ class VideoStateInheritedWidget extends InheritedWidget {
             state: state,
             contextNotifier: contextNotifier,
             videoViewParametersNotifier: videoViewParametersNotifier,
+            disposeNotifiers: disposeNotifiers,
             child: child,
           ),
         );
@@ -61,9 +64,9 @@ class VideoStateInheritedWidget extends InheritedWidget {
 /// {@endtemplate}
 class VideoStateInheritedWidgetContextNotifier extends StatefulWidget {
   final VideoState state;
-  final ValueNotifier<BuildContext?> contextNotifier;
+  final DisposeSafeNotifier<BuildContext?> contextNotifier;
   final ValueNotifier<VideoViewParameters?> videoViewParametersNotifier;
-
+  final bool disposeNotifiers;
   final Widget child;
 
   const VideoStateInheritedWidgetContextNotifier({
@@ -71,6 +74,7 @@ class VideoStateInheritedWidgetContextNotifier extends StatefulWidget {
     required this.state,
     required this.contextNotifier,
     required this.videoViewParametersNotifier,
+    required this.disposeNotifiers,
     required this.child,
   });
 
@@ -85,9 +89,10 @@ class VideoStateInheritedWidgetContextNotifierState
 
   @override
   void dispose() {
-    // Restore the original [BuildContext] associated with this [Video] widget.
-    widget.contextNotifier.value = fallback[widget.state];
-
+    if (!widget.contextNotifier.disposed) {
+      // Restore the original [BuildContext] associated with this [Video] widget.
+      widget.contextNotifier.value = fallback[widget.state];
+    }
     super.dispose();
   }
 
