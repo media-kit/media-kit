@@ -67,6 +67,7 @@ class VideoStateInheritedWidgetContextNotifier extends StatefulWidget {
   final Widget child;
 
   const VideoStateInheritedWidgetContextNotifier({
+    super.key,
     required this.state,
     required this.contextNotifier,
     required this.videoViewParametersNotifier,
