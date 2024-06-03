@@ -7,6 +7,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
+import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 
 import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
@@ -310,6 +311,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     if (_disposeNotifiers) {
       _videoViewParametersNotifier.dispose();
       _contextNotifier.dispose();
+      VideoStateInheritedWidgetContextNotifierState.fallback.clear();
     }
 
     super.dispose();
