@@ -309,6 +309,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     if (_disposeNotifiers) {
       _videoViewParametersNotifier.dispose();
       _contextNotifier.dispose();
+      VideoStateInheritedWidgetContextNotifierState.fallback.remove(this);
     }
 
     super.dispose();
