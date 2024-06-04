@@ -1,3 +1,12 @@
+## 1.2.5
+- fix: subtitleView not being updated
+- fix: mobile double tap areas hidden but still mounted
+- fix: mobile center click is delayed
+ 
+- feat: desktop video controls mouse hides with controls
+- feat: desktop on tap pause and play
+- feat: desktop on double tap fullscreen
+
 ## 1.2.4
 
 - fix: web compile error
