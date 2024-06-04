@@ -7,11 +7,13 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
+import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 
 import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
+import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
 
 import 'package:media_kit_video/src/utils/wakelock.dart';
 import 'package:media_kit_video/src/video_view_parameters.dart';
@@ -137,7 +139,7 @@ class Video extends StatefulWidget {
 }
 
 class VideoState extends State<Video> with WidgetsBindingObserver {
-  late final _contextNotifier = ValueNotifier<BuildContext?>(null);
+  late final _contextNotifier = DisposeSafeNotifier<BuildContext?>(null);
   late ValueNotifier<VideoViewParameters> _videoViewParametersNotifier;
   late bool _disposeNotifiers;
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();
@@ -308,8 +310,10 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       subscription.cancel();
     }
     if (_disposeNotifiers) {
-      _videoViewParametersNotifier.dispose();
-      _contextNotifier.dispose();
+        _videoViewParametersNotifier.dispose();
+        _contextNotifier.dispose();
+        VideoStateInheritedWidgetContextNotifierState.fallback.remove(this);
+      
     }
 
     super.dispose();
