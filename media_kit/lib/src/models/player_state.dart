@@ -51,6 +51,9 @@ class PlayerState {
   /// This indicates how much of the stream has been decoded & cached by the demuxer.
   final Duration buffer;
 
+  /// Current buffering percentage
+  final double bufferingPercentage;
+
   /// Current playlist mode.
   final PlaylistMode playlistMode;
 
@@ -98,6 +101,7 @@ class PlayerState {
     this.pitch = 1.0,
     this.buffering = false,
     this.buffer = Duration.zero,
+    this.bufferingPercentage = 0.0,
     this.playlistMode = PlaylistMode.none,
     this.audioParams = const AudioParams(),
     this.videoParams = const VideoParams(),
@@ -122,6 +126,7 @@ class PlayerState {
     double? pitch,
     bool? buffering,
     Duration? buffer,
+    double? bufferingPercentage,
     PlaylistMode? playlistMode,
     AudioParams? audioParams,
     VideoParams? videoParams,
@@ -144,6 +149,7 @@ class PlayerState {
       rate: rate ?? this.rate,
       pitch: pitch ?? this.pitch,
       buffering: buffering ?? this.buffering,
+      bufferingPercentage: bufferingPercentage ?? this.bufferingPercentage,
       buffer: buffer ?? this.buffer,
       playlistMode: playlistMode ?? this.playlistMode,
       audioParams: audioParams ?? this.audioParams,
@@ -170,6 +176,7 @@ class PlayerState {
       'rate: $rate, '
       'pitch: $pitch, '
       'buffering: $buffering, '
+      'bufferingPercentage: $bufferingPercentage, '
       'buffer: $buffer, '
       'playlistMode: $playlistMode, '
       'audioParams: $audioParams, '
