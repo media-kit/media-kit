@@ -6,7 +6,7 @@
 // ignore_for_file: library_private_types_in_public_api
 import 'dart:collection';
 import 'dart:typed_data';
-import 'dart:html' as html;
+import 'package:web/web.dart' as html;
 
 import 'package:media_kit/src/models/playable.dart';
 
@@ -119,7 +119,7 @@ class Media extends Playable {
     Uint8List data, {
     String? type,
   }) {
-    final src = html.Url.createObjectUrlFromBlob(html.Blob([data], type));
+    final src = html.URL.createObjectURL(html.Blob([data], type));
     final instance = Media(src);
     instance._memory = true;
     return Future.value(instance);
