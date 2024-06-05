@@ -20,10 +20,11 @@ dependencies:
     path: ../libs/universal/media_kit_libs_video
 
   path: ^1.8.2
-  file_picker: ^5.2.4
+  file_picker: ^8.0.3
   path_provider: ^2.0.14
   http: ">=0.13.0 <2.0.0"
   universal_platform: ^1.0.0+1
+  web: ^0.5.1
 
 dependency_overrides:
   # Force dependency overrides for all (direct or transitive) dependencies
@@ -52,7 +53,7 @@ dependency_overrides:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true

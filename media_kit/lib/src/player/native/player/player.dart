@@ -4,4 +4,4 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-export 'real.dart' if (dart.library.html) 'stub.dart';
+export 'real.dart' if (dart.library.js_interop) 'stub.dart';
