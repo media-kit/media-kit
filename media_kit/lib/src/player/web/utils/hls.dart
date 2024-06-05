@@ -5,7 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:async';
 import 'dart:html' as html;
-import 'package:js/js.dart' as js;
+import 'dart:js_interop' as js;
 import 'package:synchronized/synchronized.dart';
 
 // --------------------------------------------------
