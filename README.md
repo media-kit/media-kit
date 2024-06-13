@@ -480,7 +480,7 @@ The following state(s) are available as events:
 | `Stream<Tracks>`            | `tracks`       | Currently available video, audio and subtitle tracks.                                                    |
 | `Stream<int>`               | `width`        | Currently playing video's width.                                                                         |
 | `Stream<int>`               | `height`       | Currently playing video's height.                                                                        |
-| `Stream<int>`               | `subtitle`     | Currently displayed subtitle.                                                                            |
+| `Stream<List<String>>`      | `subtitle`     | Currently displayed subtitle.                                                                            |
 | `Stream<PlayerLog>`         | `log`          | Internal logs.                                                                                           |
 | `Stream<String>`            | `error`        | Error messages. This may be used to handle & display errors to the user.                                 |
 
