@@ -1333,9 +1333,14 @@ class NativePlayer extends PlatformPlayer {
   /// * `image/jpeg`: Returns a JPEG encoded image.
   /// * `image/png`: Returns a PNG encoded image.
   /// * `null`: Returns BGRA pixel buffer.
+  ///
+  /// If [includeLibassSubtitles] is `true` *and* [PlayerConfiguration.libass] is `true`, then the
+  /// screenshot will include the on-screen subtitles.
   @override
   Future<Uint8List?> screenshot(
-      {String? format = 'image/jpeg', bool synchronized = true}) async {
+      {String? format = 'image/jpeg',
+      bool synchronized = true,
+      bool includeLibassSubtitles = false}) async {
     Future<Uint8List?> function() async {
       if (![
         'image/jpeg',
@@ -1361,6 +1366,7 @@ class NativePlayer extends PlatformPlayer {
           ctx.address,
           NativeLibrary.path,
           format,
+          includeLibassSubtitles,
         ),
       );
     }
@@ -2794,11 +2800,13 @@ class _ScreenshotData {
   final int ctx;
   final String lib;
   final String? format;
+  final bool includeLibassSubtitles;
 
   const _ScreenshotData(
     this.ctx,
     this.lib,
     this.format,
+    this.includeLibassSubtitles,
   );
 }
 
@@ -2814,7 +2822,7 @@ Uint8List? _screenshot(_ScreenshotData data) {
   // https://mpv.io/manual/stable/#command-interface-screenshot-raw
   final args = [
     'screenshot-raw',
-    'video',
+    data.includeLibassSubtitles ? 'subtitles' : 'video',
   ];
 
   final result = calloc<generated.mpv_node>();
