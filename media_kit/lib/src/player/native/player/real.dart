@@ -1746,7 +1746,11 @@ class NativePlayer extends PlatformPlayer {
               .map(
                 (i, e) => MapEntry(
                   i,
-                  e.copyWith(start: current[i].start, end: current[i].end),
+                  e.copyWith(
+                    start: current[i].start,
+                    end: current[i].end,
+                    extras: current[i].extras,
+                  ),
                 ),
               )
               .values

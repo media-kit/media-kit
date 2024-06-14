@@ -675,6 +675,10 @@ void main() {
     'player-open-playable-playlist-start-end',
     () async {
       final player = Player();
+      final videoFiles = sources.platform;
+      // Create a duplicate of the first video file to test the edge case
+      // where the same video file is played twice, but with different start and end times.
+      videoFiles.add(videoFiles[0]);
 
       final expectStart = expectAsync2(
         (value, i) {
@@ -683,7 +687,7 @@ void main() {
           final start = value as Duration;
           expect(start, Duration(seconds: ((i as int) + 1)));
         },
-        count: sources.platform.length,
+        count: videoFiles.length,
       );
       final expectEnd = expectAsync2(
         (value, i) {
@@ -692,7 +696,24 @@ void main() {
           final end = value as Duration;
           expect(end, Duration(seconds: ((i as int) + 1) * 2));
         },
-        count: sources.platform.length,
+        count: videoFiles.length,
+      );
+      final expectExtras = expectAsync2(
+        (value, i) {
+          print('----- extras: $value');
+          expect(value, isA<Map<String, dynamic>>());
+          final extras = value as Map<String, dynamic>;
+          expect(
+            MapEquality().equals(
+              extras,
+              {
+                'i': i.toString(),
+              },
+            ),
+            true,
+          );
+        },
+        count: videoFiles.length,
       );
 
       StreamSubscription<Duration>? subscription;
@@ -702,6 +723,7 @@ void main() {
           if (e.index >= 0) {
             expectStart(e.medias[e.index].start, e.index);
             expectEnd(e.medias[e.index].end, e.index);
+            expectExtras(e.medias[e.index].extras, e.index);
 
             // Check for position updates of this [Media].
             int i = 0;
@@ -742,11 +764,12 @@ void main() {
       await player.open(
         Playlist(
           [
-            for (int i = 0; i < sources.platform.length; i++)
+            for (int i = 0; i < videoFiles.length; i++)
               Media(
-                sources.platform[i],
+                videoFiles[i],
                 start: Duration(seconds: (i + 1)),
                 end: Duration(seconds: (i + 1) * 2),
+                extras: {'i': i.toString()},
               ),
           ],
         ),
