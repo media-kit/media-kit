@@ -191,15 +191,15 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   }
 
   void update({
-    double? width,
-    double? height,
-    BoxFit? fit,
-    Color? fill,
-    Alignment? alignment,
-    double? aspectRatio,
-    FilterQuality? filterQuality,
-    /* VideoControlsBuilder? */ dynamic controls,
-    SubtitleViewConfiguration? subtitleViewConfiguration,
+    required double? width,
+    required double? height,
+    required BoxFit fit,
+    required Color fill,
+    required Alignment alignment,
+    required double? aspectRatio,
+    required FilterQuality filterQuality,
+    required VideoControlsBuilder? controls,
+    required SubtitleViewConfiguration subtitleViewConfiguration,
   }) {
     _videoViewParametersNotifier.value =
         _videoViewParametersNotifier.value.copyWith(
@@ -212,6 +212,10 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       filterQuality: filterQuality,
       controls: controls,
       subtitleViewConfiguration: subtitleViewConfiguration,
+      pauseUponEnteringBackgroundMode: null,
+      resumeUponEnteringForegroundMode: null,
+      onEnterFullscreen: null,
+      onExitFullscreen: null,
     );
   }
 
