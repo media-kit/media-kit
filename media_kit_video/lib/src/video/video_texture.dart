@@ -165,6 +165,18 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
 
   // Public API:
 
+  double? getVideoWidth() {
+    return _videoViewParametersNotifier.value.width;
+  }
+
+  double? getVideoHeight() {
+    return _videoViewParametersNotifier.value.height;
+  }
+
+  BoxFit getVideoFit() {
+    return _videoViewParametersNotifier.value.fit;
+  }
+
   bool isFullscreen() {
     return media_kit_video_controls.isFullscreen(_contextNotifier.value!);
   }
