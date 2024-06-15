@@ -42,31 +42,30 @@ class VideoViewParameters {
   });
 
   VideoViewParameters copyWith({
-    double? width,
-    double? height,
-    BoxFit? fit,
-    Color? fill,
-    Alignment? alignment,
-    double? aspectRatio,
-    FilterQuality? filterQuality,
-    /* VideoControlsBuilder? */ dynamic controls,
-    bool? pauseUponEnteringBackgroundMode,
-    bool? resumeUponEnteringForegroundMode,
-    SubtitleViewConfiguration? subtitleViewConfiguration,
-    Future<void> Function()? onEnterFullscreen,
-    Future<void> Function()? onExitFullscreen,
+    required double? width,
+    required double? height,
+    required BoxFit fit,
+    required Color fill,
+    required Alignment alignment,
+    required double? aspectRatio,
+    required FilterQuality filterQuality,
+    /* VideoControlsBuilder? */ required dynamic controls,
+    required bool? pauseUponEnteringBackgroundMode,
+    required bool? resumeUponEnteringForegroundMode,
+    required SubtitleViewConfiguration subtitleViewConfiguration,
+    required Future<void> Function()? onEnterFullscreen,
+    required Future<void> Function()? onExitFullscreen,
   }) {
     return VideoViewParameters(
-      width: width ?? this.width,
-      height: height ?? this.height,
-      fit: fit ?? this.fit,
-      fill: fill ?? this.fill,
-      alignment: alignment ?? this.alignment,
-      aspectRatio: aspectRatio ?? this.aspectRatio,
-      filterQuality: filterQuality ?? this.filterQuality,
-      controls: controls ?? this.controls,
-      subtitleViewConfiguration:
-          subtitleViewConfiguration ?? this.subtitleViewConfiguration,
+      width: width,
+      height: height,
+      fit: fit,
+      fill: fill,
+      alignment: alignment,
+      aspectRatio: aspectRatio,
+      filterQuality: filterQuality,
+      controls: controls,
+      subtitleViewConfiguration: subtitleViewConfiguration,
     );
   }
 
