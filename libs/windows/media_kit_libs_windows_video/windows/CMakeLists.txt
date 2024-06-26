@@ -128,38 +128,38 @@ if(NOT ANGLE_SRC_VALID)
 endif()
 
 # ------------------------------------------------------------------------------
-set(PLUGIN_NAME "media_kit_libs_windows_video_plugin")
+# set(PLUGIN_NAME "media_kit_libs_windows_video_plugin")
 
-add_library(
-  ${PLUGIN_NAME} SHARED
-  "include/media_kit_libs_windows_video/media_kit_libs_windows_video_plugin_c_api.h"
-  "media_kit_libs_windows_video_plugin_c_api.cpp"
-)
+# add_library(
+#  ${PLUGIN_NAME} SHARED
+#  "include/media_kit_libs_windows_video/media_kit_libs_windows_video_plugin_c_api.h"
+#  "media_kit_libs_windows_video_plugin_c_api.cpp"
+#)
 
-apply_standard_settings(${PLUGIN_NAME})
+# apply_standard_settings(${PLUGIN_NAME})
 
-set_target_properties(
-  ${PLUGIN_NAME}
-  PROPERTIES
-  CXX_VISIBILITY_PRESET
-  hidden
-)
-target_compile_definitions(
-  ${PLUGIN_NAME}
-  PRIVATE
-  FLUTTER_PLUGIN_IMPL
-)
+# set_target_properties(
+#   ${PLUGIN_NAME}
+#   PROPERTIES
+#   CXX_VISIBILITY_PRESET
+#   hidden
+# )
+# target_compile_definitions(
+#   ${PLUGIN_NAME}
+#   PRIVATE
+#   FLUTTER_PLUGIN_IMPL
+# )
 
-target_include_directories(
-  ${PLUGIN_NAME} INTERFACE
-  "${CMAKE_CURRENT_SOURCE_DIR}/include"
-)
-target_link_libraries(
-  ${PLUGIN_NAME}
-  PRIVATE
-  flutter
-  flutter_wrapper_plugin
-)
+# target_include_directories(
+#   ${PLUGIN_NAME} INTERFACE
+#   "${CMAKE_CURRENT_SOURCE_DIR}/include"
+# )
+# target_link_libraries(
+#   ${PLUGIN_NAME}
+#   PRIVATE
+#   flutter
+#   flutter_wrapper_plugin
+# )
 
 set(
   media_kit_libs_windows_video_bundled_libraries
