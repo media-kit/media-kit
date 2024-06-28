@@ -1673,7 +1673,15 @@ There are other ways to bundle these within your app package e.g. within Snap or
 
 You should consider replacing the default memory allocator with [mimalloc](https://github.com/microsoft/mimalloc) for [avoiding memory leaks](https://github.com/media-kit/media-kit/issues/68).
 
-This is as simple as [adding one line to `linux/CMakeLists.txt`](https://github.com/media-kit/media-kit/blob/d02a97ce70b316207db024401fb99e3f4509a250/media_kit_test/linux/CMakeLists.txt#L92-L94):
+Please ensure you install `libmimalloc-dev` at compile time and `libmimalloc2.0` as runtime dependencies.
+
+#### Ubuntu/Debian
+
+```bash
+sudo apt install libmimalloc-dev libmimalloc2.0
+```
+
+Then add the [the following line to `linux/CMakeLists.txt`](https://github.com/media-kit/media-kit/blob/d02a97ce70b316207db024401fb99e3f4509a250/media_kit_test/linux/CMakeLists.txt#L92-L94):
 
 ```cmake
 target_link_libraries(${BINARY_NAME} PRIVATE ${MIMALLOC_LIB})
