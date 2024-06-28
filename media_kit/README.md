@@ -1664,6 +1664,7 @@ There are other ways to bundle these within your app package e.g. within Snap or
 - [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
 - [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/_packaging)
 
+
 #### Utilize [mimalloc](https://github.com/microsoft/mimalloc)
 
 You should consider replacing the default memory allocator with [mimalloc](https://github.com/microsoft/mimalloc) for [avoiding memory leaks](https://github.com/media-kit/media-kit/issues/68).
@@ -1672,6 +1673,21 @@ This is as simple as [adding one line to `linux/CMakeLists.txt`](https://github.
 
 ```cmake
 target_link_libraries(${BINARY_NAME} PRIVATE ${MIMALLOC_LIB})
+```
+
+In case you prefer dynamic linking of mimalloc, you can additionally add the following line to your `linux/CMakeLists.txt`:
+
+```cmake
+# use dynamically linked mimalloc
+set(MIMALLOC_USE_STATIC_LIBS OFF)
+```
+
+In this case, please ensure you install `libmimalloc-dev` at compile time and `libmimalloc2.0` as runtime dependencies.
+
+#### Ubuntu/Debian
+
+```bash
+sudo apt install libmimalloc-dev libmimalloc2.0
 ```
 
 ### Web

@@ -1,3 +1,7 @@
+## 1.2.0
+
+- chore: refactor mimalloc import
+
 ## 1.1.3
 
 - feat: improve compile-time failure handling

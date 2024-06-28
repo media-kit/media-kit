@@ -12,96 +12,111 @@ option(MEDIA_KIT_LIBS_AVAILABLE "package:media_kit libraries are available." ON)
 set(PROJECT_NAME "media_kit_libs_linux")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
-# We use the mimalloc's object file (mimalloc.o) & link the final executable with it.
-# This ensures that the standard malloc interface resolves to the mimalloc library.
-#
-# Refer to "Static Override" section in mimalloc's documentation:
-# https://github.com/microsoft/mimalloc#static-override
-function(download_and_verify url md5 locationForArchive)
-  # Check if the archive exists.
-  if(EXISTS "${locationForArchive}")
-    file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+option(MIMALLOC_USE_STATIC_LIBS "Whether to prefer linking to mimalloc statically" ON)
 
-    # If MD5 doesn't match, delete the archive to download again.
-    if(NOT md5 STREQUAL ARCHIVE_MD5)
-      file(REMOVE "${locationForArchive}")
-      message(STATUS "MD5 mismatch. File deleted.")
-    endif()
+if(MIMALLOC_USE_STATIC_LIBS)
+
+  find_library(MIMALLOC_PATH "libmimalloc.so")
+  if(MIMALLOC_PATH)
+    set(MIMALLOC_LIB "${MIMALLOC_PATH}" CACHE INTERNAL "")
   endif()
 
-  # Download the archive if it doesn't exist.
-  if(NOT EXISTS "${locationForArchive}")
-    message(STATUS "Downloading archive from ${url}...")
-    file(DOWNLOAD "${url}" "${locationForArchive}")
-    message(STATUS "Downloaded archive to ${locationForArchive}.")
+else()
 
-    # Verify MD5 of the newly downloaded file.
-    file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+  # We use the mimalloc's object file (mimalloc.o) & link the final executable with it.
+  # This ensures that the standard malloc interface resolves to the mimalloc library.
+  #
+  # Refer to "Static Override" section in mimalloc's documentation:
+  # https://github.com/microsoft/mimalloc#static-override
+  function(download_and_verify url md5 locationForArchive)
+    # Check if the archive exists.
+    if(EXISTS "${locationForArchive}")
+      file(MD5 "${locationForArchive}" ARCHIVE_MD5)
 
-    if(md5 STREQUAL ARCHIVE_MD5)
-      message(STATUS "${locationForArchive} Verification successful.")
-    else()
-      message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to rebuild project again.")
+      # If MD5 doesn't match, delete the archive to download again.
+      if(NOT md5 STREQUAL ARCHIVE_MD5)
+        file(REMOVE "${locationForArchive}")
+        message(STATUS "MD5 mismatch. File deleted.")
+      endif()
     endif()
-  endif()
-endfunction()
 
-# ------------------------------------------------------------------------------
-set(MIMALLOC "mimalloc-2.1.2.tar.gz")
+    # Download the archive if it doesn't exist.
+    if(NOT EXISTS "${locationForArchive}")
+      message(STATUS "Downloading archive from ${url}...")
+      file(DOWNLOAD "${url}" "${locationForArchive}")
+      message(STATUS "Downloaded archive to ${locationForArchive}.")
 
-set(MIMALLOC_URL "https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz")
-set(MIMALLOC_MD5 "5179c8f5cf1237d2300e2d8559a7bc55")
+      # Verify MD5 of the newly downloaded file.
+      file(MD5 "${locationForArchive}" ARCHIVE_MD5)
 
-set(MIMALLOC_ARCHIVE "${CMAKE_BINARY_DIR}/${MIMALLOC}")
-set(MIMALLOC_SRC "${CMAKE_BINARY_DIR}/mimalloc")
+      if(md5 STREQUAL ARCHIVE_MD5)
+        message(STATUS "${locationForArchive} Verification successful.")
+      else()
+        message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to rebuild project again.")
+      endif()
+    endif()
+  endfunction()
 
-download_and_verify(
-  ${MIMALLOC_URL}
-  ${MIMALLOC_MD5}
-  ${MIMALLOC_ARCHIVE}
-)
+  # ------------------------------------------------------------------------------
+  set(MIMALLOC "mimalloc-2.1.2.tar.gz")
 
-function(check_directory_exists_and_not_empty dir result_var)
-  # Check if the directory exists
-  if(EXISTS "${dir}")
-    # Check if the directory is not empty
-    file(GLOB dir_contents "${dir}/*")
+  set(MIMALLOC_URL "https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz")
+  set(MIMALLOC_MD5 "5179c8f5cf1237d2300e2d8559a7bc55")
 
-    if(dir_contents)
-      set(${result_var} TRUE PARENT_SCOPE)
+  set(MIMALLOC_ARCHIVE "${CMAKE_BINARY_DIR}/${MIMALLOC}")
+  set(MIMALLOC_SRC "${CMAKE_BINARY_DIR}/mimalloc")
+
+  download_and_verify(
+    ${MIMALLOC_URL}
+    ${MIMALLOC_MD5}
+    ${MIMALLOC_ARCHIVE}
+  )
+
+  function(check_directory_exists_and_not_empty dir result_var)
+    # Check if the directory exists
+    if(EXISTS "${dir}")
+      # Check if the directory is not empty
+      file(GLOB dir_contents "${dir}/*")
+
+      if(dir_contents)
+        set(${result_var} TRUE PARENT_SCOPE)
+      else()
+        set(${result_var} FALSE PARENT_SCOPE)
+        message(STATUS "Directory ${dir} exists but is empty!")
+      endif()
     else()
       set(${result_var} FALSE PARENT_SCOPE)
-      message(STATUS "Directory ${dir} exists but is empty!")
+      message(STATUS "Directory ${dir} does not exist!")
     endif()
-  else()
-    set(${result_var} FALSE PARENT_SCOPE)
-    message(STATUS "Directory ${dir} does not exist!")
+  endfunction()
+
+  # Extract
+  # https://stackoverflow.com/a/19859882/12825435
+  set(MIMALLOC_LIB "${MIMALLOC_SRC}/out/release/mimalloc.o" CACHE INTERNAL "")
+
+  check_directory_exists_and_not_empty(${MIMALLOC_SRC} MIMALLOC_VALID)
+
+  if(NOT MIMALLOC_VALID)
+    message(STATUS "Extracting ${MIMALLOC}...")
+    make_directory("${MIMALLOC_SRC}")
+    add_custom_command(
+      OUTPUT ${MIMALLOC_LIB}
+      COMMAND "${CMAKE_COMMAND}" -E tar xzf "${MIMALLOC_ARCHIVE}"
+
+      # add_subdirectory() is too much work. Alternatively building it through command line.
+      COMMAND "mkdir" "-p" "out/release"
+      COMMAND "cd" "out/release"
+      COMMAND "${CMAKE_COMMAND}" "../../mimalloc-2.1.2"
+      COMMAND "make"
+      WORKING_DIRECTORY "${MIMALLOC_SRC}"
+    )
   endif()
-endfunction()
 
-# Extract
-# https://stackoverflow.com/a/19859882/12825435
-set(MIMALLOC_LIB "${MIMALLOC_SRC}/out/release/mimalloc.o" CACHE INTERNAL "")
+  add_custom_target("MIMALLOC_TARGET" ALL DEPENDS ${MIMALLOC_LIB})
 
-check_directory_exists_and_not_empty(${MIMALLOC_SRC} MIMALLOC_VALID)
-
-if(NOT MIMALLOC_VALID)
-  message(STATUS "Extracting ${MIMALLOC}...")
-  make_directory("${MIMALLOC_SRC}")
-  add_custom_command(
-    OUTPUT ${MIMALLOC_LIB}
-    COMMAND "${CMAKE_COMMAND}" -E tar xzf "${MIMALLOC_ARCHIVE}"
-
-    # add_subdirectory() is too much work. Alternatively building it through command line.
-    COMMAND "mkdir" "-p" "out/release"
-    COMMAND "cd" "out/release"
-    COMMAND "${CMAKE_COMMAND}" "../../mimalloc-2.1.2"
-    COMMAND "make"
-    WORKING_DIRECTORY "${MIMALLOC_SRC}"
-  )
 endif()
 
-add_custom_target("MIMALLOC_TARGET" ALL DEPENDS ${MIMALLOC_LIB})
+unset(MIMALLOC_USE_STATIC_LIBS CACHE)
 
 # ------------------------------------------------------------------------------
 set(PLUGIN_NAME "media_kit_libs_linux_plugin")

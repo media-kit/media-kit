@@ -1683,6 +1683,21 @@ This is as simple as [adding one line to `linux/CMakeLists.txt`](https://github.
 target_link_libraries(${BINARY_NAME} PRIVATE ${MIMALLOC_LIB})
 ```
 
+In case you prefer dynamic linking of mimalloc, you can additionally add the following line to your `linux/CMakeLists.txt`:
+
+```cmake
+# use dynamically linked mimalloc
+set(MIMALLOC_USE_STATIC_LIBS OFF)
+```
+
+In this case, please ensure you install `libmimalloc-dev` at compile time and `libmimalloc2.0` as runtime dependencies.
+
+#### Ubuntu/Debian
+
+```bash
+sudo apt install libmimalloc-dev libmimalloc2.0
+```
+
 ### Web
 
 On the web, **libmpv is not used**. Video & audio playback is handled by embedding [HTML `<video>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video). The format support depends upon the web browser. It happens to be extremely limited as compared to native platforms.
