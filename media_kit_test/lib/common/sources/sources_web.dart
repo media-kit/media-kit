@@ -1,5 +1,7 @@
 // ignore_for_file: avoid_web_libraries_in_flutter
 
+import 'dart:js_interop';
+
 import 'package:web/web.dart' as html;
 import 'package:flutter/foundation.dart';
 
@@ -17,7 +19,7 @@ Future<void> prepareSources() async {
 }
 
 String convertBytesToURL(Uint8List bytes) {
-  final blob = html.Blob([bytes]);
+  final blob = html.Blob(<JSUint8Array>[(bytes as Uint8List).toJS].toJS);
   final object = html.URL.createObjectURL(blob);
   return object;
 }
