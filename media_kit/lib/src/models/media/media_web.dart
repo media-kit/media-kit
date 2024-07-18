@@ -5,6 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: library_private_types_in_public_api
 import 'dart:collection';
+import 'dart:js_interop';
 import 'dart:typed_data';
 import 'package:web/web.dart' as html;
 
@@ -45,7 +46,7 @@ class Media extends Playable {
     // Media.memory : Revoke the object URL.
     try {
       if (memory) {
-        html.Url.revokeObjectUrl(uri);
+        html.URL.revokeObjectURL(uri);
       }
     } catch (exeception, stacktrace) {
       print(exeception);
@@ -119,8 +120,9 @@ class Media extends Playable {
     Uint8List data, {
     String? type,
   }) {
-    final src = html.URL.createObjectURL(html.Blob([data], type));
-    final instance = Media(src);
+    final blob = html.Blob(<JSUint8Array>[(data as Uint8List).toJS].toJS);
+    final object = html.URL.createObjectURL(blob);
+    final instance = Media(object);
     instance._memory = true;
     return Future.value(instance);
   }
