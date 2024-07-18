@@ -24,7 +24,7 @@ dependencies:
   path_provider: ^2.0.14
   http: ">=0.13.0 <2.0.0"
   universal_platform: ^1.0.0+1
-  web: ^0.5.1
+  web: ^1.0.0
 
 dependency_overrides:
   # Force dependency overrides for all (direct or transitive) dependencies
