@@ -12,6 +12,9 @@ option(MEDIA_KIT_LIBS_AVAILABLE "package:media_kit libraries are available." ON)
 set(PROJECT_NAME "media_kit_libs_windows_video")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
+# Deal with MSVC incompatiblity
+add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
+
 # ------------------------------------------------------------------------------
 function(download_and_verify url md5 locationForArchive)
   # Check if the archive exists.
