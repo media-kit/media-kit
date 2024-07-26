@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_test/common/logs_manager/logs_manager.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../common/globals.dart';
@@ -22,12 +23,13 @@ class _SinglePlayerSingleVideoScreenState
     player,
     configuration: configuration.value,
   );
-
+  LogsManager logsManager = LogsManager();
   @override
   void initState() {
     super.initState();
     player.open(Media(sources[0]));
-    player.stream.error.listen((error) => debugPrint(error));
+    player.stream.error.listen((error) => logsManager.addErrorLog(error));
+    player.stream.log.listen((log) => logsManager.addInfoLog(log.toString()));
   }
 
   @override
@@ -60,6 +62,20 @@ class _SinglePlayerSingleVideoScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              logsManager.copyLogs();
+            },
+            child: const Text(
+              'Copy Logs',
+              style: TextStyle(
+                color: Colors.black,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16.0),
+        ],
       ),
       floatingActionButton: Row(
         mainAxisSize: MainAxisSize.min,
