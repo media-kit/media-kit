@@ -63,11 +63,11 @@ endfunction()
 # Thanks to Mitchel Stewart (https://github.com/Quackdoc) for providing patches to generate minimal libmpv & FFmpeg audio specific builds.
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20230924-git-652a1dd.7z")
+set(LIBMPV "mpv-dev-x86_64-20240721-git-e509ec0.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-build/releases/download/2023-09-24/${LIBMPV}")
-set(LIBMPV_MD5 "cd738e16e2a19626d7cfa48801524f8c")
+set(LIBMPV_URL "https://master.dl.sourceforge.net/project/mpv-player-windows/libmpv/${LIBMPV}")
+set(LIBMPV_MD5 "95d6a55ac29b39c826f0f6754fdd1b69")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
