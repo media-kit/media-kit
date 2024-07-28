@@ -4,4 +4,4 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-export 'media_native.dart' if (dart.library.html) 'media_web.dart';
+export 'media_native.dart' if (dart.library.js_interop) 'media_web.dart';

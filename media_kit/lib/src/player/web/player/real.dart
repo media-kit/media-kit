@@ -6,9 +6,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:js' as js;
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 import 'dart:collection';
-import 'dart:html' as html;
+import 'package:web/web.dart' as html;
 import 'package:meta/meta.dart';
 import 'package:collection/collection.dart';
 import 'package:synchronized/synchronized.dart';
@@ -400,10 +402,10 @@ class WebPlayer extends PlatformPlayer {
       _loadSource(_playlist[_index]);
 
       if (play) {
-        element.play().catchError(
+        element.play().toDart.catchError(
           (error) {
             // PlayerStream.error
-            final e = error as html.DomException;
+            final e = error as html.DOMException;
             if (!errorController.isClosed) {
               errorController.add(e.message ?? '');
             }
@@ -548,10 +550,10 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      element.play().catchError(
+      element.play().toDart.catchError(
         (error) {
           // PlayerStream.error
-          final e = error as html.DomException;
+          final e = error as html.DOMException;
           if (!errorController.isClosed) {
             errorController.add(e.message ?? '');
           }
@@ -1430,7 +1432,7 @@ class WebPlayer extends PlatformPlayer {
       }
     } catch (exception) {
       // PlayerStream.error
-      final e = exception as html.DomException;
+      final e = exception as html.DOMException;
       if (!errorController.isClosed) {
         errorController.add(e.message ?? '');
       }
