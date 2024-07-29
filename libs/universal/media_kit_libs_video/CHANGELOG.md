@@ -1,3 +1,7 @@
+## 1.0.5
+
+- build: bump dependencies
+
 ## 1.0.4
 
 - build: bump dependencies

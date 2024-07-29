@@ -38,17 +38,17 @@
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.10                             # Primary package.
-  media_kit_video: ^1.2.4                        # For video rendering.
-  media_kit_libs_video: ^1.0.4                   # Native video dependencies.
+  media_kit: ^1.1.11 # Primary package.
+  media_kit_video: ^1.2.5 # For video rendering.
+  media_kit_libs_video: ^1.0.5 # Native video dependencies.
 ```
 
 #### For apps that need audio playback:
 
 ```yaml
 dependencies:
-  media_kit: ^1.1.10                             # Primary package.  
-  media_kit_libs_audio: ^1.0.4                   # Native audio dependencies.
+  media_kit: ^1.1.11 # Primary package.
+  media_kit_libs_audio: ^1.0.5 # Native audio dependencies.
 ```
 
 **Notes:**
@@ -60,15 +60,14 @@ dependencies:
 
 ## Platforms
 
-| Platform | Video | Audio | Notes | Demo |
-| -------- | ----- | ----- | ----- | ---- |
-| Android     | ✅    | ✅    | Android 5.0 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.10/media_kit_test_android-arm64-v8a.apk) |
-| iOS         | ✅    | ✅    | iOS 9 or above.                      | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.10/media_kit_test_ios_arm64.7z)          |
-| macOS       | ✅    | ✅    | macOS 10.9 or above.                 | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.10/media_kit_test_macos_universal.7z)    |
-| Windows     | ✅    | ✅    | Windows 7 or above.                  | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.10/media_kit_test_win32_x64.7z)          |
-| GNU/Linux   | ✅    | ✅    | Any modern GNU/Linux distribution.   | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.10/media_kit_test_linux_x64.7z)          |
-| Web         | ✅    | ✅    | Any modern web browser.              | [Visit](https://media-kit.github.io/media-kit/)                                                                            |
-
+| Platform  | Video | Audio | Notes                              | Demo                                                                                                                        |
+| --------- | ----- | ----- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Android   | ✅    | ✅    | Android 5.0 or above.              | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.10/media_kit_test_android-arm64-v8a.apk) |
+| iOS       | ✅    | ✅    | iOS 9 or above.                    | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.10/media_kit_test_ios_arm64.7z)          |
+| macOS     | ✅    | ✅    | macOS 10.9 or above.               | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.10/media_kit_test_macos_universal.7z)    |
+| Windows   | ✅    | ✅    | Windows 7 or above.                | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.10/media_kit_test_win32_x64.7z)          |
+| GNU/Linux | ✅    | ✅    | Any modern GNU/Linux distribution. | [Download](https://github.com/media-kit/media-kit/releases/download/media_kit-v1.1.10/media_kit_test_linux_x64.7z)          |
+| Web       | ✅    | ✅    | Any modern web browser.            | [Visit](https://media-kit.github.io/media-kit/)                                                                             |
 
 <table>
   <tr>
@@ -148,7 +147,7 @@ A quick usage example.
 import 'package:flutter/material.dart';
 
 import 'package:media_kit/media_kit.dart';                      // Provides [Player], [Media], [Playlist] etc.
-import 'package:media_kit_video/media_kit_video.dart';          // Provides [VideoController] & [Video] etc.        
+import 'package:media_kit_video/media_kit_video.dart';          // Provides [VideoController] & [Video] etc.
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -209,6 +208,7 @@ A usage guide for [package:media_kit](https://github.com/media-kit/media-kit).
 **Tip:** Use <kbd>Ctrl</kbd> + <kbd>F</kbd> to quickly search for things.
 
 ### Contents
+
 - [Initialization](#initialization)
 - [Create a `Player`](#create-a-player)
 - [Dispose a `Player`](#dispose-a-player)
@@ -357,7 +357,7 @@ await player.playOrPause();
 
 ### Stop
 
-The `stop` method may be used to stop the playback of currently opened `Media` or `Playlist`. 
+The `stop` method may be used to stop the playback of currently opened `Media` or `Playlist`.
 
 ```dart
 await player.stop();
@@ -689,7 +689,7 @@ The **existing ["TL;DR example"](#tldr) should provide you better idea**.
 For displaying the video inside Flutter UI, you must:
 
 - Create `VideoController`
-  - Pass the `Player` you already have. 
+  - Pass the `Player` you already have.
 - Create `Video` widget
   - Pass the `VideoController` you already have.
 
@@ -775,7 +775,6 @@ Video(
 ```
 
 https://user-images.githubusercontent.com/28951144/253067794-73b5ca5d-e90d-4892-bc09-2a80f05c9f0b.mp4
-
 
 ### Load external subtitle track
 
@@ -880,13 +879,13 @@ Apart from theming, layout can be customized, position of buttons can be modifie
 
 #### Types
 
-| Type                                                | Description                                                                                                   |
-|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| [`AdaptiveVideoControls`](#adaptivevideocontrols)               | Selects [`MaterialVideoControls`](#materialvideocontrols), [`CupertinoVideoControls`](#cupertinovideocontrols) etc. based on platform.                                                      |
-| [`MaterialVideoControls`](#materialvideocontrols)               | [Material Design](https://material.io/) video controls.                                                                               |
-| [`MaterialDesktopVideoControls`](#materialdesktopvideocontrols) | [Material Design](https://material.io/) video controls for desktop.                                                                   |
-| [`CupertinoVideoControls`](#cupertinovideocontrols)             | [iOS-style](https://developer.apple.com/design/human-interface-guidelines/designing-for-ios) video controls.                     |
-| [`NoVideoControls`](#novideocontrols)                           | Disable video controls _i.e._ only render video output.                                                                               |
+| Type                                                            | Description                                                                                                                            |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| [`AdaptiveVideoControls`](#adaptivevideocontrols)               | Selects [`MaterialVideoControls`](#materialvideocontrols), [`CupertinoVideoControls`](#cupertinovideocontrols) etc. based on platform. |
+| [`MaterialVideoControls`](#materialvideocontrols)               | [Material Design](https://material.io/) video controls.                                                                                |
+| [`MaterialDesktopVideoControls`](#materialdesktopvideocontrols) | [Material Design](https://material.io/) video controls for desktop.                                                                    |
+| [`CupertinoVideoControls`](#cupertinovideocontrols)             | [iOS-style](https://developer.apple.com/design/human-interface-guidelines/designing-for-ios) video controls.                           |
+| [`NoVideoControls`](#novideocontrols)                           | Disable video controls _i.e._ only render video output.                                                                                |
 | Custom                                                          | Provide custom `builder` for video controls.                                                                                           |
 
 #### Select existing video controls
@@ -902,6 +901,7 @@ Scaffold(
   ),
 );
 ```
+
 ```dart
 Scaffold(
   body: Video(
@@ -911,7 +911,6 @@ Scaffold(
   ),
 );
 ```
-
 
 #### Build custom video controls
 
@@ -989,6 +988,7 @@ MaterialVideoControlsTheme(
   ),
 );
 ```
+
 - Related widgets (may be used in `primaryButtonBar`, `topButtonBar` & `bottomButtonBar`):
   - `MaterialPlayOrPauseButton`
   - `MaterialSkipNextButton`
@@ -1000,7 +1000,7 @@ MaterialVideoControlsTheme(
 ##### `MaterialDesktopVideoControls`
 
 - [Material Design](https://material.io/) video controls for desktop.
-- Theming: 
+- Theming:
   - Use `MaterialDesktopVideoControlsTheme` widget.
   - `Video` widget(s) in the `child` tree will follow the specified theme:
 
@@ -1037,6 +1037,7 @@ MaterialDesktopVideoControlsTheme(
   ),
 );
 ```
+
 - Related widgets (may be used in `primaryButtonBar`, `topButtonBar` & `bottomButtonBar`):
   - `MaterialDesktopPlayOrPauseButton`
   - `MaterialDesktopSkipNextButton`
@@ -1047,22 +1048,22 @@ MaterialDesktopVideoControlsTheme(
   - `MaterialDesktopPositionIndicator`
 - Keyboard shortcuts may be modified using `keyboardShortcuts` argument. Default ones are listed below:
 
-| Shortcut                      | Action                    |
-|-------------------------------|---------------------------|
-| Media Play Button             | Play                      |
-| Media Pause Button            | Pause                     |
-| Media Play/Pause Button       | Play/Pause                |
-| Media Next Track Button       | Skip Next                 |
-| Media Previous Track Button   | Skip Previous             |
-| Space                         | Play/Pause                |
-| J                             | Seek 10s Behind           |
-| I                             | Seek 10s Ahead            |
-| Arrow Left                    | Seek 2s Behind            |
-| Arrow Right                   | Seek 2s Ahead             |
-| Arrow Up                      | Increase Volume 5%        |
-| Arrow Down                    | Decrease Volume 5%        |
-| F                             | Enter/Exit Fullscreen     |
-| Escape                        | Exit Fullscreen           |
+| Shortcut                    | Action                |
+| --------------------------- | --------------------- |
+| Media Play Button           | Play                  |
+| Media Pause Button          | Pause                 |
+| Media Play/Pause Button     | Play/Pause            |
+| Media Next Track Button     | Skip Next             |
+| Media Previous Track Button | Skip Previous         |
+| Space                       | Play/Pause            |
+| J                           | Seek 10s Behind       |
+| I                           | Seek 10s Ahead        |
+| Arrow Left                  | Seek 2s Behind        |
+| Arrow Right                 | Seek 2s Ahead         |
+| Arrow Up                    | Increase Volume 5%    |
+| Arrow Down                  | Decrease Volume 5%    |
+| F                           | Enter/Exit Fullscreen |
+| Escape                      | Exit Fullscreen       |
 
 ##### `CupertinoVideoControls`
 
@@ -1131,6 +1132,7 @@ This guide follows a tutorial-like structure & covers nearly all features that [
 You may see project's [architecture](https://github.com/media-kit/media-kit#architecture) & [implementation](https://github.com/media-kit/media-kit#implementation) details for further information.
 
 The project aims to meet demands of the community, this includes:
+
 1. Holding accountability.
 2. Ensuring timely maintenance.
 
@@ -1637,7 +1639,7 @@ During the build phase, the following warnings are not critical and cannot be si
 # 1 "<command line>" 1
  ^
 <command line>:20:9: warning: 'POD_CONFIGURATION_DEBUG' macro redefined
-#define POD_CONFIGURATION_DEBUG 1 DEBUG=1 
+#define POD_CONFIGURATION_DEBUG 1 DEBUG=1
         ^
 #define POD_CONFIGURATION_DEBUG 1
         ^
@@ -1660,7 +1662,7 @@ sudo apt install libmpv-dev mpv
 There are other ways to bundle these within your app package e.g. within Snap or Flatpak. Few examples:
 
 - [Celluloid](https://github.com/celluloid-player/celluloid/blob/master/flatpak/io.github.celluloid_player.Celluloid.json)
-- [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/\_packaging)
+- [VidCutter](https://github.com/ozmartian/vidcutter/tree/master/_packaging)
 
 #### Utilize [mimalloc](https://github.com/microsoft/mimalloc)
 

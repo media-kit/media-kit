@@ -1,3 +1,6 @@
+## 1.0.9
+- fix windows crash by @Airyzz [#900](https://github.com/media-kit/media-kit/pull/900)
+
 ## 1.0.8
 
 - fix(windows): graceful process exit
