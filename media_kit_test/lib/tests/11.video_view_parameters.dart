@@ -29,9 +29,10 @@ class _VideoViewParametersScreenState extends State<VideoViewParametersScreen> {
 
   BoxFit fit = BoxFit.contain;
 
-  int tick = 0;
-  Timer? timer;
-
+  int fitTick = 0;
+  int fontSizeTick = 0;
+  Timer? fitTimer;
+  Timer? fontSizeTimer;
   @override
   void initState() {
     super.initState();
@@ -43,8 +44,8 @@ class _VideoViewParametersScreenState extends State<VideoViewParametersScreen> {
   void dispose() {
     player.dispose();
 
-    timer?.cancel();
-
+    fitTimer?.cancel();
+    fontSizeTimer?.cancel();
     super.dispose();
   }
 
@@ -53,8 +54,8 @@ class _VideoViewParametersScreenState extends State<VideoViewParametersScreen> {
         Center(
           child: ElevatedButton(
             onPressed: () {
-              if (timer == null) {
-                timer = Timer.periodic(
+              if (fitTimer == null) {
+                fitTimer = Timer.periodic(
                   const Duration(seconds: 1),
                   (timer) {
                     if (timer.tick % 3 == 0 /* Every 3 seconds. */) {
@@ -66,24 +67,65 @@ class _VideoViewParametersScreenState extends State<VideoViewParametersScreen> {
                     }
                     if (mounted) {
                       setState(() {
-                        tick = timer.tick;
+                        fitTick = timer.tick;
                       });
                     }
                   },
                 );
               } else {
-                timer?.cancel();
-                timer = null;
+                fitTimer?.cancel();
+                fitTimer = null;
               }
               setState(() {});
             },
             child: Text(
-              timer == null ? 'Cycle BoxFit' : 'BoxFit: $fit (${3 - tick % 3})',
+              fitTimer == null
+                  ? 'Cycle BoxFit'
+                  : 'BoxFit: $fit (${3 - fitTick % 3})',
             ),
           ),
         ),
         const SizedBox(height: 16.0),
+        Center(
+          child: ElevatedButton(
+            onPressed: () {
+              if (fontSizeTimer == null) {
+                fontSizeTimer = Timer.periodic(
+                  const Duration(seconds: 1),
+                  (timer) {
+                    if (timer.tick % 3 == 0 /* Every 3 seconds. */) {
+                      key.currentState?.update(
+                        subtitleViewConfiguration: SubtitleViewConfiguration(
+                            style: TextStyle(
+                          // font size increases every 3 seconds
+                          fontSize: fontSizeFromTick(timer.tick),
+                        )),
+                      );
+                    }
+                    if (mounted) {
+                      setState(() {
+                        fontSizeTick = timer.tick;
+                      });
+                    }
+                  },
+                );
+              } else {
+                fontSizeTimer?.cancel();
+                fontSizeTimer = null;
+              }
+              setState(() {});
+            },
+            child: Text(
+              fontSizeTimer == null
+                  ? 'Cycle Font'
+                  : 'Font: ${fontSizeFromTick(fontSizeTick)}',
+            ),
+          ),
+        ),
       ];
+
+  double fontSizeFromTick(int tick) =>
+      20.0 + (tick % 6 < 3 ? tick % 6 : 6 - tick % 6) * 10.0;
 
   @override
   Widget build(BuildContext context) {

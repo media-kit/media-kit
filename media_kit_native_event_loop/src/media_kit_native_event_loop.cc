@@ -31,43 +31,49 @@ void MediaKitEventLoopHandler::Register(int64_t handle, void* post_c_object, int
       for (;;) {
         mutex_.lock();
 
-        std::unique_lock<std::mutex> l(*mutexes_[context]);
+        {
+          // This block is to ensure we free the context-specific mutex
+          // before trying to re-lock the global mutex and check if we should exit.
+          // The global mutex must always be acquired before the context-specific
+          // mutex to avoid a race condition (lock order inversion).
+          std::unique_lock<std::mutex> l(*mutexes_[context]);
 
-        auto condition_variable = condition_variables_[context].get();
+          auto condition_variable = condition_variables_[context].get();
 
-        mutex_.unlock();
+          mutex_.unlock();
 
-        auto event = mpv_wait_event(context, -1);
+          auto event = mpv_wait_event(context, -1);
 
-        // [mpv_handle*, mpv_event*]
-        Dart_CObject mpv_handle_object;
-        mpv_handle_object.type = Dart_CObject_kInt64;
-        mpv_handle_object.value.as_int64 = reinterpret_cast<int64_t>(context);
-        Dart_CObject mpv_event_object;
-        mpv_event_object.type = Dart_CObject_kInt64;
-        mpv_event_object.value.as_int64 = reinterpret_cast<int64_t>(event);
-        Dart_CObject* value_objects[] = {&mpv_handle_object, &mpv_event_object};
-        Dart_CObject event_object;
-        event_object.type = Dart_CObject_kArray;
-        event_object.value.as_array.length = 2;
-        event_object.value.as_array.values = value_objects;
+          // [mpv_handle*, mpv_event*]
+          Dart_CObject mpv_handle_object;
+          mpv_handle_object.type = Dart_CObject_kInt64;
+          mpv_handle_object.value.as_int64 = reinterpret_cast<int64_t>(context);
+          Dart_CObject mpv_event_object;
+          mpv_event_object.type = Dart_CObject_kInt64;
+          mpv_event_object.value.as_int64 = reinterpret_cast<int64_t>(event);
+          Dart_CObject* value_objects[] = {&mpv_handle_object, &mpv_event_object};
+          Dart_CObject event_object;
+          event_object.type = Dart_CObject_kArray;
+          event_object.value.as_array.length = 2;
+          event_object.value.as_array.values = value_objects;
 
-        // Post to Dart.
-        auto fn = reinterpret_cast<bool (*)(Dart_Port, Dart_CObject*)>(post_c_object);
-        if (event->event_id != MPV_EVENT_NONE) {
-#if defined(__APPLE__)
-          signal_try(label) {
+          // Post to Dart.
+          auto fn = reinterpret_cast<bool (*)(Dart_Port, Dart_CObject*)>(post_c_object);
+          if (event->event_id != MPV_EVENT_NONE) {
+  #if defined(__APPLE__)
+            signal_try(label) {
+              fn(send_port, &event_object);
+            }
+            signal_catch(label) {}
+            signal_end(label)
+  #else
             fn(send_port, &event_object);
+  #endif
           }
-          signal_catch(label) {}
-          signal_end(label)
-#else
-          fn(send_port, &event_object);
-#endif
-        }
 
-        // Interpret the posted event in Dart. Wait for |Notify| to be called.
-        condition_variable->wait(l);
+          // Interpret the posted event in Dart. Wait for |Notify| to be called.
+          condition_variable->wait(l);
+        }
 
         // Check if this |handle| has been marked to exit.
         mutex_.lock();

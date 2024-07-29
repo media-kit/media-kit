@@ -33,8 +33,7 @@ public class VideoOutput: NSObject {
   private var height: Int64?
   private var texture: ResizableTextureProtocol!
   private var textureId: Int64 = -1
-  private var currentWidth: Int64 = 0
-  private var currentHeight: Int64 = 0
+  private var currentSize: CGSize = CGSize.zero
   private var disposed: Bool = false
 
   init(
@@ -149,21 +148,14 @@ public class VideoOutput: NSObject {
   }
 
   private func _updateCallback() {
-    let width = videoWidth
-    let height = videoHeight
+    let size = videoSize
 
-    let size = CGSize(
-      width: Double(width),
-      height: Double(height)
-    )
-
-    if width == 0 || height == 0 {
+    if size.width == 0 || size.height == 0 {
       return
     }
 
-    if currentWidth != width || currentHeight != height {
-      currentWidth = width
-      currentHeight = height
+    if currentSize != size {
+      currentSize = size
 
       texture.resize(size)
       DispatchQueue.main.sync { [weak self] in
@@ -185,31 +177,23 @@ public class VideoOutput: NSObject {
     }
   }
 
-  private var videoWidth: Int64 {
-    // fixed width
-    if width != nil {
-      return width!
-    }
-
-    let params = MPVHelpers.getVideoOutParams(handle)
-    let width = params.rotate == 0 || params.rotate == 180
-      ? params.dw
-      : params.dh
-
-    return width
-  }
-
-  private var videoHeight: Int64 {
-    // fixed height
-    if height != nil {
-      return height!
-    }
-
-    let params = MPVHelpers.getVideoOutParams(handle)
-    let height = params.rotate == 0 || params.rotate == 180
-      ? params.dh
-      : params.dw
-
-    return height
+    private var videoSize: CGSize {
+        // fixed size
+        if width != nil && height != nil {
+            return CGSize(
+                width: Double(width!),
+                height: Double(height!)
+            )
+        }
+        
+        let params = MPVHelpers.getVideoOutParams(handle)
+        return CGSize(
+            width: Double(width ?? (params.rotate == 0 || params.rotate == 180
+                                    ? params.dw
+                                    : params.dh)),
+            height: Double(height ?? (params.rotate == 0 || params.rotate == 180
+                                      ? params.dh
+                                      : params.dw))
+        )
   }
 }
