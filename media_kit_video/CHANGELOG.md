@@ -6,6 +6,7 @@
 - feat: desktop video controls mouse hides with controls
 - feat: desktop on tap pause and play
 - feat: desktop on double tap fullscreen
+- fix windows crash by @Airyzz [#900](https://github.com/media-kit/media-kit/pull/900)
 
 ## 1.2.4
 
