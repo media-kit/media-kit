@@ -27,8 +27,8 @@ Future<void> enterFullscreen(BuildContext context) {
         final controllerValue = controller(context);
         Navigator.of(context, rootNavigator: true).push(
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => Material(
-              child: VideoControlsThemeDataInjector(
+            pageBuilder: (_, __, ___) => Scaffold(
+              body: VideoControlsThemeDataInjector(
                 // NOTE: Make various *VideoControlsThemeData from the parent context available in the fullscreen context.
                 context: context,
                 child: VideoStateInheritedWidget(
