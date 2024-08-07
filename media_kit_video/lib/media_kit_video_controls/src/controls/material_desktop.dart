@@ -630,7 +630,7 @@ class _MaterialDesktopVideoControlsState
                         }
                       },
 
-                onPanUpdate: _theme(context).modifyVolumeOnScroll
+                /* onPanUpdate: _theme(context).modifyVolumeOnScroll
                     ? (e) {
                         if (e.delta.dy > 0) {
                           final volume =
@@ -647,7 +647,7 @@ class _MaterialDesktopVideoControlsState
                               .setVolume(volume.clamp(0.0, 100.0));
                         }
                       }
-                    : null,
+                    : null, */
                 child: MouseRegion(
                   cursor: (_theme(context).hideMouseOnControlsRemoval && !mount)
                       ? SystemMouseCursors.none
