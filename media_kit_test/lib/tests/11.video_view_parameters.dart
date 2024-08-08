@@ -61,9 +61,7 @@ class _VideoViewParametersScreenState extends State<VideoViewParametersScreen> {
                     if (timer.tick % 3 == 0 /* Every 3 seconds. */) {
                       fit =
                           fit == BoxFit.contain ? BoxFit.none : BoxFit.contain;
-                      key.currentState?.update(
-                        fit: fit,
-                      );
+                      setState(() {});
                     }
                     if (mounted) {
                       setState(() {

@@ -216,6 +216,45 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   }
 
   @override
+  void didUpdateWidget(covariant Video oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final currentParams = _videoViewParametersNotifier.value;
+
+    final newParams = currentParams.copyWith(
+      width:
+          widget.width != oldWidget.width ? widget.width : currentParams.width,
+      height: widget.height != oldWidget.height
+          ? widget.height
+          : currentParams.height,
+      fit: widget.fit != oldWidget.fit ? widget.fit : currentParams.fit,
+      fill: widget.fill != oldWidget.fill ? widget.fill : currentParams.fill,
+      alignment: widget.alignment != oldWidget.alignment
+          ? widget.alignment
+          : currentParams.alignment,
+      aspectRatio: widget.aspectRatio != oldWidget.aspectRatio
+          ? widget.aspectRatio
+          : currentParams.aspectRatio,
+      filterQuality: widget.filterQuality != oldWidget.filterQuality
+          ? widget.filterQuality
+          : currentParams.filterQuality,
+      controls: widget.controls != oldWidget.controls
+          ? widget.controls
+          : currentParams.controls,
+      subtitleViewConfiguration: widget.subtitleViewConfiguration !=
+              oldWidget.subtitleViewConfiguration
+          ? widget.subtitleViewConfiguration
+          : currentParams.subtitleViewConfiguration,
+    );
+
+    if (newParams != currentParams) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _videoViewParametersNotifier.value = newParams;
+      });
+    }
+  }
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (widget.pauseUponEnteringBackgroundMode) {
       if ([
