@@ -7,6 +7,7 @@ import 'dart:collection';
 
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
 
 /// {@template video_state_inherited_widget}
 ///
@@ -15,19 +16,23 @@ import 'package:media_kit_video/media_kit_video.dart';
 /// {@endtemplate}
 class VideoStateInheritedWidget extends InheritedWidget {
   final VideoState state;
-  final ValueNotifier<BuildContext?> contextNotifier;
+  final DisposeSafeNotifier<BuildContext?> contextNotifier;
   final ValueNotifier<VideoViewParameters> videoViewParametersNotifier;
+
+  final bool disposeNotifiers;
   VideoStateInheritedWidget({
     super.key,
     required this.state,
     required this.contextNotifier,
     required this.videoViewParametersNotifier,
     required Widget child,
+    this.disposeNotifiers = true,
   }) : super(
-          child: _VideoStateInheritedWidgetContextNotifier(
+          child: VideoStateInheritedWidgetContextNotifier(
             state: state,
             contextNotifier: contextNotifier,
             videoViewParametersNotifier: videoViewParametersNotifier,
+            disposeNotifiers: disposeNotifiers,
             child: child,
           ),
         );
@@ -57,33 +62,37 @@ class VideoStateInheritedWidget extends InheritedWidget {
 /// This widget is used to notify the [VideoState._contextNotifier] about the most recent [BuildContext] associated with the [Video] widget.
 ///
 /// {@endtemplate}
-class _VideoStateInheritedWidgetContextNotifier extends StatefulWidget {
+class VideoStateInheritedWidgetContextNotifier extends StatefulWidget {
   final VideoState state;
-  final ValueNotifier<BuildContext?> contextNotifier;
+  final DisposeSafeNotifier<BuildContext?> contextNotifier;
   final ValueNotifier<VideoViewParameters?> videoViewParametersNotifier;
-
+  final bool disposeNotifiers;
   final Widget child;
 
-  const _VideoStateInheritedWidgetContextNotifier({
+  const VideoStateInheritedWidgetContextNotifier({
+    super.key,
     required this.state,
     required this.contextNotifier,
     required this.videoViewParametersNotifier,
+    required this.disposeNotifiers,
     required this.child,
   });
 
   @override
-  State<_VideoStateInheritedWidgetContextNotifier> createState() =>
-      _VideoStateInheritedWidgetContextNotifierState();
+  State<VideoStateInheritedWidgetContextNotifier> createState() =>
+      VideoStateInheritedWidgetContextNotifierState();
 }
 
-class _VideoStateInheritedWidgetContextNotifierState
-    extends State<_VideoStateInheritedWidgetContextNotifier> {
-  static final _fallback = HashMap<VideoState, BuildContext>.identity();
+class VideoStateInheritedWidgetContextNotifierState
+    extends State<VideoStateInheritedWidgetContextNotifier> {
+  static final fallback = HashMap<VideoState, BuildContext>.identity();
 
   @override
   void dispose() {
-    // Restore the original [BuildContext] associated with this [Video] widget.
-    widget.contextNotifier.value = _fallback[widget.state];
+    if (!widget.contextNotifier.disposed) {
+      // Restore the original [BuildContext] associated with this [Video] widget.
+      widget.contextNotifier.value = fallback[widget.state];
+    }
     super.dispose();
   }
 
@@ -93,7 +102,7 @@ class _VideoStateInheritedWidgetContextNotifierState
     // This is being done because the [Video] widget is rebuilt when it enters/exits fullscreen mode... & things don't work properly if we let [BuildContext] update in every rebuild.
     if (widget.contextNotifier.value == null || isFullscreen(context)) {
       widget.contextNotifier.value = context;
-      _fallback[widget.state] ??= context;
+      fallback[widget.state] ??= context;
     }
 
     return widget.child;
