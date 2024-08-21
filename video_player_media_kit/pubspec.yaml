@@ -30,11 +30,3 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^2.0.0
 
-# NOTE: Remove before publishing to pub.dev
-dependency_overrides:
-  media_kit:
-    path: ../media_kit
-  media_kit_video:
-    path: ../media_kit_video
-  media_kit_native_event_loop:
-    path: ../media_kit_native_event_loop

@@ -30,10 +30,7 @@ dependencies:
 dev_dependencies:
   flutter_lints: ^2.0.0
 
-# NOTE: Remove before publishing to pub.dev
-dependency_overrides:
-  media_kit:
-    path: ../media_kit
+
 
 flutter:
   plugin:
