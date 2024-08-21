@@ -1,6 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Flutter Run -&gt; 'media_kit_test'" type="FlutterRunConfigurationType" factoryName="Flutter">
-    <option name="filePath" value="$PROJECT_DIR$/media_kit_test/lib/main.dart" />
-    <method v="2" />
-  </configuration>
-</component>
