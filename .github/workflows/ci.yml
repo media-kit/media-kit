@@ -277,6 +277,8 @@ jobs:
         run: |
           "C:\Program Files\Git\usr\bin\sed.exe" -i "/media_kit_libs_/d" pubspec.yaml
           type pubspec.yaml
+          "C:\Program Files\Git\usr\bin\sed.exe" -i "/media_kit_libs_/d" pubspec_overrides.yaml
+          type pubspec_overrides.yaml
         shell: cmd
       - run: flutter pub get
       - run: flutter build windows --verbose
@@ -301,6 +303,8 @@ jobs:
         run: |
           sed -i '/media_kit_libs_/d' pubspec.yaml
           cat pubspec.yaml
+          sed -i '/media_kit_libs_/d' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml   
       - run: flutter pub get
       - run: flutter build linux --verbose
 
@@ -322,6 +326,8 @@ jobs:
         run: |
           sed -i '' '/media_kit_libs_/d' pubspec.yaml
           cat pubspec.yaml
+          sed -i '' '/media_kit_libs_/d' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml   
       - run: flutter pub get
       - run: flutter build macos --verbose
 
@@ -343,6 +349,8 @@ jobs:
         run: |
           sed -i '' '/media_kit_libs_/d' pubspec.yaml
           cat pubspec.yaml
+          sed -i '' '/media_kit_libs_/d' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml   
       - run: flutter pub get
       - run: flutter build ios --verbose --no-codesign
 
@@ -371,6 +379,8 @@ jobs:
         run: |
           sed -i '/media_kit_libs_/d' pubspec.yaml
           cat pubspec.yaml
+          sed -i '/media_kit_libs_/d' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml   
       - run: flutter pub get
       - run: flutter build apk --split-per-abi --verbose
 
@@ -392,6 +402,8 @@ jobs:
         run: |
           "C:\Program Files\Git\usr\bin\sed.exe" -i "s/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g" pubspec.yaml
           type pubspec.yaml
+          "C:\Program Files\Git\usr\bin\sed.exe" -i "s/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g" pubspec_overrides.yaml
+          pubspec_overrides.yaml
         shell: cmd
       - run: flutter pub get
       - run: flutter build windows --verbose
@@ -418,6 +430,8 @@ jobs:
         run: |
           sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
           cat pubspec.yaml
+          sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml
       - run: flutter pub get
       - run: flutter build linux --verbose
 
@@ -439,6 +453,8 @@ jobs:
         run: |
           sed -i '' 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
           cat pubspec.yaml
+          sed -i '' 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml
       - run: flutter pub get
       - run: flutter build macos --verbose
 
@@ -460,6 +476,8 @@ jobs:
         run: |
           sed -i '' 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
           cat pubspec.yaml
+          sed -i '' 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml
       - run: flutter pub get
       - run: flutter build ios --verbose --no-codesign
 
@@ -488,5 +506,8 @@ jobs:
         run: |
           sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
           cat pubspec.yaml
+          sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml
+
       - run: flutter pub get
       - run: flutter build apk --split-per-abi --verbose
