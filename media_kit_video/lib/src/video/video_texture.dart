@@ -230,7 +230,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   }
 
   @override
-  void didUpdateWidget(covariant Video oldWidget) {
+  void didUpdateWidget(Video oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     final currentParams = _videoViewParametersNotifier.value;
@@ -349,10 +349,9 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       subscription.cancel();
     }
     if (_disposeNotifiers) {
-        _videoViewParametersNotifier.dispose();
-        _contextNotifier.dispose();
-        VideoStateInheritedWidgetContextNotifierState.fallback.remove(this);
-      
+      _videoViewParametersNotifier.dispose();
+      _contextNotifier.dispose();
+      VideoStateInheritedWidgetContextNotifierState.fallback.remove(this);
     }
 
     super.dispose();
