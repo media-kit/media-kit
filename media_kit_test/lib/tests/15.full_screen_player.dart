@@ -5,7 +5,6 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../common/globals.dart';
-import '../common/widgets.dart';
 import '../common/sources/sources.dart';
 
 class FullScreenPlayer extends StatefulWidget {

@@ -616,7 +616,10 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   void shiftSubtitle() {
     if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
       state(context).setSubtitleViewPadding(
-        state(context).widget.subtitleViewConfiguration.padding +
+        videoViewParametersNotifier(context)
+                .value
+                .subtitleViewConfiguration
+                .padding +
             EdgeInsets.fromLTRB(
               0.0,
               0.0,
@@ -630,7 +633,10 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   void unshiftSubtitle() {
     if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
       state(context).setSubtitleViewPadding(
-        state(context).widget.subtitleViewConfiguration.padding,
+        videoViewParametersNotifier(context)
+            .value
+            .subtitleViewConfiguration
+            .padding,
       );
     }
   }
@@ -1418,7 +1424,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           Expanded(
                               flex: _theme(context)
                                   .seekOnDoubleTapLayoutWidgetRatios[1],
-                              child: SizedBox()),
+                              child: const SizedBox()),
                         Expanded(
                           flex: _theme(context)
                               .seekOnDoubleTapLayoutWidgetRatios[2],

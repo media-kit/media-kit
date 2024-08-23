@@ -1,8 +1,3 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2023 & onwards, Abdelaziz Mahdy <abdelaziz.h.mahdy@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 
@@ -25,8 +20,14 @@ class VideoViewParameters {
   final Alignment alignment;
   final double? aspectRatio;
   final FilterQuality filterQuality;
-  final /* VideoControlsBuilder? */ dynamic controls;
+  final dynamic
+      controls; // Assuming dynamic is used here as a placeholder for the actual type.
+  // final bool wakelock;
+  final bool pauseUponEnteringBackgroundMode;
+  final bool resumeUponEnteringForegroundMode;
   final SubtitleViewConfiguration subtitleViewConfiguration;
+  final Future<void> Function() onEnterFullscreen;
+  final Future<void> Function() onExitFullscreen;
 
   /// {@macro video_view_parameters}
   VideoViewParameters({
@@ -38,7 +39,12 @@ class VideoViewParameters {
     required this.aspectRatio,
     required this.filterQuality,
     required this.controls,
+    // required this.wakelock,
+    required this.pauseUponEnteringBackgroundMode,
+    required this.resumeUponEnteringForegroundMode,
     required this.subtitleViewConfiguration,
+    required this.onEnterFullscreen,
+    required this.onExitFullscreen,
   });
 
   VideoViewParameters copyWith({
@@ -49,7 +55,8 @@ class VideoViewParameters {
     Alignment? alignment,
     double? aspectRatio,
     FilterQuality? filterQuality,
-    /* VideoControlsBuilder? */ dynamic controls,
+    dynamic controls,
+    bool? wakelock,
     bool? pauseUponEnteringBackgroundMode,
     bool? resumeUponEnteringForegroundMode,
     SubtitleViewConfiguration? subtitleViewConfiguration,
@@ -65,8 +72,15 @@ class VideoViewParameters {
       aspectRatio: aspectRatio ?? this.aspectRatio,
       filterQuality: filterQuality ?? this.filterQuality,
       controls: controls ?? this.controls,
+      // wakelock: wakelock ?? this.wakelock,
+      pauseUponEnteringBackgroundMode: pauseUponEnteringBackgroundMode ??
+          this.pauseUponEnteringBackgroundMode,
+      resumeUponEnteringForegroundMode: resumeUponEnteringForegroundMode ??
+          this.resumeUponEnteringForegroundMode,
       subtitleViewConfiguration:
           subtitleViewConfiguration ?? this.subtitleViewConfiguration,
+      onEnterFullscreen: onEnterFullscreen ?? this.onEnterFullscreen,
+      onExitFullscreen: onExitFullscreen ?? this.onExitFullscreen,
     );
   }
 
@@ -82,7 +96,14 @@ class VideoViewParameters {
           other.aspectRatio == aspectRatio &&
           other.filterQuality == filterQuality &&
           other.controls == controls &&
-          other.subtitleViewConfiguration == subtitleViewConfiguration;
+          // other.wakelock == wakelock &&
+          other.pauseUponEnteringBackgroundMode ==
+              pauseUponEnteringBackgroundMode &&
+          other.resumeUponEnteringForegroundMode ==
+              resumeUponEnteringForegroundMode &&
+          other.subtitleViewConfiguration == subtitleViewConfiguration &&
+          other.onEnterFullscreen == onEnterFullscreen &&
+          other.onExitFullscreen == onExitFullscreen;
 
   @override
   int get hashCode =>
@@ -94,5 +115,10 @@ class VideoViewParameters {
       aspectRatio.hashCode ^
       filterQuality.hashCode ^
       controls.hashCode ^
-      subtitleViewConfiguration.hashCode;
+      // wakelock.hashCode ^
+      pauseUponEnteringBackgroundMode.hashCode ^
+      resumeUponEnteringForegroundMode.hashCode ^
+      subtitleViewConfiguration.hashCode ^
+      onEnterFullscreen.hashCode ^
+      onExitFullscreen.hashCode;
 }

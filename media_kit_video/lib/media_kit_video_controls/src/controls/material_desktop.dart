@@ -450,7 +450,10 @@ class _MaterialDesktopVideoControlsState
   void shiftSubtitle() {
     if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
       state(context).setSubtitleViewPadding(
-        state(context).widget.subtitleViewConfiguration.padding +
+        videoViewParametersNotifier(context)
+                .value
+                .subtitleViewConfiguration
+                .padding +
             EdgeInsets.fromLTRB(
               0.0,
               0.0,
@@ -464,7 +467,10 @@ class _MaterialDesktopVideoControlsState
   void unshiftSubtitle() {
     if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
       state(context).setSubtitleViewPadding(
-        state(context).widget.subtitleViewConfiguration.padding,
+        videoViewParametersNotifier(context)
+            .value
+            .subtitleViewConfiguration
+            .padding,
       );
     }
   }
@@ -629,7 +635,6 @@ class _MaterialDesktopVideoControlsState
                           toggleFullscreen(context);
                         }
                       },
-
                 onPanUpdate: _theme(context).modifyVolumeOnScroll
                     ? (e) {
                         if (e.delta.dy > 0) {

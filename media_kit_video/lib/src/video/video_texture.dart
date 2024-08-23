@@ -8,7 +8,6 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 
 import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
@@ -70,69 +69,84 @@ class Video extends StatefulWidget {
   final VideoController controller;
 
   /// Width of this viewport.
-  final double? width;
+  final double? _width;
 
   /// Height of this viewport.
-  final double? height;
+  final double? _height;
 
   /// Fit of the viewport.
-  final BoxFit fit;
+  final BoxFit _fit;
 
   /// Background color to fill the video background.
-  final Color fill;
+  final Color _fill;
 
   /// Alignment of the viewport.
-  final Alignment alignment;
+  final Alignment _alignment;
 
   /// Preferred aspect ratio of the viewport.
-  final double? aspectRatio;
+  final double? _aspectRatio;
 
   /// Filter quality of the [Texture] widget displaying the video output.
-  final FilterQuality filterQuality;
+  final FilterQuality _filterQuality;
 
   /// Video controls builder.
-  final VideoControlsBuilder? controls;
+  final VideoControlsBuilder? _controls;
 
   /// Whether to acquire wake lock while playing the video.
   final bool wakelock;
 
   /// Whether to pause the video when application enters background mode.
-  final bool pauseUponEnteringBackgroundMode;
+  final bool _pauseUponEnteringBackgroundMode;
 
   /// Whether to resume the video when application enters foreground mode.
   ///
-  /// This attribute is only applicable if [pauseUponEnteringBackgroundMode] is `true`.
+  /// This attribute is only applicable if [_pauseUponEnteringBackgroundMode] is `true`.
   ///
-  final bool resumeUponEnteringForegroundMode;
+  final bool _resumeUponEnteringForegroundMode;
 
   /// The configuration for subtitles e.g. [TextStyle] & padding etc.
-  final SubtitleViewConfiguration subtitleViewConfiguration;
+  final SubtitleViewConfiguration _subtitleViewConfiguration;
 
   /// The callback invoked when the [Video] enters fullscreen.
-  final Future<void> Function() onEnterFullscreen;
+  final Future<void> Function() _onEnterFullscreen;
 
   /// The callback invoked when the [Video] exits fullscreen.
-  final Future<void> Function() onExitFullscreen;
+  final Future<void> Function() _onExitFullscreen;
 
   /// {@macro video}
   const Video({
     Key? key,
     required this.controller,
-    this.width,
-    this.height,
-    this.fit = BoxFit.contain,
-    this.fill = const Color(0xFF000000),
-    this.alignment = Alignment.center,
-    this.aspectRatio,
-    this.filterQuality = FilterQuality.low,
-    this.controls = media_kit_video_controls.AdaptiveVideoControls,
+    double? width,
+    double? height,
+    BoxFit fit = BoxFit.contain,
+    Color fill = const Color(0xFF000000),
+    Alignment alignment = Alignment.center,
+    double? aspectRatio,
+    FilterQuality filterQuality = FilterQuality.low,
+    Widget Function(VideoState)? controls =
+        media_kit_video_controls.AdaptiveVideoControls,
     this.wakelock = true,
-    this.pauseUponEnteringBackgroundMode = true,
-    this.resumeUponEnteringForegroundMode = false,
-    this.subtitleViewConfiguration = const SubtitleViewConfiguration(),
-    this.onEnterFullscreen = defaultEnterNativeFullscreen,
-    this.onExitFullscreen = defaultExitNativeFullscreen,
-  }) : super(key: key);
+    bool pauseUponEnteringBackgroundMode = true,
+    bool resumeUponEnteringForegroundMode = false,
+    SubtitleViewConfiguration subtitleViewConfiguration =
+        const SubtitleViewConfiguration(),
+    Future<void> Function() onEnterFullscreen = defaultEnterNativeFullscreen,
+    Future<void> Function() onExitFullscreen = defaultExitNativeFullscreen,
+  })  : _onExitFullscreen = onExitFullscreen,
+        _onEnterFullscreen = onEnterFullscreen,
+        _pauseUponEnteringBackgroundMode = pauseUponEnteringBackgroundMode,
+        _resumeUponEnteringForegroundMode = resumeUponEnteringForegroundMode,
+        _subtitleViewConfiguration = subtitleViewConfiguration,
+        _controls = controls,
+        _filterQuality = filterQuality,
+        _aspectRatio = aspectRatio,
+        _alignment = alignment,
+        _fill = fill,
+        _fit = fit,
+        _height = height,
+        _width = width,
+        super(key: key);
 
   @override
   State<Video> createState() => VideoState();
@@ -210,16 +224,21 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
             )?.videoViewParametersNotifier ??
             ValueNotifier<VideoViewParameters>(
               VideoViewParameters(
-                width: widget.width,
-                height: widget.height,
-                fit: widget.fit,
-                fill: widget.fill,
-                alignment: widget.alignment,
-                aspectRatio: widget.aspectRatio,
-                filterQuality: widget.filterQuality,
-                controls: widget.controls,
-                subtitleViewConfiguration: widget.subtitleViewConfiguration,
-              ),
+                  width: widget._width,
+                  height: widget._height,
+                  fit: widget._fit,
+                  fill: widget._fill,
+                  alignment: widget._alignment,
+                  aspectRatio: widget._aspectRatio,
+                  filterQuality: widget._filterQuality,
+                  controls: widget._controls,
+                  subtitleViewConfiguration: widget._subtitleViewConfiguration,
+                  pauseUponEnteringBackgroundMode:
+                      widget._pauseUponEnteringBackgroundMode,
+                  resumeUponEnteringForegroundMode:
+                      widget._resumeUponEnteringForegroundMode,
+                  onEnterFullscreen: widget._onEnterFullscreen,
+                  onExitFullscreen: widget._onExitFullscreen),
             );
     _disposeNotifiers =
         media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
@@ -236,28 +255,29 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     final currentParams = videoViewParametersNotifier.value;
 
     final newParams = currentParams.copyWith(
-      width:
-          widget.width != oldWidget.width ? widget.width : currentParams.width,
-      height: widget.height != oldWidget.height
-          ? widget.height
+      width: widget._width != oldWidget._width
+          ? widget._width
+          : currentParams.width,
+      height: widget._height != oldWidget._height
+          ? widget._height
           : currentParams.height,
-      fit: widget.fit != oldWidget.fit ? widget.fit : currentParams.fit,
-      fill: widget.fill != oldWidget.fill ? widget.fill : currentParams.fill,
-      alignment: widget.alignment != oldWidget.alignment
-          ? widget.alignment
+      fit: widget._fit != oldWidget._fit ? widget._fit : currentParams.fit,
+      fill: widget._fill != oldWidget._fill ? widget._fill : currentParams.fill,
+      alignment: widget._alignment != oldWidget._alignment
+          ? widget._alignment
           : currentParams.alignment,
-      aspectRatio: widget.aspectRatio != oldWidget.aspectRatio
-          ? widget.aspectRatio
+      aspectRatio: widget._aspectRatio != oldWidget._aspectRatio
+          ? widget._aspectRatio
           : currentParams.aspectRatio,
-      filterQuality: widget.filterQuality != oldWidget.filterQuality
-          ? widget.filterQuality
+      filterQuality: widget._filterQuality != oldWidget._filterQuality
+          ? widget._filterQuality
           : currentParams.filterQuality,
-      controls: widget.controls != oldWidget.controls
-          ? widget.controls
+      controls: widget._controls != oldWidget._controls
+          ? widget._controls
           : currentParams.controls,
-      subtitleViewConfiguration: widget.subtitleViewConfiguration !=
-              oldWidget.subtitleViewConfiguration
-          ? widget.subtitleViewConfiguration
+      subtitleViewConfiguration: widget._subtitleViewConfiguration !=
+              oldWidget._subtitleViewConfiguration
+          ? widget._subtitleViewConfiguration
           : currentParams.subtitleViewConfiguration,
     );
 
@@ -270,7 +290,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (widget.pauseUponEnteringBackgroundMode) {
+    if (widget._pauseUponEnteringBackgroundMode) {
       if ([
         AppLifecycleState.paused,
         AppLifecycleState.detached,
@@ -280,7 +300,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
           widget.controller.player.pause();
         }
       } else {
-        if (widget.resumeUponEnteringForegroundMode &&
+        if (widget._resumeUponEnteringForegroundMode &&
             _pauseDueToPauseUponEnteringBackgroundMode) {
           _pauseDueToPauseUponEnteringBackgroundMode = false;
           widget.controller.player.play();
