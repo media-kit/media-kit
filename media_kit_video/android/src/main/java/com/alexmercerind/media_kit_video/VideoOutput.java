@@ -57,8 +57,9 @@ public class VideoOutput {
         try {
             flutterJNIAPIAvailable = false;
             waitUntilFirstFrameRenderedNotify = false;
-            // com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper is part of package:media_kit_libs_android_video & package:media_kit_libs_android_audio packages.
+                        // com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper is part of package:media_kit_libs_android_video & package:media_kit_libs_android_audio packages.
             // Use reflection to invoke methods of com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.
+
             Class<?> mediaKitAndroidHelperClass = Class.forName("com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper");
             newGlobalObjectRef = mediaKitAndroidHelperClass.getDeclaredMethod("newGlobalObjectRef", Object.class);
             deleteGlobalObjectRef = mediaKitAndroidHelperClass.getDeclaredMethod("deleteGlobalObjectRef", long.class);
@@ -69,10 +70,48 @@ public class VideoOutput {
             throw new RuntimeException("Failed to initialize com.alexmercerind.media_kit_video.VideoOutput.", e);
         }
 
-        surfaceProducer =
-            textureRegistryReference.createSurfaceProducer();
-        // If we call setOnFrameAvailableListener after creating surfaceProducer, the texture won't be displayed inside Flutter UI, because callback set by us will override the Flutter engine's own registered callback:
+        // Initialize the SurfaceProducer using the new API
+        surfaceProducer = textureRegistryReference.createSurfaceProducer();
+                // If we call setOnFrameAvailableListener after creating surfaceProducer, the texture won't be displayed inside Flutter UI, because callback set by us will override the Flutter engine's own registered callback:
         // https://github.com/flutter/engine/blob/f47e864f2dcb9c299a3a3ed22300a1dcacbdf1fe/shell/platform/android/io/flutter/view/FlutterView.java#L942-L958
+        surfaceProducer.setCallback(new TextureRegistry.SurfaceProducer.Callback() {
+            @Override
+            public void onSurfaceCreated() {
+                synchronized (lock) {
+                    Log.i("media_kit", "Surface created");
+                    surface = surfaceProducer.getSurface();
+                    if (surface != null) {
+                        try {
+                            wid = (long) newGlobalObjectRef.invoke(null, surface);
+                        } catch (Throwable e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    // Perform any additional initialization if needed
+                }
+            }
+
+            @Override
+            public void onSurfaceDestroyed() {
+                synchronized (lock) {
+                    Log.i("media_kit", "Surface destroyed");
+                    if (surface != null) {
+                        clearSurface();
+                        surface.release();
+                        surface = null;
+                    }
+                    if (wid != 0) {
+                        try {
+                            deleteGlobalObjectRef.invoke(null, wid);
+                        } catch (Throwable e) {
+                            e.printStackTrace();
+                        }
+                        wid = 0;
+                    }
+                }
+            }
+        });
+
         try {
             if (!flutterJNIAPIAvailable) {
                 flutterJNIAPIAvailable = getFlutterJNIReference() != null;
@@ -80,7 +119,9 @@ public class VideoOutput {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        // Initialize Choreographer FrameCallback for frame updates
+                // Initialize Choreographer FrameCallback for frame updates
+
+
         frameCallback = new Choreographer.FrameCallback() {
             @Override
             public void doFrame(long frameTimeNanos) {
@@ -102,7 +143,7 @@ public class VideoOutput {
                         e.printStackTrace();
                     }
                 }
-                Choreographer.getInstance().postFrameCallback(this); // Post callback again for the next frame
+                Choreographer.getInstance().postFrameCallback(this);
             }
         };
 
@@ -163,7 +204,8 @@ public class VideoOutput {
 
     public long createSurface() {
         synchronized (lock) {
-            // Delete previous android.view.Surface & object reference.
+                        // Delete previous android.view.Surface & object reference.
+
             try {
                 if (surface != null) {
                     clearSurface();
@@ -177,7 +219,8 @@ public class VideoOutput {
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-            // Create new android.view.Surface & object reference.
+                        // Create new android.view.Surface & object reference.
+
             try {
                 surface = surfaceProducer.getSurface();
                 wid = (long) newGlobalObjectRef.invoke(null, surface);
@@ -215,11 +258,9 @@ public class VideoOutput {
     private FlutterJNI getFlutterJNIReference() {
         try {
             FlutterView view = null;
-            // io.flutter.embedding.android.FlutterActivity
             if (view == null) {
                 view = MediaKitVideoPlugin.activity.findViewById(FlutterActivity.FLUTTER_VIEW_ID);
             }
-            // io.flutter.embedding.android.FlutterFragmentActivity
             if (view == null) {
                 final FrameLayout layout = (FrameLayout) MediaKitVideoPlugin.activity.findViewById(FlutterFragmentActivity.FRAGMENT_CONTAINER_ID);
                 for (int i = 0; i < layout.getChildCount(); i++) {
