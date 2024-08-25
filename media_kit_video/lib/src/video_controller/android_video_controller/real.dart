@@ -277,7 +277,6 @@ class AndroidVideoController extends PlatformVideoController {
         'gpu-context': 'android',
         'sub-use-margins': 'no',
         'sub-font-provider': 'none',
-        // 'sub-scale-with-window': 'yes',
         'hwdec-codecs': 'h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1',
       },
     );
@@ -320,7 +319,9 @@ class AndroidVideoController extends PlatformVideoController {
           this.height != (height ?? player.state.height) ||
           _wid == null;
       if (!force && !changed) {
-        debugPrint("[AndroidVideoController] Setting size no need to resize");
+        // debugPrint(
+        //   "[AndroidVideoController] Setting size no need to resize",
+        // );
         // No need to resize if the requested size is same as the current size.
         return;
       }
@@ -328,8 +329,9 @@ class AndroidVideoController extends PlatformVideoController {
       this.width = width ?? player.state.width;
       this.height = height ?? player.state.height;
 
-      debugPrint(
-          '[AndroidVideoController] Setting size to ${this.width} x ${this.height}, old: ${(width ?? player.state.width)} x ${(height ?? player.state.height)}, wid: $_wid');
+      // debugPrint(
+      //   '[AndroidVideoController] Setting size to ${this.width} x ${this.height}, old: ${(width ?? player.state.width)} x ${(height ?? player.state.height)}, wid: $_wid',
+      // );
 
       final res = await _channel.invokeMethod(
         'VideoOutputManager.CreateSurface',
@@ -344,10 +346,17 @@ class AndroidVideoController extends PlatformVideoController {
 
       final mpv = (player.platform as NativePlayer);
 
-      await mpv.setProperty('android-surface-size', '${this.width}x${this.height}');
+      await mpv.setProperty(
+        'android-surface-size',
+        '${this.width}x${this.height}',
+      );
 
-      rect.value =
-          Rect.fromLTWH(0, 0, this.width!.toDouble(), this.height!.toDouble());
+      rect.value = Rect.fromLTWH(
+        0,
+        0,
+        this.width!.toDouble(),
+        this.height!.toDouble(),
+      );
 
       // if (!player.state.playing && changed) {
       //   player.seekRelative(Duration.zero);
