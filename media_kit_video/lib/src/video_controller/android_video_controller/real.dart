@@ -340,11 +340,11 @@ class AndroidVideoController extends PlatformVideoController {
         },
       );
 
-      _updateWID(wid: res['wid'], force: true);
+      await _updateWID(wid: res['wid'], force: true);
 
       final mpv = (player.platform as NativePlayer);
 
-      mpv.setProperty('android-surface-size', '${this.width}x${this.height}');
+      await mpv.setProperty('android-surface-size', '${this.width}x${this.height}');
 
       rect.value =
           Rect.fromLTWH(0, 0, this.width!.toDouble(), this.height!.toDouble());
