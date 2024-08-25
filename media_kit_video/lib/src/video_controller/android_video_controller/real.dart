@@ -8,7 +8,7 @@ import 'dart:ffi';
 import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/media_kit.dart';
@@ -43,10 +43,11 @@ class AndroidVideoController extends PlatformVideoController {
   // ----------------------------------------------
 
   bool get androidAttachSurfaceAfterVideoParameters =>
-      configuration.androidAttachSurfaceAfterVideoParameters ?? vo == 'gpu';
+      configuration.androidAttachSurfaceAfterVideoParameters ??
+      vo.startsWith('gpu');
 
   /// --vo
-  String get vo => configuration.vo ?? 'gpu';
+  String get vo => configuration.vo ?? 'gpu'; // gpu-next doesnt work on atv
 
   /// --hwdec
   Future<String> get hwdec async {
@@ -61,8 +62,8 @@ class AndroidVideoController extends PlatformVideoController {
       debugPrint('media_kit: AndroidVideoController: Enforcing S/W rendering.');
       enableHardwareAcceleration = false;
     }
-    _hwdec = configuration.hwdec ??
-        (enableHardwareAcceleration ? 'auto-safe' : 'no');
+    _hwdec =
+        configuration.hwdec ?? (enableHardwareAcceleration ? 'auto' : 'no');
     return _hwdec!;
   }
 
@@ -78,80 +79,12 @@ class AndroidVideoController extends PlatformVideoController {
     super.configuration,
   ) {
     final platform = player.platform as NativePlayer;
-    platform.onLoadHooks.add(() {
-      return _lock.synchronized(
-        () async {
-          final handle = await player.handle;
-          NativeLibrary.ensureInitialized();
-          final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
 
-          // Skip surface re-creation if same resource.
-          final name = 'path'.toNativeUtf8();
-          final path = mpv.mpv_get_property_string(
-            Pointer.fromAddress(handle),
-            name.cast(),
-          );
-          final current = path.cast<Utf8>().toDartString();
-          calloc.free(name.cast());
-          mpv.mpv_free(path.cast());
-
-          bool refresh = _current != current;
-
-          _current = current;
-
-          if (refresh) {
-            // It is important to use a new android.view.Surface each time a new video-output is created because: https://stackoverflow.com/a/21564236
-            // Not doing so will cause MediaCodec usage inside libavcodec to incorrectly fail with error (because this android.view.Surface would be used twice):
-            // "native_window_api_connect returned an error: Invalid argument (-22)" & next less-efficient hwdec will be used redundantly.
-
-            // Create a new android.view.Surface & obtain object reference to it.
-            // NOTE: Previous android.view.Surface & object reference is internally released/destroyed by the method.
-            final data = await _channel.invokeMethod(
-              'VideoOutputManager.CreateSurface',
-              {
-                'handle': handle.toString(),
-              },
-            );
-            debugPrint(data.toString());
-            // Save the android.view.Surface object reference for usage inside player.stream.videoParams.listen.
-            _wid = data['wid'];
-          }
-
-          // By default, android.view.Surface has a size of 1x1. If we assign --wid here, libmpv will internally start rendering & the first frame will be drawn as a solid color: https://github.com/media-kit/media-kit/issues/339
-          // The solution is to assign --wid after android.graphics.SurfaceTexture.setDefaultBufferSize has been called & --android-surface-size has been updated (see inside player.stream.videoParams.listen).
-
-          // Assign --wid here if --vo is not "gpu" or "null" i.e. custom vo/hwdec was passed through [VideoControllerConfiguration].
-          try {
-            // ----------------------------------------------
-            if (!androidAttachSurfaceAfterVideoParameters) {
-              final values = {
-                // NOTE: ORDER IS IMPORTANT.
-                'wid': _wid.toString(),
-                'vo': vo,
-              };
-              for (final entry in values.entries) {
-                final name = entry.key.toNativeUtf8();
-                final value = entry.value.toNativeUtf8();
-                mpv.mpv_set_option_string(
-                  Pointer.fromAddress(handle),
-                  name.cast(),
-                  value.cast(),
-                );
-                calloc.free(name);
-                calloc.free(value);
-              }
-            }
-            // ----------------------------------------------
-          } catch (exception, stacktrace) {
-            debugPrint(exception.toString());
-            debugPrint(stacktrace.toString());
-          }
-        },
-      );
-    });
     platform.onUnloadHooks.add(() {
       return _lock.synchronized(
         () async {
+          _current = null;
+
           final handle = await player.handle;
           NativeLibrary.ensureInitialized();
           final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
@@ -189,9 +122,7 @@ class AndroidVideoController extends PlatformVideoController {
 
     _subscription = player.stream.videoParams.listen(
       (event) => _lock.synchronized(() async {
-        if ([0, null].contains(event.dw) ||
-            [0, null].contains(event.dh) ||
-            _wid == null) {
+        if ([0, null].contains(event.dw) || [0, null].contains(event.dh)) {
           return;
         }
 
@@ -206,55 +137,73 @@ class AndroidVideoController extends PlatformVideoController {
           height = event.dw ?? 0;
         }
 
-        rect.value = Rect.zero;
         try {
           final handle = await player.handle;
           NativeLibrary.ensureInitialized();
           final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
 
-          if (vo == 'gpu') {
+          if (vo.startsWith('gpu')) {
             // NOTE: Only required for --vo=gpu
             // With --vo=gpu, we need to update the android.graphics.SurfaceTexture size & notify libmpv to re-create vo.
             // In native Android, this kind of rendering is done with android.view.SurfaceView + android.view.SurfaceHolder, which offers onSurfaceChanged to handle this.
-            await _channel.invokeMethod(
-              'VideoOutputManager.SetSurfaceTextureSize',
-              {
-                'handle': handle.toString(),
-                'width': width.toString(),
-                'height': height.toString(),
-              },
+            final name = 'path'.toNativeUtf8();
+            final path = mpv.mpv_get_property_string(
+              Pointer.fromAddress(handle),
+              name.cast(),
+            );
+            final current = path.cast<Utf8>().toDartString();
+            calloc.free(name.cast());
+            mpv.mpv_free(path.cast());
+
+            final force = current != _current;
+            if (force) {
+              this.width = null;
+              this.height = null;
+            }
+
+            _current = current;
+
+            await setSize(
+              width: this.width ?? width.toInt(),
+              height: this.height ?? height.toInt(),
+              synchronized: false,
+              force: force,
             );
 
-            // ----------------------------------------------
-            final values = {
-              // NOTE: ORDER IS IMPORTANT.
-              'android-surface-size': [width, height].join('x'),
-              'wid': _wid.toString(),
-              'vo': 'gpu',
-            };
-            for (final entry in values.entries) {
-              final name = entry.key.toNativeUtf8();
-              final value = entry.value.toNativeUtf8();
-              mpv.mpv_set_option_string(
-                Pointer.fromAddress(handle),
-                name.cast(),
-                value.cast(),
-              );
-              calloc.free(name);
-              calloc.free(value);
-            }
+            // // ----------------------------------------------
+            // final values = {
+            //   // NOTE: ORDER IS IMPORTANT.
+            //   // 'android-surface-size': [width, height].join('x'),
+            //   'wid': _wid.toString(),
+            //   'vo': vo,
+            // };
+
+            // for (final entry in values.entries) {
+            //   final name = entry.key.toNativeUtf8();
+            //   final value = entry.value.toNativeUtf8();
+            //   mpv.mpv_set_option_string(
+            //     Pointer.fromAddress(handle),
+            //     name.cast(),
+            //     value.cast(),
+            //   );
+            //   calloc.free(name);
+            //   calloc.free(value);
+            // }
           }
           // ----------------------------------------------
         } catch (exception, stacktrace) {
           debugPrint(exception.toString());
           debugPrint(stacktrace.toString());
         }
-        rect.value = Rect.fromLTWH(
-          0.0,
-          0.0,
-          width.toDouble(),
-          height.toDouble(),
-        );
+
+        if (!vo.startsWith('gpu')) {
+          rect.value = Rect.fromLTWH(
+            0.0,
+            0.0,
+            width.toDouble(),
+            height.toDouble(),
+          );
+        }
       }),
     );
   }
@@ -328,7 +277,7 @@ class AndroidVideoController extends PlatformVideoController {
         'gpu-context': 'android',
         'sub-use-margins': 'no',
         'sub-font-provider': 'none',
-        'sub-scale-with-window': 'yes',
+        // 'sub-scale-with-window': 'yes',
         'hwdec-codecs': 'h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1',
       },
     );
@@ -362,9 +311,100 @@ class AndroidVideoController extends PlatformVideoController {
   Future<void> setSize({
     int? width,
     int? height,
-  }) {
-    throw UnsupportedError(
-      '[AndroidVideoController.setSize] is not available on Android',
+    bool force = false,
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      final handle = await player.handle;
+      final changed = this.width != (width ?? player.state.width) ||
+          this.height != (height ?? player.state.height) ||
+          _wid == null;
+      if (!force && !changed) {
+        debugPrint("[AndroidVideoController] Setting size no need to resize");
+        // No need to resize if the requested size is same as the current size.
+        return;
+      }
+
+      this.width = width ?? player.state.width;
+      this.height = height ?? player.state.height;
+
+      debugPrint(
+          '[AndroidVideoController] Setting size to ${this.width} x ${this.height}, old: ${(width ?? player.state.width)} x ${(height ?? player.state.height)}, wid: $_wid');
+
+      final res = await _channel.invokeMethod(
+        'VideoOutputManager.CreateSurface',
+        {
+          'handle': handle.toString(),
+          'width': this.width.toString(),
+          'height': this.height.toString(),
+        },
+      );
+
+      _updateWID(wid: res['wid'], force: true);
+
+      final mpv = (player.platform as NativePlayer);
+
+      mpv.setProperty('android-surface-size', '${this.width}x${this.height}');
+
+      rect.value =
+          Rect.fromLTWH(0, 0, this.width!.toDouble(), this.height!.toDouble());
+
+      // if (!player.state.playing && changed) {
+      //   player.seekRelative(Duration.zero);
+      // }
+    }
+
+    if (synchronized) {
+      return _lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  Future<void> _updateWID({required int wid, bool force = false}) async {
+    if (wid == _wid && !force) {
+      return;
+    }
+
+    final mpv = (player.platform as NativePlayer);
+    if (!mpv.disposed) {
+      if (wid != _wid) {
+        await mpv.setProperty('vo', 'null');
+        await mpv.setProperty('wid', '0');
+      }
+
+      _wid = wid;
+
+      if (wid != 0) {
+        await mpv.setProperty('wid', wid.toString());
+        await mpv.setProperty('vo', vo);
+      }
+    }
+  }
+
+  @override
+  bool isNativeViewAvailable() {
+    return false;
+  }
+
+  @override
+  Widget nativeView() {
+    return AndroidView(
+      viewType: '@media-kit/native-view',
+      onPlatformViewCreated: (id) {
+        _assignNativeView(id);
+      },
+    );
+  }
+
+  Future<void> _assignNativeView(int id) async {
+    final handle = await player.handle;
+    return await _channel.invokeMethod(
+      'VideoOutputManager.AssignView',
+      {
+        'handle': handle.toString(),
+        'viewId': id.toString(),
+      },
     );
   }
 
@@ -374,6 +414,7 @@ class AndroidVideoController extends PlatformVideoController {
     await _subscription?.cancel();
     // Release the native resources.
     final handle = await player.handle;
+    await _updateWID(wid: 0);
     _controllers.remove(handle);
     await _channel.invokeMethod(
       'VideoOutputManager.Dispose',
@@ -418,6 +459,15 @@ class AndroidVideoController extends PlatformVideoController {
                     if (!(completer?.isCompleted ?? true)) {
                       completer?.complete();
                     }
+                    break;
+                  }
+                case 'VideoOutput.SurfaceUpdatedNotify':
+                  {
+                    // Notify about updated texture ID & [Rect].
+                    final int handle = call.arguments['handle'];
+                    final int wid = call.arguments['wid'];
+
+                    _controllers[handle]?._updateWID(wid: wid);
                     break;
                   }
                 default:

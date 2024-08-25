@@ -48,22 +48,15 @@ public class VideoOutputManager {
         }
     }
 
-    public long createSurface(long handle) {
+    public long createSurface(long handle, int width, int height) {
         synchronized (lock) {
             Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.createSurface: %d", handle));
             if (videoOutputs.containsKey(handle)) {
-                return Objects.requireNonNull(videoOutputs.get(handle)).createSurface();
+                return Objects.requireNonNull(videoOutputs.get(handle)).createSurface(width, height);
             }
             return 0;
         }
     }
 
-    public void setSurfaceTextureSize(long handle, int width, int height) {
-        synchronized (lock) {
-            Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.setSurfaceTextureSize: %d %d %d", handle, width, height));
-            if (videoOutputs.containsKey(handle)) {
-                Objects.requireNonNull(videoOutputs.get(handle)).setSurfaceTextureSize(width, height);
-            }
-        }
-    }
+
 }

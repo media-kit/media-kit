@@ -111,28 +111,21 @@ public class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler, Ac
                 }
                 case "VideoOutputManager.CreateSurface": {
                     final String handle = call.argument("handle");
+                    final String width = call.argument("width");
+                    final String height = call.argument("height");
+
                     if (handle != null) {
-                        final long wid = videoOutputManager.createSurface(Long.parseLong(handle));
+                        final long wid = videoOutputManager.createSurface(
+                            Long.parseLong(handle),
+                            Integer.parseInt(Objects.requireNonNull(width)),
+                            Integer.parseInt(Objects.requireNonNull(height))
+                        );
                         final HashMap<String, Long> data = new HashMap<>();
                         data.put("wid", wid);
                         result.success(data);
                     } else {
                         result.success(null);
                     }
-                    break;
-                }
-                case "VideoOutputManager.SetSurfaceTextureSize": {
-                    final String handle = call.argument("handle");
-                    final String width = call.argument("width");
-                    final String height = call.argument("height");
-                    if (handle != null) {
-                        videoOutputManager.setSurfaceTextureSize(
-                                Long.parseLong(handle),
-                                Integer.parseInt(Objects.requireNonNull(width)),
-                                Integer.parseInt(Objects.requireNonNull(height))
-                        );
-                    }
-                    result.success(null);
                     break;
                 }
                 case "VideoOutputManager.Dispose": {

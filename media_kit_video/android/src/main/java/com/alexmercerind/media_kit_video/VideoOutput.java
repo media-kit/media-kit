@@ -57,7 +57,7 @@ public class VideoOutput {
         try {
             flutterJNIAPIAvailable = false;
             waitUntilFirstFrameRenderedNotify = false;
-                        // com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper is part of package:media_kit_libs_android_video & package:media_kit_libs_android_audio packages.
+            // com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper is part of package:media_kit_libs_android_video & package:media_kit_libs_android_audio packages.
             // Use reflection to invoke methods of com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.
 
             Class<?> mediaKitAndroidHelperClass = Class.forName("com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper");
@@ -72,22 +72,36 @@ public class VideoOutput {
 
         // Initialize the SurfaceProducer using the new API
         surfaceProducer = textureRegistryReference.createSurfaceProducer();
-                // If we call setOnFrameAvailableListener after creating surfaceProducer, the texture won't be displayed inside Flutter UI, because callback set by us will override the Flutter engine's own registered callback:
+        // If we call setOnFrameAvailableListener after creating surfaceProducer, the texture won't be displayed inside Flutter UI, because callback set by us will override the Flutter engine's own registered callback:
         // https://github.com/flutter/engine/blob/f47e864f2dcb9c299a3a3ed22300a1dcacbdf1fe/shell/platform/android/io/flutter/view/FlutterView.java#L942-L958
         surfaceProducer.setCallback(new TextureRegistry.SurfaceProducer.Callback() {
             @Override
             public void onSurfaceCreated() {
                 synchronized (lock) {
                     Log.i("media_kit", "Surface created");
-                    surface = surfaceProducer.getSurface();
-                    if (surface != null) {
-                        try {
-                            wid = (long) newGlobalObjectRef.invoke(null, surface);
-                        } catch (Throwable e) {
-                            e.printStackTrace();
+
+                    try {
+                        final Surface newSurface = surfaceProducer.getSurface();
+                        if (newSurface.equals(surface)) {
+                            return;
                         }
+
+                        cleanupSurface();
+
+                        surface = newSurface;
+                        wid = (long) newGlobalObjectRef.invoke(null, surface);
+                        Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.newGlobalObjectRef: %d", wid));
+
+                        final HashMap<String, Object> data = new HashMap<>();
+                        data.put("id", id);
+                        data.put("wid", wid);
+                        data.put("handle", handle);
+                        channelReference.invokeMethod("VideoOutput.SurfaceUpdatedNotify", data);
+
+                    } catch (Throwable e) {
+                        e.printStackTrace();
                     }
-                    // Perform any additional initialization if needed
+
                 }
             }
 
@@ -95,19 +109,39 @@ public class VideoOutput {
             public void onSurfaceDestroyed() {
                 synchronized (lock) {
                     Log.i("media_kit", "Surface destroyed");
+                    final Handler mainHandler = new Handler(Looper.getMainLooper());
+
                     if (surface != null) {
+                        final Surface surfaceCopy = surface;
+
                         clearSurface();
-                        surface.release();
+                        mainHandler.postDelayed(() -> {
+                            surfaceCopy.release();
+                        }, 5000);
                         surface = null;
                     }
+
                     if (wid != 0) {
-                        try {
-                            deleteGlobalObjectRef.invoke(null, wid);
-                        } catch (Throwable e) {
-                            e.printStackTrace();
-                        }
+                        final long widCopy = wid;
+
+                        mainHandler.postDelayed(() -> {
+                            try {
+                                // Invoke DeleteGlobalRef after a voluntary delay to eliminate possibility of libmpv referencing it sometime in the near future.
+                                Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.deleteGlobalObjectRef: %d", widCopy));
+                                deleteGlobalObjectRef.invoke(null, widCopy);
+                            } catch (Throwable e) {
+                                e.printStackTrace();
+                            }
+                        }, 5000);
+
                         wid = 0;
                     }
+
+                    final HashMap<String, Object> data = new HashMap<>();
+                    data.put("id", id);
+                    data.put("wid", wid);
+                    data.put("handle", handle);
+                    channelReference.invokeMethod("VideoOutput.SurfaceUpdatedNotify", data);
                 }
             }
         });
@@ -119,8 +153,8 @@ public class VideoOutput {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-                // Initialize Choreographer FrameCallback for frame updates
 
+        // Initialize Choreographer FrameCallback for frame updates
 
         frameCallback = new Choreographer.FrameCallback() {
             @Override
@@ -172,58 +206,96 @@ public class VideoOutput {
     public void dispose() {
         synchronized (lock) {
             try {
+                Log.i("media_kit", "release surface producer");
                 surfaceProducer.release();
             } catch (Throwable e) {
                 e.printStackTrace();
             }
             try {
                 if (surface != null) {
+                    Log.i("media_kit", "release surface");
                     surface.release();
                 }
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-            try {
-                final Handler mainHandler = new Handler(Looper.getMainLooper());
-                mainHandler.postDelayed(() -> {
-                    try {
-                        // Invoke DeleteGlobalRef after a voluntary delay to eliminate possibility of libmpv referencing it sometime in the near future.
-                        deleteGlobalObjectRef.invoke(null, wid);
-                        Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.deleteGlobalObjectRef: %d", wid));
-                    } catch (Throwable e) {
-                        e.printStackTrace();
-                    }
-                }, 5000);
-            } catch (Throwable e) {
-                e.printStackTrace();
+
+            if (wid != 0) {
+                try {
+                    final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+                    mainHandler.postDelayed(() -> {
+                        try {
+                            // Invoke DeleteGlobalRef after a voluntary delay to eliminate possibility of libmpv referencing it sometime in the near future.
+                            deleteGlobalObjectRef.invoke(null, wid);
+                            Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.deleteGlobalObjectRef: %d", wid));
+                        } catch (Throwable e) {
+                            e.printStackTrace();
+                        }
+                    }, 5000);
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
             }
             // Remove Choreographer callback
+
             Choreographer.getInstance().removeFrameCallback(frameCallback);
         }
     }
 
-    public long createSurface() {
-        synchronized (lock) {
-                        // Delete previous android.view.Surface & object reference.
+    private void cleanupSurface() {
+        try {
+            final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-            try {
-                if (surface != null) {
-                    clearSurface();
-                    surface.release();
-                    surface = null;
-                }
-                if (wid != 0) {
-                    deleteGlobalObjectRef.invoke(null, wid);
-                    wid = 0;
-                }
-            } catch (Throwable e) {
-                e.printStackTrace();
+            if (surface != null) {
+                final Surface surfaceCopy = this.surface;
+
+                clearSurface();
+                mainHandler.postDelayed(() -> {
+                    surfaceCopy.release();
+                }, 5000);
+
+                surface = null;
             }
-                        // Create new android.view.Surface & object reference.
+
+            if (wid != 0) {
+                final long widCopy = wid;
+
+                mainHandler.postDelayed(() -> {
+                    try {
+                        // Invoke DeleteGlobalRef after a voluntary delay to eliminate possibility of libmpv referencing it sometime in the near future.
+                        Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.deleteGlobalObjectRef: %d", widCopy));
+                        deleteGlobalObjectRef.invoke(null, widCopy);
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                }, 5000);
+                wid = 0;
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+    public long createSurface(int width, int height) {
+        synchronized (lock) {
+            // Delete previous android.view.Surface & object reference.
+            Log.i("media_kit", String.format(Locale.ENGLISH, "createSurface %d x %d", width, height));
+
+            // Create new android.view.Surface & object reference.
 
             try {
-                surface = surfaceProducer.getSurface();
+                surfaceProducer.setSize(width, height);
+                final Surface newSurface = surfaceProducer.getSurface();
+                if (newSurface.equals(surface)) {
+                    Log.i("media_kit", String.format(Locale.ENGLISH, "createSurface %d x %d - returning old instance", width, height));
+                    return wid;
+                }
+
+                cleanupSurface();
+
+                surface = newSurface;
                 wid = (long) newGlobalObjectRef.invoke(null, surface);
+                Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.mediakitandroidhelper.MediaKitAndroidHelper.newGlobalObjectRef: %d", wid));
             } catch (Throwable e) {
                 e.printStackTrace();
             }
@@ -231,13 +303,6 @@ public class VideoOutput {
         }
     }
 
-    public void setSurfaceTextureSize(int width, int height) {
-        try {
-            surfaceProducer.setSize(width, height);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-    }
 
     private void clearSurface() {
         synchronized (lock) {
