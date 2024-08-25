@@ -17,6 +17,9 @@ set(PLUGIN_NAME "media_kit_video_plugin")
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
 set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
 
+# Deal with MSVC incompatiblity
+add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
+
 if(MEDIA_KIT_LIBS_AVAILABLE)
   include_directories(
     "${LIBMPV_SRC}/include"

@@ -1,0 +1,4 @@
+name: media_kit_workspace
+
+packages:
+  - ./**

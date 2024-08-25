@@ -141,6 +141,25 @@ class MaterialVideoControlsThemeData {
   /// NOTE: This option is ignored when [seekOnDoubleTap] is false.
   final bool seekOnDoubleTapEnabledWhileControlsVisible;
 
+  /// `seekOnDoubleTapLayoutTapsRatios` defines the width proportions for the interactive areas
+  /// responsible for seek actions (backward seek, instant tap, forward seek) when a double tap
+  /// occurs on the video widget. This property divides the video widget into three segments
+  /// horizontally. Each integer in the list represents the relative width of each segment.
+  /// By default, the value `[1, 1, 1]` means that the video widget is equally divided into three
+  /// segments: the left segment for backward seek, the middle segment for instant tap (usually show and hide controls),
+  /// and the right segment for forward seek. Adjusting these values changes the width of the interactive areas
+  /// for each double tap action.
+  final List<int> seekOnDoubleTapLayoutTapsRatios;
+
+  /// `seekOnDoubleTapLayoutWidgetRatios` defines the width proportions for the visual indicators or
+  /// widgets that appear during the double tap actions (backward seek, instant tap, forward seek).
+  /// Similar to `seekOnDoubleTapLayoutTapsRatios`, it divides the area where these indicators are
+  /// displayed into three segments. Each integer in the list represents the relative width of each
+  /// segment where the corresponding indicators will be shown. The default `[1, 1, 1]` equally divides
+  /// the space for each indicator. Modifying these values can change the layout of the seek indicators,
+  /// giving more or less space to each one based on the specified ratios.
+  final List<int> seekOnDoubleTapLayoutWidgetRatios;
+
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
 
@@ -261,6 +280,8 @@ class MaterialVideoControlsThemeData {
     this.gesturesEnabledWhileControlsVisible = true,
     this.seekOnDoubleTap = false,
     this.seekOnDoubleTapEnabledWhileControlsVisible = true,
+    this.seekOnDoubleTapLayoutTapsRatios = const [1, 1, 1],
+    this.seekOnDoubleTapLayoutWidgetRatios = const [1, 1, 1],
     this.visibleOnMount = false,
     this.speedUpOnLongPress = false,
     this.speedUpFactor = 2.0,
@@ -318,6 +339,8 @@ class MaterialVideoControlsThemeData {
     bool? gesturesEnabledWhileControlsVisible,
     bool? seekOnDoubleTap,
     bool? seekOnDoubleTapEnabledWhileControlsVisible,
+    List<int>? seekOnDoubleTapLayoutTapsRatios,
+    List<int>? seekOnDoubleTapLayoutWidgetRatios,
     bool? visibleOnMount,
     bool? speedUpOnLongPress,
     double? speedUpFactor,
@@ -367,6 +390,10 @@ class MaterialVideoControlsThemeData {
       seekOnDoubleTapEnabledWhileControlsVisible:
           seekOnDoubleTapEnabledWhileControlsVisible ??
               this.seekOnDoubleTapEnabledWhileControlsVisible,
+      seekOnDoubleTapLayoutTapsRatios: seekOnDoubleTapLayoutTapsRatios ??
+          this.seekOnDoubleTapLayoutTapsRatios,
+      seekOnDoubleTapLayoutWidgetRatios: seekOnDoubleTapLayoutWidgetRatios ??
+          this.seekOnDoubleTapLayoutWidgetRatios,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
       speedUpOnLongPress: speedUpOnLongPress ?? this.speedUpOnLongPress,
       speedUpFactor: speedUpFactor ?? this.speedUpFactor,
@@ -461,7 +488,6 @@ class _MaterialVideoControls extends StatefulWidget {
 class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   late bool mount = _theme(context).visibleOnMount;
   late bool visible = _theme(context).visibleOnMount;
-
   Timer? _timer;
 
   double _brightnessValue = 0.0;
@@ -487,6 +513,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   bool _mountSeekForwardButton = false;
   bool _hideSeekBackwardButton = false;
   bool _hideSeekForwardButton = false;
+  Timer? _timerSeekBackwardButton;
+  Timer? _timerSeekForwardButton;
 
   final ValueNotifier<Duration> _seekBarDeltaValueNotifier =
       ValueNotifier<Duration>(Duration.zero);
@@ -501,7 +529,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
           : 0.0);
   Offset? _tapPosition;
 
-  void _handleTapDown(TapDownDetails details) {
+  void _handleDoubleTapDown(TapDownDetails details) {
     setState(() {
       _tapPosition = details.localPosition;
     });
@@ -580,6 +608,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       } catch (_) {}
     });
     // --------------------------------------------------
+    _timerSeekBackwardButton?.cancel();
+    _timerSeekForwardButton?.cancel();
     super.dispose();
   }
 
@@ -683,6 +713,60 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     });
   }
 
+  bool _isInSegment(double localX, int segmentIndex) {
+    // Local variable with the list of ratios
+    List<int> segmentRatios = _theme(context).seekOnDoubleTapLayoutTapsRatios;
+
+    int totalRatios = segmentRatios.reduce((a, b) => a + b);
+
+    double segmentWidthMultiplier = widgetWidth(context) / totalRatios;
+    double start = 0;
+    double end;
+
+    for (int i = 0; i < segmentRatios.length; i++) {
+      end = start + (segmentWidthMultiplier * segmentRatios[i]);
+
+      // Check if the current index matches the segmentIndex and if localX falls within it
+      if (i == segmentIndex && localX >= start && localX <= end) {
+        return true;
+      }
+
+      // Set the start of the next segment
+      start = end;
+    }
+
+    // If localX does not fall within the specified segment
+    return false;
+  }
+
+  bool _isInRightSegment(double localX) {
+    return _isInSegment(localX, 2);
+  }
+
+  bool _isInCenterSegment(double localX) {
+    return _isInSegment(localX, 1);
+  }
+
+  bool _isInLeftSegment(double localX) {
+    return _isInSegment(localX, 0);
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (!(_isInCenterSegment(event.position.dx))) {
+      return;
+    }
+
+    onTap();
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    if ((_isInCenterSegment(details.localPosition.dx))) {
+      return;
+    }
+
+    onTap();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -767,6 +851,10 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     var seekOnDoubleTapEnabledWhileControlsAreVisible =
         (_theme(context).seekOnDoubleTap &&
             _theme(context).seekOnDoubleTapEnabledWhileControlsVisible);
+    assert(_theme(context).seekOnDoubleTapLayoutTapsRatios.length == 3,
+        "The number of seekOnDoubleTapLayoutTapsRatios must be 3, i.e. [1, 1, 1]");
+    assert(_theme(context).seekOnDoubleTapLayoutWidgetRatios.length == 3,
+        "The number of seekOnDoubleTapLayoutWidgetRatios must be 3, i.e. [1, 1, 1]");
     return Theme(
       data: Theme.of(context).copyWith(
         focusColor: const Color(0x00000000),
@@ -814,79 +902,85 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                       left: 16.0,
                       top: 16.0,
                       right: 16.0,
-                      bottom: 16.0,
-                      child: GestureDetector(
-                        onTap: onTap,
-                        onDoubleTapDown: _handleTapDown,
-                        onLongPress: _theme(context).speedUpOnLongPress
-                            ? _handleLongPress
-                            : null,
-                        onLongPressEnd: _theme(context).speedUpOnLongPress
-                            ? _handleLongPressEnd
-                            : null,
-                        onDoubleTap: () {
-                          if (_tapPosition != null &&
-                              _tapPosition!.dx >
-                                  MediaQuery.of(context).size.width / 2) {
-                            if ((!mount && _theme(context).seekOnDoubleTap) ||
-                                seekOnDoubleTapEnabledWhileControlsAreVisible) {
-                              onDoubleTapSeekForward();
+                      bottom: 16.0 + subtitleVerticalShiftOffset,
+                      child: Listener(
+                        onPointerDown: (event) => _handlePointerDown(event),
+                        child: GestureDetector(
+                          onTapDown: (details) => _handleTapDown(details),
+                          onDoubleTapDown: _handleDoubleTapDown,
+                          onLongPress: _theme(context).speedUpOnLongPress
+                              ? _handleLongPress
+                              : null,
+                          onLongPressEnd: _theme(context).speedUpOnLongPress
+                              ? _handleLongPressEnd
+                              : null,
+                          onDoubleTap: () {
+                            if (_tapPosition == null) {
+                              return;
                             }
-                          } else {
-                            if ((!mount && _theme(context).seekOnDoubleTap) ||
-                                seekOnDoubleTapEnabledWhileControlsAreVisible) {
-                              onDoubleTapSeekBackward();
+                            if (_isInRightSegment(_tapPosition!.dx)) {
+                              if ((!mount && _theme(context).seekOnDoubleTap) ||
+                                  seekOnDoubleTapEnabledWhileControlsAreVisible) {
+                                onDoubleTapSeekForward();
+                              }
+                            } else {
+                              if (_isInLeftSegment(_tapPosition!.dx)) {
+                                if ((!mount &&
+                                        _theme(context).seekOnDoubleTap) ||
+                                    seekOnDoubleTapEnabledWhileControlsAreVisible) {
+                                  onDoubleTapSeekBackward();
+                                }
+                              }
                             }
-                          }
-                        },
-                        onHorizontalDragUpdate: (details) {
-                          if ((!mount && _theme(context).seekGesture) ||
-                              (_theme(context).seekGesture &&
-                                  _theme(context)
-                                      .gesturesEnabledWhileControlsVisible)) {
-                            onHorizontalDragUpdate(details);
-                          }
-                        },
-                        onHorizontalDragEnd: (details) {
-                          onHorizontalDragEnd();
-                        },
-                        onVerticalDragUpdate: (e) async {
-                          final delta = e.delta.dy;
-                          final Offset position = e.localPosition;
-
-                          if (position.dx <=
-                              MediaQuery.of(context).size.width / 2) {
-                            // Left side of screen swiped
-
-                            if ((!mount && _theme(context).brightnessGesture) ||
-                                (_theme(context).brightnessGesture &&
+                          },
+                          onHorizontalDragUpdate: (details) {
+                            if ((!mount && _theme(context).seekGesture) ||
+                                (_theme(context).seekGesture &&
                                     _theme(context)
                                         .gesturesEnabledWhileControlsVisible)) {
-                              final brightness = _brightnessValue -
-                                  delta /
-                                      _theme(context)
-                                          .verticalGestureSensitivity;
-                              final result = brightness.clamp(0.0, 1.0);
-                              setBrightness(result);
+                              onHorizontalDragUpdate(details);
                             }
-                          } else {
-                            // Right side of screen swiped
+                          },
+                          onHorizontalDragEnd: (details) {
+                            onHorizontalDragEnd();
+                          },
+                          onVerticalDragUpdate: (e) async {
+                            final delta = e.delta.dy;
+                            final Offset position = e.localPosition;
 
-                            if ((!mount && _theme(context).volumeGesture) ||
-                                (_theme(context).volumeGesture &&
-                                    _theme(context)
-                                        .gesturesEnabledWhileControlsVisible)) {
-                              final volume = _volumeValue -
-                                  delta /
+                            if (position.dx <= widgetWidth(context) / 2) {
+                              // Left side of screen swiped
+                              if ((!mount &&
+                                      _theme(context).brightnessGesture) ||
+                                  (_theme(context).brightnessGesture &&
                                       _theme(context)
-                                          .verticalGestureSensitivity;
-                              final result = volume.clamp(0.0, 1.0);
-                              setVolume(result);
+                                          .gesturesEnabledWhileControlsVisible)) {
+                                final brightness = _brightnessValue -
+                                    delta /
+                                        _theme(context)
+                                            .verticalGestureSensitivity;
+                                final result = brightness.clamp(0.0, 1.0);
+                                setBrightness(result);
+                              }
+                            } else {
+                              // Right side of screen swiped
+
+                              if ((!mount && _theme(context).volumeGesture) ||
+                                  (_theme(context).volumeGesture &&
+                                      _theme(context)
+                                          .gesturesEnabledWhileControlsVisible)) {
+                                final volume = _volumeValue -
+                                    delta /
+                                        _theme(context)
+                                            .verticalGestureSensitivity;
+                                final result = volume.clamp(0.0, 1.0);
+                                setVolume(result);
+                              }
                             }
-                          }
-                        },
-                        child: Container(
-                          color: const Color(0x00000000),
+                          },
+                          child: Container(
+                            color: const Color(0x00000000),
+                          ),
                         ),
                       ),
                     ),
@@ -1274,30 +1368,28 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                     child: Row(
                       children: [
                         Expanded(
+                          flex: _theme(context)
+                              .seekOnDoubleTapLayoutWidgetRatios[0],
                           child: _mountSeekBackwardButton
-                              ? TweenAnimationBuilder<double>(
-                                  tween: Tween<double>(
-                                    begin: 0.0,
-                                    end: _hideSeekBackwardButton ? 0.0 : 1.0,
-                                  ),
+                              ? AnimatedOpacity(
+                                  opacity: _hideSeekBackwardButton ? 0 : 1.0,
                                   duration: const Duration(milliseconds: 200),
-                                  builder: (context, value, child) => Opacity(
-                                    opacity: value,
-                                    child: child,
-                                  ),
-                                  onEnd: () {
-                                    if (_hideSeekBackwardButton) {
-                                      setState(() {
-                                        _hideSeekBackwardButton = false;
-                                        _mountSeekBackwardButton = false;
-                                      });
-                                    }
-                                  },
                                   child: _BackwardSeekIndicator(
                                     onChanged: (value) {
                                       _seekBarDeltaValueNotifier.value = -value;
                                     },
                                     onSubmitted: (value) {
+                                      _timerSeekBackwardButton?.cancel();
+                                      _timerSeekBackwardButton = Timer(
+                                        const Duration(milliseconds: 200),
+                                        () {
+                                          setState(() {
+                                            _hideSeekBackwardButton = false;
+                                            _mountSeekBackwardButton = false;
+                                          });
+                                        },
+                                      );
+
                                       setState(() {
                                         _hideSeekBackwardButton = true;
                                       });
@@ -1319,34 +1411,41 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 )
                               : const SizedBox(),
                         ),
+                        //Area in the middle where the double-tap seek buttons are ignored in
+                        if (_theme(context)
+                                .seekOnDoubleTapLayoutWidgetRatios[1] >
+                            0)
+                          Expanded(
+                              flex: _theme(context)
+                                  .seekOnDoubleTapLayoutWidgetRatios[1],
+                              child: SizedBox()),
                         Expanded(
+                          flex: _theme(context)
+                              .seekOnDoubleTapLayoutWidgetRatios[2],
                           child: _mountSeekForwardButton
-                              ? TweenAnimationBuilder<double>(
-                                  tween: Tween<double>(
-                                    begin: 0.0,
-                                    end: _hideSeekForwardButton ? 0.0 : 1.0,
-                                  ),
+                              ? AnimatedOpacity(
+                                  opacity: _hideSeekForwardButton ? 0 : 1.0,
                                   duration: const Duration(milliseconds: 200),
-                                  builder: (context, value, child) => Opacity(
-                                    opacity: value,
-                                    child: child,
-                                  ),
-                                  onEnd: () {
-                                    if (_hideSeekForwardButton) {
-                                      setState(() {
-                                        _hideSeekForwardButton = false;
-                                        _mountSeekForwardButton = false;
-                                      });
-                                    }
-                                  },
                                   child: _ForwardSeekIndicator(
                                     onChanged: (value) {
                                       _seekBarDeltaValueNotifier.value = value;
                                     },
                                     onSubmitted: (value) {
+                                      _timerSeekForwardButton?.cancel();
+                                      _timerSeekForwardButton = Timer(
+                                          const Duration(milliseconds: 200),
+                                          () {
+                                        if (_hideSeekForwardButton) {
+                                          setState(() {
+                                            _hideSeekForwardButton = false;
+                                            _mountSeekForwardButton = false;
+                                          });
+                                        }
+                                      });
                                       setState(() {
                                         _hideSeekForwardButton = true;
                                       });
+
                                       var result = controller(context)
                                               .player
                                               .state
@@ -1374,6 +1473,9 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       ),
     );
   }
+
+  double widgetWidth(BuildContext context) =>
+      (context.findRenderObject() as RenderBox).paintBounds.width;
 }
 
 // SEEK BAR
