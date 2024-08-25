@@ -382,32 +382,6 @@ class AndroidVideoController extends PlatformVideoController {
     }
   }
 
-  @override
-  bool isNativeViewAvailable() {
-    return false;
-  }
-
-  @override
-  Widget nativeView() {
-    return AndroidView(
-      viewType: '@media-kit/native-view',
-      onPlatformViewCreated: (id) {
-        _assignNativeView(id);
-      },
-    );
-  }
-
-  Future<void> _assignNativeView(int id) async {
-    final handle = await player.handle;
-    return await _channel.invokeMethod(
-      'VideoOutputManager.AssignView',
-      {
-        'handle': handle.toString(),
-        'viewId': id.toString(),
-      },
-    );
-  }
-
   /// Disposes the instance. Releases allocated resources back to the system.
   Future<void> _dispose() async {
     // Dispose the [StreamSubscription]s.
