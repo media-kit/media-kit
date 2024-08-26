@@ -1,3 +1,7 @@
+## 1.2.6
+- feat: Impeller support
+- chore: update min sdk version to flutter 3.24
+
 ## 1.2.5
 - fix: subtitleView not being updated
 - fix: mobile double tap areas hidden but still mounted
