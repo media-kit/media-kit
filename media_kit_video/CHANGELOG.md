@@ -1,4 +1,4 @@
-## 1.2.6
+## 2.0.0
 - feat: Impeller support
 - chore: update min sdk version to flutter 3.24
 
