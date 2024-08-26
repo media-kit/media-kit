@@ -5,14 +5,14 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: non_constant_identifier_names
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:volume_controller/volume_controller.dart';
-import 'package:screen_brightness/screen_brightness.dart';
-
-import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_controls_theme_data_injector.dart';
+import 'package:screen_brightness/screen_brightness.dart';
+import 'package:volume_controller/volume_controller.dart';
 
 /// {@template material_video_controls}
 ///
@@ -493,7 +493,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   double _brightnessValue = 0.0;
   bool _brightnessIndicator = false;
   Timer? _brightnessTimer;
-
+  double _currentRate = 1.0;
   double _volumeValue = 0.0;
   bool _volumeIndicator = false;
   Timer? _volumeTimer;
@@ -539,6 +539,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     setState(() {
       _speedUpIndicator = true;
     });
+    _currentRate = controller(context).player.state.rate;
     controller(context).player.setRate(_theme(context).speedUpFactor);
   }
 
@@ -546,7 +547,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     setState(() {
       _speedUpIndicator = false;
     });
-    controller(context).player.setRate(1.0);
+    controller(context).player.setRate(_currentRate);
   }
 
   @override
