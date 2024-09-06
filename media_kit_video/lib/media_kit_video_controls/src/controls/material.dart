@@ -178,6 +178,9 @@ class MaterialVideoControlsThemeData {
   /// Color of backdrop that comes up when controls are visible.
   final Color? backdropColor;
 
+  //  Whether to show controls when paused.
+  final bool showControlsWhenPaused;
+
   // GENERIC
 
   /// Padding around the controls.
@@ -288,6 +291,7 @@ class MaterialVideoControlsThemeData {
     this.verticalGestureSensitivity = 100,
     this.horizontalGestureSensitivity = 1000,
     this.backdropColor = const Color(0x66000000),
+    this.showControlsWhenPaused = false,
     this.padding,
     this.controlsHoverDuration = const Duration(seconds: 3),
     this.controlsTransitionDuration = const Duration(milliseconds: 300),
@@ -488,6 +492,7 @@ class _MaterialVideoControls extends StatefulWidget {
 class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   late bool mount = _theme(context).visibleOnMount;
   late bool visible = _theme(context).visibleOnMount;
+  late bool showControlsWhenPaused = _theme(context).showControlsWhenPaused;
   Timer? _timer;
 
   double _brightnessValue = 0.0;
@@ -576,10 +581,38 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
               });
             },
           ),
+          if (showControlsWhenPaused)
+            controller(context).player.stream.playing.listen(
+              (event) {
+                if (event) {
+                  setState(() {
+                    showControlsWhenPaused = false;
+                  });
+
+                  _timer?.cancel();
+                  _timer = Timer(_theme(context).controlsHoverDuration, () {
+                    if (mounted) {
+                      setState(() {
+                        visible = false;
+                      });
+                      unshiftSubtitle();
+                    }
+                  });
+                } else {
+                  setState(() {
+                    mount = true;
+                    visible = true;
+                    showControlsWhenPaused = true;
+                  });
+                  shiftSubtitle();
+                  _timer?.cancel();
+                }
+              },
+            ),
         ],
       );
 
-      if (_theme(context).visibleOnMount) {
+      if (_theme(context).visibleOnMount && !showControlsWhenPaused) {
         _timer = Timer(
           _theme(context).controlsHoverDuration,
           () {
@@ -642,21 +675,25 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
         visible = true;
       });
       shiftSubtitle();
-      _timer?.cancel();
-      _timer = Timer(_theme(context).controlsHoverDuration, () {
-        if (mounted) {
-          setState(() {
-            visible = false;
-          });
-          unshiftSubtitle();
-        }
-      });
+      if (!showControlsWhenPaused) {
+        _timer?.cancel();
+        _timer = Timer(_theme(context).controlsHoverDuration, () {
+          if (mounted) {
+            setState(() {
+              visible = false;
+            });
+            unshiftSubtitle();
+          }
+        });
+      }
     } else {
       setState(() {
         visible = false;
       });
       unshiftSubtitle();
-      _timer?.cancel();
+      if (!showControlsWhenPaused) {
+        _timer?.cancel();
+      }
     }
   }
 
@@ -1031,20 +1068,24 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 if (_theme(context).displaySeekBar)
                                   MaterialSeekBar(
                                     onSeekStart: () {
-                                      _timer?.cancel();
+                                      if (!!showControlsWhenPaused) {
+                                        _timer?.cancel();
+                                      }
                                     },
                                     onSeekEnd: () {
-                                      _timer = Timer(
-                                        _theme(context).controlsHoverDuration,
-                                        () {
-                                          if (mounted) {
-                                            setState(() {
-                                              visible = false;
-                                            });
-                                            unshiftSubtitle();
-                                          }
-                                        },
-                                      );
+                                      if (!showControlsWhenPaused) {
+                                        _timer = Timer(
+                                          _theme(context).controlsHoverDuration,
+                                          () {
+                                            if (mounted) {
+                                              setState(() {
+                                                visible = false;
+                                              });
+                                              unshiftSubtitle();
+                                            }
+                                          },
+                                        );
+                                      }
                                     },
                                   ),
                                 Container(
