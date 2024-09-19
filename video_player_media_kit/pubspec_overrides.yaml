@@ -1,0 +1,8 @@
+# melos_managed_dependency_overrides: media_kit,media_kit_native_event_loop,media_kit_video
+dependency_overrides:
+  media_kit:
+    path: ../media_kit
+  media_kit_native_event_loop:
+    path: ../media_kit_native_event_loop
+  media_kit_video:
+    path: ../media_kit_video

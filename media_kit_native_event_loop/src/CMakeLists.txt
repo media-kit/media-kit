@@ -14,6 +14,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   # Set the path to libmpv & ANGLE source code.
   # Must be built before this CMake project.
   set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
+  # Deal with MSVC incompatiblity
+  add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
 
   if(MEDIA_KIT_LIBS_AVAILABLE)
     # Add media_kit_native_event_loop target.

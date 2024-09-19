@@ -2,7 +2,7 @@ name: media_kit_native_event_loop
 description: Platform specific threaded event handling for media_kit. Enables support for higher number of concurrent instances.
 homepage: https://github.com/media-kit/media-kit
 repository: https://github.com/media-kit/media-kit
-version: 1.0.8
+version: 1.0.9
 
 environment:
   sdk: ">=2.17.0 <4.0.0"
