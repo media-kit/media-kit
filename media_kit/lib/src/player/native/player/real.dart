@@ -1675,6 +1675,16 @@ class NativePlayer extends PlatformPlayer {
           bufferController.add(buffer);
         }
       }
+      if (prop.ref.name.cast<Utf8>().toDartString() ==
+              'cache-buffering-state' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+        final bufferingPercentage = prop.ref.data.cast<Double>().value;
+
+        state = state.copyWith(bufferingPercentage: bufferingPercentage);
+        if (!bufferingPercentageController.isClosed) {
+          bufferingPercentageController.add(bufferingPercentage);
+        }
+      }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
         final position = Duration(
@@ -2629,6 +2639,7 @@ class NativePlayer extends PlatformPlayer {
         'core-idle': generated.mpv_format.MPV_FORMAT_FLAG,
         'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
         'demuxer-cache-time': generated.mpv_format.MPV_FORMAT_DOUBLE,
+        'cache-buffering-state': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'audio-params': generated.mpv_format.MPV_FORMAT_NODE,
         'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'audio-device': generated.mpv_format.MPV_FORMAT_NODE,

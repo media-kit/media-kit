@@ -70,6 +70,9 @@ abstract class PlatformPlayer {
     bufferingController.stream.distinct(
       (previous, current) => previous == current,
     ),
+    bufferingPercentageController.stream.distinct(
+      (previous, current) => previous == current,
+    ),
     bufferController.stream.distinct(
       (previous, current) => previous == current,
     ),
@@ -124,6 +127,7 @@ abstract class PlatformPlayer {
         rateController.close(),
         pitchController.close(),
         bufferingController.close(),
+        bufferingPercentageController.close(),
         bufferController.close(),
         playlistModeController.close(),
         audioParamsController.close(),
@@ -328,7 +332,9 @@ abstract class PlatformPlayer {
   @protected
   final StreamController<bool> bufferingController =
       StreamController<bool>.broadcast();
-
+  @protected
+  final StreamController<double> bufferingPercentageController =
+      StreamController<double>.broadcast();
   @protected
   final StreamController<Duration> bufferController =
       StreamController<Duration>.broadcast();
