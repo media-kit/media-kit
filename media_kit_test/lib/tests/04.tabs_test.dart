@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_test/tests/09.seamless.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -25,8 +24,7 @@ class TabsTest extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: () {
-                    Navigator.of(context).popUntil((e) => e.isFirst);
-                    Navigator.of(context).push(
+                    Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                         builder: (context) => const Seamless(),
                       ),
@@ -37,16 +35,13 @@ class TabsTest extends StatelessWidget {
                     alignment: Alignment.topLeft,
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: RichText(
-                      text: const TextSpan(
-                        children: [
+                      text: TextSpan(
+                        children: const [
                           TextSpan(
                             text: 'seamless.dart',
                             style: TextStyle(
                               decoration: TextDecoration.underline,
                             ),
-                          ),
-                          TextSpan(
-                            text: ' ',
                           ),
                           TextSpan(
                             text: ' provides practical & efficient example.',
@@ -55,13 +50,10 @@ class TabsTest extends StatelessWidget {
                             text: '\n',
                           ),
                           TextSpan(
-                            text: 'This sample is only for tests.',
+                            text: 'This is only for testing race conditions.',
                           ),
                         ],
-                        style: TextStyle(
-                          fontSize: 14.0,
-                          color: Colors.white,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

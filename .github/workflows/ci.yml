@@ -104,7 +104,7 @@ jobs:
       - run: flutter pub get
       - run: flutter build windows --verbose
       - run: cmake -E tar "cfv" "media_kit_test_win32_x64.7z" --format=7zip "build\windows\x64\runner\Release"
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
           name: media_kit_test_win32_x64
           path: media_kit_test/media_kit_test_win32_x64.7z
@@ -136,7 +136,7 @@ jobs:
       - run: flutter pub get
       - run: flutter build linux --verbose
       - run: 7z a media_kit_test_linux_x64.7z build/linux/x64/release/bundle
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
           name: media_kit_test_linux_x64
           path: media_kit_test/media_kit_test_linux_x64.7z
@@ -166,7 +166,7 @@ jobs:
       - run: flutter pub get
       - run: flutter build macos --verbose
       - run: 7z a media_kit_test_macos_universal.7z build/macos/Build/Products/Release/media_kit_test.app
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
           name: media_kit_test_macos_universal
           path: media_kit_test/media_kit_test_macos_universal.7z
@@ -196,7 +196,7 @@ jobs:
       - run: flutter pub get
       - run: flutter build ios --verbose --no-codesign
       - run: 7z a media_kit_test_ios_arm64.7z build/ios/iphoneos/Runner.app
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
           name: media_kit_test_ios_arm64
           path: media_kit_test/media_kit_test_ios_arm64.7z
@@ -236,15 +236,15 @@ jobs:
           mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/media_kit_test_android-armeabi-v7a.apk
           mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/media_kit_test_android-arm64-v8a.apk
           mv build/app/outputs/flutter-apk/app-x86_64-release.apk build/app/outputs/flutter-apk/media_kit_test_android-x86_64.apk
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
           name: media_kit_test_android-armeabi-v7a
           path: media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-armeabi-v7a.apk
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
           name: media_kit_test_android-arm64-v8a
           path: media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-arm64-v8a.apk
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
           name: media_kit_test_android-x86_64
           path: media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-x86_64.apk

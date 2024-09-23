@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -68,7 +67,6 @@ class _MultiplePlayerMultipleVideoScreenState
   Widget getVideoForIndex(BuildContext context, int i) =>
       MediaQuery.of(context).size.width > MediaQuery.of(context).size.height
           ? Card(
-              elevation: 8.0,
               clipBehavior: Clip.antiAlias,
               margin: const EdgeInsets.all(32.0),
               child: Video(controller: controllers[i]),
