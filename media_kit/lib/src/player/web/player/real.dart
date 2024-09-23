@@ -1359,9 +1359,13 @@ class WebPlayer extends PlatformPlayer {
   /// The [format] parameter specifies the format of the image to be returned. Supported values are:
   /// * `image/jpeg`
   /// * `image/png`
+  ///
+  /// [includeLibassSubtitles] is ignored.
   @override
   Future<Uint8List?> screenshot(
-      {String? format = 'image/jpeg', bool synchronized = true}) async {
+      {String? format = 'image/jpeg',
+      bool synchronized = true,
+      bool includeLibassSubtitles = false}) async {
     Future<Uint8List?> function() async {
       if (![
         'image/jpeg',
