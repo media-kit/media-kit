@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_test/tests/15.full_screen_player.dart';
-
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
 
+import 'common/globals.dart';
+import 'common/sources/sources.dart';
 import 'tests/01.single_player_single_video.dart';
 import 'tests/02.single_player_multiple_video.dart';
 import 'tests/03.multiple_player_multiple_video.dart';
@@ -17,12 +17,6 @@ import 'tests/08.screenshot.dart';
 import 'tests/09.seamless.dart';
 import 'tests/10.programmatic_fullscreen.dart';
 import 'tests/11.video_view_parameters.dart';
-import 'tests/12.custom_mobile_controls.dart';
-import 'tests/13.custom_desktop_controls.dart';
-import 'tests/14.custom_adaptive_controls.dart';
-
-import 'common/globals.dart';
-import 'common/sources/sources.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,12 +72,7 @@ class PrimaryScreen extends StatelessWidget {
                   enableHardwareAcceleration: !value.enableHardwareAcceleration,
                 );
               },
-              child: Text(
-                value.enableHardwareAcceleration ? 'H/W' : 'S/W',
-                style: const TextStyle(
-                  color: Colors.white,
-                ),
-              ),
+              child: Text(value.enableHardwareAcceleration ? 'H/W' : 'S/W'),
             ),
           ),
           const SizedBox(width: 16.0),
@@ -257,57 +246,6 @@ class PrimaryScreen extends StatelessWidget {
               );
             },
           ),
-          ListTile(
-            title: const Text(
-              'custom_mobile_controls.dart',
-              style: TextStyle(fontSize: 14.0),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const CustomMobileControls(),
-                ),
-              );
-            },
-          ),
-          ListTile(
-              title: const Text(
-                'custom_desktop_controls.dart',
-                style: TextStyle(fontSize: 14.0),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const CustomDesktopControls(),
-                ));
-              }),
-          ListTile(
-              title: const Text(
-                'custom_adaptive_controls.dart',
-                style: TextStyle(fontSize: 14.0),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const CustomAdaptiveControls(),
-                ));
-              }),
-          ListTile(
-              title: const Text(
-                'full_screen_player.dart',
-                style: TextStyle(fontSize: 14.0),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const FullScreenPlayer(),
-                ));
-              }),
         ],
       ),
     );
