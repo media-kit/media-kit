@@ -1212,7 +1212,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                   duration: _theme(context).controlsTransitionDuration,
                   child: _theme(context)
                           .brightnessIndicatorBuilder
-                          ?.call(context, _volumeValue) ??
+                          ?.call(context, _brightnessValue) ??
                       Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
