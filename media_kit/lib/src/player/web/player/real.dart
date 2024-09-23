@@ -1442,7 +1442,12 @@ class WebPlayer extends PlatformPlayer {
   }
 
   bool _isHLS(String src) {
-    if (element.canPlayType('application/vnd.apple.mpegurl') != '') {
+    final userAgent = html.window.navigator.userAgent;
+    final isAndroidChrome =
+        userAgent.contains("Android") && userAgent.contains("Chrome");
+
+    if (!isAndroidChrome &&
+        element.canPlayType('application/vnd.apple.mpegurl') != '') {
       return false;
     }
     if (isHLSSupported() && src.toLowerCase().contains('m3u8')) {
