@@ -1,20 +1,6 @@
 ## 1.1.11
-- Implement Media start and end time
-```
-await player.open(
-  Media(
-    'https://www.example.com/video.mp4',
-    start: const Duration(seconds: 5),
-  ),
-);
-await player.open(
-  Media(
-    'https://www.example.com/video.mp4',
-    start: const Duration(seconds: 5),
-    end: const Duration(minutes: 1),
-  ),
-);
-```
+
+- feat: `Media` `start` & `end`
 
 ## 1.1.10+1
 
