@@ -1359,9 +1359,13 @@ class WebPlayer extends PlatformPlayer {
   /// The [format] parameter specifies the format of the image to be returned. Supported values are:
   /// * `image/jpeg`
   /// * `image/png`
+  ///
+  /// [includeLibassSubtitles] is ignored.
   @override
   Future<Uint8List?> screenshot(
-      {String? format = 'image/jpeg', bool synchronized = true}) async {
+      {String? format = 'image/jpeg',
+      bool synchronized = true,
+      bool includeLibassSubtitles = false}) async {
     Future<Uint8List?> function() async {
       if (![
         'image/jpeg',
@@ -1438,7 +1442,12 @@ class WebPlayer extends PlatformPlayer {
   }
 
   bool _isHLS(String src) {
-    if (element.canPlayType('application/vnd.apple.mpegurl') != '') {
+    final userAgent = html.window.navigator.userAgent;
+    final isAndroidChrome =
+        userAgent.contains("Android") && userAgent.contains("Chrome");
+
+    if (!isAndroidChrome &&
+        element.canPlayType('application/vnd.apple.mpegurl') != '') {
       return false;
     }
     if (isHLSSupported() && src.toLowerCase().contains('m3u8')) {

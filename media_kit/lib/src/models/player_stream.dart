@@ -52,6 +52,9 @@ class PlayerStream {
   /// This indicates how much of the stream has been decoded & cached by the demuxer.
   final Stream<Duration> buffer;
 
+  /// Current buffering percentage
+  final Stream<double> bufferingPercentage;
+
   /// Current playlist mode.
   final Stream<PlaylistMode> playlistMode;
 
@@ -104,6 +107,7 @@ class PlayerStream {
     this.rate,
     this.pitch,
     this.buffering,
+    this.bufferingPercentage,
     this.buffer,
     this.playlistMode,
     this.audioParams,

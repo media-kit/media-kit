@@ -1333,9 +1333,14 @@ class NativePlayer extends PlatformPlayer {
   /// * `image/jpeg`: Returns a JPEG encoded image.
   /// * `image/png`: Returns a PNG encoded image.
   /// * `null`: Returns BGRA pixel buffer.
+  ///
+  /// If [includeLibassSubtitles] is `true` *and* [PlayerConfiguration.libass] is `true`, then the
+  /// screenshot will include the on-screen subtitles.
   @override
   Future<Uint8List?> screenshot(
-      {String? format = 'image/jpeg', bool synchronized = true}) async {
+      {String? format = 'image/jpeg',
+      bool synchronized = true,
+      bool includeLibassSubtitles = false}) async {
     Future<Uint8List?> function() async {
       if (![
         'image/jpeg',
@@ -1361,6 +1366,7 @@ class NativePlayer extends PlatformPlayer {
           ctx.address,
           NativeLibrary.path,
           format,
+          includeLibassSubtitles,
         ),
       );
     }
@@ -1667,6 +1673,16 @@ class NativePlayer extends PlatformPlayer {
         state = state.copyWith(buffer: buffer);
         if (!bufferController.isClosed) {
           bufferController.add(buffer);
+        }
+      }
+      if (prop.ref.name.cast<Utf8>().toDartString() ==
+              'cache-buffering-state' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
+        final bufferingPercentage = prop.ref.data.cast<Double>().value;
+
+        state = state.copyWith(bufferingPercentage: bufferingPercentage);
+        if (!bufferingPercentageController.isClosed) {
+          bufferingPercentageController.add(bufferingPercentage);
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
@@ -2623,6 +2639,7 @@ class NativePlayer extends PlatformPlayer {
         'core-idle': generated.mpv_format.MPV_FORMAT_FLAG,
         'paused-for-cache': generated.mpv_format.MPV_FORMAT_FLAG,
         'demuxer-cache-time': generated.mpv_format.MPV_FORMAT_DOUBLE,
+        'cache-buffering-state': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'audio-params': generated.mpv_format.MPV_FORMAT_NODE,
         'audio-bitrate': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'audio-device': generated.mpv_format.MPV_FORMAT_NODE,
@@ -2794,11 +2811,13 @@ class _ScreenshotData {
   final int ctx;
   final String lib;
   final String? format;
+  final bool includeLibassSubtitles;
 
   const _ScreenshotData(
     this.ctx,
     this.lib,
     this.format,
+    this.includeLibassSubtitles,
   );
 }
 
@@ -2814,7 +2833,7 @@ Uint8List? _screenshot(_ScreenshotData data) {
   // https://mpv.io/manual/stable/#command-interface-screenshot-raw
   final args = [
     'screenshot-raw',
-    'video',
+    data.includeLibassSubtitles ? 'subtitles' : 'video',
   ];
 
   final result = calloc<generated.mpv_node>();
