@@ -10,10 +10,13 @@ import 'package:flutter/material.dart';
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
 /// {@template subtitle_view}
+///
 /// SubtitleView
 /// ------------
 ///
 /// [SubtitleView] widget is used to display the subtitles on top of the [Video].
+///
+/// {@endtemplate}
 class SubtitleView extends StatefulWidget {
   /// The [VideoController] reference to control this [SubtitleView] output.
   final VideoController controller;
