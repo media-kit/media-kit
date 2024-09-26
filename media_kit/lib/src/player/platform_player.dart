@@ -478,6 +478,13 @@ class PlayerConfiguration {
   /// e.g. `assets/fonts/subtitle.ttf`
   final String? libassAndroidFont;
 
+  /// Font name of the `.ttf` font file to be used for [libass](https://github.com/libass/libass) based subtitle rendering on Android.
+  ///
+  /// e.g. `Droid Sans Fallback`
+  ///
+  /// NOTE: The font name is required, not the file name.
+  final String? libassAndroidFontName;
+
   /// Sets the log level on native backend.
   /// Default: `none`.
   final MPVLogLevel logLevel;
@@ -504,6 +511,7 @@ class PlayerConfiguration {
     this.muted = false,
     this.libass = false,
     this.libassAndroidFont,
+    this.libassAndroidFontName,
     this.logLevel = MPVLogLevel.error,
     this.bufferSize = 32 * 1024 * 1024,
     this.protocolWhitelist = const [

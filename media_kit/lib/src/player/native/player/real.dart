@@ -2520,7 +2520,8 @@ class NativePlayer extends PlatformPlayer {
 
       if (Platform.isAndroid &&
           configuration.libass &&
-          configuration.libassAndroidFont != null) {
+          configuration.libassAndroidFont != null &&
+          configuration.libassAndroidFontName != null) {
         try {
           // On Android, the system fonts cannot be picked up by libass/fontconfig. This makes libass subtitle rendering fail.
           // We save the subtitle font to the application's cache directory and set `config` & `config-dir` to use it.
@@ -2537,7 +2538,8 @@ class NativePlayer extends PlatformPlayer {
             options.addAll(
               {
                 'config': 'yes',
-                'config-dir': directory,
+                'sub-fonts-dir': directory,
+                'sub-font': configuration.libassAndroidFontName ?? '',
               },
             );
             print(subfont);
