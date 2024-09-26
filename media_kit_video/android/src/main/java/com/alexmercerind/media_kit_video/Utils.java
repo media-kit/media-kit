@@ -9,7 +9,12 @@ package com.alexmercerind.media_kit_video;
 
 import android.os.Build;
 
+import io.flutter.Log;
+
+
 public abstract class Utils {
+    private static final String TAG = "Utils";
+
     public static boolean isEmulator() {
         try {
             // https://github.com/fluttercommunity/plus_plugins/blob/ff54dc49230ee5f8b772a3326d4ff3758618df80/packages/device_info_plus/device_info_plus/android/src/main/kotlin/dev/fluttercommunity/plus/device_info/MethodCallHandlerImpl.kt#L110-L125
@@ -30,7 +35,7 @@ public abstract class Utils {
                     || Build.PRODUCT.contains("emulator")
                     || Build.PRODUCT.contains("simulator");
         } catch (Throwable e) {
-            e.printStackTrace();
+            Log.e(TAG, "isEmulator", e);
         }
         return false;
     }
