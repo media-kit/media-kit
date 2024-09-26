@@ -6,6 +6,7 @@
 import 'dart:async';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:media_kit/media_kit.dart';
 
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
@@ -78,6 +79,10 @@ class VideoController {
     player.platform?.isVideoControllerAttached = true;
 
     () async {
+      final completer = Completer();
+      WidgetsBinding.instance.addPostFrameCallback((_) => completer.complete());
+      await completer.future;
+
       try {
         if (NativeVideoController.supported) {
           final result = await NativeVideoController.create(
