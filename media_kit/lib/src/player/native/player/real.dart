@@ -1395,12 +1395,19 @@ class NativePlayer extends PlatformPlayer {
   /// * https://mpv.io/manual/master/#options
   /// * https://mpv.io/manual/master/#properties
   ///
-  Future<void> setProperty(String property, String value) async {
+  Future<void> setProperty(
+    String property,
+    String value, {
+    bool waitForInitialization = true,
+  }) async {
     if (disposed) {
       throw AssertionError('[Player] has been disposed');
     }
-    await waitForPlayerInitialization;
-    await waitForVideoControllerInitializationIfAttached;
+
+    if (waitForInitialization) {
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+    }
 
     final name = property.toNativeUtf8();
     final data = value.toNativeUtf8();
@@ -1420,12 +1427,18 @@ class NativePlayer extends PlatformPlayer {
   /// * https://mpv.io/manual/master/#options
   /// * https://mpv.io/manual/master/#properties
   ///
-  Future<String> getProperty(String property) async {
+  Future<String> getProperty(
+    String property, {
+    bool waitForInitialization = true,
+  }) async {
     if (disposed) {
       throw AssertionError('[Player] has been disposed');
     }
-    await waitForPlayerInitialization;
-    await waitForVideoControllerInitializationIfAttached;
+
+    if (waitForInitialization) {
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+    }
 
     final name = property.toNativeUtf8();
     final value = mpv.mpv_get_property_string(ctx, name.cast());
@@ -1449,13 +1462,17 @@ class NativePlayer extends PlatformPlayer {
   ///
   Future<void> observeProperty(
     String property,
-    Future<void> Function(String) listener,
-  ) async {
+    Future<void> Function(String) listener, {
+    bool waitForInitialization = true,
+  }) async {
     if (disposed) {
       throw AssertionError('[Player] has been disposed');
     }
-    await waitForPlayerInitialization;
-    await waitForVideoControllerInitializationIfAttached;
+
+    if (waitForInitialization) {
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+    }
 
     if (observed.containsKey(property)) {
       throw ArgumentError.value(
@@ -1483,12 +1500,18 @@ class NativePlayer extends PlatformPlayer {
   /// * https://mpv.io/manual/master/#options
   /// * https://mpv.io/manual/master/#properties
   ///
-  Future<void> unobserveProperty(String property) async {
+  Future<void> unobserveProperty(
+    String property, {
+    bool waitForInitialization = true,
+  }) async {
     if (disposed) {
       throw AssertionError('[Player] has been disposed');
     }
-    await waitForPlayerInitialization;
-    await waitForVideoControllerInitializationIfAttached;
+
+    if (waitForInitialization) {
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+    }
 
     if (!observed.containsKey(property)) {
       throw ArgumentError.value(
@@ -1508,12 +1531,18 @@ class NativePlayer extends PlatformPlayer {
   /// See:
   /// * https://mpv.io/manual/master/#list-of-input-commands
   ///
-  Future<void> command(List<String> command) async {
+  Future<void> command(
+    List<String> command, {
+    bool waitForInitialization = true,
+  }) async {
     if (disposed) {
       throw AssertionError('[Player] has been disposed');
     }
-    await waitForPlayerInitialization;
-    await waitForVideoControllerInitializationIfAttached;
+
+    if (waitForInitialization) {
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+    }
 
     await _command(command);
   }
@@ -2369,7 +2398,9 @@ class NativePlayer extends PlatformPlayer {
             if (start != null) {
               try {
                 final property = 'start'.toNativeUtf8();
-                final value = (start.inMilliseconds / 1000).toStringAsFixed(3).toNativeUtf8();
+                final value = (start.inMilliseconds / 1000)
+                    .toStringAsFixed(3)
+                    .toNativeUtf8();
                 mpv.mpv_set_property_string(
                   ctx,
                   property.cast(),
@@ -2386,7 +2417,9 @@ class NativePlayer extends PlatformPlayer {
             if (end != null) {
               try {
                 final property = 'end'.toNativeUtf8();
-                final value = (end.inMilliseconds / 1000).toStringAsFixed(3).toNativeUtf8();
+                final value = (end.inMilliseconds / 1000)
+                    .toStringAsFixed(3)
+                    .toNativeUtf8();
                 mpv.mpv_set_property_string(
                   ctx,
                   property.cast(),
