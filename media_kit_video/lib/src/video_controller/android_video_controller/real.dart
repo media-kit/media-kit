@@ -165,7 +165,7 @@ class AndroidVideoController extends PlatformVideoController {
         debugPrint('media_kit: Emulator detected.');
         debugPrint('media_kit: Enforcing S/W rendering.');
       }
-      return hw ? 'auto' : 'no';
+      return hw ? 'auto-safe' : 'no';
     }
 
     // Update [configuration] to have default values.
