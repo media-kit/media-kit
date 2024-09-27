@@ -42,8 +42,17 @@ import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 void nativeEnsureInitialized({String? libmpv}) {
   AndroidHelper.ensureInitialized();
   NativeLibrary.ensureInitialized(libmpv: libmpv);
-  NativeReferenceHolder.ensureInitialized((references) {
-    // TODO:
+  NativeReferenceHolder.ensureInitialized((references) async {
+    // I can only get quit to work; [mpv_terminate_destroy] causes direct crash.
+    final mpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
+    final cmd = 'quit'.toNativeUtf8();
+    try {
+      for (final reference in references) {
+        mpv.mpv_command_string(reference.cast(), cmd.cast());
+      }
+    } finally {
+      calloc.free(cmd);
+    }
   });
 }
 

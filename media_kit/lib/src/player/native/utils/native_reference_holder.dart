@@ -7,11 +7,11 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 import 'package:path/path.dart' as path;
-import 'package:media_kit/ffi/src/allocation.dart';
-
-import 'package:media_kit/src/player/native/utils/temp_file.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
 import 'package:synchronized/synchronized.dart';
+
+import 'package:media_kit/ffi/src/allocation.dart';
+import 'package:media_kit/src/player/native/utils/temp_file.dart';
 
 /// Callback invoked to notify about the released references.
 typedef NativeReferenceHolderCallback = void Function(List<Pointer<Void>>);
@@ -75,9 +75,6 @@ class NativeReferenceHolder {
         references.add(Pointer.fromAddress(referenceAddress));
       }
     }
-
-    print('media_kit: NativeReferenceHolder: Restored references:');
-    print(references.join('\n'));
 
     callback(references);
 
