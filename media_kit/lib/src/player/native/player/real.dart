@@ -16,28 +16,25 @@ import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/ffi/ffi.dart';
 
-import 'package:media_kit/src/player/platform_player.dart';
-
-import 'package:media_kit/src/player/native/core/initializer.dart';
-import 'package:media_kit/src/player/native/core/native_library.dart';
-import 'package:media_kit/src/player/native/core/fallback_bitrate_handler.dart';
-import 'package:media_kit/src/player/native/core/initializer_native_event_loop.dart';
-
-import 'package:media_kit/src/player/native/utils/isolates.dart';
-import 'package:media_kit/src/player/native/utils/temp_file.dart';
-import 'package:media_kit/src/player/native/utils/android_helper.dart';
-import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
-
-import 'package:media_kit/src/models/track.dart';
-import 'package:media_kit/src/models/playable.dart';
-import 'package:media_kit/src/models/playlist.dart';
-import 'package:media_kit/src/models/player_log.dart';
-import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
-import 'package:media_kit/src/models/video_params.dart';
+import 'package:media_kit/src/models/media/media.dart';
+import 'package:media_kit/src/models/playable.dart';
+import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
+import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/video_params.dart';
+import 'package:media_kit/src/player/native/core/fallback_bitrate_handler.dart';
+import 'package:media_kit/src/player/native/core/initializer.dart';
+import 'package:media_kit/src/player/native/core/native_library.dart';
+import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
+import 'package:media_kit/src/player/native/utils/android_helper.dart';
+import 'package:media_kit/src/player/native/utils/isolates.dart';
+import 'package:media_kit/src/player/native/utils/native_reference_holder.dart';
+import 'package:media_kit/src/player/native/utils/temp_file.dart';
+import 'package:media_kit/src/player/platform_player.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 
@@ -45,7 +42,9 @@ import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 void nativeEnsureInitialized({String? libmpv}) {
   AndroidHelper.ensureInitialized();
   NativeLibrary.ensureInitialized(libmpv: libmpv);
-  InitializerNativeEventLoop.ensureInitialized();
+  NativeReferenceHolder.ensureInitialized((references) {
+    // TODO:
+  });
 }
 
 /// {@template native_player}
@@ -2721,6 +2720,8 @@ class NativePlayer extends PlatformPlayer {
       mpv.mpv_hook_add(ctx, 0, unload.cast(), 0);
       calloc.free(load);
       calloc.free(unload);
+
+      NativeReferenceHolder.instance.add(ctx.cast());
     });
   }
 
@@ -2738,7 +2739,7 @@ class NativePlayer extends PlatformPlayer {
     final pointers = args.map<Pointer<Utf8>>((e) => e.toNativeUtf8()).toList();
     final arr = calloc<Pointer<Utf8>>(128);
     for (int i = 0; i < args.length; i++) {
-      arr.elementAt(i).value = pointers[i];
+      (arr + i).value = pointers[i];
     }
     mpv.mpv_command(
       ctx,
