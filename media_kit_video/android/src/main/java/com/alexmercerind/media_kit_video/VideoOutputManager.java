@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
 
-import io.flutter.plugin.common.MethodChannel;
 import io.flutter.view.TextureRegistry;
 
 public class VideoOutputManager {
@@ -27,14 +26,14 @@ public class VideoOutputManager {
         this.textureRegistryReference = textureRegistryReference;
     }
 
-    public VideoOutput create(long handle, TextureUpdateCallback textureUpdateCallback) {
+    public void create(long handle, TextureUpdateCallback textureUpdateCallback) {
         synchronized (lock) {
             Log.i(TAG, String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.create: %d", handle));
             if (!videoOutputs.containsKey(handle)) {
                 final VideoOutput videoOutput = new VideoOutput(textureRegistryReference, textureUpdateCallback);
                 videoOutputs.put(handle, videoOutput);
             }
-            return videoOutputs.get(handle);
+            videoOutputs.get(handle);
         }
     }
 

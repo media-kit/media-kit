@@ -10,7 +10,6 @@ package com.alexmercerind.media_kit_video;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.view.Surface;
 
 import java.lang.reflect.Method;
 import java.util.HashSet;
@@ -20,9 +19,7 @@ import java.util.Objects;
 import io.flutter.view.TextureRegistry;
 
 
-interface TextureUpdateCallback {
-    void onTextureUpdate(long id, long wid, int width, int height);
-}
+
 
 
 public class VideoOutput implements TextureRegistry.SurfaceProducer.Callback {
@@ -49,18 +46,16 @@ public class VideoOutput implements TextureRegistry.SurfaceProducer.Callback {
 
     private long id = 0;
     private long wid = 0;
-    private boolean waitUntilFirstFrameRenderedNotify = false;
 
-    private TextureRegistry textureRegistryReference;
-    private TextureUpdateCallback textureUpdateCallback;
+    private final TextureUpdateCallback textureUpdateCallback;
 
-    private TextureRegistry.SurfaceProducer surfaceProducer;
+    private final TextureRegistry.SurfaceProducer surfaceProducer;
 
     private final Object lock = new Object();
 
     VideoOutput(TextureRegistry textureRegistryReference, TextureUpdateCallback textureUpdateCallback) {
-        this.textureRegistryReference = textureRegistryReference;
         this.textureUpdateCallback = textureUpdateCallback;
+
         surfaceProducer = textureRegistryReference.createSurfaceProducer();
         surfaceProducer.setCallback(this);
 

@@ -7,36 +7,30 @@
  */
 package com.alexmercerind.media_kit_video;
 
-import android.util.Log;
-
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.util.HashMap;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.view.TextureRegistry;
 
 /**
  * MediaKitVideoPlugin
  */
 public class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler {
     private MethodChannel channel;
-    private TextureRegistry textureRegistry;
     private VideoOutputManager videoOutputManager;
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
         channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "com.alexmercerind/media_kit_video");
-        textureRegistry = flutterPluginBinding.getTextureRegistry();
-        videoOutputManager = new VideoOutputManager(textureRegistry);
         channel.setMethodCallHandler(this);
+
+        videoOutputManager = new VideoOutputManager(flutterPluginBinding.getTextureRegistry());
+
     }
 
     @Override
@@ -44,19 +38,17 @@ public class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler {
         switch (call.method) {
             case "VideoOutputManager.Create": {
                 final long handle = Long.parseLong(call.argument("handle"));
-                videoOutputManager.create(handle, (id, wid, width, height) -> {
-                    channel.invokeMethod("VideoOutput.Resize", new HashMap<String, Object>() {{
-                        put("handle", handle);
-                        put("id", id);
-                        put("wid", wid);
-                        put("rect", new HashMap<String, Object>() {{
-                            put("left", 0);
-                            put("top", 0);
-                            put("width", width);
-                            put("height", height);
-                        }});
+                videoOutputManager.create(handle, (id, wid, width, height) -> channel.invokeMethod("VideoOutput.Resize", new HashMap<String, Object>() {{
+                    put("handle", handle);
+                    put("id", id);
+                    put("wid", wid);
+                    put("rect", new HashMap<String, Object>() {{
+                        put("left", 0);
+                        put("top", 0);
+                        put("width", width);
+                        put("height", height);
                     }});
-                });
+                }}));
                 result.success(null);
                 break;
             }
