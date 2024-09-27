@@ -36,8 +36,6 @@ PODS:
   - Flutter (1.0.0)
   - media_kit_libs_ios_video (1.0.4):
     - Flutter
-  - media_kit_native_event_loop (1.0.0):
-    - Flutter
   - media_kit_video (0.0.1):
     - Flutter
   - package_info_plus (0.4.5):
@@ -60,7 +58,6 @@ DEPENDENCIES:
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
   - media_kit_libs_ios_video (from `.symlinks/plugins/media_kit_libs_ios_video/ios`)
-  - media_kit_native_event_loop (from `.symlinks/plugins/media_kit_native_event_loop/ios`)
   - media_kit_video (from `.symlinks/plugins/media_kit_video/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -82,8 +79,6 @@ EXTERNAL SOURCES:
     :path: Flutter
   media_kit_libs_ios_video:
     :path: ".symlinks/plugins/media_kit_libs_ios_video/ios"
-  media_kit_native_event_loop:
-    :path: ".symlinks/plugins/media_kit_native_event_loop/ios"
   media_kit_video:
     :path: ".symlinks/plugins/media_kit_video/ios"
   package_info_plus:
@@ -103,7 +98,6 @@ SPEC CHECKSUMS:
   file_picker: ce3938a0df3cc1ef404671531facef740d03f920
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   media_kit_libs_ios_video: bcbf9a53dd3b60c0fcf92b0903e4706391ad0b65
-  media_kit_native_event_loop: 611b696847db1b9100abc0ae2e127e6fc265c7e5
   media_kit_video: 6c61501e3ab980488d80df6d705905d14b150b63
   package_info_plus: fd030dabf36271f146f1f3beacd48f564b0f17f7
   path_provider_foundation: 29f094ae23ebbca9d3d0cec13889cd9060c0e943
