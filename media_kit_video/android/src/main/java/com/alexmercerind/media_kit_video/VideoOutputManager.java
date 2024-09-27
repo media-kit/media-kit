@@ -33,7 +33,6 @@ public class VideoOutputManager {
                 final VideoOutput videoOutput = new VideoOutput(textureRegistryReference, textureUpdateCallback);
                 videoOutputs.put(handle, videoOutput);
             }
-            videoOutputs.get(handle);
         }
     }
 
