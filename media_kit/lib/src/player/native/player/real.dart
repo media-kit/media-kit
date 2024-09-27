@@ -77,6 +77,8 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
+      NativeReferenceHolder.instance.remove(ctx);
+
       await pause(synchronized: false);
 
       await setVideoTrack(VideoTrack.no(), synchronized: false);
@@ -2721,7 +2723,7 @@ class NativePlayer extends PlatformPlayer {
       calloc.free(load);
       calloc.free(unload);
 
-      NativeReferenceHolder.instance.add(ctx.cast());
+      NativeReferenceHolder.instance.add(ctx);
     });
   }
 

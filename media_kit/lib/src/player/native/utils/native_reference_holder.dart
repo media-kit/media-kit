@@ -11,6 +11,7 @@ import 'package:media_kit/ffi/src/allocation.dart';
 
 import 'package:media_kit/src/player/native/utils/temp_file.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
+import 'package:synchronized/synchronized.dart';
 
 /// Callback invoked to notify about the released references.
 typedef NativeReferenceHolderCallback = void Function(List<Pointer<Void>>);
@@ -70,8 +71,9 @@ class NativeReferenceHolder {
       final referencePtr = _referenceBuffer + i;
       final referenceAddress = referencePtr.value;
       referencePtr.value = 0;
-      if (referenceAddress == 0) break;
-      references.add(Pointer.fromAddress(referenceAddress));
+      if (referenceAddress != 0) {
+        references.add(Pointer.fromAddress(referenceAddress));
+      }
     }
 
     print('media_kit: NativeReferenceHolder: Restored references:');
@@ -83,20 +85,42 @@ class NativeReferenceHolder {
   }
 
   /// Saves the reference.
-  Future<void> add(Pointer<Void> reference) async {
+  Future<void> add(Pointer reference) async {
     if (!initialized) return;
     if (reference == nullptr) return;
     await _completer.future;
-    if (_index < kReferenceBufferSize) {
-      _referenceBuffer[_index++] = reference.address;
-    }
+    return _lock.synchronized(() async {
+      for (int i = 0; i < kReferenceBufferSize; i++) {
+        final referencePtr = _referenceBuffer + i;
+        if (referencePtr.value == 0) {
+          referencePtr.value = reference.address;
+          break;
+        }
+      }
+    });
   }
 
-  /// Native terminated reference buffer.
-  late final Pointer<IntPtr> _referenceBuffer;
+  /// Removes the reference.
+  Future<void> remove(Pointer reference) async {
+    if (!initialized) return;
+    if (reference == nullptr) return;
+    await _completer.future;
+    return _lock.synchronized(() async {
+      for (int i = 0; i < kReferenceBufferSize; i++) {
+        final referencePtr = _referenceBuffer + i;
+        if (referencePtr.value == reference.address) {
+          referencePtr.value = 0;
+          break;
+        }
+      }
+    });
+  }
 
-  /// Current reference buffer index.
-  int _index = 0;
+  /// [Lock] used to synchronize access to the reference buffer.
+  final Lock _lock = Lock();
+
+  /// [Completer] used to wait for the reference buffer to be allocated.
+  final Completer<void> _completer = Completer<void>();
 
   /// [File] used to store [int] address to the reference buffer.
   /// This is necessary to have a persistent to the reference buffer across hot-restarts.
@@ -107,6 +131,6 @@ class NativeReferenceHolder {
     ),
   );
 
-  /// [Completer] used to wait for the reference buffer to be allocated.
-  final Completer<void> _completer = Completer<void>();
+  /// [Pointer] to the reference buffer.
+  late final Pointer<IntPtr> _referenceBuffer;
 }
