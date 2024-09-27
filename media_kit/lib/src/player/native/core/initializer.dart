@@ -6,7 +6,6 @@
 import 'dart:ffi';
 
 import 'initializer_isolate.dart';
-import 'initializer_native_event_loop.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
 
@@ -24,28 +23,16 @@ abstract class Initializer {
     Future<void> Function(Pointer<mpv_event> event)? callback, {
     Map<String, String> options = const {},
   }) async {
-    try {
-      return await InitializerNativeEventLoop.create(
-        path,
-        callback,
-        options,
-      );
-    } catch (_) {
-      return await InitializerIsolate.create(
-        path,
-        callback,
-        options,
-      );
-    }
+    return await InitializerIsolate.create(
+      path,
+      callback,
+      options,
+    );
   }
 
   /// Disposes the event loop of the [Pointer<mpv_handle>] created by [create].
   /// NOTE: [Pointer<mpv_handle>] itself is not disposed.
   static void dispose(Pointer<mpv_handle> handle) {
-    try {
-      InitializerNativeEventLoop.dispose(handle);
-    } catch (_) {
-      InitializerIsolate.dispose(handle);
-    }
+    InitializerIsolate.dispose(handle);
   }
 }
