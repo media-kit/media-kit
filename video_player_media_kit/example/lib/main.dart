@@ -131,7 +131,7 @@ class _ExampleCard extends StatelessWidget {
             leading: const Icon(Icons.airline_seat_flat_angled),
             title: Text(title),
           ),
-          ButtonBar(
+          OverflowBar(
             children: <Widget>[
               TextButton(
                 child: const Text('BUY TICKETS'),

@@ -56,7 +56,7 @@ extension Utf16Pointer on Pointer<Utf16> {
     final buffer = StringBuffer();
     var i = 0;
     while (true) {
-      final char = codeUnits.elementAt(i).value;
+      final char = (codeUnits + i).value;
       if (char == 0) {
         return buffer.toString();
       }
