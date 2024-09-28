@@ -38,7 +38,7 @@ ANGLESurfaceManager::~ANGLESurfaceManager() {
   instance_count_--;
 }
 
-void ANGLESurfaceManager::HandleResize(int32_t width, int32_t height) {
+void ANGLESurfaceManager::SetSize(int32_t width, int32_t height) {
   if (width == width_ && height == height_) {
     return;
   }
@@ -144,37 +144,35 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
 }
 
 bool ANGLESurfaceManager::CreateD3DTexture() {
-  if (adapter_ == nullptr) {
-    auto feature_levels = {
+  if (d3d_11_device_ == nullptr) {
+    // NOTE: Not enabling Feature Level 12. It crashes directly on Windows 7.
+    const auto feature_levels = {
         D3D_FEATURE_LEVEL_11_0,
         D3D_FEATURE_LEVEL_10_1,
         D3D_FEATURE_LEVEL_10_0,
         D3D_FEATURE_LEVEL_9_3,
     };
-    // NOTE: Not enabling DirectX 12.
-    // |D3D11CreateDevice| crashes directly on Windows 7.
-    // D3D_FEATURE_LEVEL_12_2, D3D_FEATURE_LEVEL_12_1, D3D_FEATURE_LEVEL_12_0,
-    // D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1,
-    // D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_9_3,
-    IDXGIFactory* dxgi = nullptr;
-    ::CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgi);
-    // Manually selecting adapter. As far as my experience goes, this is the
-    // safest approach. Passing NULL (so-called default) seems to cause issues
-    // on Windows 7 or maybe some older graphics drivers.
-    // First adapter is the default.
-    // |D3D_DRIVER_TYPE_UNKNOWN| must be passed with manual adapter selection.
-    dxgi->EnumAdapters(0, &adapter_);
-    dxgi->Release();
-    if (!adapter_) {
-      FAIL("No IDXGIAdapter found.");
+
+    IDXGIAdapter* adapter = nullptr;
+    D3D_DRIVER_TYPE driver_type = D3D_DRIVER_TYPE_UNKNOWN;
+
+    // NOTE: Automatically selecting adapter on Windows 10 RTM or greater.
+    if (Utils::IsWindows10RTMOrGreater()) {
+      adapter = NULL;
+      driver_type = D3D_DRIVER_TYPE_HARDWARE;
     } else {
-      // Just for debugging.
-      DXGI_ADAPTER_DESC adapter_desc_;
-      adapter_->GetDesc(&adapter_desc_);
-      std::wcout << adapter_desc_.Description << std::endl;
+      IDXGIFactory* dxgi = nullptr;
+      ::CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgi);
+      // As far as my experience goes, this is the safest approach. Passing NULL
+      // (so-called default) seems to cause issues on Windows 7 or maybe some
+      // older graphics drivers. First adapter is the default.
+      // D3D_DRIVER_TYPE_UNKNOWN| must be passed with manual adapter selection.
+      dxgi->EnumAdapters(0, &adapter);
+      dxgi->Release();
     }
+
     auto hr = ::D3D11CreateDevice(
-        adapter_, D3D_DRIVER_TYPE_UNKNOWN, 0, 0, feature_levels.begin(),
+        adapter, driver_type, 0, 0, feature_levels.begin(),
         static_cast<UINT>(feature_levels.size()), D3D11_SDK_VERSION,
         &d3d_11_device_, 0, &d3d_11_device_context_);
     CHECK_HRESULT("D3D11CreateDevice");
