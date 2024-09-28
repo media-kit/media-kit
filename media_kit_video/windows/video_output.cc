@@ -298,8 +298,8 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
   if (surface_manager_ != nullptr) {
     // Destroy internal ID3D11Texture2D & EGLSurface & create new with updated
     // dimensions while preserving previous EGLDisplay & EGLContext.
-    surface_manager_->HandleResize(static_cast<int32_t>(required_width),
-                                   static_cast<int32_t>(required_height));
+    surface_manager_->SetSize(static_cast<int32_t>(required_width),
+                              static_cast<int32_t>(required_height));
     auto texture = std::make_unique<FlutterDesktopGpuSurfaceDescriptor>();
     texture->struct_size = sizeof(FlutterDesktopGpuSurfaceDescriptor);
     texture->handle = surface_manager_->handle();

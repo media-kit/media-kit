@@ -19,6 +19,10 @@ class Utils {
 
   static void ExitNativeFullscreen(HWND window);
 
+  static RTL_OSVERSIONINFOW GetWindowsVersion();
+
+  static bool IsWindows10RTMOrGreater();
+
  private:
   static constexpr auto kFlutterViewWindowClassName = L"FLUTTERVIEW";
 
