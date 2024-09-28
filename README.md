@@ -1712,25 +1712,12 @@ classDiagram
 
   NativePlayer <.. NativeLibrary
   NativePlayer <.. Initializer
-  Initializer o-- InitializerIsolate
-  Initializer o-- InitializerNativeEventLoop
 
   Playable <.. Media
   Playable <.. Playlist
 
   class Initializer {
     +create(path: String, callback: Function, options: Map<String, String>): Future<Pointer<mpv_handle>>
-    +dispose(handle: Pointer<mpv_handle>)
-  }
-
-  class InitializerIsolate {
-    +create(path: String, callback: Function, options: Map<String, String>): Future<Pointer<mpv_handle>>
-    +dispose(handle: Pointer<mpv_handle>)
-  }
-
-  class InitializerNativeEventLoop {
-    +ensureInitialized()
-    +create(path: String, callback: Future<void> Function(Pointer<mpv_event> event), options: Map<String, String>): Future<Pointer<mpv_handle>>
     +dispose(handle: Pointer<mpv_handle>)
   }
 
@@ -1966,46 +1953,50 @@ classDiagram
   VideoOutput <.. MediaKitAndroidHelper: Create & dispose JNI global object reference to android.view.Surface (for --wid)
 
   class MediaKitVideoPlugin {
-    +Activity activity$
     -MethodChannel channel
-    -TextureRegistry textureRegistry
     -VideoOutputManager videoOutputManager
   }
 
   class VideoOutputManager {
     -HashMap<Long, VideoOutput> videoOutputs
-    -MethodChannel channelReference
     -TextureRegistry textureRegistryReference
     -Object lock
 
-    +create(handle: long): VideoOutput
-    +dispose(handle: long): void
-    +createSurface(handle: long): long
-    +setSurfaceTextureSize(handle: long, width: int, height: int): void
+    +create(handle: long, textureUpdateCallback: TextureUpdateCallback)
+    +dispose(handle: long)
+    +setSurfaceSize(handle: long, width: int, height: int): long
   }
 
   class VideoOutput {
-    +long id
-    +long wid
+    $Method newGlobalObjectRef
+    $Method deleteGlobalObjectRef
+    $Handler handler
 
-    -Surface surface
-    -TextureRegistry.SurfaceTextureEntry surfaceTextureEntry
-    -Method newGlobalObjectRef
-    -Method deleteGlobalObjectRef
+    -long id
+    -long wid
+
+    -TextureUpdateCallback textureUpdateCallback
+    -TextureRegistry.SurfaceProducer surfaceProducer
 
     -long handle
     -MethodChannel channelReference
     -TextureRegistry textureRegistryReference
 
     +dispose()
-    +createSurface(): long
-    +setSurfaceTextureSize(width: int, height: int)
+    +setSurfaceSize(width: int, height: int)
+    +setSurfaceSize(width: int, height: int, force: boolean)
+    -setSurfaceTextureSize(width: int, height: int)
+    +onSurfaceCreated()
+    +onSurfaceDestroyed()
+
+    $newGlobalObjectRef(object: Object): long
+    $deleteGlobalObjectRef(ref: long)
   }
 
   class MediaKitAndroidHelper {
     +newGlobalObjectRef(obj: Object): long
-    +deleteGlobalObjectRef(ref: long): void
-    +setApplicationContext(context: Context): void
+    +deleteGlobalObjectRef(ref: long)
+    +setApplicationContext(context: Context)
     +copyAssetToExternalFilesDir(assetName: String): String
   }
 
