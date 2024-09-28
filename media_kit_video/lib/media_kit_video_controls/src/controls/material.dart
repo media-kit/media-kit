@@ -1418,7 +1418,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           Expanded(
                               flex: _theme(context)
                                   .seekOnDoubleTapLayoutWidgetRatios[1],
-                              child: SizedBox()),
+                              child: const SizedBox()),
                         Expanded(
                           flex: _theme(context)
                               .seekOnDoubleTapLayoutWidgetRatios[2],
