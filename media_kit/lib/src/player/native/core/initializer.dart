@@ -56,6 +56,7 @@ class Initializer {
     mpv.mpv_initialize(ctx);
     final nativeCallable = WakeUpNativeCallable.listener(_callback);
     final nativeFunction = nativeCallable.nativeFunction;
+    _locks[ctx.address] = Lock();
     _eventCallbacks[ctx.address] = callback;
     _wakeUpNativeCallables[ctx.address] = nativeCallable;
     mpv.mpv_set_wakeup_callback(ctx, nativeFunction.cast(), ctx.cast());
@@ -70,13 +71,12 @@ class Initializer {
   }
 
   void _callback(Pointer<generated.mpv_handle> ctx) {
-    _locks.putIfAbsent(ctx.address, () => Lock()).synchronized(() async {
-      final callback = _eventCallbacks[ctx.address];
-      while (callback != null) {
+    _locks[ctx.address]?.synchronized(() async {
+      while (true) {
         final event = mpv.mpv_wait_event(ctx, 0);
         if (event == nullptr) return;
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_NONE) return;
-        await callback(event);
+        await _eventCallbacks[ctx.address]?.call(event);
       }
     });
   }

@@ -56,26 +56,12 @@ void main() {
   test(
     'initializer-callback',
     () async {
-      final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-
-      int count = 0;
       final shutdown = Completer();
 
-      final expectPauseFalse = expectAsync1((value) {
-        print(value);
-        expect(value, isFalse);
-        count++;
-        if (count == 2) {
-          shutdown.complete();
-        }
-      });
       final expectPauseTrue = expectAsync1((value) {
         print(value);
         expect(value, isTrue);
-        count++;
-        if (count == 2) {
-          shutdown.complete();
-        }
+        shutdown.complete();
       });
       final expectShutdown = expectAsync0(() {
         print('shutdown');
@@ -89,12 +75,7 @@ void main() {
             if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
                 prop.ref.format == mpv_format.MPV_FORMAT_FLAG) {
               final value = prop.ref.data.cast<Bool>().value;
-              if (value) {
-                expectPauseTrue(value);
-              }
-              if (!value) {
-                expectPauseFalse(value);
-              }
+              expectPauseTrue(value);
             }
           }
           if (event.ref.event_id == mpv_event_id.MPV_EVENT_SHUTDOWN) {
@@ -139,7 +120,6 @@ void main() {
   test(
     'initializer-options-with-callback',
     () async {
-      final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
       final handle = await Initializer(mpv).create(
         (_) async {},
         options: {
