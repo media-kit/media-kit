@@ -1416,10 +1416,10 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                         if (_theme(context)
                                 .seekOnDoubleTapLayoutWidgetRatios[1] >
                             0)
-                          Expanded(
-                              flex: _theme(context)
-                                  .seekOnDoubleTapLayoutWidgetRatios[1],
-                              child: SizedBox()),
+                          Spacer(
+                            flex: _theme(context)
+                                .seekOnDoubleTapLayoutWidgetRatios[1],
+                          ),
                         Expanded(
                           flex: _theme(context)
                               .seekOnDoubleTapLayoutWidgetRatios[2],
@@ -1582,6 +1582,7 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
       tapped = true;
       slider = percent.clamp(0.0, 1.0);
     });
+    controller(context).player.seek(duration * slider);
   }
 
   void onPointerDown() {
@@ -1594,13 +1595,11 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   void onPointerUp() {
     widget.onSeekEnd?.call();
     setState(() {
-      tapped = false;
-    });
-    controller(context).player.seek(duration * slider);
-    setState(() {
       // Explicitly set the position to prevent the slider from jumping.
+      tapped = false;
       position = duration * slider;
     });
+    controller(context).player.seek(duration * slider);
   }
 
   void onPanStart(DragStartDetails e, BoxConstraints constraints) {
