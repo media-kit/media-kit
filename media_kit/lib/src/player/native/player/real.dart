@@ -292,15 +292,15 @@ class NativePlayer extends PlatformPlayer {
         // if (!playlistModeController.isClosed) {
         //   playlistModeController.add(PlaylistMode.none);
         // }
-        if (!audioParamsController.isClosed) {
-          audioParamsController.add(const AudioParams());
-        }
+        // if (!audioParamsController.isClosed) {
+        //   audioParamsController.add(const AudioParams());
+        // }
         if (!videoParamsController.isClosed) {
           videoParamsController.add(const VideoParams());
         }
-        if (!audioBitrateController.isClosed) {
-          audioBitrateController.add(null);
-        }
+        // if (!audioBitrateController.isClosed) {
+        //   audioBitrateController.add(null);
+        // }
         // if (!audioDeviceController.isClosed) {
         //   audioDeviceController.add(AudioDevice.auto());
         // }
