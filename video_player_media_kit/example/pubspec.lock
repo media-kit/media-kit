@@ -443,13 +443,6 @@ packages:
       relative: true
     source: path
     version: "1.0.10"
-  media_kit_native_event_loop:
-    dependency: "direct overridden"
-    description:
-      path: "../../media_kit_native_event_loop"
-      relative: true
-    source: path
-    version: "1.0.9"
   media_kit_video:
     dependency: "direct overridden"
     description:

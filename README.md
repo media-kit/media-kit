@@ -1712,25 +1712,12 @@ classDiagram
 
   NativePlayer <.. NativeLibrary
   NativePlayer <.. Initializer
-  Initializer o-- InitializerIsolate
-  Initializer o-- InitializerNativeEventLoop
 
   Playable <.. Media
   Playable <.. Playlist
 
   class Initializer {
     +create(path: String, callback: Function, options: Map<String, String>): Future<Pointer<mpv_handle>>
-    +dispose(handle: Pointer<mpv_handle>)
-  }
-
-  class InitializerIsolate {
-    +create(path: String, callback: Function, options: Map<String, String>): Future<Pointer<mpv_handle>>
-    +dispose(handle: Pointer<mpv_handle>)
-  }
-
-  class InitializerNativeEventLoop {
-    +ensureInitialized()
-    +create(path: String, callback: Future<void> Function(Pointer<mpv_event> event), options: Map<String, String>): Future<Pointer<mpv_handle>>
     +dispose(handle: Pointer<mpv_handle>)
   }
 
@@ -1966,46 +1953,50 @@ classDiagram
   VideoOutput <.. MediaKitAndroidHelper: Create & dispose JNI global object reference to android.view.Surface (for --wid)
 
   class MediaKitVideoPlugin {
-    +Activity activity$
     -MethodChannel channel
-    -TextureRegistry textureRegistry
     -VideoOutputManager videoOutputManager
   }
 
   class VideoOutputManager {
     -HashMap<Long, VideoOutput> videoOutputs
-    -MethodChannel channelReference
     -TextureRegistry textureRegistryReference
     -Object lock
 
-    +create(handle: long): VideoOutput
-    +dispose(handle: long): void
-    +createSurface(handle: long): long
-    +setSurfaceTextureSize(handle: long, width: int, height: int): void
+    +create(handle: long, textureUpdateCallback: TextureUpdateCallback)
+    +dispose(handle: long)
+    +setSurfaceSize(handle: long, width: int, height: int): long
   }
 
   class VideoOutput {
-    +long id
-    +long wid
+    $Method newGlobalObjectRef
+    $Method deleteGlobalObjectRef
+    $Handler handler
 
-    -Surface surface
-    -TextureRegistry.SurfaceTextureEntry surfaceTextureEntry
-    -Method newGlobalObjectRef
-    -Method deleteGlobalObjectRef
+    -long id
+    -long wid
+
+    -TextureUpdateCallback textureUpdateCallback
+    -TextureRegistry.SurfaceProducer surfaceProducer
 
     -long handle
     -MethodChannel channelReference
     -TextureRegistry textureRegistryReference
 
     +dispose()
-    +createSurface(): long
-    +setSurfaceTextureSize(width: int, height: int)
+    +setSurfaceSize(width: int, height: int)
+    +setSurfaceSize(width: int, height: int, force: boolean)
+    -setSurfaceTextureSize(width: int, height: int)
+    +onSurfaceCreated()
+    +onSurfaceDestroyed()
+
+    $newGlobalObjectRef(object: Object): long
+    $deleteGlobalObjectRef(ref: long)
   }
 
   class MediaKitAndroidHelper {
     +newGlobalObjectRef(obj: Object): long
-    +deleteGlobalObjectRef(ref: long): void
-    +setApplicationContext(context: Context): void
+    +deleteGlobalObjectRef(ref: long)
+    +setApplicationContext(context: Context)
     +copyAssetToExternalFilesDir(assetName: String): String
   }
 
@@ -2207,13 +2198,15 @@ Alternative backends may be implemented in future to meet certain demands (& pro
 
 [package:media_kit](https://github.com/media-kit/media-kit) is entirely written in Dart. It uses dart:ffi to invoke native C API of libmpv through it's shared libraries. All the callback management, event-`Stream`s, other methods to control playback of audio/video are implemented in Dart with the help of FFI. Event management i.e. `position`, `duration`, `bitrate`, `audioParams` `Stream`s are important to render changes in the UI.
 
-A [big limitation with FFI in Dart SDK](https://github.com/dart-lang/sdk/issues/37022) has been that it does not support async callbacks from another thread. Learn more about this at: [dart/sdk#37022](https://github.com/dart-lang/sdk/issues/37022). Following situation will explain better:
+~~A [big limitation with FFI in Dart SDK](https://github.com/dart-lang/sdk/issues/37022) has been that it does not support async callbacks from another thread. Learn more about this at: [dart/sdk#37022](https://github.com/dart-lang/sdk/issues/37022). Following situation will explain better:~~
 
-> If you pass a function pointer from Dart to C code, you can invoke it fine. But, as soon as you invoke it from some other thread on the native side, Dart VM will instantly crash. This feature is important because most events take place on a background thread.
+> ~~If you pass a function pointer from Dart to C code, you can invoke it fine. But, as soon as you invoke it from some other thread on the native side, Dart VM will instantly crash. This feature is important because most events take place on a background thread.~~
 
-However, I could easily do this within Dart because [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) offers an "event polling"-like way to listen to events. I got awesome idea to spawn a background [`Isolate`](https://api.flutter.dev/flutter/dart-isolate/Isolate-class.html), where I run the event-loop. I get the memory address of each event and forward it outside the [`Isolate`](https://api.flutter.dev/flutter/dart-isolate/Isolate-class.html) with the help of [`ReceivePort`](https://api.dart.dev/stable/2.18.6/dart-isolate/ReceivePort-class.html), where I finally interpret it using more FFI code. I have explained this in detail within [the in-code comments of initializer.dart, where I had to perform a lot more trickery to get this to work](https://github.com/media-kit/media-kit/blob/master/media_kit/lib/src/libmpv/core/initializer.dart).
+~~However, I could easily do this within Dart because [libmpv](https://github.com/mpv-player/mpv/tree/master/libmpv) offers an "event polling"-like way to listen to events. I got awesome idea to spawn a background [`Isolate`](https://api.flutter.dev/flutter/dart-isolate/Isolate-class.html), where I run the event-loop. I get the memory address of each event and forward it outside the [`Isolate`](https://api.flutter.dev/flutter/dart-isolate/Isolate-class.html) with the help of [`ReceivePort`](https://api.dart.dev/stable/2.18.6/dart-isolate/ReceivePort-class.html), where I finally interpret it using more FFI code. I have explained this in detail within [the in-code comments of initializer.dart, where I had to perform a lot more trickery to get this to work](https://github.com/media-kit/media-kit/blob/master/media_kit/lib/src/libmpv/core/initializer.dart).~~
 
-**Thus, invoking native methods & handling of events etc. could be done within 100% Dart using FFI.** This is enough for audio playback & supports both Flutter SDK & Dart VM. Although event handling works entirely within Dart. Later, it was discovered that going beyond certain number of simultaneous instances caused a deadlock ([dart-lang/sdk#51254](https://github.com/dart-lang/sdk/issues/51254) & [dart-lang/sdk#51261](https://github.com/dart-lang/sdk/issues/51261)), making UI entirely freezed along-side any other Dart code in execution. To deal with this, a new package [package:media_kit_native_event_loop](#packagemedia_kit_native_event_loop) is created. Adding [package:media_kit_native_event_loop](#packagemedia_kit_native_event_loop) to `pubspec.yaml` automatically resolves this issue without any chagnes to code!
+~~**Thus, invoking native methods & handling of events etc. could be done within 100% Dart using FFI.** This is enough for audio playback & supports both Flutter SDK & Dart VM. Although event handling works entirely within Dart. Later, it was discovered that going beyond certain number of simultaneous instances caused a deadlock ([dart-lang/sdk#51254](https://github.com/dart-lang/sdk/issues/51254) & [dart-lang/sdk#51261](https://github.com/dart-lang/sdk/issues/51261)), making UI entirely freezed along-side any other Dart code in execution. To deal with this, a new package [package:media_kit_native_event_loop](#packagemedia_kit_native_event_loop) is created. Adding [package:media_kit_native_event_loop](#packagemedia_kit_native_event_loop) to `pubspec.yaml` automatically resolves this issue without any chagnes to code!~~
+
+**Update:** The above issue is resolved in Dart SDK 3.1.0. [`NativeCallable`](https://api.flutter.dev/flutter/dart-ffi/NativeCallable-class.html) can now be used to make async C callbacks.
 
 However, no such "event-polling" like API is possible for video rendering. So, I best idea seemed to create a new package [`package:media_kit_video`](https://github.com/media-kit/media-kit) for specifically offering platform-specific video embedding implementation which internally handles Flutter's Texture Registry API & libmpv's OpenGL rendering API. This package only consumes the `mpv_handle*` (which can be shared as primitive `int` value easily) of the instance (created with [package:media_kit](https://github.com/media-kit/media-kit) through FFI) to setup a new viewport. Detailed implementation is discussed below.
 

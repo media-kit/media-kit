@@ -3,49 +3,85 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'dart:collection';
 import 'dart:ffi';
 
-import 'initializer_isolate.dart';
-import 'initializer_native_event_loop.dart';
+import 'package:media_kit/ffi/ffi.dart';
+import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
+import 'package:synchronized/synchronized.dart';
 
-import 'package:media_kit/generated/libmpv/bindings.dart';
+typedef WakeUpCallback = Void Function(Pointer<generated.mpv_handle>);
+typedef WakeUpNativeCallable = NativeCallable<WakeUpCallback>;
+typedef WakeUpNativeCallableMap = HashMap<int, WakeUpNativeCallable>;
 
-/// Creates & returns initialized [Pointer<mpv_handle>].
-/// Pass [path] to libmpv dynamic library & [callback] to receive event callbacks as [Pointer<mpv_event>].
+typedef EventCallback = Future<void> Function(Pointer<generated.mpv_event>);
+typedef EventCallbackMap = HashMap<int, EventCallback>;
+
+/// {@template initializer}
 ///
-/// Optionally, [options] may be passed to set libmpv options before the initialization.
+/// Initializer
+/// -----------
+/// Initializes [Pointer<mpv_handle>] & notifies about events through the supplied callback.
 ///
-/// Platform specific threaded event loop is preferred over [Isolate] based event loop (automatic fallback).
-/// See package:media_kit_native_event_loop for more details.
-abstract class Initializer {
-  /// Creates & returns initialized [Pointer<mpv_handle>].
-  static Future<Pointer<mpv_handle>> create(
-    String path,
-    Future<void> Function(Pointer<mpv_event> event)? callback, {
+/// {@endtemplate}
+class Initializer {
+  /// Singleton instance.
+  static Initializer? _instance;
+
+  /// {@macro initializer}
+  Initializer._(this.mpv);
+
+  /// {@macro initializer}
+  factory Initializer(generated.MPV mpv) {
+    _instance ??= Initializer._(mpv);
+    return _instance!;
+  }
+
+  /// Generated libmpv C API bindings.
+  final generated.MPV mpv;
+
+  /// Creates [Pointer<mpv_handle>].
+  Future<Pointer<generated.mpv_handle>> create(
+    Future<void> Function(Pointer<generated.mpv_event>) callback, {
     Map<String, String> options = const {},
   }) async {
-    try {
-      return await InitializerNativeEventLoop.create(
-        path,
-        callback,
-        options,
-      );
-    } catch (_) {
-      return await InitializerIsolate.create(
-        path,
-        callback,
-        options,
-      );
+    final ctx = mpv.mpv_create();
+    for (final entry in options.entries) {
+      final name = entry.key.toNativeUtf8();
+      final value = entry.value.toNativeUtf8();
+      mpv.mpv_set_option_string(ctx, name.cast(), value.cast());
+      calloc.free(name);
+      calloc.free(value);
     }
+    mpv.mpv_initialize(ctx);
+    final nativeCallable = WakeUpNativeCallable.listener(_callback);
+    final nativeFunction = nativeCallable.nativeFunction;
+    _locks[ctx.address] = Lock();
+    _eventCallbacks[ctx.address] = callback;
+    _wakeUpNativeCallables[ctx.address] = nativeCallable;
+    mpv.mpv_set_wakeup_callback(ctx, nativeFunction.cast(), ctx.cast());
+    return ctx;
   }
 
-  /// Disposes the event loop of the [Pointer<mpv_handle>] created by [create].
-  /// NOTE: [Pointer<mpv_handle>] itself is not disposed.
-  static void dispose(Pointer<mpv_handle> handle) {
-    try {
-      InitializerNativeEventLoop.dispose(handle);
-    } catch (_) {
-      InitializerIsolate.dispose(handle);
-    }
+  /// Disposes [Pointer<mpv_handle>].
+  void dispose(Pointer<generated.mpv_handle> ctx) {
+    _locks.remove(ctx.address);
+    _eventCallbacks.remove(ctx.address);
+    _wakeUpNativeCallables.remove(ctx.address)?.close();
   }
+
+  void _callback(Pointer<generated.mpv_handle> ctx) {
+    _locks[ctx.address]?.synchronized(() async {
+      while (true) {
+        final event = mpv.mpv_wait_event(ctx, 0);
+        if (event == nullptr) return;
+        if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_NONE) return;
+        await _eventCallbacks[ctx.address]?.call(event);
+      }
+    });
+  }
+
+  final _locks = HashMap<int, Lock>();
+  final _eventCallbacks = EventCallbackMap();
+  final _wakeUpNativeCallables = WakeUpNativeCallableMap();
 }

@@ -16,28 +16,25 @@ import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/ffi/ffi.dart';
 
-import 'package:media_kit/src/player/platform_player.dart';
-
-import 'package:media_kit/src/player/native/core/initializer.dart';
-import 'package:media_kit/src/player/native/core/native_library.dart';
-import 'package:media_kit/src/player/native/core/fallback_bitrate_handler.dart';
-import 'package:media_kit/src/player/native/core/initializer_native_event_loop.dart';
-
-import 'package:media_kit/src/player/native/utils/isolates.dart';
-import 'package:media_kit/src/player/native/utils/temp_file.dart';
-import 'package:media_kit/src/player/native/utils/android_helper.dart';
-import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
-
-import 'package:media_kit/src/models/track.dart';
-import 'package:media_kit/src/models/playable.dart';
-import 'package:media_kit/src/models/playlist.dart';
-import 'package:media_kit/src/models/player_log.dart';
-import 'package:media_kit/src/models/media/media.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
-import 'package:media_kit/src/models/video_params.dart';
+import 'package:media_kit/src/models/media/media.dart';
+import 'package:media_kit/src/models/playable.dart';
+import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/player_state.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
+import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/video_params.dart';
+import 'package:media_kit/src/player/native/core/fallback_bitrate_handler.dart';
+import 'package:media_kit/src/player/native/core/initializer.dart';
+import 'package:media_kit/src/player/native/core/native_library.dart';
+import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
+import 'package:media_kit/src/player/native/utils/android_helper.dart';
+import 'package:media_kit/src/player/native/utils/isolates.dart';
+import 'package:media_kit/src/player/native/utils/native_reference_holder.dart';
+import 'package:media_kit/src/player/native/utils/temp_file.dart';
+import 'package:media_kit/src/player/platform_player.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 
@@ -45,7 +42,18 @@ import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 void nativeEnsureInitialized({String? libmpv}) {
   AndroidHelper.ensureInitialized();
   NativeLibrary.ensureInitialized(libmpv: libmpv);
-  InitializerNativeEventLoop.ensureInitialized();
+  NativeReferenceHolder.ensureInitialized((references) async {
+    // I can only get quit to work; [mpv_terminate_destroy] causes direct crash.
+    final mpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
+    final cmd = 'quit'.toNativeUtf8();
+    try {
+      for (final reference in references) {
+        mpv.mpv_command_string(reference.cast(), cmd.cast());
+      }
+    } finally {
+      calloc.free(cmd);
+    }
+  });
 }
 
 /// {@template native_player}
@@ -78,14 +86,14 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      _isDisposing = true;
-      await stop(synchronized: false);
+      await NativeReferenceHolder.instance.remove(ctx);
+      await stop(notify: false, synchronized: false);
 
       disposed = true;
 
       await super.dispose();
 
-      Initializer.dispose(ctx);
+      Initializer(mpv).dispose(ctx);
 
       Future.delayed(const Duration(seconds: 5), () {
         mpv.mpv_terminate_destroy(ctx);
@@ -211,6 +219,7 @@ class NativePlayer extends PlatformPlayer {
   @override
   Future<void> stop({
     bool open = false,
+    bool notify = true,
     bool synchronized = true,
   }) async {
     Future<void> function() async {
@@ -242,7 +251,7 @@ class NativePlayer extends PlatformPlayer {
         audioDevice: state.audioDevice,
         audioDevices: state.audioDevices,
       );
-      if (!_isDisposing) {
+      if (notify) {
         if (!open) {
           // Do not emit PlayerStream.playlist if invoked from [open].
           if (!playlistController.isClosed) {
@@ -622,7 +631,11 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      await _command(['seek', (duration.inMilliseconds / 1000).toStringAsFixed(4), 'absolute']);
+      await _command([
+        'seek',
+        (duration.inMilliseconds / 1000).toStringAsFixed(4),
+        'absolute'
+      ]);
 
       // It is self explanatory that PlayerState.completed & PlayerStream.completed must enter the false state if seek is called. Typically after EOF.
       // https://github.com/media-kit/media-kit/issues/221
@@ -738,7 +751,8 @@ class NativePlayer extends PlatformPlayer {
         // Since, it also alters the actual [speed], the scaletempo:scale is divided by the same value of [pitch] to compensate the speed change.
         await _setPropertyFlag('audio-pitch-correction', false);
         // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
-        await _setPropertyString('af', 'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}');
+        await _setPropertyString('af',
+            'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}');
       } else {
         // Pitch shift control is disabled.
 
@@ -792,7 +806,8 @@ class NativePlayer extends PlatformPlayer {
         await _setPropertyFlag('audio-pitch-correction', false);
         await _setPropertyDouble('speed', pitch);
         // Divide by [state.pitch] to compensate the speed change caused by pitch shift.
-        await _setPropertyString('af', 'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}');
+        await _setPropertyString('af',
+            'scaletempo:scale=${(state.rate / state.pitch).toStringAsFixed(8)}');
       } else {
         // Pitch shift control is disabled.
         throw ArgumentError('[PlayerConfiguration.pitch] is false');
@@ -1326,19 +1341,18 @@ class NativePlayer extends PlatformPlayer {
         generated.mpv_event_id.MPV_EVENT_SET_PROPERTY_REPLY) {
       final completer = _setPropertyRequests.remove(event.ref.reply_userdata);
       if (completer == null) {
-        print('Warning: Received MPV_EVENT_SET_PROPERTY_REPLY with unregistered ID ${event.ref.reply_userdata}');
-      }
-      else {
+        print(
+            'Warning: Received MPV_EVENT_SET_PROPERTY_REPLY with unregistered ID ${event.ref.reply_userdata}');
+      } else {
         completer.complete(event.ref.error);
       }
     }
-    if (event.ref.event_id ==
-        generated.mpv_event_id.MPV_EVENT_COMMAND_REPLY) {
+    if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_COMMAND_REPLY) {
       final completer = _commandRequests.remove(event.ref.reply_userdata);
       if (completer == null) {
-        print('Warning: Received MPV_EVENT_COMMAND_REPLY with unregistered ID ${event.ref.reply_userdata}');
-      }
-      else {
+        print(
+            'Warning: Received MPV_EVENT_COMMAND_REPLY with unregistered ID ${event.ref.reply_userdata}');
+      } else {
         completer.complete(event.ref.error);
       }
     }
@@ -2283,8 +2297,7 @@ class NativePlayer extends PlatformPlayer {
         }
       }
 
-      ctx = await Initializer.create(
-        NativeLibrary.path,
+      ctx = await Initializer(mpv).create(
         _handler,
         options: options,
       );
@@ -2365,9 +2378,8 @@ class NativePlayer extends PlatformPlayer {
         properties['ao'] = 'null';
       }
 
-      await Future.wait(properties.entries.map(
-        (entry) => _setPropertyString(entry.key, entry.value)
-      ));
+      await Future.wait(properties.entries
+          .map((entry) => _setPropertyString(entry.key, entry.value)));
 
       if (configuration.muted) {
         await _setPropertyDouble('volume', 0);
@@ -2436,6 +2448,8 @@ class NativePlayer extends PlatformPlayer {
       mpv.mpv_hook_add(ctx, 0, unload.cast(), 0);
       calloc.free(load);
       calloc.free(unload);
+
+      await NativeReferenceHolder.instance.add(ctx);
     });
   }
 
@@ -2447,12 +2461,10 @@ class NativePlayer extends PlatformPlayer {
     }
   }
 
-
   int _asyncRequestNumber = 0;
   final Map<int, Completer<int>> _setPropertyRequests = {};
   final Map<int, Completer<int>> _commandRequests = {};
 
-  /// Asynchronous property setting
   Future<void> _setProperty(
     String name,
     int format,
@@ -2461,10 +2473,16 @@ class NativePlayer extends PlatformPlayer {
     final requestNumber = _asyncRequestNumber++;
     final completer = _setPropertyRequests[requestNumber] = Completer<int>();
     final namePtr = name.toNativeUtf8();
-    final immediate = mpv.mpv_set_property_async(ctx, requestNumber, namePtr.cast(), format, data);
+    final immediate = mpv.mpv_set_property_async(
+      ctx,
+      requestNumber,
+      namePtr.cast(),
+      format,
+      data,
+    );
     calloc.free(namePtr);
     if (immediate < 0) {
-      // Sending failed
+      // Sending failed.
       _error(immediate);
       return;
     }
@@ -2473,28 +2491,44 @@ class NativePlayer extends PlatformPlayer {
 
   Future<void> _setPropertyFlag(String name, bool value) async {
     final ptr = calloc<Bool>(1)..value = value;
-    await _setProperty(name, generated.mpv_format.MPV_FORMAT_FLAG, ptr.cast());
+    await _setProperty(
+      name,
+      generated.mpv_format.MPV_FORMAT_FLAG,
+      ptr.cast(),
+    );
     calloc.free(ptr);
   }
 
   Future<void> _setPropertyDouble(String name, double value) async {
     final ptr = calloc<Double>(1)..value = value;
-    await _setProperty(name, generated.mpv_format.MPV_FORMAT_DOUBLE, ptr.cast());
+    await _setProperty(
+      name,
+      generated.mpv_format.MPV_FORMAT_DOUBLE,
+      ptr.cast(),
+    );
     calloc.free(ptr);
   }
 
   Future<void> _setPropertyInt64(String name, int value) async {
     final ptr = calloc<Int64>(1)..value = value;
-    await _setProperty(name, generated.mpv_format.MPV_FORMAT_INT64, ptr.cast());
+    await _setProperty(
+      name,
+      generated.mpv_format.MPV_FORMAT_INT64,
+      ptr.cast(),
+    );
     calloc.free(ptr);
   }
 
   Future<void> _setPropertyString(String name, String value) async {
     final string = value.toNativeUtf8();
-    // It wants char**
+    // API requires char**.
     final ptr = calloc<Pointer<Void>>(1);
     ptr.value = Pointer.fromAddress(string.address);
-    await _setProperty(name, generated.mpv_format.MPV_FORMAT_STRING, ptr.cast());
+    await _setProperty(
+      name,
+      generated.mpv_format.MPV_FORMAT_STRING,
+      ptr.cast(),
+    );
     calloc.free(ptr);
     calloc.free(string);
   }
@@ -2505,7 +2539,7 @@ class NativePlayer extends PlatformPlayer {
     final pointers = args.map<Pointer<Utf8>>((e) => e.toNativeUtf8()).toList();
     final arr = calloc<Pointer<Utf8>>(128);
     for (int i = 0; i < args.length; i++) {
-      arr.elementAt(i).value = pointers[i];
+      (arr + i).value = pointers[i];
     }
     final requestNumber = _asyncRequestNumber++;
     final completer = _commandRequests[requestNumber] = Completer<int>();
@@ -2513,14 +2547,14 @@ class NativePlayer extends PlatformPlayer {
     calloc.free(arr);
     pointers.forEach(calloc.free);
     if (immediate < 0) {
-      // Sending failed
+      // Sending failed.
       _error(immediate);
       return;
     }
     _error(await completer.future);
   }
 
-  /// Internal generated libmpv C API bindings.
+  /// Generated libmpv C API bindings.
   final generated.MPV mpv;
 
   /// [Pointer] to [generated.mpv_handle] of this instance.
@@ -2529,9 +2563,6 @@ class NativePlayer extends PlatformPlayer {
   /// The [Future] to wait for [_create] completion.
   /// This is used to prevent signaling [completer] (from [PlatformPlayer]) before [_create] completes in any hypothetical situation (because `idle-active` may fire before it).
   Future<void>? future;
-
-  /// Internal flag to avoid emitting events during disposal cleanup
-  bool _isDisposing = false;
 
   /// Whether the [Player] has been disposed. This is used to prevent accessing dangling [ctx] after [dispose].
   bool disposed = false;

@@ -18,10 +18,6 @@ import java.util.Objects;
 
 import io.flutter.view.TextureRegistry;
 
-
-
-
-
 public class VideoOutput implements TextureRegistry.SurfaceProducer.Callback {
     private static final String TAG = "VideoOutput";
     private static final Method newGlobalObjectRef;
