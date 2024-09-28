@@ -43,6 +43,10 @@ void nativeEnsureInitialized({String? libmpv}) {
   AndroidHelper.ensureInitialized();
   NativeLibrary.ensureInitialized(libmpv: libmpv);
   NativeReferenceHolder.ensureInitialized((references) async {
+    if (references.isEmpty) {
+      return;
+    }
+    print('media_kit: Found ${references.length} reference(s). Disposing...');
     // I can only get quit to work; [mpv_terminate_destroy] causes direct crash.
     final mpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
     final cmd = 'quit'.toNativeUtf8();
@@ -2337,6 +2341,9 @@ class NativePlayer extends PlatformPlayer {
         'dscale': 'bilinear',
         'dither': 'no',
         'cache': 'yes',
+        'cache-on-disk': 'yes',
+        'hr-seek': 'yes',
+        'hr-seek-framedrop': 'no',
         'correct-downscaling': 'no',
         'linear-downscaling': 'no',
         'sigmoid-upscaling': 'no',

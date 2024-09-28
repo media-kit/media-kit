@@ -27,12 +27,6 @@ class AndroidVideoController extends PlatformVideoController {
   /// Whether [AndroidVideoController] is supported on the current platform or not.
   static bool get supported => Platform.isAndroid;
 
-  /// Fixed width of the video output.
-  int? width;
-
-  /// Fixed height of the video output.
-  int? height;
-
   /// Pointer address to the global object reference of `android.view.Surface` i.e. `(intptr_t)(*android.view.Surface)`.
   final ValueNotifier<int?> wid = ValueNotifier<int?>(null);
 
@@ -110,11 +104,6 @@ class AndroidVideoController extends PlatformVideoController {
     wid.addListener(widListener);
     platform.onLoadHooks.add(onLoadHook);
     platform.onUnloadHooks.add(onUnloadHook);
-
-    // This setup is here within Dart (unlike [NativeVideoController]) primarily for two reasons:
-    // * We use --wid & do not run own render loop.
-    // * Native listener/callback within JNI would be redundantly complex.
-
     videoParamsSubscription = player.stream.videoParams.listen(
       (event) => lock.synchronized(() async {
         if ([0, null].contains(event.dw) || [0, null].contains(event.dh)) {
