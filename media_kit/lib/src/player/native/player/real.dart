@@ -78,11 +78,8 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      await pause(synchronized: false);
-
-      await setVideoTrack(VideoTrack.no(), synchronized: false);
-      await setAudioTrack(AudioTrack.no(), synchronized: false);
-      await setSubtitleTrack(SubtitleTrack.no(), synchronized: false);
+      _isDisposing = true;
+      await stop(synchronized: false);
 
       disposed = true;
 
@@ -245,71 +242,73 @@ class NativePlayer extends PlatformPlayer {
         audioDevice: state.audioDevice,
         audioDevices: state.audioDevices,
       );
-      if (!open) {
-        // Do not emit PlayerStream.playlist if invoked from [open].
-        if (!playlistController.isClosed) {
-          playlistController.add(Playlist([]));
+      if (!_isDisposing) {
+        if (!open) {
+          // Do not emit PlayerStream.playlist if invoked from [open].
+          if (!playlistController.isClosed) {
+            playlistController.add(Playlist([]));
+          }
         }
-      }
-      if (!playingController.isClosed) {
-        playingController.add(false);
-      }
-      if (!completedController.isClosed) {
-        completedController.add(false);
-      }
-      if (!positionController.isClosed) {
-        positionController.add(Duration.zero);
-      }
-      if (!durationController.isClosed) {
-        durationController.add(Duration.zero);
-      }
-      // if (!volumeController.isClosed) {
-      //   volumeController.add(0.0);
-      // }
-      // if (!rateController.isClosed) {
-      //   rateController.add(0.0);
-      // }
-      // if (!pitchController.isClosed) {
-      //   pitchController.add(0.0);
-      // }
-      if (!bufferingController.isClosed) {
-        bufferingController.add(false);
-      }
-      if (!bufferController.isClosed) {
-        bufferController.add(Duration.zero);
-      }
-      // if (!playlistModeController.isClosed) {
-      //   playlistModeController.add(PlaylistMode.none);
-      // }
-      if (!audioParamsController.isClosed) {
-        audioParamsController.add(const AudioParams());
-      }
-      if (!videoParamsController.isClosed) {
-        videoParamsController.add(const VideoParams());
-      }
-      if (!audioBitrateController.isClosed) {
-        audioBitrateController.add(null);
-      }
-      // if (!audioDeviceController.isClosed) {
-      //   audioDeviceController.add(AudioDevice.auto());
-      // }
-      // if (!audioDevicesController.isClosed) {
-      //   audioDevicesController.add([AudioDevice.auto()]);
-      // }
-      if (!trackController.isClosed) {
-        trackController.add(Track());
-      }
-      if (!tracksController.isClosed) {
-        tracksController.add(Tracks());
-      }
-      if (!widthController.isClosed) {
-        widthController.add(null);
-      }
-      if (!heightController.isClosed) {
-        heightController.add(null);
-      }
-      if (!subtitleController.isClosed) {
-        subtitleController.add(['', '']);
+        if (!playingController.isClosed) {
+          playingController.add(false);
+        }
+        if (!completedController.isClosed) {
+          completedController.add(false);
+        }
+        if (!positionController.isClosed) {
+          positionController.add(Duration.zero);
+        }
+        if (!durationController.isClosed) {
+          durationController.add(Duration.zero);
+        }
+        // if (!volumeController.isClosed) {
+        //   volumeController.add(0.0);
+        // }
+        // if (!rateController.isClosed) {
+        //   rateController.add(0.0);
+        // }
+        // if (!pitchController.isClosed) {
+        //   pitchController.add(0.0);
+        // }
+        if (!bufferingController.isClosed) {
+          bufferingController.add(false);
+        }
+        if (!bufferController.isClosed) {
+          bufferController.add(Duration.zero);
+        }
+        // if (!playlistModeController.isClosed) {
+        //   playlistModeController.add(PlaylistMode.none);
+        // }
+        if (!audioParamsController.isClosed) {
+          audioParamsController.add(const AudioParams());
+        }
+        if (!videoParamsController.isClosed) {
+          videoParamsController.add(const VideoParams());
+        }
+        if (!audioBitrateController.isClosed) {
+          audioBitrateController.add(null);
+        }
+        // if (!audioDeviceController.isClosed) {
+        //   audioDeviceController.add(AudioDevice.auto());
+        // }
+        // if (!audioDevicesController.isClosed) {
+        //   audioDevicesController.add([AudioDevice.auto()]);
+        // }
+        if (!trackController.isClosed) {
+          trackController.add(Track());
+        }
+        if (!tracksController.isClosed) {
+          tracksController.add(Tracks());
+        }
+        if (!widthController.isClosed) {
+          widthController.add(null);
+        }
+        if (!heightController.isClosed) {
+          heightController.add(null);
+        }
+        if (!subtitleController.isClosed) {
+          subtitleController.add(['', '']);
+        }
       }
     }
 
@@ -335,6 +334,13 @@ class NativePlayer extends PlatformPlayer {
         playingController.add(true);
       }
 
+      isPlayingStateChangeAllowed = true;
+
+      // This condition is specifically for the case when the internal playlist is ended (with [PlaylistLoopMode.none]), and we want to play the playlist again if play/pause is pressed.
+      if (state.completed) {
+        await seek(Duration.zero, synchronized: false);
+        await _setPropertyInt64('playlist-pos', 0);
+      }
       await _setPropertyFlag('pause', false);
     }
 
@@ -360,6 +366,7 @@ class NativePlayer extends PlatformPlayer {
         playingController.add(false);
       }
 
+      isPlayingStateChangeAllowed = true;
       await _setPropertyFlag('pause', true);
     }
 
@@ -2522,6 +2529,9 @@ class NativePlayer extends PlatformPlayer {
   /// The [Future] to wait for [_create] completion.
   /// This is used to prevent signaling [completer] (from [PlatformPlayer]) before [_create] completes in any hypothetical situation (because `idle-active` may fire before it).
   Future<void>? future;
+
+  /// Internal flag to avoid emitting events during disposal cleanup
+  bool _isDisposing = false;
 
   /// Whether the [Player] has been disposed. This is used to prevent accessing dangling [ctx] after [dispose].
   bool disposed = false;
