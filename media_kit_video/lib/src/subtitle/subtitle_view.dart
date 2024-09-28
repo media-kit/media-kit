@@ -84,7 +84,6 @@ class SubtitleViewState extends State<SubtitleView> {
   /// {@macro subtitle_view}
   @override
   Widget build(BuildContext context) {
-    padding = widget.configuration.padding;
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate the visible text scale factor.
