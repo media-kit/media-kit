@@ -17,13 +17,28 @@ import 'package:media_kit/src/player/native/core/native_library.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
 
+MPV? _mpv;
+MPV get mpv => _mpv!;
+
 void main() {
-  setUp(NativeLibrary.ensureInitialized);
+  setUp(() {
+    NativeLibrary.ensureInitialized();
+    _mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
+  });
+  test(
+    'initializer-init',
+    () {
+      expect(
+        Initializer(mpv).create((_) async {}),
+        completes,
+      );
+    },
+  );
   test(
     'initializer-create',
     () {
       expect(
-        Initializer.create(NativeLibrary.path, (_) async {}),
+        Initializer(mpv).create((_) async {}),
         completes,
       );
     },
@@ -31,9 +46,9 @@ void main() {
   test(
     'initializer-dispose',
     () async {
-      final handle = await Initializer.create(NativeLibrary.path, (_) async {});
+      final handle = await Initializer(mpv).create((_) async {});
       expect(
-        () => Initializer.dispose(handle),
+        () => Initializer(mpv).dispose(handle),
         returnsNormally,
       );
     },
@@ -67,8 +82,7 @@ void main() {
         expect(true, isTrue);
       });
 
-      final handle = await Initializer.create(
-        NativeLibrary.path,
+      final handle = await Initializer(mpv).create(
         (event) async {
           if (event.ref.event_id == mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
             final prop = event.ref.data.cast<mpv_event_property>();
@@ -119,15 +133,14 @@ void main() {
 
       await Future.delayed(const Duration(seconds: 5));
 
-      Initializer.dispose(handle);
+      Initializer(mpv).dispose(handle);
     },
   );
   test(
     'initializer-options-with-callback',
     () async {
       final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-      final handle = await Initializer.create(
-        NativeLibrary.path,
+      final handle = await Initializer(mpv).create(
         (_) async {},
         options: {
           'config': 'yes',
@@ -161,49 +174,7 @@ void main() {
 
       await Future.delayed(const Duration(seconds: 5));
 
-      Initializer.dispose(handle);
-    },
-  );
-  test(
-    'initializer-options-without-callback',
-    () async {
-      final mpv = MPV(DynamicLibrary.open(NativeLibrary.path));
-      final handle = await Initializer.create(
-        NativeLibrary.path,
-        null,
-        options: {
-          'config': 'yes',
-          'config-dir': dirname(Platform.script.toFilePath()),
-        },
-      );
-      {
-        final name = 'config'.toNativeUtf8();
-        final value = mpv.mpv_get_property_string(
-          handle,
-          name.cast(),
-        );
-        calloc.free(name);
-        expect(
-          value.cast<Utf8>().toDartString(),
-          'yes',
-        );
-      }
-      {
-        final name = 'config-dir'.toNativeUtf8();
-        final value = mpv.mpv_get_property_string(
-          handle,
-          name.cast(),
-        );
-        calloc.free(name);
-        expect(
-          value.cast<Utf8>().toDartString(),
-          dirname(Platform.script.toFilePath()),
-        );
-      }
-
-      await Future.delayed(const Duration(seconds: 5));
-
-      Initializer.dispose(handle);
+      Initializer(mpv).dispose(handle);
     },
   );
 }

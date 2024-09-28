@@ -98,7 +98,7 @@ class NativePlayer extends PlatformPlayer {
 
       await super.dispose();
 
-      Initializer.dispose(ctx);
+      Initializer(mpv).dispose(ctx);
 
       Future.delayed(const Duration(seconds: 5), () {
         mpv.mpv_terminate_destroy(ctx);
@@ -2561,8 +2561,7 @@ class NativePlayer extends PlatformPlayer {
         }
       }
 
-      ctx = await Initializer.create(
-        NativeLibrary.path,
+      ctx = await Initializer(mpv).create(
         _handler,
         options: options,
       );
@@ -2760,7 +2759,7 @@ class NativePlayer extends PlatformPlayer {
     pointers.forEach(calloc.free);
   }
 
-  /// Internal generated libmpv C API bindings.
+  /// Generated libmpv C API bindings.
   final generated.MPV mpv;
 
   /// [Pointer] to [generated.mpv_handle] of this instance.

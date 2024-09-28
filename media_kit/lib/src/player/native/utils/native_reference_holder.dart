@@ -20,7 +20,7 @@ typedef NativeReferenceHolderCallback = void Function(List<Pointer<Void>>);
 ///
 /// NativeReferenceHolder
 /// ---------------------
-/// This class is used to hold references to [Pointer<generated.mpv_handle>]s created during the application runtime, while running in debug mode.
+/// Holds references to [Pointer<generated.mpv_handle>]s created during the application runtime, while running in debug mode.
 /// These references can be used to dispose the [Pointer<generated.mpv_handle>]s when they are no longer needed i.e. upon hot-restart.
 ///
 /// {@endtemplate}
