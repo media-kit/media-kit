@@ -8,6 +8,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/media_kit.dart';
 
@@ -40,6 +41,15 @@ class NativeVideoController extends PlatformVideoController {
   /// Fixed height of the video output.
   int? height;
 
+  /// Width of the video (from [VideoParams]).
+  int? videoParamsWidth;
+
+  /// Height of the video (from [VideoParams]).
+  int? videoParamsHeight;
+
+  /// [Lock] used to synchronize [onLoadHooks], [onUnloadHooks] & [subscription].
+  final lock = Lock();
+
   NativePlayer get platform => player.platform as NativePlayer;
 
   Future<void> setProperty(String key, String value) async {
@@ -53,12 +63,52 @@ class NativeVideoController extends PlatformVideoController {
     }
   }
 
+  /// [StreamSubscription] for listening to video [Rect].
+  StreamSubscription<VideoParams>? videoParamsSubscription;
+
   /// {@macro native_video_controller}
   NativeVideoController._(
     super.player,
     super.configuration,
   )   : width = configuration.width,
-        height = configuration.height;
+        height = configuration.height {
+    videoParamsSubscription = player.stream.videoParams.listen(
+      (event) => lock.synchronized(() async {
+        if ([0, null].contains(event.dw) || [0, null].contains(event.dh)) {
+          return;
+        }
+
+        final int handle = await player.handle;
+
+        final int width;
+        final int height;
+        if (event.rotate == 0 || event.rotate == 180) {
+          width = event.dw ?? 0;
+          height = event.dh ?? 0;
+        } else {
+          // width & height are swapped for 90 or 270 degrees rotation.
+          width = event.dh ?? 0;
+          height = event.dw ?? 0;
+        }
+
+        if (videoParamsWidth == width && videoParamsHeight == height) {
+          return;
+        }
+
+        videoParamsWidth = width;
+        videoParamsHeight = height;
+
+        await _channel.invokeMethod(
+          'VideoOutputManager.SetSize',
+          {
+            'handle': handle.toString(),
+            'width': width.toString(),
+            'height': height.toString(),
+          },
+        );
+      }),
+    );
+  }
 
   /// {@macro native_video_controller}
   static Future<PlatformVideoController> create(
@@ -178,8 +228,8 @@ class NativeVideoController extends PlatformVideoController {
         'VideoOutputManager.SetSize',
         {
           'handle': handle.toString(),
-          'width': 'null',
-          'height': 'null',
+          'width': videoParamsWidth?.toString() ?? 'null',
+          'height': videoParamsHeight?.toString() ?? 'null',
         },
       );
     }
@@ -188,6 +238,7 @@ class NativeVideoController extends PlatformVideoController {
   /// Disposes the instance. Releases allocated resources back to the system.
   Future<void> _dispose() async {
     super.dispose();
+    await videoParamsSubscription?.cancel();
     final handle = await player.handle;
     _controllers.remove(handle);
     await _channel.invokeMethod(
