@@ -61,7 +61,7 @@ class NativeReferenceHolder {
       await _file.write_('${_referenceBuffer.address}');
     } else {
       // Read reference buffer.
-      final address = int.parse((await instance._file.readAsString_())!);
+      final address = int.parse((await _file.readAsString_())!);
       _referenceBuffer = Pointer<IntPtr>.fromAddress(address);
     }
 
