@@ -157,23 +157,6 @@ class NativePlayer extends PlatformPlayer {
       // Keep these [Media] objects in memory.
       current = playlist;
 
-      // NOTE: Handled as part of [stop] logic.
-      // final commands = [
-      //   // Clear existing playlist & change currently playing index to none.
-      //   // This causes playback to stop & player to enter the idle state.
-      //   'stop',
-      //   'playlist-clear',
-      //   'playlist-play-index none',
-      // ];
-      // for (final command in commands) {
-      //   final args = command.toNativeUtf8();
-      //   mpv.mpv_command_string(
-      //     ctx,
-      //     args.cast(),
-      //   );
-      //   calloc.free(args);
-      // }
-
       // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, subtitle=['', ''] etc.
       await stop(
         open: true,
@@ -183,19 +166,21 @@ class NativePlayer extends PlatformPlayer {
       // Enter paused state.
       await _setPropertyFlag('pause', true);
 
-      // NOTE: Handled as part of [stop] logic.
-      // isShuffleEnabled = false;
-      // isPlayingStateChangeAllowed = false;
-
-      for (int i = 0; i < playlist.length; i++) {
-        await _command(
-          [
-            'loadfile',
-            playlist[i].uri,
-            'append',
-          ],
-        );
+      final file = await TempFile.create();
+      String list = '';
+      for (final media in playlist) {
+        list += '${media.uri}\n';
       }
+
+      await file.write_(list);
+
+      await _command(
+        [
+          'loadlist',
+          file.path,
+          'append',
+        ],
+      );
 
       // If [play] is `true`, then exit paused state.
       if (play) {
