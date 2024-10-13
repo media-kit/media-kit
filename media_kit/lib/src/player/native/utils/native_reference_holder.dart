@@ -58,11 +58,14 @@ class NativeReferenceHolder {
     if (!await _file.exists_()) {
       // Allocate reference buffer.
       _referenceBuffer = calloc<IntPtr>(kReferenceBufferSize);
-      await _file.write_('${_referenceBuffer.address}');
+      final address = _referenceBuffer.address;
+      await _file.write_(address.toString());
+      print('$kTag Allocated $address');
     } else {
-      // Read reference buffer.
+      // Locate reference buffer.
       final address = int.parse((await _file.readAsString_())!);
       _referenceBuffer = Pointer<IntPtr>.fromAddress(address);
+      print('$kTag Located $address');
     }
 
     final references = <Pointer<Void>>[];
@@ -88,9 +91,11 @@ class NativeReferenceHolder {
     await _completer.future;
     return _lock.synchronized(() async {
       for (int i = 0; i < kReferenceBufferSize; i++) {
-        final referencePtr = _referenceBuffer + i;
-        if (referencePtr.value == 0) {
-          referencePtr.value = reference.address;
+        final referenceValue = _referenceBuffer + i;
+        final referencePtr = Pointer.fromAddress(referenceValue.value);
+        // NOTE: Do not compare .value with .address. Bad things may happen on 32-bit systems.
+        if (referencePtr.address == 0) {
+          referenceValue.value = reference.address;
           break;
         }
       }
@@ -104,9 +109,11 @@ class NativeReferenceHolder {
     await _completer.future;
     return _lock.synchronized(() async {
       for (int i = 0; i < kReferenceBufferSize; i++) {
-        final referencePtr = _referenceBuffer + i;
-        if (referencePtr.value == reference.address) {
-          referencePtr.value = 0;
+        final referenceValue = _referenceBuffer + i;
+        final referencePtr = Pointer.fromAddress(referenceValue.value);
+        // NOTE: Do not compare .value with .address. Bad things may happen on 32-bit systems.
+        if (referencePtr.address == reference.address) {
+          referenceValue.value = 0;
           break;
         }
       }
@@ -130,4 +137,6 @@ class NativeReferenceHolder {
 
   /// [Pointer] to the reference buffer.
   late final Pointer<IntPtr> _referenceBuffer;
+
+  static const String kTag = 'media_kit: NativeReferenceHolder:';
 }

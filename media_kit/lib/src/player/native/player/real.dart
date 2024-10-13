@@ -46,7 +46,10 @@ void nativeEnsureInitialized({String? libmpv}) {
     if (references.isEmpty) {
       return;
     }
-    print('media_kit: Found ${references.length} reference(s). Disposing...');
+    const tag = NativeReferenceHolder.kTag;
+    print('$tag Found ${references.length} reference(s).');
+    print('$tag Disposing:\n${references.map((e) => e.address).join('\n')}');
+
     // I can only get quit to work; [mpv_terminate_destroy] causes direct crash.
     final mpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
     final cmd = 'quit'.toNativeUtf8();
