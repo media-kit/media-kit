@@ -42,7 +42,6 @@ class Wakelock {
     } else {
       WakelockPlus.disable().catchError((_) {});
     }
-    debugPrint('media_kit: wakelock: _count = $_count');
   }
 
   /// Whether the wakelock is enabled for this instance.
