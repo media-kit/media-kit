@@ -1988,7 +1988,12 @@ class NativePlayer extends PlatformPlayer {
           if (fn != null) {
             final data = mpv.mpv_get_property_string(ctx, prop.ref.name);
             if (data != nullptr) {
-              await fn.call(data.cast<Utf8>().toDartString());
+              try {
+                await fn.call(data.cast<Utf8>().toDartString());
+              } catch (exception, stacktrace) {
+                print(exception);
+                print(stacktrace);
+              }
               mpv.mpv_free(data.cast());
             }
           }
