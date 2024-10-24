@@ -645,6 +645,48 @@ class NativePlayer extends PlatformPlayer {
     }
   }
 
+  /// Play one frame, then pause.
+  @override
+  Future<void> frameStep({bool synchronized = true}) {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      await _command(['frame-step']);
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Go back by one frame, then pause.
+  @override
+  Future<void> frameBackStep({bool synchronized = true}) {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      await _command(['frame-back-step']);
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
   /// Sets playlist mode.
   @override
   Future<void> setPlaylistMode(PlaylistMode playlistMode,

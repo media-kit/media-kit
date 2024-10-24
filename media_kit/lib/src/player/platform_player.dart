@@ -229,6 +229,18 @@ abstract class PlatformPlayer {
     );
   }
 
+  Future<void> frameStep() {
+    throw UnimplementedError(
+      '[PlatformPlayer.frameStep] is not implemented',
+    );
+  }
+
+  Future<void> frameBackStep() {
+    throw UnimplementedError(
+      '[PlatformPlayer.frameBackStep] is not implemented',
+    );
+  }
+
   Future<void> setPlaylistMode(PlaylistMode playlistMode) {
     throw UnimplementedError(
       '[PlatformPlayer.setPlaylistMode] is not implemented',

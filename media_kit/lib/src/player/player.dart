@@ -220,6 +220,16 @@ class Player {
     return platform?.seek(duration);
   }
 
+  /// Play one frame, then pause.
+  Future<void> frameStep() async {
+    return platform?.frameStep();
+  }
+
+  /// Go back by one frame, then pause.
+  Future<void> frameBackStep() async {
+    return platform?.frameBackStep();
+  }
+
   /// Sets playlist mode.
   Future<void> setPlaylistMode(PlaylistMode playlistMode) async {
     return platform?.setPlaylistMode(playlistMode);
