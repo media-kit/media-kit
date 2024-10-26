@@ -169,21 +169,37 @@ class NativePlayer extends PlatformPlayer {
       // Enter paused state.
       await _setPropertyFlag('pause', true);
 
-      final file = await TempFile.create();
-      String list = '';
-      for (final media in playlist) {
-        list += '${media.uri}\n';
+      if (playlist.any((media) => media.uri.startsWith('fd://'))) {
+        // `fd://` is a scheme used to reference `content` URIs on Android,
+        // but the `loadlist` command does not support that scheme by default,
+        // yielding "Refusing to load potentially unsafe URL from a playlist."
+        // so we fallback to loading each file individually.
+        for (int i = 0; i < playlist.length; i++) {
+          await _command(
+            [
+              'loadfile',
+              playlist[i].uri,
+              'append',
+            ],
+          );
+        }
+      } else {
+        final file = await TempFile.create();
+        String list = '';
+        for (final media in playlist) {
+          list += '${media.uri}\n';
+        }
+
+        await file.write_(list);
+
+        await _command(
+          [
+            'loadlist',
+            file.path,
+            'append',
+          ],
+        );
       }
-
-      await file.write_(list);
-
-      await _command(
-        [
-          'loadlist',
-          file.path,
-          'append',
-        ],
-      );
 
       // If [play] is `true`, then exit paused state.
       if (play) {
