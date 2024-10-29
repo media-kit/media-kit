@@ -2,3 +2,7 @@ name: media_kit_workspace
 
 packages:
   - ./**
+scripts:
+  upgrade_major_versions:
+    run: |
+      melos exec -- flutter pub upgrade --major-versions
