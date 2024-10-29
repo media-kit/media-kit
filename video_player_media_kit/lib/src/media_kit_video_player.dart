@@ -334,12 +334,12 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
         player.stream.error.listen(
           (event) async {
             await completer.future;
-            // streamController.addError(
-            //   PlatformException(
-            //     code: '',
-            //     message: event,
-            //   ),
-            // );
+            streamController.addError(
+              PlatformException(
+                code: '',
+                message: event,
+              ),
+            );
           },
         ),
       );
