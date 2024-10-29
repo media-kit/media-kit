@@ -1355,8 +1355,10 @@ class NativePlayer extends PlatformPlayer {
       return;
     }
 
-    _logError(event.ref.error,
-        'event:${event.ref.event_id} ${event.ref.data.cast<Uint8>()}');
+    _logError(
+      event.ref.error,
+      'event:${event.ref.event_id} ${event.ref.data.cast<Uint8>()}',
+    );
 
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
       if (isPlayingStateChangeAllowed) {
@@ -2487,14 +2489,14 @@ class NativePlayer extends PlatformPlayer {
       data,
     );
     calloc.free(namePtr);
-    String context = "_setProperty name $name format $format";
+    String text = '_setProperty($name, $format)';
     if (immediate < 0) {
       // Sending failed.
-      _logError(immediate, context);
+      _logError(immediate, text);
       return;
     }
 
-    _logError(await completer.future, context);
+    _logError(await completer.future, text);
   }
 
   Future<void> _setPropertyFlag(String name, bool value) async {
@@ -2554,14 +2556,14 @@ class NativePlayer extends PlatformPlayer {
     final immediate = mpv.mpv_command_async(ctx, requestNumber, arr.cast());
     calloc.free(arr);
     pointers.forEach(calloc.free);
-    String context = "_command ${args.join(" ")}";
+    String text = '_command(${args.join(', ')})';
     if (immediate < 0) {
       // Sending failed.
-      _logError(immediate, context);
+      _logError(immediate, text);
       return;
     }
 
-    _logError(await completer.future, context);
+    _logError(await completer.future, text);
   }
 
   /// Generated libmpv C API bindings.
