@@ -2456,7 +2456,7 @@ class NativePlayer extends PlatformPlayer {
 
   /// Adds an error to the [Player.stream.error].
   void _error(int code) {
-    if (code < 0 && !errorController.isClosed) {
+    if (code < 0 && !errorController.isClosed && code != -8) {
       final message = mpv.mpv_error_string(code).cast<Utf8>().toDartString();
       errorController.add(message);
     }
