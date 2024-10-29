@@ -2456,11 +2456,14 @@ class NativePlayer extends PlatformPlayer {
   }
 
   /// Adds an error to the [Player.stream.error].
-  void _logError(int code, String? extraContext) {
+  void _logError(int code, String? text) {
     if (code < 0 && !logController.isClosed) {
       final message = mpv.mpv_error_string(code).cast<Utf8>().toDartString();
       logController.add(PlayerLog(
-          prefix: "media_kit", level: 'error', text: 'error:$message $extraContext'));
+        prefix: 'media_kit',
+        level: 'error',
+        text: 'error: $message $text',
+      ));
     }
   }
 
