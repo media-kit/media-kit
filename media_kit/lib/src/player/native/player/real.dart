@@ -2460,7 +2460,7 @@ class NativePlayer extends PlatformPlayer {
     if (code < 0 && !logController.isClosed) {
       final message = mpv.mpv_error_string(code).cast<Utf8>().toDartString();
       logController.add(PlayerLog(
-          prefix: "", level: 'error', text: 'error:$message $extraContext'));
+          prefix: "media_kit", level: 'error', text: 'error:$message $extraContext'));
     }
   }
 
