@@ -238,7 +238,7 @@ class WebPlayer extends PlatformPlayer {
           // PlayerStream.error
           final error = element.error!;
           if (!errorController.isClosed) {
-            errorController.addError(error.message ?? '');
+            errorController.add(error.message ?? '');
           }
         });
       });
