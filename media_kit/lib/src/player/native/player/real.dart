@@ -199,6 +199,10 @@ class NativePlayer extends PlatformPlayer {
             'append',
           ],
         );
+
+        Future.delayed(const Duration(seconds: 5), () {
+          file.delete_();
+        });
       }
 
       // If [play] is `true`, then exit paused state.
