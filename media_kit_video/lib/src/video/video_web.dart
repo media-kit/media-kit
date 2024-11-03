@@ -285,6 +285,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
         }
       }
     }
+    super.didChangeAppLifecycleState(state);
   }
 
   @override
