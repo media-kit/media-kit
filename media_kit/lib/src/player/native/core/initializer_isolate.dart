@@ -130,11 +130,11 @@ abstract class InitializerIsolate {
           completer.complete();
         } else if (message == null) {
           if (handle != null) {
+            disposed = true;
             // Break out of last event await.
             completer.complete();
             // Break out of the possible [MPV.mpv_wait_event] call.
             mpv.mpv_wakeup(handle);
-            disposed = true;
           }
         }
       },
@@ -164,14 +164,15 @@ abstract class InitializerIsolate {
 
     // Lookup for events & send to main thread through [SendPort].
     // Ensuring the successful sending of the last event before moving to next [MPV.mpv_wait_event].
-    while (true) {
+    while (!disposed) {
       completer = Completer();
-      final event = mpv.mpv_wait_event(handle, kReleaseMode ? -1 : 0.1);
+      final event = mpv.mpv_wait_event(handle, kReleaseMode ? 1 : 0.1);
 
       if (disposed) {
         break;
       }
 
+      if (event == nullptr) return;
       if (event.ref.event_id != generated.mpv_event_id.MPV_EVENT_NONE) {
         // Sending raw address of [mpv_event].
         port.send(event.address);
