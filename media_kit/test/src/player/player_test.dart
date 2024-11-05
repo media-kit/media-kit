@@ -2974,7 +2974,6 @@ void main() {
   test(
     'player-subtitle',
     retry: 3, // TODO: Fix flaky test
-
     () async {
       final player = Player();
 
