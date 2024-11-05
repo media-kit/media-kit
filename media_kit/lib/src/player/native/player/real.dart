@@ -199,6 +199,10 @@ class NativePlayer extends PlatformPlayer {
             'append',
           ],
         );
+
+        Future.delayed(const Duration(seconds: 5), () {
+          file.delete_();
+        });
       }
 
       // If [play] is `true`, then exit paused state.
@@ -1371,7 +1375,10 @@ class NativePlayer extends PlatformPlayer {
       return;
     }
 
-    _error(event.ref.error);
+    _logError(
+      event.ref.error,
+      'event:${event.ref.event_id} ${event.ref.data.cast<Uint8>()}',
+    );
 
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_START_FILE) {
       if (isPlayingStateChangeAllowed) {
@@ -2471,10 +2478,14 @@ class NativePlayer extends PlatformPlayer {
   }
 
   /// Adds an error to the [Player.stream.error].
-  void _error(int code) {
-    if (code < 0 && !errorController.isClosed) {
+  void _logError(int code, String? text) {
+    if (code < 0 && !logController.isClosed) {
       final message = mpv.mpv_error_string(code).cast<Utf8>().toDartString();
-      errorController.add(message);
+      logController.add(PlayerLog(
+        prefix: 'media_kit',
+        level: 'error',
+        text: 'error: $message $text',
+      ));
     }
   }
 
@@ -2498,12 +2509,14 @@ class NativePlayer extends PlatformPlayer {
       data,
     );
     calloc.free(namePtr);
+    String text = '_setProperty($name, $format)';
     if (immediate < 0) {
       // Sending failed.
-      _error(immediate);
+      _logError(immediate, text);
       return;
     }
-    _error(await completer.future);
+
+    _logError(await completer.future, text);
   }
 
   Future<void> _setPropertyFlag(String name, bool value) async {
@@ -2563,12 +2576,14 @@ class NativePlayer extends PlatformPlayer {
     final immediate = mpv.mpv_command_async(ctx, requestNumber, arr.cast());
     calloc.free(arr);
     pointers.forEach(calloc.free);
+    String text = '_command(${args.join(', ')})';
     if (immediate < 0) {
       // Sending failed.
-      _error(immediate);
+      _logError(immediate, text);
       return;
     }
-    _error(await completer.future);
+
+    _logError(await completer.future, text);
   }
 
   /// Generated libmpv C API bindings.
