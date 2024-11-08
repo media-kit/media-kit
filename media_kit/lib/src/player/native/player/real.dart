@@ -2481,11 +2481,13 @@ class NativePlayer extends PlatformPlayer {
   void _logError(int code, String? text) {
     if (code < 0 && !logController.isClosed) {
       final message = mpv.mpv_error_string(code).cast<Utf8>().toDartString();
-      logController.add(PlayerLog(
-        prefix: 'media_kit',
-        level: 'error',
-        text: 'error: $message $text',
-      ));
+      logController.add(
+        PlayerLog(
+          prefix: 'media_kit',
+          level: 'error',
+          text: 'error: $message $text',
+        ),
+      );
     }
   }
 
@@ -2493,30 +2495,34 @@ class NativePlayer extends PlatformPlayer {
   final Map<int, Completer<int>> _setPropertyRequests = {};
   final Map<int, Completer<int>> _commandRequests = {};
 
-  Future<void> _setProperty(
-    String name,
-    int format,
-    Pointer<Void> data,
-  ) async {
+  Future<void> _setProperty(String name, int format, Pointer<Void> data) async {
     final requestNumber = _asyncRequestNumber++;
     final completer = _setPropertyRequests[requestNumber] = Completer<int>();
     final namePtr = name.toNativeUtf8();
-    final immediate = mpv.mpv_set_property_async(
-      ctx,
-      requestNumber,
-      namePtr.cast(),
-      format,
-      data,
-    );
-    calloc.free(namePtr);
-    String text = '_setProperty($name, $format)';
-    if (immediate < 0) {
-      // Sending failed.
-      _logError(immediate, text);
-      return;
+    if (configuration.async) {
+      final immediate = mpv.mpv_set_property_async(
+        ctx,
+        requestNumber,
+        namePtr.cast(),
+        format,
+        data,
+      );
+      final text = '_setProperty($name, $format)';
+      if (immediate < 0) {
+        // Sending failed.
+        _logError(immediate, text);
+        return;
+      }
+      _logError(await completer.future, text);
+    } else {
+      mpv.mpv_set_property(
+        ctx,
+        namePtr.cast(),
+        format,
+        data,
+      );
     }
-
-    _logError(await completer.future, text);
+    calloc.free(namePtr);
   }
 
   Future<void> _setPropertyFlag(String name, bool value) async {
@@ -2563,27 +2569,30 @@ class NativePlayer extends PlatformPlayer {
     calloc.free(string);
   }
 
-  /// Calls mpv command passed as [args].
-  /// Automatically freeds memory after command sending.
   Future<void> _command(List<String> args) async {
     final pointers = args.map<Pointer<Utf8>>((e) => e.toNativeUtf8()).toList();
     final arr = calloc<Pointer<Utf8>>(128);
     for (int i = 0; i < args.length; i++) {
       (arr + i).value = pointers[i];
     }
-    final requestNumber = _asyncRequestNumber++;
-    final completer = _commandRequests[requestNumber] = Completer<int>();
-    final immediate = mpv.mpv_command_async(ctx, requestNumber, arr.cast());
-    calloc.free(arr);
-    pointers.forEach(calloc.free);
-    String text = '_command(${args.join(', ')})';
-    if (immediate < 0) {
-      // Sending failed.
-      _logError(immediate, text);
-      return;
+
+    if (configuration.async) {
+      final requestNumber = _asyncRequestNumber++;
+      final completer = _commandRequests[requestNumber] = Completer<int>();
+      final immediate = mpv.mpv_command_async(ctx, requestNumber, arr.cast());
+      final text = '_command(${args.join(', ')})';
+      if (immediate < 0) {
+        // Sending failed.
+        _logError(immediate, text);
+        return;
+      }
+      _logError(await completer.future, text);
+    } else {
+      mpv.mpv_command(ctx, arr.cast());
     }
 
-    _logError(await completer.future, text);
+    calloc.free(arr);
+    pointers.forEach(calloc.free);
   }
 
   /// Generated libmpv C API bindings.

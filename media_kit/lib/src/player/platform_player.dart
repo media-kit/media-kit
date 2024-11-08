@@ -466,6 +466,11 @@ class PlayerConfiguration {
   /// Default: `false`.
   final bool muted;
 
+  /// Whether to use the async API for native backend.
+  ///
+  /// Default: `true`.
+  final bool async;
+
   /// Whether to use [libass](https://github.com/libass/libass) based subtitle rendering for native backend.
   ///
   /// By default, subtitles rendering is Flutter `Widget` based.
@@ -509,6 +514,7 @@ class PlayerConfiguration {
     this.title = 'package:media_kit',
     this.ready,
     this.muted = false,
+    this.async = true,
     this.libass = false,
     this.libassAndroidFont,
     this.libassAndroidFontName,
