@@ -51,7 +51,7 @@ abstract class InitializerIsolate {
           completer.complete();
         }
         // Receiving event callbacks.
-        else {
+        else if (message != null) {
           Pointer<generated.mpv_event> event = Pointer.fromAddress(message);
           try {
             await callback(event);
@@ -60,6 +60,10 @@ abstract class InitializerIsolate {
             print(stacktrace.toString());
           }
           port.send(true);
+        }
+        // Receiving null indicating that the isolate has finished
+        else {
+          receiver.close();
         }
       },
     );
@@ -75,13 +79,18 @@ abstract class InitializerIsolate {
 
   /// Disposes the event loop of the [Pointer<mpv_handle>] created by [create].
   /// NOTE: [Pointer<mpv_handle>] itself is not disposed.
-  static void dispose(Pointer<generated.mpv_handle> handle) {
+  static void dispose(generated.MPV mpv, Pointer<generated.mpv_handle> handle) {
     final port = _ports[handle.address];
     final isolate = _isolates[handle.address];
     if (port != null && isolate != null) {
       port.send(null);
       _ports.remove(handle.address);
       _isolates.remove(handle.address);
+
+      // The isolate might be blocked in a [MPV.mpv_wait_event] call.
+      // Wake it up so it can process our dispose request
+      mpv.mpv_wakeup(handle);
+
       // A voluntary delay. Although, [Isolate.kill] is not necessary since execution in the [Isolate] will stop automatically.
       Future.delayed(const Duration(seconds: 2), () {
         isolate.kill(priority: Isolate.immediate);
@@ -133,8 +142,6 @@ abstract class InitializerIsolate {
             disposed = true;
             // Break out of last event await.
             completer.complete();
-            // Break out of the possible [MPV.mpv_wait_event] call.
-            mpv.mpv_wakeup(handle);
           }
         }
       },
@@ -166,20 +173,25 @@ abstract class InitializerIsolate {
     // Ensuring the successful sending of the last event before moving to next [MPV.mpv_wait_event].
     while (!disposed) {
       completer = Completer();
-      final event = mpv.mpv_wait_event(handle, kReleaseMode ? 1 : 0.1);
+      final event = mpv.mpv_wait_event(handle, kReleaseMode ? -1 : 0.1);
 
       if (disposed) {
         break;
       }
 
-      if (event == nullptr) return;
       if (event.ref.event_id != generated.mpv_event_id.MPV_EVENT_NONE) {
         // Sending raw address of [mpv_event].
         port.send(event.address);
         // Ensuring that the last [mpv_event] (which is at the same address) is NOT reset to [mpv_event_id.MPV_EVENT_NONE] after next [MPV.mpv_wait_event] in the loop.
         await completer.future;
+      } else {
+        // Even if there is no event to process, give control back to the event loop to handle a potential dispose request
+        await Future.delayed(Duration.zero);
       }
     }
+
+    port.send(null);
+    receiver.close();
   }
 
   /// Associated [SendPort] of the [Pointer<mpv_handle>], if events are enabled.

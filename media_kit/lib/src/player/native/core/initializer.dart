@@ -77,7 +77,7 @@ class Initializer {
   /// Disposes [Pointer<mpv_handle>].
   void dispose(Pointer<generated.mpv_handle> ctx) {
     if (isExecmemRestricted) {
-      InitializerIsolate.dispose(ctx);
+      InitializerIsolate.dispose(mpv, ctx);
     } else {
       _locks.remove(ctx.address);
       _eventCallbacks.remove(ctx.address);
