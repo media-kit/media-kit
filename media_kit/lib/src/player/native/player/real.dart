@@ -2197,10 +2197,7 @@ class NativePlayer extends PlatformPlayer {
               }
             }
           }
-        } catch (exception, stacktrace) {
-          print(exception);
-          print(stacktrace);
-        }
+        } catch (_) {}
         // --------------------------------------------------
         mpv.mpv_hook_continue(
           ctx,
