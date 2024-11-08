@@ -1558,10 +1558,7 @@ class NativePlayer extends PlatformPlayer {
               )
               .values
               .toList();
-        } catch (exception, stacktrace) {
-          print(exception.toString());
-          print(stacktrace.toString());
-        }
+        } catch (_) {}
 
         if (index >= 0) {
           state = state.copyWith(
