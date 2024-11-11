@@ -8,6 +8,8 @@ import 'dart:ffi';
 
 import 'package:media_kit/ffi/ffi.dart';
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
+import 'package:media_kit/src/player/native/core/execmem_restriction.dart';
+import 'package:media_kit/src/player/native/core/initializer_isolate.dart';
 import 'package:synchronized/synchronized.dart';
 
 typedef WakeUpCallback = Void Function(Pointer<generated.mpv_handle>);
@@ -45,29 +47,42 @@ class Initializer {
     Future<void> Function(Pointer<generated.mpv_event>) callback, {
     Map<String, String> options = const {},
   }) async {
-    final ctx = mpv.mpv_create();
-    for (final entry in options.entries) {
-      final name = entry.key.toNativeUtf8();
-      final value = entry.value.toNativeUtf8();
-      mpv.mpv_set_option_string(ctx, name.cast(), value.cast());
-      calloc.free(name);
-      calloc.free(value);
+    if (isExecmemRestricted) {
+      // If creating executable memory is restricted on Linux, Dart VM will crash when trying to use NativeCallables.
+      // Fallback to the isolate-based event loop approach if that's the case.
+      return InitializerIsolate.create(
+        callback,
+        options
+      );
+    } else {
+      final ctx = mpv.mpv_create();
+      for (final entry in options.entries) {
+        final name = entry.key.toNativeUtf8();
+        final value = entry.value.toNativeUtf8();
+        mpv.mpv_set_option_string(ctx, name.cast(), value.cast());
+        calloc.free(name);
+        calloc.free(value);
+      }
+      mpv.mpv_initialize(ctx);
+      final nativeCallable = WakeUpNativeCallable.listener(_callback);
+      final nativeFunction = nativeCallable.nativeFunction;
+      _locks[ctx.address] = Lock();
+      _eventCallbacks[ctx.address] = callback;
+      _wakeUpNativeCallables[ctx.address] = nativeCallable;
+      mpv.mpv_set_wakeup_callback(ctx, nativeFunction.cast(), ctx.cast());
+      return ctx;
     }
-    mpv.mpv_initialize(ctx);
-    final nativeCallable = WakeUpNativeCallable.listener(_callback);
-    final nativeFunction = nativeCallable.nativeFunction;
-    _locks[ctx.address] = Lock();
-    _eventCallbacks[ctx.address] = callback;
-    _wakeUpNativeCallables[ctx.address] = nativeCallable;
-    mpv.mpv_set_wakeup_callback(ctx, nativeFunction.cast(), ctx.cast());
-    return ctx;
   }
 
   /// Disposes [Pointer<mpv_handle>].
   void dispose(Pointer<generated.mpv_handle> ctx) {
-    _locks.remove(ctx.address);
-    _eventCallbacks.remove(ctx.address);
-    _wakeUpNativeCallables.remove(ctx.address)?.close();
+    if (isExecmemRestricted) {
+      InitializerIsolate.dispose(mpv, ctx);
+    } else {
+      _locks.remove(ctx.address);
+      _eventCallbacks.remove(ctx.address);
+      _wakeUpNativeCallables.remove(ctx.address)?.close();
+    }
   }
 
   void _callback(Pointer<generated.mpv_handle> ctx) {
