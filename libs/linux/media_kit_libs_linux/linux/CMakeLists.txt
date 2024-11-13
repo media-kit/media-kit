@@ -90,7 +90,7 @@ if(NOT MIMALLOC_VALID)
   make_directory("${MIMALLOC_SRC}")
   add_custom_command(
     OUTPUT ${MIMALLOC_LIB}
-    COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${MIMALLOC_ARCHIVE}\""
+    COMMAND "${CMAKE_COMMAND}" -E tar xzf "${MIMALLOC_ARCHIVE}"
 
     # add_subdirectory() is too much work. Alternatively building it through command line.
     COMMAND "mkdir" "-p" "out/release"
