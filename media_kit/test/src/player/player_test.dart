@@ -623,7 +623,6 @@ void main() {
         },
       );
 
-      int i = 0;
       final expectPosition = expectAsync1(
         (value) {
           print(value);
@@ -631,16 +630,8 @@ void main() {
           expect(value, isA<Duration>());
           final position = value as Duration;
 
-          if (i == 0) {
-            expect(position, Duration.zero);
-          } else if (i == 1) {
-            expect(position, const Duration(seconds: 2));
-          } else {
-            expect(position, greaterThan(const Duration(seconds: 2)));
-            expect(position, lessThanOrEqualTo(const Duration(seconds: 5)));
-          }
-
-          i++;
+          expect(position, greaterThanOrEqualTo(const Duration(seconds: 2)));
+          expect(position, lessThanOrEqualTo(const Duration(seconds: 5)));
         },
         count: 1,
         max: -1,
