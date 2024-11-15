@@ -12,6 +12,7 @@ import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/ffi/src/allocation.dart';
 import 'package:media_kit/src/player/native/utils/temp_file.dart';
+import 'package:media_kit/src/values.dart';
 
 /// Callback invoked to notify about the released references.
 typedef NativeReferenceHolderCallback = void Function(List<Pointer<Void>>);
@@ -27,15 +28,6 @@ typedef NativeReferenceHolderCallback = void Function(List<Pointer<Void>>);
 class NativeReferenceHolder {
   /// Maximum number of references that can be held.
   static const int kReferenceBufferSize = 512;
-
-  // Ref:
-  // https://api.flutter.dev/flutter/foundation/kReleaseMode-constant.html
-  // https://api.flutter.dev/flutter/foundation/kProfileMode-constant.html
-  // https://api.flutter.dev/flutter/foundation/kDebugMode-constant.html
-
-  static const bool kReleaseMode = bool.fromEnvironment('dart.vm.product');
-  static const bool kProfileMode = bool.fromEnvironment('dart.vm.profile');
-  static const bool kDebugMode = !kReleaseMode && !kProfileMode;
 
   /// Singleton instance.
   static final NativeReferenceHolder instance = NativeReferenceHolder._();

@@ -6,3 +6,9 @@
 
 /// A constant that is true if the application was compiled in release mode.
 const bool kReleaseMode = bool.fromEnvironment('dart.vm.product');
+
+/// A constant that is true if the application was compiled in profile mode.
+const bool kProfileMode = bool.fromEnvironment('dart.vm.profile');
+
+/// A constant that is true if the application was compiled in debug mode.
+const bool kDebugMode = !kReleaseMode && !kProfileMode;
