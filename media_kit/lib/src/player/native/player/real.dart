@@ -162,10 +162,9 @@ class NativePlayer extends PlatformPlayer {
 
       // External List<Media>:
       // ---------------------------------------------
-      final playlistState = Playlist(playlist, index: index);
-      state = state.copyWith(playlist: playlistState);
+      state = state.copyWith(playlist: Playlist(playlist, index: index));
       if (!playlistController.isClosed) {
-        playlistController.add(playlistState);
+        playlistController.add(Playlist(playlist, index: index));
       }
       // ---------------------------------------------
 
@@ -777,9 +776,7 @@ class NativePlayer extends PlatformPlayer {
       if (configuration.pitch) {
         // Pitch shift control is enabled.
 
-        state = state.copyWith(
-          rate: rate,
-        );
+        state = state.copyWith(rate: rate);
         if (!rateController.isClosed) {
           rateController.add(state.rate);
         }
@@ -793,9 +790,7 @@ class NativePlayer extends PlatformPlayer {
       } else {
         // Pitch shift control is disabled.
 
-        state = state.copyWith(
-          rate: rate,
-        );
+        state = state.copyWith(rate: rate);
         if (!rateController.isClosed) {
           rateController.add(state.rate);
         }
@@ -831,9 +826,7 @@ class NativePlayer extends PlatformPlayer {
 
         // Pitch shift control is enabled.
 
-        state = state.copyWith(
-          pitch: pitch,
-        );
+        state = state.copyWith(pitch: pitch);
         if (!pitchController.isClosed) {
           pitchController.add(state.pitch);
         }
@@ -1539,10 +1532,11 @@ class NativePlayer extends PlatformPlayer {
         }
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-playing-pos' &&
-          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64) {
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64 &&
+          prop.ref.data != nullptr) {
         final index = prop.ref.data.cast<Int64>().value;
-        if (index > 0) {
-          final playlist = state.playlist.copyWith(index: index);
+        if (index >= 0) {
+          final playlist = Playlist(current, index: index);
           state = state.copyWith(playlist: playlist);
           if (!playlistController.isClosed) {
             playlistController.add(playlist);
