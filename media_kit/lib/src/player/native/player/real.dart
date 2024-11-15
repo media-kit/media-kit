@@ -490,42 +490,71 @@ class NativePlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      // External List<Media>:
-      // ---------------------------------------------
-      // Force a new List<T> object.
-      current = [...current];
-      current.removeAt(index);
-      final playlist = state.playlist.copyWith(medias: current);
-      state = state.copyWith(playlist: playlist);
-      if (!playlistController.isClosed) {
-        playlistController.add(playlist);
-      }
-      // ---------------------------------------------
+      int currentIndex = state.playlist.index;
 
       // If we remove the last item in the playlist while playlist mode is none or single, then playback will stop.
       // In this situation, the playlist doesn't seem to be updated, so we manually update it.
-      if (state.playlist.index == index &&
-          state.playlist.medias.length - 1 == index &&
+      if (currentIndex == index &&
+          current.length - 1 == index &&
           [
             PlaylistMode.none,
             PlaylistMode.single,
           ].contains(state.playlistMode)) {
+        currentIndex = current.length - 2 < 0 ? 0 : current.length - 2;
+
         state = state.copyWith(
           // Allow playOrPause /w state.completed code-path to play the playlist again.
           completed: true,
           playlist: state.playlist.copyWith(
-            medias: state.playlist.medias.sublist(
-              0,
-              state.playlist.medias.length - 1,
-            ),
-            index: state.playlist.medias.length - 2 < 0
-                ? 0
-                : state.playlist.medias.length - 2,
+            medias: current.sublist(0, current.length - 1),
+            index: currentIndex,
           ),
         );
         if (!completedController.isClosed) {
           completedController.add(true);
         }
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+      }
+      // If we remove the last item in the playlist while playlist mode is loop, jump to the index 0.
+      else if (state.playlist.index == index &&
+          current.length - 1 == index &&
+          state.playlistMode == PlaylistMode.loop) {
+        currentIndex = 0;
+        state = state.copyWith(
+          // Allow playOrPause /w state.completed code-path to play the playlist again.
+          completed: true,
+          playlist: state.playlist.copyWith(
+            medias: current.sublist(0, current.length - 1),
+            index: 0,
+          ),
+        );
+        if (!completedController.isClosed) {
+          completedController.add(true);
+        }
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+      }
+
+      // Default
+      else {
+        current = [...current]; // Force a new List<T> object.
+        current.removeAt(index);
+
+        // If the current index is greater than the removed index, then the current index should be reduced by 1.
+        // If the current index is equal or less than the removed index, then the current index should not be changed.
+        if (state.playlist.index > index) {
+          currentIndex--;
+        }
+
+        state = state.copyWith(
+          playlist: state.playlist.copyWith(
+            medias: current,
+            index: currentIndex,
+          ),
+        );
         if (!playlistController.isClosed) {
           playlistController.add(state.playlist);
         }
