@@ -160,6 +160,15 @@ class NativePlayer extends PlatformPlayer {
       // Keep these [Media] objects in memory.
       current = playlist;
 
+      // External List<Media>:
+      // ---------------------------------------------
+      final playlistState = Playlist(playlist, index: index);
+      state = state.copyWith(playlist: playlistState);
+      if (!playlistController.isClosed) {
+        playlistController.add(playlistState);
+      }
+      // ---------------------------------------------
+
       // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, subtitle=['', ''] etc.
       await stop(
         open: true,
@@ -170,10 +179,9 @@ class NativePlayer extends PlatformPlayer {
       await _setPropertyFlag('pause', true);
 
       if (playlist.any((media) => media.uri.startsWith('fd://'))) {
-        // `fd://` is a scheme used to reference `content` URIs on Android,
-        // but the `loadlist` command does not support that scheme by default,
-        // yielding "Refusing to load potentially unsafe URL from a playlist."
-        // so we fallback to loading each file individually.
+        // fd:// is used to reference content:// URIs on Android.
+        // The fd:// command does not support this by default, yielding "Refusing to load potentially unsafe URL from a playlist."
+        // So, we fallback to loading each file individually.
         for (int i = 0; i < playlist.length; i++) {
           await _command(
             [
