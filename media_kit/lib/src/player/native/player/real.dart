@@ -461,7 +461,8 @@ class NativePlayer extends PlatformPlayer {
 
       // External List<Media>:
       // ---------------------------------------------
-      current.add(media);
+      // Force a new List<T> object.
+      current = [...current, media];
       final playlist = state.playlist.copyWith(medias: current);
       state = state.copyWith(playlist: playlist);
       if (!playlistController.isClosed) {
@@ -491,6 +492,8 @@ class NativePlayer extends PlatformPlayer {
 
       // External List<Media>:
       // ---------------------------------------------
+      // Force a new List<T> object.
+      current = [...current];
       current.removeAt(index);
       final playlist = state.playlist.copyWith(medias: current);
       state = state.copyWith(playlist: playlist);
