@@ -704,7 +704,6 @@ void main() {
             expectEnd(e.medias[e.index].end, e.index);
 
             // Check for position updates of this [Media].
-            int i = 0;
             final expectPosition = expectAsync1(
               (value) {
                 print(value);
@@ -712,14 +711,14 @@ void main() {
                 expect(value, isA<Duration>());
                 final position = value as Duration;
 
-                if (i == 0) {
-                  expect(position, e.medias[e.index].start);
-                } else {
-                  expect(position, greaterThan(e.medias[e.index].start!));
-                  expect(position, lessThanOrEqualTo(e.medias[e.index].end!));
-                }
-
-                i++;
+                expect(
+                  position,
+                  greaterThanOrEqualTo(e.medias[e.index].start!),
+                );
+                expect(
+                  position,
+                  lessThanOrEqualTo(e.medias[e.index].end!),
+                );
               },
               count: 1,
               max: -1,

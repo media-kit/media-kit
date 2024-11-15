@@ -283,8 +283,10 @@ class NativePlayer extends PlatformPlayer {
         if (!completedController.isClosed) {
           completedController.add(false);
         }
-        if (!positionController.isClosed) {
-          positionController.add(Duration.zero);
+        if (!open) {
+          if (!positionController.isClosed) {
+            positionController.add(Duration.zero);
+          }
         }
         if (!durationController.isClosed) {
           durationController.add(Duration.zero);
@@ -1496,7 +1498,8 @@ class NativePlayer extends PlatformPlayer {
       if (prop.ref.name.cast<Utf8>().toDartString() == 'time-pos' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
         final position = Duration(
-            microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
+          microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1,
+        );
         state = state.copyWith(position: position);
         if (!positionController.isClosed) {
           positionController.add(position);
@@ -1505,7 +1508,8 @@ class NativePlayer extends PlatformPlayer {
       if (prop.ref.name.cast<Utf8>().toDartString() == 'duration' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_DOUBLE) {
         final duration = Duration(
-            microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1);
+          microseconds: prop.ref.data.cast<Double>().value * 1e6 ~/ 1,
+        );
         state = state.copyWith(duration: duration);
         if (!durationController.isClosed) {
           durationController.add(duration);
