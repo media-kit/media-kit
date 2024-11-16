@@ -11,7 +11,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_controls_theme_data_injector.dart';
-import 'package:screen_brightness/screen_brightness.dart';
+import 'package:screen_brightness_platform_interface/screen_brightness_platform_interface.dart';
 import 'package:volume_controller/volume_controller.dart';
 
 /// {@template material_video_controls}
@@ -406,8 +406,8 @@ class MaterialVideoControlsThemeData {
           this.seekOnDoubleTapLayoutWidgetRatios,
       seekOnDoubleTapBackwardDuration: seekOnDoubleTapBackwardDuration ??
           this.seekOnDoubleTapBackwardDuration,
-      seekOnDoubleTapForwardDuration: seekOnDoubleTapForwardDuration ??
-          this.seekOnDoubleTapForwardDuration,
+      seekOnDoubleTapForwardDuration:
+          seekOnDoubleTapForwardDuration ?? this.seekOnDoubleTapForwardDuration,
       visibleOnMount: visibleOnMount ?? this.visibleOnMount,
       speedUpOnLongPress: speedUpOnLongPress ?? this.speedUpOnLongPress,
       speedUpFactor: speedUpFactor ?? this.speedUpFactor,
@@ -619,7 +619,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     // package:screen_brightness
     Future.microtask(() async {
       try {
-        await ScreenBrightness().resetScreenBrightness();
+        await ScreenBrightnessPlatform.instance
+            .resetApplicationScreenBrightness();
       } catch (_) {}
     });
     // --------------------------------------------------
@@ -805,8 +806,9 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     // package:screen_brightness
     Future.microtask(() async {
       try {
-        _brightnessValue = await ScreenBrightness().current;
-        ScreenBrightness().onCurrentBrightnessChanged.listen((value) {
+        _brightnessValue = await ScreenBrightnessPlatform.instance.application;
+        ScreenBrightnessPlatform.instance.onApplicationScreenBrightnessChanged
+            .listen((value) {
           if (mounted) {
             setState(() {
               _brightnessValue = value;
@@ -845,7 +847,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     // --------------------------------------------------
     // package:screen_brightness
     try {
-      await ScreenBrightness().setScreenBrightness(value);
+      await ScreenBrightnessPlatform.instance
+          .setApplicationScreenBrightness(value);
     } catch (_) {}
     setState(() {
       _brightnessIndicator = true;
