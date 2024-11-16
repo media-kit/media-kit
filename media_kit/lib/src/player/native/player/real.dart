@@ -178,8 +178,8 @@ class NativePlayer extends PlatformPlayer {
       await _setPropertyFlag('pause', true);
 
       if (playlist.any((media) => media.uri.startsWith('fd://'))) {
-        // fd:// is used to reference content:// URIs on Android.
-        // The fd:// command does not support this by default, yielding "Refusing to load potentially unsafe URL from a playlist."
+        // The fd:// scheme is used to reference content:// URIs on Android.
+        // The loadlist command does not support this by default, yielding "Refusing to load potentially unsafe URL from a playlist."
         // So, we fallback to loading each file individually.
         for (int i = 0; i < playlist.length; i++) {
           await _command(
