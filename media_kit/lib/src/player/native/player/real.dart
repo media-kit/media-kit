@@ -283,10 +283,8 @@ class NativePlayer extends PlatformPlayer {
         if (!completedController.isClosed) {
           completedController.add(false);
         }
-        if (!open) {
-          if (!positionController.isClosed) {
-            positionController.add(Duration.zero);
-          }
+        if (!positionController.isClosed) {
+          positionController.add(Duration.zero);
         }
         if (!durationController.isClosed) {
           durationController.add(Duration.zero);
