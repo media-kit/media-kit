@@ -644,7 +644,14 @@ void main() {
         }
       });
 
+      bool opened = false;
+
       player.stream.position.listen((e) {
+        if (!opened) {
+          // Emits Duration.zero right after open(...).
+          opened = true;
+          return;
+        }
         expectPosition(e);
       });
 
@@ -688,6 +695,8 @@ void main() {
 
       StreamSubscription<Duration>? subscription;
 
+      bool opened = false;
+
       player.stream.playlist.listen(
         (e) {
           if (e.index >= 0) {
@@ -697,6 +706,12 @@ void main() {
             // Check for position updates of this [Media].
             final expectPosition = expectAsync1(
               (value) {
+                if (!opened) {
+                  // Emits Duration.zero right after open(...).
+                  opened = true;
+                  return;
+                }
+
                 print(value);
 
                 expect(value, isA<Duration>());
