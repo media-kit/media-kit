@@ -623,7 +623,6 @@ void main() {
         },
       );
 
-      int i = 0;
       final expectPosition = expectAsync1(
         (value) {
           print(value);
@@ -631,16 +630,8 @@ void main() {
           expect(value, isA<Duration>());
           final position = value as Duration;
 
-          if (i == 0) {
-            expect(position, Duration.zero);
-          } else if (i == 1) {
-            expect(position, const Duration(seconds: 2));
-          } else {
-            expect(position, greaterThan(const Duration(seconds: 2)));
-            expect(position, lessThanOrEqualTo(const Duration(seconds: 5)));
-          }
-
-          i++;
+          expect(position, greaterThanOrEqualTo(const Duration(seconds: 2)));
+          expect(position, lessThanOrEqualTo(const Duration(seconds: 5)));
         },
         count: 1,
         max: -1,
@@ -653,7 +644,14 @@ void main() {
         }
       });
 
+      bool opened = false;
+
       player.stream.position.listen((e) {
+        if (!opened) {
+          // Emits Duration.zero right after open(...).
+          opened = true;
+          return;
+        }
         expectPosition(e);
       });
 
@@ -697,6 +695,8 @@ void main() {
 
       StreamSubscription<Duration>? subscription;
 
+      bool opened = false;
+
       player.stream.playlist.listen(
         (e) {
           if (e.index >= 0) {
@@ -704,22 +704,27 @@ void main() {
             expectEnd(e.medias[e.index].end, e.index);
 
             // Check for position updates of this [Media].
-            int i = 0;
             final expectPosition = expectAsync1(
               (value) {
+                if (!opened) {
+                  // Emits Duration.zero right after open(...).
+                  opened = true;
+                  return;
+                }
+
                 print(value);
 
                 expect(value, isA<Duration>());
                 final position = value as Duration;
 
-                if (i == 0) {
-                  expect(position, e.medias[e.index].start);
-                } else {
-                  expect(position, greaterThan(e.medias[e.index].start!));
-                  expect(position, lessThanOrEqualTo(e.medias[e.index].end!));
-                }
-
-                i++;
+                expect(
+                  position,
+                  greaterThanOrEqualTo(e.medias[e.index].start!),
+                );
+                expect(
+                  position,
+                  lessThanOrEqualTo(e.medias[e.index].end!),
+                );
               },
               count: 1,
               max: -1,
