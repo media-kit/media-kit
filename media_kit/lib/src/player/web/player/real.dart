@@ -1415,19 +1415,20 @@ class WebPlayer extends PlatformPlayer {
   void _loadSource(Media media) {
     try {
       if (_isHLS(media.uri)) {
-        void setHlsHTTPHeaders(html.HttpRequest xhr) {
+        void setHlsHTTPHeaders(html.HttpRequest xhr, String url) {
           for (final header in media.httpHeaders!.entries) {
             xhr.setRequestHeader(header.key, header.value);
           }
         }
 
         final hls = Hls(
-          media.httpHeaders != null
-              ? HlsOptions(
-                  xhrSetup: js.allowInterop(setHlsHTTPHeaders),
-                )
-              : null,
+          HlsOptions(
+            xhrSetup: media.httpHeaders != null
+                ? js.allowInterop(setHlsHTTPHeaders)
+                : null,
+          ),
         );
+
         hls.loadSource(media.uri);
         hls.attachMedia(element);
       } else {

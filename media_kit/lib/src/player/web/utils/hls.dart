@@ -81,14 +81,15 @@ external bool isHLSSupported();
 @js.JS()
 @js.anonymous
 class HlsOptions {
-  external void Function(html.HttpRequest xhr) get xhrSetup;
-  external factory HlsOptions({void Function(html.HttpRequest xhr) xhrSetup});
+  external factory HlsOptions({
+    void Function(html.HttpRequest xhr, String url)? xhrSetup,
+  });
 }
 
 @js.JS()
 @js.staticInterop
 class Hls {
-  external factory Hls(HlsOptions? options);
+  external factory Hls(HlsOptions options);
 }
 
 extension ExtensionHls on Hls {
