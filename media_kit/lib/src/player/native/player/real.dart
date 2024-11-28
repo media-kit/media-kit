@@ -192,10 +192,11 @@ class NativePlayer extends PlatformPlayer {
         }
       } else {
         final file = await TempFile.create();
-        String list = '';
+        final buffer = StringBuffer();
         for (final media in playlist) {
-          list += '${media.uri}\n';
+          buffer.writeln(media.uri);
         }
+        final list = buffer.toString();
 
         await file.write_(list);
 
