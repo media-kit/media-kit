@@ -58,10 +58,10 @@ task downloadDependencies(type: Exec) {
 
         // Download all *.jar dependencies & verify their MD5 checksums.
         def filesToDownload = [
-            ["url": "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-arm64-v8a.jar", "md5": "5f521b08692d7fef73c5df9bcc00ca4d", "destination": file("$buildDir/v1.1.5/default-arm64-v8a.jar")],
-            ["url": "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-armeabi-v7a.jar", "md5": "08d500ca1116c13e9c1296cc6f2207b0", "destination": file("$buildDir/v1.1.5/default-armeabi-v7a.jar")],
-            ["url": "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-x86_64.jar", "md5": "0880d5fbc3ff0053409704617f54cb55", "destination": file("$buildDir/v1.1.5/default-x86_64.jar")],
-            ["url": "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-x86.jar", "md5": "f6f51aa42b30d747099506cdc3277352", "destination": file("$buildDir/v1.1.5/default-x86.jar")]
+            ["url": "https://github.com/Predidit/libmpv-android-video-build/releases/download/v1.0.2/default-arm64-v8a.jar", "md5": "a114a4e352cfb2d5ead6fba4f5963e51", "destination": file("$buildDir/v1.0.2/default-arm64-v8a.jar")],
+            ["url": "https://github.com/Predidit/libmpv-android-video-build/releases/download/v1.0.2/default-armeabi-v7a.jar", "md5": "108b577e0c1c5e05f88a1fb8defe91f2", "destination": file("$buildDir/v1.0.2/default-armeabi-v7a.jar")],
+            ["url": "https://github.com/Predidit/libmpv-android-video-build/releases/download/v1.0.2/default-x86_64.jar", "md5": "565b9501de27d2fa652a5a5824d70f22", "destination": file("$buildDir/v1.0.2/default-x86_64.jar")],
+            ["url": "https://github.com/Predidit/libmpv-android-video-build/releases/download/v1.0.2/default-x86.jar", "md5": "4e147d08599e56a2f29531698addfc29", "destination": file("$buildDir/v1.0.2/default-x86.jar")]
         ]
 
         filesToDownload.each { fileInfo ->
