@@ -20,6 +20,9 @@ set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/down
 set(LIBMPV_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64.zip")
 set(LIBMPV_UNZIP_DIR "${CMAKE_BINARY_DIR}/libmpv")
 
+make_directory("${LIBMPV_UNZIP_DIR}") 
+message(STATUS "create libmpv unzip directory ${LIBMPV_UNZIP_DIR}")
+
 message(STATUS "downloading libmpv from ${LIBMPV_ZIP_URL} to ${LIBMPV_ZIP_PATH}")
 file(DOWNLOAD ${LIBMPV_ZIP_URL} ${LIBMPV_ZIP_PATH} SHOW_PROGRESS STATUS download_status)
 
@@ -32,9 +35,7 @@ endif()
 
 message(STATUS "unzip libmpv to ${LIBMPV_UNZIP_DIR}")
 execute_process(
-  COMMAND ${CMAKE_COMMAND} -E remove_directory ${LIBMPV_UNZIP_DIR}
-  make_directory("${LIBMPV_UNZIP_DIR}")
-  COMMAND unzip ${LIBMPV_ZIP_PATH} -d ${LIBMPV_UNZIP_DIR}
+  COMMAND unzip -q ${LIBMPV_ZIP_PATH} -d ${LIBMPV_UNZIP_DIR}
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   RESULT_VARIABLE unzip_result
 )
