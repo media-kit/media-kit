@@ -18,7 +18,7 @@ set(PLUGIN_NAME "media_kit_video_plugin")
 
 set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241130/libmpv_x86_64.zip")
 set(LIBMPV_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64.zip")
-set(LIBMPV_UNZIP_DIR "${CMAKE_BINARY_DIR}/libmpv")
+set(LIBMPV_UNZIP_DIR "${CMAKE_BINARY_DIR}/mpv")
 
 make_directory("${LIBMPV_UNZIP_DIR}") 
 message(STATUS "create libmpv unzip directory ${LIBMPV_UNZIP_DIR}")
@@ -136,8 +136,8 @@ else()
   )
 endif()
 
-message(STATUS "create libmpv install directory ${CMAKE_BINARY_DIR}/libmpv")
-file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/libmpv")
+message(STATUS "create libmpv install directory ${CMAKE_BINARY_DIR}/mpv")
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/mpv")
 
 install(
   FILES "${LIBMPV_PATH}/libmpv.so"
