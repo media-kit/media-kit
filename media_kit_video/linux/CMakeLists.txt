@@ -68,6 +68,7 @@ add_library(
 apply_standard_settings(${PLUGIN_NAME})
 
 find_package(PkgConfig REQUIRED)
+pkg_check_modules(mpv IMPORTED_TARGET mpv)
 pkg_check_modules(epoxy IMPORTED_TARGET epoxy)
 
 set_target_properties(
@@ -80,11 +81,13 @@ target_compile_definitions(
   FLUTTER_PLUGIN_IMPL
 )
 
+target_compile_options(${PLUGIN_NAME} PRIVATE "${mpv_CFLAGS_OTHER}")
 target_compile_options(${PLUGIN_NAME} PRIVATE "${epoxy_CFLAGS_OTHER}")
 
 target_include_directories(
   ${PLUGIN_NAME} INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  "${mpv_INCLUDE_DIRS}"
   "${epoxy_INCLUDE_DIRS}"
 )
 
