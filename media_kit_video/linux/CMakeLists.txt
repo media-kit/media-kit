@@ -15,6 +15,7 @@ set(CMAKE_CXX_STANDARD 17)
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 set(PLUGIN_NAME "media_kit_video_plugin")
+set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
 
 set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241130/libmpv_x86_64.zip")
 set(LIBMPV_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64.zip")
@@ -97,10 +98,6 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     PkgConfig::GTK
     PkgConfig::mpv
     PkgConfig::epoxy
-  )
-
-  set_target_properties(${PLUGIN_NAME} PROPERTIES
-    INSTALL_RPATH "${LIBMPV_PATH}"
   )
 
 else()
