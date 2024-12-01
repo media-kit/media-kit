@@ -50,6 +50,10 @@ endif()
 set(LIBMPV_PATH "${LIBMPV_UNZIP_DIR}")
 
 if(EXISTS "${LIBMPV_PATH}/libmpv.so")
+  execute_process(
+    COMMAND ln -sf libmpv.so libmpv.so.2
+    WORKING_DIRECTORY ${LIBMPV_PATH}
+  )
   message(STATUS "libmpv.so founded ${LIBMPV_PATH}/libmpv.so")
 else()
   message(FATAL_ERROR "libmpv.so not founded ${LIBMPV_PATH}")
