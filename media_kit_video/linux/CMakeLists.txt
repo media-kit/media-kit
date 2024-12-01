@@ -95,6 +95,7 @@ target_link_libraries(
   ${PLUGIN_NAME} PRIVATE
   flutter
   PkgConfig::GTK
+  PkgConfig::mpv
   PkgConfig::epoxy
 )
 
