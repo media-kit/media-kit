@@ -33,8 +33,8 @@ endif()
 message(STATUS "unzip libmpv to ${LIBMPV_UNZIP_DIR}")
 execute_process(
   COMMAND ${CMAKE_COMMAND} -E remove_directory ${LIBMPV_UNZIP_DIR}
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${LIBMPV_UNZIP_DIR}
-  COMMAND unzip -q ${LIBMPV_ZIP_PATH} -d ${LIBMPV_UNZIP_DIR}
+  make_directory("${LIBMPV_UNZIP_DIR}")
+  COMMAND unzip ${LIBMPV_ZIP_PATH} -d ${LIBMPV_UNZIP_DIR}
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   RESULT_VARIABLE unzip_result
 )
