@@ -11,9 +11,9 @@
 
 #include <flutter_linux/flutter_linux.h>
 
-#include <mpv/client.h>
-#include <mpv/render.h>
-#include <mpv/render_gl.h>
+#include "mpv/client.h"
+#include "mpv/render.h"
+#include "mpv/render_gl.h"
 
 typedef struct _VideoOutputConfiguration {
   gint64 width;

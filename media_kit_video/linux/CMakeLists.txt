@@ -57,7 +57,7 @@ endif()
 
 set(LIBMPV_HEADER_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241130/libmpv_x86_64_header.zip")
 set(LIBMPV_HEADER_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64_header.zip")
-set(LIBMPV_HEADER_UNZIP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(LIBMPV_HEADER_UNZIP_DIR "${CMAKE_BINARY_DIR}/mpv/include")
 
 message(STATUS "downloading libmpv header from ${LIBMPV_HEADER_ZIP_URL} to ${LIBMPV_HEADER_ZIP_PATH}")
 file(DOWNLOAD ${LIBMPV_HEADER_ZIP_URL} ${LIBMPV_HEADER_ZIP_PATH} SHOW_PROGRESS STATUS download_status)
@@ -112,6 +112,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
   target_include_directories(
     ${PLUGIN_NAME} INTERFACE
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${LIBMPV_UNZIP_DIR}/include"
     "${epoxy_INCLUDE_DIRS}"
   )
 
