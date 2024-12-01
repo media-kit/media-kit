@@ -36,7 +36,7 @@ endif()
 
 message(STATUS "unzip libmpv to ${LIBMPV_UNZIP_DIR}")
 execute_process(
-  COMMAND unzip -q ${LIBMPV_ZIP_PATH} -d ${LIBMPV_UNZIP_DIR}
+  COMMAND unzip -o -q ${LIBMPV_ZIP_PATH} -d ${LIBMPV_UNZIP_DIR}
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   RESULT_VARIABLE unzip_result
 )
@@ -82,7 +82,6 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     FLUTTER_PLUGIN_IMPL
   )
 
-  target_compile_options(${PLUGIN_NAME} PRIVATE "${mpv_CFLAGS_OTHER}")
   target_compile_options(${PLUGIN_NAME} PRIVATE "${epoxy_CFLAGS_OTHER}")
 
   target_include_directories(
