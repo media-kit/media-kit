@@ -112,8 +112,12 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
   target_include_directories(
     ${PLUGIN_NAME} INTERFACE
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
-    "${LIBMPV_UNZIP_DIR}/include"
     "${epoxy_INCLUDE_DIRS}"
+  )
+
+  target_include_directories(
+    ${PLUGIN_NAME} PRIVATE
+    "${LIBMPV_HEADER_UNZIP_DIR}"
   )
 
   target_link_libraries(
