@@ -143,9 +143,3 @@ install(
   FILES "${LIBMPV_PATH}/libmpv.so"
   DESTINATION "libmpv"
 )
-
-set(
-  media_kit_video_bundled_libraries
-  "${LIBMPV_PATH}/libmpv.so"
-  PARENT_SCOPE
-)
