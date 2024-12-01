@@ -85,7 +85,6 @@ target_compile_options(${PLUGIN_NAME} PRIVATE "${epoxy_CFLAGS_OTHER}")
 target_include_directories(
   ${PLUGIN_NAME} INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
-  "${mpv_INCLUDE_DIRS}"
   "${epoxy_INCLUDE_DIRS}"
 )
 
