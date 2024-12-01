@@ -55,6 +55,32 @@ else()
   message(FATAL_ERROR "libmpv.so not founded ${LIBMPV_PATH}")
 endif()
 
+set(LIBMPV_HEADER_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241130/libmpv_x86_64_header.zip")
+set(LIBMPV_HEADER_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64_header.zip")
+set(LIBMPV_HEADER_UNZIP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+message(STATUS "downloading libmpv header from ${LIBMPV_HEADER_ZIP_URL} to ${LIBMPV_HEADER_ZIP_PATH}")
+file(DOWNLOAD ${LIBMPV_HEADER_ZIP_URL} ${LIBMPV_HEADER_ZIP_PATH} SHOW_PROGRESS STATUS download_status)
+
+list(GET download_status 0 download_status_code)
+if(NOT download_status_code EQUAL 0)
+  message(FATAL_ERROR "libmpv header download failed. err: ${download_status_code}")
+else()
+  message(STATUS "libmpv header download completed.")
+endif()
+
+message(STATUS "unzip libmpv header to ${LIBMPV_HEADER_UNZIP_DIR}")
+execute_process(
+  COMMAND unzip -o -q ${LIBMPV_HEADER_ZIP_PATH} -d ${LIBMPV_HEADER_UNZIP_DIR}
+  RESULT_VARIABLE unzip_result
+)
+
+if(NOT unzip_result EQUAL 0)
+  message(FATAL_ERROR "unzip libmpv header failed, err: ${unzip_result}")
+else()
+  message(STATUS "unzip libmpv header success.")
+endif()
+
 if(MEDIA_KIT_LIBS_AVAILABLE)
   add_library(
     ${PLUGIN_NAME} SHARED
@@ -69,7 +95,6 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
   apply_standard_settings(${PLUGIN_NAME})
 
   find_package(PkgConfig REQUIRED)
-  pkg_check_modules(mpv IMPORTED_TARGET mpv)
   pkg_check_modules(epoxy IMPORTED_TARGET epoxy)
 
   set_target_properties(
@@ -87,7 +112,6 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
   target_include_directories(
     ${PLUGIN_NAME} INTERFACE
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
-    "${mpv_INCLUDE_DIRS}"
     "${epoxy_INCLUDE_DIRS}"
   )
 
@@ -95,7 +119,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     ${PLUGIN_NAME} PRIVATE
     flutter
     PkgConfig::GTK
-    PkgConfig::mpv
+    "${LIBMPV_UNZIP_DIR}/libmpv.so"
     PkgConfig::epoxy
   )
 
