@@ -55,83 +55,46 @@ else()
   message(FATAL_ERROR "libmpv.so not founded ${LIBMPV_PATH}")
 endif()
 
-if(MEDIA_KIT_LIBS_AVAILABLE)
-  add_library(
-    ${PLUGIN_NAME} SHARED
-    "media_kit_video_plugin.cc"
-    "texture_gl.cc"
-    "texture_sw.cc"
-    "video_output_manager.cc"
-    "video_output.cc"
-    "utils.cc"
-  )
+add_library(
+  ${PLUGIN_NAME} SHARED
+  "media_kit_video_plugin.cc"
+  "texture_gl.cc"
+  "texture_sw.cc"
+  "video_output_manager.cc"
+  "video_output.cc"
+  "utils.cc"
+)
 
-  apply_standard_settings(${PLUGIN_NAME})
+apply_standard_settings(${PLUGIN_NAME})
 
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(mpv IMPORTED_TARGET mpv)
-  pkg_check_modules(epoxy IMPORTED_TARGET epoxy)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(epoxy IMPORTED_TARGET epoxy)
 
-  set_target_properties(
-    ${PLUGIN_NAME} PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-  )
+set_target_properties(
+  ${PLUGIN_NAME} PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
+)
 
-  target_compile_definitions(
-    ${PLUGIN_NAME} PRIVATE
-    FLUTTER_PLUGIN_IMPL
-  )
+target_compile_definitions(
+  ${PLUGIN_NAME} PRIVATE
+  FLUTTER_PLUGIN_IMPL
+)
 
-  target_compile_options(${PLUGIN_NAME} PRIVATE "${mpv_CFLAGS_OTHER}")
-  target_compile_options(${PLUGIN_NAME} PRIVATE "${epoxy_CFLAGS_OTHER}")
+target_compile_options(${PLUGIN_NAME} PRIVATE "${epoxy_CFLAGS_OTHER}")
 
-  target_include_directories(
-    ${PLUGIN_NAME} INTERFACE
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
-    "${mpv_INCLUDE_DIRS}"
-    "${epoxy_INCLUDE_DIRS}"
-  )
+target_include_directories(
+  ${PLUGIN_NAME} INTERFACE
+  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  "${mpv_INCLUDE_DIRS}"
+  "${epoxy_INCLUDE_DIRS}"
+)
 
-  target_link_libraries(
-    ${PLUGIN_NAME} PRIVATE
-    flutter
-    PkgConfig::GTK
-    PkgConfig::mpv
-    PkgConfig::epoxy
-  )
-
-else()
-  message(NOTICE "media_kit: WARNING: package:media_kit_libs_*** not found.")
-
-  add_library(
-    ${PLUGIN_NAME} SHARED
-    "media_kit_video_plugin.cc"
-  )
-
-  apply_standard_settings(${PLUGIN_NAME})
-
-  set_target_properties(
-    ${PLUGIN_NAME} PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-  )
-
-  target_compile_definitions(
-    ${PLUGIN_NAME} PRIVATE
-    FLUTTER_PLUGIN_IMPL
-    "MEDIA_KIT_LIBS_NOT_FOUND=1"
-  )
-
-  target_include_directories(
-    ${PLUGIN_NAME} INTERFACE
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
-  )
-
-  target_link_libraries(
-    ${PLUGIN_NAME} PRIVATE
-    flutter
-    PkgConfig::GTK
-  )
-endif()
+target_link_libraries(
+  ${PLUGIN_NAME} PRIVATE
+  flutter
+  PkgConfig::GTK
+  PkgConfig::epoxy
+)
 
 message(STATUS "create libmpv install directory ${CMAKE_BINARY_DIR}/mpv")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/mpv")
