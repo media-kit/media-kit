@@ -20,16 +20,38 @@ set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/down
 set(LIBMPV_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64.zip")
 set(LIBMPV_UNZIP_DIR "${CMAKE_BINARY_DIR}/libmpv")
 
-file(DOWNLOAD ${LIBMPV_ZIP_URL} ${LIBMPV_ZIP_PATH} SHOW_PROGRESS)
+message(STATUS "downloading libmpv from ${LIBMPV_ZIP_URL} to ${LIBMPV_ZIP_PATH}")
+file(DOWNLOAD ${LIBMPV_ZIP_URL} ${LIBMPV_ZIP_PATH} SHOW_PROGRESS STATUS download_status)
 
+list(GET download_status 0 download_status_code)
+if(NOT download_status_code EQUAL 0)
+  message(FATAL_ERROR "libmpv download failed. err: ${download_status_code}")
+else()
+  message(STATUS "libmpv download completed.")
+endif()
+
+message(STATUS "unzip libmpv to ${LIBMPV_UNZIP_DIR}")
 execute_process(
-  COMMAND ${CMAKE_COMMAND} -E remove_directory ${LIBMPV_UNZIP_DIR}  
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${LIBMPV_UNZIP_DIR}   
-  COMMAND unzip -q ${LIBMPV_ZIP_PATH} -d ${LIBMPV_UNZIP_DIR}        
+  COMMAND ${CMAKE_COMMAND} -E remove_directory ${LIBMPV_UNZIP_DIR}
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${LIBMPV_UNZIP_DIR}
+  COMMAND unzip -q ${LIBMPV_ZIP_PATH} -d ${LIBMPV_UNZIP_DIR}
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  RESULT_VARIABLE unzip_result
 )
 
+if(NOT unzip_result EQUAL 0)
+  message(FATAL_ERROR "unzip libmpv failed, err: ${unzip_result}")
+else()
+  message(STATUS "unzip libmpv success.")
+endif()
+
 set(LIBMPV_PATH "${LIBMPV_UNZIP_DIR}")
+
+if(EXISTS "${LIBMPV_PATH}/libmpv.so")
+  message(STATUS "libmpv.so founded ${LIBMPV_PATH}/libmpv.so")
+else()
+  message(FATAL_ERROR "libmpv.so not founded ${LIBMPV_PATH}")
+endif()
 
 if(MEDIA_KIT_LIBS_AVAILABLE)
   add_library(
@@ -44,7 +66,6 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
 
   apply_standard_settings(${PLUGIN_NAME})
 
-  # Check for libmpv & epoxy headers & libraries.
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(mpv IMPORTED_TARGET mpv)
   pkg_check_modules(epoxy IMPORTED_TARGET epoxy)
@@ -114,9 +135,12 @@ else()
   )
 endif()
 
+message(STATUS "create libmpv install directory ${CMAKE_BINARY_DIR}/libmpv")
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/libmpv")
+
 install(
   FILES "${LIBMPV_PATH}/libmpv.so"
-  DESTINATION "${CMAKE_BINARY_DIR}/libmpv"
+  DESTINATION "libmpv"
 )
 
 set(
