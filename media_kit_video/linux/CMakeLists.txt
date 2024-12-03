@@ -17,7 +17,7 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 set(PLUGIN_NAME "media_kit_video_plugin")
 set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
 
-set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241130/libmpv_x86_64.zip")
+set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241203/libmpv_x86_64.zip")
 set(LIBMPV_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64.zip")
 set(LIBMPV_UNZIP_DIR "${CMAKE_BINARY_DIR}/mpv")
 
@@ -55,7 +55,7 @@ else()
   message(FATAL_ERROR "libmpv.so.2 not founded ${LIBMPV_PATH}")
 endif()
 
-set(LIBMPV_HEADER_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241130/libmpv_x86_64_header.zip")
+set(LIBMPV_HEADER_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241203/libmpv_x86_64_header.zip")
 set(LIBMPV_HEADER_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64_header.zip")
 set(LIBMPV_HEADER_UNZIP_DIR "${CMAKE_BINARY_DIR}/mpv/include")
 
