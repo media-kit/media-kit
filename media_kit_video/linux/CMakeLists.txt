@@ -49,14 +49,10 @@ endif()
 
 set(LIBMPV_PATH "${LIBMPV_UNZIP_DIR}")
 
-if(EXISTS "${LIBMPV_PATH}/libmpv.so")
-  execute_process(
-    COMMAND ln -sf libmpv.so libmpv.so.2
-    WORKING_DIRECTORY ${LIBMPV_PATH}
-  )
-  message(STATUS "libmpv.so founded ${LIBMPV_PATH}/libmpv.so")
+if(EXISTS "${LIBMPV_PATH}/libmpv.so.2")
+  message(STATUS "libmpv.so.2 founded ${LIBMPV_PATH}/libmpv.so.2")
 else()
-  message(FATAL_ERROR "libmpv.so not founded ${LIBMPV_PATH}")
+  message(FATAL_ERROR "libmpv.so.2 not founded ${LIBMPV_PATH}")
 endif()
 
 set(LIBMPV_HEADER_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241130/libmpv_x86_64_header.zip")
@@ -128,7 +124,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     ${PLUGIN_NAME} PRIVATE
     flutter
     PkgConfig::GTK
-    "${LIBMPV_UNZIP_DIR}/libmpv.so"
+    "${LIBMPV_UNZIP_DIR}/libmpv.so.2"
     PkgConfig::epoxy
   )
 
@@ -170,6 +166,6 @@ file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/mpv")
 
 set(
   media_kit_video_bundled_libraries
-  "${LIBMPV_PATH}/libmpv.so"
+  "${LIBMPV_PATH}/libmpv.so.2"
   PARENT_SCOPE
 )
