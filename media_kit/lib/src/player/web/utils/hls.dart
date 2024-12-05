@@ -6,7 +6,7 @@
 import 'dart:async';
 // import 'package:web/web.dart' as html;
 import 'dart:html' as html;
-import 'dart:js_interop' as js;
+import 'package:js/js.dart' as js;
 import 'package:synchronized/synchronized.dart';
 
 // --------------------------------------------------
