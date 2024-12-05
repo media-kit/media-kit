@@ -3,14 +3,20 @@ description: package:media_kit video (& audio) playback native libraries for all
 version: 1.0.5
 homepage: https://github.com/media-kit/media-kit.git
 repository: https://github.com/media-kit/media-kit.git
+publish_to: none
 
 environment:
   sdk: ">=2.17.0 <4.0.0"
   flutter: ">=3.7.0"
 
 dependencies:
-  media_kit_libs_android_video: ^1.3.6
-  media_kit_libs_ios_video: ^1.1.4
-  media_kit_libs_macos_video: ^1.1.4
-  media_kit_libs_windows_video: ^1.0.10
-  media_kit_libs_linux: ^1.1.3
+  media_kit_libs_android_video: 
+    path: ../../android/media_kit_libs_android_video
+  media_kit_libs_ios_video:
+    path: ../../ios/media_kit_libs_ios_video
+  media_kit_libs_macos_video: 
+    path: ../../macos/media_kit_libs_macos_video
+  media_kit_libs_windows_video: 
+    path: ../../windows/media_kit_libs_windows_video
+  media_kit_libs_linux: 
+    path: ../../linux/media_kit_libs_linux
