@@ -6,6 +6,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:js' as js;
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 import 'dart:collection';
 import 'dart:html' as html;

@@ -4,7 +4,9 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: avoid_web_libraries_in_flutter
-import 'dart:html';
+import 'dart:js_interop';
+
+import 'package:web/web.dart';
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -450,7 +452,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
 /// Makes the native window enter fullscreen.
 Future<void> defaultEnterNativeFullscreen() async {
   try {
-    await document.documentElement?.requestFullscreen();
+    await document.documentElement?.requestFullscreen().toDart;
   } catch (exception, stacktrace) {
     debugPrint(exception.toString());
     debugPrint(stacktrace.toString());
@@ -460,7 +462,7 @@ Future<void> defaultEnterNativeFullscreen() async {
 /// Makes the native window exit fullscreen.
 Future<void> defaultExitNativeFullscreen() async {
   try {
-    document.exitFullscreen();
+    await document.exitFullscreen().toDart;
   } catch (exception, stacktrace) {
     debugPrint(exception.toString());
     debugPrint(stacktrace.toString());
