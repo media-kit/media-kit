@@ -20,13 +20,9 @@ dependencies:
 
   # NOTE: Bump before publishing to pub.dev
   media_kit:
-    git:
-      url: https://github.com/Predidit/media-kit
-      path: media_kit
+    path: ../media_kit
   media_kit_video:
-    git:
-      url: https://github.com/Predidit/media-kit
-      path: media_kit_video
+    path: ../media_kit_video
 
   universal_platform: ^1.0.0+1
   video_player_platform_interface: ^6.2.0
