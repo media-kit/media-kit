@@ -3,6 +3,7 @@ description: package:video_player support for all platforms, based on package:me
 homepage: https://github.com/media-kit/media-kit
 repository: https://github.com/media-kit/media-kit
 version: 1.0.5
+publish_to: none
 topics:
   - video
   - video-player
@@ -18,8 +19,14 @@ dependencies:
     sdk: flutter
 
   # NOTE: Bump before publishing to pub.dev
-  media_kit: ^1.1.10
-  media_kit_video: ^1.2.4
+  media_kit:
+    git:
+      url: https://github.com/Predidit/media-kit
+      path: media_kit
+  media_kit_video:
+    git:
+      url: https://github.com/Predidit/media-kit
+      path: media_kit_video
 
   universal_platform: ^1.0.0+1
   video_player_platform_interface: ^6.2.0
