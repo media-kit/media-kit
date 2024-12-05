@@ -4,7 +4,8 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:async';
-import 'package:web/web.dart' as html;
+// import 'package:web/web.dart' as html;
+import 'dart:html' as html;
 import 'dart:js_interop' as js;
 import 'package:synchronized/synchronized.dart';
 
@@ -43,9 +44,9 @@ abstract class HLS {
           }
         });
 
-        html.HTMLHeadElement? head = html.document.head;
+        html.HeadElement? head = html.document.head;
         if (head == null) {
-          head = html.HTMLHeadElement();
+          head = html.HeadElement();
           html.document.append(head);
         }
         head.append(script);

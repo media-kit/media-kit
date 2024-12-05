@@ -10,7 +10,7 @@ import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 import 'dart:collection';
-import 'package:web/web.dart' as html;
+import 'dart:html' as html;
 import 'package:meta/meta.dart';
 import 'package:collection/collection.dart';
 import 'package:synchronized/synchronized.dart';
@@ -402,10 +402,10 @@ class WebPlayer extends PlatformPlayer {
       _loadSource(_playlist[_index]);
 
       if (play) {
-        element.play().toDart.catchError(
+        element.play().catchError(
           (error) {
             // PlayerStream.error
-            final e = error as html.DOMException;
+            final e = error as html.DomException;
             if (!errorController.isClosed) {
               errorController.add(e.message ?? '');
             }
@@ -550,10 +550,10 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      element.play().toDart.catchError(
+      element.play().catchError(
         (error) {
           // PlayerStream.error
-          final e = error as html.DOMException;
+          final e = error as html.DomException;
           if (!errorController.isClosed) {
             errorController.add(e.message ?? '');
           }
@@ -1449,7 +1449,7 @@ class WebPlayer extends PlatformPlayer {
       }
     } catch (exception) {
       // PlayerStream.error
-      final e = exception as html.DOMException;
+      final e = exception as html.DomException;
       if (!errorController.isClosed) {
         errorController.add(e.message ?? '');
       }
