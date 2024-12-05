@@ -92,6 +92,10 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     "utils.cc"
   )
 
+  add_library(
+     libmpv SHARED IMPORTED
+  )
+
   apply_standard_settings(${PLUGIN_NAME})
 
   find_package(PkgConfig REQUIRED)
@@ -100,6 +104,11 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
   set_target_properties(
     ${PLUGIN_NAME} PROPERTIES
     CXX_VISIBILITY_PRESET hidden
+  )
+
+  set_target_properties(
+    libmpv PROPERTIES
+    IMPORTED_LOCATION "${LIBMPV_UNZIP_DIR}/libmpv.so.2"
   )
 
   target_compile_definitions(
@@ -124,7 +133,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     ${PLUGIN_NAME} PRIVATE
     flutter
     PkgConfig::GTK
-    "${LIBMPV_UNZIP_DIR}/libmpv.so.2"
+    libmpv
     PkgConfig::epoxy
   )
 
