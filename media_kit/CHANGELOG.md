@@ -1,3 +1,7 @@
+## 1.1.11
+
+- feat: `Media` `start` & `end`
+
 ## 1.1.10+1
 
 - docs: document updated `media_kit_video`

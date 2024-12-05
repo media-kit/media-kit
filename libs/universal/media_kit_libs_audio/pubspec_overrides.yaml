@@ -1,0 +1,12 @@
+# melos_managed_dependency_overrides: media_kit_libs_android_audio,media_kit_libs_ios_audio,media_kit_libs_linux,media_kit_libs_macos_audio,media_kit_libs_windows_audio
+dependency_overrides:
+  media_kit_libs_android_audio:
+    path: ../../android/media_kit_libs_android_audio
+  media_kit_libs_ios_audio:
+    path: ../../ios/media_kit_libs_ios_audio
+  media_kit_libs_linux:
+    path: ../../linux/media_kit_libs_linux
+  media_kit_libs_macos_audio:
+    path: ../../macos/media_kit_libs_macos_audio
+  media_kit_libs_windows_audio:
+    path: ../../windows/media_kit_libs_windows_audio

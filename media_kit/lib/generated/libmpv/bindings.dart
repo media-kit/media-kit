@@ -1630,14 +1630,14 @@ class MPV {
       ffi.Pointer<ffi.Void> Function(ffi.Pointer<mpv_handle>, int)>();
 }
 
-class max_align_t extends ffi.Opaque {}
+final class max_align_t extends ffi.Opaque {}
 
-class __fsid_t extends ffi.Struct {
+final class __fsid_t extends ffi.Struct {
   @ffi.Array.multi([2])
   external ffi.Array<ffi.Int32> __val;
 }
 
-class mpv_handle extends ffi.Opaque {}
+final class mpv_handle extends ffi.Opaque {}
 
 /// List of error codes than can be returned by API functions. 0 and positive
 /// return values always mean success, negative values are always errors.
@@ -1846,7 +1846,7 @@ abstract class mpv_format {
 /// the data. In some cases (mpv_get_property()), you have to free it with
 /// mpv_free_node_contents(). If you fill this struct yourself, you're also
 /// responsible for freeing it, and you must not call mpv_free_node_contents().
-class mpv_node extends ffi.Struct {
+final class mpv_node extends ffi.Struct {
   external UnnamedUnion1 u;
 
   /// Type of the data stored in this struct. This value rules what members in
@@ -1868,7 +1868,7 @@ class mpv_node extends ffi.Struct {
   external int format;
 }
 
-class UnnamedUnion1 extends ffi.Union {
+final class UnnamedUnion1 extends ffi.Union {
   external ffi.Pointer<ffi.Int8> string;
 
   /// valid if format==MPV_FORMAT_STRING
@@ -1894,7 +1894,7 @@ class UnnamedUnion1 extends ffi.Union {
 }
 
 /// (see mpv_node)
-class mpv_node_list extends ffi.Struct {
+final class mpv_node_list extends ffi.Struct {
   /// Number of entries. Negative values are not allowed.
   @ffi.Int32()
   external int num;
@@ -1921,7 +1921,7 @@ class mpv_node_list extends ffi.Struct {
 }
 
 /// (see mpv_node)
-class mpv_byte_array extends ffi.Struct {
+final class mpv_byte_array extends ffi.Struct {
   /// Pointer to the data. In what format the data is stored is up to whatever
   /// uses MPV_FORMAT_BYTE_ARRAY.
   external ffi.Pointer<ffi.Void> data;
@@ -2109,7 +2109,7 @@ abstract class mpv_event_id {
   static const int MPV_EVENT_HOOK = 25;
 }
 
-class mpv_event_property extends ffi.Struct {
+final class mpv_event_property extends ffi.Struct {
   /// Name of the property.
   external ffi.Pointer<ffi.Int8> name;
 
@@ -2162,7 +2162,7 @@ abstract class mpv_log_level {
   static const int MPV_LOG_LEVEL_TRACE = 70;
 }
 
-class mpv_event_log_message extends ffi.Struct {
+final class mpv_event_log_message extends ffi.Struct {
   /// The module prefix, identifies the sender of the message. As a special
   /// case, if the message buffer overflows, this will be set to the string
   /// "overflow" (which doesn't appear as prefix otherwise), and the text
@@ -2215,13 +2215,13 @@ abstract class mpv_end_file_reason {
 }
 
 /// Since API version 1.108.
-class mpv_event_start_file extends ffi.Struct {
+final class mpv_event_start_file extends ffi.Struct {
   /// Playlist entry ID of the file being loaded now.
   @ffi.Int64()
   external int playlist_entry_id;
 }
 
-class mpv_event_end_file extends ffi.Struct {
+final class mpv_event_end_file extends ffi.Struct {
   /// Corresponds to the values in enum mpv_end_file_reason (the "int" type
   /// will be replaced with mpv_end_file_reason on the next ABI bump).
   ///
@@ -2266,14 +2266,14 @@ class mpv_event_end_file extends ffi.Struct {
 }
 
 /// @deprecated see MPV_EVENT_SCRIPT_INPUT_DISPATCH for remarks
-class mpv_event_script_input_dispatch extends ffi.Struct {
+final class mpv_event_script_input_dispatch extends ffi.Struct {
   @ffi.Int32()
   external int arg0;
 
   external ffi.Pointer<ffi.Int8> type;
 }
 
-class mpv_event_client_message extends ffi.Struct {
+final class mpv_event_client_message extends ffi.Struct {
   /// Arbitrary arguments chosen by the sender of the message. If num_args > 0,
   /// you can access args[0] through args[num_args - 1] (inclusive). What
   /// these arguments mean is up to the sender and receiver.
@@ -2284,7 +2284,7 @@ class mpv_event_client_message extends ffi.Struct {
   external ffi.Pointer<ffi.Pointer<ffi.Int8>> args;
 }
 
-class mpv_event_hook extends ffi.Struct {
+final class mpv_event_hook extends ffi.Struct {
   /// The hook name as passed to mpv_hook_add().
   external ffi.Pointer<ffi.Int8> name;
 
@@ -2293,7 +2293,7 @@ class mpv_event_hook extends ffi.Struct {
   external int id;
 }
 
-class mpv_event_command extends ffi.Struct {
+final class mpv_event_command extends ffi.Struct {
   /// Result data of the command. Note that success/failure is signaled
   /// separately via mpv_event.error. This field is only for result data
   /// in case of success. Most commands leave it at MPV_FORMAT_NONE. Set
@@ -2301,7 +2301,7 @@ class mpv_event_command extends ffi.Struct {
   external mpv_node result;
 }
 
-class mpv_event extends ffi.Struct {
+final class mpv_event extends ffi.Struct {
   /// One of mpv_event. Keep in mind that later ABI compatible releases might
   /// add new event types. These should be ignored by the API user.
   @ffi.Int32()

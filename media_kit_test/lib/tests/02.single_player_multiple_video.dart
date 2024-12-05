@@ -1,12 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-
+import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../common/globals.dart';
-import '../common/widgets.dart';
 import '../common/sources/sources.dart';
+import '../common/widgets.dart';
 
 class SinglePlayerMultipleVideoScreen extends StatefulWidget {
   const SinglePlayerMultipleVideoScreen({Key? key}) : super(key: key);
@@ -101,7 +100,6 @@ class _SinglePlayerMultipleVideoScreenState
                       children: [
                         Expanded(
                           child: Card(
-                            elevation: 8.0,
                             color: Colors.black,
                             clipBehavior: Clip.antiAlias,
                             margin: const EdgeInsets.all(32.0),

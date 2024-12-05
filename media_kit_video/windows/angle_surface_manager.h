@@ -21,6 +21,8 @@
 #include <d3d11.h>
 #include <wrl.h>
 
+#include "utils.h"
+
 #include <cstdint>
 #include <functional>
 
@@ -43,7 +45,7 @@ class ANGLESurfaceManager {
 
   ~ANGLESurfaceManager();
 
-  void HandleResize(int32_t width, int32_t height);
+  void SetSize(int32_t width, int32_t height);
 
   void Draw(std::function<void()> callback);
 
@@ -64,7 +66,6 @@ class ANGLESurfaceManager {
 
   bool CreateAndBindEGLSurface();
 
-  IDXGIAdapter* adapter_ = nullptr;
   int32_t width_ = 1;
   int32_t height_ = 1;
   HANDLE internal_handle_ = nullptr;

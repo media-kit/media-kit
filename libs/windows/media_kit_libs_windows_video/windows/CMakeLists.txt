@@ -12,6 +12,9 @@ option(MEDIA_KIT_LIBS_AVAILABLE "package:media_kit libraries are available." ON)
 set(PROJECT_NAME "media_kit_libs_windows_video")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
+# Deal with MSVC incompatiblity
+add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
+
 # ------------------------------------------------------------------------------
 function(download_and_verify url md5 locationForArchive)
   # Check if the archive exists.
@@ -100,8 +103,8 @@ endif()
 set(ANGLE "ANGLE.7z")
 
 # Download URL & MD5 hash of the ANGLE archive.
-set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.0/ANGLE.7z")
-set(ANGLE_MD5 "e5be38d0e1c5cbe5f70e53701ea8b6c9")
+set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.1/ANGLE.7z")
+set(ANGLE_MD5 "e866f13e8d552348058afaafe869b1ed")
 
 # Download location of the ANGLE archive.
 set(ANGLE_ARCHIVE "${CMAKE_BINARY_DIR}/${ANGLE}")
@@ -164,68 +167,9 @@ target_link_libraries(
 set(
   media_kit_libs_windows_video_bundled_libraries
   "${LIBMPV_SRC}/libmpv-2.dll"
-  "${ANGLE_SRC}/api-ms-win-core-console-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-console-l1-2-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-datetime-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-debug-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-errorhandling-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-fibers-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-file-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-file-l1-2-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-file-l2-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-handle-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-heap-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-interlocked-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-libraryloader-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-localization-l1-2-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-memory-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-namedpipe-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-processenvironment-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-processthreads-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-processthreads-l1-1-1.dll"
-  "${ANGLE_SRC}/api-ms-win-core-profile-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-rtlsupport-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-string-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-synch-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-synch-l1-2-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-sysinfo-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-timezone-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-core-util-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-conio-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-convert-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-environment-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-filesystem-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-heap-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-locale-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-math-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-multibyte-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-private-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-process-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-runtime-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-stdio-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-string-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-time-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-crt-utility-l1-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-downlevel-kernel32-l2-1-0.dll"
-  "${ANGLE_SRC}/api-ms-win-eventing-provider-l1-1-0.dll"
-  "${ANGLE_SRC}/concrt140.dll"
   "${ANGLE_SRC}/d3dcompiler_47.dll"
-  "${ANGLE_SRC}/libc++.dll"
   "${ANGLE_SRC}/libEGL.dll"
   "${ANGLE_SRC}/libGLESv2.dll"
-  "${ANGLE_SRC}/msvcp140.dll"
-  "${ANGLE_SRC}/msvcp140_1.dll"
-  "${ANGLE_SRC}/msvcp140_2.dll"
-  "${ANGLE_SRC}/msvcp140_atomic_wait.dll"
-  "${ANGLE_SRC}/msvcp140_codecvt_ids.dll"
-  "${ANGLE_SRC}/ucrtbase.dll"
-  "${ANGLE_SRC}/ucrtbased.dll"
-  "${ANGLE_SRC}/vccorlib140.dll"
-  "${ANGLE_SRC}/vccorlib140d.dll"
-  "${ANGLE_SRC}/vcruntime140.dll"
-  "${ANGLE_SRC}/vcruntime140d.dll"
-  "${ANGLE_SRC}/vcruntime140_1.dll"
-  "${ANGLE_SRC}/vcruntime140_1d.dll"
   "${ANGLE_SRC}/vk_swiftshader.dll"
   "${ANGLE_SRC}/vulkan-1.dll"
   "${ANGLE_SRC}/zlib.dll"

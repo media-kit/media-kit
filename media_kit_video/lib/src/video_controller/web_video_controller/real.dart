@@ -115,7 +115,7 @@ class WebVideoController extends PlatformVideoController {
 
   /// Disposes the instance. Releases allocated resources back to the system.
   Future<void> _dispose() async {
-    // Close the resize event stream subscription.
+    super.dispose();
     await _resizeStreamSubscription?.cancel();
   }
 

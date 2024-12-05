@@ -1,6 +1,3 @@
-# `MediaKitUtils` is duplicated across:
-# - `media_kit_video`
-# - `media_kit_native_event_loop`
 class MediaKitUtils
   attr_accessor :libs_found, :libs_package
 

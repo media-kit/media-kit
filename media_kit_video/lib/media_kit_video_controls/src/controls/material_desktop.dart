@@ -185,7 +185,7 @@ class MaterialDesktopVideoControlsThemeData {
     this.automaticallyImplySkipNextButton = true,
     this.automaticallyImplySkipPreviousButton = true,
     this.toggleFullscreenOnDoublePress = true,
-    this.playAndPauseOnTap = true,
+    this.playAndPauseOnTap = false,
     this.modifyVolumeOnScroll = true,
     this.keyboardShortcuts,
     this.visibleOnMount = false,
@@ -629,7 +629,6 @@ class _MaterialDesktopVideoControlsState
                           toggleFullscreen(context);
                         }
                       },
-
                 onPanUpdate: _theme(context).modifyVolumeOnScroll
                     ? (e) {
                         if (e.delta.dy > 0) {
@@ -956,6 +955,7 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
       hover = true;
       slider = percent.clamp(0.0, 1.0);
     });
+    controller(context).player.seek(duration * slider);
   }
 
   void onPointerDown() {
@@ -968,13 +968,11 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
   void onPointerUp() {
     widget.onSeekEnd?.call();
     setState(() {
-      click = false;
-    });
-    controller(context).player.seek(duration * slider);
-    setState(() {
       // Explicitly set the position to prevent the slider from jumping.
+      click = false;
       position = duration * slider;
     });
+    controller(context).player.seek(duration * slider);
   }
 
   void onHover(PointerHoverEvent e, BoxConstraints constraints) {

@@ -10,10 +10,13 @@ import 'package:flutter/material.dart';
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
 /// {@template subtitle_view}
+///
 /// SubtitleView
 /// ------------
 ///
 /// [SubtitleView] widget is used to display the subtitles on top of the [Video].
+///
+/// {@endtemplate}
 class SubtitleView extends StatefulWidget {
   /// The [VideoController] reference to control this [SubtitleView] output.
   final VideoController controller;
@@ -81,18 +84,17 @@ class SubtitleViewState extends State<SubtitleView> {
   /// {@macro subtitle_view}
   @override
   Widget build(BuildContext context) {
-    padding = widget.configuration.padding;
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate the visible text scale factor.
-        final textScaleFactor = widget.configuration.textScaleFactor ??
-            MediaQuery.of(context).textScaleFactor *
-                sqrt(
-                  ((constraints.maxWidth * constraints.maxHeight) /
-                          (kTextScaleFactorReferenceWidth *
-                              kTextScaleFactorReferenceHeight))
-                      .clamp(0.0, 1.0),
-                );
+
+        final nr = (constraints.maxWidth * constraints.maxHeight);
+        const dr =
+            kTextScaleFactorReferenceWidth * kTextScaleFactorReferenceHeight;
+        final textScaleFactor = sqrt((nr / dr).clamp(0.0, 1.0));
+
+        final textScaler = widget.configuration.textScaler ??
+            TextScaler.linear(textScaleFactor);
         return Material(
           color: Colors.transparent,
           child: AnimatedContainer(
@@ -106,7 +108,7 @@ class SubtitleViewState extends State<SubtitleView> {
               ].join('\n'),
               style: widget.configuration.style,
               textAlign: widget.configuration.textAlign,
-              textScaleFactor: textScaleFactor,
+              textScaler: textScaler,
             ),
           ),
         );
@@ -131,8 +133,8 @@ class SubtitleViewConfiguration {
   /// The text alignment to be used for the subtitles.
   final TextAlign textAlign;
 
-  /// The text scale factor to be used for the subtitles.
-  final double? textScaleFactor;
+  /// The text scaler to be used for the subtitles.
+  final TextScaler? textScaler;
 
   /// The padding to be used for the subtitles.
   final EdgeInsets padding;
@@ -150,7 +152,7 @@ class SubtitleViewConfiguration {
       backgroundColor: Color(0xaa000000),
     ),
     this.textAlign = TextAlign.center,
-    this.textScaleFactor,
+    this.textScaler,
     this.padding = const EdgeInsets.fromLTRB(
       16.0,
       0.0,

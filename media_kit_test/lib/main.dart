@@ -4,6 +4,8 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
 
+import 'common/globals.dart';
+import 'common/sources/sources.dart';
 import 'tests/01.single_player_single_video.dart';
 import 'tests/02.single_player_multiple_video.dart';
 import 'tests/03.multiple_player_multiple_video.dart';
@@ -15,9 +17,6 @@ import 'tests/08.screenshot.dart';
 import 'tests/09.seamless.dart';
 import 'tests/10.programmatic_fullscreen.dart';
 import 'tests/11.video_view_parameters.dart';
-
-import 'common/globals.dart';
-import 'common/sources/sources.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,12 +72,7 @@ class PrimaryScreen extends StatelessWidget {
                   enableHardwareAcceleration: !value.enableHardwareAcceleration,
                 );
               },
-              child: Text(
-                value.enableHardwareAcceleration ? 'H/W' : 'S/W',
-                style: const TextStyle(
-                  color: Colors.white,
-                ),
-              ),
+              child: Text(value.enableHardwareAcceleration ? 'H/W' : 'S/W'),
             ),
           ),
           const SizedBox(width: 16.0),

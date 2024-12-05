@@ -13,34 +13,32 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
 
-import io.flutter.plugin.common.MethodChannel;
 import io.flutter.view.TextureRegistry;
 
 public class VideoOutputManager {
+    private static final String TAG = "VideoOutputManager";
+
     private final HashMap<Long, VideoOutput> videoOutputs = new HashMap<>();
-    private final MethodChannel channelReference;
     private final TextureRegistry textureRegistryReference;
     private final Object lock = new Object();
 
-    VideoOutputManager(MethodChannel channelReference, TextureRegistry textureRegistryReference) {
-        this.channelReference = channelReference;
+    VideoOutputManager(TextureRegistry textureRegistryReference) {
         this.textureRegistryReference = textureRegistryReference;
     }
 
-    public VideoOutput create(long handle) {
+    public void create(long handle, TextureUpdateCallback textureUpdateCallback) {
         synchronized (lock) {
-            Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.create: %d", handle));
+            Log.i(TAG, String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.create: %d", handle));
             if (!videoOutputs.containsKey(handle)) {
-                final VideoOutput videoOutput = new VideoOutput(handle, channelReference, textureRegistryReference);
+                final VideoOutput videoOutput = new VideoOutput(textureRegistryReference, textureUpdateCallback);
                 videoOutputs.put(handle, videoOutput);
             }
-            return videoOutputs.get(handle);
         }
     }
 
     public void dispose(long handle) {
         synchronized (lock) {
-            Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.dispose: %d", handle));
+            Log.i(TAG, String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.dispose: %d", handle));
             if (videoOutputs.containsKey(handle)) {
                 Objects.requireNonNull(videoOutputs.get(handle)).dispose();
                 videoOutputs.remove(handle);
@@ -48,21 +46,11 @@ public class VideoOutputManager {
         }
     }
 
-    public long createSurface(long handle) {
+    public void setSurfaceSize(long handle, int width, int height) {
         synchronized (lock) {
-            Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.createSurface: %d", handle));
+            Log.i(TAG, String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.setSurfaceSize: %d %d %d", handle, width, height));
             if (videoOutputs.containsKey(handle)) {
-                return Objects.requireNonNull(videoOutputs.get(handle)).createSurface();
-            }
-            return 0;
-        }
-    }
-
-    public void setSurfaceTextureSize(long handle, int width, int height) {
-        synchronized (lock) {
-            Log.i("media_kit", String.format(Locale.ENGLISH, "com.alexmercerind.media_kit_video.VideoOutputManager.setSurfaceTextureSize: %d %d %d", handle, width, height));
-            if (videoOutputs.containsKey(handle)) {
-                Objects.requireNonNull(videoOutputs.get(handle)).setSurfaceTextureSize(width, height);
+                Objects.requireNonNull(videoOutputs.get(handle)).setSurfaceSize(width, height);
             }
         }
     }

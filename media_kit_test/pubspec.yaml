@@ -6,7 +6,7 @@ version: 1.0.0
 publish_to: none
 
 environment:
-  sdk: ">=2.17.0 <4.0.0"
+  sdk: ">=3.1.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -20,40 +20,17 @@ dependencies:
     path: ../libs/universal/media_kit_libs_video
 
   path: ^1.8.2
-  file_picker: ^8.0.3
+  file_picker: ^8.1.3
   path_provider: ^2.0.14
   http: ">=0.13.0 <2.0.0"
   universal_platform: ^1.0.0+1
   web: ^1.0.0
 
-dependency_overrides:
-  # Force dependency overrides for all (direct or transitive) dependencies
-  media_kit:
-    path: ../media_kit
-  media_kit_video:
-    path: ../media_kit_video
-
-  media_kit_native_event_loop:
-    path: ../media_kit_native_event_loop
-
-  media_kit_libs_video:
-    path: ../libs/universal/media_kit_libs_video
-
-  media_kit_libs_android_video:
-    path: ../libs/android/media_kit_libs_android_video
-  media_kit_libs_ios_video:
-    path: ../libs/ios/media_kit_libs_ios_video
-  media_kit_libs_macos_video:
-    path: ../libs/macos/media_kit_libs_macos_video
-  media_kit_libs_windows_video:
-    path: ../libs/windows/media_kit_libs_windows_video
-  media_kit_libs_linux:
-    path: ../libs/linux/media_kit_libs_linux
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
 
 flutter:
   uses-material-design: true

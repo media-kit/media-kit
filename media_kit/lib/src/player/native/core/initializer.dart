@@ -5,47 +5,52 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:ffi';
 
-import 'initializer_isolate.dart';
-import 'initializer_native_event_loop.dart';
+import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
+import 'package:media_kit/src/player/native/core/execmem_restriction.dart';
+import 'package:media_kit/src/player/native/core/initializer_isolate.dart';
+import 'package:media_kit/src/player/native/core/initializer_native_callable.dart';
 
-import 'package:media_kit/generated/libmpv/bindings.dart';
+/// {@template initializer}
+///
+/// Initializer
+/// -----------
+/// Initializes [Pointer<mpv_handle>] & notifies about events through the supplied callback.
+///
+/// {@endtemplate}
+class Initializer {
+  /// Singleton instance.
+  static Initializer? _instance;
 
-/// Creates & returns initialized [Pointer<mpv_handle>].
-/// Pass [path] to libmpv dynamic library & [callback] to receive event callbacks as [Pointer<mpv_event>].
-///
-/// Optionally, [options] may be passed to set libmpv options before the initialization.
-///
-/// Platform specific threaded event loop is preferred over [Isolate] based event loop (automatic fallback).
-/// See package:media_kit_native_event_loop for more details.
-abstract class Initializer {
-  /// Creates & returns initialized [Pointer<mpv_handle>].
-  static Future<Pointer<mpv_handle>> create(
-    String path,
-    Future<void> Function(Pointer<mpv_event> event)? callback, {
+  /// {@macro initializer}
+  Initializer._(this.mpv);
+
+  /// {@macro initializer}
+  factory Initializer(generated.MPV mpv) {
+    _instance ??= Initializer._(mpv);
+    return _instance!;
+  }
+
+  /// Generated libmpv C API bindings.
+  final generated.MPV mpv;
+
+  /// Creates [Pointer<mpv_handle>].
+  Future<Pointer<generated.mpv_handle>> create(
+    Future<void> Function(Pointer<generated.mpv_event>) callback, {
     Map<String, String> options = const {},
   }) async {
-    try {
-      return await InitializerNativeEventLoop.create(
-        path,
-        callback,
-        options,
-      );
-    } catch (_) {
-      return await InitializerIsolate.create(
-        path,
-        callback,
-        options,
-      );
+    if (!isExecmemRestricted) {
+      return InitializerNativeCallable(mpv).create(callback, options: options);
+    } else {
+      return InitializerIsolate().create(callback, options: options);
     }
   }
 
-  /// Disposes the event loop of the [Pointer<mpv_handle>] created by [create].
-  /// NOTE: [Pointer<mpv_handle>] itself is not disposed.
-  static void dispose(Pointer<mpv_handle> handle) {
-    try {
-      InitializerNativeEventLoop.dispose(handle);
-    } catch (_) {
-      InitializerIsolate.dispose(handle);
+  /// Disposes [Pointer<mpv_handle>].
+  void dispose(Pointer<generated.mpv_handle> ctx) {
+    if (!isExecmemRestricted) {
+      InitializerNativeCallable(mpv).dispose(ctx);
+    } else {
+      InitializerIsolate().dispose(mpv, ctx);
     }
   }
 }

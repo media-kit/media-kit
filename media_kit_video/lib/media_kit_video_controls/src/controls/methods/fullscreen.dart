@@ -35,6 +35,7 @@ Future<void> enterFullscreen(BuildContext context) {
                   state: stateValue,
                   contextNotifier: contextNotifierValue,
                   videoViewParametersNotifier: videoViewParametersNotifierValue,
+                  disposeNotifiers: false,
                   child: FullscreenInheritedWidget(
                     parent: stateValue,
                     // Another [VideoStateInheritedWidget] inside [FullscreenInheritedWidget] is important to notify about the fullscreen [BuildContext].
@@ -43,6 +44,7 @@ Future<void> enterFullscreen(BuildContext context) {
                       contextNotifier: contextNotifierValue,
                       videoViewParametersNotifier:
                           videoViewParametersNotifierValue,
+                      disposeNotifiers: false,
                       child: Video(
                         controller: controllerValue,
                         // Do not restrict the video's width & height in fullscreen mode:

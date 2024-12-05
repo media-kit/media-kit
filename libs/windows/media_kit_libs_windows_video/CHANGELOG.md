@@ -1,3 +1,7 @@
+## 1.0.10
+
+- fix windows crash by @Airyzz [#900](https://github.com/media-kit/media-kit/pull/900)
+
 ## 1.0.9
 
 - [mpv-player/mpv@`652a1dd`](https://github.com/mpv-player/mpv/commit/652a1dd90711839acdccc08004056d25514ef2d8)

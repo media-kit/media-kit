@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -56,7 +55,6 @@ class _StressTestScreenState extends State<StressTestScreen> {
           return video;
         }
         return Card(
-          elevation: 8.0,
           margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
           child: video,

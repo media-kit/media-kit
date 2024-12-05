@@ -240,7 +240,7 @@ class WebPlayer extends PlatformPlayer {
           // PlayerStream.error
           final error = element.error!;
           if (!errorController.isClosed) {
-            errorController.addError(error.message ?? '');
+            errorController.add(error.message ?? '');
           }
         });
       });
@@ -1361,9 +1361,13 @@ class WebPlayer extends PlatformPlayer {
   /// The [format] parameter specifies the format of the image to be returned. Supported values are:
   /// * `image/jpeg`
   /// * `image/png`
+  ///
+  /// [includeLibassSubtitles] is ignored.
   @override
   Future<Uint8List?> screenshot(
-      {String? format = 'image/jpeg', bool synchronized = true}) async {
+      {String? format = 'image/jpeg',
+      bool synchronized = true,
+      bool includeLibassSubtitles = false}) async {
     Future<Uint8List?> function() async {
       if (![
         'image/jpeg',
@@ -1413,7 +1417,20 @@ class WebPlayer extends PlatformPlayer {
   void _loadSource(Media media) {
     try {
       if (_isHLS(media.uri)) {
-        final hls = Hls();
+        void setHlsHTTPHeaders(html.HttpRequest xhr, String url) {
+          for (final header in media.httpHeaders!.entries) {
+            xhr.setRequestHeader(header.key, header.value);
+          }
+        }
+
+        final hls = Hls(
+          HlsOptions(
+            xhrSetup: media.httpHeaders != null
+                ? js.allowInterop(setHlsHTTPHeaders)
+                : null,
+          ),
+        );
+
         hls.loadSource(media.uri);
         hls.attachMedia(element);
       } else {
@@ -1440,7 +1457,12 @@ class WebPlayer extends PlatformPlayer {
   }
 
   bool _isHLS(String src) {
-    if (element.canPlayType('application/vnd.apple.mpegurl') != '') {
+    final userAgent = html.window.navigator.userAgent;
+    final isAndroidChrome =
+        userAgent.contains("Android") && userAgent.contains("Chrome");
+
+    if (!isAndroidChrome &&
+        element.canPlayType('application/vnd.apple.mpegurl') != '') {
       return false;
     }
     if (isHLSSupported() && src.toLowerCase().contains('m3u8')) {

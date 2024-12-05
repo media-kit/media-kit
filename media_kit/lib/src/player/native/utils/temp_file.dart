@@ -5,35 +5,43 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:io';
 import 'package:path/path.dart';
+import 'package:safe_local_storage/safe_local_storage.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:media_kit/src/player/native/utils/android_helper.dart';
 
 /// {@template temp_file}
+///
 /// TempFile
 /// --------
 /// A simple class to create temporary files.
+///
 /// {@endtemplate}
 abstract class TempFile {
+  /// The directory used to create temporary files.
+  static String get directory {
+    String? result;
+    if (Platform.isWindows) {
+      result = Directory.systemTemp.path;
+    } else if (Platform.isLinux) {
+      result = Directory.systemTemp.path;
+    } else if (Platform.isMacOS) {
+      result = Directory.systemTemp.path;
+    } else if (Platform.isIOS) {
+      result = Directory.systemTemp.path;
+    } else if (Platform.isAndroid) {
+      result = AndroidHelper.filesDir;
+    }
+    if (result != null) {
+      return result;
+    }
+    throw UnsupportedError('Unsupported platform: ${Platform.operatingSystem}');
+  }
+
   /// Creates a temporary file & returns it.
   static Future<File> create() async {
-    String? directory;
-    if (Platform.isWindows) {
-      directory = Directory.systemTemp.path;
-    } else if (Platform.isLinux) {
-      directory = Directory.systemTemp.path;
-    } else if (Platform.isMacOS) {
-      directory = Directory.systemTemp.path;
-    } else if (Platform.isIOS) {
-      directory = Directory.systemTemp.path;
-    } else if (Platform.isAndroid) {
-      directory = AndroidHelper.filesDir;
-    }
-    if (directory == null) {
-      throw UnsupportedError('[TempFile.create] is unsupported');
-    }
     final file = File(join(directory, Uuid().v4()));
-    await file.create();
+    await file.create_();
     return file;
   }
 }

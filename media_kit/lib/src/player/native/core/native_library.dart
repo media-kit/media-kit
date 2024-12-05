@@ -7,12 +7,14 @@
 import 'dart:io';
 import 'dart:ffi';
 
+/// {@template native_library}
+///
 /// NativeLibrary
 /// -------------
 ///
-/// This class is used to discover & load the libmpv shared library.
-/// It is generally present with the name `libmpv-2.dll` on Windows & `libmpv.so` on GNU/Linux.
+/// Discovers & loads the libmpv shared library.
 ///
+/// {@endtemplate}
 abstract class NativeLibrary {
   /// The resolved libmpv dynamic library.
   static String get path {
@@ -100,6 +102,6 @@ abstract class NativeLibrary {
 
   /// The resolved libmpv dynamic library.
   ///
-  /// **NOTE:** We are storing this value as [String] because we want to share this across [Isolate]s.
+  /// **NOTE:** We are storing this value as [String] because we want to send/receive this across [Isolate]s.
   static String? _resolved;
 }

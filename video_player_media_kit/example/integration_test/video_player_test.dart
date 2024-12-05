@@ -20,7 +20,6 @@ const String _videoAssetKey =
 
 // Returns the URL to load an asset from this example app as a network source.
 //
-// TODO(stuartmorgan): Convert this to a local `HttpServer` that vends the
 // assets directly, https://github.com/flutter/flutter/issues/95420
 String getUrlForAssetAsNetworkSource(String assetKey) {
   return 'https://github.com/flutter/packages/blob/'

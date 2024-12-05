@@ -61,7 +61,6 @@ class _MallocAllocator implements Allocator {
   ///
   /// Throws an [ArgumentError] if the number of bytes or alignment cannot be
   /// satisfied.
-  // TODO: Stop ignoring alignment if it's large, for example for SSE data.
   @override
   Pointer<T> allocate<T extends NativeType>(int byteCount, {int? alignment}) {
     Pointer<T> result;
@@ -124,7 +123,6 @@ class _CallocAllocator implements Allocator {
   ///
   /// Throws an [ArgumentError] if the number of bytes or alignment cannot be
   /// satisfied.
-  // TODO: Stop ignoring alignment if it's large, for example for SSE data.
   @override
   Pointer<T> allocate<T extends NativeType>(int byteCount, {int? alignment}) {
     Pointer<T> result;

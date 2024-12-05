@@ -3,6 +3,12 @@ all: Frameworks/*.xcframework Frameworks/.symlinks
 MPV_XCFRAMEWORKS_VERSION=v0.6.0
 MPV_XCFRAMEWORKS_SHA256SUM=916220b7b4fe9209de41264382966ac90a2de2ac11956a4b6041cf66a8110732
 
+TAR=tar
+TAR_WILDCARDS_FLAG := $(shell ${TAR} --version 2>&1 | grep -q 'GNU' && echo "--wildcards" || echo "")
+
+SED=sed
+SED_INPLACE_FLAG := $(shell ${SED} --version 2>&1 | grep -q 'GNU' && echo "" || echo "''")
+
 .cache/xcframeworks/libmpv-xcframeworks-${MPV_XCFRAMEWORKS_VERSION}-macos-universal.tar.gz:
 	mkdir -p .cache/xcframeworks
 	rm -f .cache/xcframeworks/*.tmp .cache/xcframeworks/*-macos-universal.tar.gz
@@ -20,13 +26,13 @@ MPV_XCFRAMEWORKS_SHA256SUM=916220b7b4fe9209de41264382966ac90a2de2ac11956a4b6041c
 Frameworks/*.xcframework: .cache/xcframeworks/libmpv-xcframeworks-macos-universal.tar.gz
 	mkdir -p Frameworks
 	rm -rf Frameworks/*.xcframework
-	tar -xvf .cache/xcframeworks/libmpv-xcframeworks-macos-universal.tar.gz --strip-components 1 -C Frameworks
+	${TAR} ${TAR_WILDCARDS_FLAG} -xvf .cache/xcframeworks/libmpv-xcframeworks-macos-universal.tar.gz --strip-components 1 -C Frameworks
 	touch Frameworks/*.xcframework
 
 Frameworks/.symlinks: Frameworks/*.xcframework
 	rm -rf Frameworks/.symlinks
 	mkdir -p Frameworks/.symlinks/mpv
-	sed -i '' 's/\r$$//g' create_framework_symlinks.sh # remove CRLF line terminator added by Flutter packaging (https://github.com/media-kit/media-kit/issues/338)
+	${SED} -i ${SED_INPLACE_FLAG} 's/\r$$//g' create_framework_symlinks.sh # remove CRLF line terminator added by Flutter packaging (https://github.com/media-kit/media-kit/issues/338)
 	sh create_framework_symlinks.sh Frameworks/Mpv.xcframework Frameworks/.symlinks/mpv
 
 .PHONY: clean

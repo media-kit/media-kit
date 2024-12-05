@@ -1,13 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../common/globals.dart';
-import '../common/widgets.dart';
 import '../common/sources/sources.dart';
+import '../common/widgets.dart';
 
 class VideoViewParametersScreen extends StatefulWidget {
   const VideoViewParametersScreen({Key? key}) : super(key: key);
@@ -61,9 +60,7 @@ class _VideoViewParametersScreenState extends State<VideoViewParametersScreen> {
                     if (timer.tick % 3 == 0 /* Every 3 seconds. */) {
                       fit =
                           fit == BoxFit.contain ? BoxFit.none : BoxFit.contain;
-                      key.currentState?.update(
-                        fit: fit,
-                      );
+                      setState(() {});
                     }
                     if (mounted) {
                       setState(() {
@@ -169,7 +166,6 @@ class _VideoViewParametersScreenState extends State<VideoViewParametersScreen> {
                         children: [
                           Expanded(
                             child: Card(
-                              elevation: 8.0,
                               clipBehavior: Clip.antiAlias,
                               margin: const EdgeInsets.all(32.0),
                               child: Video(

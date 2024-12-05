@@ -20,7 +20,6 @@ dependencies:
   # NOTE: Bump before publishing to pub.dev
   media_kit: ^1.1.10
   media_kit_video: ^1.2.4
-  media_kit_native_event_loop: ^1.0.8
 
   universal_platform: ^1.0.0+1
   video_player_platform_interface: ^6.2.0
@@ -28,13 +27,5 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^5.0.0
 
-# NOTE: Remove before publishing to pub.dev
-dependency_overrides:
-  media_kit:
-    path: ../media_kit
-  media_kit_video:
-    path: ../media_kit_video
-  media_kit_native_event_loop:
-    path: ../media_kit_native_event_loop

@@ -13,7 +13,7 @@ import 'package:media_kit/ffi/src/allocation.dart';
 /// through a `Pointer<Utf16>` representing the entire array. This pointer is
 /// the equivalent of a char pointer (`const wchar_t*`) in C code. The
 /// individual UTF-16 code units are stored in native byte order.
-class Utf16 extends Opaque {}
+final class Utf16 extends Opaque {}
 
 /// Extension method for converting a`Pointer<Utf16>` to a [String].
 extension Utf16Pointer on Pointer<Utf16> {
@@ -56,7 +56,7 @@ extension Utf16Pointer on Pointer<Utf16> {
     final buffer = StringBuffer();
     var i = 0;
     while (true) {
-      final char = codeUnits.elementAt(i).value;
+      final char = (codeUnits + i).value;
       if (char == 0) {
         return buffer.toString();
       }
