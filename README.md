@@ -8,13 +8,6 @@
 
 ## 使用
 
-在 linux/CmakeLists.txt 中添加
-```
-# add runpath, shared libs of a release bundle is in lib dir, plugin must add $ORIGIN to runpath to find libmpv
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--enable-new-dtags -Wl,-z,origin -Wl,-rpath,\\$ORIGIN")
-set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--enable-new-dtags -Wl,-z,origin -Wl,-rpath,\\$ORIGIN")
-```
-
 在 pubspec.yaml 中添加
 ```
 dependencies:
