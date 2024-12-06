@@ -173,8 +173,10 @@ endif()
 message(STATUS "create libmpv install directory ${CMAKE_BINARY_DIR}/mpv")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/mpv")
 
+install(FILES "${LIBMPV_PATH}/libmpv.so.2" DESTINATION lib)
+
 set(
   media_kit_video_bundled_libraries
-  "${LIBMPV_PATH}/libmpv.so.2"
+  ""
   PARENT_SCOPE
 )
