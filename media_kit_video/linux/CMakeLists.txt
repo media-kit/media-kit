@@ -21,7 +21,7 @@ set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--enable-new-dtags -Wl,-z,origin -Wl,-rpath,\\$ORIGIN")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--enable-new-dtags -Wl,-z,origin -Wl,-rpath,\\$ORIGIN")
 
-set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241206/libmpv_x86_64.zip")
+set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/2024120614/libmpv_x86_64.zip")
 set(LIBMPV_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64.zip")
 set(LIBMPV_UNZIP_DIR "${CMAKE_BINARY_DIR}/mpv")
 
@@ -59,7 +59,7 @@ else()
   message(FATAL_ERROR "libmpv.so.2 not founded ${LIBMPV_PATH}")
 endif()
 
-set(LIBMPV_HEADER_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241206/libmpv_x86_64_header.zip")
+set(LIBMPV_HEADER_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/2024120614/libmpv_x86_64_header.zip")
 set(LIBMPV_HEADER_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64_header.zip")
 set(LIBMPV_HEADER_UNZIP_DIR "${CMAKE_BINARY_DIR}/mpv/include")
 
