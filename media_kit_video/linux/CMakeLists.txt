@@ -53,10 +53,10 @@ endif()
 
 set(LIBMPV_PATH "${LIBMPV_UNZIP_DIR}")
 
-if(EXISTS "${LIBMPV_PATH}/libmpv-39.so")
-  message(STATUS "libmpv-39.so founded ${LIBMPV_PATH}/libmpv-39.so")
+if(EXISTS "${LIBMPV_PATH}/libmpv.so.2")
+  message(STATUS "libmpv.so.2 founded ${LIBMPV_PATH}/libmpv.so.2")
 else()
-  message(FATAL_ERROR "libmpv-39.so not founded ${LIBMPV_PATH}")
+  message(FATAL_ERROR "libmpv.so.2 not founded ${LIBMPV_PATH}")
 endif()
 
 set(LIBMPV_HEADER_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241206/libmpv_x86_64_header.zip")
@@ -112,7 +112,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
 
   set_target_properties(
     libmpv PROPERTIES
-    IMPORTED_LOCATION "${LIBMPV_UNZIP_DIR}/libmpv-39.so"
+    IMPORTED_LOCATION "${LIBMPV_UNZIP_DIR}/libmpv.so.2"
   )
 
   target_compile_definitions(
@@ -177,10 +177,10 @@ endif()
 message(STATUS "create libmpv install directory ${CMAKE_BINARY_DIR}/mpv")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/mpv")
 
-# install(FILES "${LIBMPV_PATH}/libmpv-39.so" DESTINATION lib)
+# install(FILES "${LIBMPV_PATH}/libmpv.so.2" DESTINATION lib)
 
 set(
   media_kit_video_bundled_libraries
-  "${LIBMPV_PATH}/libmpv-39.so"
+  "${LIBMPV_PATH}/libmpv.so.2"
   PARENT_SCOPE
 )
