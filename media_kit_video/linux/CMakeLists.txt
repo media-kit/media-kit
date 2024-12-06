@@ -21,7 +21,7 @@ set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--enable-new-dtags -Wl,-z,origin -Wl,-rpath,\\$ORIGIN")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--enable-new-dtags -Wl,-z,origin -Wl,-rpath,\\$ORIGIN")
 
-set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241205/libmpv_x86_64.zip")
+set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241206/libmpv_x86_64.zip")
 set(LIBMPV_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64.zip")
 set(LIBMPV_UNZIP_DIR "${CMAKE_BINARY_DIR}/mpv")
 
@@ -53,13 +53,13 @@ endif()
 
 set(LIBMPV_PATH "${LIBMPV_UNZIP_DIR}")
 
-if(EXISTS "${LIBMPV_PATH}/libmpv.so.2")
-  message(STATUS "libmpv.so.2 founded ${LIBMPV_PATH}/libmpv.so.2")
+if(EXISTS "${LIBMPV_PATH}/libmpv-39.so")
+  message(STATUS "libmpv-39.so founded ${LIBMPV_PATH}/libmpv-39.so")
 else()
-  message(FATAL_ERROR "libmpv.so.2 not founded ${LIBMPV_PATH}")
+  message(FATAL_ERROR "libmpv-39.so not founded ${LIBMPV_PATH}")
 endif()
 
-set(LIBMPV_HEADER_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241205/libmpv_x86_64_header.zip")
+set(LIBMPV_HEADER_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241206/libmpv_x86_64_header.zip")
 set(LIBMPV_HEADER_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64_header.zip")
 set(LIBMPV_HEADER_UNZIP_DIR "${CMAKE_BINARY_DIR}/mpv/include")
 
@@ -112,7 +112,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
 
   set_target_properties(
     libmpv PROPERTIES
-    IMPORTED_LOCATION "${LIBMPV_UNZIP_DIR}/libmpv.so.2"
+    IMPORTED_LOCATION "${LIBMPV_UNZIP_DIR}/libmpv-39.so"
   )
 
   target_compile_definitions(
@@ -177,10 +177,10 @@ endif()
 message(STATUS "create libmpv install directory ${CMAKE_BINARY_DIR}/mpv")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/mpv")
 
-# install(FILES "${LIBMPV_PATH}/libmpv.so.2" DESTINATION lib)
+# install(FILES "${LIBMPV_PATH}/libmpv-39.so" DESTINATION lib)
 
 set(
   media_kit_video_bundled_libraries
-  "${LIBMPV_PATH}/libmpv.so.2"
+  "${LIBMPV_PATH}/libmpv-39.so"
   PARENT_SCOPE
 )

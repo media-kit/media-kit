@@ -53,9 +53,7 @@ abstract class NativeLibrary {
         'mpv-1.dll',
       ],
       'linux': [
-        'libmpv.so',
-        'libmpv.so.2',
-        'libmpv.so.1',
+        'libmpv-39.so',
       ],
       'macos': [
         'Mpv.framework/Mpv',
