@@ -17,6 +17,10 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 set(PLUGIN_NAME "media_kit_video_plugin")
 set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
 
+# add runpath, shared libs of a release bundle is in lib dir, plugin must add $ORIGIN to runpath to find libmpv
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--enable-new-dtags -Wl,-z,origin -Wl,-rpath,\\$ORIGIN")
+set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--enable-new-dtags -Wl,-z,origin -Wl,-rpath,\\$ORIGIN")
+
 set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/20241205/libmpv_x86_64.zip")
 set(LIBMPV_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64.zip")
 set(LIBMPV_UNZIP_DIR "${CMAKE_BINARY_DIR}/mpv")
@@ -173,10 +177,10 @@ endif()
 message(STATUS "create libmpv install directory ${CMAKE_BINARY_DIR}/mpv")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/mpv")
 
-install(FILES "${LIBMPV_PATH}/libmpv.so.2" DESTINATION lib)
+# install(FILES "${LIBMPV_PATH}/libmpv.so.2" DESTINATION lib)
 
 set(
   media_kit_video_bundled_libraries
-  ""
+  "${LIBMPV_PATH}/libmpv.so.2"
   PARENT_SCOPE
 )
