@@ -23,6 +23,7 @@ set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--enable-new-dta
 
 set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/2024120614/libmpv_x86_64.zip")
 set(LIBMPV_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64.zip")
+set(LIBMPV_ZIP_MD5 "b31f6d3adcdcb7a58793144887584493")
 set(LIBMPV_UNZIP_DIR "${CMAKE_BINARY_DIR}/mpv")
 
 make_directory("${LIBMPV_UNZIP_DIR}") 
@@ -36,6 +37,14 @@ if(NOT download_status_code EQUAL 0)
   message(FATAL_ERROR "libmpv download failed. err: ${download_status_code}")
 else()
   message(STATUS "libmpv download completed.")
+endif()
+
+message(STATUS "Verifying MD5 checksum for ${LIBMPV_ZIP_PATH}")
+file(MD5 ${LIBMPV_ZIP_PATH} computed_md5)
+if(NOT computed_md5 STREQUAL "${LIBMPV_ZIP_MD5}")
+  message(FATAL_ERROR "MD5 checksum mismatch! Expected: ${LIBMPV_ZIP_MD5}, Got: ${computed_md5}")
+else()
+  message(STATUS "MD5 checksum verification passed.")
 endif()
 
 message(STATUS "unzip libmpv to ${LIBMPV_UNZIP_DIR}")
