@@ -208,24 +208,6 @@ void main() {
         equals(true),
       );
     },
-    skip: UniversalPlatform.isWeb,
-  );
-  test(
-    'media-http-headers-propagate',
-    () {
-      Media.cache.clear();
-
-      expect(
-        () => Media(
-          sources.platform.first,
-          httpHeaders: {
-            'x': 'y',
-          },
-        ),
-        throwsUnsupportedError,
-      );
-    },
-    skip: !UniversalPlatform.isWeb,
   );
   test(
     'media-finalizer',
