@@ -1357,9 +1357,10 @@ class WebPlayer extends PlatformPlayer {
           // Use modern event listener for cue changes
           firstTrack.oncuechange = (event) {
             try {
+              // UNTESTED! I have no idea if this works. ~Eric Apostal
+              // it's pretty sketchy, so it has a very good chance of not working.
               final activeCues = firstTrack.activeCues;
               if (activeCues != null) {
-                print("ON TRACK CHANGE!");
                 final data = List<String>.from(
                   (activeCues.dartify as dynamic).map((cue) {
                     final text = (cue as dynamic).text as String;
@@ -1369,7 +1370,6 @@ class WebPlayer extends PlatformPlayer {
                         .trim();
                   }),
                 );
-                print("DID NOT ERROR!!!");
 
                 final subtitle = ['', ''];
                 if (data.length == 1) {
