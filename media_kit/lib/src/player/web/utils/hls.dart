@@ -4,8 +4,8 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:async';
-import 'dart:html' as html;
-import 'package:js/js.dart' as js;
+import 'dart:js_interop';
+import 'package:web/web.dart' as web;
 import 'package:synchronized/synchronized.dart';
 
 // --------------------------------------------------
@@ -15,7 +15,7 @@ import 'package:synchronized/synchronized.dart';
 /// HLS
 /// ---
 ///
-/// Adds [HLS.js](https://github.com/video-dev/hls.js/) to the HTML document using [html.ScriptElement].
+/// Adds [HLS.js](https://github.com/video-dev/hls.js/) to the HTML document using [web.HTMLScriptElement].
 ///
 /// {@endtemplate}
 abstract class HLS {
@@ -26,7 +26,7 @@ abstract class HLS {
       }
       final completer = Completer();
       try {
-        final script = html.ScriptElement()
+        final script = web.HTMLScriptElement()
           ..async = true
           ..charset = 'utf-8'
           ..type = 'text/javascript'
@@ -43,10 +43,10 @@ abstract class HLS {
           }
         });
 
-        html.HeadElement? head = html.document.head;
+        web.HTMLHeadElement? head = web.document.head;
         if (head == null) {
-          head = html.HeadElement();
-          html.document.append(head);
+          head = web.HTMLHeadElement();
+          web.document.append(head);
         }
         head.append(script);
       } catch (_) {
@@ -75,26 +75,37 @@ abstract class HLS {
 
 // --------------------------------------------------
 
-@js.JS('Hls.isSupported')
+@JS('Hls.isSupported')
 external bool isHLSSupported();
 
-@js.JS()
-@js.anonymous
+@JS()
+@staticInterop
+abstract class XHRSetupCallback {}
+
+extension on XHRSetupCallback {
+  // ignore: unused_element
+  external void call(web.XMLHttpRequest xhr, String url);
+  // todo: is this even important? I am not familiar with this.
+}
+
+@JS()
+@anonymous
+@staticInterop
 class HlsOptions {
   external factory HlsOptions({
-    void Function(html.HttpRequest xhr, String url)? xhrSetup,
+    XHRSetupCallback? xhrSetup,
   });
 }
 
-@js.JS()
-@js.staticInterop
+@JS()
+@staticInterop
 class Hls {
   external factory Hls(HlsOptions options);
 }
 
 extension ExtensionHls on Hls {
   external void loadSource(String src);
-  external void attachMedia(html.VideoElement video);
+  external void attachMedia(web.HTMLVideoElement video);
 }
 
 // --------------------------------------------------
