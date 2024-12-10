@@ -5,7 +5,8 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: avoid_web_libraries_in_flutter
 import 'dart:async';
-import 'dart:js' as js;
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'package:web/web.dart' as html;
 
 import 'dart:ui_web';
@@ -49,7 +50,17 @@ class WebVideoController extends PlatformVideoController {
     player.platform?.release.add(controller._dispose);
 
     // Retrieve the [html.VideoElement] instance from [js.context].
-    controller._element = js.context[_kInstances][handle];
+    var propertyGet = globalContext.getProperty(_kInstances.toJS);
+    print("GOT PROPERTY $propertyGet");
+    print("runtime type: ${propertyGet.runtimeType}");
+    // print("is null?: ${propertyGet.isNull}");
+    print("handle: $handle");
+    print(
+        "indexed handle: ${(propertyGet as html.HTMLVideoElement).getProperty(handle.toJS)}");
+    // controller._element =
+    //     (globalContext.getProperty(_kInstances.toJS)! as dynamic)[handle];
+    controller._element =
+        propertyGet.getProperty(handle.toJS) as html.HTMLVideoElement;
     // Register the [html.VideoElement] as platform view.
     platformViewRegistry.registerViewFactory(
       'com.alexmercerind.media_kit_video.$handle',
@@ -119,8 +130,8 @@ class WebVideoController extends PlatformVideoController {
     await _resizeStreamSubscription?.cancel();
   }
 
-  /// HTML [html.VideoElement] instance reference.
-  html.VideoElement? _element;
+  /// HTML [html.HTMLVideoElement] instance reference.
+  html.HTMLVideoElement? _element;
 
   StreamSubscription<html.Event>? _resizeStreamSubscription;
 
