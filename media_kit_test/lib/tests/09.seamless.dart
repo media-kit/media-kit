@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import '../common/globals.dart';
 import '../common/sources/sources.dart';
@@ -55,7 +56,9 @@ class _SeamlessState extends State<Seamless> {
       player,
       configuration: configuration.value,
     );
-    await player.setAudioTrack(AudioTrack.no());
+    if (!UniversalPlatform.isWeb) {
+      await player.setAudioTrack(AudioTrack.no());
+    }
     await player.setPlaylistMode(PlaylistMode.loop);
     await player.open(
       // Load a random video from the list of sources.
