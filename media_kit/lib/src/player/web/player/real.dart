@@ -42,8 +42,6 @@ void webEnsureInitialized({String? libmpv}) {}
 /// {@endtemplate}
 class WebPlayer extends PlatformPlayer {
   /// {@macro web_player}
-  // late int id;
-  // late web.HTMLVideoElement element;
   WebPlayer({required super.configuration}) {
     var idProperty = globalContext.getProperty(kInstanceCount.toJS);
     if (idProperty.isUndefinedOrNull) {
@@ -67,7 +65,6 @@ class WebPlayer extends PlatformPlayer {
         ..pause();
       // Initialize or increment the instance count.
       globalContext[kInstanceCount] ??= 0.toJS;
-      // im so sorry
       globalContext[kInstanceCount] =
           (int.parse((globalContext[kInstanceCount]!).toString()) + 1).toJS;
       // Store the [html.VideoElement] instance in [globalContext].
@@ -1248,21 +1245,19 @@ class WebPlayer extends PlatformPlayer {
           }
         }
 
-        // Remove all <source> elements
+        // Remove all <source> elements.
         for (final child in children) {
           if (child.tagName.toLowerCase() == 'source') {
             element.removeChild(child);
           }
         }
 
-        // Create a new <source> element
+        // Create a new <source> element.
         final source = web.document.createElement('source');
         source.setAttribute('src', track.id);
 
-        // Append the new <source> element
+        // Append the new <source> element.
         element.appendChild(source);
-
-        // element.children.removeWhere((e) => e is web.HTMLSourceElement);
 
         final child = web.HTMLSourceElement();
         child.src = track.id;
@@ -1296,7 +1291,7 @@ class WebPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      // Reset existing subtitle state
+      // Reset existing Player.state.subtitle & Player.stream.subtitle.
       state = state.copyWith(
         subtitle: const PlayerState().subtitle,
       );
@@ -1305,7 +1300,7 @@ class WebPlayer extends PlatformPlayer {
       }
 
       if (['no', 'auto'].contains(track.id)) {
-        // No action needed for these tracks
+        // No action needed for these tracks.
       } else if (track.uri || track.data) {
         final String uri;
         if (track.uri) {
@@ -1316,11 +1311,11 @@ class WebPlayer extends PlatformPlayer {
           for (var i = 0; i < blobParts.length; i++) {
             array.add(blobParts[i].toJS);
           }
-          // Create object URL from subtitle data using modern web API
+          // Create object URL from subtitle data using modern web API.
           final blob = web.Blob(array as JSArray<web.BlobPart>);
           final src = web.URL.createObjectURL(blob);
 
-          // Revoke the object URL upon disposal
+          // Revoke the object URL upon disposal.
           release.add(() async {
             web.URL.revokeObjectURL(src);
           });
@@ -1328,8 +1323,6 @@ class WebPlayer extends PlatformPlayer {
         } else {
           return;
         }
-
-        // element.children.removeWhere((e) => e is web.HTMLTrackElement);
 
         final child = web.HTMLTrackElement();
         child.src = uri;
@@ -1343,7 +1336,7 @@ class WebPlayer extends PlatformPlayer {
           trackController.add(state.track);
         }
 
-        // Match native player behavior
+        // To match NativePlayer behavior.
         state = state.copyWith(subtitle: ['', '']);
         if (!subtitleController.isClosed) {
           subtitleController.add(['', '']);
@@ -1354,7 +1347,7 @@ class WebPlayer extends PlatformPlayer {
           final firstTrack = tracks[0];
           firstTrack.mode = 'hidden';
 
-          // Use modern event listener for cue changes
+          // Use modern event listener for cue changes.
           firstTrack.oncuechange = (event) {
             try {
               // UNTESTED! I have no idea if this works. ~Eric Apostal
@@ -1437,6 +1430,8 @@ class WebPlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
 
       try {
+        // Kind of limited in usage:
+        // https://stackoverflow.com/questions/35244215/html5-video-screenshot-via-canvas-using-cors
         final canvas = web.HTMLCanvasElement();
         canvas.width = element.videoWidth;
         canvas.height = element.videoHeight;
@@ -1547,7 +1542,6 @@ class WebPlayer extends PlatformPlayer {
       bufferingController.add(false);
     }
 
-    // clear children
     element.innerHTML = ''.toJS;
     state = state.copyWith(track: Track());
     if (!trackController.isClosed) {
