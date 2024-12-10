@@ -50,9 +50,9 @@ class WebVideoController extends PlatformVideoController {
     player.platform?.release.add(controller._dispose);
 
     // Retrieve the [html.VideoElement] instance from [js.context].
-    final element = globalContext.getProperty(_kInstances.toJS);
-    controller._element = (element as web.HTMLVideoElement)
-        .getProperty(handle.toJS) as web.HTMLVideoElement;
+    final instances = globalContext.getProperty(_kInstances.toJS) as JSObject;
+    final element = instances.getProperty(handle.toJS) as web.HTMLVideoElement;
+    controller._element = element;
     // Register the [html.VideoElement] as platform view.
     platformViewRegistry.registerViewFactory(
       'com.alexmercerind.media_kit_video.$handle',
