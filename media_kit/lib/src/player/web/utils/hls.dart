@@ -83,7 +83,9 @@ external bool isHLSSupported();
 abstract class XHRSetupCallback {}
 
 extension on XHRSetupCallback {
+  // ignore: unused_element
   external void call(web.XMLHttpRequest xhr, String url);
+  // todo: is this even important? I am not familiar with this.
 }
 
 @JS()

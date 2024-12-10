@@ -47,10 +47,8 @@ class WebPlayer extends PlatformPlayer {
   WebPlayer({required super.configuration}) {
     var idProperty = globalContext.getProperty(kInstanceCount.toJS);
     if (idProperty.isUndefinedOrNull) {
-      print("NULL!");
       id = 0;
     } else {
-      print("tostring property: ${idProperty.toString()}");
       id = int.parse(idProperty.toString());
     }
     element = web.HTMLVideoElement();
@@ -72,18 +70,10 @@ class WebPlayer extends PlatformPlayer {
       // im so sorry
       globalContext[kInstanceCount] =
           (int.parse((globalContext[kInstanceCount]!).toString()) + 1).toJS;
-      print("globalContext[kInstanceCount]: ${globalContext[kInstanceCount]}");
-
-      // Store the [html.VideoElement] instance in global [js.context].
-      print("storing global context!");
+      // Store the [html.VideoElement] instance in [globalContext].
       globalContext[kInstances] ??= JSObject();
-      print("storing context ${globalContext[kInstances]}");
       (globalContext[kInstances] as JSObject)
           .setProperty(id.toString().toJS, element);
-      print("set context");
-      print("id: $id");
-      print("element: $element");
-      print("all instances: ${globalContext[kInstances]}");
       // --------------------------------------------------
       // Event streams handling:
       element.onPlay.listen((_) {
@@ -1365,38 +1355,40 @@ class WebPlayer extends PlatformPlayer {
           firstTrack.mode = 'hidden';
 
           // Use modern event listener for cue changes
-          // firstTrack.oncuechange = (event) {
-          //   try {
-          //     final activeCues = firstTrack.activeCues;
-          //     if (activeCues != null) {
-          //       final data = List<String>.from(
-          //         activeCues.map((cue) {
-          //           final text = (cue as dynamic).text as String;
-          //           return text
-          //               .replaceAll(RegExp('<[^>]*>'), ' ')
-          //               .replaceAll(RegExp('\\s+'), ' ')
-          //               .trim();
-          //         }),
-          //       );
+          firstTrack.oncuechange = (event) {
+            try {
+              final activeCues = firstTrack.activeCues;
+              if (activeCues != null) {
+                print("ON TRACK CHANGE!");
+                final data = List<String>.from(
+                  (activeCues.dartify as dynamic).map((cue) {
+                    final text = (cue as dynamic).text as String;
+                    return text
+                        .replaceAll(RegExp('<[^>]*>'), ' ')
+                        .replaceAll(RegExp('\\s+'), ' ')
+                        .trim();
+                  }),
+                );
+                print("DID NOT ERROR!!!");
 
-          //       final subtitle = ['', ''];
-          //       if (data.length == 1) {
-          //         subtitle[0] = data[0];
-          //       } else if (data.length >= 2) {
-          //         subtitle[0] = data[0];
-          //         subtitle[1] = data.skip(1).join('\n');
-          //       }
+                final subtitle = ['', ''];
+                if (data.length == 1) {
+                  subtitle[0] = data[0];
+                } else if (data.length >= 2) {
+                  subtitle[0] = data[0];
+                  subtitle[1] = data.skip(1).join('\n');
+                }
 
-          //       state = state.copyWith(subtitle: subtitle);
-          //       if (!subtitleController.isClosed) {
-          //         subtitleController.add(subtitle);
-          //       }
-          //     }
-          //   } catch (exception, stacktrace) {
-          //     print(exception);
-          //     print(stacktrace);
-          //   }
-          // };
+                state = state.copyWith(subtitle: subtitle);
+                if (!subtitleController.isClosed) {
+                  subtitleController.add(subtitle);
+                }
+              }
+            } catch (exception, stacktrace) {
+              print(exception);
+              print(stacktrace);
+            }
+          } as dynamic;
         }
       } else {
         throw UnsupportedError(

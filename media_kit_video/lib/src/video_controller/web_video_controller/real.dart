@@ -7,7 +7,7 @@
 import 'dart:async';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
-import 'package:web/web.dart' as html;
+import 'package:web/web.dart' as web;
 
 import 'dart:ui_web';
 import 'package:flutter/rendering.dart';
@@ -51,16 +51,10 @@ class WebVideoController extends PlatformVideoController {
 
     // Retrieve the [html.VideoElement] instance from [js.context].
     var propertyGet = globalContext.getProperty(_kInstances.toJS);
-    print("GOT PROPERTY $propertyGet");
-    print("runtime type: ${propertyGet.runtimeType}");
-    // print("is null?: ${propertyGet.isNull}");
-    print("handle: $handle");
-    print(
-        "indexed handle: ${(propertyGet as html.HTMLVideoElement).getProperty(handle.toJS)}");
     // controller._element =
     //     (globalContext.getProperty(_kInstances.toJS)! as dynamic)[handle];
-    controller._element =
-        propertyGet.getProperty(handle.toJS) as html.HTMLVideoElement;
+    controller._element = (propertyGet as web.HTMLVideoElement)
+        .getProperty(handle.toJS) as web.HTMLVideoElement;
     // Register the [html.VideoElement] as platform view.
     platformViewRegistry.registerViewFactory(
       'com.alexmercerind.media_kit_video.$handle',
@@ -131,9 +125,9 @@ class WebVideoController extends PlatformVideoController {
   }
 
   /// HTML [html.HTMLVideoElement] instance reference.
-  html.HTMLVideoElement? _element;
+  web.HTMLVideoElement? _element;
 
-  StreamSubscription<html.Event>? _resizeStreamSubscription;
+  StreamSubscription<web.Event>? _resizeStreamSubscription;
 
   /// JavaScript object attribute used to store various [VideoElement] instances in [js.context].
   static const _kInstances = '\$com.alexmercerind.media_kit.instances';
