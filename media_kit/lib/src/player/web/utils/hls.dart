@@ -1,7 +1,14 @@
+/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+///
+/// Copyright © 2021 & onwards, WanJiMi.
+/// All rights reserved.
+/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:async';
 import 'dart:js_interop';
-import 'package:synchronized/synchronized.dart';
 import 'package:web/web.dart' as web;
+import 'package:synchronized/synchronized.dart';
+
+// --------------------------------------------------
 
 /// {@template hls}
 ///
@@ -20,34 +27,28 @@ abstract class HLS {
       final completer = Completer();
       try {
         final script = web.HTMLScriptElement()
-          ..setAttribute('async', 'true')
-          ..setAttribute('charset', 'utf-8')
-          ..setAttribute('type', 'text/javascript')
-          ..setAttribute('src', hls ?? kHLSAsset);
+          ..async = true
+          ..charset = 'utf-8'
+          ..type = 'text/javascript'
+          ..src = hls ?? kHLSAsset;
 
-        onLoad(JSObject _) {
+        script.onLoad.listen((_) {
           if (!completer.isCompleted) {
             completer.complete();
           }
-        }
-
-        onError(JSObject _) {
+        });
+        script.onError.listen((_) {
           if (!completer.isCompleted) {
             completer.completeError(Exception('Failed to load HLS.js'));
           }
+        });
+
+        web.HTMLHeadElement? head = web.document.head;
+        if (head == null) {
+          head = web.HTMLHeadElement();
+          web.document.append(head);
         }
-
-        script.addEventListener('load', onLoad.toJS);
-        script.addEventListener('error', onError.toJS);
-
-        final head = web.document.head ??
-            (() {
-              final newHead = web.HTMLHeadElement();
-              web.document.appendChild(newHead);
-              return newHead;
-            })();
-
-        head.appendChild(script);
+        head.append(script);
       } catch (_) {
         if (!completer.isCompleted) {
           completer.completeError(Exception('Failed to load HLS.js'));
@@ -65,7 +66,6 @@ abstract class HLS {
 
   static const String kHLSAsset =
       'assets/packages/media_kit/assets/web/hls1.4.10.js';
-
   static const String kHLSCDN =
       'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.10/hls.js';
 
@@ -73,32 +73,37 @@ abstract class HLS {
   static bool _initialized = false;
 }
 
-// JavaScript interop definitions
+// --------------------------------------------------
+
 @JS('Hls.isSupported')
 external bool isHLSSupported();
 
 @JS()
 @staticInterop
+abstract class XHRSetupCallback {}
+
+extension on XHRSetupCallback {
+  external void call(web.XMLHttpRequest xhr, String url);
+}
+
+@JS()
+@anonymous
+@staticInterop
 class HlsOptions {
-  external factory HlsOptions([JSObject? options]);
+  external factory HlsOptions({
+    XHRSetupCallback? xhrSetup,
+  });
 }
 
 @JS()
 @staticInterop
 class Hls {
-  external factory Hls([HlsOptions? options]);
+  external factory Hls(HlsOptions options);
 }
 
-extension HlsMethods on Hls {
+extension ExtensionHls on Hls {
   external void loadSource(String src);
   external void attachMedia(web.HTMLVideoElement video);
 }
 
-// Helper function to create HLS options
-JSObject createHlsOptions({JSFunction? xhrSetup}) {
-  final options = JSObject();
-  if (xhrSetup != null) {
-    // options['xhrSetup'] = xhrSetup;
-  }
-  return options;
-}
+// --------------------------------------------------

@@ -1481,8 +1481,10 @@ class WebPlayer extends PlatformPlayer {
 
         final hls = Hls(
           HlsOptions(
-              // xhrSetup: media.httpHeaders != null ? setHlsHTTPHeaders.toJS : null,
-              ),
+            xhrSetup: media.httpHeaders != null
+                ? setHlsHTTPHeaders.toJS as XHRSetupCallback
+                : null,
+          ),
         );
 
         hls.loadSource(media.uri);
