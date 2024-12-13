@@ -1379,7 +1379,39 @@ class NativePlayer extends PlatformPlayer {
     }
   }
 
+  void startDynamicHeaderUpdate() {
+    final name = 'path'.toNativeUtf8();
+    final uri = mpv.mpv_get_property_string(
+      ctx,
+      name.cast(),
+    );
+
+    var pointer = uri.cast<Utf8>();
+
+    if (pointer != Pointer.fromAddress(0)) {
+      var media = Media(pointer.toDartString());
+
+      if (media.dynamicHttpHeaders != null) {
+        var headers = media.dynamicHttpHeaders!();
+        updateHttpHeaders(headers);
+      }
+    }
+  }
+
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
+    if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_SEEK) {
+      startDynamicHeaderUpdate();
+    }
+
+    if (event.ref.event_id ==
+        generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
+      final prop = event.ref.data.cast<generated.mpv_event_property>();
+      if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
+          prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
+        startDynamicHeaderUpdate();
+      }
+    }
+
     if (event.ref.event_id ==
         generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
       final prop = event.ref.data.cast<generated.mpv_event_property>();
@@ -1510,23 +1542,6 @@ class NativePlayer extends PlatformPlayer {
     // }
     if (event.ref.event_id ==
         generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
-      final name = 'path'.toNativeUtf8();
-      final uri = mpv.mpv_get_property_string(
-        ctx,
-        name.cast(),
-      );
-
-      var temp = uri.cast<Utf8>();
-
-      if (temp != Pointer.fromAddress(0)) {
-        var media = Media(temp.toDartString());
-
-        if (media.dynamicHttpHeaders != null) {
-          var headers = media.dynamicHttpHeaders!();
-          updateHttpHeaders(headers);
-        }
-      }
-
       final prop = event.ref.data.cast<generated.mpv_event_property>();
       if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
