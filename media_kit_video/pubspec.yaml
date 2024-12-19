@@ -27,7 +27,7 @@ dependencies:
   volume_controller: ^2.0.7
   universal_platform: ^1.0.0+1
   plugin_platform_interface: ^2.0.2
-  web: ^1.0.0
+  web: ^1.1.0
 
 dev_dependencies:
   flutter_lints: ^5.0.0
