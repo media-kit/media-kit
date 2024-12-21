@@ -86,7 +86,7 @@ public class VideoOutput implements TextureRegistry.SurfaceProducer.Callback {
                     return;
                 }
                 surfaceProducer.setSize(width, height);
-                onSurfaceCreated();
+                onSurfaceAvailable();
             } catch (Throwable e) {
                 Log.e(TAG, "setSurfaceSize", e);
             }
@@ -94,9 +94,9 @@ public class VideoOutput implements TextureRegistry.SurfaceProducer.Callback {
     }
 
     @Override
-    public void onSurfaceCreated() {
+    public void onSurfaceAvailable() {
         synchronized (lock) {
-            Log.i(TAG, "onSurfaceCreated");
+            Log.i(TAG, "onSurfaceAvailable");
             id = surfaceProducer.id();
             wid = newGlobalObjectRef(surfaceProducer.getSurface());
             textureUpdateCallback.onTextureUpdate(id, wid, surfaceProducer.getWidth(), surfaceProducer.getHeight());

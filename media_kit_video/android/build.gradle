@@ -36,3 +36,39 @@ android {
         consumerProguardFiles 'proguard-rules.pro'
     }
 }
+
+// The code below is from fvp package (https://github.com/wang-bin/fvp), licensed under BSD 3-Clause License.
+def flutterSdkVersion = {
+    def properties = new Properties()
+    file(rootDir.absolutePath + "/local.properties").withInputStream { properties.load(it) }
+    def flutterSdkPath = properties.getProperty("flutter.sdk")
+    if (flutterSdkPath == null) {
+        flutterSdkPath = System.env.FLUTTER_ROOT // from flutter.groovy
+    }
+    assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
+    def version = file(flutterSdkPath + "/version")
+    assert version.exists(), "flutter version file not found"
+    return version.text.trim()
+}()
+
+def preprocessJava(Map textMap) {
+    def f = file('src/main/java/com/alexmercerind/media_kit_video/VideoOutput.java')
+    assert f.exists(), path + "not found"
+    def content = f.text
+    def newContent = content
+    textMap.forEach { oldText, newText ->
+        newContent = newContent.replaceAll(oldText, newText)
+    }
+    if (content != newContent) {
+        println "rewrite " + f.path
+        f.write(newContent)
+    }
+}
+
+def flutterSdkVersionInt = flutterSdkVersion.split('\\D')[[0, 1, 2]].inject(0, (a, b) -> 100*a + Integer.parseInt(b))
+println "flutterSdkVersion: ${flutterSdkVersion}, ${flutterSdkVersionInt}"
+
+if (flutterSdkVersionInt < 32700) {
+    println 'rename onSurfaceAvailable to onSurfaceCreated'
+    preprocessJava(['onSurfaceAvailable': 'onSurfaceCreated'])
+}
