@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/padding.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_controls_theme_data_injector.dart';
 import 'package:screen_brightness_platform_interface/screen_brightness_platform_interface.dart';
@@ -631,14 +632,15 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   void shiftSubtitle() {
     if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
+      final configPadding =
+          state(context).widget.subtitleViewConfiguration.padding;
       state(context).setSubtitleViewPadding(
-        state(context).widget.subtitleViewConfiguration.padding +
-            EdgeInsets.fromLTRB(
-              0.0,
-              0.0,
-              0.0,
-              subtitleVerticalShiftOffset,
-            ),
+        EdgeInsets.fromLTRB(
+          configPadding.start,
+          configPadding.top,
+          configPadding.end,
+          configPadding.bottom + subtitleVerticalShiftOffset,
+        ),
       );
     }
   }

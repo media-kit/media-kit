@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/padding.dart';
 
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
@@ -449,15 +450,15 @@ class _MaterialDesktopVideoControlsState
 
   void shiftSubtitle() {
     if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
-      state(context).setSubtitleViewPadding(
-        state(context).widget.subtitleViewConfiguration.padding +
-            EdgeInsets.fromLTRB(
-              0.0,
-              0.0,
-              0.0,
-              subtitleVerticalShiftOffset,
-            ),
-      );
+      final configPadding =
+          state(context).widget.subtitleViewConfiguration.padding;
+
+      state(context).setSubtitleViewPadding(EdgeInsets.fromLTRB(
+        configPadding.start,
+        configPadding.top,
+        configPadding.end,
+        configPadding.bottom + subtitleVerticalShiftOffset,
+      ));
     }
   }
 
