@@ -37,7 +37,7 @@ class SubtitleView extends StatefulWidget {
 
 class SubtitleViewState extends State<SubtitleView> {
   late List<String> subtitle = widget.controller.player.state.subtitle;
-  late EdgeInsets padding = widget.configuration.padding;
+  late EdgeInsetsGeometry padding = widget.configuration.padding;
   late Duration duration = const Duration(milliseconds: 100);
 
   // The [StreamSubscription] to listen to the subtitle changes.
@@ -68,7 +68,7 @@ class SubtitleViewState extends State<SubtitleView> {
   ///
   /// The [duration] argument may be specified to set the duration of the animation.
   void setPadding(
-    EdgeInsets padding, {
+    EdgeInsetsGeometry padding, {
     Duration duration = const Duration(milliseconds: 100),
   }) {
     if (this.duration != duration) {
@@ -137,7 +137,7 @@ class SubtitleViewConfiguration {
   final TextScaler? textScaler;
 
   /// The padding to be used for the subtitles.
-  final EdgeInsets padding;
+  final EdgeInsetsGeometry padding;
 
   /// {@macro subtitle_view_configuration}
   const SubtitleViewConfiguration({

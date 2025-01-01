@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/padding.dart';
 
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
@@ -82,7 +83,7 @@ class MaterialDesktopVideoControlsThemeData {
   ///
   /// * Default: `EdgeInsets.zero`
   /// * Fullscreen: `MediaQuery.of(context).padding`
-  final EdgeInsets? padding;
+  final EdgeInsetsGeometry? padding;
 
   /// [Duration] after which the controls will be hidden when there is no mouse movement.
   final Duration controlsHoverDuration;
@@ -102,13 +103,13 @@ class MaterialDesktopVideoControlsThemeData {
   final List<Widget> topButtonBar;
 
   /// Margin around the top button bar.
-  final EdgeInsets topButtonBarMargin;
+  final EdgeInsetsGeometry topButtonBarMargin;
 
   /// Buttons to be displayed in the bottom button bar.
   final List<Widget> bottomButtonBar;
 
   /// Margin around the bottom button bar.
-  final EdgeInsets bottomButtonBarMargin;
+  final EdgeInsetsGeometry bottomButtonBarMargin;
 
   /// Height of the button bar.
   final double buttonBarHeight;
@@ -128,7 +129,7 @@ class MaterialDesktopVideoControlsThemeData {
   final Duration seekBarThumbTransitionDuration;
 
   /// Margin around the seek bar.
-  final EdgeInsets seekBarMargin;
+  final EdgeInsetsGeometry seekBarMargin;
 
   /// Height of the seek bar.
   final double seekBarHeight;
@@ -245,15 +246,15 @@ class MaterialDesktopVideoControlsThemeData {
     Duration? controlsTransitionDuration,
     Widget Function(BuildContext)? bufferingIndicatorBuilder,
     List<Widget>? topButtonBar,
-    EdgeInsets? topButtonBarMargin,
+    EdgeInsetsGeometry? topButtonBarMargin,
     List<Widget>? bottomButtonBar,
-    EdgeInsets? bottomButtonBarMargin,
+    EdgeInsetsGeometry? bottomButtonBarMargin,
     double? buttonBarHeight,
     double? buttonBarButtonSize,
     Color? buttonBarButtonColor,
     Duration? seekBarTransitionDuration,
     Duration? seekBarThumbTransitionDuration,
-    EdgeInsets? seekBarMargin,
+    EdgeInsetsGeometry? seekBarMargin,
     double? seekBarHeight,
     double? seekBarHoverHeight,
     double? seekBarContainerHeight,
@@ -449,15 +450,15 @@ class _MaterialDesktopVideoControlsState
 
   void shiftSubtitle() {
     if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
-      state(context).setSubtitleViewPadding(
-        state(context).widget.subtitleViewConfiguration.padding +
-            EdgeInsets.fromLTRB(
-              0.0,
-              0.0,
-              0.0,
-              subtitleVerticalShiftOffset,
-            ),
-      );
+      final configPadding =
+          state(context).widget.subtitleViewConfiguration.padding;
+
+      state(context).setSubtitleViewPadding(EdgeInsets.fromLTRB(
+        configPadding.start,
+        configPadding.top,
+        configPadding.end,
+        configPadding.bottom + subtitleVerticalShiftOffset,
+      ));
     }
   }
 

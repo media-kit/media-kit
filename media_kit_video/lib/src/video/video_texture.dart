@@ -167,7 +167,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   }
 
   void setSubtitleViewPadding(
-    EdgeInsets padding, {
+    EdgeInsetsGeometry padding, {
     Duration duration = const Duration(milliseconds: 100),
   }) {
     return _subtitleViewKey.currentState?.setPadding(
