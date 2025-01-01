@@ -82,7 +82,7 @@ class MaterialDesktopVideoControlsThemeData {
   ///
   /// * Default: `EdgeInsets.zero`
   /// * Fullscreen: `MediaQuery.of(context).padding`
-  final EdgeInsets? padding;
+  final EdgeInsetsGeometry? padding;
 
   /// [Duration] after which the controls will be hidden when there is no mouse movement.
   final Duration controlsHoverDuration;
@@ -102,13 +102,13 @@ class MaterialDesktopVideoControlsThemeData {
   final List<Widget> topButtonBar;
 
   /// Margin around the top button bar.
-  final EdgeInsets topButtonBarMargin;
+  final EdgeInsetsGeometry topButtonBarMargin;
 
   /// Buttons to be displayed in the bottom button bar.
   final List<Widget> bottomButtonBar;
 
   /// Margin around the bottom button bar.
-  final EdgeInsets bottomButtonBarMargin;
+  final EdgeInsetsGeometry bottomButtonBarMargin;
 
   /// Height of the button bar.
   final double buttonBarHeight;
@@ -128,7 +128,7 @@ class MaterialDesktopVideoControlsThemeData {
   final Duration seekBarThumbTransitionDuration;
 
   /// Margin around the seek bar.
-  final EdgeInsets seekBarMargin;
+  final EdgeInsetsGeometry seekBarMargin;
 
   /// Height of the seek bar.
   final double seekBarHeight;
@@ -245,15 +245,15 @@ class MaterialDesktopVideoControlsThemeData {
     Duration? controlsTransitionDuration,
     Widget Function(BuildContext)? bufferingIndicatorBuilder,
     List<Widget>? topButtonBar,
-    EdgeInsets? topButtonBarMargin,
+    EdgeInsetsGeometry? topButtonBarMargin,
     List<Widget>? bottomButtonBar,
-    EdgeInsets? bottomButtonBarMargin,
+    EdgeInsetsGeometry? bottomButtonBarMargin,
     double? buttonBarHeight,
     double? buttonBarButtonSize,
     Color? buttonBarButtonColor,
     Duration? seekBarTransitionDuration,
     Duration? seekBarThumbTransitionDuration,
-    EdgeInsets? seekBarMargin,
+    EdgeInsetsGeometry? seekBarMargin,
     double? seekBarHeight,
     double? seekBarHoverHeight,
     double? seekBarContainerHeight,
