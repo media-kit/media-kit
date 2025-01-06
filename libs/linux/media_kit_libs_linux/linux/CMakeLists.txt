@@ -4,15 +4,16 @@
 # All rights reserved.
 # Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 
 # This option is read by the other packages which are part of package:media_kit.
 option(MEDIA_KIT_LIBS_AVAILABLE "package:media_kit libraries are available." ON)
 
+# This is the public option enabling dynamic linking on request of applications.
+option(MIMALLOC_USE_STATIC_LIBS "Whether to prefer linking to mimalloc statically" ON)
+
 set(PROJECT_NAME "media_kit_libs_linux")
 project(${PROJECT_NAME} LANGUAGES CXX)
-
-option(MIMALLOC_USE_STATIC_LIBS "Whether to prefer linking to mimalloc statically" ON)
 
 if(MIMALLOC_USE_STATIC_LIBS)
 
