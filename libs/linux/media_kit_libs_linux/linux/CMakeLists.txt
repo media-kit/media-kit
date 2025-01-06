@@ -17,13 +17,6 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 
 if(MIMALLOC_USE_STATIC_LIBS)
 
-  find_library(MIMALLOC_PATH "libmimalloc.so")
-  if(MIMALLOC_PATH)
-    set(MIMALLOC_LIB "${MIMALLOC_PATH}" CACHE INTERNAL "")
-  endif()
-
-else()
-
   # We use the mimalloc's object file (mimalloc.o) & link the final executable with it.
   # This ensures that the standard malloc interface resolves to the mimalloc library.
   #
@@ -114,6 +107,13 @@ else()
   endif()
 
   add_custom_target("MIMALLOC_TARGET" ALL DEPENDS ${MIMALLOC_LIB})
+
+else()
+
+  find_library(MIMALLOC_PATH "libmimalloc.so")
+  if(MIMALLOC_PATH)
+    set(MIMALLOC_LIB "${MIMALLOC_PATH}" CACHE INTERNAL "")
+  endif()
 
 endif()
 
