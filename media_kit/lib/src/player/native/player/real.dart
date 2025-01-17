@@ -1178,6 +1178,38 @@ class NativePlayer extends PlatformPlayer {
     return ctx.address;
   }
 
+  /// Sets option for the internal libmpv instance of this [Player].
+  /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
+  ///
+  /// See:
+  /// * https://mpv.io/manual/master/#options
+  /// * https://mpv.io/manual/master/#properties
+  ///
+  Future<void> setOption(
+    String option,
+    String value, {
+    bool waitForInitialization = true,
+  }) async {
+    if (disposed) {
+      throw AssertionError('[Player] has been disposed');
+    }
+
+    if (waitForInitialization) {
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+    }
+
+    final name = option.toNativeUtf8();
+    final data = value.toNativeUtf8();
+    mpv.mpv_set_option_string(
+      ctx,
+      name.cast(),
+      data.cast(),
+    );
+    calloc.free(name);
+    calloc.free(data);
+  }
+
   /// Sets property for the internal libmpv instance of this [Player].
   /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
   ///

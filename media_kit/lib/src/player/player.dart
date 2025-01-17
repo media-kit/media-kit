@@ -324,6 +324,24 @@ class Player {
     );
   }
 
+  Future<void> setOption(
+    String option,
+    String value, {
+    bool waitForInitialization = true,
+  }) async {
+    return platform?.setProperty(option, value,
+        waitForInitialization: waitForInitialization);
+  }
+
+  Future<void> setProperty(
+    String property,
+    String value, {
+    bool waitForInitialization = true,
+  }) async {
+    return platform?.setProperty(property, value,
+        waitForInitialization: waitForInitialization);
+  }
+
   /// Internal platform specific identifier for this [Player] instance.
   ///
   /// Since, [int] is a primitive type, it can be used to pass this [Player] instance to native code without directly depending upon this library.

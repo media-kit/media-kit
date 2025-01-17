@@ -283,6 +283,26 @@ abstract class PlatformPlayer {
     );
   }
 
+  Future<void> setOption(
+    String option,
+    String value, {
+    bool waitForInitialization = true,
+  }) async {
+    throw UnimplementedError(
+      '[PlatformPlayer.setProperty] is not implemented',
+    );
+  }
+
+  Future<void> setProperty(
+    String property,
+    String value, {
+    bool waitForInitialization = true,
+  }) async {
+    throw UnimplementedError(
+      '[PlatformPlayer.setProperty] is not implemented',
+    );
+  }
+
   Future<Uint8List?> screenshot(
       {String? format = 'image/jpeg',
       bool includeLibassSubtitles = false}) async {
