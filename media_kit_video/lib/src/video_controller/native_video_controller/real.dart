@@ -167,7 +167,7 @@ class NativeVideoController extends PlatformVideoController {
     void listener() {
       final value = controller.id.value;
       if (value != null) {
-        debugPrint('NativeVideoController: Texture ID: $value');
+        // debugPrint('NativeVideoController: Texture ID: $value');
         completer.complete();
       }
     }
@@ -259,8 +259,8 @@ class NativeVideoController extends PlatformVideoController {
         ..setMethodCallHandler(
           (MethodCall call) async {
             try {
-              debugPrint(call.method.toString());
-              debugPrint(call.arguments.toString());
+              // debugPrint(call.method.toString());
+              // debugPrint(call.arguments.toString());
               switch (call.method) {
                 case 'VideoOutput.Resize':
                   {
