@@ -71,7 +71,7 @@ public class VideoOutput implements TextureRegistry.SurfaceProducer.Callback {
             } catch (Throwable e) {
                 Log.e(TAG, "dispose", e);
             }
-            onSurfaceDestroyed();
+            onSurfaceCleanup();
         }
     }
 
@@ -104,9 +104,9 @@ public class VideoOutput implements TextureRegistry.SurfaceProducer.Callback {
     }
 
     @Override
-    public void onSurfaceDestroyed() {
+    public void onSurfaceCleanup() {
         synchronized (lock) {
-            Log.i(TAG, "onSurfaceDestroyed");
+            Log.i(TAG, "onSurfaceCleanup");
             textureUpdateCallback.onTextureUpdate(id, 0, surfaceProducer.getWidth(), surfaceProducer.getHeight());
             if (wid != 0) {
                 final long widReference = wid;

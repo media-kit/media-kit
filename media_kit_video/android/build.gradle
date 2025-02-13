@@ -72,3 +72,8 @@ if (flutterSdkVersionInt < 32700) {
     println 'rename onSurfaceAvailable to onSurfaceCreated'
     preprocessJava(['onSurfaceAvailable': 'onSurfaceCreated'])
 }
+
+if (flutterSdkVersionInt < 32800) {
+    println 'rename onSurfaceCleanup to onSurfaceDestroyed'
+    preprocessJava(['onSurfaceCleanup': 'onSurfaceDestroyed'])
+}
