@@ -522,6 +522,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   bool _speedUpIndicator = false;
   late /* private */ var playlist = controller(context).player.state.playlist;
   late bool buffering = controller(context).player.state.buffering;
+  final VolumeController _volumeController = VolumeController.instance;
 
   bool _mountSeekBackwardButton = false;
   bool _mountSeekForwardButton = false;
@@ -759,10 +760,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     return _isInSegment(localX, 2);
   }
 
-  bool _isInCenterSegment(double localX) {
-    return _isInSegment(localX, 1);
-  }
-
   bool _isInLeftSegment(double localX) {
     return _isInSegment(localX, 0);
   }
@@ -778,9 +775,9 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     // package:volume_controller
     Future.microtask(() async {
       try {
-        VolumeController().showSystemUI = false;
-        _volumeValue = await VolumeController().getVolume();
-        VolumeController().listener((value) {
+        _volumeController.showSystemUI = false;
+        _volumeValue = await _volumeController.getVolume();
+        _volumeController.addListener((value) {
           if (mounted && !_volumeInterceptEventStream) {
             setState(() {
               _volumeValue = value;
@@ -812,7 +809,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     // --------------------------------------------------
     // package:volume_controller
     try {
-      VolumeController().setVolume(value);
+      _volumeController.setVolume(value);
     } catch (_) {}
     setState(() {
       _volumeValue = value;
