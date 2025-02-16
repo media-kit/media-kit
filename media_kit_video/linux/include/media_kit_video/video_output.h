@@ -20,8 +20,8 @@ typedef struct _VideoOutputConfiguration {
   gint64 height;
   bool enable_hardware_acceleration;
 
-  _VideoOutputConfiguration(gint64 width = NULL,
-                            gint64 height = NULL,
+  _VideoOutputConfiguration(gint64 width = 0,
+                            gint64 height = 0,
                             bool enable_hardware_acceleration = true)
       : width(width),
         height(height),
