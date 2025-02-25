@@ -179,6 +179,9 @@ class MaterialDesktopVideoControlsThemeData {
   /// Whether to shift the subtitles upwards when the controls are visible.
   final bool shiftSubtitlesOnControlsVisibilityChange;
 
+  /// Whether to display the volume bar vertically.
+  final bool verticalVolume;
+
   /// {@macro material_desktop_video_controls_theme_data}
   const MaterialDesktopVideoControlsThemeData({
     this.displaySeekBar = true,
@@ -228,6 +231,7 @@ class MaterialDesktopVideoControlsThemeData {
     this.volumeBarThumbColor = const Color(0xFFFFFFFF),
     this.volumeBarTransitionDuration = const Duration(milliseconds: 150),
     this.shiftSubtitlesOnControlsVisibilityChange = true,
+    this.verticalVolume = false
   });
 
   /// Creates a copy of this [MaterialDesktopVideoControlsThemeData] with the given fields replaced by the non-null parameter values.
@@ -269,6 +273,7 @@ class MaterialDesktopVideoControlsThemeData {
     Color? volumeBarThumbColor,
     Duration? volumeBarTransitionDuration,
     bool? shiftSubtitlesOnControlsVisibilityChange,
+    bool? verticalVolume
   }) {
     return MaterialDesktopVideoControlsThemeData(
       displaySeekBar: displaySeekBar ?? this.displaySeekBar,
@@ -323,6 +328,7 @@ class MaterialDesktopVideoControlsThemeData {
       shiftSubtitlesOnControlsVisibilityChange:
           shiftSubtitlesOnControlsVisibilityChange ??
               this.shiftSubtitlesOnControlsVisibilityChange,
+      verticalVolume: verticalVolume ?? this.verticalVolume
     );
   }
 }
@@ -800,6 +806,16 @@ class _MaterialDesktopVideoControlsState
                                   ],
                                 ),
                               ),
+                            // custom riêng cho vertical volume
+                            if (mount && _theme(context).verticalVolume 
+                              && !isFullscreen(context)
+                              && _theme(context).bottomButtonBar.isNotEmpty
+                            )
+                            Positioned(
+                              left: 50,
+                              bottom: 3,
+                              child: RotatedBox(quarterTurns: 3, child: const MaterialDesktopVolumeButton(verticalTurn: true))
+                            ),
                           ],
                         ),
                       ),
@@ -1341,6 +1357,8 @@ class MaterialDesktopVolumeButton extends StatefulWidget {
   /// Width for the volume slider.
   final double? sliderWidth;
 
+  final bool verticalTurn;
+
   const MaterialDesktopVolumeButton({
     super.key,
     this.iconSize,
@@ -1349,6 +1367,7 @@ class MaterialDesktopVolumeButton extends StatefulWidget {
     this.volumeLowIcon,
     this.volumeHighIcon,
     this.sliderWidth,
+    this.verticalTurn = false,
   });
 
   @override
@@ -1444,25 +1463,28 @@ class MaterialDesktopVolumeButtonState
               iconSize: widget.iconSize ??
                   (_theme(context).buttonBarButtonSize * 0.8),
               color: widget.iconColor ?? _theme(context).buttonBarButtonColor,
-              icon: AnimatedSwitcher(
-                duration: _theme(context).volumeBarTransitionDuration,
-                child: volume == 0.0
-                    ? (widget.volumeMuteIcon ??
-                        const Icon(
-                          Icons.volume_off,
-                          key: ValueKey(Icons.volume_off),
-                        ))
-                    : volume < 50.0
-                        ? (widget.volumeLowIcon ??
-                            const Icon(
-                              Icons.volume_down,
-                              key: ValueKey(Icons.volume_down),
-                            ))
-                        : (widget.volumeHighIcon ??
-                            const Icon(
-                              Icons.volume_up,
-                              key: ValueKey(Icons.volume_up),
-                            )),
+              icon: RotatedBox(
+                quarterTurns: widget.verticalTurn ? 1 : 0,
+                child: AnimatedSwitcher(
+                  duration: _theme(context).volumeBarTransitionDuration,
+                  child: volume == 0.0
+                      ? (widget.volumeMuteIcon ??
+                          const Icon(
+                            Icons.volume_off,
+                            key: ValueKey(Icons.volume_off),
+                          ))
+                      : volume < 50.0
+                          ? (widget.volumeLowIcon ??
+                              const Icon(
+                                Icons.volume_down,
+                                key: ValueKey(Icons.volume_down),
+                              ))
+                          : (widget.volumeHighIcon ??
+                              const Icon(
+                                Icons.volume_up,
+                                key: ValueKey(Icons.volume_up),
+                              )),
+                ),
               ),
             ),
             AnimatedOpacity(
