@@ -616,12 +616,12 @@ class _MaterialDesktopVideoControlsState
                             box.globalToLocal(details.globalPosition);
                         const double tapPadding = 10.0;
                         if (!mount ||
-                            localPosition.dy <
+                            (localPosition.dy <
                                 box.size.height -
                                     subtitleVerticalShiftOffset -
-                                    tapPadding) {
+                                    tapPadding && localPosition.dy >= 65)) {
                           // Only play and pause when the bottom seek bar is visible
-                          // and when clicking outside of the bottom seek bar region
+                          // and when clicking outside of the bottom/top seek bar region
                           controller(context).player.playOrPause();
                         }
                       },
