@@ -814,7 +814,7 @@ class _MaterialDesktopVideoControlsState
                             Positioned(
                               left: 50,
                               bottom: 3,
-                              child: RotatedBox(quarterTurns: 3, child: const MaterialDesktopVolumeButton(verticalTurn: true))
+                              child: RotatedBox(quarterTurns: 3, child: MaterialDesktopVolumeButton(verticalTurn: _theme(context).verticalVolume))
                             ),
                           ],
                         ),
@@ -1498,6 +1498,7 @@ class MaterialDesktopVolumeButtonState
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
+                      if (!widget.verticalTurn)
                       const SizedBox(width: 12.0),
                       SizedBox(
                         width: widget.sliderWidth ?? 52.0,
@@ -1529,6 +1530,7 @@ class MaterialDesktopVolumeButtonState
                           ),
                         ),
                       ),
+                      if (!widget.verticalTurn)
                       const SizedBox(width: 18.0),
                     ],
                   ),
