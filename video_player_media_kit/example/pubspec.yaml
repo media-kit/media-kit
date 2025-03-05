@@ -15,8 +15,8 @@ dependencies:
     path: ../
 
   media_kit_libs_macos_video: any
-  media_kit_libs_windows_video: any
-  media_kit_libs_linux: any
+  media_kit_libs_windows_video: ^1.0.11
+  media_kit_libs_linux: ^1.2.1
 
 dev_dependencies:
   test: any

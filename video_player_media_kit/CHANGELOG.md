@@ -1,3 +1,8 @@
+## 1.0.6
+
+ - **FIX**: add null checks for uri and textureId in MediaKitVideoPlayer.
+ - **FIX**: video_player black screen.
+
 ## 1.0.5
 
 - fix: `setVolume` implementation

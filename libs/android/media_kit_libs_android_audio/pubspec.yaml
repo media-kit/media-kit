@@ -1,6 +1,6 @@
 name: media_kit_libs_android_audio
 description: Android package providing audio (only) native libraries for package:media_kit.
-version: 1.3.6
+version: 1.3.7
 homepage: https://github.com/media-kit/media-kit.git
 repository: https://github.com/media-kit/media-kit.git
 

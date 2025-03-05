@@ -1,3 +1,7 @@
+## 1.0.11
+
+ - **FIX**(windows): do not bundle MSVCP/UCRT DLLs.
+
 ## 1.0.10
 
 - fix windows crash by @Airyzz [#900](https://github.com/media-kit/media-kit/pull/900)
