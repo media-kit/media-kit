@@ -2,7 +2,7 @@ name: video_player_media_kit
 description: package:video_player support for all platforms, based on package:media_kit.
 homepage: https://github.com/media-kit/media-kit
 repository: https://github.com/media-kit/media-kit
-version: 1.0.5
+version: 1.0.6
 topics:
   - video
   - video-player
@@ -18,8 +18,8 @@ dependencies:
     sdk: flutter
 
   # NOTE: Bump before publishing to pub.dev
-  media_kit: ^1.1.10
-  media_kit_video: ^1.2.4
+  media_kit: ^1.2.0
+  media_kit_video: ^1.3.0
 
   universal_platform: ^1.0.0+1
   video_player_platform_interface: ^6.2.0

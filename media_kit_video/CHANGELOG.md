@@ -1,3 +1,29 @@
+## 1.3.0
+
+ - **REFACTOR**: screen_brightness -> screen_brightness_platform_interface.
+ - **REFACTOR**(android): simplify AndroidVideoController implementation.
+ - **REFACTOR**(android): VideoOutput SurfaceTextureEntry -> SurfaceProducer migration.
+ - **REFACTOR**: use setProperty API in NativeVideoController.
+ - **FIX**: improve responsiveness of showing controls on mobile.
+ - **FIX**: bump web to 1.1.0.
+ - **FIX**: cast to JSObject.
+ - **FIX**: not call super.didChangeAppLifecycleState(state);.
+ - **FIX**: not call super.didChangeAppLifecycleState(state);.
+ - **FIX**: wakelock print.
+ - **FIX**: subtitles not shifting on controls show/hide.
+ - **FIX**: set width/height from VideoParams in NativeVideoController.
+ - **FIX**: seek inside onPointerMove.
+ - **FIX**(windows): automatic IDXGIAdapter selection on windows 10 or greater.
+ - **FIX**(android): waitUntilFirstFrameRenderedCompleter.
+ - **FIX**(android): --hwdec=auto-safe as default.
+ - **FIX**: dispose ValueNotifier(s) in PlatformVideoController.
+ - **FIX**: fullscreen.
+ - **FIX**: long press video speed reset issue.
+ - **FIX**: wrong value in brightness builder callback.
+ - **FIX**: Use a Scaffold as the outermost widget on fullscreen video pages.
+ - **FEAT**: upgrade volume_controller dependency and refactor related code.
+ - **FEAT**: seek on double tap custom duration support.
+
 ## 1.2.5
 - fix: subtitleView not being updated
 - fix: mobile double tap areas hidden but still mounted
