@@ -1,3 +1,7 @@
+## 1.2.1
+
+ - **FIX**: correct minimum required CMake version.
+
 ## 1.2.0
 
 - chore: refactor mimalloc import
