@@ -53,7 +53,7 @@ class NativeVideoController extends PlatformVideoController {
   NativePlayer get platform => player.platform as NativePlayer;
 
   Future<void> setProperty(String key, String value) async {
-    await platform.setProperty(key, value, waitForInitialization: false);
+    await platform.setProperty(key, value);
   }
 
   Future<void> setProperties(Map<String, String> properties) async {
