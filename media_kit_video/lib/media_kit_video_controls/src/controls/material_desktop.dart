@@ -372,6 +372,7 @@ class _MaterialDesktopVideoControlsState
   DateTime last = DateTime.now();
 
   final List<StreamSubscription> subscriptions = [];
+  final FocusNode _focus = FocusNode();
 
   double get subtitleVerticalShiftOffset =>
       (_theme(context).padding?.bottom ?? 0.0) +
@@ -407,6 +408,11 @@ class _MaterialDesktopVideoControlsState
               });
             },
           ),
+        controller(context).player.stream.playing.listen((playing) {
+          // regain focus when media begins playing.
+          if (!playing) return;
+          _focus.requestFocus();
+        }),
         ],
       );
 
@@ -558,6 +564,7 @@ class _MaterialDesktopVideoControlsState
                   exitFullscreen(context),
             },
         child: Focus(
+          focusNode: _focus,
           autofocus: true,
           child: Material(
             elevation: 0.0,
