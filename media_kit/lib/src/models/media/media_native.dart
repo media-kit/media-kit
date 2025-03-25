@@ -87,6 +87,11 @@ class Media extends Playable {
   /// Default: `null`.
   final Map<String, String>? httpHeaders;
 
+  /// Dynamic HTTP headers.
+  ///
+  /// Default: `null`.
+  final Map<String, String> Function()? dynamicHttpHeaders;
+
   /// Start position.
   ///
   /// Default: `null`.
@@ -105,10 +110,12 @@ class Media extends Playable {
     String resource, {
     Map<String, dynamic>? extras,
     Map<String, String>? httpHeaders,
+    Map<String, String> Function()? dynamicHttpHeaders,
     this.start,
     this.end,
   })  : uri = normalizeURI(resource),
         extras = extras ?? cache[normalizeURI(resource)]?.extras,
+        dynamicHttpHeaders = dynamicHttpHeaders ?? cache[normalizeURI(resource)]?.dynamicHttpHeaders,
         httpHeaders =
             httpHeaders ?? cache[normalizeURI(resource)]?.httpHeaders {
     // Increment reference count.
@@ -117,6 +124,7 @@ class Media extends Playable {
     cache[uri] = _MediaCache(
       extras: this.extras,
       httpHeaders: this.httpHeaders,
+      dynamicHttpHeaders: this.dynamicHttpHeaders,
     );
     // Attach [this] instance to [Finalizer].
     _finalizer.attach(
@@ -239,10 +247,17 @@ class _MediaCache {
   /// Default: `null`.
   final Map<String, String>? httpHeaders;
 
+  /// Dynamic HTTP headers.
+  ///
+  /// Default: `null`.
+  final Map<String, String> Function()? dynamicHttpHeaders;
+
+
   /// {@macro _media_cache}
   const _MediaCache({
     this.extras,
     this.httpHeaders,
+    this.dynamicHttpHeaders,
   });
 
   @override
