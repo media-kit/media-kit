@@ -66,9 +66,16 @@ endfunction()
 set(LIBMPV "mpv-dev-x86_64-20230924-git-652a1dd.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-build/releases/download/2023-09-24/${LIBMPV}")
-set(LIBMPV_MD5 "cd738e16e2a19626d7cfa48801524f8c")
-
+if(DEFINED ENV{LIBMPV_URL})
+  set(LIBMPV_URL "$ENV{LIBMPV_URL}")
+else() 
+  set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-build/releases/download/2023-09-24/${LIBMPV}")
+endif()
+if(DEFINED ENV{LIBMPV_MD5})
+  set(LIBMPV_MD5"$ENV{LIBMPV_MD5}")
+else()
+  set(LIBMPV_MD5 "cd738e16e2a19626d7cfa48801524f8c")
+endif()
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")

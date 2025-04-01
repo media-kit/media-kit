@@ -67,8 +67,16 @@ endfunction()
 set(LIBMPV "mpv-dev-x86_64-20230924-git-652a1dd.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-09-24/${LIBMPV}")
-set(LIBMPV_MD5 "a832ef24b3a6ff97cd2560b5b9d04cd8")
+if(DEFINED ENV{LIBMPV_URL})
+  set(LIBMPV_URL "$ENV{LIBMPV_URL}")
+else() 
+  set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-09-24/${LIBMPV}")
+endif()
+if(DEFINED ENV{LIBMPV_MD5})
+  set(LIBMPV_MD5"$ENV{LIBMPV_MD5}")
+else()
+  set(LIBMPV_MD5 "a832ef24b3a6ff97cd2560b5b9d04cd8")
+endif()
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
@@ -103,8 +111,16 @@ endif()
 set(ANGLE "ANGLE.7z")
 
 # Download URL & MD5 hash of the ANGLE archive.
-set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.1/ANGLE.7z")
-set(ANGLE_MD5 "e866f13e8d552348058afaafe869b1ed")
+if(DEFINED ENV{ANGLE_URL})
+  set(ANGLE_URL "$ENV{ANGLE_URL}")
+else() 
+  set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.1/ANGLE.7z")
+endif()
+if(DEFINED ENV{ANGLE_MD5})
+  set(ANGLE_MD5"$ENV{ANGLE_MD5}")
+else()
+  set(ANGLE_MD5 "e866f13e8d552348058afaafe869b1ed")
+endif()
 
 # Download location of the ANGLE archive.
 set(ANGLE_ARCHIVE "${CMAKE_BINARY_DIR}/${ANGLE}")
