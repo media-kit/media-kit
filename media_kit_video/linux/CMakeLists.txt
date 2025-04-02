@@ -15,11 +15,10 @@ set(CMAKE_CXX_STANDARD 17)
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 set(PLUGIN_NAME "media_kit_video_plugin")
-set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
 
-# add runpath, shared libs of a release bundle is in lib dir, plugin must add $ORIGIN to runpath to find libmpv
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--enable-new-dtags -Wl,-z,origin -Wl,-rpath,'$ORIGIN'")
-set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--enable-new-dtags -Wl,-z,origin -Wl,-rpath,'$ORIGIN'")
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH "$ORIGIN")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 set(LIBMPV_ZIP_URL "https://github.com/Predidit/libmpv-linux-build/releases/download/2024120614/libmpv_x86_64.zip")
 set(LIBMPV_ZIP_PATH "${CMAKE_BINARY_DIR}/libmpv_x86_64.zip")
@@ -105,6 +104,13 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     "utils.cc"
   )
 
+  # add runpath, shared libs of a release bundle is in lib dir, plugin must add $ORIGIN to runpath to find libmpv
+  target_link_options(${PLUGIN_NAME} PRIVATE -Wl,--enable-new-dtags -Wl,-z,origin)
+  set_target_properties(${PLUGIN_NAME} PROPERTIES 
+  BUILD_WITH_INSTALL_RPATH TRUE
+  INSTALL_RPATH "$ORIGIN:$ORIGIN/lib"
+  INSTALL_RPATH_USE_LINK_PATH TRUE)
+
   add_library(
      libmpv SHARED IMPORTED
   )
@@ -157,6 +163,13 @@ else()
     ${PLUGIN_NAME} SHARED
     "media_kit_video_plugin.cc"
   )
+
+  # add runpath, shared libs of a release bundle is in lib dir, plugin must add $ORIGIN to runpath to find libmpv
+  target_link_options(${PLUGIN_NAME} PRIVATE -Wl,--enable-new-dtags -Wl,-z,origin)
+  set_target_properties(${PLUGIN_NAME} PROPERTIES 
+  BUILD_WITH_INSTALL_RPATH TRUE
+  INSTALL_RPATH "$ORIGIN:$ORIGIN/lib"
+  INSTALL_RPATH_USE_LINK_PATH TRUE)
 
   apply_standard_settings(${PLUGIN_NAME})
 
