@@ -2298,7 +2298,7 @@ void main() {
       final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
-            Media(sources.platform[i]),
+            Media(sources.platform[i], extras: {'i': i}),
         ],
       );
 
@@ -2316,11 +2316,17 @@ void main() {
             // Player.open
             playable,
             // Player.setShuffle /w true
-            TypeMatcher<Playlist>().having(
-              (event) => event.medias.toSet(),
-              'medias',
-              equals(playable.medias.toSet()),
-            ),
+            TypeMatcher<Playlist>()
+                .having(
+                  (e) => e.medias,
+                  'have same entries',
+                  unorderedEquals(playable.medias),
+                )
+                .having(
+                  (e) => e.medias,
+                  'do not have same order',
+                  isNot(equals(playable.medias)),
+                ),
             // Player.setShuffle /w false
             playable,
           ],
@@ -2330,20 +2336,20 @@ void main() {
       await player.open(playable);
 
       // VOLUNTARY DELAY.
-      await Future.delayed(const Duration(seconds: 5));
+      await Future.delayed(const Duration(seconds: 1));
 
       await player.setShuffle(true);
 
-      await Future.delayed(const Duration(seconds: 5));
+      await Future.delayed(const Duration(seconds: 1));
 
       // VOLUNTARY DELAY.
       await player.setShuffle(false);
 
-      await Future.delayed(const Duration(seconds: 30));
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 1));
 
       await player.dispose();
     },
-    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
@@ -2354,7 +2360,7 @@ void main() {
       final playable = Playlist(
         [
           for (int i = 0; i < sources.platform.length; i++)
-            Media(sources.platform[i]),
+            Media(sources.platform[i], extras: {'i': i}),
         ],
       );
 
@@ -2372,11 +2378,17 @@ void main() {
             // Player.open
             playable,
             // Player.setShuffle /w true
-            TypeMatcher<Playlist>().having(
-              (event) => event.medias.toSet(),
-              'medias',
-              equals(playable.medias.toSet()),
-            ),
+            TypeMatcher<Playlist>()
+                .having(
+                  (e) => e.medias,
+                  'have same entries',
+                  unorderedEquals(playable.medias),
+                )
+                .having(
+                  (e) => e.medias,
+                  'do not have same order',
+                  isNot(equals(playable.medias)),
+                ),
             // Player.setShuffle /w false
             playable,
           ],
@@ -2386,7 +2398,7 @@ void main() {
       await player.open(playable);
 
       // VOLUNTARY DELAY.
-      await Future.delayed(const Duration(seconds: 5));
+      await Future.delayed(const Duration(seconds: 1));
 
       await player.setShuffle(true);
       await player.setShuffle(true);
@@ -2394,7 +2406,7 @@ void main() {
       await player.setShuffle(true);
       await player.setShuffle(true);
 
-      await Future.delayed(const Duration(seconds: 5));
+      await Future.delayed(const Duration(seconds: 1));
 
       // VOLUNTARY DELAY.
       await player.setShuffle(false);
@@ -2403,11 +2415,11 @@ void main() {
       await player.setShuffle(false);
       await player.setShuffle(false);
 
-      await Future.delayed(const Duration(seconds: 30));
+      // VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 1));
 
       await player.dispose();
     },
-    skip: kSkipFlakyTests,
     timeout: Timeout(const Duration(minutes: 1)),
   );
   test(
