@@ -9,7 +9,7 @@ jobs:
       run:
         working-directory: media_kit
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - uses: subosito/flutter-action@v2
@@ -34,7 +34,7 @@ jobs:
       run:
         working-directory: media_kit
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - run: sudo apt-get update
@@ -55,7 +55,7 @@ jobs:
       run:
         working-directory: media_kit
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - run: sh test/ci/macos/scripts/setup_dylibs.sh
@@ -73,7 +73,7 @@ jobs:
       run:
         working-directory: media_kit
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - run: sudo apt-get update
@@ -95,7 +95,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - uses: subosito/flutter-action@v2
@@ -109,7 +109,7 @@ jobs:
         with:
           name: media_kit_test_win32_x64
           path: media_kit_test/media_kit_test_win32_x64.7z
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
           draft: true
@@ -125,7 +125,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - run: sudo apt-get update
@@ -141,7 +141,7 @@ jobs:
         with:
           name: media_kit_test_linux_x64
           path: media_kit_test/media_kit_test_linux_x64.7z
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
           draft: true
@@ -157,7 +157,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - uses: subosito/flutter-action@v2
@@ -171,7 +171,7 @@ jobs:
         with:
           name: media_kit_test_macos_universal
           path: media_kit_test/media_kit_test_macos_universal.7z
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
           draft: true
@@ -187,7 +187,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - uses: subosito/flutter-action@v2
@@ -201,7 +201,7 @@ jobs:
         with:
           name: media_kit_test_ios_arm64
           path: media_kit_test/media_kit_test_ios_arm64.7z
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
           draft: true
@@ -217,7 +217,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - name: Setup Java
@@ -249,7 +249,7 @@ jobs:
         with:
           name: media_kit_test_android-x86_64
           path: media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-x86_64.apk
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
           draft: true
@@ -292,7 +292,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - uses: subosito/flutter-action@v2
@@ -316,7 +316,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - run: sudo apt-get update
@@ -341,7 +341,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - uses: subosito/flutter-action@v2
@@ -364,7 +364,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - uses: subosito/flutter-action@v2
@@ -387,7 +387,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - name: Setup Java
@@ -417,7 +417,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - uses: subosito/flutter-action@v2
@@ -443,7 +443,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - run: sudo apt-get update
@@ -468,7 +468,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - uses: subosito/flutter-action@v2
@@ -491,7 +491,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - uses: subosito/flutter-action@v2
@@ -514,7 +514,7 @@ jobs:
       run:
         working-directory: media_kit_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "true"
       - name: Setup Java
