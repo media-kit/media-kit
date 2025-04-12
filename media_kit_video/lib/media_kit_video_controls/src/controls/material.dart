@@ -864,9 +864,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
         hoverColor: const Color(0x00000000),
         splashColor: const Color(0x00000000),
         highlightColor: const Color(0x00000000),
-        
       ),
-      /// set the directionality to ltr to avoid wrong animation of sides
+      /// Add [Directionality] to ltr to avoid wrong animation of sides.
       child: Directionality(
         textDirection: TextDirection.ltr,
         child: Focus(
@@ -925,7 +924,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 return;
                               }
                               if (_isInRightSegment(_tapPosition!.dx)) {
-                                if ((!mount && _theme(context).seekOnDoubleTap) ||
+                                if ((!mount &&
+                                        _theme(context).seekOnDoubleTap) ||
                                     seekOnDoubleTapEnabledWhileControlsAreVisible) {
                                   onDoubleTapSeekForward();
                                 }
@@ -953,7 +953,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                             onVerticalDragUpdate: (e) async {
                               final delta = e.delta.dy;
                               final Offset position = e.localPosition;
-        
+
                               if (position.dx <= widgetWidth(context) / 2) {
                                 // Left side of screen swiped
                                 if ((!mount &&
@@ -970,7 +970,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 }
                               } else {
                                 // Right side of screen swiped
-        
+
                                 if ((!mount && _theme(context).volumeGesture) ||
                                     (_theme(context).volumeGesture &&
                                         _theme(context)
@@ -1018,15 +1018,17 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 child: AnimatedOpacity(
                                   curve: Curves.easeInOut,
                                   opacity: buffering ? 0.0 : 1.0,
-                                  duration:
-                                      _theme(context).controlsTransitionDuration,
+                                  duration: _theme(context)
+                                      .controlsTransitionDuration,
                                   child: Center(
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       crossAxisAlignment:
                                           CrossAxisAlignment.center,
-                                      children: _theme(context).primaryButtonBar,
+                                      children:
+                                          _theme(context).primaryButtonBar,
                                     ),
                                   ),
                                 ),
@@ -1055,10 +1057,12 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                     ),
                                   Container(
                                     height: _theme(context).buttonBarHeight,
-                                    margin: _theme(context).bottomButtonBarMargin,
+                                    margin:
+                                        _theme(context).bottomButtonBarMargin,
                                     child: Row(
                                       mainAxisSize: MainAxisSize.max,
-                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
                                       crossAxisAlignment:
                                           CrossAxisAlignment.center,
                                       children: _theme(context).bottomButtonBar,
@@ -1280,10 +1284,13 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                         ),
                         Expanded(
                           child: AnimatedOpacity(
-                            duration: _theme(context).controlsTransitionDuration,
+                            duration:
+                                _theme(context).controlsTransitionDuration,
                             opacity: _speedUpIndicator ? 1 : 0,
-                            child: _theme(context).speedUpIndicatorBuilder?.call(
-                                    context, _theme(context).speedUpFactor) ??
+                            child: _theme(context)
+                                    .speedUpIndicatorBuilder
+                                    ?.call(context,
+                                        _theme(context).speedUpFactor) ??
                                 Container(
                                   alignment: Alignment.topCenter,
                                   child: Container(
@@ -1297,7 +1304,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                     width: 108.0,
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       crossAxisAlignment:
                                           CrossAxisAlignment.center,
                                       children: [
@@ -1366,7 +1374,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                         ),
                   ),
                 ),
-        
+
                 // Double-Tap Seek Button(s):
                 if (!mount || seekOnDoubleTapEnabledWhileControlsAreVisible)
                   if (_mountSeekBackwardButton || _mountSeekForwardButton)
@@ -1384,7 +1392,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                       duration: _theme(context)
                                           .seekOnDoubleTapBackwardDuration,
                                       onChanged: (value) {
-                                        _seekBarDeltaValueNotifier.value = -value;
+                                        _seekBarDeltaValueNotifier.value =
+                                            -value;
                                       },
                                       onSubmitted: (value) {
                                         _timerSeekBackwardButton?.cancel();
@@ -1397,7 +1406,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                             });
                                           },
                                         );
-        
+
                                         setState(() {
                                           _hideSeekBackwardButton = true;
                                         });
@@ -1438,7 +1447,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                       duration: _theme(context)
                                           .seekOnDoubleTapForwardDuration,
                                       onChanged: (value) {
-                                        _seekBarDeltaValueNotifier.value = value;
+                                        _seekBarDeltaValueNotifier.value =
+                                            value;
                                       },
                                       onSubmitted: (value) {
                                         _timerSeekForwardButton?.cancel();
@@ -1455,7 +1465,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                         setState(() {
                                           _hideSeekForwardButton = true;
                                         });
-        
+
                                         var result = controller(context)
                                                 .player
                                                 .state
