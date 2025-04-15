@@ -111,6 +111,9 @@ class Video extends StatefulWidget {
   /// The callback invoked when the [Video] exits fullscreen.
   final Future<void> Function() onExitFullscreen;
 
+  /// FocusNode for keyboard input.
+  final FocusNode? focusNode;
+
   /// {@macro video}
   const Video({
     Key? key,
@@ -129,6 +132,7 @@ class Video extends StatefulWidget {
     this.subtitleViewConfiguration = const SubtitleViewConfiguration(),
     this.onEnterFullscreen = defaultEnterNativeFullscreen,
     this.onExitFullscreen = defaultExitNativeFullscreen,
+    this.focusNode,
   }) : super(key: key);
 
   @override
@@ -187,6 +191,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     FilterQuality? filterQuality,
     /* VideoControlsBuilder? */ dynamic controls,
     SubtitleViewConfiguration? subtitleViewConfiguration,
+    FocusNode? focusNode,
   }) {
     videoViewParametersNotifier.value =
         videoViewParametersNotifier.value.copyWith(
@@ -199,6 +204,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       filterQuality: filterQuality,
       controls: controls,
       subtitleViewConfiguration: subtitleViewConfiguration,
+      focusNode: focusNode,
     );
   }
 
@@ -232,6 +238,9 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
               oldWidget.subtitleViewConfiguration
           ? widget.subtitleViewConfiguration
           : currentParams.subtitleViewConfiguration,
+      focusNode: widget.focusNode != oldWidget.focusNode
+          ? widget.focusNode
+          : currentParams.focusNode,
     );
 
     if (newParams != currentParams) {
@@ -258,6 +267,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                 filterQuality: widget.filterQuality,
                 controls: widget.controls,
                 subtitleViewConfiguration: widget.subtitleViewConfiguration,
+                focusNode: widget.focusNode,
               ),
             );
     _disposeNotifiers =
@@ -373,72 +383,77 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       child: ValueListenableBuilder<VideoViewParameters>(
         valueListenable: videoViewParametersNotifier,
         builder: (context, videoViewParameters, _) {
-          return Container(
-            clipBehavior: Clip.none,
-            width: videoViewParameters.width,
-            height: videoViewParameters.height,
-            color: videoViewParameters.fill,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ClipRect(
-                  child: FittedBox(
-                    fit: videoViewParameters.fit,
-                    alignment: videoViewParameters.alignment,
-                    child: ValueListenableBuilder<PlatformVideoController?>(
-                      valueListenable: widget.controller.notifier,
-                      builder: (context, notifier, _) => notifier == null
-                          ? const SizedBox.shrink()
-                          : ValueListenableBuilder<int?>(
-                              valueListenable: notifier.id,
-                              builder: (context, id, _) {
-                                return ValueListenableBuilder<Rect?>(
-                                  valueListenable: notifier.rect,
-                                  builder: (context, rect, _) {
-                                    if (id != null &&
-                                        rect != null &&
-                                        _visible) {
-                                      return SizedBox(
-                                        // Apply aspect ratio if provided.
-                                        width:
-                                            videoViewParameters.aspectRatio ==
-                                                    null
-                                                ? rect.width
-                                                : rect.height *
-                                                    videoViewParameters
-                                                        .aspectRatio!,
-                                        height: rect.height,
-                                        child: HtmlElementView(
-                                          key: _key,
-                                          viewType:
-                                              'com.alexmercerind.media_kit_video.$id',
-                                        ),
-                                      );
-                                    }
-                                    return const SizedBox.shrink();
-                                  },
-                                );
-                              },
-                            ),
+          return Focus(
+            focusNode: videoViewParameters.focusNode ?? widget.focusNode,
+            child: Container(
+              clipBehavior: Clip.none,
+              width: videoViewParameters.width,
+              height: videoViewParameters.height,
+              color: videoViewParameters.fill,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRect(
+                    child: FittedBox(
+                      fit: videoViewParameters.fit,
+                      alignment: videoViewParameters.alignment,
+                      child: ValueListenableBuilder<PlatformVideoController?>(
+                        valueListenable: widget.controller.notifier,
+                        builder: (context, notifier, _) => notifier == null
+                            ? const SizedBox.shrink()
+                            : ValueListenableBuilder<int?>(
+                                valueListenable: notifier.id,
+                                builder: (context, id, _) {
+                                  return ValueListenableBuilder<Rect?>(
+                                    valueListenable: notifier.rect,
+                                    builder: (context, rect, _) {
+                                      if (id != null &&
+                                          rect != null &&
+                                          _visible) {
+                                        return SizedBox(
+                                          // Apply aspect ratio if provided.
+                                          width:
+                                              videoViewParameters.aspectRatio ==
+                                                      null
+                                                  ? rect.width
+                                                  : rect.height *
+                                                      videoViewParameters
+                                                          .aspectRatio!,
+                                          height: rect.height,
+                                          child: HtmlElementView(
+                                            key: _key,
+                                            viewType:
+                                                'com.alexmercerind.media_kit_video.$id',
+                                          ),
+                                        );
+                                      }
+                                      return const SizedBox.shrink();
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
                     ),
                   ),
-                ),
-                if (videoViewParameters.subtitleViewConfiguration.visible &&
-                    !(widget.controller.player.platform?.configuration.libass ??
-                        false))
-                  Positioned.fill(
-                    child: SubtitleView(
-                      controller: widget.controller,
-                      key: _subtitleViewKey,
-                      configuration:
-                          videoViewParameters.subtitleViewConfiguration,
+                  if (videoViewParameters
+                          .subtitleViewConfiguration.visible &&
+                      !(widget.controller.player.platform?.configuration
+                              .libass ??
+                          false))
+                    Positioned.fill(
+                      child: SubtitleView(
+                        controller: widget.controller,
+                        key: _subtitleViewKey,
+                        configuration:
+                            videoViewParameters.subtitleViewConfiguration,
+                      ),
                     ),
-                  ),
-                if (videoViewParameters.controls != null)
-                  Positioned.fill(
-                    child: videoViewParameters.controls!.call(this as dynamic),
-                  ),
-              ],
+                  if (videoViewParameters.controls != null)
+                    Positioned.fill(
+                      child: videoViewParameters.controls!.call(this as dynamic),
+                    ),
+                ],
+              ),
             ),
           );
         },

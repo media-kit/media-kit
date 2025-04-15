@@ -865,10 +865,12 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
         splashColor: const Color(0x00000000),
         highlightColor: const Color(0x00000000),
       ),
+
       /// Add [Directionality] to ltr to avoid wrong animation of sides.
       child: Directionality(
         textDirection: TextDirection.ltr,
         child: Focus(
+          focusNode: videoViewParametersNotifier(context).value.focusNode,
           autofocus: true,
           child: Material(
             elevation: 0.0,

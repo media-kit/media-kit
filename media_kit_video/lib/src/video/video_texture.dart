@@ -113,6 +113,9 @@ class Video extends StatefulWidget {
   /// The callback invoked when the [Video] exits fullscreen.
   final Future<void> Function() onExitFullscreen;
 
+  /// FocusNode for keyboard input.
+  final FocusNode? focusNode;
+
   /// {@macro video}
   const Video({
     Key? key,
@@ -131,6 +134,7 @@ class Video extends StatefulWidget {
     this.subtitleViewConfiguration = const SubtitleViewConfiguration(),
     this.onEnterFullscreen = defaultEnterNativeFullscreen,
     this.onExitFullscreen = defaultExitNativeFullscreen,
+    this.focusNode,
   }) : super(key: key);
 
   @override
@@ -186,19 +190,20 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     FilterQuality? filterQuality,
     VideoControlsBuilder? controls,
     SubtitleViewConfiguration? subtitleViewConfiguration,
+    FocusNode? focusNode,
   }) {
-    videoViewParametersNotifier.value =
-        videoViewParametersNotifier.value.copyWith(
-      width: width,
-      height: height,
-      fit: fit,
-      fill: fill,
-      alignment: alignment,
-      aspectRatio: aspectRatio,
-      filterQuality: filterQuality,
-      controls: controls,
-      subtitleViewConfiguration: subtitleViewConfiguration,
-    );
+    videoViewParametersNotifier.value = videoViewParametersNotifier.value
+        .copyWith(
+            width: width,
+            height: height,
+            fit: fit,
+            fill: fill,
+            alignment: alignment,
+            aspectRatio: aspectRatio,
+            filterQuality: filterQuality,
+            controls: controls,
+            subtitleViewConfiguration: subtitleViewConfiguration,
+            focusNode: focusNode);
   }
 
   @override
@@ -218,6 +223,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                 filterQuality: widget.filterQuality,
                 controls: widget.controls,
                 subtitleViewConfiguration: widget.subtitleViewConfiguration,
+                focusNode: widget.focusNode,
               ),
             );
     _disposeNotifiers =
@@ -258,6 +264,9 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
               oldWidget.subtitleViewConfiguration
           ? widget.subtitleViewConfiguration
           : currentParams.subtitleViewConfiguration,
+      focusNode: widget.focusNode != oldWidget.focusNode
+          ? widget.focusNode
+          : currentParams.focusNode,
     );
 
     if (newParams != currentParams) {
@@ -421,8 +430,8 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                                                 rect.height <= 1.0)
                                               Positioned.fill(
                                                 child: Container(
-                                                  color:
-                                                      videoViewParameters.fill,
+                                                  color: videoViewParameters
+                                                      .fill,
                                                 ),
                                               ),
                                           ],
@@ -438,7 +447,8 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                   ),
                 ),
                 if (videoViewParameters.subtitleViewConfiguration.visible &&
-                    !(widget.controller.player.platform?.configuration.libass ??
+                    !(widget.controller.player.platform?.configuration
+                            .libass ??
                         false))
                   Positioned.fill(
                     child: SubtitleView(
