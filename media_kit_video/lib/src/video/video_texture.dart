@@ -192,18 +192,19 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     SubtitleViewConfiguration? subtitleViewConfiguration,
     FocusNode? focusNode,
   }) {
-    videoViewParametersNotifier.value = videoViewParametersNotifier.value
-        .copyWith(
-            width: width,
-            height: height,
-            fit: fit,
-            fill: fill,
-            alignment: alignment,
-            aspectRatio: aspectRatio,
-            filterQuality: filterQuality,
-            controls: controls,
-            subtitleViewConfiguration: subtitleViewConfiguration,
-            focusNode: focusNode);
+    videoViewParametersNotifier.value =
+        videoViewParametersNotifier.value.copyWith(
+      width: width,
+      height: height,
+      fit: fit,
+      fill: fill,
+      alignment: alignment,
+      aspectRatio: aspectRatio,
+      filterQuality: filterQuality,
+      controls: controls,
+      subtitleViewConfiguration: subtitleViewConfiguration,
+      focusNode: focusNode,
+    );
   }
 
   @override
@@ -430,8 +431,8 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                                                 rect.height <= 1.0)
                                               Positioned.fill(
                                                 child: Container(
-                                                  color: videoViewParameters
-                                                      .fill,
+                                                  color:
+                                                      videoViewParameters.fill,
                                                 ),
                                               ),
                                           ],
@@ -447,8 +448,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                   ),
                 ),
                 if (videoViewParameters.subtitleViewConfiguration.visible &&
-                    !(widget.controller.player.platform?.configuration
-                            .libass ??
+                    !(widget.controller.player.platform?.configuration.libass ??
                         false))
                   Positioned.fill(
                     child: SubtitleView(
