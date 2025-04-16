@@ -21,7 +21,7 @@ dependencies:
   media_kit: ^1.2.0
 
   synchronized: ^3.1.0
-  wakelock_plus: ^1.1.1
+  wakelock_plus: ^1.1.6
   screen_brightness_android: ^2.0.0
   screen_brightness_platform_interface: ^2.0.0
   volume_controller: ^3.0.2
