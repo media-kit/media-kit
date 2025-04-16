@@ -113,6 +113,9 @@ class Video extends StatefulWidget {
   /// The callback invoked when the [Video] exits fullscreen.
   final Future<void> Function() onExitFullscreen;
 
+  /// FocusNode for keyboard input.
+  final FocusNode? focusNode;
+
   /// {@macro video}
   const Video({
     Key? key,
@@ -131,6 +134,7 @@ class Video extends StatefulWidget {
     this.subtitleViewConfiguration = const SubtitleViewConfiguration(),
     this.onEnterFullscreen = defaultEnterNativeFullscreen,
     this.onExitFullscreen = defaultExitNativeFullscreen,
+    this.focusNode,
   }) : super(key: key);
 
   @override
@@ -186,6 +190,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     FilterQuality? filterQuality,
     VideoControlsBuilder? controls,
     SubtitleViewConfiguration? subtitleViewConfiguration,
+    FocusNode? focusNode,
   }) {
     videoViewParametersNotifier.value =
         videoViewParametersNotifier.value.copyWith(
@@ -198,6 +203,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       filterQuality: filterQuality,
       controls: controls,
       subtitleViewConfiguration: subtitleViewConfiguration,
+      focusNode: focusNode,
     );
   }
 
@@ -218,6 +224,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                 filterQuality: widget.filterQuality,
                 controls: widget.controls,
                 subtitleViewConfiguration: widget.subtitleViewConfiguration,
+                focusNode: widget.focusNode,
               ),
             );
     _disposeNotifiers =
@@ -258,6 +265,9 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
               oldWidget.subtitleViewConfiguration
           ? widget.subtitleViewConfiguration
           : currentParams.subtitleViewConfiguration,
+      focusNode: widget.focusNode != oldWidget.focusNode
+          ? widget.focusNode
+          : currentParams.focusNode,
     );
 
     if (newParams != currentParams) {
