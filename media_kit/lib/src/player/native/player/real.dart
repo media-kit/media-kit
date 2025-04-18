@@ -500,15 +500,19 @@ class NativePlayer extends PlatformPlayer {
             PlaylistMode.single,
           ].contains(state.playlistMode)) {
         currentIndex = current.length - 2 < 0 ? 0 : current.length - 2;
-
+        current = current.sublist(0, current.length - 1);
         state = state.copyWith(
           // Allow playOrPause /w state.completed code-path to play the playlist again.
           completed: true,
+          playing: false,
           playlist: state.playlist.copyWith(
-            medias: current.sublist(0, current.length - 1),
+            medias: current,
             index: currentIndex,
           ),
         );
+        if (!playingController.isClosed) {
+          playingController.add(false);
+        }
         if (!completedController.isClosed) {
           completedController.add(true);
         }
@@ -521,11 +525,12 @@ class NativePlayer extends PlatformPlayer {
           current.length - 1 == index &&
           state.playlistMode == PlaylistMode.loop) {
         currentIndex = 0;
+        current = current.sublist(0, current.length - 1);
         state = state.copyWith(
           // Allow playOrPause /w state.completed code-path to play the playlist again.
           completed: true,
           playlist: state.playlist.copyWith(
-            medias: current.sublist(0, current.length - 1),
+            medias: current,
             index: 0,
           ),
         );
