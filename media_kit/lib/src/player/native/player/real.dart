@@ -2433,10 +2433,11 @@ class NativePlayer extends PlatformPlayer {
         'secondary-sub-text': generated.mpv_format.MPV_FORMAT_NODE,
       }.forEach(
         (property, format) {
+          final reply = property.hashCode;
           final name = property.toNativeUtf8();
           mpv.mpv_observe_property(
             ctx,
-            0,
+            reply,
             name.cast(),
             format,
           );
