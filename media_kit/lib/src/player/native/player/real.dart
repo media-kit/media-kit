@@ -268,6 +268,7 @@ class NativePlayer extends PlatformPlayer {
         rate: state.rate,
         pitch: state.pitch,
         playlistMode: state.playlistMode,
+        shuffle: isShuffleEnabled,
         audioDevice: state.audioDevice,
         audioDevices: state.audioDevices,
       );
@@ -308,6 +309,9 @@ class NativePlayer extends PlatformPlayer {
         // if (!playlistModeController.isClosed) {
         //   playlistModeController.add(PlaylistMode.none);
         // }
+        if (!shuffleController.isClosed) {
+          shuffleController.add(isShuffleEnabled);
+        }
         // if (!audioParamsController.isClosed) {
         //   audioParamsController.add(const AudioParams());
         // }
@@ -919,9 +923,12 @@ class NativePlayer extends PlatformPlayer {
       final index = getPlaylistResult.index;
       final medias = getPlaylistResult.playlist.map(Media.new).toList();
       final playlist = Playlist(medias, index: index);
-      state = state.copyWith(playlist: playlist);
+      state = state.copyWith(playlist: playlist, shuffle: isShuffleEnabled);
       if (!playlistController.isClosed) {
         playlistController.add(playlist);
+      }
+      if (!shuffleController.isClosed) {
+        shuffleController.add(isShuffleEnabled);
       }
 
       current = medias;

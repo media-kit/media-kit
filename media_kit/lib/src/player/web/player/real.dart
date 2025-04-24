@@ -469,6 +469,7 @@ class WebPlayer extends PlatformPlayer {
         rate: state.rate,
         pitch: state.pitch,
         playlistMode: state.playlistMode,
+        shuffle: false,
         audioDevice: state.audioDevice,
         audioDevices: state.audioDevices,
       );
@@ -508,6 +509,9 @@ class WebPlayer extends PlatformPlayer {
       // if (!playlistModeController.isClosed) {
       //   playlistModeController.add(PlaylistMode.none);
       // }
+      if (!shuffleController.isClosed) {
+        shuffleController.add(false);
+      }
       if (!audioParamsController.isClosed) {
         audioParamsController.add(const AudioParams());
       }
@@ -1155,9 +1159,13 @@ class WebPlayer extends PlatformPlayer {
             [..._playlist],
             index: _index,
           ),
+          shuffle: shuffle,
         );
         if (!playlistController.isClosed) {
           playlistController.add(state.playlist);
+        }
+        if (!shuffleController.isClosed) {
+          shuffleController.add(shuffle);
         }
       } else if (!shuffle && _shuffle.isNotEmpty) {
         _playlist.clear();
@@ -1170,9 +1178,13 @@ class WebPlayer extends PlatformPlayer {
             [..._playlist],
             index: _index,
           ),
+          shuffle: shuffle,
         );
         if (!playlistController.isClosed) {
           playlistController.add(state.playlist);
+        }
+        if (!shuffleController.isClosed) {
+          shuffleController.add(shuffle);
         }
       }
     }

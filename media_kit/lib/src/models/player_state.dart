@@ -57,6 +57,9 @@ class PlayerState {
   /// Current playlist mode.
   final PlaylistMode playlistMode;
 
+  /// Whether playlist is shuffled or not.
+  final bool shuffle;
+
   /// Audio parameters of the currently playing [Media].
   /// e.g. sample rate, channels, etc.
   final AudioParams audioParams;
@@ -103,6 +106,7 @@ class PlayerState {
     this.buffer = Duration.zero,
     this.bufferingPercentage = 0.0,
     this.playlistMode = PlaylistMode.none,
+    this.shuffle = false,
     this.audioParams = const AudioParams(),
     this.videoParams = const VideoParams(),
     this.audioBitrate,
@@ -128,6 +132,7 @@ class PlayerState {
     Duration? buffer,
     double? bufferingPercentage,
     PlaylistMode? playlistMode,
+    bool? shuffle,
     AudioParams? audioParams,
     VideoParams? videoParams,
     double? audioBitrate,
@@ -152,6 +157,7 @@ class PlayerState {
       bufferingPercentage: bufferingPercentage ?? this.bufferingPercentage,
       buffer: buffer ?? this.buffer,
       playlistMode: playlistMode ?? this.playlistMode,
+      shuffle: shuffle ?? this.shuffle,
       audioParams: audioParams ?? this.audioParams,
       videoParams: videoParams ?? this.videoParams,
       audioBitrate: audioBitrate ?? this.audioBitrate,
@@ -179,6 +185,7 @@ class PlayerState {
       'bufferingPercentage: $bufferingPercentage, '
       'buffer: $buffer, '
       'playlistMode: $playlistMode, '
+      'shuffle: $shuffle, '
       'audioParams: $audioParams, '
       'videoParams: $videoParams, '
       'audioBitrate: $audioBitrate, '

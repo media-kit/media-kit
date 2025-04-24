@@ -2333,6 +2333,8 @@ void main() {
         ),
       );
 
+      expect(player.stream.shuffle, emitsInOrder([false, true, false]));
+
       await player.open(playable);
 
       // VOLUNTARY DELAY.
@@ -2394,6 +2396,8 @@ void main() {
           ],
         ),
       );
+
+      expect(player.stream.shuffle, emitsInOrder([false, true, false]));
 
       await player.open(playable);
 
@@ -2795,6 +2799,7 @@ void main() {
       expect(player.state.duration, equals(Duration.zero));
       expect(player.state.buffering, equals(false));
       expect(player.state.buffer, equals(Duration.zero));
+      expect(player.state.shuffle, equals(false));
       expect(player.state.audioParams, equals(const AudioParams()));
       expect(player.state.videoParams, equals(const VideoParams()));
       expect(player.state.audioBitrate, equals(null));
