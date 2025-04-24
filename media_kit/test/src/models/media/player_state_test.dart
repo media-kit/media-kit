@@ -62,6 +62,7 @@ void main() {
         state.playlistMode,
         equals(PlaylistMode.none),
       );
+      expect(state.shuffle, equals(false));
       expect(state.audioParams.format, isNull);
       expect(state.audioParams.sampleRate, isNull);
       expect(state.audioParams.channels, isNull);

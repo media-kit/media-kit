@@ -472,6 +472,7 @@ The following state(s) are available as events:
 | `Stream<bool>`              | `buffering`    | Whether buffering or not.                                                                                |
 | `Stream<Duration>`          | `buffer`       | Current buffer position. This indicates how much of the stream has been decoded & cached by the demuxer. |
 | `Stream<PlaylistMode>`      | `playlistMode` | Current playlist mode.                                                                                   |
+| `Stream<bool>`              | `shuffle`      | Whether playlist is shuffled or not.
 | `Stream<AudioParams>`       | `audioParams`  | Audio parameters of the currently playing media source e.g. sample rate, channels, etc.                  |
 | `Stream<VideoParams>`       | `videoParams`  | Video parameters of the currently playing media source e.g. width, height, rotation etc.                 |
 | `Stream<double?>`           | `audioBitrate` | Audio bitrate of the currently playing media source.                                                     |
