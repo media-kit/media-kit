@@ -144,10 +144,14 @@ class Media extends Playable {
 
   /// Normalizes the passed URI.
   static String normalizeURI(String uri) {
-    if (uri.startsWith(_kAssetScheme)) {
-      // Handle asset:// scheme. Only for Flutter.
+    // Handle asset:// scheme. Only for Flutter.
+    if (_kAssetScheme ==
+        uri
+            .substring(0, _kAssetScheme.length.clamp(0, uri.length))
+            .toLowerCase()) {
       return AssetLoader.load(uri);
     }
+
     // content:// URI support for Android.
     if (Platform.isAndroid &&
         _kContentScheme ==
