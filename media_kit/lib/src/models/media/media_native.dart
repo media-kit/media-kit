@@ -55,8 +55,7 @@ class Media extends Playable {
                   .substring(
                       0, _kFileDescriptorScheme.length.clamp(0, uri.length))
                   .toLowerCase()) {
-        final fd =
-            int.tryParse(uri.substring(_kFileDescriptorScheme.length));
+        final fd = int.tryParse(uri.substring(_kFileDescriptorScheme.length));
         assert(fd != null, 'invalid file descriptor uri, fd is not an integer');
         if (fd != null && fd > 0) {
           await AndroidContentUriProvider.closeFileDescriptor(uri);
