@@ -149,19 +149,17 @@ class Media extends Playable {
       return AssetLoader.load(uri);
     }
     // content:// URI support for Android.
-    try {
-      if (Platform.isAndroid) {
-        if (Uri.parse(uri).isScheme('CONTENT')) {
-          final fd = AndroidContentUriProvider.openFileDescriptorSync(uri);
-          if (fd > 0) {
-            return 'fd://$fd';
-          }
-        }
+    if (Platform.isAndroid &&
+        _kContentScheme ==
+            uri
+                .substring(0, _kContentScheme.length.clamp(0, uri.length))
+                .toLowerCase()) {
+      final fd = AndroidContentUriProvider.openFileDescriptorSync(uri);
+      if (fd > 0) {
+        return 'fd://$fd';
       }
-    } catch (exception, stacktrace) {
-      print(exception);
-      print(stacktrace);
     }
+
     // Keep the resulting URI normalization same as used by libmpv internally.
     // [File] or network URIs.
     final parser = URIParser(uri);
@@ -215,6 +213,9 @@ class Media extends Playable {
 
   /// URI scheme used to identify Flutter assets.
   static const String _kAssetScheme = 'asset://';
+
+  /// URI scheme used to identify Android content.
+  static const String _kContentScheme = 'content://';
 
   /// Previously created [Media] instances.
   /// This [HashMap] is used to retrieve previously set [extras] & [httpHeaders].
