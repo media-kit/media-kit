@@ -500,15 +500,19 @@ class NativePlayer extends PlatformPlayer {
             PlaylistMode.single,
           ].contains(state.playlistMode)) {
         currentIndex = current.length - 2 < 0 ? 0 : current.length - 2;
-
+        current = current.sublist(0, current.length - 1);
         state = state.copyWith(
           // Allow playOrPause /w state.completed code-path to play the playlist again.
           completed: true,
+          playing: false,
           playlist: state.playlist.copyWith(
-            medias: current.sublist(0, current.length - 1),
+            medias: current,
             index: currentIndex,
           ),
         );
+        if (!playingController.isClosed) {
+          playingController.add(false);
+        }
         if (!completedController.isClosed) {
           completedController.add(true);
         }
@@ -521,11 +525,12 @@ class NativePlayer extends PlatformPlayer {
           current.length - 1 == index &&
           state.playlistMode == PlaylistMode.loop) {
         currentIndex = 0;
+        current = current.sublist(0, current.length - 1);
         state = state.copyWith(
           // Allow playOrPause /w state.completed code-path to play the playlist again.
           completed: true,
           playlist: state.playlist.copyWith(
-            medias: current.sublist(0, current.length - 1),
+            medias: current,
             index: 0,
           ),
         );
@@ -751,8 +756,6 @@ class NativePlayer extends PlatformPlayer {
             await _setPropertyString('loop-playlist', 'yes');
             break;
           }
-        default:
-          break;
       }
 
       state = state.copyWith(playlistMode: playlistMode);
@@ -898,12 +901,34 @@ class NativePlayer extends PlatformPlayer {
         return;
       }
       isShuffleEnabled = shuffle;
+      isPlaylistStateChangeAllowed = false;
 
       await _command(
         [
           shuffle ? 'playlist-shuffle' : 'playlist-unshuffle',
         ],
       );
+
+      final getPlaylistResult = await compute(
+        _getPlaylist,
+        _GetPlaylistData(
+          ctx.address,
+          NativeLibrary.path,
+        ),
+      );
+      final index = getPlaylistResult.index;
+      final medias = getPlaylistResult.playlist.map(Media.new).toList();
+      final playlist = Playlist(medias, index: index);
+      state = state.copyWith(playlist: playlist);
+      if (!playlistController.isClosed) {
+        playlistController.add(playlist);
+      }
+
+      current = medias;
+
+      Future.delayed(const Duration(seconds: 5), () {
+        isPlaylistStateChangeAllowed = true;
+      });
     }
 
     if (synchronized) {
@@ -1568,10 +1593,15 @@ class NativePlayer extends PlatformPlayer {
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'playlist-playing-pos' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64 &&
-          prop.ref.data != nullptr) {
+          prop.ref.data != nullptr &&
+          isPlaylistStateChangeAllowed) {
+        isPlaylistStateChangeAllowed = true;
+
         final index = prop.ref.data.cast<Int64>().value;
+        final medias = current;
+
         if (index >= 0) {
-          final playlist = Playlist(current, index: index);
+          final playlist = Playlist(medias, index: index);
           state = state.copyWith(playlist: playlist);
           if (!playlistController.isClosed) {
             playlistController.add(playlist);
@@ -2433,10 +2463,11 @@ class NativePlayer extends PlatformPlayer {
         'secondary-sub-text': generated.mpv_format.MPV_FORMAT_NODE,
       }.forEach(
         (property, format) {
+          final reply = property.hashCode;
           final name = property.toNativeUtf8();
           mpv.mpv_observe_property(
             ctx,
-            0,
+            reply,
             name.cast(),
             format,
           );
@@ -2623,6 +2654,11 @@ class NativePlayer extends PlatformPlayer {
   /// This is used to prevent [state.buffering] being set to `true` when [pause] or [playOrPause] is called.
   bool isBufferingStateChangeAllowed = true;
 
+  /// A flag to prevent changes to the [state.playlist] due to `playlist-shuffle` or `playlist-unshuffle` in [setShuffle].
+  ///
+  /// This is used to prevent a duplicate update by the `playlist-playing-pos` event.
+  bool isPlaylistStateChangeAllowed = true;
+
   /// Current loaded [Media] queue.
   List<Media> current = <Media>[];
 
@@ -2649,11 +2685,6 @@ class NativePlayer extends PlatformPlayer {
 }
 
 // --------------------------------------------------
-// Performance sensitive methods in [Player] are executed in an [Isolate].
-// This avoids blocking the Dart event loop for long periods of time.
-//
-// TODO: Maybe eventually move all methods to [Isolate]?
-// --------------------------------------------------
 
 class _ScreenshotData {
   final int ctx;
@@ -2669,19 +2700,19 @@ class _ScreenshotData {
   );
 }
 
-/// [NativePlayer.screenshot]
 Uint8List? _screenshot(_ScreenshotData data) {
   // ---------
   final mpv = generated.MPV(DynamicLibrary.open(data.lib));
   final ctx = Pointer<generated.mpv_handle>.fromAddress(data.ctx);
   // ---------
   final format = data.format;
+  final includeLibassSubtitles = data.includeLibassSubtitles;
   // ---------
 
   // https://mpv.io/manual/stable/#command-interface-screenshot-raw
   final args = [
     'screenshot-raw',
-    data.includeLibassSubtitles ? 'subtitles' : 'video',
+    includeLibassSubtitles ? 'subtitles' : 'video',
   ];
 
   final result = calloc<generated.mpv_node>();
@@ -2788,6 +2819,78 @@ Uint8List? _screenshot(_ScreenshotData data) {
   calloc.free(result.cast());
 
   return image;
+}
+
+class _GetPlaylistData {
+  final int ctx;
+  final String lib;
+
+  const _GetPlaylistData(
+    this.ctx,
+    this.lib,
+  );
+}
+
+class _GetPlaylistResult {
+  final int index;
+  final List<String> playlist;
+
+  const _GetPlaylistResult(
+    this.index,
+    this.playlist,
+  );
+}
+
+_GetPlaylistResult _getPlaylist(_GetPlaylistData data) {
+  // ---------
+  final mpv = generated.MPV(DynamicLibrary.open(data.lib));
+  final ctx = Pointer<generated.mpv_handle>.fromAddress(data.ctx);
+  // ---------
+
+  final name = 'playlist'.toNativeUtf8();
+  final value = calloc<generated.mpv_node>();
+
+  mpv.mpv_get_property(
+    ctx,
+    name.cast(),
+    generated.mpv_format.MPV_FORMAT_NODE,
+    value.cast(),
+  );
+
+  int index = -1;
+  List<String> playlist = [];
+
+  final list = value.ref.u.list.ref;
+
+  for (int i = 0; i < list.num; i++) {
+    if (list.values[i].format == generated.mpv_format.MPV_FORMAT_NODE_MAP) {
+      final map = list.values[i].u.list.ref;
+      for (int j = 0; j < map.num; j++) {
+        final property = map.keys[j].cast<Utf8>().toDartString();
+        if (map.values[j].format == generated.mpv_format.MPV_FORMAT_FLAG) {
+          if (property == 'playing') {
+            final value = map.values[j].u.flag;
+            if (value == 1) {
+              index = i;
+            }
+          }
+        }
+        if (map.values[j].format == generated.mpv_format.MPV_FORMAT_STRING) {
+          if (property == 'filename') {
+            final value = map.values[j].u.string.cast<Utf8>().toDartString();
+            playlist.add(value);
+          }
+        }
+      }
+    }
+  }
+
+  mpv.mpv_free_node_contents(value.cast());
+
+  calloc.free(name.cast());
+  calloc.free(value.cast());
+
+  return _GetPlaylistResult(index, playlist);
 }
 
 // --------------------------------------------------

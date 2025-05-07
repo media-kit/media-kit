@@ -1,3 +1,11 @@
+## 1.3.7
+
+ - **FIX**: undefined variable.
+ - **FIX**: check if is found before md5.
+ - **FIX**: md5 check.
+ - **FIX**: md5Matches.
+ - **FIX**: new gradle logic for downloading.
+
 ## 1.3.6
 
 - build: bump dependencies

@@ -115,7 +115,7 @@ class Media extends Playable {
     Uint8List data, {
     String? type,
   }) {
-    final blob = html.Blob(<JSUint8Array>[(data as Uint8List).toJS].toJS);
+    final blob = html.Blob(<JSUint8Array>[data.toJS].toJS);
     final object = html.URL.createObjectURL(blob);
     final instance = Media(object);
     instance._memory = true;
