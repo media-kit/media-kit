@@ -47,21 +47,21 @@ class Media extends Playable {
       if (ref[uri] == 0) {
         cache.remove(uri);
       }
+
       // content:// : Close the possible file descriptor on Android.
-      try {
-        if (Platform.isAndroid) {
-          final data = Uri.parse(uri);
-          if (data.isScheme('FD')) {
-            final fd = int.parse(data.authority);
-            if (fd > 0) {
-              await AndroidContentUriProvider.closeFileDescriptor(uri);
-            }
-          }
+      if (Platform.isAndroid &&
+          _kFileDescriptorScheme ==
+              uri
+                  .substring(
+                      0, _kFileDescriptorScheme.length.clamp(0, uri.length))
+                  .toLowerCase()) {
+        final fd = int.tryParse(uri.substring(_kFileDescriptorScheme.length));
+        assert(fd != null, 'invalid file descriptor uri, fd is not an integer');
+        if (fd != null && fd > 0) {
+          await AndroidContentUriProvider.closeFileDescriptor(uri);
         }
-      } catch (exeception, stacktrace) {
-        print(exeception);
-        print(stacktrace);
       }
+
       // Media.memory : Delete the temporary file.
       try {
         if (memory) {
@@ -144,24 +144,26 @@ class Media extends Playable {
 
   /// Normalizes the passed URI.
   static String normalizeURI(String uri) {
-    if (uri.startsWith(_kAssetScheme)) {
-      // Handle asset:// scheme. Only for Flutter.
+    // Handle asset:// scheme. Only for Flutter.
+    if (_kAssetScheme ==
+        uri
+            .substring(0, _kAssetScheme.length.clamp(0, uri.length))
+            .toLowerCase()) {
       return AssetLoader.load(uri);
     }
+
     // content:// URI support for Android.
-    try {
-      if (Platform.isAndroid) {
-        if (Uri.parse(uri).isScheme('CONTENT')) {
-          final fd = AndroidContentUriProvider.openFileDescriptorSync(uri);
-          if (fd > 0) {
-            return 'fd://$fd';
-          }
-        }
+    if (Platform.isAndroid &&
+        _kContentScheme ==
+            uri
+                .substring(0, _kContentScheme.length.clamp(0, uri.length))
+                .toLowerCase()) {
+      final fd = AndroidContentUriProvider.openFileDescriptorSync(uri);
+      if (fd > 0) {
+        return 'fd://$fd';
       }
-    } catch (exception, stacktrace) {
-      print(exception);
-      print(stacktrace);
     }
+
     // Keep the resulting URI normalization same as used by libmpv internally.
     // [File] or network URIs.
     final parser = URIParser(uri);
@@ -215,6 +217,12 @@ class Media extends Playable {
 
   /// URI scheme used to identify Flutter assets.
   static const String _kAssetScheme = 'asset://';
+
+  /// URI scheme used to identify Android content.
+  static const String _kContentScheme = 'content://';
+
+  /// URI scheme used to identify file descriptors.
+  static const String _kFileDescriptorScheme = 'fd://';
 
   /// Previously created [Media] instances.
   /// This [HashMap] is used to retrieve previously set [extras] & [httpHeaders].
