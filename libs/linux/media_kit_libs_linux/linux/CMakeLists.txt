@@ -54,8 +54,16 @@ if(MIMALLOC_USE_STATIC_LIBS)
   # ------------------------------------------------------------------------------
   set(MIMALLOC "mimalloc-2.1.2.tar.gz")
 
-  set(MIMALLOC_URL "https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz")
-  set(MIMALLOC_MD5 "5179c8f5cf1237d2300e2d8559a7bc55")
+  if(DEFINED ENV{MIMALLOC_URL})
+    set(MIMALLOC_URL "$ENV{MIMALLOC_URL}")
+  else() 
+    set(MIMALLOC_URL "https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz")
+  endif()
+  if(DEFINED ENV{MIMALLOC_MD5})
+    set(MIMALLOC_MD5"$ENV{MIMALLOC_MD5}")
+  else()
+    set(MIMALLOC_MD5 "5179c8f5cf1237d2300e2d8559a7bc55")
+  endif()
 
   set(MIMALLOC_ARCHIVE "${CMAKE_BINARY_DIR}/${MIMALLOC}")
   set(MIMALLOC_SRC "${CMAKE_BINARY_DIR}/mimalloc")

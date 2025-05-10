@@ -47,6 +47,16 @@ android {
     }
 }
 
+def Prop(String name, String defaultValue = null) {
+    if (project.hasProperty(name)) {
+        return project.findProperty(name)
+    } else if (System.getenv(name) != null) {
+        return System.getenv(name)
+    } else {
+        return defaultValue
+    }
+}
+
 task downloadDependencies(type: Exec) {   
         // Delete previously created /output subdirectory.
 
@@ -58,10 +68,10 @@ task downloadDependencies(type: Exec) {
 
         // Download all *.jar dependencies & verify their MD5 checksums.
         def filesToDownload = [
-            ["url": "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-arm64-v8a.jar", "md5": "5f521b08692d7fef73c5df9bcc00ca4d", "destination": file("$buildDir/v1.1.5/default-arm64-v8a.jar")],
-            ["url": "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-armeabi-v7a.jar", "md5": "08d500ca1116c13e9c1296cc6f2207b0", "destination": file("$buildDir/v1.1.5/default-armeabi-v7a.jar")],
-            ["url": "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-x86_64.jar", "md5": "0880d5fbc3ff0053409704617f54cb55", "destination": file("$buildDir/v1.1.5/default-x86_64.jar")],
-            ["url": "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-x86.jar", "md5": "f6f51aa42b30d747099506cdc3277352", "destination": file("$buildDir/v1.1.5/default-x86.jar")]
+            ["url": Prop("LIBMPV_URL_ARM64", "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-arm64-v8a.jar"), "md5": Prop("LIBMPV_MD5_ARM64", "5f521b08692d7fef73c5df9bcc00ca4d"), "destination": file("$buildDir/v1.1.5/default-arm64-v8a.jar")],
+            ["url": Prop("LIBMPV_URL_ARMV7", "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-armeabi-v7a.jar"), "md5": Prp("LIBMPV_MD5_ARMV7", "08d500ca1116c13e9c1296cc6f2207b0"), "destination": file("$buildDir/v1.1.5/default-armeabi-v7a.jar")],
+            ["url": Prop("LIBMPV_URL_X64", "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-x86_64.jar"), "md5": Prop("LIBMPV_MD5_X64", "0880d5fbc3ff0053409704617f54cb55"), "destination": file("$buildDir/v1.1.5/default-x86_64.jar")],
+            ["url": Prop("LIBMPV_URL_X86", "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.5/default-x86.jar"), "md5": Prop("LIBMPV_MD5_X86", "f6f51aa42b30d747099506cdc3277352"), "destination": file("$buildDir/v1.1.5/default-x86.jar")]
         ]
 
         filesToDownload.each { fileInfo ->
