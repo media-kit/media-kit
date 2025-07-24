@@ -5,13 +5,13 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: non_constant_identifier_names
 import 'dart:async';
-import 'package:flutter/material.dart';
+
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-
-import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_controls_theme_data_injector.dart';
 
 /// {@template material_desktop_video_controls}
@@ -118,6 +118,12 @@ class MaterialDesktopVideoControlsThemeData {
 
   /// Color of the button bar buttons.
   final Color buttonBarButtonColor;
+
+  /// Gradient shown over the top bar of the video player on mouse hover.
+  final LinearGradient topBarGradient;
+
+  /// Gradient shown over the bottom bar of the video player on mouse hover.
+  final LinearGradient bottomBarGradient;
 
   // SEEK BAR
 
@@ -228,6 +234,30 @@ class MaterialDesktopVideoControlsThemeData {
     this.volumeBarThumbColor = const Color(0xFFFFFFFF),
     this.volumeBarTransitionDuration = const Duration(milliseconds: 150),
     this.shiftSubtitlesOnControlsVisibilityChange = true,
+    this.topBarGradient = const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: [
+        0.0,
+        0.2,
+      ],
+      colors: [
+        Color(0x61000000),
+        Color(0x00000000),
+      ],
+    ),
+    this.bottomBarGradient = const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: [
+        0.5,
+        1.0,
+      ],
+      colors: [
+        Color(0x00000000),
+        Color(0x61000000),
+      ],
+    ),
   });
 
   /// Creates a copy of this [MaterialDesktopVideoControlsThemeData] with the given fields replaced by the non-null parameter values.
@@ -269,6 +299,8 @@ class MaterialDesktopVideoControlsThemeData {
     Color? volumeBarThumbColor,
     Duration? volumeBarTransitionDuration,
     bool? shiftSubtitlesOnControlsVisibilityChange,
+    LinearGradient? topBarGradient,
+    LinearGradient? bottomBarGradient,
   }) {
     return MaterialDesktopVideoControlsThemeData(
       displaySeekBar: displaySeekBar ?? this.displaySeekBar,
@@ -323,6 +355,8 @@ class MaterialDesktopVideoControlsThemeData {
       shiftSubtitlesOnControlsVisibilityChange:
           shiftSubtitlesOnControlsVisibilityChange ??
               this.shiftSubtitlesOnControlsVisibilityChange,
+      topBarGradient: topBarGradient ?? this.topBarGradient,
+      bottomBarGradient: bottomBarGradient ?? this.bottomBarGradient,
     );
   }
 }
@@ -335,6 +369,7 @@ class MaterialDesktopVideoControlsThemeData {
 class MaterialDesktopVideoControlsTheme extends InheritedWidget {
   final MaterialDesktopVideoControlsThemeData normal;
   final MaterialDesktopVideoControlsThemeData fullscreen;
+
   const MaterialDesktopVideoControlsTheme({
     super.key,
     required this.normal,
@@ -679,38 +714,16 @@ class _MaterialDesktopVideoControlsState
                             children: [
                               // Top gradient.
                               if (_theme(context).topButtonBar.isNotEmpty)
-                                Container(
-                                  decoration: const BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      stops: [
-                                        0.0,
-                                        0.2,
-                                      ],
-                                      colors: [
-                                        Color(0x61000000),
-                                        Color(0x00000000),
-                                      ],
-                                    ),
+                                DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: _theme(context).topBarGradient,
                                   ),
                                 ),
                               // Bottom gradient.
                               if (_theme(context).bottomButtonBar.isNotEmpty)
-                                Container(
-                                  decoration: const BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      stops: [
-                                        0.5,
-                                        1.0,
-                                      ],
-                                      colors: [
-                                        Color(0x00000000),
-                                        Color(0x61000000),
-                                      ],
-                                    ),
+                                DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: _theme(context).bottomBarGradient,
                                   ),
                                 ),
                               if (mount)
@@ -886,10 +899,10 @@ class MaterialDesktopSeekBar extends StatefulWidget {
   final VoidCallback? onSeekEnd;
 
   const MaterialDesktopSeekBar({
-    Key? key,
+    super.key,
     this.onSeekStart,
     this.onSeekEnd,
-  }) : super(key: key);
+  });
 
   @override
   MaterialDesktopSeekBarState createState() => MaterialDesktopSeekBarState();
@@ -1201,11 +1214,11 @@ class MaterialDesktopSkipNextButton extends StatelessWidget {
   final Color? iconColor;
 
   const MaterialDesktopSkipNextButton({
-    Key? key,
+    super.key,
     this.icon,
     this.iconSize,
     this.iconColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1237,11 +1250,11 @@ class MaterialDesktopSkipPreviousButton extends StatelessWidget {
   final Color? iconColor;
 
   const MaterialDesktopSkipPreviousButton({
-    Key? key,
+    super.key,
     this.icon,
     this.iconSize,
     this.iconColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1273,11 +1286,11 @@ class MaterialDesktopFullscreenButton extends StatelessWidget {
   final Color? iconColor;
 
   const MaterialDesktopFullscreenButton({
-    Key? key,
+    super.key,
     this.icon,
     this.iconSize,
     this.iconColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1310,12 +1323,12 @@ class MaterialDesktopCustomButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   const MaterialDesktopCustomButton({
-    Key? key,
+    super.key,
     this.icon,
     this.iconSize,
     this.iconColor,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1535,6 +1548,7 @@ class MaterialDesktopVolumeButtonState
 class MaterialDesktopPositionIndicator extends StatefulWidget {
   /// Overriden [TextStyle] for the [MaterialDesktopPositionIndicator].
   final TextStyle? style;
+
   const MaterialDesktopPositionIndicator({super.key, this.style});
 
   @override
