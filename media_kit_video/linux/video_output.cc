@@ -19,7 +19,7 @@ struct _VideoOutput {
   GObject parent_instance;
   TextureGL* texture_gl;
   GdkGLContext* gdk_gl_context;
-  guint8* pixel_buffer;
+  guint32* pixel_buffer;
   TextureSW* texture_sw;
   GMutex mutex; /* Only used in S/W rendering. */
   mpv_handle* handle;
@@ -171,7 +171,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   if (!hardware_acceleration_supported) {
     // H/W rendering failed somewhere down the line. Fallback to S/W
     // rendering.
-    self->pixel_buffer = g_new0(guint8, SW_RENDERING_PIXEL_BUFFER_SIZE);
+    self->pixel_buffer = g_new0(guint32, SW_RENDERING_PIXEL_BUFFER_SIZE);
     self->texture_gl = NULL;
     self->gdk_gl_context = NULL;
     self->texture_sw = texture_sw_new(self);
@@ -278,7 +278,7 @@ GdkGLContext* video_output_get_gdk_gl_context(VideoOutput* self) {
 }
 
 guint8* video_output_get_pixel_buffer(VideoOutput* self) {
-  return self->pixel_buffer;
+  return reinterpret_cast<guint8*>(self->pixel_buffer);
 }
 
 gint64 video_output_get_width(VideoOutput* self) {
@@ -324,7 +324,7 @@ gint64 video_output_get_width(VideoOutput* self) {
       return SW_RENDERING_MAX_WIDTH;
     }
     if (height >= SW_RENDERING_MAX_HEIGHT) {
-      return width / height * SW_RENDERING_MAX_HEIGHT;
+      return width * SW_RENDERING_MAX_HEIGHT / height;
     }
   }
 
@@ -374,7 +374,7 @@ gint64 video_output_get_height(VideoOutput* self) {
       return SW_RENDERING_MAX_HEIGHT;
     }
     if (width >= SW_RENDERING_MAX_WIDTH) {
-      return height / width * SW_RENDERING_MAX_WIDTH;
+      return height * SW_RENDERING_MAX_WIDTH / width;
     }
   }
 

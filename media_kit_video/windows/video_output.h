@@ -117,7 +117,7 @@ class VideoOutput {
 
   // S/W rendering.
 
-  std::unique_ptr<uint8_t[]> pixel_buffer_ = nullptr;
+  std::unique_ptr<uint32_t[]> pixel_buffer_ = nullptr;
   std::unordered_map<int64_t, std::unique_ptr<FlutterDesktopPixelBuffer>>
       pixel_buffer_textures_ = {};
 

@@ -15,7 +15,7 @@
 #define SW_RENDERING_MAX_WIDTH 1920
 #define SW_RENDERING_MAX_HEIGHT 1080
 #define SW_RENDERING_PIXEL_BUFFER_SIZE \
-  (SW_RENDERING_MAX_WIDTH) * (SW_RENDERING_MAX_HEIGHT) * (4)
+  (SW_RENDERING_MAX_WIDTH) * (SW_RENDERING_MAX_HEIGHT)
 
 VideoOutput::VideoOutput(int64_t handle,
                          VideoOutputConfiguration configuration,
@@ -84,7 +84,7 @@ VideoOutput::VideoOutput(int64_t handle,
       std::cout << "media_kit: VideoOutput: Using S/W rendering." << std::endl;
       // Allocate a "large enough" buffer ahead of time.
       pixel_buffer_ =
-          std::make_unique<uint8_t[]>(SW_RENDERING_PIXEL_BUFFER_SIZE);
+          std::make_unique<uint32_t[]>(SW_RENDERING_PIXEL_BUFFER_SIZE);
       Resize(width_.value_or(1), height_.value_or(1));
       mpv_render_param params[] = {
           {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_SW},
@@ -334,7 +334,7 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
   // S/W
   if (pixel_buffer_ != nullptr) {
     auto pixel_buffer_texture = std::make_unique<FlutterDesktopPixelBuffer>();
-    pixel_buffer_texture->buffer = pixel_buffer_.get();
+    pixel_buffer_texture->buffer = reinterpret_cast<uint8_t*>(pixel_buffer_.get());
     pixel_buffer_texture->width = required_width;
     pixel_buffer_texture->height = required_height;
     pixel_buffer_texture->release_context = nullptr;
@@ -405,7 +405,7 @@ int64_t VideoOutput::GetVideoWidth() {
       return SW_RENDERING_MAX_WIDTH;
     }
     if (height >= SW_RENDERING_MAX_HEIGHT) {
-      return width / height * SW_RENDERING_MAX_HEIGHT;
+      return width * SW_RENDERING_MAX_HEIGHT / height;
     }
   }
 
@@ -454,7 +454,7 @@ int64_t VideoOutput::GetVideoHeight() {
       return SW_RENDERING_MAX_HEIGHT;
     }
     if (width >= SW_RENDERING_MAX_WIDTH) {
-      return height / width * SW_RENDERING_MAX_WIDTH;
+      return height * SW_RENDERING_MAX_WIDTH / width;
     }
   }
 

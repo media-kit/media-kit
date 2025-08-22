@@ -37,6 +37,6 @@ gboolean texture_sw_copy_pixels(FlPixelBufferTexture* texture,
 #define SW_RENDERING_MAX_WIDTH 1920
 #define SW_RENDERING_MAX_HEIGHT 1080
 #define SW_RENDERING_PIXEL_BUFFER_SIZE \
-  (SW_RENDERING_MAX_WIDTH) * (SW_RENDERING_MAX_HEIGHT) * (4)
+  (SW_RENDERING_MAX_WIDTH) * (SW_RENDERING_MAX_HEIGHT)
 
 #endif  // TEXTURE_SW_H_
