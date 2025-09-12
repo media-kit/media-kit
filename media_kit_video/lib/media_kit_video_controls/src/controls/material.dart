@@ -941,17 +941,22 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                 }
                               }
                             },
-                            onHorizontalDragUpdate: (details) {
-                              if ((!mount && _theme(context).seekGesture) ||
-                                  (_theme(context).seekGesture &&
-                                      _theme(context)
-                                          .gesturesEnabledWhileControlsVisible)) {
-                                onHorizontalDragUpdate(details);
-                              }
-                            },
-                            onHorizontalDragEnd: (details) {
-                              onHorizontalDragEnd();
-                            },
+                            onHorizontalDragUpdate: !_theme(context).seekGesture
+                                ? null
+                                : (details) {
+                                    if ((!mount &&
+                                            _theme(context).seekGesture) ||
+                                        (_theme(context).seekGesture &&
+                                            _theme(context)
+                                                .gesturesEnabledWhileControlsVisible)) {
+                                      onHorizontalDragUpdate(details);
+                                    }
+                                  },
+                            onHorizontalDragEnd: !_theme(context).seekGesture
+                                ? null
+                                : (details) {
+                                    onHorizontalDragEnd();
+                                  },
                             onVerticalDragUpdate: (e) async {
                               final delta = e.delta.dy;
                               final Offset position = e.localPosition;
