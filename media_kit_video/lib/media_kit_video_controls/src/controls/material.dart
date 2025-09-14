@@ -169,6 +169,8 @@ class MaterialVideoControlsThemeData {
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
 
+  final ValueNotifier<bool>? visible;
+
   /// Whether to speed up on long press.
   final bool speedUpOnLongPress;
 
@@ -277,6 +279,7 @@ class MaterialVideoControlsThemeData {
 
   /// {@macro material_video_controls_theme_data}
   const MaterialVideoControlsThemeData({
+    this.visible = null,
     this.displaySeekBar = true,
     this.automaticallyImplySkipNextButton = true,
     this.automaticallyImplySkipPreviousButton = true,
@@ -501,7 +504,14 @@ class _MaterialVideoControls extends StatefulWidget {
 /// {@macro material_video_controls}
 class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   late bool mount = _theme(context).visibleOnMount;
-  late bool visible = _theme(context).visibleOnMount;
+  // late bool visible = _theme(context).visibleOnMount;
+  late bool _visible = _theme(context).visibleOnMount;
+  bool get visible => _visible;
+  void set visible(bool visible) {
+    _visible = visible;
+    _theme(context).visible?.value = visible;
+  }
+
   Timer? _timer;
 
   double _brightnessValue = 0.0;

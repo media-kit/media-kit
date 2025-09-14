@@ -76,6 +76,7 @@ class MaterialDesktopVideoControlsThemeData {
   /// Whether the controls are initially visible.
   final bool visibleOnMount;
 
+  final ValueNotifier<bool>? visible;
   // GENERIC
 
   /// Padding around the controls.
@@ -181,6 +182,7 @@ class MaterialDesktopVideoControlsThemeData {
 
   /// {@macro material_desktop_video_controls_theme_data}
   const MaterialDesktopVideoControlsThemeData({
+    this.visible = null,
     this.displaySeekBar = true,
     this.automaticallyImplySkipNextButton = true,
     this.automaticallyImplySkipPreviousButton = true,
@@ -375,7 +377,13 @@ class _MaterialDesktopVideoControls extends StatefulWidget {
 class _MaterialDesktopVideoControlsState
     extends State<_MaterialDesktopVideoControls> {
   late bool mount = _theme(context).visibleOnMount;
-  late bool visible = _theme(context).visibleOnMount;
+  // late bool visible = _theme(context).visibleOnMount;
+  late bool _visible = _theme(context).visibleOnMount;
+  bool get visible => _visible;
+  void set visible(bool visible) {
+    _visible = visible;
+    _theme(context).visible?.value = visible;
+  }
 
   Timer? _timer;
 
