@@ -31,7 +31,7 @@ android {
         namespace 'com.alexmercerind.media_kit_libs_android_video'
     }
 
-    compileSdkVersion 31
+    compileSdkVersion 36
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
