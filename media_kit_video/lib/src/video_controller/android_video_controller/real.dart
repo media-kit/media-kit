@@ -40,7 +40,6 @@ class AndroidVideoController extends PlatformVideoController {
   }
 
   Future<void> setProperties(Map<String, String> properties) async {
-    // ORDER IS IMPORTANT.
     for (final entry in properties.entries) {
       await setProperty(entry.key, entry.value);
     }
@@ -60,6 +59,7 @@ class AndroidVideoController extends PlatformVideoController {
       await setProperty('vo', 'null');
       await setProperties(
         {
+          // ORDER IS IMPORTANT.
           'android-surface-size': androidSurfaceSizeValue,
           'wid': widValue,
           'vo': voValue,
@@ -68,28 +68,7 @@ class AndroidVideoController extends PlatformVideoController {
           if (configuration.vo == 'mediacodec_embed') 'vid': vidValue,
         },
       );
-    });
-  }
-
-  /// Hook to attach --wid & --vo properties before video output is initialized.
-  Future<void> onLoadHook() async {
-    // This setup is important to take away control of android.view.Surface from libmpv, when the currently playing gets switched.
-    // Not doing so will cause MediaCodec usage inside libavcodec to incorrectly fail with error (because this android.view.Surface would be used twice):
-    // "native_window_api_connect returned an error: Invalid argument (-22)" & next less-efficient hwdec will be used redundantly.
-    return lock.synchronized(() async {
-      if ((rect.value?.width ?? 0.0) <= 1.0 ||
-          (rect.value?.height ?? 0.0) <= 1.0) {
-        // Do not set --vo if the rect is currently not available.
-        return;
-      }
-      await setProperty('vo', configuration.vo!);
-    });
-  }
-
-  /// Hook to detach --wid & --vo properties before video output is disposed.
-  Future<void> onUnloadHook() async {
-    return lock.synchronized(() async {
-      await setProperty('vo', 'null');
+      await player.seek(Duration.zero);
     });
   }
 
@@ -102,16 +81,8 @@ class AndroidVideoController extends PlatformVideoController {
     super.configuration,
   ) {
     wid.addListener(widListener);
-    platform.onLoadHooks.add(onLoadHook);
-    platform.onUnloadHooks.add(onUnloadHook);
     videoParamsSubscription = player.stream.videoParams.listen(
       (event) => lock.synchronized(() async {
-        if ([0, null].contains(event.dw) || [0, null].contains(event.dh)) {
-          return;
-        }
-
-        final int handle = await player.handle;
-
         final int width;
         final int height;
         if (event.rotate == 0 || event.rotate == 180) {
@@ -122,6 +93,15 @@ class AndroidVideoController extends PlatformVideoController {
           width = event.dh ?? 0;
           height = event.dw ?? 0;
         }
+
+        final isZero = width == 0 || height == 0;
+        final isSame = width == rect.value?.width.toInt() &&
+            height == rect.value?.height.toInt();
+        if (isZero || isSame) {
+          return;
+        }
+
+        final handle = await player.handle;
 
         await _channel.invokeMethod(
           'VideoOutputManager.SetSurfaceSize',
@@ -201,28 +181,12 @@ class AndroidVideoController extends PlatformVideoController {
     // Store the [VideoController] in the [_controllers].
     _controllers[handle] = controller;
 
-    // Wait until first texture ID is received.
-    // We are not waiting on the native-side itself because it will block the UI thread.
-    final completer = Completer<void>();
-    void listener() {
-      final value = controller.id.value;
-      if (value != null) {
-        debugPrint('AndroidVideoController: Texture ID: $value');
-        completer.complete();
-      }
-    }
-
-    controller.id.addListener(listener);
-
     await _channel.invokeMethod(
       'VideoOutputManager.Create',
       {
         'handle': handle.toString(),
       },
     );
-
-    await completer.future;
-    controller.id.removeListener(listener);
 
     await controller.setProperties(
       {
@@ -265,8 +229,6 @@ class AndroidVideoController extends PlatformVideoController {
     super.dispose();
     wid.dispose();
     wid.removeListener(widListener);
-    platform.onLoadHooks.remove(onLoadHook);
-    platform.onUnloadHooks.remove(onUnloadHook);
     await videoParamsSubscription?.cancel();
     final handle = await player.handle;
     _controllers.remove(handle);
@@ -304,7 +266,6 @@ class AndroidVideoController extends PlatformVideoController {
                     final int wid = call.arguments['wid'];
                     _controllers[handle]?.rect.value = rect;
                     _controllers[handle]?.id.value = id;
-                    // Only on Android:
                     _controllers[handle]?.wid.value = wid;
                     break;
                   }
