@@ -399,7 +399,7 @@ class NativePlayer extends PlatformPlayer {
         playingController.add(false);
       }
 
-      isPlayingStateChangeAllowed = true;
+      isPlayingStateChangeAllowed = state.playing;
       isBufferingStateChangeAllowed = false;
       await _setPropertyFlag('pause', true);
     }
@@ -434,7 +434,7 @@ class NativePlayer extends PlatformPlayer {
         }
       }
 
-      isPlayingStateChangeAllowed = true;
+      isPlayingStateChangeAllowed = state.playing;
       isBufferingStateChangeAllowed = false;
 
       // This condition is specifically for the case when the internal playlist is ended (with [PlaylistLoopMode.none]), and we want to play the playlist again if play/pause is pressed.
