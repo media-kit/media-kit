@@ -59,14 +59,14 @@ void MediaKitVideoPlugin::RunOnMainThread(std::function<void()> task) {
     main_thread_tasks_.push(std::move(task));
   }
 
-  ::PostMessage(flutter_window_, WM_MAIN_THREAD_TASK, 0, 0);
+  ::PostMessage(flutter_window_, kMainThreadTaskMessage, 0, 0);
 }
 
 LRESULT CALLBACK MediaKitVideoPlugin::WindowProcDelegate(HWND hwnd,
                                                          UINT message,
                                                          WPARAM wParam,
                                                          LPARAM lParam) {
-  if (message == WM_MAIN_THREAD_TASK && instance_) {
+  if (message == kMainThreadTaskMessage && instance_) {
     instance_->ProcessMainThreadTasks();
     return 0;
   }

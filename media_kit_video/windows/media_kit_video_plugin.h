@@ -31,6 +31,8 @@ class MediaKitVideoPlugin : public flutter::Plugin {
   MediaKitVideoPlugin& operator=(const MediaKitVideoPlugin&) = delete;
 
  private:
+  static constexpr UINT kMainThreadTaskMessage = WM_USER + 1001;
+
   void HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
@@ -43,8 +45,6 @@ class MediaKitVideoPlugin : public flutter::Plugin {
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel_ =
       nullptr;
   std::unique_ptr<VideoOutputManager> video_output_manager_ = nullptr;
-  
-  static const UINT WM_MAIN_THREAD_TASK = WM_USER + 1001;
   HWND flutter_window_ = nullptr;
   WNDPROC original_window_proc_ = nullptr;
   std::queue<std::function<void()>> main_thread_tasks_;
