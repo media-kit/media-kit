@@ -2812,7 +2812,7 @@ Uint8List? _screenshot(_ScreenshotData data) {
           }
         case null:
           {
-            image = bytes;
+            image = bytes.sublist(0);
             break;
           }
       }
