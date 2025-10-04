@@ -58,10 +58,10 @@ task downloadDependencies(type: Exec)  {
 
         // Download all *.jar dependencies & verify their MD5 checksums.
         def filesToDownload = [
-            ["url": "https://github.com/media-kit/libmpv-android-audio-build/releases/download/v1.1.5/default-arm64-v8a.jar", "md5": "46f80b1f48ec7df4b5232b2f183ef012", "destination": file("$buildDir/v1.1.5/default-arm64-v8a.jar")],
-            ["url": "https://github.com/media-kit/libmpv-android-audio-build/releases/download/v1.1.5/default-armeabi-v7a.jar", "md5": "5655d8b66001ba374ca73e6205f62737", "destination": file("$buildDir/v1.1.5/default-armeabi-v7a.jar")],
-            ["url": "https://github.com/media-kit/libmpv-android-audio-build/releases/download/v1.1.5/default-x86_64.jar", "md5": "0775b74a81445784aed41180816e55be", "destination": file("$buildDir/v1.1.5/default-x86_64.jar")],
-            ["url": "https://github.com/media-kit/libmpv-android-audio-build/releases/download/v1.1.5/default-x86.jar", "md5": "e77160289385403425b1516f0dd692b0", "destination": file("$buildDir/v1.1.5/default-x86.jar")]
+            ["url": "https://github.com/media-kit/libmpv-android-audio-build/releases/download/v1.1.8/default-arm64-v8a.jar", "md5": "6f4af754ae94da8cbb24655fd66c07ed", "destination": file("$buildDir/v1.1.8/default-arm64-v8a.jar")],
+            ["url": "https://github.com/media-kit/libmpv-android-audio-build/releases/download/v1.1.8/default-armeabi-v7a.jar", "md5": "d8d1ba181d3d6ecb341e1e8d87506e17", "destination": file("$buildDir/v1.1.8/default-armeabi-v7a.jar")],
+            ["url": "https://github.com/media-kit/libmpv-android-audio-build/releases/download/v1.1.8/default-x86_64.jar", "md5": "43ed7b0e6bdaa1a6ed2c1eee01f5e44a", "destination": file("$buildDir/v1.1.8/default-x86_64.jar")],
+            ["url": "https://github.com/media-kit/libmpv-android-audio-build/releases/download/v1.1.8/default-x86.jar", "md5": "a2acb148c02d02f0892047f5c6c4f964", "destination": file("$buildDir/v1.1.8/default-x86.jar")]
         ]
 
         filesToDownload.each { fileInfo ->
