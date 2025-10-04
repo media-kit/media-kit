@@ -131,7 +131,7 @@ void MediaKitVideoPlugin::HandleMethodCall(
     video_output_manager_->Create(
         handle_value, configuration_value,
         [this, handle = handle_value](auto id, auto width, auto height) {
-          RunOnMainThread([this, handle, id, width, height]() {
+          RunOnMainThread([=]() {
             channel_->InvokeMethod(
                 "VideoOutput.Resize",
                 std::make_unique<flutter::EncodableValue>(flutter::EncodableMap{
