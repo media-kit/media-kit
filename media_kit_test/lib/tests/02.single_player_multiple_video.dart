@@ -8,7 +8,7 @@ import '../common/sources/sources.dart';
 import '../common/widgets.dart';
 
 class SinglePlayerMultipleVideoScreen extends StatefulWidget {
-  const SinglePlayerMultipleVideoScreen({Key? key}) : super(key: key);
+  const SinglePlayerMultipleVideoScreen({super.key});
 
   @override
   State<SinglePlayerMultipleVideoScreen> createState() =>

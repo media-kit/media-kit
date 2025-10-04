@@ -7,7 +7,7 @@ import '../common/globals.dart';
 import '../common/sources/sources.dart';
 
 class TabsTest extends StatelessWidget {
-  const TabsTest({Key? key}) : super(key: key);
+  const TabsTest({super.key});
 
   static const int count = 5;
 
@@ -90,7 +90,7 @@ class TabsTest extends StatelessWidget {
 
 class TabView extends StatefulWidget {
   final int i;
-  const TabView(this.i, {Key? key}) : super(key: key);
+  const TabView(this.i, {super.key});
   @override
   State<TabView> createState() => TabViewState();
 }

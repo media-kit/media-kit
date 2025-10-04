@@ -77,10 +77,10 @@ class PaintFirstFrameScreen extends StatelessWidget {
   final List<Player> players;
   final List<VideoController> controllers;
   const PaintFirstFrameScreen({
-    Key? key,
+    super.key,
     required this.players,
     required this.controllers,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

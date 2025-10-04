@@ -19,7 +19,7 @@ Future<void> prepareSources() async {
 }
 
 String convertBytesToURL(Uint8List bytes) {
-  final blob = html.Blob(<JSUint8Array>[(bytes as Uint8List).toJS].toJS);
+  final blob = html.Blob(<JSUint8Array>[(bytes).toJS].toJS);
   final object = html.URL.createObjectURL(blob);
   return object;
 }

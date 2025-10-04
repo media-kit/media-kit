@@ -29,10 +29,10 @@ class VideoControlsThemeDataInjector extends StatefulWidget {
 
   /// {@macro video_controls_theme_data_injector}
   const VideoControlsThemeDataInjector({
-    Key? key,
+    super.key,
     required this.child,
     this.context,
-  }) : super(key: key);
+  });
 
   @override
   State<VideoControlsThemeDataInjector> createState() =>
