@@ -116,7 +116,7 @@ class Video extends StatefulWidget {
 
   /// {@macro video}
   const Video({
-    Key? key,
+    super.key,
     required this.controller,
     this.width,
     this.height,
@@ -133,7 +133,7 @@ class Video extends StatefulWidget {
     this.onEnterFullscreen = defaultEnterNativeFullscreen,
     this.onExitFullscreen = defaultExitNativeFullscreen,
     this.focusNode,
-  }) : super(key: key);
+  });
 
   @override
   State<Video> createState() => VideoState();
@@ -362,6 +362,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     if (_disposeNotifiers) {
       videoViewParametersNotifier.dispose();
       _contextNotifier.dispose();
+      // ignore: collection_methods_unrelated_type
       VideoStateInheritedWidgetContextNotifierState.fallback.remove(this);
     }
 

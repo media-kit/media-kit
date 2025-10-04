@@ -253,7 +253,7 @@ class PrimaryScreen extends StatelessWidget {
 }
 
 class DownloadingScreen extends StatelessWidget {
-  const DownloadingScreen({Key? key}) : super(key: key);
+  const DownloadingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -886,10 +886,10 @@ class MaterialDesktopSeekBar extends StatefulWidget {
   final VoidCallback? onSeekEnd;
 
   const MaterialDesktopSeekBar({
-    Key? key,
+    super.key,
     this.onSeekStart,
     this.onSeekEnd,
-  }) : super(key: key);
+  });
 
   @override
   MaterialDesktopSeekBarState createState() => MaterialDesktopSeekBarState();
@@ -1201,11 +1201,11 @@ class MaterialDesktopSkipNextButton extends StatelessWidget {
   final Color? iconColor;
 
   const MaterialDesktopSkipNextButton({
-    Key? key,
+    super.key,
     this.icon,
     this.iconSize,
     this.iconColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1237,11 +1237,11 @@ class MaterialDesktopSkipPreviousButton extends StatelessWidget {
   final Color? iconColor;
 
   const MaterialDesktopSkipPreviousButton({
-    Key? key,
+    super.key,
     this.icon,
     this.iconSize,
     this.iconColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1273,11 +1273,11 @@ class MaterialDesktopFullscreenButton extends StatelessWidget {
   final Color? iconColor;
 
   const MaterialDesktopFullscreenButton({
-    Key? key,
+    super.key,
     this.icon,
     this.iconSize,
     this.iconColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1310,12 +1310,12 @@ class MaterialDesktopCustomButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   const MaterialDesktopCustomButton({
-    Key? key,
+    super.key,
     this.icon,
     this.iconSize,
     this.iconColor,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

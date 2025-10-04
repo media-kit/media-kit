@@ -11,9 +11,9 @@ class TracksSelector extends StatefulWidget {
   final Player player;
 
   const TracksSelector({
-    Key? key,
+    super.key,
     required this.player,
-  }) : super(key: key);
+  });
 
   @override
   State<TracksSelector> createState() => _TracksSelectorState();
@@ -157,9 +157,9 @@ class _TracksSelectorState extends State<TracksSelector> {
 class SeekBar extends StatefulWidget {
   final Player player;
   const SeekBar({
-    Key? key,
+    super.key,
     required this.player,
-  }) : super(key: key);
+  });
 
   @override
   State<SeekBar> createState() => _SeekBarState();

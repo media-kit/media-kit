@@ -26,10 +26,10 @@ class SubtitleView extends StatefulWidget {
 
   /// {@macro subtitle_view}
   const SubtitleView({
-    Key? key,
+    super.key,
     required this.controller,
     required this.configuration,
-  }) : super(key: key);
+  });
 
   @override
   SubtitleViewState createState() => SubtitleViewState();

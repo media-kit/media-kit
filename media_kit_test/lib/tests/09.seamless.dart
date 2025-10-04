@@ -12,7 +12,7 @@ import '../common/sources/sources.dart';
 // A simple example to show how buffering & initial black screen can be avoided by writing code effectively.
 
 class Seamless extends StatefulWidget {
-  const Seamless({Key? key}) : super(key: key);
+  const Seamless({super.key});
 
   @override
   State<Seamless> createState() => _SeamlessState();
