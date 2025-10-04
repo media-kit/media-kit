@@ -84,8 +84,24 @@ static void media_kit_video_plugin_handle_method_call(
           fl_value_set_string_take(result, "handle", fl_value_new_int(handle));
           fl_value_set_string_take(result, "id", fl_value_new_int(id));
           fl_value_set_string_take(result, "rect", rect);
-          fl_method_channel_invoke_method(channel, "VideoOutput.Resize", result,
-                                          NULL, NULL, NULL);
+          
+          typedef struct {
+            FlMethodChannel* channel;
+            FlValue* result;
+          } IdleCallbackData;
+          
+          IdleCallbackData* idle_data = g_new0(IdleCallbackData, 1);
+          idle_data->channel = channel;
+          idle_data->result = result;
+
+          // `fl_method_channel_invoke_method` should be called from PlatformThread.
+          g_idle_add([](gpointer user_data) -> gboolean {
+            IdleCallbackData* idle_data = (IdleCallbackData*)user_data;
+            fl_method_channel_invoke_method(idle_data->channel, "VideoOutput.Resize", 
+                                          idle_data->result, NULL, NULL, NULL);
+            g_free(idle_data);
+            return G_SOURCE_REMOVE;
+          }, idle_data);
         },
         data);
     FlValue* result = fl_value_new_null();
