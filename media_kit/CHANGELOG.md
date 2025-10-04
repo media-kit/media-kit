@@ -1,3 +1,7 @@
+## 1.2.1
+
+- fix: misc issues
+
 ## 1.2.0
 
  - **REFACTOR**: InitializerNativeCallable & InitializerIsolate.

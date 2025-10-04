@@ -1,3 +1,9 @@
+## 1.3.8
+
+- build: AGP 8.13.0
+- build: bump dependencies
+- build: 16KB page size support
+
 ## 1.3.7
 
  - **FIX**: undefined variable.
