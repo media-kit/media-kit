@@ -2,6 +2,7 @@
 
 - fix(windows): notify `VideoOutput.Resize` on platform thread
 - fix(linux): notify `VideoOutput.Resize` on platform thread
+- fix(android): `VideoController` implementation
 - fix(android): remove deprecated API usage
 
 ## 1.3.0
