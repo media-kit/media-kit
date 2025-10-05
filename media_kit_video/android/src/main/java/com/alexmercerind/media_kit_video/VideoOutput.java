@@ -54,9 +54,6 @@ public class VideoOutput implements TextureRegistry.SurfaceProducer.Callback {
 
         surfaceProducer = textureRegistryReference.createSurfaceProducer();
         surfaceProducer.setCallback(this);
-
-        // By default, android.graphics.SurfaceTexture has a size of 1x1.
-        setSurfaceSize(1, 1, true);
     }
 
     public void dispose() {
