@@ -68,7 +68,6 @@ class ANGLESurfaceManager {
 
   int32_t width_ = 1;
   int32_t height_ = 1;
-  HANDLE internal_handle_ = nullptr;
   HANDLE handle_ = nullptr;
 
   // Sync |Draw| & |Read| calls.

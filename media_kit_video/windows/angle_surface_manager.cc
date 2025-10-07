@@ -90,7 +90,7 @@ void ANGLESurfaceManager::Create() {
     throw std::runtime_error("Unable to create ANGLE EGL surface.");
     return;
   }
-  if (internal_handle_ == nullptr || handle_ == nullptr) {
+  if (handle_ == nullptr) {
     throw std::runtime_error("Unable to retrieve Direct3D shared HANDLE.");
     return;
   }
@@ -135,7 +135,6 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
     d3d_11_texture_2D_->Release();
     d3d_11_texture_2D_ = nullptr;
   }
-  internal_handle_ = nullptr;
   handle_ = nullptr;
 }
 
@@ -210,10 +209,6 @@ bool ANGLESurfaceManager::CreateD3DTexture() {
   hr = resource->GetSharedHandle(&handle_);
   CHECK_HRESULT("IDXGIResource::GetSharedHandle");
   d3d_11_texture_2D_->AddRef();
-  
-  // Also set internal_handle_ to the same handle for EGL binding
-  internal_handle_ = handle_;
-
   std::cout << "media_kit: ANGLESurfaceManager: Created shared texture: "
             << width_ << "x" << height_ << std::endl;
 
@@ -276,7 +271,7 @@ bool ANGLESurfaceManager::CreateAndBindEGLSurface() {
       EGL_NONE,
   };
   surface_ = eglCreatePbufferFromClientBuffer(
-      display_, EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE, internal_handle_,
+      display_, EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE, handle_,
       config_, buffer_attributes);
   if (surface_ == EGL_NO_SURFACE) {
     FAIL("eglCreatePbufferFromClientBuffer");
