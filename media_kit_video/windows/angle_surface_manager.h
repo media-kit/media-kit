@@ -76,7 +76,7 @@ class ANGLESurfaceManager {
   // D3D 11
   ID3D11Device* d3d_11_device_ = nullptr;
   ID3D11DeviceContext* d3d_11_device_context_ = nullptr;
-  Microsoft::WRL::ComPtr<ID3D11Texture2D> internal_d3d_11_texture_2D_;
+  // Single shared texture for both ANGLE rendering and Flutter reading
   Microsoft::WRL::ComPtr<ID3D11Texture2D> d3d_11_texture_2D_;
   // ANGLE
   EGLSurface surface_ = EGL_NO_SURFACE;

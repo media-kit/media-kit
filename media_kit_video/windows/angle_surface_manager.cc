@@ -59,8 +59,6 @@ void ANGLESurfaceManager::Draw(std::function<void()> callback) {
 void ANGLESurfaceManager::Read() {
   ::WaitForSingleObject(mutex_, INFINITE);
   if (d3d_11_device_context_ != nullptr) {
-    d3d_11_device_context_->CopyResource(d3d_11_texture_2D_.Get(),
-                                         internal_d3d_11_texture_2D_.Get());
     d3d_11_device_context_->Flush();
   }
   ::ReleaseMutex(mutex_);
@@ -133,14 +131,12 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
     surface_ = EGL_NO_SURFACE;
   }
   // Release D3D 11 texture(s).
-  if (internal_d3d_11_texture_2D_) {
-    internal_d3d_11_texture_2D_->Release();
-    internal_d3d_11_texture_2D_ = nullptr;
-  }
   if (d3d_11_texture_2D_) {
     d3d_11_texture_2D_->Release();
     d3d_11_texture_2D_ = nullptr;
   }
+  internal_handle_ = nullptr;
+  handle_ = nullptr;
 }
 
 bool ANGLESurfaceManager::CreateD3DTexture() {
@@ -203,35 +199,23 @@ bool ANGLESurfaceManager::CreateD3DTexture() {
   d3d11_texture2D_desc.CPUAccessFlags = 0;
   d3d11_texture2D_desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
 
-  // The general idea is to create two textures, one that is used to |Draw|
-  // using ANGLE & another one that is used for |Read| the rendered content
-  // using |handle|.
-  // The internal texture is copied to the public texture once a frame is
-  // requested using |ID3D11DeviceContext::CopyResource|. This prevents any kind
-  // of synchronization issues.
-
-  // Internal.
+  // Create the single shared texture
   auto hr = d3d_11_device_->CreateTexture2D(&d3d11_texture2D_desc, nullptr,
-                                            &internal_d3d_11_texture_2D_);
+                                            &d3d_11_texture_2D_);
   CHECK_HRESULT("ID3D11Device::CreateTexture2D");
   auto resource = Microsoft::WRL::ComPtr<IDXGIResource>{};
-  hr = internal_d3d_11_texture_2D_.As(&resource);
-  CHECK_HRESULT("ID3D11Texture2D::As");
-  // Retrieve the shared |HANDLE| for interop.
-  hr = resource->GetSharedHandle(&internal_handle_);
-  CHECK_HRESULT("IDXGIResource::GetSharedHandle");
-  internal_d3d_11_texture_2D_->AddRef();
-
-  // External.
-  hr = d3d_11_device_->CreateTexture2D(&d3d11_texture2D_desc, nullptr,
-                                       &d3d_11_texture_2D_);
-  CHECK_HRESULT("ID3D11Device::CreateTexture2D");
   hr = d3d_11_texture_2D_.As(&resource);
   CHECK_HRESULT("ID3D11Texture2D::As");
-  // Retrieve the shared |HANDLE| for interop.
+  // Retrieve the shared HANDLE for interop with Flutter
   hr = resource->GetSharedHandle(&handle_);
   CHECK_HRESULT("IDXGIResource::GetSharedHandle");
   d3d_11_texture_2D_->AddRef();
+  
+  // Also set internal_handle_ to the same handle for EGL binding
+  internal_handle_ = handle_;
+
+  std::cout << "media_kit: ANGLESurfaceManager: Created shared texture: "
+            << width_ << "x" << height_ << std::endl;
 
   return true;
 }
