@@ -31,13 +31,29 @@ static void texture_gl_init(TextureGL* self) {
 
 static void texture_gl_dispose(GObject* object) {
   TextureGL* self = TEXTURE_GL(object);
-  // Free texture & FBO.
-  if (self->name != 0) {
-    glDeleteTextures(1, &self->name);
-    self->name = 0;
+
+  // Only delete OpenGL resources if there is a valid OpenGL context.
+  gboolean deleted = FALSE;
+  if(self->video_output != NULL){
+    GdkGLContext* ctx = video_output_get_gdk_gl_context(self->video_output);
+    if (ctx != NULL) {
+      gdk_gl_context_make_current(ctx);
+      if (gdk_gl_context_get_current() == ctx) {
+        if (self->name != 0) {
+          glDeleteTextures(1, &self->name);
+          self->name = 0;
+        }
+        if (self->fbo != 0) {
+          glDeleteFramebuffers(1, &self->fbo);
+          self->fbo = 0;
+        }
+        deleted = TRUE;
+      }
+    }
   }
-  if (self->fbo != 0) {
-    glDeleteFramebuffers(1, &self->fbo);
+
+  if(!deleted){
+    self->name = 0;
     self->fbo = 0;
   }
   self->current_width = 1;
