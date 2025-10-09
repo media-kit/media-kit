@@ -65,13 +65,6 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
                                      GError** error) {
   TextureGL* self = TEXTURE_GL(texture);
   VideoOutput* video_output = self->video_output;
-  
-  // Ensure the OpenGL context is current before any GL operations.
-  GdkGLContext* gdk_gl_context = video_output_get_gdk_gl_context(video_output);
-  if (gdk_gl_context != NULL) {
-    gdk_gl_context_make_current(gdk_gl_context);
-  }
-  
   gint32 required_width = (guint32)video_output_get_width(video_output);
   gint32 required_height = (guint32)video_output_get_height(video_output);
   if (required_width > 0 && required_height > 0) {
