@@ -109,6 +109,8 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
       // OpenGL context must be made current before creating mpv render context.
       gdk_gl_context_realize(self->gdk_gl_context, &error);
       if (error == NULL) {
+        // Make the OpenGL context current.
+        gdk_gl_context_make_current(self->gdk_gl_context);
         // Create |FlTextureGL| and register it.
         self->texture_gl = texture_gl_new(self);
         if (fl_texture_registrar_register_texture(
