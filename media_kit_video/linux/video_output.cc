@@ -38,6 +38,12 @@ G_DEFINE_TYPE(VideoOutput, video_output, G_TYPE_OBJECT)
 static void video_output_dispose(GObject* object) {
   VideoOutput* self = VIDEO_OUTPUT(object);
   self->destroyed = TRUE;
+
+  // Make sure that no more callbacks are invoked from mpv.
+  if (self->render_context) {
+    mpv_render_context_set_update_callback(self->render_context, NULL, NULL);
+  }
+
   // H/W
   if (self->texture_gl) {
     fl_texture_registrar_unregister_texture(self->texture_registrar,
