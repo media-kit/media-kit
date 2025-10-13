@@ -68,7 +68,10 @@ class AndroidVideoController extends PlatformVideoController {
           if (configuration.vo == 'mediacodec_embed') 'vid': vidValue,
         },
       );
-      await player.seek(Duration.zero);
+      // Instead of seeking to the start (Duration.zero), seek to the current playback position
+      // without jumping the user to the start of the media.
+      final currentPosition = player.state.position;
+      await player.seek(currentPosition);
     });
   }
 
