@@ -13,7 +13,7 @@
 
 #include <client.h>
 #include <render.h>
-#include <render_gl.h>
+#include <render_dxgi.h>
 
 #include <future>
 #include <memory>
@@ -22,7 +22,7 @@
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
 
-#include "angle_surface_manager.h"
+#include "d3d11_renderer.h"
 #include "thread_pool.h"
 
 typedef struct _VideoOutputConfiguration {
@@ -43,8 +43,8 @@ class VideoOutput {
   int64_t texture_id() const { return texture_id_; }
   int64_t width() const {
     // H/W
-    if (surface_manager_ != nullptr && texture_id_) {
-      return surface_manager_->width();
+    if (d3d11_renderer_ != nullptr && texture_id_) {
+      return d3d11_renderer_->width();
     }
     // S/W
     if (pixel_buffer_ != nullptr && texture_id_) {
@@ -54,8 +54,8 @@ class VideoOutput {
   }
   int64_t height() const {
     // H/W
-    if (surface_manager_ != nullptr && texture_id_) {
-      return surface_manager_->height();
+    if (d3d11_renderer_ != nullptr && texture_id_) {
+      return d3d11_renderer_->height();
     }
     // S/W
     if (pixel_buffer_ != nullptr && texture_id_) {
@@ -110,7 +110,7 @@ class VideoOutput {
 
   // H/W rendering.
 
-  std::unique_ptr<ANGLESurfaceManager> surface_manager_ = nullptr;
+  std::unique_ptr<D3D11Renderer> d3d11_renderer_ = nullptr;
   std::unordered_map<int64_t,
                      std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor>>
       textures_ = {};

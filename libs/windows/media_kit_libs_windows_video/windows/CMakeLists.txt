@@ -64,11 +64,11 @@ function(check_directory_exists_and_not_empty dir result_var)
 endfunction()
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20250514-git-4522929.7z")
+set(LIBMPV "mpv-dev-x86_64-20251014-git-ad59ff1.7z")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/Predidit/libmpv-win32-video-cmake/releases/download/20250514/${LIBMPV}")
-set(LIBMPV_MD5 "3ad17fccbbbe4b100889020cace5e57f")
+set(LIBMPV_URL "https://github.com/Predidit/libmpv-win32-video-cmake/releases/download/20251014/${LIBMPV}")
+set(LIBMPV_MD5 "6c523b6db73bfb8553ee7dd5db12cb9e")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
@@ -94,39 +94,6 @@ if(NOT LIBMPV_SRC_VALID)
     COMMAND rmdir "\"${LIBMPV_SRC}/include\"" /S /Q
     COMMAND ren "\"${LIBMPV_SRC}/mpv\"" "\"include\""
     WORKING_DIRECTORY "${LIBMPV_SRC}"
-  )
-endif()
-
-# ------------------------------------------------------------------------------
-
-# ANGLE archive containing the pre-built shared libraries & headers.
-set(ANGLE "ANGLE.7z")
-
-# Download URL & MD5 hash of the ANGLE archive.
-set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.1/ANGLE.7z")
-set(ANGLE_MD5 "e866f13e8d552348058afaafe869b1ed")
-
-# Download location of the ANGLE archive.
-set(ANGLE_ARCHIVE "${CMAKE_BINARY_DIR}/${ANGLE}")
-set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
-
-download_and_verify(
-  ${ANGLE_URL}
-  ${ANGLE_MD5}
-  ${ANGLE_ARCHIVE}
-)
-
-check_directory_exists_and_not_empty(${ANGLE_SRC} ANGLE_SRC_VALID)
-
-# Extract the ANGLE archive.
-if(NOT ANGLE_SRC_VALID)
-  message(STATUS "Extracting ${ANGLE}...")
-  make_directory("${ANGLE_SRC}")
-  add_custom_target("${PROJECT_NAME}_ANGLE_EXTRACT" ALL)
-  add_custom_command(
-    TARGET "${PROJECT_NAME}_ANGLE_EXTRACT"
-    COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${ANGLE_ARCHIVE}\""
-    WORKING_DIRECTORY "${ANGLE_SRC}"
   )
 endif()
 
@@ -167,11 +134,5 @@ target_link_libraries(
 set(
   media_kit_libs_windows_video_bundled_libraries
   "${LIBMPV_SRC}/libmpv-2.dll"
-  "${ANGLE_SRC}/d3dcompiler_47.dll"
-  "${ANGLE_SRC}/libEGL.dll"
-  "${ANGLE_SRC}/libGLESv2.dll"
-  "${ANGLE_SRC}/vk_swiftshader.dll"
-  "${ANGLE_SRC}/vulkan-1.dll"
-  "${ANGLE_SRC}/zlib.dll"
   PARENT_SCOPE
 )

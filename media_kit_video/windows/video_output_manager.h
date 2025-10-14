@@ -34,8 +34,7 @@ class VideoOutputManager {
       std::function<void(int64_t, int64_t, int64_t)> texture_update_callback);
 
   // Sets the required video output size.
-  // This forces |VideoOutput| to resize the internal OpenGL surface / D3D
-  // texture.
+  // This forces |VideoOutput| to resize the internal D3D11 texture.
   void SetSize(int64_t handle,
                std::optional<int64_t> width,
                std::optional<int64_t> height);
@@ -47,8 +46,8 @@ class VideoOutputManager {
 
  private:
   std::mutex mutex_ = std::mutex();
-  // All the operations involving ANGLE or EGL or libmpv must be performed on
-  // same single thread to prevent any race conditions or invalid ANGLE usage.
+  // All the operations involving Direct3D 11 or libmpv must be performed on
+  // same single thread to prevent any race conditions or invalid usage.
   // Not doing so results in access violations & crashes.
   //
   // Technically, the correct place to do all the video rendering (& thus
@@ -58,20 +57,19 @@ class VideoOutputManager {
   // worker thread which queues all the rendering related jobs & performs them
   // orderly. |ThreadPool| is exactly that.
   //
-  // All of the following tasks involve ANGLE or OpenGL context etc. etc.
+  // All of the following tasks involve Direct3D 11 context etc.
   // Following operations are performed through the |ThreadPool|:
   //
-  // * Rendering of video frame i.e. |mpv_render_context_render| (also involves
-  //   |eglMakeCurrent| etc.) after being notified by
-  //   |mpv_render_context_set_update_callback|.
+  // * Rendering of video frame i.e. |mpv_render_context_render| after being
+  //   notified by |mpv_render_context_set_update_callback|.
   // * Creation / Disposal of new |VideoOutput|.
   //     * For creation, |mpv_render_context_create| & instantiation of a new
-  //       |ANGLESurfaceManager| is done through |ThreadPool| (in |VideoOutput|
+  //       |D3D11Renderer| is done through |ThreadPool| (in |VideoOutput|
   //       constructor).
   //     * For disposal, |ThreadPool| ensures that all the pending |Render| or
-  //       |Resize| tasks are completed before freeing the |ANGLESurfaceManager|
+  //       |Resize| tasks are completed before freeing the |D3D11Renderer|
   //       & |mpv_render_context| etc.
-  // * Resizing of |ANGLESurfaceManager| & creation of newly sized Flutter
+  // * Resizing of |D3D11Renderer| & creation of newly sized Flutter
   //   textures (|flutter::GpuSurfaceTexture| & |flutter::PixelBufferTexture|).
   //
   // Creating a |ThreadPool| with maximum number of worker threads as 1, ensures

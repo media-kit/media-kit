@@ -15,7 +15,6 @@ set(PLUGIN_NAME "media_kit_video_plugin")
 # This is shipped as part of package:media_kit_libs_*** package(s).
 # Must be built before this target.
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
-set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
 
 # Deal with MSVC incompatiblity
 add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
@@ -23,12 +22,11 @@ add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
 if(MEDIA_KIT_LIBS_AVAILABLE)
   include_directories(
     "${LIBMPV_SRC}/include"
-    "${ANGLE_SRC}/include"
   )
 
   add_library(
     ${PLUGIN_NAME} SHARED
-    "angle_surface_manager.cc"
+    "d3d11_renderer.cc"
     "media_kit_video_plugin_c_api.cc"
     "media_kit_video_plugin.cc"
     "video_output_manager.cc"
@@ -58,10 +56,8 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     flutter
     flutter_wrapper_plugin
 
-    # Link to libmpv & ANGLE.
+    # Link to libmpv.
     "${LIBMPV_SRC}/libmpv.dll.a"
-    "${ANGLE_SRC}/lib/libEGL.dll.lib"
-    "${ANGLE_SRC}/lib/libGLESv2.dll.lib"
   )
 else()
   message(NOTICE "media_kit: WARNING: package:media_kit_libs_*** not found.")
@@ -83,7 +79,7 @@ else()
     ${PLUGIN_NAME} PRIVATE
     FLUTTER_PLUGIN_IMPL
 
-    # Add macro to indicate that libmpv & ANGLE from package:media_kit_libs_*** are not found.
+    # Add macro to indicate that libmpv from package:media_kit_libs_*** are not found.
     "MEDIA_KIT_LIBS_NOT_FOUND=1"
   )
 
