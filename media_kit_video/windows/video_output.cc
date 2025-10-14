@@ -305,7 +305,6 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
             kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle, [&](auto, auto) {
               std::lock_guard<std::mutex> lock(textures_mutex_);
               if (texture_id_) {
-                d3d11_renderer_->CopyTexture();
                 return textures_.at(texture_id_).get();
               } else {
                 return (FlutterDesktopGpuSurfaceDescriptor*)nullptr;
