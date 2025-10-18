@@ -21,6 +21,7 @@ abstract class _Track {
   // ----------------------------------------
   final bool? image; /* image */
   final bool? albumart; /* albumart */
+  final bool? isDefault; /* default */
   final String? codec; /* codec */
   final String? decoder; /* decoder-desc */
   final int? w; /* demux-w */
@@ -42,6 +43,7 @@ abstract class _Track {
     this.language, {
     this.image,
     this.albumart,
+    this.isDefault,
     this.codec,
     this.decoder,
     this.w,
@@ -80,6 +82,7 @@ abstract class _Track {
       '$language, '
       'image: $image, '
       'albumart: $albumart, '
+      'isDefault: $isDefault, '
       'codec: $codec, '
       'decoder: $decoder, '
       'w: $w, '
@@ -111,6 +114,7 @@ class VideoTrack extends _Track {
     super.language, {
     super.image,
     super.albumart,
+    super.isDefault,
     super.codec,
     super.decoder,
     super.w,
@@ -151,6 +155,7 @@ class AudioTrack extends _Track {
     super.language, {
     super.image,
     super.albumart,
+    super.isDefault,
     super.codec,
     super.decoder,
     super.w,
@@ -226,6 +231,7 @@ class SubtitleTrack extends _Track {
     super.language, {
     super.image,
     super.albumart,
+    super.isDefault,
     super.codec,
     super.decoder,
     super.w,
