@@ -478,7 +478,7 @@ typedef VideoControlsBuilder = Widget Function(VideoState state);
 /// Makes the native window enter fullscreen.
 Future<void> defaultEnterNativeFullscreen() async {
   try {
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (Platform.isAndroid || Platform.isIOS || Platform.operatingSystem == 'ohos') {
       await Future.wait(
         [
           SystemChrome.setEnabledSystemUIMode(
@@ -508,7 +508,7 @@ Future<void> defaultEnterNativeFullscreen() async {
 /// Makes the native window exit fullscreen.
 Future<void> defaultExitNativeFullscreen() async {
   try {
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (Platform.isAndroid || Platform.isIOS || Platform.operatingSystem == 'ohos') {
       await Future.wait(
         [
           SystemChrome.setEnabledSystemUIMode(

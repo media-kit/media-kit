@@ -3,9 +3,9 @@ import {
   FlutterPluginBinding,
 } from "@ohos/flutter_ohos";
 
-export class MediaKitLibsOhOSVideoPlugin implements FlutterPlugin {
+export default class MediaKitLibsOhosPlugin implements FlutterPlugin {
   getUniqueClassName(): string {
-    return "MediaKitLibsOhOSVideoPlugin"
+    return "MediaKitLibsOhosPlugin"
   }
 
   onAttachedToEngine(binding: FlutterPluginBinding): void {

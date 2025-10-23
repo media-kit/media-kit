@@ -20,5 +20,5 @@ dev_dependencies:
 flutter:
   plugin:
     platforms:
-      linux:
+      ohos:
         pluginClass: MediaKitLibsOhosPlugin

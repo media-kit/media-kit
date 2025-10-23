@@ -1,0 +1,10 @@
+{
+  "module": {
+    "name": "media_kit_video",
+    "type": "har",
+    "deviceTypes": [
+      "default",
+      "tablet"
+    ]
+  }
+}
