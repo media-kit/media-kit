@@ -1,0 +1,10 @@
+{
+  "module": {
+    "name": "media_kit_libs_ohos",
+    "type": "har",
+    "deviceTypes": [
+      "default",
+      "tablet",
+    ]
+  }
+}
