@@ -3,7 +3,7 @@
   "buildOption": {
     "externalNativeOptions": {
       "path": "./src/main/cpp/CMakeLists.txt",
-      "arguments": "",
+      "arguments": ["-DOHOS_STL=c++_shared"],
       "abiFilters": ["arm64-v8a"],
       "cppFlags": "",
     }
