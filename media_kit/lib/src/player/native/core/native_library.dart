@@ -68,8 +68,6 @@ abstract class NativeLibrary {
       ],
       'ohos': [
         'libmpv.so.2',
-        'libxml2.so.16',
-        'libshaderc_shared.so.1',
       ],
     }[Platform.operatingSystem];
     if (names != null) {

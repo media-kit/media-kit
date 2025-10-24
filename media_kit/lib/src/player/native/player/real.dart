@@ -8,6 +8,7 @@ import 'dart:ffi';
 import 'dart:async';
 import 'dart:collection';
 import 'dart:typed_data';
+import 'package:media_kit/src/player/native/utils/ohos_helper.dart';
 import 'package:path/path.dart';
 import 'package:meta/meta.dart';
 import 'package:image/image.dart';
@@ -41,6 +42,7 @@ import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 /// Initializes the native backend for package:media_kit.
 void nativeEnsureInitialized({String? libmpv}) {
   AndroidHelper.ensureInitialized();
+  OhosHelper.ensureInitialized();
   NativeLibrary.ensureInitialized(libmpv: libmpv);
   NativeReferenceHolder.ensureInitialized((references) async {
     if (references.isEmpty) {
