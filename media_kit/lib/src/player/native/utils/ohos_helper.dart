@@ -33,17 +33,6 @@ abstract class OhosHelper {
         } catch (e) {
           print("load libmpv failed: $e");
         }
-        // Look for the required symbols.
-        try {
-          libcpp?.lookup('_ZNSt4__n18to_charsEPcS0_f');
-        } catch (e) {
-          print("symbol not found: $e");
-        }
-        try {
-          libmpv?.lookupFunction('mpv_create');
-        } catch (e) {
-          print("symbol not found: $e");
-        }
       }
     } catch (_) {}
   }
