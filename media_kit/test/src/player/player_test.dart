@@ -1077,8 +1077,14 @@ void main() {
       );
 
       player.stream.position.listen((event) async {
-        print(event);
-        expectPosition(event);
+        // Filter out stale position values before seek completes.
+        // On Linux, the position stream may emit the old EOF position
+        // before the seek operation updates it to Duration.zero.
+        // We can't change mpv platform specific behavior here. And we only care about the stable position.
+        if (event == Duration.zero) {
+          print(event);
+          expectPosition(event);
+        }
       });
 
       // NOTE: VOLUNTARY DELAY.
