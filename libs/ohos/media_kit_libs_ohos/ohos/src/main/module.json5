@@ -3,8 +3,11 @@
     "name": "media_kit_libs_ohos",
     "type": "har",
     "deviceTypes": [
-      "default",
+      "phone",
       "tablet",
+      "2in1",
+      "car",
+      "tv"
     ]
   }
 }

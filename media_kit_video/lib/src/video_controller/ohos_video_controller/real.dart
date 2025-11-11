@@ -177,8 +177,7 @@ class OhosVideoController extends PlatformVideoController {
         'force-window': 'yes',
         'sub-use-margins': 'no',
         'sub-scale-with-window': 'no',
-        'sub-font': 'HarmonyOS Sans SC',
-        'sub-fonts-dir': '/system/fonts',
+        'osd-font': 'HarmonyOS Sans SC',
       },
     );
 

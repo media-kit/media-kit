@@ -3,8 +3,11 @@
     "name": "media_kit_video",
     "type": "har",
     "deviceTypes": [
-      "default",
-      "tablet"
+      "phone",
+      "tablet",
+      "2in1",
+      "car",
+      "tv"
     ]
   }
 }

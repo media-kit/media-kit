@@ -9,6 +9,8 @@
 import Log from '@ohos/flutter_ohos/src/main/ets/util/Log';
 import { SurfaceTextureEntry } from '@ohos/flutter_ohos';
 import { TextureUpdateCallback } from './TextureUpdateCallback';
+import { common } from '@kit.AbilityKit';
+import { window } from '@kit.ArkUI';
 
 const TAG = "VideoOutput";
 
@@ -17,12 +19,15 @@ export class VideoOutput {
   private wid: number = 0;
   private textureUpdateCallback: TextureUpdateCallback;
   private surfaceProducer: SurfaceTextureEntry;
-  private width: number = 0;
-  private height: number = 0;
+  context: common.UIAbilityContext;
 
-  constructor(surfaceProducer: SurfaceTextureEntry, textureUpdateCallback: TextureUpdateCallback) {
+  constructor(surfaceProducer: SurfaceTextureEntry, textureUpdateCallback: TextureUpdateCallback,
+    context: common.UIAbilityContext) {
     this.surfaceProducer = surfaceProducer;
     this.textureUpdateCallback = textureUpdateCallback;
+    this.context = context;
+
+    this.setSurfaceSize(1, 1, true);
   }
 
   dispose(): void {
@@ -36,28 +41,37 @@ export class VideoOutput {
 
   async setSurfaceSize(width: number, height: number, force: boolean = false): Promise<void> {
     try {
-      if (!force && this.width == width && this.height == height) {
+      let windowProperty = await window.getLastWindow(this.context);
+      const w = windowProperty.getWindowProperties().windowRect.width;
+      const h = windowProperty.getWindowProperties().windowRect.height;
+      if (!force && w == width && h == height) {
         return;
       }
 
-      this.width = width;
-      this.height = height;
-
+      windowProperty.resize(width, height);
       this.onSurfaceCreated();
     } catch (e) {
-      Log.e(TAG, `setSurfaceSize: ${e}`);
+      Log.e(TAG, `setSurfaceSize error: ${e}`);
     }
   }
 
   private async onSurfaceCreated(): Promise<void> {
     Log.i(TAG, "onSurfaceCreated");
-    this.id = this.surfaceProducer.getTextureId();
-    this.wid = this.surfaceProducer.getNativeWindowId();
-    this.textureUpdateCallback.onTextureUpdate(this.id, this.wid, this.width, this.height);
+    try {
+      this.id = this.surfaceProducer.getTextureId();
+      this.wid = this.surfaceProducer.getSurfaceId();
+      let windowProperty = await window.getLastWindow(this.context);
+      const width = windowProperty.getWindowProperties().windowRect.width;
+      const height = windowProperty.getWindowProperties().windowRect.height;
+      this.textureUpdateCallback.onTextureUpdate(this.id, this.wid, width, height);
+    } catch (e) {
+      Log.e(TAG, `onSurfaceCreated error: ${e}`);
+    }
   }
 
   private async onSurfaceDestroyed(): Promise<void> {
     Log.i(TAG, "onSurfaceDestroyed");
-    this.textureUpdateCallback.onTextureUpdate(this.id, 0, this.width, this.height);
+    this.textureUpdateCallback.onTextureUpdate(this.id, 0, 0, 0);
+    this.surfaceProducer.release();
   }
 }

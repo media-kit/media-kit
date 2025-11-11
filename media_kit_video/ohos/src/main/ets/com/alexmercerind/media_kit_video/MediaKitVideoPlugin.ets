@@ -13,16 +13,24 @@ import {
   MethodCallHandler,
   MethodChannel,
   MethodResult,
+  AbilityAware,
+  AbilityPluginBinding
 } from '@ohos/flutter_ohos';
 import { TextureUpdateCallback } from './TextureUpdateCallback';
 import { Rect, SizeData, Utils } from './Utils';
 import { VideoOutputManager } from './VideoOutputManager';
 
-export default class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler {
+export default class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler, AbilityAware {
   private channel: MethodChannel | null = null;
   private videoOutputManager: VideoOutputManager | null = null;
+  binding: FlutterPluginBinding | null = null;
 
-  constructor() {
+  onAttachedToAbility(binding: AbilityPluginBinding): void {
+    this.videoOutputManager = new VideoOutputManager(this.binding!.getTextureRegistry(), binding.getAbility().context);
+  }
+
+  onDetachedFromAbility(): void {
+    return;
   }
 
   getUniqueClassName(): string {
@@ -32,8 +40,7 @@ export default class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHan
   onAttachedToEngine(binding: FlutterPluginBinding): void {
     this.channel = new MethodChannel(binding.getBinaryMessenger(), "com.alexmercerind/media_kit_video");
     this.channel.setMethodCallHandler(this);
-
-    this.videoOutputManager = new VideoOutputManager(binding.getTextureRegistry());
+    this.binding = binding;
   }
 
   onDetachedFromEngine(binding: FlutterPluginBinding): void {
@@ -60,7 +67,7 @@ export default class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHan
               wid: wid,
               rect: rect,
             }
-            this.channel?.invokeMethod("VideoOutput.Resize", JSON.stringify(args));
+            this.channel?.invokeMethod("VideoOutput.Resize", args);
           }
         }
         this.videoOutputManager?.create(handle, textureUpdateCallback);

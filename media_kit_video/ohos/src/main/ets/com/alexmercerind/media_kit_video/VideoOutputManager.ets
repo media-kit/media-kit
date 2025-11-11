@@ -10,15 +10,18 @@ import Log from '@ohos/flutter_ohos/src/main/ets/util/Log';
 import { TextureRegistry } from '@ohos/flutter_ohos';
 import { VideoOutput } from './VideoOutput';
 import { TextureUpdateCallback } from './TextureUpdateCallback';
+import { common } from '@kit.AbilityKit';
 
 const TAG = "VideoOutputManager";
 
 export class VideoOutputManager {
   private videoOutputs: Map<number, VideoOutput> = new Map();
   private textureRegistryReference: TextureRegistry;
+  context: common.UIAbilityContext;
 
-  constructor(textureRegistryReference: TextureRegistry) {
+  constructor(textureRegistryReference: TextureRegistry, context: common.UIAbilityContext) {
     this.textureRegistryReference = textureRegistryReference;
+    this.context = context;
   }
 
   async create(handle: number, textureUpdateCallback: TextureUpdateCallback): Promise<void> {
@@ -27,7 +30,7 @@ export class VideoOutputManager {
     if (!this.videoOutputs.has(handle)) {
       const textureId = this.textureRegistryReference.getTextureId();
       const videoOutput =
-        new VideoOutput(this.textureRegistryReference.registerTexture(textureId), textureUpdateCallback);
+        new VideoOutput(this.textureRegistryReference.registerTexture(textureId), textureUpdateCallback, this.context);
       this.videoOutputs.set(handle, videoOutput);
     }
   }
