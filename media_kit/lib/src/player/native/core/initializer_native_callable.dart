@@ -60,6 +60,11 @@ class InitializerNativeCallable {
   void dispose(Pointer<generated.mpv_handle> ctx) {
     _locks.remove(ctx.address);
     _eventCallbacks.remove(ctx.address);
+
+    // Clear the wakeup callback in libmpv before closing NativeCallable
+    // to prevent libmpv from invoking a deleted callback
+    mpv.mpv_set_wakeup_callback(ctx, nullptr, nullptr);
+    
     _wakeUpNativeCallables.remove(ctx.address)?.close();
   }
 
