@@ -102,8 +102,11 @@ class Player {
   /// {@macro player}
   Player({
     PlayerConfiguration configuration = const PlayerConfiguration(),
+    PlatformPlayer? platformPlayer,
   }) {
-    if (UniversalPlatform.isWindows) {
+    if (platformPlayer != null) {
+      platform = platformPlayer;
+    } else if (UniversalPlatform.isWindows) {
       platform = NativePlayer(configuration: configuration);
     } else if (UniversalPlatform.isLinux) {
       platform = NativePlayer(configuration: configuration);
@@ -315,9 +318,7 @@ class Player {
   /// On the native backend, if [includeLibassSubtitles] is `true` *and*
   /// [PlayerConfiguration.libass] is `true`, then the screenshot will include
   /// the on-screen subtitles. This option is ignored by the web backend.
-  Future<Uint8List?> screenshot(
-      {String? format = 'image/jpeg',
-      bool includeLibassSubtitles = false}) async {
+  Future<Uint8List?> screenshot({String? format = 'image/jpeg', bool includeLibassSubtitles = false}) async {
     return platform?.screenshot(
       format: format,
       includeLibassSubtitles: includeLibassSubtitles,
