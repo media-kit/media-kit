@@ -7,6 +7,8 @@
  */
 
 import deviceInfo from '@ohos.deviceInfo';
+import { window } from '@kit.ArkUI';
+import { common } from '@kit.AbilityKit';
 
 export class Utils {
   static isEmulator(): boolean {
@@ -15,6 +17,32 @@ export class Utils {
     } else {
       return false;
     }
+  }
+
+  static enterFullScreen(context: common.UIAbilityContext): void {
+    window.getLastWindow(context).then((lastWindow) => {
+      if (deviceInfo.deviceType == '2in1') {
+        lastWindow.maximize();
+        return;
+      }
+      lastWindow.enableLandscapeMultiWindow();
+      lastWindow.setPreferredOrientation(window.Orientation.USER_ROTATION_LANDSCAPE);
+      lastWindow.setWindowSystemBarEnable([]);
+    })
+  }
+
+  static exitFullScreen(context: common.UIAbilityContext): void {
+    window.getLastWindow(context).then((lastWindow) => {
+      if (deviceInfo.deviceType == '2in1') {
+        lastWindow.recover();
+        return;
+      }
+      lastWindow.disableLandscapeMultiWindow();
+      if (deviceInfo.deviceType == 'phone') {
+        lastWindow.setPreferredOrientation(window.Orientation.USER_ROTATION_PORTRAIT);
+      }
+      lastWindow.setWindowSystemBarEnable(['status']);
+    })
   }
 }
 

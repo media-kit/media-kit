@@ -17,11 +17,9 @@ const TAG = "VideoOutputManager";
 export class VideoOutputManager {
   private videoOutputs: Map<number, VideoOutput> = new Map();
   private textureRegistryReference: TextureRegistry;
-  context: common.UIAbilityContext;
 
-  constructor(textureRegistryReference: TextureRegistry, context: common.UIAbilityContext) {
+  constructor(textureRegistryReference: TextureRegistry) {
     this.textureRegistryReference = textureRegistryReference;
-    this.context = context;
   }
 
   async create(handle: number, textureUpdateCallback: TextureUpdateCallback): Promise<void> {
@@ -30,7 +28,8 @@ export class VideoOutputManager {
     if (!this.videoOutputs.has(handle)) {
       const textureId = this.textureRegistryReference.getTextureId();
       const videoOutput =
-        new VideoOutput(this.textureRegistryReference, this.textureRegistryReference.registerTexture(textureId), textureUpdateCallback, this.context);
+        new VideoOutput(this.textureRegistryReference, this.textureRegistryReference.registerTexture(textureId),
+          textureUpdateCallback);
       this.videoOutputs.set(handle, videoOutput);
     }
   }

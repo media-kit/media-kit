@@ -1,4 +1,3 @@
-
 {
   "module": {
     "name": "entry",
@@ -25,6 +24,7 @@
         "startWindowIcon": "$media:icon",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
+        "orientation": "auto_rotation_unspecified",
         "skills": [
           {
             "entities": [
@@ -38,7 +38,9 @@
       }
     ],
     "requestPermissions": [
-      {"name" :  "ohos.permission.INTERNET"},
+      {
+        "name": "ohos.permission.INTERNET"
+      },
     ]
   }
 }

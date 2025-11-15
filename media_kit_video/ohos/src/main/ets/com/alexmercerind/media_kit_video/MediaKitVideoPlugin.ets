@@ -19,14 +19,17 @@ import {
 import { TextureUpdateCallback } from './TextureUpdateCallback';
 import { Rect, SizeData, Utils } from './Utils';
 import { VideoOutputManager } from './VideoOutputManager';
+import { common } from '@kit.AbilityKit';
 
 export default class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler, AbilityAware {
   private channel: MethodChannel | null = null;
   private videoOutputManager: VideoOutputManager | null = null;
   binding: FlutterPluginBinding | null = null;
+  context: common.UIAbilityContext | null = null;
 
   onAttachedToAbility(binding: AbilityPluginBinding): void {
-    this.videoOutputManager = new VideoOutputManager(this.binding!.getTextureRegistry(), binding.getAbility().context);
+    this.videoOutputManager = new VideoOutputManager(this.binding!.getTextureRegistry());
+    this.context = binding.getAbility().context;
   }
 
   onDetachedFromAbility(): void {
@@ -90,6 +93,16 @@ export default class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHan
       }
       case "Utils.IsEmulator": {
         result.success(Utils.isEmulator());
+        break;
+      }
+      case "Utils.EnterNativeFullscreen": {
+        Utils.enterFullScreen(this.context!);
+        result.success(null);
+        break;
+      }
+      case "Utils.ExitNativeFullscreen": {
+        Utils.exitFullScreen(this.context!);
+        result.success(null);
         break;
       }
       default: {

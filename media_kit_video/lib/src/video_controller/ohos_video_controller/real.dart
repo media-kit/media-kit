@@ -47,16 +47,8 @@ class OhosVideoController extends PlatformVideoController {
   /// Listener for updating the --wid property.
   Future<void> widListener() {
     return lock.synchronized(() async {
-      final width = rect.value?.width.toInt() ?? 1;
-      final height = rect.value?.height.toInt() ?? 1;
-      final ohosSurfaceSizeValue = [width, height].join('x');
       final widValue = wid.value?.toString() ?? '0';
-      await setProperties(
-        {
-          'ohos-surface-size': ohosSurfaceSizeValue,
-          'wid': widValue,
-        },
-      );
+      await setProperties({'wid': widValue});
       // Instead of seeking to the start (Duration.zero), seek to the current playback position
       // without jumping the user to the start of the media.
       final currentPosition = player.state.position;
@@ -103,6 +95,9 @@ class OhosVideoController extends PlatformVideoController {
             'height': height.toString(),
           },
         );
+        await setProperties({
+          'ohos-surface-size': [width, height].join('x'),
+        });
 
         rect.value = Rect.fromLTWH(
           0.0,
@@ -181,6 +176,8 @@ class OhosVideoController extends PlatformVideoController {
       },
     );
 
+    await controller.setProperties({'ohos-surface-size': '1x1'});
+
     // Return the [PlatformVideoController].
     return controller;
   }
@@ -244,19 +241,6 @@ class OhosVideoController extends PlatformVideoController {
                     _controllers[handle]?.rect.value = rect;
                     _controllers[handle]?.id.value = id;
                     _controllers[handle]?.wid.value = wid;
-                    break;
-                  }
-                case 'VideoOutput.WaitUntilFirstFrameRenderedNotify':
-                  {
-                    // Notify about updated texture ID & [Rect].
-                    final int handle = call.arguments['handle'];
-                    debugPrint(handle.toString());
-                    // Notify about the first frame being rendered.
-                    final completer = _controllers[handle]
-                        ?.waitUntilFirstFrameRenderedCompleter;
-                    if (!(completer?.isCompleted ?? true)) {
-                      completer?.complete();
-                    }
                     break;
                   }
                 default:
