@@ -4,6 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: non_constant_identifier_names
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -22,6 +23,9 @@ Widget AdaptiveVideoControls(VideoState state) {
     case TargetPlatform.linux:
       return MaterialDesktopVideoControls(state);
     default:
+      if (Platform.operatingSystem == 'ohos') {
+        return MaterialVideoControls(state);
+      }
       return NoVideoControls(state);
   }
 }

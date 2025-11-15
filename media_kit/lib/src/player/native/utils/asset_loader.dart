@@ -70,6 +70,18 @@ class AssetLoader {
           ),
         ),
       );
+    } else if (Platform.operatingSystem == 'ohos') {
+      asset = path.normalize(
+        path.join(
+          path.dirname(Platform.resolvedExecutable),
+          '..',
+          '..',
+          'resources',
+          'rawfile',
+          'flutter_assets',
+          key,
+        ),
+      );
     } else {
       throw UnimplementedError(
         '$_kAssetScheme is not supported on ${Platform.operatingSystem}',
