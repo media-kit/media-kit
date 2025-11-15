@@ -30,7 +30,7 @@ export class VideoOutputManager {
     if (!this.videoOutputs.has(handle)) {
       const textureId = this.textureRegistryReference.getTextureId();
       const videoOutput =
-        new VideoOutput(this.textureRegistryReference.registerTexture(textureId), textureUpdateCallback, this.context);
+        new VideoOutput(this.textureRegistryReference, this.textureRegistryReference.registerTexture(textureId), textureUpdateCallback, this.context);
       this.videoOutputs.set(handle, videoOutput);
     }
   }

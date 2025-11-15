@@ -9,6 +9,7 @@
 import Log from '@ohos/flutter_ohos/src/main/ets/util/Log';
 import { SurfaceTextureEntry } from '@ohos/flutter_ohos';
 import { TextureUpdateCallback } from './TextureUpdateCallback';
+import { TextureRegistry } from '@ohos/flutter_ohos';
 import { common } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 
@@ -18,15 +19,16 @@ export class VideoOutput {
   private id: number = 0;
   private wid: number = 0;
   private textureUpdateCallback: TextureUpdateCallback;
+  private textureRegistry: TextureRegistry;
   private surfaceProducer: SurfaceTextureEntry;
   context: common.UIAbilityContext;
 
-  constructor(surfaceProducer: SurfaceTextureEntry, textureUpdateCallback: TextureUpdateCallback,
+  constructor(textureRegistry: TextureRegistry, surfaceProducer: SurfaceTextureEntry, textureUpdateCallback: TextureUpdateCallback,
     context: common.UIAbilityContext) {
     this.surfaceProducer = surfaceProducer;
     this.textureUpdateCallback = textureUpdateCallback;
     this.context = context;
-
+    this.textureRegistry = textureRegistry;
     this.setSurfaceSize(1, 1, true);
   }
 
@@ -44,11 +46,18 @@ export class VideoOutput {
       let windowProperty = await window.getLastWindow(this.context);
       const w = windowProperty.getWindowProperties().windowRect.width;
       const h = windowProperty.getWindowProperties().windowRect.height;
+      
+      // 检查是否需要更新大小
       if (!force && w == width && h == height) {
         return;
       }
-
+      
+      // 先调整窗口大小
       windowProperty.resize(width, height);
+
+      this.textureRegistry.setTextureBufferSize(this.id, width, height);
+      
+      // 确保surface创建并通知更新
       this.onSurfaceCreated();
     } catch (e) {
       Log.e(TAG, `setSurfaceSize error: ${e}`);
