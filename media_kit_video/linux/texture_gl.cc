@@ -250,9 +250,8 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     // Unbind FBO
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
-    // Flush and synchronize to ensure rendering is complete
+    // Flush to ensure rendering is complete
     glFlush();
-    glFinish();
     
     // Restore Flutter's context
     eglMakeCurrent(flutter_display, flutter_draw, flutter_read, flutter_context);

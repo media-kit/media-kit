@@ -18,7 +18,7 @@
 struct _VideoOutput {
   GObject parent_instance;
   TextureGL* texture_gl;
-  EGLDisplay egl_display; /* Isolated EGL display for mpv rendering. */
+  EGLDisplay egl_display; /* EGL display for mpv rendering (shared with flutter). */
   EGLContext egl_context; /* Isolated EGL context (non-shared). */
   EGLSurface egl_surface; /* Place holder surface for activating egl context */
   guint8* pixel_buffer;
@@ -173,11 +173,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
         g_printerr("media_kit: VideoOutput: Failed to query Flutter's EGL config ID.\n");
       }
       
-      if (config != NULL) {
-        // Initialize EGL version info
-        EGLint major = 0, minor = 0;
-        eglInitialize(self->egl_display, &major, &minor);
-        
+      if (config != NULL) {        
         // Create an isolated EGL context (NOT shared with Flutter)
         // This prevents OpenGL state pollution and resource contention
         EGLint context_attribs[] = {
