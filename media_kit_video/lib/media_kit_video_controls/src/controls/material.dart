@@ -530,8 +530,8 @@ class _MaterialVideoControls extends StatefulWidget {
 
 /// {@macro material_video_controls}
 class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
-  late bool mount = _theme(context).visibleOnMount;
-  late bool visible = _theme(context).visibleOnMount;
+  late bool mount;
+  late bool visible;
   Timer? _timer;
 
   double _brightnessValue = 0.0;
@@ -541,6 +541,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   double _volumeValue = 0.0;
   bool _volumeIndicator = false;
   Timer? _volumeTimer;
+
+  void Function()? _onBrightnessReset;
 
   Offset _dragInitialDelta =
       Offset.zero; // Initial position for horizontal drag
@@ -603,6 +605,12 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (subscriptions.isEmpty) {
+      mount = _theme(context).visibleOnMount;
+      visible = _theme(context).visibleOnMount;
+      _volumeValue = _theme(context).initialVolume ?? 0.5;
+      _brightnessValue = _theme(context).initialBrightness ?? 0.5;
+      _onBrightnessReset = _theme(context).onBrightnessReset;
+
       subscriptions.addAll(
         [
           controller(context).player.stream.playlist.listen(
@@ -643,7 +651,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     for (final subscription in subscriptions) {
       subscription.cancel();
     }
-    _theme(context).onBrightnessReset?.call();
+    _onBrightnessReset?.call();
     _timerSeekBackwardButton?.cancel();
     _timerSeekForwardButton?.cancel();
     super.dispose();
@@ -785,14 +793,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   void _handlePointerDown(PointerDownEvent event) {
     onTap();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialize with theme values or defaults
-    _volumeValue = _theme(context).initialVolume ?? 0.5;
-    _brightnessValue = _theme(context).initialBrightness ?? 0.5;
   }
 
   void setVolume(double value) {
