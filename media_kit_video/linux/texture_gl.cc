@@ -77,21 +77,13 @@ static void texture_gl_dispose(GObject* object) {
   }
   
   // Clean up EGLImage and mpv's OpenGL resources in dedicated thread
-  // Use fire-and-forget with g_object_ref to extend video_output lifetime
   if (video_output != NULL && thread_pool != NULL) {
-    // Capture resources by value
-    guint32 mpv_texture = self->mpv_texture;
-    guint32 fbo = self->fbo;
-    EGLImageKHR egl_image = self->egl_image;
-    
-    // Extend video_output lifetime for async cleanup
-    g_object_ref(video_output);
-    
-    thread_pool->Post([video_output, mpv_texture, fbo, egl_image]() {
+    auto future = thread_pool->Post([self, video_output]() {
       // Clean up EGLImage
-      if (egl_image != EGL_NO_IMAGE_KHR) {
+      if (self->egl_image != EGL_NO_IMAGE_KHR) {
         EGLDisplay egl_display = video_output_get_egl_display(video_output);
-        eglDestroyImageKHR(egl_display, egl_image);
+        eglDestroyImageKHR(egl_display, self->egl_image);
+        self->egl_image = EGL_NO_IMAGE_KHR;
       }
       
       // Clean up mpv's OpenGL resources (in mpv's isolated context)
@@ -101,22 +93,17 @@ static void texture_gl_dispose(GObject* object) {
       if (egl_context != EGL_NO_CONTEXT) {
         eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
         
-        if (mpv_texture != 0) {
-          glDeleteTextures(1, &mpv_texture);
+        if (self->mpv_texture != 0) {
+          glDeleteTextures(1, &self->mpv_texture);
+          self->mpv_texture = 0;
         }
-        if (fbo != 0) {
-          glDeleteFramebuffers(1, &fbo);
+        if (self->fbo != 0) {
+          glDeleteFramebuffers(1, &self->fbo);
+          self->fbo = 0;
         }
       }
-      
-      // Release the reference when cleanup is done
-      g_object_unref(video_output);
     });
-    
-    // Reset local state immediately (actual cleanup happens asynchronously)
-    self->mpv_texture = 0;
-    self->fbo = 0;
-    self->egl_image = EGL_NO_IMAGE_KHR;
+    future.wait();
   }
   
   self->current_width = 1;
