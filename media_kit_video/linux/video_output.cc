@@ -282,47 +282,46 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
     self->texture_sw = texture_sw_new(self);
     if (fl_texture_registrar_register_texture(texture_registrar,
                                               FL_TEXTURE(self->texture_sw))) {
-      auto sw_future = thread_pool_ref->Post([self]() {
-        mpv_render_param params[] = {
-            {MPV_RENDER_PARAM_API_TYPE, (void*)MPV_RENDER_API_TYPE_SW},
-            {MPV_RENDER_PARAM_INVALID, (void*)0},
-        };
-        if (mpv_render_context_create(&self->render_context, self->handle,
-                                      params) == 0) {
-          mpv_render_context_set_update_callback(
-              self->render_context,
-              [](void* data) {
-                VideoOutput* self = (VideoOutput*)data;
-                if (self->destroyed) {
-                  return;
-                }
-                // Post render to dedicated thread
-                self->thread_pool_ref->Post([self]() {
-                  g_mutex_lock(&self->mutex);
-                  gint64 width = video_output_get_width(self);
-                  gint64 height = video_output_get_height(self);
-                  if (width > 0 && height > 0) {
-                    gint32 size[]{(gint32)width, (gint32)height};
-                    gint32 pitch = 4 * (gint32)width;
-                    mpv_render_param params[]{
-                        {MPV_RENDER_PARAM_SW_SIZE, size},
-                        {MPV_RENDER_PARAM_SW_FORMAT, (void*)"rgb0"},
-                        {MPV_RENDER_PARAM_SW_STRIDE, &pitch},
-                        {MPV_RENDER_PARAM_SW_POINTER, self->pixel_buffer},
-                        {MPV_RENDER_PARAM_INVALID, (void*)0},
-                    };
-                    mpv_render_context_render(self->render_context, params);
-                    fl_texture_registrar_mark_texture_frame_available(
-                        self->texture_registrar,
-                        FL_TEXTURE(self->texture_sw));
-                  }
-                  g_mutex_unlock(&self->mutex);
-                });
-              },
-              self);
-        }
-      });
-      sw_future.wait();
+      mpv_render_param params[] = {
+          {MPV_RENDER_PARAM_API_TYPE, (void*)MPV_RENDER_API_TYPE_SW},
+          {MPV_RENDER_PARAM_INVALID, (void*)0},
+      };
+      if (mpv_render_context_create(&self->render_context, self->handle,
+                                    params) == 0) {
+        mpv_render_context_set_update_callback(
+            self->render_context,
+            [](void* data) {
+              gdk_threads_add_idle(
+                  [](gpointer data) -> gboolean {
+                    VideoOutput* self = (VideoOutput*)data;
+                    if (self->destroyed) {
+                      return FALSE;
+                    }
+                    g_mutex_lock(&self->mutex);
+                    gint64 width = video_output_get_width(self);
+                    gint64 height = video_output_get_height(self);
+                    if (width > 0 && height > 0) {
+                      gint32 size[]{(gint32)width, (gint32)height};
+                      gint32 pitch = 4 * (gint32)width;
+                      mpv_render_param params[]{
+                          {MPV_RENDER_PARAM_SW_SIZE, size},
+                          {MPV_RENDER_PARAM_SW_FORMAT, (void*)"rgb0"},
+                          {MPV_RENDER_PARAM_SW_STRIDE, &pitch},
+                          {MPV_RENDER_PARAM_SW_POINTER, self->pixel_buffer},
+                          {MPV_RENDER_PARAM_INVALID, (void*)0},
+                      };
+                      mpv_render_context_render(self->render_context, params);
+                      fl_texture_registrar_mark_texture_frame_available(
+                          self->texture_registrar,
+                          FL_TEXTURE(self->texture_sw));
+                    }
+                    g_mutex_unlock(&self->mutex);
+                    return FALSE;
+                  },
+                  data);
+            },
+            self);
+      }
     }
   }
 #endif
