@@ -54,16 +54,17 @@ static void video_output_dispose(GObject* object) {
 
   // H/W
   if (self->texture_gl) {
+    fl_texture_registrar_unregister_texture(self->texture_registrar,
+                                            FL_TEXTURE(self->texture_gl));
+    
     // Clean up EGL resources in dedicated thread using fire-and-forget
-    // with g_object_ref to extend both self and texture_gl lifetime
+    // with g_object_ref to extend self lifetime
     if (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT) {
-      // Extend both self and texture_gl lifetime for async cleanup
+      // Extend self lifetime for async cleanup
       g_object_ref(self);
-      TextureGL* texture_gl = self->texture_gl;
-      g_object_ref(texture_gl);
       
       // Fire-and-forget: no future.wait()
-      self->thread_pool_ref->Post([self, texture_gl]() {
+      self->thread_pool_ref->Post([self]() {
         // Free mpv_render_context with our isolated EGL context
         if (self->render_context != NULL) {
           if (self->egl_context != EGL_NO_CONTEXT) {
@@ -79,15 +80,11 @@ static void video_output_dispose(GObject* object) {
           self->egl_context = EGL_NO_CONTEXT;
         }
         
-        // Release references when cleanup is done
-        g_object_unref(texture_gl);
+        // Release the reference when cleanup is done
         g_object_unref(self);
       });
     }
     
-    // Unregister and release texture after posting cleanup task
-    fl_texture_registrar_unregister_texture(self->texture_registrar,
-                                            FL_TEXTURE(self->texture_gl));
     g_object_unref(self->texture_gl);
   }
   // S/W
