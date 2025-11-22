@@ -17,6 +17,12 @@
 #include "mpv/render_gl.h"
 #include "thread_pool.h"
 
+// Threading architecture note:
+// - Windows: Single shared ThreadPool for all players (D3D11 thread safety)
+// - Linux: Per-player ThreadPool (EGL supports multiple independent contexts)
+// Each VideoOutput instance receives its dedicated rendering thread from
+// VideoOutputManager, enabling true parallel rendering on Linux.
+
 typedef struct _VideoOutputConfiguration {
   gint64 width;
   gint64 height;

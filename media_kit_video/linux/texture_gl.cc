@@ -256,6 +256,9 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
         // After initialization, trigger a render to populate the texture
         if (self->egl_image != EGL_NO_IMAGE_KHR) {
           video_output_notify_render(video_output);
+        } else {
+          // Initialization failed, reset flag to allow retry
+          self->initialization_posted = FALSE;
         }
       });
     }

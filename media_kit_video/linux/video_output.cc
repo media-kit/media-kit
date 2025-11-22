@@ -34,7 +34,10 @@ struct _VideoOutput {
   TextureUpdateCallback texture_update_callback;
   gpointer texture_update_callback_context;
   FlTextureRegistrar* texture_registrar;
-  ThreadPool* thread_pool_ref;
+  ThreadPool* thread_pool_ref; /* Dedicated rendering thread for this video output.
+                                 * Unlike Windows (single thread for all players),
+                                 * Linux EGL supports multiple independent contexts,
+                                 * so each player has its own rendering thread. */
   gboolean destroyed;
 };
 

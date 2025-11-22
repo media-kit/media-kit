@@ -8,12 +8,17 @@
 
 #include "include/media_kit_video/video_output_manager.h"
 
+// Linux-specific architecture: Per-player rendering threads
+// Unlike Windows (which uses a single shared thread due to D3D11 constraints),
+// Linux leverages EGL's multi-context support by giving each player its own
+// dedicated rendering thread, enabling true parallel rendering.
+
 struct _VideoOutputManager {
   GObject parent_instance;
   GHashTable* video_outputs;
+  GHashTable* render_threads;  // Map: handle -> ThreadPool (each player has dedicated thread)
   FlTextureRegistrar* texture_registrar;
   FlView* view;
-  ThreadPool* thread_pool;
 };
 
 G_DEFINE_TYPE(VideoOutputManager, video_output_manager, G_TYPE_OBJECT)
@@ -21,13 +26,20 @@ G_DEFINE_TYPE(VideoOutputManager, video_output_manager, G_TYPE_OBJECT)
 static void video_output_manager_init(VideoOutputManager* self) {
   self->video_outputs = g_hash_table_new_full(g_direct_hash, g_direct_equal,
                                               nullptr, g_object_unref);
-  self->thread_pool = new ThreadPool(1);  // Single dedicated thread for rendering
+  // Each video output will have its own dedicated rendering thread
+  // Linux EGL supports multiple independent contexts in different threads
+  self->render_threads = g_hash_table_new_full(g_direct_hash, g_direct_equal,
+                                               nullptr, [](gpointer data) {
+                                                 delete static_cast<ThreadPool*>(data);
+                                               });
+  self->texture_registrar = nullptr;
+  self->view = nullptr;
 }
 
 static void video_output_manager_dispose(GObject* object) {
   VideoOutputManager* self = VIDEO_OUTPUT_MANAGER(object);
   g_hash_table_unref(self->video_outputs);
-  delete self->thread_pool;
+  g_hash_table_unref(self->render_threads);
   G_OBJECT_CLASS(video_output_manager_parent_class)->dispose(object);
 }
 
@@ -51,8 +63,13 @@ void video_output_manager_create(VideoOutputManager* self,
                                  TextureUpdateCallback texture_update_callback,
                                  gpointer texture_update_callback_context) {
   if (!g_hash_table_contains(self->video_outputs, GINT_TO_POINTER(handle))) {
+    // Create a dedicated rendering thread for this video output
+    // Each player gets its own thread to leverage Linux EGL multi-threading
+    ThreadPool* render_thread = new ThreadPool(1);
+    g_hash_table_insert(self->render_threads, GINT_TO_POINTER(handle), render_thread);
+    
     g_autoptr(VideoOutput) video_output = video_output_new(
-        self->texture_registrar, self->view, handle, configuration, self->thread_pool);
+        self->texture_registrar, self->view, handle, configuration, render_thread);
     video_output_set_texture_update_callback(
         video_output, texture_update_callback, texture_update_callback_context);
     g_hash_table_insert(self->video_outputs, GINT_TO_POINTER(handle),
@@ -74,5 +91,7 @@ void video_output_manager_set_size(VideoOutputManager* self,
 void video_output_manager_dispose(VideoOutputManager* self, gint64 handle) {
   if (g_hash_table_contains(self->video_outputs, GINT_TO_POINTER(handle))) {
     g_hash_table_remove(self->video_outputs, GINT_TO_POINTER(handle));
+    // Remove the dedicated rendering thread for this video output
+    g_hash_table_remove(self->render_threads, GINT_TO_POINTER(handle));
   }
 }
