@@ -77,27 +77,33 @@ static void texture_gl_dispose(GObject* object) {
   }
   
   // Clean up EGLImage and mpv's OpenGL resources in dedicated thread
-  // Use fire-and-forget with g_object_ref to extend video_output lifetime
-  if (video_output != NULL && thread_pool != NULL) {
-    // Capture resources by value
+  // Use fire-and-forget to avoid blocking, but with proper lifetime management
+  if (video_output != NULL && thread_pool != NULL && 
+      (self->mpv_texture != 0 || self->fbo != 0 || self->egl_image != EGL_NO_IMAGE_KHR)) {
+    
+    // Capture ALL resources by value before clearing
     guint32 mpv_texture = self->mpv_texture;
     guint32 fbo = self->fbo;
     EGLImageKHR egl_image = self->egl_image;
+    EGLDisplay egl_display = video_output_get_egl_display(video_output);
+    EGLContext egl_context = video_output_get_egl_context(video_output);
+    
+    // Clear local state immediately to prevent re-use
+    self->mpv_texture = 0;
+    self->fbo = 0;
+    self->egl_image = EGL_NO_IMAGE_KHR;
     
     // Extend video_output lifetime for async cleanup
     g_object_ref(video_output);
     
-    thread_pool->Post([video_output, mpv_texture, fbo, egl_image]() {
+    // Fire-and-forget: cleanup happens asynchronously without blocking
+    thread_pool->Post([video_output, mpv_texture, fbo, egl_image, egl_display, egl_context]() {
       // Clean up EGLImage
       if (egl_image != EGL_NO_IMAGE_KHR) {
-        EGLDisplay egl_display = video_output_get_egl_display(video_output);
         eglDestroyImageKHR(egl_display, egl_image);
       }
       
       // Clean up mpv's OpenGL resources (in mpv's isolated context)
-      EGLDisplay egl_display = video_output_get_egl_display(video_output);
-      EGLContext egl_context = video_output_get_egl_context(video_output);
-      
       if (egl_context != EGL_NO_CONTEXT) {
         eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
         
@@ -107,16 +113,14 @@ static void texture_gl_dispose(GObject* object) {
         if (fbo != 0) {
           glDeleteFramebuffers(1, &fbo);
         }
+        
+        // Flush to ensure cleanup is complete before releasing context
+        glFlush();
       }
       
       // Release the reference when cleanup is done
       g_object_unref(video_output);
     });
-    
-    // Reset local state immediately (actual cleanup happens asynchronously)
-    self->mpv_texture = 0;
-    self->fbo = 0;
-    self->egl_image = EGL_NO_IMAGE_KHR;
   }
   
   self->current_width = 1;
@@ -252,6 +256,16 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
                                      GError** error) {
   TextureGL* self = TEXTURE_GL(texture);
   VideoOutput* video_output = self->video_output;
+  
+  // Check if video_output is still valid
+  if (video_output == NULL) {
+    *target = GL_TEXTURE_2D;
+    *name = 0;
+    *width = 1;
+    *height = 1;
+    return TRUE;
+  }
+  
   ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
   
   // Asynchronously trigger initialization on first call (non-blocking)
@@ -261,6 +275,9 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     
     if (required_width > 0 && required_height > 0 && thread_pool) {
       self->initialization_posted = TRUE;
+      
+      // Extend video_output lifetime for async initialization
+      g_object_ref(video_output);
       
       // Post initialization task asynchronously (don't wait)
       thread_pool->Post([self, required_width, required_height, video_output]() {
@@ -273,6 +290,9 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
           // Initialization failed, reset flag to allow retry
           self->initialization_posted = FALSE;
         }
+        
+        // Release reference after initialization
+        g_object_unref(video_output);
       });
     }
   }
