@@ -177,6 +177,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
     if (!fl_texture_registrar_register_texture(
             texture_registrar, FL_TEXTURE(self->texture_gl))) {
       g_printerr("media_kit: VideoOutput: Failed to register texture.\n");
+      g_object_unref(self->texture_gl);
       self->texture_gl = NULL;
     }
   }
@@ -255,9 +256,13 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
             g_print("media_kit: VideoOutput: H/W rendering with isolated EGL context in dedicated thread.\n");
           } else {
             g_printerr("media_kit: VideoOutput: Failed to create mpv_render_context.\n");
+            eglDestroyContext(self->egl_display, self->egl_context);
+            self->egl_context = EGL_NO_CONTEXT;
           }
         } else {
           g_printerr("media_kit: VideoOutput: Failed to make isolated EGL context current. Error: 0x%x\n", eglGetError());
+          eglDestroyContext(self->egl_display, self->egl_context);
+          self->egl_context = EGL_NO_CONTEXT;
         }
       } else {
         g_printerr("media_kit: VideoOutput: Failed to create isolated EGL context. Error: 0x%x\n", eglGetError());
