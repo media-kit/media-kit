@@ -47,6 +47,7 @@ struct _TextureGL {
   guint32 current_width;
   guint32 current_height;
   gboolean needs_texture_update;  // Flag to update Flutter texture
+  gboolean initialization_posted;  // Flag to avoid duplicate initialization
   VideoOutput* video_output;
 };
 
@@ -60,6 +61,7 @@ static void texture_gl_init(TextureGL* self) {
   self->current_width = 1;
   self->current_height = 1;
   self->needs_texture_update = FALSE;
+  self->initialization_posted = FALSE;
   self->video_output = NULL;
 }
 
@@ -239,17 +241,23 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
   VideoOutput* video_output = self->video_output;
   ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
   
-  // Check if we need to initialize resources for first frame
-  if (self->name == 0 || self->fbo == 0) {
+  // Asynchronously trigger initialization on first call (non-blocking)
+  if (!self->initialization_posted && (self->name == 0 || self->fbo == 0)) {
     gint64 required_width = video_output_get_width(video_output);
     gint64 required_height = video_output_get_height(video_output);
     
     if (required_width > 0 && required_height > 0 && thread_pool) {
-      // Initialize resources in dedicated thread (from Flutter thread context)
-      auto future = thread_pool->Post([self, required_width, required_height]() {
+      self->initialization_posted = TRUE;
+      
+      // Post initialization task asynchronously (don't wait)
+      thread_pool->Post([self, required_width, required_height, video_output]() {
         texture_gl_check_and_resize(self, required_width, required_height);
+        
+        // After initialization, trigger a render to populate the texture
+        if (self->egl_image != EGL_NO_IMAGE_KHR) {
+          video_output_notify_render(video_output);
+        }
       });
-      future.wait();  // Must wait for first frame resources
     }
   }
   
