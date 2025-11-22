@@ -124,7 +124,6 @@ TextureGL* texture_gl_new(VideoOutput* video_output) {
 
 void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 required_height) {
   VideoOutput* video_output = self->video_output;
-  ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
   
   if (required_width < 1 || required_height < 1) {
     return;
@@ -141,56 +140,54 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
   EGLDisplay egl_display = video_output_get_egl_display(video_output);
   EGLContext egl_context = video_output_get_egl_context(video_output);
   
-  // Create/resize resources in dedicated thread
-  auto future = thread_pool->Post([self, egl_display, egl_context, first_frame, required_width, required_height]() {
-    // Switch to mpv's isolated context
-    eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
-    
-    // Free previous resources in mpv's context
-    if (!first_frame) {
-      glDeleteTextures(1, &self->mpv_texture);
-      glDeleteFramebuffers(1, &self->fbo);
-      if (self->egl_image != EGL_NO_IMAGE_KHR) {
-        eglDestroyImageKHR(egl_display, self->egl_image);
-      }
-    }
-    
-    // Create mpv's FBO and texture
-    glGenFramebuffers(1, &self->fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, self->fbo);
-    
-    glGenTextures(1, &self->mpv_texture);
-    glBindTexture(GL_TEXTURE_2D, self->mpv_texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, required_width, required_height,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    
-    // Attach mpv's texture to FBO
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                           GL_TEXTURE_2D, self->mpv_texture, 0);
-    
-    // Create EGLImage from mpv's texture
-    EGLint egl_image_attribs[] = { EGL_NONE };
-    self->egl_image = eglCreateImageKHR(
-        egl_display,
-        egl_context,
-        EGL_GL_TEXTURE_2D_KHR,
-        (EGLClientBuffer)(guintptr)self->mpv_texture,
-        egl_image_attribs);
-    
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    
-    // Flush to ensure mpv's texture is ready
-    glFlush();
-  });
-  future.wait();  // Must wait for resources to be created before updating Flutter texture
+  // This function is called from the dedicated rendering thread
+  // So we can directly perform OpenGL operations (no need to Post)
   
-  // Update Flutter's texture from EGLImage (must be in Flutter's GL context)
-  // This will be called from the render thread when populate_texture is invoked
+  // Switch to mpv's isolated context
+  eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
+  
+  // Free previous resources in mpv's context
+  if (!first_frame) {
+    glDeleteTextures(1, &self->mpv_texture);
+    glDeleteFramebuffers(1, &self->fbo);
+    if (self->egl_image != EGL_NO_IMAGE_KHR) {
+      eglDestroyImageKHR(egl_display, self->egl_image);
+    }
+  }
+  
+  // Create mpv's FBO and texture
+  glGenFramebuffers(1, &self->fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, self->fbo);
+  
+  glGenTextures(1, &self->mpv_texture);
+  glBindTexture(GL_TEXTURE_2D, self->mpv_texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, required_width, required_height,
+               0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  
+  // Attach mpv's texture to FBO
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                         GL_TEXTURE_2D, self->mpv_texture, 0);
+  
+  // Create EGLImage from mpv's texture
+  EGLint egl_image_attribs[] = { EGL_NONE };
+  self->egl_image = eglCreateImageKHR(
+      egl_display,
+      egl_context,
+      EGL_GL_TEXTURE_2D_KHR,
+      (EGLClientBuffer)(guintptr)self->mpv_texture,
+      egl_image_attribs);
+  
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  
+  // Flush to ensure mpv's texture is ready
+  glFlush();
+  
+  // Mark that Flutter texture needs update
   self->current_width = required_width;
   self->current_height = required_height;
   self->needs_texture_update = TRUE;
@@ -239,6 +236,22 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
                                      guint32* height,
                                      GError** error) {
   TextureGL* self = TEXTURE_GL(texture);
+  VideoOutput* video_output = self->video_output;
+  ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
+  
+  // Check if we need to initialize resources for first frame
+  if (self->name == 0 || self->fbo == 0) {
+    gint64 required_width = video_output_get_width(video_output);
+    gint64 required_height = video_output_get_height(video_output);
+    
+    if (required_width > 0 && required_height > 0 && thread_pool) {
+      // Initialize resources in dedicated thread (from Flutter thread context)
+      auto future = thread_pool->Post([self, required_width, required_height]() {
+        texture_gl_check_and_resize(self, required_width, required_height);
+      });
+      future.wait();  // Must wait for first frame resources
+    }
+  }
   
   // Update Flutter's texture from EGLImage if resize happened
   if (self->needs_texture_update && self->egl_image != EGL_NO_IMAGE_KHR) {
@@ -260,7 +273,6 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     self->needs_texture_update = FALSE;
     
     // Notify Flutter about dimension change
-    VideoOutput* video_output = self->video_output;
     video_output_notify_texture_update(video_output);
   }
   
