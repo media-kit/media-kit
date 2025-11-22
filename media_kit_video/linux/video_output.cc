@@ -60,28 +60,29 @@ static void video_output_dispose(GObject* object) {
     fl_texture_registrar_unregister_texture(self->texture_registrar,
                                             FL_TEXTURE(self->texture_gl));
     
+    TextureGL* texture_gl = self->texture_gl;
+    self->texture_gl = NULL;
+
+    if (texture_gl != NULL) {
+      // Drop the owning reference before scheduling mpv cleanup so that
+      // TextureGL can enqueue its GL teardown ahead of EGL destruction.
+      g_object_unref(texture_gl);
+    }
+
+    mpv_render_context* render_context = self->render_context;
+    EGLDisplay egl_display = self->egl_display;
+    EGLContext egl_context = self->egl_context;
+    self->render_context = NULL;
+    
     // Clean up EGL resources in dedicated thread using fire-and-forget
     // The key is to capture everything by value and use reference counting
     if (self->thread_pool_ref != NULL && 
-        (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT)) {
+        (render_context != NULL || egl_context != EGL_NO_CONTEXT)) {
       
-      // Capture resources by value to avoid use-after-free
-      mpv_render_context* render_context = self->render_context;
-      EGLDisplay egl_display = self->egl_display;
-      EGLContext egl_context = self->egl_context;
-      TextureGL* texture_gl = self->texture_gl;
-      
-      // Extend lifetimes for async cleanup (will be released in lambda)
-      g_object_ref(texture_gl);
       g_object_ref(self);
       
-      // Clear pointers immediately to prevent re-use
-      self->render_context = NULL;
-      self->egl_context = EGL_NO_CONTEXT;
-      self->texture_gl = NULL;
-      
       // Fire-and-forget: cleanup happens asynchronously
-      self->thread_pool_ref->Post([render_context, egl_display, egl_context, texture_gl, self]() {
+      self->thread_pool_ref->Post([render_context, egl_display, egl_context, self]() {
         // Free mpv_render_context with our isolated EGL context
         if (render_context != NULL) {
           if (egl_context != EGL_NO_CONTEXT) {
@@ -95,14 +96,23 @@ static void video_output_dispose(GObject* object) {
           eglDestroyContext(egl_display, egl_context);
         }
         
+        self->egl_context = EGL_NO_CONTEXT;
+        
         // Release references when cleanup is done
-        g_object_unref(texture_gl);
         g_object_unref(self);
       });
     } else {
       // No async cleanup needed, release immediately
-      g_object_unref(self->texture_gl);
-      self->texture_gl = NULL;
+      if (render_context != NULL) {
+        if (egl_context != EGL_NO_CONTEXT) {
+          eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
+        }
+        mpv_render_context_free(render_context);
+      }
+      if (egl_context != EGL_NO_CONTEXT) {
+        eglDestroyContext(egl_display, egl_context);
+        self->egl_context = EGL_NO_CONTEXT;
+      }
     }
   }
   // S/W
