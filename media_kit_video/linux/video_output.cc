@@ -45,8 +45,6 @@ G_DEFINE_TYPE(VideoOutput, video_output, G_TYPE_OBJECT)
 
 static void video_output_dispose(GObject* object) {
   VideoOutput* self = VIDEO_OUTPUT(object);
-  
-  // Set destroyed flag FIRST to stop all new render tasks
   self->destroyed = TRUE;
   
   // Make sure that no more callbacks are invoked from mpv.
@@ -56,54 +54,41 @@ static void video_output_dispose(GObject* object) {
 
   // H/W
   if (self->texture_gl) {
-    // Unregister texture immediately to stop Flutter from requesting frames
-    fl_texture_registrar_unregister_texture(self->texture_registrar,
-                                            FL_TEXTURE(self->texture_gl));
-    
     // Clean up EGL resources in dedicated thread using fire-and-forget
-    // The key is to capture everything by value and use reference counting
-    if (self->thread_pool_ref != NULL && 
-        (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT)) {
-      
-      // Capture resources by value to avoid use-after-free
-      mpv_render_context* render_context = self->render_context;
-      EGLDisplay egl_display = self->egl_display;
-      EGLContext egl_context = self->egl_context;
-      TextureGL* texture_gl = self->texture_gl;
-      
-      // Extend lifetimes for async cleanup (will be released in lambda)
-      g_object_ref(texture_gl);
+    // with g_object_ref to extend both self and texture_gl lifetime
+    if (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT) {
+      // Extend both self and texture_gl lifetime for async cleanup
       g_object_ref(self);
+      TextureGL* texture_gl = self->texture_gl;
+      g_object_ref(texture_gl);
       
-      // Clear pointers immediately to prevent re-use
-      self->render_context = NULL;
-      self->egl_context = EGL_NO_CONTEXT;
-      self->texture_gl = NULL;
-      
-      // Fire-and-forget: cleanup happens asynchronously
-      self->thread_pool_ref->Post([render_context, egl_display, egl_context, texture_gl, self]() {
+      // Fire-and-forget: no future.wait()
+      self->thread_pool_ref->Post([self, texture_gl]() {
         // Free mpv_render_context with our isolated EGL context
-        if (render_context != NULL) {
-          if (egl_context != EGL_NO_CONTEXT) {
-            eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
+        if (self->render_context != NULL) {
+          if (self->egl_context != EGL_NO_CONTEXT) {
+            eglMakeCurrent(self->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, self->egl_context);
           }
-          mpv_render_context_free(render_context);
+          mpv_render_context_free(self->render_context);
+          self->render_context = NULL;
         }
         
         // Clean up EGL context
-        if (egl_context != EGL_NO_CONTEXT) {
-          eglDestroyContext(egl_display, egl_context);
+        if (self->egl_context != EGL_NO_CONTEXT) {
+          eglDestroyContext(self->egl_display, self->egl_context);
+          self->egl_context = EGL_NO_CONTEXT;
         }
         
         // Release references when cleanup is done
         g_object_unref(texture_gl);
         g_object_unref(self);
       });
-    } else {
-      // No async cleanup needed, release immediately
-      g_object_unref(self->texture_gl);
-      self->texture_gl = NULL;
     }
+    
+    // Unregister and release texture after posting cleanup task
+    fl_texture_registrar_unregister_texture(self->texture_registrar,
+                                            FL_TEXTURE(self->texture_gl));
+    g_object_unref(self->texture_gl);
   }
   // S/W
   if (self->texture_sw) {
@@ -550,27 +535,15 @@ void video_output_notify_texture_update(VideoOutput* self) {
 }
 
 void video_output_notify_render(VideoOutput* self) {
-  if (self->destroyed || !self->thread_pool_ref || !self->texture_gl) {
+  if (self->destroyed || !self->thread_pool_ref) {
     return;
   }
-  
-  // Extend lifetime for async render operations
-  g_object_ref(self);
-  
   // Post render tasks to dedicated thread (asynchronously, don't wait)
   self->thread_pool_ref->Post([self]() {
-    if (!self->destroyed) {
-      video_output_check_and_resize(self);
-    }
-    g_object_unref(self);
+    video_output_check_and_resize(self);
   });
-  
-  g_object_ref(self);
   self->thread_pool_ref->Post([self]() {
-    if (!self->destroyed) {
-      video_output_render(self);
-    }
-    g_object_unref(self);
+    video_output_render(self);
   });
 }
 
