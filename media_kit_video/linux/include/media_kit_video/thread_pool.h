@@ -87,19 +87,12 @@ auto ThreadPool::Post(F&& f, Args&&... args)
 inline ThreadPool::~ThreadPool() {
   {
     std::unique_lock<std::mutex> lock(queue_mutex_);
-    
-    // Wait for ALL tasks to complete - no timeout
-    // This is safe because VideoOutput::dispose waits for cleanup completion
-    // before ThreadPool destruction, ensuring no infinite waits
     condition_producers_.wait(lock, [this] { return this->tasks_.empty(); });
-    
     stop_ = true;
   }
   condition_.notify_all();
   for (std::thread& worker : workers_) {
-    if (worker.joinable()) {
-      worker.join();
-    }
+    worker.join();
   }
 }
 

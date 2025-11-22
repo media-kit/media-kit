@@ -48,8 +48,7 @@ struct _TextureGL {
   guint32 current_height;
   gboolean needs_texture_update;  // Flag to update Flutter texture
   gboolean initialization_posted;  // Flag to avoid duplicate initialization
-  GWeakRef video_output_weak;      // Weak reference to avoid circular reference
-  gboolean disposed;               // Flag to prevent double disposal
+  VideoOutput* video_output;
 };
 
 G_DEFINE_TYPE(TextureGL, texture_gl, fl_texture_gl_get_type())
@@ -63,22 +62,12 @@ static void texture_gl_init(TextureGL* self) {
   self->current_height = 1;
   self->needs_texture_update = FALSE;
   self->initialization_posted = FALSE;
-  g_weak_ref_init(&self->video_output_weak, NULL);
-  self->disposed = FALSE;
+  self->video_output = NULL;
 }
 
 static void texture_gl_dispose(GObject* object) {
   TextureGL* self = TEXTURE_GL(object);
-  
-  // Prevent double disposal
-  if (self->disposed) {
-    G_OBJECT_CLASS(texture_gl_parent_class)->dispose(object);
-    return;
-  }
-  self->disposed = TRUE;
-  
-  // Get video_output from weak reference (may be NULL if already destroyed)
-  VideoOutput* video_output = (VideoOutput*)g_weak_ref_get(&self->video_output_weak);
+  VideoOutput* video_output = self->video_output;
   ThreadPool* thread_pool = video_output ? video_output_get_thread_pool(video_output) : NULL;
   
   // Clean up Flutter's texture (in Flutter's context)
@@ -96,9 +85,6 @@ static void texture_gl_dispose(GObject* object) {
   
   auto cleanup_gl_resources = [mpv_texture, fbo, egl_image, video_output, thread_pool]() {
     if (video_output == NULL || (mpv_texture == 0 && fbo == 0 && egl_image == EGL_NO_IMAGE_KHR)) {
-      if (video_output) {
-        g_object_unref(video_output);
-      }
       return;
     }
     EGLDisplay egl_display = video_output_get_egl_display(video_output);
@@ -119,14 +105,13 @@ static void texture_gl_dispose(GObject* object) {
       }
     };
     if (thread_pool != NULL) {
-      // video_output already has +1 ref from g_weak_ref_get, pass it to async task
+      g_object_ref(video_output);
       thread_pool->Post([video_output, do_cleanup]() {
         do_cleanup();
         g_object_unref(video_output);
       });
     } else {
       do_cleanup();
-      g_object_unref(video_output);
     }
   };
 
@@ -134,7 +119,7 @@ static void texture_gl_dispose(GObject* object) {
   
   self->current_width = 1;
   self->current_height = 1;
-  g_weak_ref_clear(&self->video_output_weak);
+  self->video_output = NULL;
   G_OBJECT_CLASS(texture_gl_parent_class)->dispose(object);
 }
 
@@ -146,22 +131,14 @@ static void texture_gl_class_init(TextureGLClass* klass) {
 TextureGL* texture_gl_new(VideoOutput* video_output) {
   init_egl_image_extensions();
   TextureGL* self = TEXTURE_GL(g_object_new(texture_gl_get_type(), NULL));
-  g_weak_ref_set(&self->video_output_weak, video_output);
+  self->video_output = video_output;
   return self;
 }
 
 void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 required_height) {
-  if (self->disposed) {
-    return;
-  }
-  
-  VideoOutput* video_output = (VideoOutput*)g_weak_ref_get(&self->video_output_weak);
-  if (!video_output) {
-    return;  // VideoOutput already destroyed
-  }
+  VideoOutput* video_output = self->video_output;
   
   if (required_width < 1 || required_height < 1) {
-    g_object_unref(video_output);
     return;
   }
   
@@ -227,26 +204,15 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
   self->current_width = required_width;
   self->current_height = required_height;
   self->needs_texture_update = TRUE;
-  
-  g_object_unref(video_output);
 }
 
 void texture_gl_render(TextureGL* self) {
-  if (self->disposed) {
-    return;
-  }
-  
-  VideoOutput* video_output = (VideoOutput*)g_weak_ref_get(&self->video_output_weak);
-  if (!video_output) {
-    return;  // VideoOutput already destroyed
-  }
-  
+  VideoOutput* video_output = self->video_output;
   EGLDisplay egl_display = video_output_get_egl_display(video_output);
   EGLContext egl_context = video_output_get_egl_context(video_output);
   mpv_render_context* render_context = video_output_get_render_context(video_output);
   
   if (!render_context || self->fbo == 0) {
-    g_object_unref(video_output);
     return;
   }
   
@@ -274,8 +240,6 @@ void texture_gl_render(TextureGL* self) {
   
   // Flush to ensure rendering is complete
   glFlush();
-  
-  g_object_unref(video_output);
 }
 
 gboolean texture_gl_populate_texture(FlTextureGL* texture,
@@ -285,16 +249,7 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
                                      guint32* height,
                                      GError** error) {
   TextureGL* self = TEXTURE_GL(texture);
-  
-  if (self->disposed) {
-    *target = GL_TEXTURE_2D;
-    *name = 0;
-    *width = 1;
-    *height = 1;
-    return TRUE;
-  }
-  
-  VideoOutput* video_output = (VideoOutput*)g_weak_ref_get(&self->video_output_weak);
+  VideoOutput* video_output = self->video_output;
   
   // Check if video_output is still valid
   if (video_output == NULL) {
@@ -315,25 +270,23 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     if (required_width > 0 && required_height > 0 && thread_pool) {
       self->initialization_posted = TRUE;
       
-      // Both g_weak_ref_get and g_object_ref add reference
+      // Extend video_output lifetime for async initialization
       g_object_ref(video_output);
       g_object_ref(self);
       
       // Post initialization task asynchronously (don't wait)
       thread_pool->Post([self, required_width, required_height, video_output]() {
-        if (!self->disposed) {
-          texture_gl_check_and_resize(self, required_width, required_height);
-          
-          // After initialization, trigger a render to populate the texture
-          if (self->egl_image != EGL_NO_IMAGE_KHR && !self->disposed) {
-            video_output_notify_render(video_output);
-          } else if (self->egl_image == EGL_NO_IMAGE_KHR) {
-            // Initialization failed, reset flag to allow retry
-            self->initialization_posted = FALSE;
-          }
+        texture_gl_check_and_resize(self, required_width, required_height);
+        
+        // After initialization, trigger a render to populate the texture
+        if (self->egl_image != EGL_NO_IMAGE_KHR) {
+          video_output_notify_render(video_output);
+        } else {
+          // Initialization failed, reset flag to allow retry
+          self->initialization_posted = FALSE;
         }
         
-        // Release references after initialization
+        // Release reference after initialization
         g_object_unref(video_output);
         g_object_unref(self);
       });
@@ -379,6 +332,5 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     *height = 1;
   }
   
-  g_object_unref(video_output);
   return TRUE;
 }

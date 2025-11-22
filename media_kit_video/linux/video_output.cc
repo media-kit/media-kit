@@ -15,9 +15,6 @@
 #include <epoxy/glx.h>
 #include <gdk/gdkwayland.h>
 #include <gdk/gdkx.h>
-#include <mutex>
-#include <condition_variable>
-#include <chrono>
 
 struct _VideoOutput {
   GObject parent_instance;
@@ -42,9 +39,6 @@ struct _VideoOutput {
                                  * Linux EGL supports multiple independent contexts,
                                  * so each player has its own rendering thread. */
   gboolean destroyed;
-  std::mutex cleanup_mutex;          /* Mutex for cleanup synchronization */
-  std::condition_variable cleanup_cv; /* Condition variable for cleanup completion */
-  gboolean cleanup_completed;        /* Flag indicating cleanup is done */
 };
 
 G_DEFINE_TYPE(VideoOutput, video_output, G_TYPE_OBJECT)
@@ -53,11 +47,6 @@ static void video_output_dispose(GObject* object) {
   VideoOutput* self = VIDEO_OUTPUT(object);
   
   // Set destroyed flag FIRST to stop all new render tasks
-  // Use atomic exchange to prevent race conditions
-  if (self->destroyed) {
-    G_OBJECT_CLASS(video_output_parent_class)->dispose(object);
-    return;
-  }
   self->destroyed = TRUE;
   
   // Make sure that no more callbacks are invoked from mpv.
@@ -85,15 +74,16 @@ static void video_output_dispose(GObject* object) {
     EGLContext egl_context = self->egl_context;
     self->render_context = NULL;
     
-    // Clean up EGL resources in dedicated thread with SYNCHRONOUS waiting
-    // We MUST wait for cleanup to complete before ThreadPool is destroyed
+    // Clean up EGL resources in dedicated thread using fire-and-forget
+    // The key is to capture everything by value and use reference counting
     if (self->thread_pool_ref != NULL && 
         (render_context != NULL || egl_context != EGL_NO_CONTEXT)) {
       
-      // Post cleanup task to the rendering thread
-      auto cleanup_future = self->thread_pool_ref->Post([render_context, egl_display, egl_context, self]() {
+      g_object_ref(self);
+      
+      // Fire-and-forget: cleanup happens asynchronously
+      self->thread_pool_ref->Post([render_context, egl_display, egl_context, self]() {
         // Free mpv_render_context with our isolated EGL context
-        // mpv_render_context_free MUST be called in the thread that created it
         if (render_context != NULL) {
           if (egl_context != EGL_NO_CONTEXT) {
             eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
@@ -108,24 +98,20 @@ static void video_output_dispose(GObject* object) {
         
         self->egl_context = EGL_NO_CONTEXT;
         
-        // Signal that cleanup is completed
-        {
-          std::lock_guard<std::mutex> lock(self->cleanup_mutex);
-          self->cleanup_completed = TRUE;
-        }
-        self->cleanup_cv.notify_one();
+        // Release references when cleanup is done
+        g_object_unref(self);
       });
-      
-      // Wait for cleanup to complete with timeout
-      // This ensures zero resource leaks while preventing deadlock
-      {
-        std::unique_lock<std::mutex> lock(self->cleanup_mutex);
-        auto timeout = std::chrono::steady_clock::now() + std::chrono::seconds(10);
-        if (!self->cleanup_cv.wait_until(lock, timeout, [self] { return self->cleanup_completed == TRUE; })) {
-          g_printerr("media_kit: VideoOutput: WARNING - Cleanup timeout after 10 seconds\n");
-          // Even with timeout, the task is still in the queue and will eventually execute
-          // The ThreadPool destructor will wait for it, so no leak
+    } else {
+      // No async cleanup needed, release immediately
+      if (render_context != NULL) {
+        if (egl_context != EGL_NO_CONTEXT) {
+          eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
         }
+        mpv_render_context_free(render_context);
+      }
+      if (egl_context != EGL_NO_CONTEXT) {
+        eglDestroyContext(egl_display, egl_context);
+        self->egl_context = EGL_NO_CONTEXT;
       }
     }
   }
@@ -142,11 +128,6 @@ static void video_output_dispose(GObject* object) {
   }
   
   g_mutex_clear(&self->mutex);
-  
-  // Destroy C++ objects
-  self->cleanup_cv.~condition_variable();
-  self->cleanup_mutex.~mutex();
-  
   G_OBJECT_CLASS(video_output_parent_class)->dispose(object);
 }
 
@@ -172,9 +153,6 @@ static void video_output_init(VideoOutput* self) {
   self->texture_registrar = NULL;
   self->thread_pool_ref = NULL;
   self->destroyed = FALSE;
-  new (&self->cleanup_mutex) std::mutex();
-  new (&self->cleanup_cv) std::condition_variable();
-  self->cleanup_completed = FALSE;
   g_mutex_init(&self->mutex);
 }
 
@@ -244,11 +222,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   
   // Initialize mpv in dedicated thread
   auto future = thread_pool_ref->Post([self]() {
-    // Check if already destroyed during initialization
-    if (self->destroyed) {
-      return FALSE;
-    }
-    
     mpv_set_option_string(self->handle, "video-sync", "audio");
     // Causes frame drops with `pulse` audio output. (SlotSun/dart_simple_live#42)
     // mpv_set_option_string(self->handle, "video-timing-offset", "0");
@@ -256,8 +229,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
     gboolean hardware_acceleration_supported = FALSE;
     if (self->texture_gl != NULL && 
         self->egl_display != EGL_NO_DISPLAY && 
-        self->egl_config != NULL &&
-        !self->destroyed) {
+        self->egl_config != NULL) {
       
       // Bind OpenGL ES API (Flutter uses OpenGL ES on Linux)
       eglBindAPI(EGL_OPENGL_ES_API);
@@ -272,19 +244,12 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
       self->egl_context = eglCreateContext(self->egl_display, self->egl_config, 
                                            EGL_NO_CONTEXT, context_attribs);
       
-      if (self->egl_context != EGL_NO_CONTEXT && !self->destroyed) {
+      if (self->egl_context != EGL_NO_CONTEXT) {
         g_print("media_kit: VideoOutput: Created isolated EGL context: %p (display: %p, using Flutter's config)\n", 
                 self->egl_context, self->egl_display);
         
         // Make our isolated context current for initialization (surfaceless)
         if (eglMakeCurrent(self->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, self->egl_context)) {
-          // Check again before creating render context
-          if (self->destroyed) {
-            eglDestroyContext(self->egl_display, self->egl_context);
-            self->egl_context = EGL_NO_CONTEXT;
-            return FALSE;
-          }
-          
           // Initialize mpv with our isolated EGL context
           mpv_opengl_init_params gl_init_params{
               [](auto, auto name) {
@@ -311,28 +276,19 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
           }
           
           if (mpv_render_context_create(&self->render_context, self->handle, params) == 0) {
-            // Final check before setting callback
-            if (!self->destroyed) {
-              mpv_render_context_set_update_callback(
-                  self->render_context,
-                  [](void* data) {
-                    VideoOutput* self = (VideoOutput*)data;
-                    if (self->destroyed) {
-                      return;
-                    }
-                    // Asynchronously notify render (don't block mpv thread)
-                    video_output_notify_render(self);
-                  },
-                  self);
-              hardware_acceleration_supported = TRUE;
-              g_print("media_kit: VideoOutput: H/W rendering with isolated EGL context in dedicated thread.\n");
-            } else {
-              // Destroyed during initialization, cleanup
-              mpv_render_context_free(self->render_context);
-              self->render_context = NULL;
-              eglDestroyContext(self->egl_display, self->egl_context);
-              self->egl_context = EGL_NO_CONTEXT;
-            }
+            mpv_render_context_set_update_callback(
+                self->render_context,
+                [](void* data) {
+                  VideoOutput* self = (VideoOutput*)data;
+                  if (self->destroyed) {
+                    return;
+                  }
+                  // Asynchronously notify render (don't block mpv thread)
+                  video_output_notify_render(self);
+                },
+                self);
+            hardware_acceleration_supported = TRUE;
+            g_print("media_kit: VideoOutput: H/W rendering with isolated EGL context in dedicated thread.\n");
           } else {
             g_printerr("media_kit: VideoOutput: Failed to create mpv_render_context.\n");
             eglDestroyContext(self->egl_display, self->egl_context);
@@ -344,13 +300,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
           self->egl_context = EGL_NO_CONTEXT;
         }
       } else {
-        if (self->egl_context != EGL_NO_CONTEXT) {
-          eglDestroyContext(self->egl_display, self->egl_context);
-          self->egl_context = EGL_NO_CONTEXT;
-        }
-        if (!self->destroyed) {
-          g_printerr("media_kit: VideoOutput: Failed to create isolated EGL context. Error: 0x%x\n", eglGetError());
-        }
+        g_printerr("media_kit: VideoOutput: Failed to create isolated EGL context. Error: 0x%x\n", eglGetError());
       }
     }
     // If hardware acceleration is not supported or disabled, fall back to software rendering
