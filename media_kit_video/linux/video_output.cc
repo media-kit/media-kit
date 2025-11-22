@@ -267,9 +267,8 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
       } else {
         g_printerr("media_kit: VideoOutput: Failed to create isolated EGL context. Error: 0x%x\n", eglGetError());
       }
-    } else {
-      g_printerr("media_kit: VideoOutput: EGL display or config is invalid.\n");
     }
+    // If hardware acceleration is not supported or disabled, fall back to software rendering
     
     return hardware_acceleration_supported;
   });
