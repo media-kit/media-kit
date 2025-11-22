@@ -38,8 +38,20 @@ static void video_output_manager_init(VideoOutputManager* self) {
 
 static void video_output_manager_dispose(GObject* object) {
   VideoOutputManager* self = VIDEO_OUTPUT_MANAGER(object);
+  
+  // Clear video_outputs FIRST to trigger all VideoOutput disposals
+  // This allows them to post their cleanup tasks to the ThreadPools
+  g_hash_table_remove_all(self->video_outputs);
+  
+  // Then clear render_threads
+  // Each ThreadPool destructor will wait for its tasks to complete
+  // This ensures all GL resources are cleaned up in the correct threads
+  g_hash_table_remove_all(self->render_threads);
+  
+  // Finally unreference the hash tables themselves
   g_hash_table_unref(self->video_outputs);
   g_hash_table_unref(self->render_threads);
+  
   G_OBJECT_CLASS(video_output_manager_parent_class)->dispose(object);
 }
 
@@ -90,8 +102,14 @@ void video_output_manager_set_size(VideoOutputManager* self,
 
 void video_output_manager_dispose(VideoOutputManager* self, gint64 handle) {
   if (g_hash_table_contains(self->video_outputs, GINT_TO_POINTER(handle))) {
+    // First remove VideoOutput to trigger its async cleanup
+    // The VideoOutput will post cleanup tasks to the ThreadPool
     g_hash_table_remove(self->video_outputs, GINT_TO_POINTER(handle));
-    // Remove the dedicated rendering thread for this video output
+    
+    // Then remove ThreadPool
+    // ThreadPool destructor waits for all queued tasks to complete (with timeout)
+    // This ensures VideoOutput cleanup tasks finish before the thread exits
+    // Order matters: VideoOutput disposal -> posts cleanup tasks -> ThreadPool waits -> thread exits
     g_hash_table_remove(self->render_threads, GINT_TO_POINTER(handle));
   }
 }

@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "future": "cpp"
+        "future": "cpp",
+        "mutex": "cpp"
     }
 }
