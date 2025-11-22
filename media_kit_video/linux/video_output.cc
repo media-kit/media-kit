@@ -141,6 +141,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   gboolean hardware_acceleration_supported = FALSE;
   
   // Get EGL display and config in main thread (where Flutter context is available)
+  // Only attempt if hardware acceleration is enabled
   if (self->configuration.enable_hardware_acceleration) {
     EGLDisplay flutter_display = eglGetCurrentDisplay();
     EGLContext flutter_context = eglGetCurrentContext();
@@ -158,6 +159,16 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
         if (eglChooseConfig(flutter_display, config_attribs, &self->egl_config, 1, &num_configs) && num_configs > 0) {
           g_print("media_kit: VideoOutput: Got Flutter's EGL display (%p) and config (ID: %d)\n", 
                   flutter_display, config_id);
+          
+          // Create texture_gl in main thread (needed by mpv callback)
+          self->texture_gl = texture_gl_new(self);
+          if (!fl_texture_registrar_register_texture(
+                  texture_registrar, FL_TEXTURE(self->texture_gl))) {
+            g_printerr("media_kit: VideoOutput: Failed to register texture.\n");
+            g_object_unref(self->texture_gl);
+            self->texture_gl = NULL;
+            self->egl_config = NULL;
+          }
         } else {
           g_printerr("media_kit: VideoOutput: Failed to get Flutter's EGL config by ID.\n");
           self->egl_config = NULL;
@@ -168,17 +179,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
       }
     } else {
       g_printerr("media_kit: VideoOutput: Failed to get Flutter's EGL display or context.\n");
-    }
-  }
-  
-  // Create texture_gl in main thread first (needed by mpv callback)
-  if (self->configuration.enable_hardware_acceleration) {
-    self->texture_gl = texture_gl_new(self);
-    if (!fl_texture_registrar_register_texture(
-            texture_registrar, FL_TEXTURE(self->texture_gl))) {
-      g_printerr("media_kit: VideoOutput: Failed to register texture.\n");
-      g_object_unref(self->texture_gl);
-      self->texture_gl = NULL;
     }
   }
   
