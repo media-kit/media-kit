@@ -140,7 +140,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
 #endif
   
   // Initialize mpv in dedicated thread
-  auto future = thread_pool_ref->Post([self, view]() {
+  auto future = thread_pool_ref->Post([self]() {
     mpv_set_option_string(self->handle, "video-sync", "audio");
     // Causes frame drops with `pulse` audio output. (SlotSun/dart_simple_live#42)
     // mpv_set_option_string(self->handle, "video-timing-offset", "0");
