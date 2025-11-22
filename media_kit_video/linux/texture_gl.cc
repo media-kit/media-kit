@@ -139,12 +139,6 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
                       self->current_height != required_height;
     
     if (first_frame || resize) {
-      // Save Flutter's current EGL context
-      EGLDisplay flutter_display = eglGetCurrentDisplay();
-      EGLContext flutter_context = eglGetCurrentContext();
-      EGLSurface flutter_draw = eglGetCurrentSurface(EGL_DRAW);
-      EGLSurface flutter_read = eglGetCurrentSurface(EGL_READ);
-      
       EGLDisplay egl_display = video_output_get_egl_display(video_output);
       EGLContext egl_context = video_output_get_egl_context(video_output);
       
@@ -196,9 +190,7 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       });
       future.wait();
       
-      // Switch back to Flutter's context to create/update Flutter's texture
-      eglMakeCurrent(flutter_display, flutter_draw, flutter_read, flutter_context);
-      
+      // Create/update Flutter's texture from EGLImage (in Flutter's context which is already current)
       // Free previous Flutter texture
       if (!first_frame && self->name != 0) {
         glDeleteTextures(1, &self->name);
@@ -219,8 +211,6 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       
       // Notify Flutter about dimension change
       video_output_notify_texture_update(video_output);
-      
-      // Flutter's context is already current, so we're ready to render
     }
     
     EGLDisplay egl_display = video_output_get_egl_display(video_output);
