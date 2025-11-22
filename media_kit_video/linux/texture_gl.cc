@@ -68,7 +68,7 @@ static void texture_gl_init(TextureGL* self) {
 static void texture_gl_dispose(GObject* object) {
   TextureGL* self = TEXTURE_GL(object);
   VideoOutput* video_output = self->video_output;
-  ThreadPool* thread_pool = video_output ? video_output_get_thread_pool(video_output) : NULL;
+  ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
   
   // Clean up Flutter's texture (in Flutter's context)
   if (self->name != 0) {
@@ -76,46 +76,52 @@ static void texture_gl_dispose(GObject* object) {
     self->name = 0;
   }
   
-  guint32 mpv_texture = self->mpv_texture;
-  guint32 fbo = self->fbo;
-  EGLImageKHR egl_image = self->egl_image;
-  self->mpv_texture = 0;
-  self->fbo = 0;
-  self->egl_image = EGL_NO_IMAGE_KHR;
-  
-  auto cleanup_gl_resources = [mpv_texture, fbo, egl_image, video_output, thread_pool]() {
-    if (video_output == NULL || (mpv_texture == 0 && fbo == 0 && egl_image == EGL_NO_IMAGE_KHR)) {
-      return;
-    }
+  // Clean up EGLImage and mpv's OpenGL resources in dedicated thread
+  // Use fire-and-forget to avoid blocking, but with proper lifetime management
+  if (video_output != NULL && thread_pool != NULL && 
+      (self->mpv_texture != 0 || self->fbo != 0 || self->egl_image != EGL_NO_IMAGE_KHR)) {
+    
+    // Capture ALL resources by value before clearing
+    guint32 mpv_texture = self->mpv_texture;
+    guint32 fbo = self->fbo;
+    EGLImageKHR egl_image = self->egl_image;
     EGLDisplay egl_display = video_output_get_egl_display(video_output);
     EGLContext egl_context = video_output_get_egl_context(video_output);
-    auto do_cleanup = [mpv_texture, fbo, egl_image, egl_display, egl_context]() {
-      if (egl_image != EGL_NO_IMAGE_KHR && egl_display != EGL_NO_DISPLAY) {
+    
+    // Clear local state immediately to prevent re-use
+    self->mpv_texture = 0;
+    self->fbo = 0;
+    self->egl_image = EGL_NO_IMAGE_KHR;
+    
+    // Extend video_output lifetime for async cleanup
+    g_object_ref(video_output);
+    
+    // Fire-and-forget: cleanup happens asynchronously without blocking
+    thread_pool->Post([video_output, mpv_texture, fbo, egl_image, egl_display, egl_context]() {
+      // Clean up EGLImage
+      if (egl_image != EGL_NO_IMAGE_KHR) {
         eglDestroyImageKHR(egl_display, egl_image);
       }
-      if (egl_context != EGL_NO_CONTEXT && egl_display != EGL_NO_DISPLAY) {
+      
+      // Clean up mpv's OpenGL resources (in mpv's isolated context)
+      if (egl_context != EGL_NO_CONTEXT) {
         eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
+        
         if (mpv_texture != 0) {
           glDeleteTextures(1, &mpv_texture);
         }
         if (fbo != 0) {
           glDeleteFramebuffers(1, &fbo);
         }
+        
+        // Flush to ensure cleanup is complete before releasing context
         glFlush();
       }
-    };
-    if (thread_pool != NULL) {
-      g_object_ref(video_output);
-      thread_pool->Post([video_output, do_cleanup]() {
-        do_cleanup();
-        g_object_unref(video_output);
-      });
-    } else {
-      do_cleanup();
-    }
-  };
-
-  cleanup_gl_resources();
+      
+      // Release the reference when cleanup is done
+      g_object_unref(video_output);
+    });
+  }
   
   self->current_width = 1;
   self->current_height = 1;
@@ -272,7 +278,6 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       
       // Extend video_output lifetime for async initialization
       g_object_ref(video_output);
-      g_object_ref(self);
       
       // Post initialization task asynchronously (don't wait)
       thread_pool->Post([self, required_width, required_height, video_output]() {
@@ -288,7 +293,6 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
         
         // Release reference after initialization
         g_object_unref(video_output);
-        g_object_unref(self);
       });
     }
   }
