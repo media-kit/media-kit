@@ -245,11 +245,8 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                   if (self->destroyed) {
                     return;
                   }
-                  // Post render request to dedicated thread
-                  self->thread_pool_ref->Post([self]() {
-                    fl_texture_registrar_mark_texture_frame_available(
-                        self->texture_registrar, FL_TEXTURE(self->texture_gl));
-                  });
+                  // Asynchronously notify render (don't block mpv thread)
+                  video_output_notify_render(self);
                 },
                 self);
             hardware_acceleration_supported = TRUE;
@@ -521,5 +518,50 @@ void video_output_notify_texture_update(VideoOutput* self) {
   gpointer context = self->texture_update_callback_context;
   if (self->texture_update_callback != NULL) {
     self->texture_update_callback(id, width, height, context);
+  }
+}
+
+void video_output_notify_render(VideoOutput* self) {
+  if (self->destroyed || !self->thread_pool_ref) {
+    return;
+  }
+  // Post render tasks to dedicated thread (asynchronously, don't wait)
+  self->thread_pool_ref->Post([self]() {
+    video_output_check_and_resize(self);
+  });
+  self->thread_pool_ref->Post([self]() {
+    video_output_render(self);
+  });
+}
+
+void video_output_check_and_resize(VideoOutput* self) {
+  if (self->destroyed || !self->texture_gl) {
+    return;
+  }
+  
+  TextureGL* texture = self->texture_gl;
+  gint64 required_width = video_output_get_width(self);
+  gint64 required_height = video_output_get_height(self);
+  
+  if (required_width < 1 || required_height < 1) {
+    return;
+  }
+  
+  // Check if resize is needed through texture_gl
+  texture_gl_check_and_resize(texture, required_width, required_height);
+}
+
+void video_output_render(VideoOutput* self) {
+  if (self->destroyed) {
+    return;
+  }
+  
+  // H/W rendering
+  if (self->texture_gl && self->render_context) {
+    texture_gl_render(self->texture_gl);
+    
+    // Notify Flutter that a new frame is available
+    fl_texture_registrar_mark_texture_frame_available(
+        self->texture_registrar, FL_TEXTURE(self->texture_gl));
   }
 }

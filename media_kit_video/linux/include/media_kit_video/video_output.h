@@ -110,4 +110,10 @@ gint64 video_output_get_texture_id(VideoOutput* self);
 
 void video_output_notify_texture_update(VideoOutput* self);
 
+void video_output_notify_render(VideoOutput* self);
+
+void video_output_check_and_resize(VideoOutput* self);
+
+void video_output_render(VideoOutput* self);
+
 #endif  // VIDEO_OUTPUT_H_
