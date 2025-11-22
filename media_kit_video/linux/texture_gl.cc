@@ -7,6 +7,7 @@
 // LICENSE file.
 
 #include "include/media_kit_video/texture_gl.h"
+#include "include/media_kit_video/thread_pool.h"
 
 #include <epoxy/gl.h>
 #include <epoxy/egl.h>
@@ -63,12 +64,7 @@ static void texture_gl_init(TextureGL* self) {
 static void texture_gl_dispose(GObject* object) {
   TextureGL* self = TEXTURE_GL(object);
   VideoOutput* video_output = self->video_output;
-  
-  // Save current context
-  EGLDisplay current_display = eglGetCurrentDisplay();
-  EGLContext current_context = eglGetCurrentContext();
-  EGLSurface current_draw = eglGetCurrentSurface(EGL_DRAW);
-  EGLSurface current_read = eglGetCurrentSurface(EGL_READ);
+  ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
   
   // Clean up Flutter's texture (in Flutter's context)
   if (self->name != 0) {
@@ -76,33 +72,34 @@ static void texture_gl_dispose(GObject* object) {
     self->name = 0;
   }
   
-  // Clean up EGLImage
-  if (self->egl_image != EGL_NO_IMAGE_KHR && video_output != NULL) {
-    EGLDisplay egl_display = video_output_get_egl_display(video_output);
-    eglDestroyImageKHR(egl_display, self->egl_image);
-    self->egl_image = EGL_NO_IMAGE_KHR;
-  }
-  
-  // Clean up mpv's OpenGL resources (in mpv's isolated context)
-  if (video_output != NULL) {
-    EGLDisplay egl_display = video_output_get_egl_display(video_output);
-    EGLContext egl_context = video_output_get_egl_context(video_output);
-    
-    if (egl_context != EGL_NO_CONTEXT) {
-      eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
-      
-      if (self->mpv_texture != 0) {
-        glDeleteTextures(1, &self->mpv_texture);
-        self->mpv_texture = 0;
-      }
-      if (self->fbo != 0) {
-        glDeleteFramebuffers(1, &self->fbo);
-        self->fbo = 0;
+  // Clean up EGLImage and mpv's OpenGL resources in dedicated thread
+  if (video_output != NULL && thread_pool != NULL) {
+    auto future = thread_pool->Post([self, video_output]() {
+      // Clean up EGLImage
+      if (self->egl_image != EGL_NO_IMAGE_KHR) {
+        EGLDisplay egl_display = video_output_get_egl_display(video_output);
+        eglDestroyImageKHR(egl_display, self->egl_image);
+        self->egl_image = EGL_NO_IMAGE_KHR;
       }
       
-      // Restore previous context
-      eglMakeCurrent(current_display, current_draw, current_read, current_context);
-    }
+      // Clean up mpv's OpenGL resources (in mpv's isolated context)
+      EGLDisplay egl_display = video_output_get_egl_display(video_output);
+      EGLContext egl_context = video_output_get_egl_context(video_output);
+      
+      if (egl_context != EGL_NO_CONTEXT) {
+        eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
+        
+        if (self->mpv_texture != 0) {
+          glDeleteTextures(1, &self->mpv_texture);
+          self->mpv_texture = 0;
+        }
+        if (self->fbo != 0) {
+          glDeleteFramebuffers(1, &self->fbo);
+          self->fbo = 0;
+        }
+      }
+    });
+    future.wait();
   }
   
   self->current_width = 1;
@@ -131,6 +128,7 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
                                      GError** error) {
   TextureGL* self = TEXTURE_GL(texture);
   VideoOutput* video_output = self->video_output;
+  ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
   
   gint32 required_width = (guint32)video_output_get_width(video_output);
   gint32 required_height = (guint32)video_output_get_height(video_output);
@@ -150,49 +148,53 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       EGLDisplay egl_display = video_output_get_egl_display(video_output);
       EGLContext egl_context = video_output_get_egl_context(video_output);
       
-      // Switch to mpv's isolated context to create/resize mpv's texture and FBO
-      eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
-      
-      // Free previous resources in mpv's context
-      if (!first_frame) {
-        glDeleteTextures(1, &self->mpv_texture);
-        glDeleteFramebuffers(1, &self->fbo);
-        if (self->egl_image != EGL_NO_IMAGE_KHR) {
-          eglDestroyImageKHR(egl_display, self->egl_image);
+      // Create/resize resources in dedicated thread
+      auto future = thread_pool->Post([self, egl_display, egl_context, first_frame, required_width, required_height]() {
+        // Switch to mpv's isolated context
+        eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
+        
+        // Free previous resources in mpv's context
+        if (!first_frame) {
+          glDeleteTextures(1, &self->mpv_texture);
+          glDeleteFramebuffers(1, &self->fbo);
+          if (self->egl_image != EGL_NO_IMAGE_KHR) {
+            eglDestroyImageKHR(egl_display, self->egl_image);
+          }
         }
-      }
-      
-      // Create mpv's FBO and texture
-      glGenFramebuffers(1, &self->fbo);
-      glBindFramebuffer(GL_FRAMEBUFFER, self->fbo);
-      
-      glGenTextures(1, &self->mpv_texture);
-      glBindTexture(GL_TEXTURE_2D, self->mpv_texture);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, required_width, required_height,
-                   0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-      
-      // Attach mpv's texture to FBO
-      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                             GL_TEXTURE_2D, self->mpv_texture, 0);
-      
-      // Create EGLImage from mpv's texture
-      EGLint egl_image_attribs[] = { EGL_NONE };
-      self->egl_image = eglCreateImageKHR(
-          egl_display,
-          egl_context,
-          EGL_GL_TEXTURE_2D_KHR,
-          (EGLClientBuffer)(guintptr)self->mpv_texture,
-          egl_image_attribs);
-      
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
-      glBindTexture(GL_TEXTURE_2D, 0);
-      
-      // Flush to ensure mpv's texture is ready
-      glFlush();
+        
+        // Create mpv's FBO and texture
+        glGenFramebuffers(1, &self->fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, self->fbo);
+        
+        glGenTextures(1, &self->mpv_texture);
+        glBindTexture(GL_TEXTURE_2D, self->mpv_texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, required_width, required_height,
+                     0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        
+        // Attach mpv's texture to FBO
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                               GL_TEXTURE_2D, self->mpv_texture, 0);
+        
+        // Create EGLImage from mpv's texture
+        EGLint egl_image_attribs[] = { EGL_NONE };
+        self->egl_image = eglCreateImageKHR(
+            egl_display,
+            egl_context,
+            EGL_GL_TEXTURE_2D_KHR,
+            (EGLClientBuffer)(guintptr)self->mpv_texture,
+            egl_image_attribs);
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        
+        // Flush to ensure mpv's texture is ready
+        glFlush();
+      });
+      future.wait();
       
       // Switch back to Flutter's context to create/update Flutter's texture
       eglMakeCurrent(flutter_display, flutter_draw, flutter_read, flutter_context);
@@ -221,40 +223,35 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       // Flutter's context is already current, so we're ready to render
     }
     
-    // Save Flutter's current context
-    EGLDisplay flutter_display = eglGetCurrentDisplay();
-    EGLContext flutter_context = eglGetCurrentContext();
-    EGLSurface flutter_draw = eglGetCurrentSurface(EGL_DRAW);
-    EGLSurface flutter_read = eglGetCurrentSurface(EGL_READ);
-    
     EGLDisplay egl_display = video_output_get_egl_display(video_output);
     EGLContext egl_context = video_output_get_egl_context(video_output);
     mpv_render_context* render_context = video_output_get_render_context(video_output);
     
-    // Switch to mpv's isolated context for rendering
-    eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
-    
-    // Bind mpv's FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, self->fbo);
-    
-    // Render mpv frame to mpv's texture
-    mpv_opengl_fbo fbo{(gint32)self->fbo, required_width, required_height, 0};
-    int flip_y = 0;
-    mpv_render_param params[] = {
-        {MPV_RENDER_PARAM_OPENGL_FBO, &fbo},
-        {MPV_RENDER_PARAM_FLIP_Y, &flip_y},
-        {MPV_RENDER_PARAM_INVALID, NULL},
-    };
-    mpv_render_context_render(render_context, params);
-    
-    // Unbind FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
-    // Flush to ensure rendering is complete
-    glFlush();
-    
-    // Restore Flutter's context
-    eglMakeCurrent(flutter_display, flutter_draw, flutter_read, flutter_context);
+    // Render in dedicated thread
+    auto future = thread_pool->Post([self, egl_display, egl_context, render_context, required_width, required_height]() {
+      // Switch to mpv's isolated context for rendering
+      eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
+      
+      // Bind mpv's FBO
+      glBindFramebuffer(GL_FRAMEBUFFER, self->fbo);
+      
+      // Render mpv frame to mpv's texture
+      mpv_opengl_fbo fbo{(gint32)self->fbo, required_width, required_height, 0};
+      int flip_y = 0;
+      mpv_render_param params[] = {
+          {MPV_RENDER_PARAM_OPENGL_FBO, &fbo},
+          {MPV_RENDER_PARAM_FLIP_Y, &flip_y},
+          {MPV_RENDER_PARAM_INVALID, NULL},
+      };
+      mpv_render_context_render(render_context, params);
+      
+      // Unbind FBO
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      
+      // Flush to ensure rendering is complete
+      glFlush();
+    });
+    future.wait();
   }
   
   *target = GL_TEXTURE_2D;
