@@ -84,10 +84,7 @@ static void video_output_dispose(GObject* object) {
     g_free(self->pixel_buffer);
     g_object_unref(self->texture_sw);
     if (self->render_context != NULL) {
-      auto future = self->thread_pool_ref->Post([render_context = self->render_context]() {
-        mpv_render_context_free(render_context);
-      });
-      future.wait();
+      mpv_render_context_free(self->render_context);
       self->render_context = NULL;
     }
   }
