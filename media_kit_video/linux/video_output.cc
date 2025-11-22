@@ -171,6 +171,16 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
     }
   }
   
+  // Create texture_gl in main thread first (needed by mpv callback)
+  if (self->configuration.enable_hardware_acceleration) {
+    self->texture_gl = texture_gl_new(self);
+    if (!fl_texture_registrar_register_texture(
+            texture_registrar, FL_TEXTURE(self->texture_gl))) {
+      g_printerr("media_kit: VideoOutput: Failed to register texture.\n");
+      self->texture_gl = NULL;
+    }
+  }
+  
   // Initialize mpv in dedicated thread
   auto future = thread_pool_ref->Post([self]() {
     mpv_set_option_string(self->handle, "video-sync", "audio");
@@ -178,7 +188,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
     // mpv_set_option_string(self->handle, "video-timing-offset", "0");
     
     gboolean hardware_acceleration_supported = FALSE;
-    if (self->configuration.enable_hardware_acceleration && 
+    if (self->texture_gl != NULL && 
         self->egl_display != EGL_NO_DISPLAY && 
         self->egl_config != NULL) {
       
@@ -261,14 +271,12 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   
   hardware_acceleration_supported = future.get();
   
-  // Create texture in main thread after successful initialization
-  if (hardware_acceleration_supported) {
-    self->texture_gl = texture_gl_new(self);
-    if (!fl_texture_registrar_register_texture(
-            texture_registrar, FL_TEXTURE(self->texture_gl))) {
-      g_printerr("media_kit: VideoOutput: Failed to register texture.\n");
-      hardware_acceleration_supported = FALSE;
-    }
+  // If hardware acceleration failed and texture was created, clean it up
+  if (!hardware_acceleration_supported && self->texture_gl != NULL) {
+    fl_texture_registrar_unregister_texture(texture_registrar, 
+                                            FL_TEXTURE(self->texture_gl));
+    g_object_unref(self->texture_gl);
+    self->texture_gl = NULL;
   }
 #ifdef MPV_RENDER_API_TYPE_SW
   if (!hardware_acceleration_supported) {
