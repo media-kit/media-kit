@@ -262,7 +262,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
     return hardware_acceleration_supported;
   });
   
-  gboolean hardware_acceleration_supported = future.get();
+  hardware_acceleration_supported = future.get();
   
   // Create texture in main thread after successful initialization
   if (hardware_acceleration_supported) {
