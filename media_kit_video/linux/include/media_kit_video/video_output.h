@@ -115,8 +115,6 @@ gint64 video_output_get_height(VideoOutput* self);
 
 gint64 video_output_get_texture_id(VideoOutput* self);
 
-gboolean video_output_is_destroyed(VideoOutput* self);
-
 void video_output_notify_texture_update(VideoOutput* self);
 
 void video_output_notify_render(VideoOutput* self);

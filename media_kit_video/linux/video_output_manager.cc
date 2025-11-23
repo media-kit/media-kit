@@ -98,14 +98,6 @@ void video_output_manager_dispose(VideoOutputManager* self, gint64 handle) {
   g_print("[VideoOutputManager] Disposing video output for handle: %ld\n", handle);
   if (g_hash_table_contains(self->video_outputs, GINT_TO_POINTER(handle))) {
     g_print("[VideoOutputManager] Found video output in hash table, removing...\n");
-    
-    // Get references before removal for logging
-    VideoOutput* video_output = VIDEO_OUTPUT(
-        g_hash_table_lookup(self->video_outputs, GINT_TO_POINTER(handle)));
-    ThreadPool* thread_pool = static_cast<ThreadPool*>(
-        g_hash_table_lookup(self->render_threads, GINT_TO_POINTER(handle)));
-    g_print("[VideoOutputManager] video_output=%p, thread_pool=%p\n", video_output, thread_pool);
-    
     // Must remove video_output first (triggers video_output_dispose which uses thread_pool)
     // Then remove thread pool after video_output cleanup is complete
     g_hash_table_remove(self->video_outputs, GINT_TO_POINTER(handle));

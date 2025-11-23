@@ -52,17 +52,14 @@ static void video_output_dispose(GObject* object) {
   VideoOutput* self = VIDEO_OUTPUT(object);
   g_print("[VideoOutput %p] video_output_dispose called\n", self);
   
-  // CRITICAL: Disable mpv callbacks FIRST before setting destroyed flag
-  // This prevents race condition where callback fires during disposal
+  // Set destroyed flag FIRST to prevent new async tasks from being posted
+  self->destroyed.store(true, std::memory_order_release);
+  
+  // Make sure that no more callbacks are invoked from mpv.
   if (self->render_context) {
-    g_print("[VideoOutput %p] Disabling mpv callbacks\n", self);
     mpv_render_context_set_update_callback(self->render_context, NULL, NULL);
     g_print("[VideoOutput %p] mpv callbacks disabled\n", self);
   }
-  
-  // Now set destroyed flag to prevent new async tasks from being posted
-  self->destroyed.store(true, std::memory_order_release);
-  g_print("[VideoOutput %p] destroyed flag set\n", self);
 
   // H/W
   if (self->texture_gl) {
@@ -173,8 +170,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                               VideoOutputConfiguration configuration,
                               ThreadPool* thread_pool_ref) {
   VideoOutput* self = VIDEO_OUTPUT(g_object_new(video_output_get_type(), NULL));
-  
-  g_print("[VideoOutput %p] CREATED for handle=%ld (thread_pool=%p)\n", self, handle, thread_pool_ref);
   
   self->texture_registrar = texture_registrar;
   self->thread_pool_ref = thread_pool_ref;
@@ -583,32 +578,24 @@ void video_output_notify_texture_update(VideoOutput* self) {
   }
 }
 
-gboolean video_output_is_destroyed(VideoOutput* self) {
-  return self->destroyed.load(std::memory_order_acquire);
-}
-
 void video_output_notify_render(VideoOutput* self) {
   if (self->destroyed.load(std::memory_order_acquire) || !self->thread_pool_ref) {
     return;
   }
   
   // Post render tasks to dedicated thread (asynchronously, don't wait)
-  // Check destroyed flag BEFORE posting to avoid queuing tasks during disposal
-  if (!self->destroyed.load(std::memory_order_acquire)) {
-    self->thread_pool_ref->Post([self]() {
-      if (!self->destroyed.load(std::memory_order_acquire)) {
-        video_output_check_and_resize(self);
-      }
-    });
-  }
+  // Use destroyed flag to check if still valid (simpler and more reliable than weak_ptr)
+  self->thread_pool_ref->Post([self]() {
+    if (!self->destroyed.load(std::memory_order_acquire)) {
+      video_output_check_and_resize(self);
+    }
+  });
   
-  if (!self->destroyed.load(std::memory_order_acquire)) {
-    self->thread_pool_ref->Post([self]() {
-      if (!self->destroyed.load(std::memory_order_acquire)) {
-        video_output_render(self);
-      }
-    });
-  }
+  self->thread_pool_ref->Post([self]() {
+    if (!self->destroyed.load(std::memory_order_acquire)) {
+      video_output_render(self);
+    }
+  });
 }
 
 void video_output_check_and_resize(VideoOutput* self) {
