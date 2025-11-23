@@ -3,6 +3,7 @@
         "future": "cpp",
         "any": "cpp",
         "memory": "cpp",
-        "optional": "cpp"
+        "optional": "cpp",
+        "mutex": "cpp"
     }
 }
