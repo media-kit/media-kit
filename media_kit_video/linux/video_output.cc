@@ -9,7 +9,7 @@
 #include "include/media_kit_video/video_output.h"
 #include "include/media_kit_video/texture_gl.h"
 #include "include/media_kit_video/texture_sw.h"
-#include "include/media_kit_video/thread_pool.h"
+#include "include/media_kit_video/gl_render_thread.h"
 
 #include <epoxy/egl.h>
 #include <epoxy/glx.h>
@@ -34,7 +34,7 @@ struct _VideoOutput {
   TextureUpdateCallback texture_update_callback;
   gpointer texture_update_callback_context;
   FlTextureRegistrar* texture_registrar;
-  ThreadPool* thread_pool_ref;
+  GLRenderThread* gl_render_thread;
   gboolean destroyed;
 };
 
@@ -54,9 +54,9 @@ static void video_output_dispose(GObject* object) {
     fl_texture_registrar_unregister_texture(self->texture_registrar,
                                             FL_TEXTURE(self->texture_gl));
     
-    // Clean up EGL resources in dedicated thread
+    // Clean up EGL resources in dedicated GL thread
     if (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT) {
-      auto future = self->thread_pool_ref->Post([self]() {
+      self->gl_render_thread->PostAndWait([self]() {
         // Free mpv_render_context with our isolated EGL context
         if (self->render_context != NULL) {
           if (self->egl_context != EGL_NO_CONTEXT) {
@@ -72,7 +72,6 @@ static void video_output_dispose(GObject* object) {
           self->egl_context = EGL_NO_CONTEXT;
         }
       });
-      future.wait();
     }
     
     g_object_unref(self->texture_gl);
@@ -113,7 +112,7 @@ static void video_output_init(VideoOutput* self) {
   self->texture_update_callback = NULL;
   self->texture_update_callback_context = NULL;
   self->texture_registrar = NULL;
-  self->thread_pool_ref = NULL;
+  self->gl_render_thread = NULL;
   self->destroyed = FALSE;
   g_mutex_init(&self->mutex);
 }
@@ -122,10 +121,10 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                               FlView* view,
                               gint64 handle,
                               VideoOutputConfiguration configuration,
-                              ThreadPool* thread_pool_ref) {
+                              GLRenderThread* gl_render_thread) {
   VideoOutput* self = VIDEO_OUTPUT(g_object_new(video_output_get_type(), NULL));
   self->texture_registrar = texture_registrar;
-  self->thread_pool_ref = thread_pool_ref;
+  self->gl_render_thread = gl_render_thread;
   self->handle = (mpv_handle*)handle;
   self->width = configuration.width;
   self->height = configuration.height;
@@ -182,8 +181,9 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
     }
   }
   
-  // Initialize mpv in dedicated thread
-  auto future = thread_pool_ref->Post([self]() {
+  // Initialize mpv in dedicated GL render thread
+  gboolean hardware_acceleration_supported = FALSE;
+  gl_render_thread->PostAndWait([self, &hardware_acceleration_supported]() {
     mpv_set_option_string(self->handle, "video-sync", "audio");
     // Causes frame drops with `pulse` audio output. (SlotSun/dart_simple_live#42)
     // mpv_set_option_string(self->handle, "video-timing-offset", "0");
@@ -266,11 +266,8 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
       }
     }
     // If hardware acceleration is not supported or disabled, fall back to software rendering
-    
-    return hardware_acceleration_supported;
   });
-  
-  hardware_acceleration_supported = future.get();
+  // hardware_acceleration_supported is already set by the lambda
   
   // If hardware acceleration failed and texture was created, clean it up
   if (!hardware_acceleration_supported && self->texture_gl != NULL) {
@@ -390,8 +387,8 @@ EGLSurface video_output_get_egl_surface(VideoOutput* self) {
   return self->egl_surface;
 }
 
-ThreadPool* video_output_get_thread_pool(VideoOutput* self) {
-  return self->thread_pool_ref;
+GLRenderThread* video_output_get_gl_render_thread(VideoOutput* self) {
+  return self->gl_render_thread;
 }
 
 guint8* video_output_get_pixel_buffer(VideoOutput* self) {
@@ -522,14 +519,12 @@ void video_output_notify_texture_update(VideoOutput* self) {
 }
 
 void video_output_notify_render(VideoOutput* self) {
-  if (self->destroyed || !self->thread_pool_ref) {
+  if (self->destroyed || !self->gl_render_thread) {
     return;
   }
-  // Post render tasks to dedicated thread (asynchronously, don't wait)
-  self->thread_pool_ref->Post([self]() {
+  // Post combined check_and_resize + render task to GL thread (asynchronously)
+  self->gl_render_thread->Post([self]() {
     video_output_check_and_resize(self);
-  });
-  self->thread_pool_ref->Post([self]() {
     video_output_render(self);
   });
 }

@@ -15,7 +15,7 @@
 #include "mpv/client.h"
 #include "mpv/render.h"
 #include "mpv/render_gl.h"
-#include "thread_pool.h"
+#include "gl_render_thread.h"
 
 typedef struct _VideoOutputConfiguration {
   gint64 width;
@@ -54,14 +54,14 @@ G_DECLARE_FINAL_TYPE(VideoOutput,
  * @param view |FlView| reference.
  * @param handle |mpv_handle| reference casted to gint64.
  * @param configuration Video output configuration.
- * @param thread_pool_ref |ThreadPool| reference for dedicated rendering thread.
+ * @param gl_render_thread |GLRenderThread| reference for dedicated GL rendering.
  * @return VideoOutput*
  */
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                               FlView* view,
                               gint64 handle,
                               VideoOutputConfiguration configuration,
-                              ThreadPool* thread_pool_ref);
+                              GLRenderThread* gl_render_thread);
 
 /**
  * @brief Sets the callback invoked when the texture ID updates i.e. video
@@ -98,7 +98,7 @@ EGLContext video_output_get_egl_context(VideoOutput* self);
 
 EGLSurface video_output_get_egl_surface(VideoOutput* self);
 
-ThreadPool* video_output_get_thread_pool(VideoOutput* self);
+GLRenderThread* video_output_get_gl_render_thread(VideoOutput* self);
 
 guint8* video_output_get_pixel_buffer(VideoOutput* self);
 

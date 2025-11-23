@@ -128,6 +128,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     "texture_sw.cc"
     "video_output_manager.cc"
     "video_output.cc"
+    "gl_render_thread.cc"
     "utils.cc"
   )
 

@@ -7,7 +7,7 @@
 // LICENSE file.
 
 #include "include/media_kit_video/texture_gl.h"
-#include "include/media_kit_video/thread_pool.h"
+#include "include/media_kit_video/gl_render_thread.h"
 
 #include <epoxy/gl.h>
 #include <epoxy/egl.h>
@@ -68,7 +68,7 @@ static void texture_gl_init(TextureGL* self) {
 static void texture_gl_dispose(GObject* object) {
   TextureGL* self = TEXTURE_GL(object);
   VideoOutput* video_output = self->video_output;
-  ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
+  GLRenderThread* gl_thread = video_output_get_gl_render_thread(video_output);
   
   // Clean up Flutter's texture (in Flutter's context)
   if (self->name != 0) {
@@ -76,9 +76,9 @@ static void texture_gl_dispose(GObject* object) {
     self->name = 0;
   }
   
-  // Clean up EGLImage and mpv's OpenGL resources in dedicated thread
-  if (video_output != NULL && thread_pool != NULL) {
-    auto future = thread_pool->Post([self, video_output]() {
+  // Clean up EGLImage and mpv's OpenGL resources in dedicated GL thread
+  if (video_output != NULL && gl_thread != NULL) {
+    gl_thread->PostAndWait([self, video_output]() {
       // Clean up EGLImage
       if (self->egl_image != EGL_NO_IMAGE_KHR) {
         EGLDisplay egl_display = video_output_get_egl_display(video_output);
@@ -103,7 +103,6 @@ static void texture_gl_dispose(GObject* object) {
         }
       }
     });
-    future.wait();
   }
   
   self->current_width = 1;
@@ -239,18 +238,18 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
                                      GError** error) {
   TextureGL* self = TEXTURE_GL(texture);
   VideoOutput* video_output = self->video_output;
-  ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
+  GLRenderThread* gl_thread = video_output_get_gl_render_thread(video_output);
   
   // Asynchronously trigger initialization on first call (non-blocking)
   if (!self->initialization_posted && (self->name == 0 || self->fbo == 0)) {
     gint64 required_width = video_output_get_width(video_output);
     gint64 required_height = video_output_get_height(video_output);
     
-    if (required_width > 0 && required_height > 0 && thread_pool) {
+    if (required_width > 0 && required_height > 0 && gl_thread) {
       self->initialization_posted = TRUE;
       
-      // Post initialization task asynchronously (don't wait)
-      thread_pool->Post([self, required_width, required_height, video_output]() {
+      // Post initialization task to GL thread asynchronously (don't wait)
+      gl_thread->Post([self, required_width, required_height, video_output]() {
         texture_gl_check_and_resize(self, required_width, required_height);
         
         // After initialization, trigger a render to populate the texture
