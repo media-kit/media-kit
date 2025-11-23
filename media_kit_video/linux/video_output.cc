@@ -15,10 +15,6 @@
 #include <epoxy/glx.h>
 #include <gdk/gdkwayland.h>
 #include <gdk/gdkx.h>
-#include <memory>
-#include <atomic>
-
-// No longer using GLCleanupContext - all cleanup is done synchronously in dispose
 
 struct _VideoOutput {
   GObject parent_instance;
@@ -37,28 +33,20 @@ struct _VideoOutput {
   VideoOutputConfiguration configuration;
   TextureUpdateCallback texture_update_callback;
   gpointer texture_update_callback_context;
-  GDestroyNotify texture_update_callback_destroy_notify;
   FlTextureRegistrar* texture_registrar;
-  ThreadPool* thread_pool_ref; /* Dedicated rendering thread for this video output.
-                                 * Unlike Windows (single thread for all players),
-                                 * Linux EGL supports multiple independent contexts,
-                                 * so each player has its own rendering thread. */
-  std::atomic<bool> destroyed; /* Flag to prevent new async tasks during dispose */
+  ThreadPool* thread_pool_ref;
+  gboolean destroyed;
 };
 
 G_DEFINE_TYPE(VideoOutput, video_output, G_TYPE_OBJECT)
 
 static void video_output_dispose(GObject* object) {
   VideoOutput* self = VIDEO_OUTPUT(object);
-  g_print("[VideoOutput %p] video_output_dispose called\n", self);
-  
-  // Set destroyed flag FIRST to prevent new async tasks from being posted
-  self->destroyed.store(true, std::memory_order_release);
+  self->destroyed = TRUE;
   
   // Make sure that no more callbacks are invoked from mpv.
   if (self->render_context) {
     mpv_render_context_set_update_callback(self->render_context, NULL, NULL);
-    g_print("[VideoOutput %p] mpv callbacks disabled\n", self);
   }
 
   // H/W
@@ -66,52 +54,28 @@ static void video_output_dispose(GObject* object) {
     fl_texture_registrar_unregister_texture(self->texture_registrar,
                                             FL_TEXTURE(self->texture_gl));
     
-    // Must unref texture_gl BEFORE destroying EGL context
-    // TextureGL's dispose needs the EGL context to clean up:
-    // - EGLImage (references mpv_texture)
-    // - mpv_texture and fbo (created in mpv's EGL context)
-    g_print("[VideoOutput %p] Cleaning up texture_gl (before EGL context destruction)\n", self);
-    g_object_unref(self->texture_gl);
-    self->texture_gl = NULL;
-    g_print("[VideoOutput %p] texture_gl cleanup completed\n", self);
-    
-    // Now clean up EGL resources synchronously
-    // The thread pool is still alive because video_output is removed from hash table first
+    // Clean up EGL resources in dedicated thread
     if (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT) {
-      if (self->thread_pool_ref != NULL) {
-        g_print("[VideoOutput %p] Posting EGL cleanup to thread pool\n", self);
-        // Capture by value to avoid accessing self after it's destroyed
-        EGLDisplay egl_display = self->egl_display;
-        EGLContext egl_context = self->egl_context;
-        mpv_render_context* render_context = self->render_context;
-        void* self_ptr = self;  // For logging only
-        
-        auto future = self->thread_pool_ref->Post([self_ptr, egl_display, egl_context, render_context]() {
-          // Free mpv_render_context with our isolated EGL context
-          if (render_context != NULL) {
-            if (egl_context != EGL_NO_CONTEXT) {
-              eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
-            }
-            g_print("[VideoOutput %p] Freeing mpv_render_context\n", self_ptr);
-            mpv_render_context_free(render_context);
+      auto future = self->thread_pool_ref->Post([self]() {
+        // Free mpv_render_context with our isolated EGL context
+        if (self->render_context != NULL) {
+          if (self->egl_context != EGL_NO_CONTEXT) {
+            eglMakeCurrent(self->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, self->egl_context);
           }
-          
-          // Clean up EGL context
-          if (egl_context != EGL_NO_CONTEXT) {
-            g_print("[VideoOutput %p] Destroying EGL context %p\n", self_ptr, egl_context);
-            eglDestroyContext(egl_display, egl_context);
-          }
-        });
-        future.wait();
-        g_print("[VideoOutput %p] EGL cleanup completed\n", self);
+          mpv_render_context_free(self->render_context);
+          self->render_context = NULL;
+        }
         
-        // Clear these after cleanup
-        self->render_context = NULL;
-        self->egl_context = EGL_NO_CONTEXT;
-      } else {
-        g_printerr("[VideoOutput %p] WARNING: thread_pool_ref is NULL, cannot cleanup EGL resources properly\n", self);
-      }
+        // Clean up EGL context
+        if (self->egl_context != EGL_NO_CONTEXT) {
+          eglDestroyContext(self->egl_display, self->egl_context);
+          self->egl_context = EGL_NO_CONTEXT;
+        }
+      });
+      future.wait();
     }
+    
+    g_object_unref(self->texture_gl);
   }
   // S/W
   if (self->texture_sw) {
@@ -125,16 +89,7 @@ static void video_output_dispose(GObject* object) {
     }
   }
   
-  if (self->texture_update_callback_context &&
-      self->texture_update_callback_destroy_notify) {
-    self->texture_update_callback_destroy_notify(
-        self->texture_update_callback_context);
-  }
-  self->texture_update_callback_context = NULL;
-  self->texture_update_callback_destroy_notify = NULL;
-
   g_mutex_clear(&self->mutex);
-  g_print("[VideoOutput %p] video_output_dispose completed, calling parent dispose\n", self);
   G_OBJECT_CLASS(video_output_parent_class)->dispose(object);
 }
 
@@ -157,10 +112,9 @@ static void video_output_init(VideoOutput* self) {
   self->configuration = VideoOutputConfiguration{};
   self->texture_update_callback = NULL;
   self->texture_update_callback_context = NULL;
-  self->texture_update_callback_destroy_notify = NULL;
   self->texture_registrar = NULL;
   self->thread_pool_ref = NULL;
-  new (&self->destroyed) std::atomic<bool>(false);
+  self->destroyed = FALSE;
   g_mutex_init(&self->mutex);
 }
 
@@ -170,7 +124,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                               VideoOutputConfiguration configuration,
                               ThreadPool* thread_pool_ref) {
   VideoOutput* self = VIDEO_OUTPUT(g_object_new(video_output_get_type(), NULL));
-  
   self->texture_registrar = texture_registrar;
   self->thread_pool_ref = thread_pool_ref;
   self->handle = (mpv_handle*)handle;
@@ -289,7 +242,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                 self->render_context,
                 [](void* data) {
                   VideoOutput* self = (VideoOutput*)data;
-                  if (self->destroyed.load(std::memory_order_acquire)) {
+                  if (self->destroyed) {
                     return;
                   }
                   // Asynchronously notify render (don't block mpv thread)
@@ -382,21 +335,11 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
 }
 
 void video_output_set_texture_update_callback(
-  VideoOutput* self,
-  TextureUpdateCallback texture_update_callback,
-  gpointer texture_update_callback_context,
-  GDestroyNotify texture_update_callback_destroy_notify) {
-  if (self->texture_update_callback_context &&
-    self->texture_update_callback_destroy_notify &&
-    self->texture_update_callback_context !=
-      texture_update_callback_context) {
-  self->texture_update_callback_destroy_notify(
-    self->texture_update_callback_context);
-  }
+    VideoOutput* self,
+    TextureUpdateCallback texture_update_callback,
+    gpointer texture_update_callback_context) {
   self->texture_update_callback = texture_update_callback;
   self->texture_update_callback_context = texture_update_callback_context;
-  self->texture_update_callback_destroy_notify =
-    texture_update_callback_destroy_notify;
   // Notify initial dimensions as (1, 1) if |width| & |height| are 0 i.e.
   // texture & video frame size is based on playing file's resolution. This
   // will make sure that `Texture` widget on Flutter's widget tree is actually
@@ -579,27 +522,20 @@ void video_output_notify_texture_update(VideoOutput* self) {
 }
 
 void video_output_notify_render(VideoOutput* self) {
-  if (self->destroyed.load(std::memory_order_acquire) || !self->thread_pool_ref) {
+  if (self->destroyed || !self->thread_pool_ref) {
     return;
   }
-  
   // Post render tasks to dedicated thread (asynchronously, don't wait)
-  // Use destroyed flag to check if still valid (simpler and more reliable than weak_ptr)
   self->thread_pool_ref->Post([self]() {
-    if (!self->destroyed.load(std::memory_order_acquire)) {
-      video_output_check_and_resize(self);
-    }
+    video_output_check_and_resize(self);
   });
-  
   self->thread_pool_ref->Post([self]() {
-    if (!self->destroyed.load(std::memory_order_acquire)) {
-      video_output_render(self);
-    }
+    video_output_render(self);
   });
 }
 
 void video_output_check_and_resize(VideoOutput* self) {
-  if (self->destroyed.load(std::memory_order_acquire) || !self->texture_gl) {
+  if (self->destroyed || !self->texture_gl) {
     return;
   }
   
@@ -616,7 +552,7 @@ void video_output_check_and_resize(VideoOutput* self) {
 }
 
 void video_output_render(VideoOutput* self) {
-  if (self->destroyed.load(std::memory_order_acquire)) {
+  if (self->destroyed) {
     return;
   }
   
