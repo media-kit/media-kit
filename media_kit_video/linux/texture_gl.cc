@@ -158,7 +158,7 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
     return;  // No resize needed
   }
   
-  g_print("[TextureGL %p] check_and_resize: %s (size: %ldx%ld -> %ldx%ld)\n",
+  g_print("[TextureGL %p] check_and_resize: %s (size: %ux%u -> %ldx%ld)\n",
           self, first_frame ? "FIRST_FRAME" : "RESIZE",
           self->current_width, self->current_height, required_width, required_height);
   
