@@ -325,19 +325,34 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
                                      GError** error) {
   TextureGL* self = TEXTURE_GL(texture);
   VideoOutput* video_output = self->video_output;
+  
+  // Early exit if video_output is being destroyed
+  if (video_output == NULL || video_output_is_destroyed(video_output)) {
+    *target = GL_TEXTURE_2D;
+    *name = self->name;
+    *width = self->current_width;
+    *height = self->current_height;
+    return TRUE;
+  }
+  
   ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
   
   // Asynchronously trigger initialization on first call (non-blocking)
-  // video_output_notify_render already checks destroyed flag, so safe to call
   if (!self->initialization_posted && (self->name == 0 || self->fbo == 0)) {
     gint64 required_width = video_output_get_width(video_output);
     gint64 required_height = video_output_get_height(video_output);
     
-    if (required_width > 0 && required_height > 0 && thread_pool) {
+    if (required_width > 0 && required_height > 0 && thread_pool && !video_output_is_destroyed(video_output)) {
       self->initialization_posted = TRUE;
       
       // Post initialization task asynchronously (don't wait)
+      // Capture self as raw pointer but check video_output destroyed flag
       thread_pool->Post([self, required_width, required_height, video_output]() {
+        // Check if destroyed before executing
+        if (video_output_is_destroyed(video_output)) {
+          return;
+        }
+        
         texture_gl_check_and_resize(self, required_width, required_height);
         
         // After initialization, trigger a render to populate the texture

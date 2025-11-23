@@ -85,15 +85,27 @@ auto ThreadPool::Post(F&& f, Args&&... args)
 }
 
 inline ThreadPool::~ThreadPool() {
+  g_print("[ThreadPool %p] Destroying - clearing task queue and stopping workers\n", this);
+  size_t cleared_tasks = 0;
   {
     std::unique_lock<std::mutex> lock(queue_mutex_);
-    condition_producers_.wait(lock, [this] { return this->tasks_.empty(); });
+    // Don't wait for queue to empty - set stop flag immediately
+    // This allows worker threads to exit even if tasks remain
     stop_ = true;
+    // Clear any remaining tasks to free memory immediately
+    cleared_tasks = tasks_.size();
+    while (!tasks_.empty()) {
+      tasks_.pop();
+    }
   }
+  g_print("[ThreadPool %p] Cleared %zu pending tasks, joining workers\n", this, cleared_tasks);
   condition_.notify_all();
   for (std::thread& worker : workers_) {
-    worker.join();
+    if (worker.joinable()) {
+      worker.join();
+    }
   }
+  g_print("[ThreadPool %p] Destroyed - all workers joined\n", this);
 }
 
 #endif  // THREAD_POOL_H_
