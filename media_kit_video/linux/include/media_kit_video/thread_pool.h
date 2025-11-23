@@ -28,7 +28,7 @@ class ThreadPool {
   template <class F, class... Args>
   auto Post(F&& f, Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type>;
   
-  size_t GetQueueSize();
+  size_t GetQueueSize() const;
   size_t GetPeakQueueSize() const;
 
  private:
@@ -116,7 +116,7 @@ inline ThreadPool::~ThreadPool() {
   g_print("[ThreadPool %p] Destroyed\n", this);
 }
 
-inline size_t ThreadPool::GetQueueSize() {
+inline size_t ThreadPool::GetQueueSize() const {
   std::unique_lock<std::mutex> lock(queue_mutex_);
   return tasks_.size();
 }
