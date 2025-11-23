@@ -8,19 +8,6 @@
 
 #include "include/media_kit_video/video_output_manager.h"
 
-#include <atomic>
-
-// Reference counting for leak detection
-static std::atomic<int> g_thread_pool_instance_count{0};
-static std::atomic<int> g_video_output_manager_count{0};
-
-static void print_manager_stats(const char* context) {
-  g_print("[ManagerStats - %s] VideoOutputManager instances: %d, ThreadPool instances: %d\n",
-          context,
-          g_video_output_manager_count.load(),
-          g_thread_pool_instance_count.load());
-}
-
 // Linux-specific architecture: Per-player rendering threads
 // Unlike Windows (which uses a single shared thread due to D3D11 constraints),
 // Linux leverages EGL's multi-context support by giving each player its own
@@ -43,33 +30,16 @@ static void video_output_manager_init(VideoOutputManager* self) {
   // Linux EGL supports multiple independent contexts in different threads
   self->render_threads = g_hash_table_new_full(g_direct_hash, g_direct_equal,
                                                nullptr, [](gpointer data) {
-                                                 ThreadPool* pool = static_cast<ThreadPool*>(data);
-                                                 g_print("[VideoOutputManager] Deleting ThreadPool: %p\n", pool);
-                                                 delete pool;
-                                                 --g_thread_pool_instance_count;
-                                                 g_print("[VideoOutputManager] ThreadPool deleted (remaining instances: %d)\n", 
-                                                         g_thread_pool_instance_count.load());
+                                                 delete static_cast<ThreadPool*>(data);
                                                });
   self->texture_registrar = nullptr;
   self->view = nullptr;
-  
-  ++g_video_output_manager_count;
-  g_print("[VideoOutputManager %p] Instance created (total: %d)\n", self, g_video_output_manager_count.load());
-  print_manager_stats("manager_init");
 }
 
 static void video_output_manager_dispose(GObject* object) {
   VideoOutputManager* self = VIDEO_OUTPUT_MANAGER(object);
-  
-  --g_video_output_manager_count;
-  g_print("[VideoOutputManager %p] Disposing (remaining instances: %d)\n", self, g_video_output_manager_count.load());
-  g_print("[VideoOutputManager %p] video_outputs count: %d, render_threads count: %d\n", 
-          self, g_hash_table_size(self->video_outputs), g_hash_table_size(self->render_threads));
-  
   g_hash_table_unref(self->video_outputs);
   g_hash_table_unref(self->render_threads);
-  
-  print_manager_stats("manager_dispose");
   G_OBJECT_CLASS(video_output_manager_parent_class)->dispose(object);
 }
 
@@ -97,9 +67,6 @@ void video_output_manager_create(VideoOutputManager* self,
     // Create a dedicated rendering thread for this video output
     // Each player gets its own thread to leverage Linux EGL multi-threading
     ThreadPool* render_thread = new ThreadPool(1);
-    ++g_thread_pool_instance_count;
-    g_print("[VideoOutputManager] Created ThreadPool: %p for handle %ld (total instances: %d)\n", 
-            render_thread, handle, g_thread_pool_instance_count.load());
     g_hash_table_insert(self->render_threads, GINT_TO_POINTER(handle), render_thread);
     
     g_autoptr(VideoOutput) video_output = video_output_new(

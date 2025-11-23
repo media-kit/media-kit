@@ -18,21 +18,17 @@
 #include <memory>
 #include <atomic>
 
-// Reference counting for leak detection (H/W rendering only)
+// Reference counting for leak detection
 static std::atomic<int> g_video_output_instance_count{0};
 static std::atomic<int> g_egl_context_count{0};
 static std::atomic<int> g_render_context_count{0};
-static std::atomic<int> g_thread_pool_ref_count{0};
-static std::atomic<int> g_texture_gl_ref_count{0};  // Track texture_gl references
 
 static void print_video_output_stats(const char* context) {
-  g_print("[VideoOutputStats - %s] VideoOutput: %d, EGL contexts: %d, mpv render_contexts: %d, ThreadPool refs: %d, TextureGL refs: %d\n",
+  g_print("[VideoOutputStats - %s] VideoOutput instances: %d, EGL contexts: %d, mpv render_contexts: %d\n",
           context,
           g_video_output_instance_count.load(),
           g_egl_context_count.load(),
-          g_render_context_count.load(),
-          g_thread_pool_ref_count.load(),
-          g_texture_gl_ref_count.load());
+          g_render_context_count.load());
 }
 
 // No longer using GLCleanupContext - all cleanup is done synchronously in dispose
@@ -68,9 +64,7 @@ G_DEFINE_TYPE(VideoOutput, video_output, G_TYPE_OBJECT)
 static void video_output_dispose(GObject* object) {
   VideoOutput* self = VIDEO_OUTPUT(object);
   int count = --g_video_output_instance_count;
-  g_print("[VideoOutput %p] ========== DISPOSE START (remaining instances: %d) ==========\n", self, count);
-  g_print("[VideoOutput %p] Current state: texture_gl=%p, egl_context=%p, render_context=%p, thread_pool=%p\n",
-          self, self->texture_gl, self->egl_context, self->render_context, self->thread_pool_ref);
+  g_print("[VideoOutput %p] video_output_dispose called (remaining instances: %d)\n", self, count);
   print_video_output_stats("video_output_dispose_start");
   
   // Set destroyed flag FIRST to prevent new async tasks from being posted
@@ -84,8 +78,6 @@ static void video_output_dispose(GObject* object) {
 
   // H/W
   if (self->texture_gl) {
-    g_print("[VideoOutput %p] Unregistering texture_gl: %p (current refs before cleanup: %d)\n", 
-            self, self->texture_gl, g_texture_gl_ref_count.load());
     fl_texture_registrar_unregister_texture(self->texture_registrar,
                                             FL_TEXTURE(self->texture_gl));
     
@@ -93,19 +85,16 @@ static void video_output_dispose(GObject* object) {
     // TextureGL's dispose needs the EGL context to clean up:
     // - EGLImage (references mpv_texture)
     // - mpv_texture and fbo (created in mpv's EGL context)
-    g_print("[VideoOutput %p] Unreffing texture_gl: %p (before EGL context destruction)\n", self, self->texture_gl);
+    g_print("[VideoOutput %p] Cleaning up texture_gl (before EGL context destruction)\n", self);
     g_object_unref(self->texture_gl);
-    --g_texture_gl_ref_count;
-    g_print("[VideoOutput %p] texture_gl unref completed (remaining refs: %d)\n", 
-            self, g_texture_gl_ref_count.load());
     self->texture_gl = NULL;
+    g_print("[VideoOutput %p] texture_gl cleanup completed\n", self);
     
     // Now clean up EGL resources synchronously
     // The thread pool is still alive because video_output is removed from hash table first
     if (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT) {
       if (self->thread_pool_ref != NULL) {
-        g_print("[VideoOutput %p] Posting EGL cleanup to thread pool %p (render_context=%p, egl_context=%p)\n", 
-                self, self->thread_pool_ref, self->render_context, self->egl_context);
+        g_print("[VideoOutput %p] Posting EGL cleanup to thread pool\n", self);
         // Capture by value to avoid accessing self after it's destroyed
         EGLDisplay egl_display = self->egl_display;
         EGLContext egl_context = self->egl_context;
@@ -142,16 +131,8 @@ static void video_output_dispose(GObject* object) {
         g_printerr("[VideoOutput %p] WARNING: thread_pool_ref is NULL, cannot cleanup EGL resources properly\n", self);
       }
     }
-    
-    // Release thread pool reference
-    if (self->thread_pool_ref != NULL) {
-      --g_thread_pool_ref_count;
-      g_print("[VideoOutput %p] ThreadPool ref released: %p (remaining refs: %d)\n", 
-              self, self->thread_pool_ref, g_thread_pool_ref_count.load());
-      self->thread_pool_ref = NULL;
-    }
   }
-  // S/W (no tracking needed - confirmed no leaks)
+  // S/W
   if (self->texture_sw) {
     fl_texture_registrar_unregister_texture(self->texture_registrar,
                                             FL_TEXTURE(self->texture_sw));
@@ -171,31 +152,9 @@ static void video_output_dispose(GObject* object) {
   self->texture_update_callback_context = NULL;
   self->texture_update_callback_destroy_notify = NULL;
 
-  // Note: mpv_handle is NOT owned by VideoOutput, it's managed externally
-  // Just log if it's still set (should be cleared externally before dispose)
-  if (self->handle != NULL) {
-    g_print("[VideoOutput %p] WARNING: mpv_handle still set during dispose: %p (managed externally)\n", 
-            self, self->handle);
-  }
-  
   g_mutex_clear(&self->mutex);
-  
-  // Final verification: ensure all H/W resources are cleared
-  if (self->texture_gl != NULL) {
-    g_printerr("[VideoOutput %p] ERROR: texture_gl still set after dispose: %p\n", self, self->texture_gl);
-  }
-  if (self->egl_context != EGL_NO_CONTEXT) {
-    g_printerr("[VideoOutput %p] ERROR: egl_context still set after dispose: %p\n", self, self->egl_context);
-  }
-  if (self->render_context != NULL) {
-    g_printerr("[VideoOutput %p] ERROR: render_context still set after dispose: %p\n", self, self->render_context);
-  }
-  if (self->thread_pool_ref != NULL) {
-    g_printerr("[VideoOutput %p] ERROR: thread_pool_ref still set after dispose: %p\n", self, self->thread_pool_ref);
-  }
-  
+  g_print("[VideoOutput %p] video_output_dispose completed, calling parent dispose\n", self);
   print_video_output_stats("video_output_dispose_end");
-  g_print("[VideoOutput %p] ========== DISPOSE COMPLETE ==========\n", self);
   G_OBJECT_CLASS(video_output_parent_class)->dispose(object);
 }
 
@@ -238,12 +197,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   
   self->texture_registrar = texture_registrar;
   self->thread_pool_ref = thread_pool_ref;
-  if (thread_pool_ref != NULL) {
-    ++g_thread_pool_ref_count;
-    g_print("[VideoOutput %p] ThreadPool ref acquired: %p (total refs: %d)\n", self, thread_pool_ref, g_thread_pool_ref_count.load());
-  }
   self->handle = (mpv_handle*)handle;
-  g_print("[VideoOutput %p] mpv_handle assigned: %p\n", self, self->handle);
   self->width = configuration.width;
   self->height = configuration.height;
   self->configuration = configuration;
@@ -279,17 +233,10 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
           
           // Create texture_gl in main thread (needed by mpv callback)
           self->texture_gl = texture_gl_new(self);
-          ++g_texture_gl_ref_count;
-          g_print("[VideoOutput %p] texture_gl created: %p (total refs: %d)\n", 
-                  self, self->texture_gl, g_texture_gl_ref_count.load());
-          
           if (!fl_texture_registrar_register_texture(
                   texture_registrar, FL_TEXTURE(self->texture_gl))) {
-            g_printerr("[VideoOutput %p] ERROR: Failed to register texture_gl\n", self);
+            g_printerr("media_kit: VideoOutput: Failed to register texture.\n");
             g_object_unref(self->texture_gl);
-            --g_texture_gl_ref_count;
-            g_print("[VideoOutput %p] texture_gl unref after register failure (remaining refs: %d)\n", 
-                    self, g_texture_gl_ref_count.load());
             self->texture_gl = NULL;
             self->egl_config = NULL;
           }
@@ -380,30 +327,21 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
             g_print("media_kit: VideoOutput: H/W rendering with isolated EGL context in dedicated thread.\n");
             print_video_output_stats("video_output_hw_init_success");
           } else {
-            g_printerr("[VideoOutput %p] ERROR: Failed to create mpv_render_context\n", self);
-            g_printerr("[VideoOutput %p] Cleaning up EGL context after render_context failure\n", self);
+            g_printerr("media_kit: VideoOutput: Failed to create mpv_render_context.\n");
             eglDestroyContext(self->egl_display, self->egl_context);
             --g_egl_context_count;
-            g_print("[VideoOutput %p] EGL context destroyed after render_context failure (remaining: %d)\n", 
-                    self, g_egl_context_count.load());
+            g_print("media_kit: VideoOutput: EGL context destroyed after render_context creation failure (remaining: %d)\n", g_egl_context_count.load());
             self->egl_context = EGL_NO_CONTEXT;
-            print_video_output_stats("video_output_render_context_creation_failed");
           }
         } else {
-          EGLint egl_error = eglGetError();
-          g_printerr("[VideoOutput %p] ERROR: Failed to make isolated EGL context current. Error: 0x%x\n", self, egl_error);
-          g_printerr("[VideoOutput %p] Cleaning up EGL context after make current failure\n", self);
+          g_printerr("media_kit: VideoOutput: Failed to make isolated EGL context current. Error: 0x%x\n", eglGetError());
           eglDestroyContext(self->egl_display, self->egl_context);
           --g_egl_context_count;
-          g_print("[VideoOutput %p] EGL context destroyed after make current failure (remaining: %d)\n", 
-                  self, g_egl_context_count.load());
+          g_print("media_kit: VideoOutput: EGL context destroyed after make current failure (remaining: %d)\n", g_egl_context_count.load());
           self->egl_context = EGL_NO_CONTEXT;
-          print_video_output_stats("video_output_make_current_failed");
         }
       } else {
-        EGLint egl_error = eglGetError();
-        g_printerr("[VideoOutput %p] ERROR: Failed to create isolated EGL context. Error: 0x%x\n", self, egl_error);
-        print_video_output_stats("video_output_egl_context_creation_failed");
+        g_printerr("media_kit: VideoOutput: Failed to create isolated EGL context. Error: 0x%x\n", eglGetError());
       }
     }
     // If hardware acceleration is not supported or disabled, fall back to software rendering
@@ -415,15 +353,10 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   
   // If hardware acceleration failed and texture was created, clean it up
   if (!hardware_acceleration_supported && self->texture_gl != NULL) {
-    g_print("[VideoOutput %p] H/W acceleration failed, cleaning up texture_gl: %p\n", self, self->texture_gl);
     fl_texture_registrar_unregister_texture(texture_registrar, 
                                             FL_TEXTURE(self->texture_gl));
     g_object_unref(self->texture_gl);
-    --g_texture_gl_ref_count;
-    g_print("[VideoOutput %p] texture_gl unref after HW failure (remaining refs: %d)\n", 
-            self, g_texture_gl_ref_count.load());
     self->texture_gl = NULL;
-    print_video_output_stats("video_output_hw_fallback_cleanup");
   }
 #ifdef MPV_RENDER_API_TYPE_SW
   if (!hardware_acceleration_supported) {
