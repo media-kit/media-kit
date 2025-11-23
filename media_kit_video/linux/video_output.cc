@@ -45,32 +45,23 @@ G_DEFINE_TYPE(VideoOutput, video_output, G_TYPE_OBJECT)
 
 static void video_output_dispose(GObject* object) {
   VideoOutput* self = VIDEO_OUTPUT(object);
-  g_print("[VideoOutput %p] Dispose started (texture_gl=%p, render_context=%p, egl_context=%p)\n",
-          self, self->texture_gl, self->render_context, self->egl_context);
-  
   self->destroyed = TRUE;
   
   // Make sure that no more callbacks are invoked from mpv.
   if (self->render_context) {
-    g_print("[VideoOutput %p] Clearing mpv render context update callback\n", self);
     mpv_render_context_set_update_callback(self->render_context, NULL, NULL);
   }
 
   // H/W
   if (self->texture_gl) {
-    g_print("[VideoOutput %p] Unregistering texture_gl %p\n", self, self->texture_gl);
     fl_texture_registrar_unregister_texture(self->texture_registrar,
                                             FL_TEXTURE(self->texture_gl));
     
     // Clean up EGL resources in dedicated thread
     if (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT) {
-      g_print("[VideoOutput %p] Posting EGL cleanup task\n", self);
       auto future = self->thread_pool_ref->Post([self]() {
-        g_print("[VideoOutput %p] EGL cleanup task started\n", self);
-        
         // Free mpv_render_context with our isolated EGL context
         if (self->render_context != NULL) {
-          g_print("[VideoOutput %p] Freeing mpv_render_context %p\n", self, self->render_context);
           if (self->egl_context != EGL_NO_CONTEXT) {
             eglMakeCurrent(self->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, self->egl_context);
           }
@@ -80,36 +71,28 @@ static void video_output_dispose(GObject* object) {
         
         // Clean up EGL context
         if (self->egl_context != EGL_NO_CONTEXT) {
-          g_print("[VideoOutput %p] Destroying EGL context %p\n", self, self->egl_context);
           eglDestroyContext(self->egl_display, self->egl_context);
           self->egl_context = EGL_NO_CONTEXT;
         }
-        
-        g_print("[VideoOutput %p] EGL cleanup task completed\n", self);
       });
       future.wait();
-      g_print("[VideoOutput %p] EGL cleanup task wait finished\n", self);
     }
     
-    g_print("[VideoOutput %p] Unreferencing texture_gl %p\n", self, self->texture_gl);
     g_object_unref(self->texture_gl);
   }
   // S/W
   if (self->texture_sw) {
-    g_print("[VideoOutput %p] Cleaning up S/W rendering resources\n", self);
     fl_texture_registrar_unregister_texture(self->texture_registrar,
                                             FL_TEXTURE(self->texture_sw));
     g_free(self->pixel_buffer);
     g_object_unref(self->texture_sw);
     if (self->render_context != NULL) {
-      g_print("[VideoOutput %p] Freeing mpv_render_context (S/W) %p\n", self, self->render_context);
       mpv_render_context_free(self->render_context);
       self->render_context = NULL;
     }
   }
   
   g_mutex_clear(&self->mutex);
-  g_print("[VideoOutput %p] Dispose completed\n", self);
   G_OBJECT_CLASS(video_output_parent_class)->dispose(object);
 }
 
@@ -136,7 +119,6 @@ static void video_output_init(VideoOutput* self) {
   self->thread_pool_ref = NULL;
   self->destroyed = FALSE;
   g_mutex_init(&self->mutex);
-  g_print("[VideoOutput %p] Initialized\n", self);
 }
 
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
@@ -145,8 +127,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                               VideoOutputConfiguration configuration,
                               ThreadPool* thread_pool_ref) {
   VideoOutput* self = VIDEO_OUTPUT(g_object_new(video_output_get_type(), NULL));
-  g_print("[VideoOutput %p] Creating new instance (mpv_handle=%p, thread_pool=%p, hw_accel=%d)\n",
-          self, (void*)handle, thread_pool_ref, configuration.enable_hardware_acceleration);
   
   self->texture_registrar = texture_registrar;
   self->thread_pool_ref = thread_pool_ref;
@@ -167,12 +147,8 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   // Get EGL display and config in main thread (where Flutter context is available)
   // Only attempt if hardware acceleration is enabled
   if (self->configuration.enable_hardware_acceleration) {
-    g_print("[VideoOutput %p] Attempting H/W acceleration setup\n", self);
     EGLDisplay flutter_display = eglGetCurrentDisplay();
     EGLContext flutter_context = eglGetCurrentContext();
-    
-    g_print("[VideoOutput %p] Flutter EGL display=%p, context=%p\n",
-            self, flutter_display, flutter_context);
     
     if (flutter_display != EGL_NO_DISPLAY && flutter_context != EGL_NO_CONTEXT) {
       self->egl_display = flutter_display;
@@ -189,7 +165,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                   flutter_display, config_id);
           
           // Create texture_gl in main thread (needed by mpv callback)
-          g_print("[VideoOutput %p] Creating texture_gl\n", self);
           self->texture_gl = texture_gl_new(self);
           if (!fl_texture_registrar_register_texture(
                   texture_registrar, FL_TEXTURE(self->texture_gl))) {
@@ -197,8 +172,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
             g_object_unref(self->texture_gl);
             self->texture_gl = NULL;
             self->egl_config = NULL;
-          } else {
-            g_print("[VideoOutput %p] texture_gl registered: %p\n", self, self->texture_gl);
           }
         } else {
           g_printerr("media_kit: VideoOutput: Failed to get Flutter's EGL config by ID.\n");
@@ -214,10 +187,7 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   }
   
   // Initialize mpv in dedicated thread
-  g_print("[VideoOutput %p] Posting mpv initialization task to thread pool\n", self);
   auto future = thread_pool_ref->Post([self]() {
-    g_print("[VideoOutput %p] mpv initialization task started\n", self);
-    
     mpv_set_option_string(self->handle, "video-sync", "audio");
     // Causes frame drops with `pulse` audio output. (SlotSun/dart_simple_live#42)
     // mpv_set_option_string(self->handle, "video-timing-offset", "0");
@@ -226,8 +196,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
     if (self->texture_gl != NULL && 
         self->egl_display != EGL_NO_DISPLAY && 
         self->egl_config != NULL) {
-      
-      g_print("[VideoOutput %p] Creating isolated EGL context\n", self);
       
       // Bind OpenGL ES API (Flutter uses OpenGL ES on Linux)
       eglBindAPI(EGL_OPENGL_ES_API);
@@ -274,9 +242,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
           }
           
           if (mpv_render_context_create(&self->render_context, self->handle, params) == 0) {
-            g_print("[VideoOutput %p] mpv_render_context created: %p\n",
-                    self, self->render_context);
-            
             mpv_render_context_set_update_callback(
                 self->render_context,
                 [](void* data) {
@@ -306,19 +271,13 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
     }
     // If hardware acceleration is not supported or disabled, fall back to software rendering
     
-    g_print("[VideoOutput %p] mpv initialization task completed (hw_accel=%d)\n",
-            self, hardware_acceleration_supported);
     return hardware_acceleration_supported;
   });
   
   hardware_acceleration_supported = future.get();
-  g_print("[VideoOutput %p] mpv initialization result: hw_accel=%d\n",
-          self, hardware_acceleration_supported);
   
   // If hardware acceleration failed and texture was created, clean it up
   if (!hardware_acceleration_supported && self->texture_gl != NULL) {
-    g_print("[VideoOutput %p] H/W acceleration failed, cleaning up texture_gl %p\n",
-            self, self->texture_gl);
     fl_texture_registrar_unregister_texture(texture_registrar, 
                                             FL_TEXTURE(self->texture_gl));
     g_object_unref(self->texture_gl);
@@ -568,8 +527,6 @@ void video_output_notify_texture_update(VideoOutput* self) {
 
 void video_output_notify_render(VideoOutput* self) {
   if (self->destroyed || !self->thread_pool_ref) {
-    g_print("[VideoOutput %p] notify_render: destroyed=%d, thread_pool=%p\n",
-            self, self->destroyed, self->thread_pool_ref);
     return;
   }
   // Post render tasks to dedicated thread (asynchronously, don't wait)

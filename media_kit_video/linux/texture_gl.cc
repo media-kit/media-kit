@@ -63,35 +63,37 @@ static void texture_gl_init(TextureGL* self) {
   self->needs_texture_update = FALSE;
   self->initialization_posted = FALSE;
   self->video_output = NULL;
-  g_print("[TextureGL %p] Initialized\n", self);
 }
 
 static void texture_gl_dispose(GObject* object) {
   TextureGL* self = TEXTURE_GL(object);
-  g_print("[TextureGL %p] Dispose started (name=%u, fbo=%u, mpv_texture=%u, egl_image=%p)\n", 
-          self, self->name, self->fbo, self->mpv_texture, self->egl_image);
   
   VideoOutput* video_output = self->video_output;
+  
+  // Handle early dispose (video_output may be NULL)
+  if (video_output == NULL) {
+    g_printerr("[TextureGL %p] WARNING: Disposed before video_output was set\n", self);
+    G_OBJECT_CLASS(texture_gl_parent_class)->dispose(object);
+    return;
+  }
+  
   ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
   
   // Clean up Flutter's texture (in Flutter's context)
   if (self->name != 0) {
-    g_print("[TextureGL %p] Deleting Flutter texture (name=%u)\n", self, self->name);
     glDeleteTextures(1, &self->name);
     self->name = 0;
   }
   
   // Clean up EGLImage and mpv's OpenGL resources in dedicated thread
-  if (video_output != NULL && thread_pool != NULL) {
-    g_print("[TextureGL %p] Posting cleanup task to thread pool\n", self);
+  if (thread_pool != NULL) {
     auto future = thread_pool->Post([self, video_output]() {
-      g_print("[TextureGL %p] Cleanup task started in thread\n", self);
-      
       // Clean up EGLImage
       if (self->egl_image != EGL_NO_IMAGE_KHR) {
-        g_print("[TextureGL %p] Destroying EGLImage %p\n", self, self->egl_image);
         EGLDisplay egl_display = video_output_get_egl_display(video_output);
-        eglDestroyImageKHR(egl_display, self->egl_image);
+        if (egl_display != EGL_NO_DISPLAY) {
+          eglDestroyImageKHR(egl_display, self->egl_image);
+        }
         self->egl_image = EGL_NO_IMAGE_KHR;
       }
       
@@ -100,33 +102,28 @@ static void texture_gl_dispose(GObject* object) {
       EGLContext egl_context = video_output_get_egl_context(video_output);
       
       if (egl_context != EGL_NO_CONTEXT) {
-        g_print("[TextureGL %p] Making mpv context current for cleanup\n", self);
         eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
         
         if (self->mpv_texture != 0) {
-          g_print("[TextureGL %p] Deleting mpv texture (mpv_texture=%u)\n", self, self->mpv_texture);
           glDeleteTextures(1, &self->mpv_texture);
           self->mpv_texture = 0;
         }
         if (self->fbo != 0) {
-          g_print("[TextureGL %p] Deleting FBO (fbo=%u)\n", self, self->fbo);
           glDeleteFramebuffers(1, &self->fbo);
           self->fbo = 0;
         }
+      } else {
+        g_printerr("[TextureGL %p] ERROR: egl_context is NULL during cleanup\n", self);
       }
-      
-      g_print("[TextureGL %p] Cleanup task completed\n", self);
     });
     future.wait();
-    g_print("[TextureGL %p] Cleanup task wait finished\n", self);
   } else {
-    g_print("[TextureGL %p] WARNING: video_output or thread_pool is NULL, skipping threaded cleanup\n", self);
+    g_printerr("[TextureGL %p] WARNING: thread_pool is NULL, cannot cleanup GL resources\n", self);
   }
   
   self->current_width = 1;
   self->current_height = 1;
   self->video_output = NULL;
-  g_print("[TextureGL %p] Dispose completed\n", self);
   G_OBJECT_CLASS(texture_gl_parent_class)->dispose(object);
 }
 
@@ -139,7 +136,6 @@ TextureGL* texture_gl_new(VideoOutput* video_output) {
   init_egl_image_extensions();
   TextureGL* self = TEXTURE_GL(g_object_new(texture_gl_get_type(), NULL));
   self->video_output = video_output;
-  g_print("[TextureGL %p] Created for VideoOutput %p\n", self, video_output);
   return self;
 }
 
@@ -160,23 +156,26 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
     return;  // No resize needed
   }
   
-  g_print("[TextureGL %p] check_and_resize: %s (size: %ux%u -> %ldx%ld)\n",
-          self, first_frame ? "FIRST_FRAME" : "RESIZE",
-          self->current_width, self->current_height, required_width, required_height);
-  
   EGLDisplay egl_display = video_output_get_egl_display(video_output);
   EGLContext egl_context = video_output_get_egl_context(video_output);
+  
+  if (egl_display == EGL_NO_DISPLAY || egl_context == EGL_NO_CONTEXT) {
+    g_printerr("[TextureGL %p] ERROR: Invalid EGL display/context during resize\n", self);
+    return;
+  }
   
   // This function is called from the dedicated rendering thread
   // So we can directly perform OpenGL operations (no need to Post)
   
   // Switch to mpv's isolated context
-  eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
+  if (!eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context)) {
+    g_printerr("[TextureGL %p] ERROR: Failed to make EGL context current (error: 0x%x)\n", 
+               self, eglGetError());
+    return;
+  }
   
   // Free previous resources in mpv's context
   if (!first_frame) {
-    g_print("[TextureGL %p] Freeing old resources (mpv_texture=%u, fbo=%u, egl_image=%p)\n",
-            self, self->mpv_texture, self->fbo, self->egl_image);
     glDeleteTextures(1, &self->mpv_texture);
     glDeleteFramebuffers(1, &self->fbo);
     if (self->egl_image != EGL_NO_IMAGE_KHR) {
@@ -210,8 +209,10 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
       (EGLClientBuffer)(guintptr)self->mpv_texture,
       egl_image_attribs);
   
-  g_print("[TextureGL %p] Created resources: mpv_texture=%u, fbo=%u, egl_image=%p\n",
-          self, self->mpv_texture, self->fbo, self->egl_image);
+  if (self->egl_image == EGL_NO_IMAGE_KHR) {
+    g_printerr("[TextureGL %p] ERROR: Failed to create EGLImage (error: 0x%x)\n", 
+               self, eglGetError());
+  }
   
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -296,11 +297,8 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
   
   // Update Flutter's texture from EGLImage if resize happened
   if (self->needs_texture_update && self->egl_image != EGL_NO_IMAGE_KHR) {
-    g_print("[TextureGL %p] Updating Flutter texture (old name=%u)\n", self, self->name);
-    
     // Free previous Flutter texture
     if (self->name != 0) {
-      g_print("[TextureGL %p] Deleting old Flutter texture (name=%u)\n", self, self->name);
       glDeleteTextures(1, &self->name);
     }
     
@@ -313,9 +311,6 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, self->egl_image);
     glBindTexture(GL_TEXTURE_2D, 0);
-    
-    g_print("[TextureGL %p] Created new Flutter texture (name=%u, size=%ux%u)\n",
-            self, self->name, self->current_width, self->current_height);
     
     self->needs_texture_update = FALSE;
     
