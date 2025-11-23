@@ -135,11 +135,11 @@ static void texture_gl_dispose(GObject* object) {
         glDeleteFramebuffers(1, &fbo);
       }
       
-      // Use eglFinish() instead of glFlush() to ensure GPU driver
+      // Use glFinish() instead of glFlush() to ensure GPU driver
       //    actually processes deletion commands BEFORE thread exits.
       //    glFlush() only submits commands but doesn't wait - with thread pools,
       //    the cleanup thread may exit before GPU completes, causing VRAM leak.
-      eglFinish(egl_display);
+      glFinish();
       
       g_print("[TextureGL %p] Cleaned mpv resources in thread pool (GPU sync completed)\n", self_ptr);
     });
@@ -300,10 +300,10 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
   self->current_height = required_height;
   self->needs_texture_update = TRUE;
   
-  // Use eglFinish() to ensure GPU resources are fully allocated
+  // Use glFinish() to ensure GPU resources are fully allocated
   // before allowing render/dispose operations. Prevents race conditions where
   // dispose tries to clean up partially-created resources.
-  eglFinish(egl_display);
+  glFinish();
   
   g_print("[TextureGL %p] Resource creation synchronized with GPU\n", self);
 }
@@ -347,9 +347,9 @@ void texture_gl_render(TextureGL* self) {
   // Unbind FBO
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   
-  // Use eglFinish() to ensure rendering completes before Flutter accesses texture
+  // Use glFinish() to ensure rendering completes before Flutter accesses texture
   // Prevents tearing and ensures texture data is fully written to GPU memory
-  eglFinish(egl_display);
+  glFinish();
 }
 
 gboolean texture_gl_populate_texture(FlTextureGL* texture,
