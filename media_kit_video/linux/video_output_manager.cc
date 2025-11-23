@@ -95,9 +95,19 @@ void video_output_manager_set_size(VideoOutputManager* self,
 }
 
 void video_output_manager_dispose(VideoOutputManager* self, gint64 handle) {
+  g_print("[VideoOutputManager] Disposing video output for handle: %ld\n", handle);
   if (g_hash_table_contains(self->video_outputs, GINT_TO_POINTER(handle))) {
+    g_print("[VideoOutputManager] Found video output in hash table, removing...\n");
+    // Must remove video_output first (triggers video_output_dispose which uses thread_pool)
+    // Then remove thread pool after video_output cleanup is complete
     g_hash_table_remove(self->video_outputs, GINT_TO_POINTER(handle));
-    // Remove the dedicated rendering thread for this video output
+    g_print("[VideoOutputManager] video_output removed from hash table\n");
+    
+    // Now safe to remove the dedicated rendering thread
+    // The thread pool will be deleted by hash table's value_destroy_func
     g_hash_table_remove(self->render_threads, GINT_TO_POINTER(handle));
+    g_print("[VideoOutputManager] render_thread removed from hash table\n");
+  } else {
+    g_print("[VideoOutputManager] Video output NOT found in hash table\n");
   }
 }
