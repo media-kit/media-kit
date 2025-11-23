@@ -34,7 +34,7 @@ struct _VideoOutput {
   TextureUpdateCallback texture_update_callback;
   gpointer texture_update_callback_context;
   FlTextureRegistrar* texture_registrar;
-  ThreadPool* thread_pool_ref;
+  ThreadPool* thread_pool; /* Owned dedicated thread pool (1 thread per player). */
   gboolean destroyed;
 };
 
@@ -54,9 +54,9 @@ static void video_output_dispose(GObject* object) {
     fl_texture_registrar_unregister_texture(self->texture_registrar,
                                             FL_TEXTURE(self->texture_gl));
     
-    // Clean up EGL resources in dedicated thread
-    if (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT) {
-      auto future = self->thread_pool_ref->Post([self]() {
+    // Synchronously clean up EGL resources in dedicated thread (thread-safe)
+    if (self->thread_pool != NULL && (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT)) {
+      auto future = self->thread_pool->Post([self]() {
         // Free mpv_render_context with our isolated EGL context
         if (self->render_context != NULL) {
           if (self->egl_context != EGL_NO_CONTEXT) {
@@ -72,7 +72,7 @@ static void video_output_dispose(GObject* object) {
           self->egl_context = EGL_NO_CONTEXT;
         }
       });
-      future.wait();
+      future.wait();  // Synchronous cleanup - prevent resource leaks
     }
     
     g_object_unref(self->texture_gl);
@@ -87,6 +87,12 @@ static void video_output_dispose(GObject* object) {
       mpv_render_context_free(self->render_context);
       self->render_context = NULL;
     }
+  }
+  
+  // Delete owned thread pool (destructor waits for tasks to complete)
+  if (self->thread_pool != NULL) {
+    delete self->thread_pool;
+    self->thread_pool = NULL;
   }
   
   g_mutex_clear(&self->mutex);
@@ -113,7 +119,7 @@ static void video_output_init(VideoOutput* self) {
   self->texture_update_callback = NULL;
   self->texture_update_callback_context = NULL;
   self->texture_registrar = NULL;
-  self->thread_pool_ref = NULL;
+  self->thread_pool = NULL;
   self->destroyed = FALSE;
   g_mutex_init(&self->mutex);
 }
@@ -121,11 +127,11 @@ static void video_output_init(VideoOutput* self) {
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                               FlView* view,
                               gint64 handle,
-                              VideoOutputConfiguration configuration,
-                              ThreadPool* thread_pool_ref) {
+                              VideoOutputConfiguration configuration) {
   VideoOutput* self = VIDEO_OUTPUT(g_object_new(video_output_get_type(), NULL));
   self->texture_registrar = texture_registrar;
-  self->thread_pool_ref = thread_pool_ref;
+  // Create dedicated thread pool with 1 thread for this player instance
+  self->thread_pool = new ThreadPool(1);
   self->handle = (mpv_handle*)handle;
   self->width = configuration.width;
   self->height = configuration.height;
@@ -182,8 +188,8 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
     }
   }
   
-  // Initialize mpv in dedicated thread
-  auto future = thread_pool_ref->Post([self]() {
+  // Initialize mpv in owned dedicated thread
+  auto future = self->thread_pool->Post([self]() {
     mpv_set_option_string(self->handle, "video-sync", "audio");
     // Causes frame drops with `pulse` audio output. (SlotSun/dart_simple_live#42)
     // mpv_set_option_string(self->handle, "video-timing-offset", "0");
@@ -391,7 +397,7 @@ EGLSurface video_output_get_egl_surface(VideoOutput* self) {
 }
 
 ThreadPool* video_output_get_thread_pool(VideoOutput* self) {
-  return self->thread_pool_ref;
+  return self->thread_pool;
 }
 
 guint8* video_output_get_pixel_buffer(VideoOutput* self) {
@@ -522,14 +528,14 @@ void video_output_notify_texture_update(VideoOutput* self) {
 }
 
 void video_output_notify_render(VideoOutput* self) {
-  if (self->destroyed || !self->thread_pool_ref) {
+  if (self->destroyed || !self->thread_pool) {
     return;
   }
-  // Post render tasks to dedicated thread (asynchronously, don't wait)
-  self->thread_pool_ref->Post([self]() {
+  // Post render tasks to owned dedicated thread (asynchronously, don't wait)
+  self->thread_pool->Post([self]() {
     video_output_check_and_resize(self);
   });
-  self->thread_pool_ref->Post([self]() {
+  self->thread_pool->Post([self]() {
     video_output_render(self);
   });
 }
