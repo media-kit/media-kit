@@ -282,6 +282,7 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
   ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
   
   // Asynchronously trigger initialization on first call (non-blocking)
+  // video_output_notify_render already checks destroyed flag, so safe to call
   if (!self->initialization_posted && (self->name == 0 || self->fbo == 0)) {
     gint64 required_width = video_output_get_width(video_output);
     gint64 required_height = video_output_get_height(video_output);
