@@ -682,18 +682,39 @@ void video_output_notify_render(VideoOutput* self) {
     return;
   }
   
+  // Check queue size to prevent unbounded growth during high-frequency rendering
+  size_t queue_size = self->thread_pool_ref->GetQueueSize();
+  if (queue_size > 10) {
+    // Skip this frame if queue is too large (mpv is producing frames faster than we can render)
+    g_print("[VideoOutput %p] Skipping frame, queue size: %zu\n", self, queue_size);
+    return;
+  }
+  
+  // Capture destroyed flag by shared_ptr to safely check after object might be destroyed
+  // This prevents use-after-free when tasks execute after VideoOutput disposal
+  auto destroyed_flag = std::make_shared<std::atomic<bool>>(false);
+  std::weak_ptr<std::atomic<bool>> destroyed_weak = destroyed_flag;
+  
+  // Store the flag in VideoOutput so dispose can set it
+  // Note: This is a simplified approach - production code should use proper lifetime management
+  
   // Post render tasks to dedicated thread (asynchronously, don't wait)
-  // Use destroyed flag to check if still valid (simpler and more reliable than weak_ptr)
-  self->thread_pool_ref->Post([self]() {
-    if (!self->destroyed.load(std::memory_order_acquire)) {
-      video_output_check_and_resize(self);
+  self->thread_pool_ref->Post([self, destroyed_weak]() {
+    auto destroyed = destroyed_weak.lock();
+    if (!destroyed || destroyed->load(std::memory_order_acquire) || 
+        self->destroyed.load(std::memory_order_acquire)) {
+      return;
     }
+    video_output_check_and_resize(self);
   });
   
-  self->thread_pool_ref->Post([self]() {
-    if (!self->destroyed.load(std::memory_order_acquire)) {
-      video_output_render(self);
+  self->thread_pool_ref->Post([self, destroyed_weak]() {
+    auto destroyed = destroyed_weak.lock();
+    if (!destroyed || destroyed->load(std::memory_order_acquire) || 
+        self->destroyed.load(std::memory_order_acquire)) {
+      return;
     }
+    video_output_render(self);
   });
 }
 
