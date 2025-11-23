@@ -93,8 +93,9 @@ static void texture_gl_dispose(GObject* object) {
   VideoOutput* video_output = self->video_output;
   
   int count = --g_texture_gl_instance_count;
-  g_print("[TextureGL %p] Disposing: name=%u, mpv_texture=%u, fbo=%u, egl_image=%p (remaining instances: %d)\n",
-          self, self->name, self->mpv_texture, self->fbo, self->egl_image, count);
+  g_print("[TextureGL %p] ========== DISPOSE START (remaining instances: %d) ==========\n", self, count);
+  g_print("[TextureGL %p] Current state: name=%u, mpv_texture=%u, fbo=%u, egl_image=%p\n",
+          self, self->name, self->mpv_texture, self->fbo, self->egl_image);
   print_resource_stats("texture_gl_dispose_start");
   
   // Handle early dispose (video_output may be NULL)
@@ -182,7 +183,22 @@ static void texture_gl_dispose(GObject* object) {
   self->current_height = 1;
   self->video_output = NULL;
   
+  // Final verification: ensure all resources are cleared
+  if (self->name != 0) {
+    g_printerr("[TextureGL %p] ERROR: Flutter texture name still set after dispose: %u\n", self, self->name);
+  }
+  if (self->mpv_texture != 0) {
+    g_printerr("[TextureGL %p] ERROR: mpv_texture still set after dispose: %u\n", self, self->mpv_texture);
+  }
+  if (self->fbo != 0) {
+    g_printerr("[TextureGL %p] ERROR: fbo still set after dispose: %u\n", self, self->fbo);
+  }
+  if (self->egl_image != EGL_NO_IMAGE_KHR) {
+    g_printerr("[TextureGL %p] ERROR: egl_image still set after dispose: %p\n", self, self->egl_image);
+  }
+  
   print_resource_stats("texture_gl_dispose_end");
+  g_print("[TextureGL %p] ========== DISPOSE COMPLETE ==========\n", self);
   G_OBJECT_CLASS(texture_gl_parent_class)->dispose(object);
 }
 
@@ -228,8 +244,11 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
   
   // Switch to mpv's isolated context
   if (!eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context)) {
+    EGLint egl_error = eglGetError();
     g_printerr("[TextureGL %p] ERROR: Failed to make EGL context current (error: 0x%x)\n", 
-               self, eglGetError());
+               self, egl_error);
+    g_printerr("[TextureGL %p] Context state: egl_display=%p, egl_context=%p\n", 
+               self, egl_display, egl_context);
     return;
   }
   
@@ -266,11 +285,27 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
   
   // Create mpv's FBO and texture
   glGenFramebuffers(1, &self->fbo);
+  GLenum gl_error = glGetError();
+  if (gl_error != GL_NO_ERROR) {
+    g_printerr("[TextureGL %p] ERROR: GL error after glGenFramebuffers: 0x%x\n", self, gl_error);
+    print_resource_stats("texture_gl_fbo_creation_failed");
+    return;
+  }
   ++g_fbo_count;
   g_print("[TextureGL %p] FBO created: %u (total: %d)\n", self, self->fbo, g_fbo_count.load());
   glBindFramebuffer(GL_FRAMEBUFFER, self->fbo);
   
   glGenTextures(1, &self->mpv_texture);
+  gl_error = glGetError();
+  if (gl_error != GL_NO_ERROR) {
+    g_printerr("[TextureGL %p] ERROR: GL error after glGenTextures: 0x%x\n", self, gl_error);
+    // Cleanup FBO before returning
+    glDeleteFramebuffers(1, &self->fbo);
+    --g_fbo_count;
+    self->fbo = 0;
+    print_resource_stats("texture_gl_texture_creation_failed");
+    return;
+  }
   ++g_mpv_texture_count;
   g_print("[TextureGL %p] mpv_texture created: %u (total: %d)\n", self, self->mpv_texture, g_mpv_texture_count.load());
   glBindTexture(GL_TEXTURE_2D, self->mpv_texture);
@@ -282,19 +317,42 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
                0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   
   // Check for GL errors after texture creation
-  GLenum gl_error = glGetError();
+  gl_error = glGetError();
   if (gl_error != GL_NO_ERROR) {
-    g_printerr("[TextureGL %p] ERROR: GL error after texture creation: 0x%x\n", self, gl_error);
+    g_printerr("[TextureGL %p] ERROR: GL error after glTexImage2D: 0x%x\n", self, gl_error);
+    // Cleanup texture and FBO before returning
+    glDeleteTextures(1, &self->mpv_texture);
+    --g_mpv_texture_count;
+    self->mpv_texture = 0;
+    glDeleteFramebuffers(1, &self->fbo);
+    --g_fbo_count;
+    self->fbo = 0;
+    print_resource_stats("texture_gl_teximage2d_failed");
+    return;
   }
   
   // Attach mpv's texture to FBO
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                          GL_TEXTURE_2D, self->mpv_texture, 0);
   
+  gl_error = glGetError();
+  if (gl_error != GL_NO_ERROR) {
+    g_printerr("[TextureGL %p] ERROR: GL error after glFramebufferTexture2D: 0x%x\n", self, gl_error);
+  }
+  
   // Check FBO completeness
   GLenum fbo_status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (fbo_status != GL_FRAMEBUFFER_COMPLETE) {
     g_printerr("[TextureGL %p] ERROR: FBO incomplete, status=0x%x\n", self, fbo_status);
+    // Cleanup resources before returning
+    glDeleteTextures(1, &self->mpv_texture);
+    --g_mpv_texture_count;
+    self->mpv_texture = 0;
+    glDeleteFramebuffers(1, &self->fbo);
+    --g_fbo_count;
+    self->fbo = 0;
+    print_resource_stats("texture_gl_fbo_incomplete");
+    return;
   }
   
   // Create EGLImage from mpv's texture
@@ -307,8 +365,17 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
       egl_image_attribs);
   
   if (self->egl_image == EGL_NO_IMAGE_KHR) {
+    EGLint egl_error = eglGetError();
     g_printerr("[TextureGL %p] ERROR: Failed to create EGLImage (error: 0x%x)\n", 
-               self, eglGetError());
+               self, egl_error);
+    // Cleanup GL resources before returning
+    glDeleteTextures(1, &self->mpv_texture);
+    --g_mpv_texture_count;
+    self->mpv_texture = 0;
+    glDeleteFramebuffers(1, &self->fbo);
+    --g_fbo_count;
+    self->fbo = 0;
+    print_resource_stats("texture_gl_eglimage_creation_failed");
   } else {
     ++g_egl_image_count;
     g_print("[TextureGL %p] Created resources: egl_image=%p, mpv_texture=%u, fbo=%u, size=%ldx%ld (total EGLImages: %d)\n",
@@ -425,7 +492,14 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     // Check for GL errors
     GLenum gl_error = glGetError();
     if (gl_error != GL_NO_ERROR) {
-      g_printerr("[TextureGL %p] ERROR: GL error after Flutter texture creation: 0x%x\n", self, gl_error);
+      g_printerr("[TextureGL %p] ERROR: GL error after glEGLImageTargetTexture2DOES: 0x%x\n", self, gl_error);
+      // Delete the created texture on error
+      glDeleteTextures(1, &self->name);
+      --g_flutter_texture_count;
+      self->name = 0;
+      glBindTexture(GL_TEXTURE_2D, 0);
+      print_resource_stats("texture_gl_flutter_texture_eglimage_failed");
+      return FALSE;  // Return error to Flutter
     }
     
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -457,6 +531,11 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     GLenum gl_error = glGetError();
     if (gl_error != GL_NO_ERROR) {
       g_printerr("[TextureGL %p] ERROR: GL error after dummy texture creation: 0x%x\n", self, gl_error);
+      glDeleteTextures(1, &self->name);
+      --g_flutter_texture_count;
+      self->name = 0;
+      print_resource_stats("texture_gl_dummy_texture_failed");
+      return FALSE;  // Return error to Flutter
     }
     
     glBindTexture(GL_TEXTURE_2D, 0);

@@ -11,9 +11,18 @@
 #ifndef MEDIA_KIT_LIBS_NOT_FOUND
 
 #include <gtk/gtk.h>
+#include <atomic>
 
 #include "include/media_kit_video/utils.h"
 #include "include/media_kit_video/video_output_manager.h"
+
+// Reference counting for leak detection
+static std::atomic<int> g_plugin_instance_count{0};
+
+static void print_plugin_stats(const char* context) {
+  g_print("[PluginStats - %s] MediaKitVideoPlugin instances: %d\n",
+          context, g_plugin_instance_count.load());
+}
 
 #define MEDIA_KIT_VIDEO_PLUGIN(obj)                                     \
   (G_TYPE_CHECK_INSTANCE_CAST((obj), media_kit_video_plugin_get_type(), \
@@ -151,6 +160,24 @@ static void media_kit_video_plugin_handle_method_call(
 }
 
 static void media_kit_video_plugin_dispose(GObject* object) {
+  MediaKitVideoPlugin* self = MEDIA_KIT_VIDEO_PLUGIN(object);
+  
+  --g_plugin_instance_count;
+  g_print("[MediaKitVideoPlugin %p] Disposing (remaining instances: %d)\n", self, g_plugin_instance_count.load());
+  
+  if (self->video_output_manager != NULL) {
+    g_print("[MediaKitVideoPlugin %p] Cleaning up video_output_manager: %p\n", self, self->video_output_manager);
+    g_object_unref(self->video_output_manager);
+    self->video_output_manager = NULL;
+  }
+  
+  if (self->channel != NULL) {
+    g_print("[MediaKitVideoPlugin %p] Cleaning up method channel\n", self);
+    // Channel is cleaned up by Flutter
+    self->channel = NULL;
+  }
+  
+  print_plugin_stats("plugin_dispose");
   G_OBJECT_CLASS(media_kit_video_plugin_parent_class)->dispose(object);
 }
 
@@ -161,6 +188,10 @@ static void media_kit_video_plugin_class_init(MediaKitVideoPluginClass* klass) {
 static void media_kit_video_plugin_init(MediaKitVideoPlugin* self) {
   self->channel = NULL;
   self->video_output_manager = NULL;
+  
+  ++g_plugin_instance_count;
+  g_print("[MediaKitVideoPlugin %p] Instance created (total instances: %d)\n", self, g_plugin_instance_count.load());
+  print_plugin_stats("plugin_init");
 }
 
 static void method_call_cb(FlMethodChannel* channel,
@@ -187,6 +218,7 @@ static MediaKitVideoPlugin* media_kit_video_plugin_new(
   self->view = view;
   self->video_output_manager =
       video_output_manager_new(texture_registrar, view);
+  g_print("[MediaKitVideoPlugin %p] Created video_output_manager: %p\n", self, self->video_output_manager);
   return self;
 }
 
