@@ -90,13 +90,20 @@ G_DEFINE_TYPE(VideoOutput, video_output, G_TYPE_OBJECT)
 static void video_output_dispose(GObject* object) {
   VideoOutput* self = VIDEO_OUTPUT(object);
   g_print("[VideoOutput %p] video_output_dispose called\n", self);
-  self->destroyed = TRUE;
+  
+  // Set destroyed flag FIRST to prevent new async tasks from being posted
+  self->destroyed.store(true, std::memory_order_release);
   
   // Make sure that no more callbacks are invoked from mpv.
   if (self->render_context) {
     mpv_render_context_set_update_callback(self->render_context, NULL, NULL);
     g_print("[VideoOutput %p] mpv callbacks disabled\n", self);
   }
+
+  // Reset gl_cleanup_context to release shared_ptr
+  // This ensures all pending async tasks will detect context is gone
+  self->gl_cleanup_context.reset();
+  g_print("[VideoOutput %p] gl_cleanup_context released\n", self);
 
   // H/W
   if (self->texture_gl) {
@@ -110,31 +117,39 @@ static void video_output_dispose(GObject* object) {
     self->texture_gl = NULL;
     g_print("[VideoOutput %p] texture_gl cleanup completed\n", self);
     
-    // Now clean up EGL resources synchronously (we're in dispose, can't use async)
+    // Now clean up EGL resources synchronously
     // The thread pool is still alive because video_output is removed from hash table first
     if (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT) {
       if (self->thread_pool_ref != NULL) {
         g_print("[VideoOutput %p] Posting EGL cleanup to thread pool\n", self);
-        auto future = self->thread_pool_ref->Post([self]() {
+        // Capture by value to avoid accessing self after it's destroyed
+        EGLDisplay egl_display = self->egl_display;
+        EGLContext egl_context = self->egl_context;
+        mpv_render_context* render_context = self->render_context;
+        void* self_ptr = self;  // For logging only
+        
+        auto future = self->thread_pool_ref->Post([self_ptr, egl_display, egl_context, render_context]() {
           // Free mpv_render_context with our isolated EGL context
-          if (self->render_context != NULL) {
-            if (self->egl_context != EGL_NO_CONTEXT) {
-              eglMakeCurrent(self->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, self->egl_context);
+          if (render_context != NULL) {
+            if (egl_context != EGL_NO_CONTEXT) {
+              eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
             }
-            g_print("[VideoOutput %p] Freeing mpv_render_context\n", self);
-            mpv_render_context_free(self->render_context);
-            self->render_context = NULL;
+            g_print("[VideoOutput %p] Freeing mpv_render_context\n", self_ptr);
+            mpv_render_context_free(render_context);
           }
           
           // Clean up EGL context
-          if (self->egl_context != EGL_NO_CONTEXT) {
-            g_print("[VideoOutput %p] Destroying EGL context %p\n", self, self->egl_context);
-            eglDestroyContext(self->egl_display, self->egl_context);
-            self->egl_context = EGL_NO_CONTEXT;
+          if (egl_context != EGL_NO_CONTEXT) {
+            g_print("[VideoOutput %p] Destroying EGL context %p\n", self_ptr, egl_context);
+            eglDestroyContext(egl_display, egl_context);
           }
         });
         future.wait();
         g_print("[VideoOutput %p] EGL cleanup completed\n", self);
+        
+        // Clear these after cleanup
+        self->render_context = NULL;
+        self->egl_context = EGL_NO_CONTEXT;
       } else {
         g_printerr("[VideoOutput %p] WARNING: thread_pool_ref is NULL, cannot cleanup EGL resources properly\n", self);
       }
@@ -619,20 +634,21 @@ void video_output_notify_render(VideoOutput* self) {
     return;
   }
   
-  // Create weak_ptr to avoid extending VideoOutput lifetime
-  // Tasks will check if object is still alive before executing
+  // Use weak_ptr to check if context still valid (object not disposed)
+  // weak_ptr is safe to capture because it doesn't extend object lifetime
   std::weak_ptr<GLCleanupContext> weak_ctx = self->gl_cleanup_context;
-  std::atomic<bool>* destroyed_flag = &self->destroyed;
   
   // Post render tasks to dedicated thread (asynchronously, don't wait)
-  self->thread_pool_ref->Post([self, weak_ctx, destroyed_flag]() {
-    if (destroyed_flag->load(std::memory_order_acquire)) return;
+  // Lambda captures weak_ptr and self (but only accesses self if weak_ptr.lock() succeeds)
+  self->thread_pool_ref->Post([self, weak_ctx]() {
+    // Check if context still exists (object not disposed)
     if (auto ctx = weak_ctx.lock()) {
       video_output_check_and_resize(self);
     }
+    // If lock() returns nullptr, object is being disposed, skip silently
   });
-  self->thread_pool_ref->Post([self, weak_ctx, destroyed_flag]() {
-    if (destroyed_flag->load(std::memory_order_acquire)) return;
+  
+  self->thread_pool_ref->Post([self, weak_ctx]() {
     if (auto ctx = weak_ctx.lock()) {
       video_output_render(self);
     }

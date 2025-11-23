@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "future": "cpp"
+        "future": "cpp",
+        "any": "cpp",
+        "memory": "cpp",
+        "optional": "cpp"
     }
 }

@@ -87,41 +87,45 @@ static void texture_gl_dispose(GObject* object) {
   
   // Clean up EGLImage and mpv's OpenGL resources in dedicated thread
   if (thread_pool != NULL) {
-    auto future = thread_pool->Post([self, video_output]() {
+    // Capture everything by value to avoid dangling pointers
+    EGLDisplay egl_display = video_output_get_egl_display(video_output);
+    EGLContext egl_context = video_output_get_egl_context(video_output);
+    EGLImageKHR egl_image = self->egl_image;
+    guint32 mpv_texture = self->mpv_texture;
+    guint32 fbo = self->fbo;
+    void* self_ptr = self;  // For logging only
+    
+    auto future = thread_pool->Post([self_ptr, egl_display, egl_context, egl_image, mpv_texture, fbo]() {
       // Clean up EGLImage
-      if (self->egl_image != EGL_NO_IMAGE_KHR) {
-        EGLDisplay egl_display = video_output_get_egl_display(video_output);
-        if (egl_display != EGL_NO_DISPLAY) {
-          eglDestroyImageKHR(egl_display, self->egl_image);
-        }
-        self->egl_image = EGL_NO_IMAGE_KHR;
+      if (egl_image != EGL_NO_IMAGE_KHR && egl_display != EGL_NO_DISPLAY) {
+        eglDestroyImageKHR(egl_display, egl_image);
       }
       
       // Clean up mpv's OpenGL resources (in mpv's isolated context)
-      EGLDisplay egl_display = video_output_get_egl_display(video_output);
-      EGLContext egl_context = video_output_get_egl_context(video_output);
-      
       if (egl_context != EGL_NO_CONTEXT && egl_display != EGL_NO_DISPLAY) {
         if (eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context)) {
-          if (self->mpv_texture != 0) {
-            glDeleteTextures(1, &self->mpv_texture);
-            self->mpv_texture = 0;
+          if (mpv_texture != 0) {
+            glDeleteTextures(1, &mpv_texture);
           }
-          if (self->fbo != 0) {
-            glDeleteFramebuffers(1, &self->fbo);
-            self->fbo = 0;
+          if (fbo != 0) {
+            glDeleteFramebuffers(1, &fbo);
           }
         } else {
           g_printerr("[TextureGL %p] ERROR: Failed to make EGL context current (error: 0x%x) - GL resources leaked\n", 
-                     self, eglGetError());
+                     self_ptr, eglGetError());
         }
-      } else if (self->mpv_texture != 0 || self->fbo != 0) {
+      } else if (mpv_texture != 0 || fbo != 0) {
         // EGL context already destroyed but we still have GL resources
         g_printerr("[TextureGL %p] LEAK: EGL context destroyed before GL cleanup (texture=%u, fbo=%u)\n", 
-                   self, self->mpv_texture, self->fbo);
+                   self_ptr, mpv_texture, fbo);
       }
     });
     future.wait();
+    
+    // Clear after cleanup
+    self->egl_image = EGL_NO_IMAGE_KHR;
+    self->mpv_texture = 0;
+    self->fbo = 0;
   } else {
     g_printerr("[TextureGL %p] WARNING: thread_pool is NULL, cannot cleanup GL resources\n", self);
   }
