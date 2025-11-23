@@ -182,13 +182,11 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
   }
   
   // Initialize mpv in dedicated GL render thread
-  gboolean hardware_acceleration_supported = FALSE;
   gl_render_thread->PostAndWait([self, &hardware_acceleration_supported]() {
     mpv_set_option_string(self->handle, "video-sync", "audio");
     // Causes frame drops with `pulse` audio output. (SlotSun/dart_simple_live#42)
     // mpv_set_option_string(self->handle, "video-timing-offset", "0");
     
-    gboolean hardware_acceleration_supported = FALSE;
     if (self->texture_gl != NULL && 
         self->egl_display != EGL_NO_DISPLAY && 
         self->egl_config != NULL) {
