@@ -67,7 +67,9 @@ static void video_output_dispose(GObject* object) {
                                             FL_TEXTURE(self->texture_gl));
     
     // Must unref texture_gl BEFORE destroying EGL context
-    // because texture_gl's dispose needs the EGL context to clean up GL resources
+    // TextureGL's dispose needs the EGL context to clean up:
+    // - EGLImage (references mpv_texture)
+    // - mpv_texture and fbo (created in mpv's EGL context)
     g_print("[VideoOutput %p] Cleaning up texture_gl (before EGL context destruction)\n", self);
     g_object_unref(self->texture_gl);
     self->texture_gl = NULL;

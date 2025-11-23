@@ -86,6 +86,7 @@ static void texture_gl_dispose(GObject* object) {
   }
   
   // Clean up EGLImage and mpv's OpenGL resources in dedicated thread
+  // video_output_dispose ensures EGL context is still valid when this runs
   if (thread_pool != NULL) {
     // Capture everything by value to avoid dangling pointers
     EGLDisplay egl_display = video_output_get_egl_display(video_output);
@@ -96,29 +97,33 @@ static void texture_gl_dispose(GObject* object) {
     void* self_ptr = self;  // For logging only
     
     auto future = thread_pool->Post([self_ptr, egl_display, egl_context, egl_image, mpv_texture, fbo]() {
-      // Clean up EGLImage
-      if (egl_image != EGL_NO_IMAGE_KHR && egl_display != EGL_NO_DISPLAY) {
+      // Clean up in correct order to prevent leaks
+      if (egl_context == EGL_NO_CONTEXT || egl_display == EGL_NO_DISPLAY) {
+        g_printerr("[TextureGL %p] ERROR: EGL context already destroyed, resources leaked\n", self_ptr);
+        return;
+      }
+      
+      if (!eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context)) {
+        g_printerr("[TextureGL %p] ERROR: Failed to make EGL context current (error: 0x%x) - resources leaked\n", 
+                   self_ptr, eglGetError());
+        return;
+      }
+      
+      // 1. First destroy EGLImage (it references the texture)
+      if (egl_image != EGL_NO_IMAGE_KHR) {
         eglDestroyImageKHR(egl_display, egl_image);
       }
       
-      // Clean up mpv's OpenGL resources (in mpv's isolated context)
-      if (egl_context != EGL_NO_CONTEXT && egl_display != EGL_NO_DISPLAY) {
-        if (eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context)) {
-          if (mpv_texture != 0) {
-            glDeleteTextures(1, &mpv_texture);
-          }
-          if (fbo != 0) {
-            glDeleteFramebuffers(1, &fbo);
-          }
-        } else {
-          g_printerr("[TextureGL %p] ERROR: Failed to make EGL context current (error: 0x%x) - GL resources leaked\n", 
-                     self_ptr, eglGetError());
-        }
-      } else if (mpv_texture != 0 || fbo != 0) {
-        // EGL context already destroyed but we still have GL resources
-        g_printerr("[TextureGL %p] LEAK: EGL context destroyed before GL cleanup (texture=%u, fbo=%u)\n", 
-                   self_ptr, mpv_texture, fbo);
+      // 2. Then delete GL texture and FBO
+      if (mpv_texture != 0) {
+        glDeleteTextures(1, &mpv_texture);
       }
+      if (fbo != 0) {
+        glDeleteFramebuffers(1, &fbo);
+      }
+      
+      // Flush to ensure cleanup is complete
+      glFlush();
     });
     future.wait();
     
@@ -183,12 +188,22 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
     return;
   }
   
-  // Free previous resources in mpv's context
+  // Free previous resources in mpv's context BEFORE creating new ones
   if (!first_frame) {
-    glDeleteTextures(1, &self->mpv_texture);
-    glDeleteFramebuffers(1, &self->fbo);
+    // Clean up in correct order to prevent leaks
+    // First destroy EGLImage (it references the texture)
     if (self->egl_image != EGL_NO_IMAGE_KHR) {
       eglDestroyImageKHR(egl_display, self->egl_image);
+      self->egl_image = EGL_NO_IMAGE_KHR;
+    }
+    // Then delete GL texture and FBO
+    if (self->mpv_texture != 0) {
+      glDeleteTextures(1, &self->mpv_texture);
+      self->mpv_texture = 0;
+    }
+    if (self->fbo != 0) {
+      glDeleteFramebuffers(1, &self->fbo);
+      self->fbo = 0;
     }
   }
   
@@ -226,13 +241,13 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D, 0);
   
-  // Flush to ensure mpv's texture is ready
-  glFlush();
-  
   // Mark that Flutter texture needs update
   self->current_width = required_width;
   self->current_height = required_height;
   self->needs_texture_update = TRUE;
+  
+  // Flush to ensure all GL commands are executed (resource creation/deletion)
+  glFlush();
 }
 
 void texture_gl_render(TextureGL* self) {
