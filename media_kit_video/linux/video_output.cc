@@ -18,19 +18,6 @@
 #include <memory>
 #include <atomic>
 
-// Reference counting for leak detection
-static std::atomic<int> g_video_output_instance_count{0};
-static std::atomic<int> g_egl_context_count{0};
-static std::atomic<int> g_render_context_count{0};
-
-static void print_video_output_stats(const char* context) {
-  g_print("[VideoOutputStats - %s] VideoOutput instances: %d, EGL contexts: %d, mpv render_contexts: %d\n",
-          context,
-          g_video_output_instance_count.load(),
-          g_egl_context_count.load(),
-          g_render_context_count.load());
-}
-
 // No longer using GLCleanupContext - all cleanup is done synchronously in dispose
 
 struct _VideoOutput {
@@ -63,9 +50,7 @@ G_DEFINE_TYPE(VideoOutput, video_output, G_TYPE_OBJECT)
 
 static void video_output_dispose(GObject* object) {
   VideoOutput* self = VIDEO_OUTPUT(object);
-  int count = --g_video_output_instance_count;
-  g_print("[VideoOutput %p] video_output_dispose called (remaining instances: %d)\n", self, count);
-  print_video_output_stats("video_output_dispose_start");
+  g_print("[VideoOutput %p] video_output_dispose called\n", self);
   
   // Set destroyed flag FIRST to prevent new async tasks from being posted
   self->destroyed.store(true, std::memory_order_release);
@@ -109,16 +94,12 @@ static void video_output_dispose(GObject* object) {
             }
             g_print("[VideoOutput %p] Freeing mpv_render_context\n", self_ptr);
             mpv_render_context_free(render_context);
-            --g_render_context_count;
-            g_print("[VideoOutput %p] render_context freed (remaining: %d)\n", self_ptr, g_render_context_count.load());
           }
           
           // Clean up EGL context
           if (egl_context != EGL_NO_CONTEXT) {
             g_print("[VideoOutput %p] Destroying EGL context %p\n", self_ptr, egl_context);
             eglDestroyContext(egl_display, egl_context);
-            --g_egl_context_count;
-            g_print("[VideoOutput %p] EGL context destroyed (remaining: %d)\n", self_ptr, g_egl_context_count.load());
           }
         });
         future.wait();
@@ -154,7 +135,6 @@ static void video_output_dispose(GObject* object) {
 
   g_mutex_clear(&self->mutex);
   g_print("[VideoOutput %p] video_output_dispose completed, calling parent dispose\n", self);
-  print_video_output_stats("video_output_dispose_end");
   G_OBJECT_CLASS(video_output_parent_class)->dispose(object);
 }
 
@@ -182,10 +162,6 @@ static void video_output_init(VideoOutput* self) {
   self->thread_pool_ref = NULL;
   new (&self->destroyed) std::atomic<bool>(false);
   g_mutex_init(&self->mutex);
-  
-  int count = ++g_video_output_instance_count;
-  g_print("[VideoOutput %p] Instance created (total instances: %d)\n", self, count);
-  print_video_output_stats("video_output_init");
 }
 
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
@@ -278,9 +254,8 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                                            EGL_NO_CONTEXT, context_attribs);
       
       if (self->egl_context != EGL_NO_CONTEXT) {
-        ++g_egl_context_count;
-        g_print("media_kit: VideoOutput: Created isolated EGL context: %p (display: %p, using Flutter's config, total: %d)\n", 
-                self->egl_context, self->egl_display, g_egl_context_count.load());
+        g_print("media_kit: VideoOutput: Created isolated EGL context: %p (display: %p, using Flutter's config)\n", 
+                self->egl_context, self->egl_display);
         
         // Make our isolated context current for initialization (surfaceless)
         if (eglMakeCurrent(self->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, self->egl_context)) {
@@ -310,8 +285,6 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
           }
           
           if (mpv_render_context_create(&self->render_context, self->handle, params) == 0) {
-            ++g_render_context_count;
-            g_print("media_kit: VideoOutput: mpv_render_context created (total: %d)\n", g_render_context_count.load());
             mpv_render_context_set_update_callback(
                 self->render_context,
                 [](void* data) {
@@ -325,19 +298,14 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                 self);
             hardware_acceleration_supported = TRUE;
             g_print("media_kit: VideoOutput: H/W rendering with isolated EGL context in dedicated thread.\n");
-            print_video_output_stats("video_output_hw_init_success");
           } else {
             g_printerr("media_kit: VideoOutput: Failed to create mpv_render_context.\n");
             eglDestroyContext(self->egl_display, self->egl_context);
-            --g_egl_context_count;
-            g_print("media_kit: VideoOutput: EGL context destroyed after render_context creation failure (remaining: %d)\n", g_egl_context_count.load());
             self->egl_context = EGL_NO_CONTEXT;
           }
         } else {
           g_printerr("media_kit: VideoOutput: Failed to make isolated EGL context current. Error: 0x%x\n", eglGetError());
           eglDestroyContext(self->egl_display, self->egl_context);
-          --g_egl_context_count;
-          g_print("media_kit: VideoOutput: EGL context destroyed after make current failure (remaining: %d)\n", g_egl_context_count.load());
           self->egl_context = EGL_NO_CONTEXT;
         }
       } else {

@@ -11,24 +11,6 @@
 
 #include <epoxy/gl.h>
 #include <epoxy/egl.h>
-#include <atomic>
-
-// Reference counting for leak detection
-static std::atomic<int> g_texture_gl_instance_count{0};
-static std::atomic<int> g_egl_image_count{0};
-static std::atomic<int> g_mpv_texture_count{0};
-static std::atomic<int> g_fbo_count{0};
-static std::atomic<int> g_flutter_texture_count{0};
-
-static void print_resource_stats(const char* context) {
-  g_print("[ResourceStats - %s] TextureGL instances: %d, EGLImages: %d, mpv_textures: %d, FBOs: %d, Flutter_textures: %d\n",
-          context,
-          g_texture_gl_instance_count.load(),
-          g_egl_image_count.load(),
-          g_mpv_texture_count.load(),
-          g_fbo_count.load(),
-          g_flutter_texture_count.load());
-}
 
 // EGLImage extension function pointers
 typedef EGLImageKHR (*PFNEGLCREATEIMAGEKHRPROC)(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list);
@@ -81,10 +63,6 @@ static void texture_gl_init(TextureGL* self) {
   self->needs_texture_update = FALSE;
   self->initialization_posted = FALSE;
   self->video_output = NULL;
-  
-  int count = ++g_texture_gl_instance_count;
-  g_print("[TextureGL %p] Instance created (total instances: %d)\n", self, count);
-  print_resource_stats("texture_gl_init");
 }
 
 static void texture_gl_dispose(GObject* object) {
@@ -92,10 +70,8 @@ static void texture_gl_dispose(GObject* object) {
   
   VideoOutput* video_output = self->video_output;
   
-  int count = --g_texture_gl_instance_count;
-  g_print("[TextureGL %p] Disposing: name=%u, mpv_texture=%u, fbo=%u, egl_image=%p (remaining instances: %d)\n",
-          self, self->name, self->mpv_texture, self->fbo, self->egl_image, count);
-  print_resource_stats("texture_gl_dispose_start");
+  g_print("[TextureGL %p] Disposing: name=%u, mpv_texture=%u, fbo=%u, egl_image=%p\n",
+          self, self->name, self->mpv_texture, self->fbo, self->egl_image);
   
   // Handle early dispose (video_output may be NULL)
   if (video_output == NULL) {
@@ -111,8 +87,6 @@ static void texture_gl_dispose(GObject* object) {
     g_print("[TextureGL %p] Deleting Flutter texture %u\n", self, self->name);
     glDeleteTextures(1, &self->name);
     self->name = 0;
-    --g_flutter_texture_count;
-    g_print("[TextureGL %p] Flutter texture deleted (remaining: %d)\n", self, g_flutter_texture_count.load());
   }
   
   // Clean up EGLImage and mpv's OpenGL resources in dedicated thread
@@ -142,20 +116,14 @@ static void texture_gl_dispose(GObject* object) {
       // 1. First destroy EGLImage (it references the texture)
       if (egl_image != EGL_NO_IMAGE_KHR) {
         eglDestroyImageKHR(egl_display, egl_image);
-        --g_egl_image_count;
-        g_print("[TextureGL %p] EGLImage destroyed (remaining: %d)\n", self_ptr, g_egl_image_count.load());
       }
       
       // 2. Then delete GL texture and FBO
       if (mpv_texture != 0) {
         glDeleteTextures(1, &mpv_texture);
-        --g_mpv_texture_count;
-        g_print("[TextureGL %p] mpv_texture deleted (remaining: %d)\n", self_ptr, g_mpv_texture_count.load());
       }
       if (fbo != 0) {
         glDeleteFramebuffers(1, &fbo);
-        --g_fbo_count;
-        g_print("[TextureGL %p] FBO deleted (remaining: %d)\n", self_ptr, g_fbo_count.load());
       }
       
       // 3. Flush to ensure cleanup is complete
@@ -181,8 +149,6 @@ static void texture_gl_dispose(GObject* object) {
   self->current_width = 1;
   self->current_height = 1;
   self->video_output = NULL;
-  
-  print_resource_stats("texture_gl_dispose_end");
   G_OBJECT_CLASS(texture_gl_parent_class)->dispose(object);
 }
 
@@ -243,36 +209,25 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
     if (self->egl_image != EGL_NO_IMAGE_KHR) {
       eglDestroyImageKHR(egl_display, self->egl_image);
       self->egl_image = EGL_NO_IMAGE_KHR;
-      --g_egl_image_count;
-      g_print("[TextureGL %p] Resize: EGLImage destroyed (remaining: %d)\n", self, g_egl_image_count.load());
     }
     // Then delete GL texture and FBO
     if (self->mpv_texture != 0) {
       glDeleteTextures(1, &self->mpv_texture);
       self->mpv_texture = 0;
-      --g_mpv_texture_count;
-      g_print("[TextureGL %p] Resize: mpv_texture deleted (remaining: %d)\n", self, g_mpv_texture_count.load());
     }
     if (self->fbo != 0) {
       glDeleteFramebuffers(1, &self->fbo);
       self->fbo = 0;
-      --g_fbo_count;
-      g_print("[TextureGL %p] Resize: FBO deleted (remaining: %d)\n", self, g_fbo_count.load());
     }
     
     g_print("[TextureGL %p] Old resources cleaned\n", self);
-    print_resource_stats("texture_gl_resize_cleanup");
   }
   
   // Create mpv's FBO and texture
   glGenFramebuffers(1, &self->fbo);
-  ++g_fbo_count;
-  g_print("[TextureGL %p] FBO created: %u (total: %d)\n", self, self->fbo, g_fbo_count.load());
   glBindFramebuffer(GL_FRAMEBUFFER, self->fbo);
   
   glGenTextures(1, &self->mpv_texture);
-  ++g_mpv_texture_count;
-  g_print("[TextureGL %p] mpv_texture created: %u (total: %d)\n", self, self->mpv_texture, g_mpv_texture_count.load());
   glBindTexture(GL_TEXTURE_2D, self->mpv_texture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -310,12 +265,9 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
     g_printerr("[TextureGL %p] ERROR: Failed to create EGLImage (error: 0x%x)\n", 
                self, eglGetError());
   } else {
-    ++g_egl_image_count;
-    g_print("[TextureGL %p] Created resources: egl_image=%p, mpv_texture=%u, fbo=%u, size=%ldx%ld (total EGLImages: %d)\n",
-            self, self->egl_image, self->mpv_texture, self->fbo, required_width, required_height, g_egl_image_count.load());
+    g_print("[TextureGL %p] Created resources: egl_image=%p, mpv_texture=%u, fbo=%u, size=%ldx%ld\n",
+            self, self->egl_image, self->mpv_texture, self->fbo, required_width, required_height);
   }
-  
-  print_resource_stats("texture_gl_resources_created");
   
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -407,14 +359,10 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     if (self->name != 0) {
       glDeleteTextures(1, &self->name);
       self->name = 0;
-      --g_flutter_texture_count;
-      g_print("[TextureGL %p] Old Flutter texture deleted during update (remaining: %d)\n", self, g_flutter_texture_count.load());
     }
     
     // Create Flutter's texture from EGLImage (in Flutter's GL context)
     glGenTextures(1, &self->name);
-    ++g_flutter_texture_count;
-    g_print("[TextureGL %p] Flutter texture created: %u (total: %d)\n", self, self->name, g_flutter_texture_count.load());
     glBindTexture(GL_TEXTURE_2D, self->name);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -448,8 +396,6 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
   if (self->name == 0) {
     g_print("[TextureGL %p] Creating dummy texture (first frame not yet available)\n", self);
     glGenTextures(1, &self->name);
-    ++g_flutter_texture_count;
-    g_print("[TextureGL %p] Dummy Flutter texture created: %u (total: %d)\n", self, self->name, g_flutter_texture_count.load());
     glBindTexture(GL_TEXTURE_2D, self->name);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     
