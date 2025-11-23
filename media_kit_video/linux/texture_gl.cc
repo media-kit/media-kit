@@ -70,6 +70,9 @@ static void texture_gl_dispose(GObject* object) {
   
   VideoOutput* video_output = self->video_output;
   
+  g_print("[TextureGL %p] Disposing: name=%u, mpv_texture=%u, fbo=%u, egl_image=%p\n",
+          self, self->name, self->mpv_texture, self->fbo, self->egl_image);
+  
   // Handle early dispose (video_output may be NULL)
   if (video_output == NULL) {
     g_printerr("[TextureGL %p] WARNING: Disposed before video_output was set\n", self);
@@ -81,6 +84,7 @@ static void texture_gl_dispose(GObject* object) {
   
   // Clean up Flutter's texture (in Flutter's context)
   if (self->name != 0) {
+    g_print("[TextureGL %p] Deleting Flutter texture %u\n", self, self->name);
     glDeleteTextures(1, &self->name);
     self->name = 0;
   }
@@ -122,10 +126,14 @@ static void texture_gl_dispose(GObject* object) {
         glDeleteFramebuffers(1, &fbo);
       }
       
-      // Flush to ensure cleanup is complete
+      // 3. Flush to ensure cleanup is complete
       glFlush();
+      
+      g_print("[TextureGL %p] Cleaned mpv resources in thread pool\n", self_ptr);
     });
     future.wait();
+    
+    g_print("[TextureGL %p] mpv resources cleanup completed\n", self);
     
     // Clear after cleanup
     self->egl_image = EGL_NO_IMAGE_KHR;
@@ -190,6 +198,9 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
   
   // Free previous resources in mpv's context BEFORE creating new ones
   if (!first_frame) {
+    g_print("[TextureGL %p] Resize detected, cleaning old resources (egl_image=%p, mpv_texture=%u, fbo=%u)\n",
+            self, self->egl_image, self->mpv_texture, self->fbo);
+    
     // Clean up in correct order to prevent leaks
     // First destroy EGLImage (it references the texture)
     if (self->egl_image != EGL_NO_IMAGE_KHR) {
@@ -205,6 +216,8 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
       glDeleteFramebuffers(1, &self->fbo);
       self->fbo = 0;
     }
+    
+    g_print("[TextureGL %p] Old resources cleaned\n", self);
   }
   
   // Create mpv's FBO and texture
@@ -236,6 +249,9 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
   if (self->egl_image == EGL_NO_IMAGE_KHR) {
     g_printerr("[TextureGL %p] ERROR: Failed to create EGLImage (error: 0x%x)\n", 
                self, eglGetError());
+  } else {
+    g_print("[TextureGL %p] Created resources: egl_image=%p, mpv_texture=%u, fbo=%u, size=%ldx%ld\n",
+            self, self->egl_image, self->mpv_texture, self->fbo, required_width, required_height);
   }
   
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -322,9 +338,12 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
   
   // Update Flutter's texture from EGLImage if resize happened
   if (self->needs_texture_update && self->egl_image != EGL_NO_IMAGE_KHR) {
-    // Free previous Flutter texture
+    g_print("[TextureGL %p] Updating Flutter texture (old name=%u)\n", self, self->name);
+    
+    // Free previous Flutter texture to prevent leak
     if (self->name != 0) {
       glDeleteTextures(1, &self->name);
+      self->name = 0;
     }
     
     // Create Flutter's texture from EGLImage (in Flutter's GL context)
@@ -337,6 +356,9 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, self->egl_image);
     glBindTexture(GL_TEXTURE_2D, 0);
     
+    g_print("[TextureGL %p] Flutter texture updated: name=%u, size=%ux%u\n",
+            self, self->name, self->current_width, self->current_height);
+    
     self->needs_texture_update = FALSE;
     
     // Notify Flutter about dimension change
@@ -348,8 +370,9 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
   *width = self->current_width;
   *height = self->current_height;
   
+  // Create dummy texture ONLY if name is still 0 (first call before initialization)
   if (self->name == 0) {
-    // First frame not yet available - create dummy texture in Flutter's context
+    g_print("[TextureGL %p] Creating dummy texture (first frame not yet available)\n", self);
     glGenTextures(1, &self->name);
     glBindTexture(GL_TEXTURE_2D, self->name);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -357,6 +380,7 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     *name = self->name;
     *width = 1;
     *height = 1;
+    g_print("[TextureGL %p] Dummy texture created: name=%u\n", self, self->name);
   }
   
   return TRUE;
