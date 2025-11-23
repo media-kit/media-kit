@@ -52,7 +52,6 @@ void video_output_manager_create(VideoOutputManager* self,
                                  TextureUpdateCallback texture_update_callback,
                                  gpointer texture_update_callback_context,
                                  GDestroyNotify texture_update_callback_context_destroy_notify);
-                                 GDestroyNotify texture_update_callback_context_destroy_notify);
 
 /**
  * @brief Sets the required video output size. This forces |VideoOutput| to
