@@ -84,8 +84,14 @@ static void texture_gl_dispose(GObject* object) {
   
   // Clean up Flutter's texture (in Flutter's context)
   if (self->name != 0) {
-    g_print("[TextureGL %p] Deleting Flutter texture %u\n", self, self->name);
+    g_print("[TextureGL %p] Deleting Flutter texture %u in Flutter context\n", self, self->name);
     glDeleteTextures(1, &self->name);
+    
+    // Verify deletion
+    GLenum gl_error = glGetError();
+    if (gl_error != GL_NO_ERROR) {
+      g_printerr("[TextureGL %p] ERROR: GL error during Flutter texture deletion: 0x%x\n", self, gl_error);
+    }
     self->name = 0;
   }
   
@@ -115,21 +121,27 @@ static void texture_gl_dispose(GObject* object) {
       
       // 1. First destroy EGLImage (it references the texture)
       if (egl_image != EGL_NO_IMAGE_KHR) {
+        g_print("[TextureGL %p] Destroying EGLImage %p\n", self_ptr, egl_image);
         eglDestroyImageKHR(egl_display, egl_image);
       }
       
       // 2. Then delete GL texture and FBO
       if (mpv_texture != 0) {
+        g_print("[TextureGL %p] Deleting mpv_texture %u\n", self_ptr, mpv_texture);
         glDeleteTextures(1, &mpv_texture);
       }
       if (fbo != 0) {
+        g_print("[TextureGL %p] Deleting FBO %u\n", self_ptr, fbo);
         glDeleteFramebuffers(1, &fbo);
       }
       
-      // 3. Flush to ensure cleanup is complete
-      glFlush();
+      // Use eglFinish() instead of glFlush() to ensure GPU driver
+      //    actually processes deletion commands BEFORE thread exits.
+      //    glFlush() only submits commands but doesn't wait - with thread pools,
+      //    the cleanup thread may exit before GPU completes, causing VRAM leak.
+      eglFinish(egl_display);
       
-      g_print("[TextureGL %p] Cleaned mpv resources in thread pool\n", self_ptr);
+      g_print("[TextureGL %p] Cleaned mpv resources in thread pool (GPU sync completed)\n", self_ptr);
     });
     future.wait();
     
@@ -171,6 +183,12 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
     return;
   }
   
+  // Check if VideoOutput was destroyed (prevents GPU leak during dispose)
+  if (video_output_is_destroyed(video_output)) {
+    g_print("[TextureGL %p] Resize aborted - VideoOutput destroyed\n", self);
+    return;
+  }
+  
   // Only check mpv-owned resources (fbo, mpv_texture) for first_frame detection
   // self->name is created in Flutter's context and shouldn't be used here
   gboolean first_frame = self->fbo == 0 || self->mpv_texture == 0;
@@ -180,6 +198,11 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
   if (!first_frame && !resize) {
     return;  // No resize needed
   }
+  
+  g_print("[TextureGL %p] %s: %ldx%ld -> %ldx%ld\n", 
+          self, first_frame ? "First frame" : "Resize",
+          (gint64)self->current_width, (gint64)self->current_height,
+          required_width, required_height);
   
   EGLDisplay egl_display = video_output_get_egl_display(video_output);
   EGLContext egl_context = video_output_get_egl_context(video_output);
@@ -277,12 +300,23 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
   self->current_height = required_height;
   self->needs_texture_update = TRUE;
   
-  // Flush to ensure all GL commands are executed (resource creation/deletion)
-  glFlush();
+  // Use eglFinish() to ensure GPU resources are fully allocated
+  // before allowing render/dispose operations. Prevents race conditions where
+  // dispose tries to clean up partially-created resources.
+  eglFinish(egl_display);
+  
+  g_print("[TextureGL %p] Resource creation synchronized with GPU\n", self);
 }
 
 void texture_gl_render(TextureGL* self) {
   VideoOutput* video_output = self->video_output;
+  
+  // Check if VideoOutput was destroyed (prevents GPU operations during dispose)
+  if (video_output_is_destroyed(video_output)) {
+    g_print("[TextureGL %p] Render aborted - VideoOutput destroyed\n", self);
+    return;
+  }
+  
   EGLDisplay egl_display = video_output_get_egl_display(video_output);
   EGLContext egl_context = video_output_get_egl_context(video_output);
   mpv_render_context* render_context = video_output_get_render_context(video_output);
@@ -313,8 +347,9 @@ void texture_gl_render(TextureGL* self) {
   // Unbind FBO
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   
-  // Flush to ensure rendering is complete
-  glFlush();
+  // Use eglFinish() to ensure rendering completes before Flutter accesses texture
+  // Prevents tearing and ensures texture data is fully written to GPU memory
+  eglFinish(egl_display);
 }
 
 gboolean texture_gl_populate_texture(FlTextureGL* texture,
@@ -338,6 +373,14 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       
       // Post initialization task asynchronously (don't wait)
       thread_pool->Post([self, required_width, required_height, video_output]() {
+        // Check if VideoOutput was destroyed while task was queued
+        // If destroyed during initialization, abort to prevent GPU resource leak
+        if (video_output_is_destroyed(video_output)) {
+          g_print("[TextureGL %p] Async initialization aborted - VideoOutput destroyed\n", self);
+          self->initialization_posted = FALSE;
+          return;
+        }
+        
         texture_gl_check_and_resize(self, required_width, required_height);
         
         // After initialization, trigger a render to populate the texture
@@ -355,28 +398,40 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
   if (self->needs_texture_update && self->egl_image != EGL_NO_IMAGE_KHR) {
     g_print("[TextureGL %p] Updating Flutter texture (old name=%u)\n", self, self->name);
     
-    // Free previous Flutter texture to prevent leak
-    if (self->name != 0) {
-      glDeleteTextures(1, &self->name);
-      self->name = 0;
-    }
+    guint32 old_name = self->name;
+    guint32 new_name = 0;
     
-    // Create Flutter's texture from EGLImage (in Flutter's GL context)
-    glGenTextures(1, &self->name);
-    glBindTexture(GL_TEXTURE_2D, self->name);
+    // Create NEW Flutter texture from EGLImage FIRST (in Flutter's GL context)
+    glGenTextures(1, &new_name);
+    glBindTexture(GL_TEXTURE_2D, new_name);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, self->egl_image);
     
-    // Check for GL errors
+    // Check for GL errors BEFORE committing the change
     GLenum gl_error = glGetError();
     if (gl_error != GL_NO_ERROR) {
-      g_printerr("[TextureGL %p] ERROR: GL error after Flutter texture creation: 0x%x\n", self, gl_error);
+      g_printerr("[TextureGL %p] ERROR: GL error after Flutter texture creation: 0x%x, keeping old texture %u\n", 
+                 self, gl_error, old_name);
+      // Clean up failed new texture to prevent leak
+      if (new_name != 0) {
+        glDeleteTextures(1, &new_name);
+      }
+      glBindTexture(GL_TEXTURE_2D, 0);
+      // Don't update, keep old texture
+      return TRUE;
     }
     
     glBindTexture(GL_TEXTURE_2D, 0);
+    
+    // Success! Now safe to delete old texture and update pointer
+    if (old_name != 0) {
+      glDeleteTextures(1, &old_name);
+      g_print("[TextureGL %p] Deleted old Flutter texture %u\n", self, old_name);
+    }
+    self->name = new_name;
     
     g_print("[TextureGL %p] Flutter texture updated: name=%u, size=%ux%u\n",
             self, self->name, self->current_width, self->current_height);
@@ -398,18 +453,24 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     glGenTextures(1, &self->name);
     glBindTexture(GL_TEXTURE_2D, self->name);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
     
     // Check for GL errors
     GLenum gl_error = glGetError();
     if (gl_error != GL_NO_ERROR) {
       g_printerr("[TextureGL %p] ERROR: GL error after dummy texture creation: 0x%x\n", self, gl_error);
+      // If dummy texture creation fails, delete it to prevent leak
+      if (self->name != 0) {
+        glDeleteTextures(1, &self->name);
+        self->name = 0;
+      }
+    } else {
+      g_print("[TextureGL %p] Dummy texture created: name=%u\n", self, self->name);
     }
     
-    glBindTexture(GL_TEXTURE_2D, 0);
     *name = self->name;
     *width = 1;
     *height = 1;
-    g_print("[TextureGL %p] Dummy texture created: name=%u\n", self, self->name);
   }
   
   return TRUE;
