@@ -123,6 +123,4 @@ void video_output_check_and_resize(VideoOutput* self);
 
 void video_output_render(VideoOutput* self);
 
-gboolean video_output_is_destroyed(VideoOutput* self);
-
 #endif  // VIDEO_OUTPUT_H_

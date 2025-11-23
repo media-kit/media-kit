@@ -629,7 +629,3 @@ void video_output_render(VideoOutput* self) {
         self->texture_registrar, FL_TEXTURE(self->texture_gl));
   }
 }
-
-gboolean video_output_is_destroyed(VideoOutput* self) {
-  return self->destroyed.load(std::memory_order_acquire);
-}
