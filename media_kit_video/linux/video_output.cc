@@ -54,9 +54,8 @@ static void video_output_dispose(GObject* object) {
     fl_texture_registrar_unregister_texture(self->texture_registrar,
                                             FL_TEXTURE(self->texture_gl));
     
-    // Synchronously clean up EGL resources in dedicated GL thread
-    if (self->gl_render_thread != NULL && 
-        (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT)) {
+    // Clean up EGL resources in dedicated GL thread
+    if (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT) {
       self->gl_render_thread->PostAndWait([self]() {
         // Free mpv_render_context with our isolated EGL context
         if (self->render_context != NULL) {
@@ -87,12 +86,6 @@ static void video_output_dispose(GObject* object) {
       mpv_render_context_free(self->render_context);
       self->render_context = NULL;
     }
-  }
-  
-  // Delete the dedicated GL render thread for this VideoOutput
-  if (self->gl_render_thread != NULL) {
-    delete self->gl_render_thread;
-    self->gl_render_thread = NULL;
   }
   
   g_mutex_clear(&self->mutex);
@@ -127,11 +120,11 @@ static void video_output_init(VideoOutput* self) {
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                               FlView* view,
                               gint64 handle,
-                              VideoOutputConfiguration configuration) {
+                              VideoOutputConfiguration configuration,
+                              GLRenderThread* gl_render_thread) {
   VideoOutput* self = VIDEO_OUTPUT(g_object_new(video_output_get_type(), NULL));
   self->texture_registrar = texture_registrar;
-  // Create a dedicated GL render thread for this VideoOutput instance
-  self->gl_render_thread = new GLRenderThread();
+  self->gl_render_thread = gl_render_thread;
   self->handle = (mpv_handle*)handle;
   self->width = configuration.width;
   self->height = configuration.height;

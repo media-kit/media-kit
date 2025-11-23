@@ -49,19 +49,6 @@ void GLRenderThread::Post(std::function<void()> task) {
 }
 
 void GLRenderThread::PostAndWait(std::function<void()> task) {
-  // Check if already stopped to avoid deadlock
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (stop_) {
-      // Thread is stopping, execute task synchronously if on same thread
-      // or skip if thread is already dead
-      if (IsCurrentThread()) {
-        task();
-      }
-      return;
-    }
-  }
-  
   std::mutex wait_mutex;
   std::condition_variable wait_cv;
   bool done = false;

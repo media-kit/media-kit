@@ -49,18 +49,19 @@ G_DECLARE_FINAL_TYPE(VideoOutput,
 
 /**
  * @brief Creates a new |VideoOutput| instance for given |handle|.
- * Each VideoOutput creates its own dedicated GLRenderThread for independent rendering.
  *
  * @param texture_registrar |FlTextureRegistrar| reference.
  * @param view |FlView| reference.
  * @param handle |mpv_handle| reference casted to gint64.
  * @param configuration Video output configuration.
+ * @param gl_render_thread |GLRenderThread| reference for dedicated GL rendering.
  * @return VideoOutput*
  */
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                               FlView* view,
                               gint64 handle,
-                              VideoOutputConfiguration configuration);
+                              VideoOutputConfiguration configuration,
+                              GLRenderThread* gl_render_thread);
 
 /**
  * @brief Sets the callback invoked when the texture ID updates i.e. video
