@@ -57,7 +57,14 @@ static void video_output_dispose(GObject* object) {
     fl_texture_registrar_unregister_texture(self->texture_registrar,
                                             FL_TEXTURE(self->texture_gl));
     
-    // Clean up EGL resources in dedicated thread
+    // Must unref texture_gl BEFORE destroying EGL context
+    // because texture_gl's dispose needs the EGL context to clean up GL resources
+    g_print("[VideoOutput %p] Cleaning up texture_gl (before EGL context destruction)\\n", self);
+    g_object_unref(self->texture_gl);
+    self->texture_gl = NULL;
+    g_print("[VideoOutput %p] texture_gl cleanup completed\\n", self);
+    
+    // Now safe to clean up EGL resources in dedicated thread
     if (self->render_context != NULL || self->egl_context != EGL_NO_CONTEXT) {
       auto future = self->thread_pool_ref->Post([self]() {
         // Free mpv_render_context with our isolated EGL context
@@ -71,14 +78,13 @@ static void video_output_dispose(GObject* object) {
         
         // Clean up EGL context
         if (self->egl_context != EGL_NO_CONTEXT) {
+          g_print("[VideoOutput %p] Destroying EGL context %p\\n", self, self->egl_context);
           eglDestroyContext(self->egl_display, self->egl_context);
           self->egl_context = EGL_NO_CONTEXT;
         }
       });
       future.wait();
     }
-    
-    g_object_unref(self->texture_gl);
   }
   // S/W
   if (self->texture_sw) {

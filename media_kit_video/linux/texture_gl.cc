@@ -101,19 +101,24 @@ static void texture_gl_dispose(GObject* object) {
       EGLDisplay egl_display = video_output_get_egl_display(video_output);
       EGLContext egl_context = video_output_get_egl_context(video_output);
       
-      if (egl_context != EGL_NO_CONTEXT) {
-        eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
-        
-        if (self->mpv_texture != 0) {
-          glDeleteTextures(1, &self->mpv_texture);
-          self->mpv_texture = 0;
+      if (egl_context != EGL_NO_CONTEXT && egl_display != EGL_NO_DISPLAY) {
+        if (eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context)) {
+          if (self->mpv_texture != 0) {
+            glDeleteTextures(1, &self->mpv_texture);
+            self->mpv_texture = 0;
+          }
+          if (self->fbo != 0) {
+            glDeleteFramebuffers(1, &self->fbo);
+            self->fbo = 0;
+          }
+        } else {
+          g_printerr("[TextureGL %p] ERROR: Failed to make EGL context current (error: 0x%x) - GL resources leaked\n", 
+                     self, eglGetError());
         }
-        if (self->fbo != 0) {
-          glDeleteFramebuffers(1, &self->fbo);
-          self->fbo = 0;
-        }
-      } else {
-        g_printerr("[TextureGL %p] ERROR: egl_context is NULL during cleanup\n", self);
+      } else if (self->mpv_texture != 0 || self->fbo != 0) {
+        // EGL context already destroyed but we still have GL resources
+        g_printerr("[TextureGL %p] LEAK: EGL context destroyed before GL cleanup (texture=%u, fbo=%u)\n", 
+                   self, self->mpv_texture, self->fbo);
       }
     });
     future.wait();
