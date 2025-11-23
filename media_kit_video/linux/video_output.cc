@@ -33,6 +33,7 @@ struct _VideoOutput {
   VideoOutputConfiguration configuration;
   TextureUpdateCallback texture_update_callback;
   gpointer texture_update_callback_context;
+  GDestroyNotify texture_update_callback_destroy_notify;
   FlTextureRegistrar* texture_registrar;
   ThreadPool* thread_pool_ref; /* Dedicated rendering thread for this video output.
                                  * Unlike Windows (single thread for all players),
@@ -98,6 +99,14 @@ static void video_output_dispose(GObject* object) {
     }
   }
   
+  if (self->texture_update_callback_context &&
+      self->texture_update_callback_destroy_notify) {
+    self->texture_update_callback_destroy_notify(
+        self->texture_update_callback_context);
+  }
+  self->texture_update_callback_context = NULL;
+  self->texture_update_callback_destroy_notify = NULL;
+
   g_mutex_clear(&self->mutex);
   G_OBJECT_CLASS(video_output_parent_class)->dispose(object);
 }
@@ -121,6 +130,7 @@ static void video_output_init(VideoOutput* self) {
   self->configuration = VideoOutputConfiguration{};
   self->texture_update_callback = NULL;
   self->texture_update_callback_context = NULL;
+  self->texture_update_callback_destroy_notify = NULL;
   self->texture_registrar = NULL;
   self->thread_pool_ref = NULL;
   self->destroyed = FALSE;
@@ -345,11 +355,21 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
 }
 
 void video_output_set_texture_update_callback(
-    VideoOutput* self,
-    TextureUpdateCallback texture_update_callback,
-    gpointer texture_update_callback_context) {
+  VideoOutput* self,
+  TextureUpdateCallback texture_update_callback,
+  gpointer texture_update_callback_context,
+  GDestroyNotify texture_update_callback_destroy_notify) {
+  if (self->texture_update_callback_context &&
+    self->texture_update_callback_destroy_notify &&
+    self->texture_update_callback_context !=
+      texture_update_callback_context) {
+  self->texture_update_callback_destroy_notify(
+    self->texture_update_callback_context);
+  }
   self->texture_update_callback = texture_update_callback;
   self->texture_update_callback_context = texture_update_callback_context;
+  self->texture_update_callback_destroy_notify =
+    texture_update_callback_destroy_notify;
   // Notify initial dimensions as (1, 1) if |width| & |height| are 0 i.e.
   // texture & video frame size is based on playing file's resolution. This
   // will make sure that `Texture` widget on Flutter's widget tree is actually

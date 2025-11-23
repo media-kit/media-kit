@@ -64,7 +64,6 @@ static void media_kit_video_plugin_handle_method_call(
       FlMethodChannel* channel;
       gint64 handle;
     } VideoOutputTextureUpdateCallbackData;
-    // TODO(@alexmercerind): Fix memory leak.
     VideoOutputTextureUpdateCallbackData* data =
         g_new0(VideoOutputTextureUpdateCallbackData, 1);
     data->channel = self->channel;
@@ -103,7 +102,8 @@ static void media_kit_video_plugin_handle_method_call(
             return G_SOURCE_REMOVE;
           }, idle_data);
         },
-        data);
+        data,
+        g_free);
     FlValue* result = fl_value_new_null();
     response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
   } else if (g_strcmp0(method, "VideoOutputManager.SetSize") == 0) {
