@@ -143,6 +143,9 @@ static void texture_gl_dispose(GObject* object) {
     g_printerr("[TextureGL %p] WARNING: thread_pool is NULL, cannot cleanup GL resources\n", self);
   }
   
+  // Reset flags
+  self->initialization_posted = FALSE;
+  self->needs_texture_update = FALSE;
   self->current_width = 1;
   self->current_height = 1;
   self->video_output = NULL;
@@ -233,9 +236,21 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, required_width, required_height,
                0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   
+  // Check for GL errors after texture creation
+  GLenum gl_error = glGetError();
+  if (gl_error != GL_NO_ERROR) {
+    g_printerr("[TextureGL %p] ERROR: GL error after texture creation: 0x%x\n", self, gl_error);
+  }
+  
   // Attach mpv's texture to FBO
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                          GL_TEXTURE_2D, self->mpv_texture, 0);
+  
+  // Check FBO completeness
+  GLenum fbo_status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  if (fbo_status != GL_FRAMEBUFFER_COMPLETE) {
+    g_printerr("[TextureGL %p] ERROR: FBO incomplete, status=0x%x\n", self, fbo_status);
+  }
   
   // Create EGLImage from mpv's texture
   EGLint egl_image_attribs[] = { EGL_NONE };
@@ -354,6 +369,13 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, self->egl_image);
+    
+    // Check for GL errors
+    GLenum gl_error = glGetError();
+    if (gl_error != GL_NO_ERROR) {
+      g_printerr("[TextureGL %p] ERROR: GL error after Flutter texture creation: 0x%x\n", self, gl_error);
+    }
+    
     glBindTexture(GL_TEXTURE_2D, 0);
     
     g_print("[TextureGL %p] Flutter texture updated: name=%u, size=%ux%u\n",
@@ -376,6 +398,13 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     glGenTextures(1, &self->name);
     glBindTexture(GL_TEXTURE_2D, self->name);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    
+    // Check for GL errors
+    GLenum gl_error = glGetError();
+    if (gl_error != GL_NO_ERROR) {
+      g_printerr("[TextureGL %p] ERROR: GL error after dummy texture creation: 0x%x\n", self, gl_error);
+    }
+    
     glBindTexture(GL_TEXTURE_2D, 0);
     *name = self->name;
     *width = 1;
