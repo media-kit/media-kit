@@ -83,13 +83,17 @@ static void texture_gl_dispose(GObject* object) {
   ThreadPool* thread_pool = video_output_get_thread_pool(video_output);
   
   // Clean up Flutter's texture (in Flutter's context)
-  // IMPORTANT: Flutter texture is bound to EGLImage via glEGLImageTargetTexture2DOES
-  // According to EGL_KHR_image spec, such textures cannot be respecified
-  // We must delete in order: Flutter texture -> EGLImage -> mpv texture
   if (self->name != 0) {
-    g_print("[TextureGL %p] Deleting Flutter texture %u (bound to EGLImage %p)\n", 
-            self, self->name, self->egl_image);
+    g_print("[TextureGL %p] Deleting Flutter texture %u in Flutter context\n", self, self->name);
     
+    // Orphan the texture from EGLImage before deletion
+    // This ensures GPU driver releases the underlying EGLImage-backed storage
+    glBindTexture(GL_TEXTURE_2D, self->name);
+    // Re-specify the texture as a regular texture (orphans EGLImage connection)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    // Now safe to delete the texture
     glDeleteTextures(1, &self->name);
     
     // Verify deletion
@@ -98,12 +102,10 @@ static void texture_gl_dispose(GObject* object) {
       g_printerr("[TextureGL %p] ERROR: GL error during Flutter texture deletion: 0x%x\n", self, gl_error);
     }
     
-    // Must finish all GL operations in Flutter context before destroying EGLImage
-    // The EGLImage is shared between contexts and deletion must be synchronized
-    glFinish();
+    // Flush to ensure deletion is submitted before moving to mpv context
+    glFlush();
     
     self->name = 0;
-    g_print("[TextureGL %p] Flutter texture deleted, GL operations synchronized\n", self);
   }
   
   // Clean up EGLImage and mpv's OpenGL resources in dedicated thread
@@ -130,26 +132,19 @@ static void texture_gl_dispose(GObject* object) {
         return;
       }
       
-      // Insert barrier to ensure Flutter context finished ALL texture operations
-      // including the glDeleteTextures call above. Without this, we might destroy EGLImage
-      // while Flutter's deletion is still pending, causing VRAM leak.
+      // Insert barrier to ensure Flutter context finished texture operations
+      // Without this, we might destroy EGLImage while Flutter is still using it
       glFinish();
       
-      // Now safe to destroy EGLImage (after all sibling textures are deleted)
+      // 1. First destroy EGLImage (it references the texture)
       if (egl_image != EGL_NO_IMAGE_KHR) {
-        g_print("[TextureGL %p] Destroying EGLImage %p (all sibling textures deleted)\n", 
-                self_ptr, egl_image);
+        g_print("[TextureGL %p] Destroying EGLImage %p\n", self_ptr, egl_image);
         eglDestroyImageKHR(egl_display, egl_image);
-        
-        // Sync after EGLImage destruction to ensure it completes
-        // before we delete the source texture. Some drivers need this.
-        glFinish();
-        g_print("[TextureGL %p] EGLImage destruction synchronized\n", self_ptr);
       }
       
-      // 2. Now safe to delete GL source texture and FBO
+      // 2. Then delete GL texture and FBO
       if (mpv_texture != 0) {
-        g_print("[TextureGL %p] Deleting mpv_texture %u (EGLImage source)\n", self_ptr, mpv_texture);
+        g_print("[TextureGL %p] Deleting mpv_texture %u\n", self_ptr, mpv_texture);
         glDeleteTextures(1, &mpv_texture);
       }
       if (fbo != 0) {
@@ -453,11 +448,15 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     
     glBindTexture(GL_TEXTURE_2D, 0);
     
-    // Success! Now safe to delete old texture
+    // Success! Now safe to delete old texture and update pointer
     if (old_name != 0) {
-      g_print("[TextureGL %p] Deleting old Flutter texture %u (will be replaced by %u)\n", 
-              self, old_name, new_name);
+      // Orphan old texture before deletion (same as in dispose)
+      glBindTexture(GL_TEXTURE_2D, old_name);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      glBindTexture(GL_TEXTURE_2D, 0);
+      
       glDeleteTextures(1, &old_name);
+      g_print("[TextureGL %p] Deleted old Flutter texture %u (orphaned before deletion)\n", self, old_name);
     }
     self->name = new_name;
     
