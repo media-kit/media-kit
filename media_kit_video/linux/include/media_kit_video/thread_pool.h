@@ -18,7 +18,6 @@
 #include <condition_variable>
 #include <vector>
 #include <memory>
-#include <atomic>
 
 class ThreadPool {
  public:
@@ -27,9 +26,6 @@ class ThreadPool {
 
   template <class F, class... Args>
   auto Post(F&& f, Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type>;
-  
-  size_t GetQueueSize() const;
-  size_t GetPeakQueueSize() const;
 
  private:
   std::vector<std::thread> workers_;
@@ -39,8 +35,6 @@ class ThreadPool {
   std::condition_variable condition_;
   std::condition_variable condition_producers_;
   bool stop_;
-  
-  mutable std::atomic<size_t> peak_queue_size_{0};
 };
 
 inline ThreadPool::ThreadPool(size_t threads) : stop_(false) {
@@ -85,25 +79,12 @@ auto ThreadPool::Post(F&& f, Args&&... args)
       throw std::runtime_error("ThreadPool::Post on stopped ThreadPool");
     }
     tasks_.emplace([task]() { (*task)(); });
-    
-    // Track peak queue size for leak detection
-    size_t current_size = tasks_.size();
-    size_t peak = peak_queue_size_.load();
-    while (current_size > peak && !peak_queue_size_.compare_exchange_weak(peak, current_size)) {
-      peak = peak_queue_size_.load();
-    }
-    
-    if (current_size > 100) {
-      g_printerr("[ThreadPool %p] WARNING: Task queue size is large: %zu (peak: %zu)\n", 
-                 this, current_size, peak_queue_size_.load());
-    }
   }
   condition_.notify_one();
   return res;
 }
 
 inline ThreadPool::~ThreadPool() {
-  g_print("[ThreadPool %p] Destroying (peak queue size: %zu)\n", this, peak_queue_size_.load());
   {
     std::unique_lock<std::mutex> lock(queue_mutex_);
     condition_producers_.wait(lock, [this] { return this->tasks_.empty(); });
@@ -113,16 +94,6 @@ inline ThreadPool::~ThreadPool() {
   for (std::thread& worker : workers_) {
     worker.join();
   }
-  g_print("[ThreadPool %p] Destroyed\n", this);
-}
-
-inline size_t ThreadPool::GetQueueSize() const {
-  std::unique_lock<std::mutex> lock(queue_mutex_);
-  return tasks_.size();
-}
-
-inline size_t ThreadPool::GetPeakQueueSize() const {
-  return peak_queue_size_.load();
 }
 
 #endif  // THREAD_POOL_H_

@@ -131,21 +131,6 @@ void video_output_manager_dispose(VideoOutputManager* self, gint64 handle) {
   g_print("[VideoOutputManager] Disposing video output for handle: %ld\n", handle);
   if (g_hash_table_contains(self->video_outputs, GINT_TO_POINTER(handle))) {
     g_print("[VideoOutputManager] Found video output in hash table, removing...\n");
-    
-    // Check thread pool queue size before disposal
-    if (g_hash_table_contains(self->render_threads, GINT_TO_POINTER(handle))) {
-      ThreadPool* pool = static_cast<ThreadPool*>(g_hash_table_lookup(self->render_threads, GINT_TO_POINTER(handle)));
-      if (pool != NULL) {
-        size_t queue_size = pool->GetQueueSize();
-        size_t peak_size = pool->GetPeakQueueSize();
-        g_print("[VideoOutputManager] ThreadPool %p stats: current queue: %zu, peak queue: %zu\n", 
-                pool, queue_size, peak_size);
-        if (queue_size > 0) {
-          g_printerr("[VideoOutputManager] WARNING: ThreadPool still has %zu pending tasks\n", queue_size);
-        }
-      }
-    }
-    
     // Must remove video_output first (triggers video_output_dispose which uses thread_pool)
     // Then remove thread pool after video_output cleanup is complete
     g_hash_table_remove(self->video_outputs, GINT_TO_POINTER(handle));
