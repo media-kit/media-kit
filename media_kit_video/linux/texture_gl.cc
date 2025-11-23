@@ -150,7 +150,9 @@ void texture_gl_check_and_resize(TextureGL* self, gint64 required_width, gint64 
     return;
   }
   
-  gboolean first_frame = self->name == 0 || self->fbo == 0 || self->mpv_texture == 0;
+  // Only check mpv-owned resources (fbo, mpv_texture) for first_frame detection
+  // self->name is created in Flutter's context and shouldn't be used here
+  gboolean first_frame = self->fbo == 0 || self->mpv_texture == 0;
   gboolean resize = self->current_width != required_width ||
                     self->current_height != required_height;
   
