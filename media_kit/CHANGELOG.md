@@ -1,3 +1,9 @@
+## 1.2.3
+
+- fix(native): setShuffle behavior
+- refactor(web): remove duplicate internal state
+- feat: add `isDefault` property to `Track`
+
 ## 1.2.2
 
 - feat: allow overriding `PlatformPlayer` in `Player` constructor

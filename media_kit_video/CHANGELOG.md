@@ -1,3 +1,8 @@
+## 2.0.1
+
+- fix: flutter 3.38.x crash
+- fix(linux): flutter 3.38.x h/w render
+
 ## 2.0.0
 
 - feat: flutter 3.38.x support
