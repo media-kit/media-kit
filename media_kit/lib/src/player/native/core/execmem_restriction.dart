@@ -14,7 +14,7 @@ final bool isExecmemRestricted = _checkIfExecmemRestricted();
 /// Checks if creating new anonymous executable memory mappings is blocked by the system.
 /// Only applies to Linux-based systems, since Dart doesn't use them for [NativeCallback]s on Fuchsia and Apple systems.
 bool _checkIfExecmemRestricted() {
-  if (Platform.isLinux || Platform.isAndroid) {
+  if (Platform.isLinux || Platform.isAndroid || Platform.operatingSystem == 'ohos') {
     try {
       final libs = DynamicLibrary.process();
       final mmap = libs.lookupFunction<MmapFunctionNative, MmapFunctionDart>(
