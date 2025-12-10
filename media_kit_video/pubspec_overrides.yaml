@@ -2,3 +2,7 @@
 dependency_overrides:
   media_kit:
     path: ../media_kit
+  wakelock_plus:
+    git:
+      url: https://gitcode.com/openharmony-sig/fluttertpc_wakelock_plus.git
+      path: wakelock_plus
