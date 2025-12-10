@@ -10,18 +10,19 @@
 #define VIDEO_OUTPUT_H_
 
 #include <flutter_linux/flutter_linux.h>
+#include <epoxy/egl.h>
 
-#include <mpv/client.h>
-#include <mpv/render.h>
-#include <mpv/render_gl.h>
+#include "mpv/client.h"
+#include "mpv/render.h"
+#include "mpv/render_gl.h"
 
 typedef struct _VideoOutputConfiguration {
   gint64 width;
   gint64 height;
   bool enable_hardware_acceleration;
 
-  _VideoOutputConfiguration(gint64 width = 0,
-                            gint64 height = 0,
+  _VideoOutputConfiguration(gint64 width = NULL,
+                            gint64 height = NULL,
                             bool enable_hardware_acceleration = true)
       : width(width),
         height(height),
@@ -90,6 +91,12 @@ void video_output_set_size(VideoOutput* self, gint64 width, gint64 height);
 mpv_render_context* video_output_get_render_context(VideoOutput* self);
 
 GdkGLContext* video_output_get_gdk_gl_context(VideoOutput* self);
+
+EGLDisplay video_output_get_egl_display(VideoOutput* self);
+
+EGLContext video_output_get_egl_context(VideoOutput* self);
+
+EGLSurface video_output_get_egl_surface(VideoOutput* self);
 
 guint8* video_output_get_pixel_buffer(VideoOutput* self);
 

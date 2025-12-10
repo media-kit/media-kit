@@ -904,7 +904,11 @@ class NativePlayer extends PlatformPlayer {
       if (shuffle == isShuffleEnabled) {
         return;
       }
+
       isShuffleEnabled = shuffle;
+
+      // The playlist-(un)shuffle command causes the playlist-playing-pos event to be fired (with still unchanged playlist).
+      // This flag is used to prevent an incorrect update to the public state/stream values.
       isPlaylistStateChangeAllowed = false;
 
       await _command(
@@ -933,9 +937,7 @@ class NativePlayer extends PlatformPlayer {
 
       current = medias;
 
-      Future.delayed(const Duration(seconds: 5), () {
-        isPlaylistStateChangeAllowed = true;
-      });
+      isPlaylistStateChangeAllowed = true;
     }
 
     if (synchronized) {
@@ -1602,8 +1604,6 @@ class NativePlayer extends PlatformPlayer {
           prop.ref.format == generated.mpv_format.MPV_FORMAT_INT64 &&
           prop.ref.data != nullptr &&
           isPlaylistStateChangeAllowed) {
-        isPlaylistStateChangeAllowed = true;
-
         final index = prop.ref.data.cast<Int64>().value;
         final medias = current;
 
@@ -1723,6 +1723,7 @@ class NativePlayer extends PlatformPlayer {
               String? language;
               bool? image;
               bool? albumart;
+              bool? isDefault;
               String? codec;
               String? decoder;
               int? w;
@@ -1775,6 +1776,9 @@ class NativePlayer extends PlatformPlayer {
                     case 'albumart':
                       albumart = map.values[j].u.flag > 0;
                       break;
+                    case 'default':
+                      isDefault = map.values[j].u.flag > 0;
+                      break;
                   }
                 }
                 if (map.values[j].format ==
@@ -1823,6 +1827,7 @@ class NativePlayer extends PlatformPlayer {
                       language,
                       image: image,
                       albumart: albumart,
+                      isDefault: isDefault,
                       codec: codec,
                       decoder: decoder,
                       w: w,
@@ -1846,6 +1851,7 @@ class NativePlayer extends PlatformPlayer {
                       language,
                       image: image,
                       albumart: albumart,
+                      isDefault: isDefault,
                       codec: codec,
                       decoder: decoder,
                       w: w,
@@ -1869,6 +1875,7 @@ class NativePlayer extends PlatformPlayer {
                       language,
                       image: image,
                       albumart: albumart,
+                      isDefault: isDefault,
                       codec: codec,
                       decoder: decoder,
                       w: w,

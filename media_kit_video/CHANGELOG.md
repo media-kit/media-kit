@@ -1,3 +1,13 @@
+## 2.0.1
+
+- fix: flutter 3.38.x crash
+- fix(linux): flutter 3.38.x h/w render
+
+## 2.0.0
+
+- feat: flutter 3.38.x support
+- **BREAKING CHANGE**: remove `screen_brightness` and `volume_controller` dependencies
+
 ## 1.3.1
 
 - fix(windows): notify `VideoOutput.Resize` on platform thread

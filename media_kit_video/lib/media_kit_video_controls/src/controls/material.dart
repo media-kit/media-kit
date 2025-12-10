@@ -11,8 +11,6 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_controls_theme_data_injector.dart';
-import 'package:screen_brightness_platform_interface/screen_brightness_platform_interface.dart';
-import 'package:volume_controller/volume_controller.dart';
 
 /// {@template material_video_controls}
 ///
@@ -209,6 +207,23 @@ class MaterialVideoControlsThemeData {
   /// Custom builder for brightness indicator.
   final Widget Function(BuildContext, double)? brightnessIndicatorBuilder;
 
+  /// Optional callback called when volume should be changed (0.0 to 1.0).
+  /// If not provided, volume gestures will be disabled.
+  final void Function(double)? onVolumeChanged;
+
+  /// Optional initial volume value (0.0 to 1.0). Defaults to 0.5.
+  final double? initialVolume;
+
+  /// Optional callback called when brightness should be changed (0.0 to 1.0).
+  /// If not provided, brightness gestures will be disabled.
+  final void Function(double)? onBrightnessChanged;
+
+  /// Optional initial brightness value (0.0 to 1.0). Defaults to 0.5.
+  final double? initialBrightness;
+
+  /// Optional callback called when brightness should be reset on dispose.
+  final void Function()? onBrightnessReset;
+
   /// Custom builder for seek indicator.
   final Widget Function(BuildContext, Duration)? seekIndicatorBuilder;
 
@@ -302,6 +317,11 @@ class MaterialVideoControlsThemeData {
     this.bufferingIndicatorBuilder,
     this.volumeIndicatorBuilder,
     this.brightnessIndicatorBuilder,
+    this.onVolumeChanged,
+    this.initialVolume,
+    this.onBrightnessChanged,
+    this.initialBrightness,
+    this.onBrightnessReset,
     this.seekIndicatorBuilder,
     this.speedUpIndicatorBuilder,
     this.primaryButtonBar = const [
@@ -362,6 +382,11 @@ class MaterialVideoControlsThemeData {
     Widget Function(BuildContext)? bufferingIndicatorBuilder,
     Widget Function(BuildContext, double)? volumeIndicatorBuilder,
     Widget Function(BuildContext, double)? brightnessIndicatorBuilder,
+    void Function(double)? onVolumeChanged,
+    double? initialVolume,
+    void Function(double)? onBrightnessChanged,
+    double? initialBrightness,
+    void Function()? onBrightnessReset,
     Widget Function(BuildContext, Duration)? seekIndicatorBuilder,
     Widget Function(BuildContext, double)? speedUpIndicatorBuilder,
     List<Widget>? primaryButtonBar,
@@ -426,6 +451,11 @@ class MaterialVideoControlsThemeData {
           volumeIndicatorBuilder ?? this.volumeIndicatorBuilder,
       brightnessIndicatorBuilder:
           brightnessIndicatorBuilder ?? this.brightnessIndicatorBuilder,
+      onVolumeChanged: onVolumeChanged ?? this.onVolumeChanged,
+      initialVolume: initialVolume ?? this.initialVolume,
+      onBrightnessChanged: onBrightnessChanged ?? this.onBrightnessChanged,
+      initialBrightness: initialBrightness ?? this.initialBrightness,
+      onBrightnessReset: onBrightnessReset ?? this.onBrightnessReset,
       seekIndicatorBuilder: seekIndicatorBuilder ?? this.seekIndicatorBuilder,
       speedUpIndicatorBuilder:
           speedUpIndicatorBuilder ?? this.speedUpIndicatorBuilder,
@@ -500,8 +530,8 @@ class _MaterialVideoControls extends StatefulWidget {
 
 /// {@macro material_video_controls}
 class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
-  late bool mount = _theme(context).visibleOnMount;
-  late bool visible = _theme(context).visibleOnMount;
+  late bool mount;
+  late bool visible;
   Timer? _timer;
 
   double _brightnessValue = 0.0;
@@ -511,8 +541,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   double _volumeValue = 0.0;
   bool _volumeIndicator = false;
   Timer? _volumeTimer;
-  // The default event stream in package:volume_controller is buggy.
-  bool _volumeInterceptEventStream = false;
+
+  void Function()? _onBrightnessReset;
 
   Offset _dragInitialDelta =
       Offset.zero; // Initial position for horizontal drag
@@ -522,7 +552,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   bool _speedUpIndicator = false;
   late /* private */ var playlist = controller(context).player.state.playlist;
   late bool buffering = controller(context).player.state.buffering;
-  final VolumeController _volumeController = VolumeController.instance;
 
   bool _mountSeekBackwardButton = false;
   bool _mountSeekForwardButton = false;
@@ -576,6 +605,12 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (subscriptions.isEmpty) {
+      mount = _theme(context).visibleOnMount;
+      visible = _theme(context).visibleOnMount;
+      _volumeValue = _theme(context).initialVolume ?? 0.5;
+      _brightnessValue = _theme(context).initialBrightness ?? 0.5;
+      _onBrightnessReset = _theme(context).onBrightnessReset;
+
       subscriptions.addAll(
         [
           controller(context).player.stream.playlist.listen(
@@ -616,15 +651,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     for (final subscription in subscriptions) {
       subscription.cancel();
     }
-    // --------------------------------------------------
-    // package:screen_brightness
-    Future.microtask(() async {
-      try {
-        await ScreenBrightnessPlatform.instance
-            .resetApplicationScreenBrightness();
-      } catch (_) {}
-    });
-    // --------------------------------------------------
+    _onBrightnessReset?.call();
     _timerSeekBackwardButton?.cancel();
     _timerSeekForwardButton?.cancel();
     super.dispose();
@@ -768,74 +795,26 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     onTap();
   }
 
-  @override
-  void initState() {
-    super.initState();
-    // --------------------------------------------------
-    // package:volume_controller
-    Future.microtask(() async {
-      try {
-        _volumeController.showSystemUI = false;
-        _volumeValue = await _volumeController.getVolume();
-        _volumeController.addListener((value) {
-          if (mounted && !_volumeInterceptEventStream) {
-            setState(() {
-              _volumeValue = value;
-            });
-          }
-        });
-      } catch (_) {}
-    });
-    // --------------------------------------------------
-    // --------------------------------------------------
-    // package:screen_brightness
-    Future.microtask(() async {
-      try {
-        _brightnessValue = await ScreenBrightnessPlatform.instance.application;
-        ScreenBrightnessPlatform.instance.onApplicationScreenBrightnessChanged
-            .listen((value) {
-          if (mounted) {
-            setState(() {
-              _brightnessValue = value;
-            });
-          }
-        });
-      } catch (_) {}
-    });
-    // --------------------------------------------------
-  }
-
-  Future<void> setVolume(double value) async {
-    // --------------------------------------------------
-    // package:volume_controller
-    try {
-      _volumeController.setVolume(value);
-    } catch (_) {}
+  void setVolume(double value) {
+    _theme(context).onVolumeChanged?.call(value);
     setState(() {
       _volumeValue = value;
       _volumeIndicator = true;
-      _volumeInterceptEventStream = true;
     });
     _volumeTimer?.cancel();
     _volumeTimer = Timer(const Duration(milliseconds: 200), () {
       if (mounted) {
         setState(() {
           _volumeIndicator = false;
-          _volumeInterceptEventStream = false;
         });
       }
     });
-    // --------------------------------------------------
   }
 
-  Future<void> setBrightness(double value) async {
-    // --------------------------------------------------
-    // package:screen_brightness
-    try {
-      await ScreenBrightnessPlatform.instance
-          .setApplicationScreenBrightness(value);
-    } catch (_) {}
+  void setBrightness(double value) {
+    _theme(context).onBrightnessChanged?.call(value);
     setState(() {
+      _brightnessValue = value;
       _brightnessIndicator = true;
     });
     _brightnessTimer?.cancel();
@@ -846,7 +825,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
         });
       }
     });
-    // --------------------------------------------------
   }
 
   @override
@@ -959,10 +937,14 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                               if (position.dx <= widgetWidth(context) / 2) {
                                 // Left side of screen swiped
                                 if ((!mount &&
-                                        _theme(context).brightnessGesture) ||
+                                        _theme(context).brightnessGesture &&
+                                        _theme(context).onBrightnessChanged !=
+                                            null) ||
                                     (_theme(context).brightnessGesture &&
                                         _theme(context)
-                                            .gesturesEnabledWhileControlsVisible)) {
+                                            .gesturesEnabledWhileControlsVisible &&
+                                        _theme(context).onBrightnessChanged !=
+                                            null)) {
                                   final brightness = _brightnessValue -
                                       delta /
                                           _theme(context)
@@ -973,10 +955,15 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                               } else {
                                 // Right side of screen swiped
 
-                                if ((!mount && _theme(context).volumeGesture) ||
+                                if ((!mount &&
+                                        _theme(context).volumeGesture &&
+                                        _theme(context).onVolumeChanged !=
+                                            null) ||
                                     (_theme(context).volumeGesture &&
                                         _theme(context)
-                                            .gesturesEnabledWhileControlsVisible)) {
+                                            .gesturesEnabledWhileControlsVisible &&
+                                        _theme(context).onVolumeChanged !=
+                                            null)) {
                                   final volume = _volumeValue -
                                       delta /
                                           _theme(context)

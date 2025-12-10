@@ -95,7 +95,7 @@ class MPV {
   ///
   /// IDs are never 0 or negative.
   ///
-  /// Some mpv APIs (not necessarily all) accept a name in the form "@<id>" in
+  /// Some mpv APIs (not necessarily all) accept a name in the form "<id>" in
   /// addition of the proper mpv_client_name(), where "<id>" is the ID in decimal
   /// form (e.g. "@123"). For example, the "script-message-to" command takes the
   /// client name as first argument, but also accepts the client ID formatted in

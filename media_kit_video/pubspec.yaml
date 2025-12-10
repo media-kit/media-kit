@@ -2,7 +2,7 @@ name: media_kit_video
 description: Native implementation for video playback in package:media_kit.
 homepage: https://github.com/media-kit/media-kit
 repository: https://github.com/media-kit/media-kit
-version: 1.3.1
+version: 2.0.1
 topics:
   - video
   - video-player
@@ -18,13 +18,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-  media_kit: ^1.2.1
+  media_kit: ^1.2.3
 
   synchronized: ^3.1.0
   wakelock_plus: ^1.1.6
-  screen_brightness_android: ^2.0.0
-  screen_brightness_platform_interface: ^2.0.0
-  volume_controller: ^3.0.2
   universal_platform: ^1.0.0+1
   plugin_platform_interface: ^2.0.2
   web: ^1.1.0

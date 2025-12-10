@@ -1,3 +1,14 @@
+## 1.2.3
+
+- fix(native): setShuffle behavior
+- refactor(web): remove duplicate internal state
+- feat: add `isDefault` property to `Track`
+
+## 1.2.2
+
+- feat: allow overriding `PlatformPlayer` in `Player` constructor
+- feat: flutter 3.38.x support
+
 ## 1.2.1
 
 - fix: misc issues
