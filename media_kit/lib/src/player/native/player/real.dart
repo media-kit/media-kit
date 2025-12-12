@@ -185,7 +185,7 @@ class NativePlayer extends PlatformPlayer {
           await _command(
             [
               'loadfile',
-              playlist[i].uri,
+              addPrefix(playlist[i].uri),
               'append',
             ],
           );
@@ -473,7 +473,7 @@ class NativePlayer extends PlatformPlayer {
       }
       // ---------------------------------------------
 
-      await _command(['loadfile', media.uri, 'append']);
+      await _command(['loadfile', addPrefix(media.uri), 'append']);
     }
 
     if (synchronized) {
