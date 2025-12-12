@@ -1,3 +1,7 @@
+## 1.2.5
+
+- fix(windows): long file path support
+
 ## 1.2.4
 
 - fix(windows): long file path support

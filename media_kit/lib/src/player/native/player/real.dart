@@ -194,7 +194,7 @@ class NativePlayer extends PlatformPlayer {
         final file = await TempFile.create();
         final buffer = StringBuffer();
         for (final media in playlist) {
-          buffer.writeln(media.uri);
+          buffer.writeln(addPrefix(media.uri));
         }
         final list = buffer.toString();
 
