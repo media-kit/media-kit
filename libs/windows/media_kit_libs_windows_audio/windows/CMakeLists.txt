@@ -63,16 +63,14 @@ endfunction()
 # Thanks to Mitchel Stewart (https://github.com/Quackdoc) for providing patches to generate minimal libmpv & FFmpeg audio specific builds.
 
 # Detect architecture and set appropriate libmpv archive
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|aarch64|arm64")
-  set(LIBMPV_ARCH "aarch64")
-  set(LIBMPV "mpv-dev-aarch64-20251213-git-140ec21.7z")
-  set(LIBMPV_MD5 "fc3c09cd5bed08db58f888460da9059f")
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64|x86_64|x64")
+if(${FLUTTER_TARGET_PLATFORM} STREQUAL "windows-x64")
   set(LIBMPV_ARCH "x86_64")
   set(LIBMPV "mpv-dev-x86_64-20251213-git-140ec21.7z")
   set(LIBMPV_MD5 "bf77216724f0f290dd14d2b1bc9826df")
 else()
-  message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+  set(LIBMPV_ARCH "aarch64")
+  set(LIBMPV "mpv-dev-aarch64-20251213-git-140ec21.7z")
+  set(LIBMPV_MD5 "fc3c09cd5bed08db58f888460da9059f")
 endif()
 
 # Download URL for the libmpv archive from the latest release

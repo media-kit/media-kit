@@ -64,16 +64,14 @@ function(check_directory_exists_and_not_empty dir result_var)
 endfunction()
 
 # Detect architecture and set appropriate libmpv archive
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|aarch64|arm64")
-  set(LIBMPV_ARCH "aarch64")
-  set(LIBMPV "mpv-dev-aarch64-20241021-git-0f78584.7z")
-  set(LIBMPV_MD5 "5b507a35db13eee6cb7eb21e8be7c83d")
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64|x86_64|x64")
+if(${FLUTTER_TARGET_PLATFORM} STREQUAL "windows-x64")
   set(LIBMPV_ARCH "x86_64")
   set(LIBMPV "mpv-dev-x86_64-20241021-git-0f78584.7z")
   set(LIBMPV_MD5 "6ecf18e85b093c3f7edb16f3ee6603f3")
 else()
-  message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+  set(LIBMPV_ARCH "aarch64")
+  set(LIBMPV "mpv-dev-aarch64-20241021-git-0f78584.7z")
+  set(LIBMPV_MD5 "5b507a35db13eee6cb7eb21e8be7c83d")
 endif()
 
 # Download URL for the libmpv archive from the latest release
