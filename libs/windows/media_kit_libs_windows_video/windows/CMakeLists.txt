@@ -89,19 +89,36 @@ download_and_verify(
 
 check_directory_exists_and_not_empty(${LIBMPV_SRC} LIBMPV_SRC_VALID)
 
+# Find 7zip for extraction (preferred for .7z files)
+find_program(SEVENZ_EXECUTABLE NAMES 7z 7za)
+
 # Extract the libmpv archive.
 if(NOT LIBMPV_SRC_VALID)
   message(STATUS "Extracting ${LIBMPV}...")
   make_directory("${LIBMPV_SRC}")
   add_custom_target("${PROJECT_NAME}_LIBMPV_EXTRACT" ALL)
-  add_custom_command(
-    TARGET "${PROJECT_NAME}_LIBMPV_EXTRACT"
-    COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${LIBMPV_ARCHIVE}\""
-    COMMAND xcopy "\"${LIBMPV_SRC}/include/mpv\"" "\"${LIBMPV_SRC}/mpv\"" /E /H /C /I
-    COMMAND rmdir "\"${LIBMPV_SRC}/include\"" /S /Q
-    COMMAND ren "\"${LIBMPV_SRC}/mpv\"" "\"include\""
-    WORKING_DIRECTORY "${LIBMPV_SRC}"
-  )
+  
+  if(SEVENZ_EXECUTABLE)
+    message(STATUS "Using 7zip for extraction: ${SEVENZ_EXECUTABLE}")
+    add_custom_command(
+      TARGET "${PROJECT_NAME}_LIBMPV_EXTRACT"
+      COMMAND "${SEVENZ_EXECUTABLE}" x -y "\"${LIBMPV_ARCHIVE}\""
+      COMMAND xcopy "\"${LIBMPV_SRC}/include/mpv\"" "\"${LIBMPV_SRC}/mpv\"" /E /H /C /I
+      COMMAND rmdir "\"${LIBMPV_SRC}/include\"" /S /Q
+      COMMAND ren "\"${LIBMPV_SRC}/mpv\"" "\"include\""
+      WORKING_DIRECTORY "${LIBMPV_SRC}"
+    )
+  else()
+    message(STATUS "7zip not found, falling back to CMake tar")
+    add_custom_command(
+      TARGET "${PROJECT_NAME}_LIBMPV_EXTRACT"
+      COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${LIBMPV_ARCHIVE}\""
+      COMMAND xcopy "\"${LIBMPV_SRC}/include/mpv\"" "\"${LIBMPV_SRC}/mpv\"" /E /H /C /I
+      COMMAND rmdir "\"${LIBMPV_SRC}/include\"" /S /Q
+      COMMAND ren "\"${LIBMPV_SRC}/mpv\"" "\"include\""
+      WORKING_DIRECTORY "${LIBMPV_SRC}"
+    )
+  endif()
 endif()
 
 # ------------------------------------------------------------------------------
@@ -130,11 +147,22 @@ if(NOT ANGLE_SRC_VALID)
   message(STATUS "Extracting ${ANGLE}...")
   make_directory("${ANGLE_SRC}")
   add_custom_target("${PROJECT_NAME}_ANGLE_EXTRACT" ALL)
-  add_custom_command(
-    TARGET "${PROJECT_NAME}_ANGLE_EXTRACT"
-    COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${ANGLE_ARCHIVE}\""
-    WORKING_DIRECTORY "${ANGLE_SRC}"
-  )
+  
+  if(SEVENZ_EXECUTABLE)
+    message(STATUS "Using 7zip for extraction: ${SEVENZ_EXECUTABLE}")
+    add_custom_command(
+      TARGET "${PROJECT_NAME}_ANGLE_EXTRACT"
+      COMMAND "${SEVENZ_EXECUTABLE}" x -y "\"${ANGLE_ARCHIVE}\""
+      WORKING_DIRECTORY "${ANGLE_SRC}"
+    )
+  else()
+    message(STATUS "7zip not found, falling back to CMake tar")
+    add_custom_command(
+      TARGET "${PROJECT_NAME}_ANGLE_EXTRACT"
+      COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${ANGLE_ARCHIVE}\""
+      WORKING_DIRECTORY "${ANGLE_SRC}"
+    )
+  endif()
 endif()
 
 # ------------------------------------------------------------------------------
