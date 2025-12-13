@@ -1,6 +1,10 @@
+## 1.0.12
+
+- feat: support ARM64
+
 ## 1.0.11
 
- - **FIX**(windows): do not bundle MSVCP/UCRT DLLs.
+- **FIX**(windows): do not bundle MSVCP/UCRT DLLs.
 
 ## 1.0.10
 

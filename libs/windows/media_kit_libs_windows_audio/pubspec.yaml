@@ -1,6 +1,6 @@
 name: media_kit_libs_windows_audio
 description: Windows package providing audio (only) native libraries for package:media_kit.
-version: 1.0.9
+version: 1.0.10
 homepage: https://github.com/media-kit/media-kit.git
 repository: https://github.com/media-kit/media-kit.git
 

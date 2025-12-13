@@ -1,6 +1,6 @@
 name: media_kit_libs_macos_audio
 description: macOS package providing audio native libraries for package:media_kit.
-version: 1.1.4
+version: 1.1.5
 homepage: https://github.com/media-kit/media-kit.git
 repository: https://github.com/media-kit/media-kit.git
 

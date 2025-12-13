@@ -62,12 +62,21 @@ endfunction()
 
 # Thanks to Mitchel Stewart (https://github.com/Quackdoc) for providing patches to generate minimal libmpv & FFmpeg audio specific builds.
 
-# libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20230924-git-652a1dd.7z")
+# Detect architecture and set appropriate libmpv archive
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|aarch64|arm64")
+  set(LIBMPV_ARCH "aarch64")
+  set(LIBMPV "mpv-dev-aarch64-20251213-git-140ec21.7z")
+  set(LIBMPV_MD5 "fc3c09cd5bed08db58f888460da9059f")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64|x86_64|x64")
+  set(LIBMPV_ARCH "x86_64")
+  set(LIBMPV "mpv-dev-x86_64-20251213-git-140ec21.7z")
+  set(LIBMPV_MD5 "bf77216724f0f290dd14d2b1bc9826df")
+else()
+  message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
 
-# Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-build/releases/download/2023-09-24/${LIBMPV}")
-set(LIBMPV_MD5 "cd738e16e2a19626d7cfa48801524f8c")
+# Download URL for the libmpv archive from the latest release
+set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-audio-cmake/releases/download/20251213/${LIBMPV}")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
