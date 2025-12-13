@@ -3,16 +3,17 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:io';
-import 'dart:ffi';
 import 'dart:async';
 import 'dart:collection';
+import 'dart:ffi';
+import 'dart:io';
 import 'dart:typed_data';
-import 'package:path/path.dart';
-import 'package:meta/meta.dart';
 import 'package:image/image.dart';
-import 'package:synchronized/synchronized.dart';
+import 'package:meta/meta.dart';
+import 'package:path/path.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
+import 'package:synchronized/synchronized.dart';
+import 'package:uri_parser/uri_parser.dart';
 
 import 'package:media_kit/ffi/ffi.dart';
 
@@ -185,7 +186,7 @@ class NativePlayer extends PlatformPlayer {
           await _command(
             [
               'loadfile',
-              addPrefix(playlist[i].uri),
+              _sanitizeUri(playlist[i].uri),
               'append',
             ],
           );
@@ -194,7 +195,7 @@ class NativePlayer extends PlatformPlayer {
         final file = await TempFile.create();
         final buffer = StringBuffer();
         for (final media in playlist) {
-          buffer.writeln(addPrefix(media.uri));
+          buffer.writeln(_sanitizeUri(media.uri));
         }
         final list = buffer.toString();
 
@@ -473,7 +474,7 @@ class NativePlayer extends PlatformPlayer {
       }
       // ---------------------------------------------
 
-      await _command(['loadfile', addPrefix(media.uri), 'append']);
+      await _command(['loadfile', _sanitizeUri(media.uri), 'append']);
     }
 
     if (synchronized) {
@@ -2633,6 +2634,21 @@ class NativePlayer extends PlatformPlayer {
 
     calloc.free(arr);
     pointers.forEach(calloc.free);
+  }
+
+  String _sanitizeUri(String uri) {
+    // Append \\?\ prefix on Windows to support long file paths.
+    final parser = URIParser(uri);
+    switch (parser.type) {
+      case URIType.file:
+        return addPrefix(parser.file!.path);
+      case URIType.directory:
+        return addPrefix(parser.directory!.path);
+      case URIType.network:
+        return parser.uri!.toString();
+      default:
+        return uri;
+    }
   }
 
   /// Generated libmpv C API bindings.

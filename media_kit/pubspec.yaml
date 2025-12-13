@@ -2,7 +2,7 @@ name: media_kit
 description: A cross-platform video player & audio player for Flutter & Dart. Performant, stable, feature-proof & modular.
 homepage: https://github.com/media-kit/media-kit
 repository: https://github.com/media-kit/media-kit
-version: 1.2.5
+version: 1.2.6
 
 screenshots:
   - description: "package:media_kit running on Android (visible controls)"
@@ -41,7 +41,7 @@ dependencies:
   synchronized: ^3.1.0
   universal_platform: ^1.0.0+1
   web: ^1.1.0
-  uri_parser: ^3.0.0
+  uri_parser: ^3.0.1
   uuid: ">=2.0.0 <5.0.0"
 
 dev_dependencies:
