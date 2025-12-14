@@ -10,6 +10,7 @@
 #define VIDEO_OUTPUT_MANAGER_H_
 
 #include "video_output.h"
+#include "gl_render_thread.h"
 
 #define VIDEO_OUTPUT_MANAGER_TYPE (video_output_manager_get_type())
 
