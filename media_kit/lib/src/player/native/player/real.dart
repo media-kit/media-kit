@@ -2908,7 +2908,7 @@ _GetPlaylistResult _getPlaylist(_GetPlaylistData data) {
         if (map.values[j].format == generated.mpv_format.MPV_FORMAT_STRING) {
           if (property == 'filename') {
             final value = map.values[j].u.string.cast<Utf8>().toDartString();
-            playlist.add(value);
+            playlist.add(removePrefix(value));
           }
         }
       }
