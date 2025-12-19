@@ -69,7 +69,18 @@ class InitializerNativeCallable {
   }
 
   void _callback(Pointer<generated.mpv_handle> ctx) {
-    _locks[ctx.address]?.synchronized(() async {
+    // Check if this context is still valid before processing
+    // This prevents crashes when callbacks fire after disposal
+    final lock = _locks[ctx.address];
+    if (lock == null) {
+      // Context has been disposed, ignore callback
+      return;
+    }
+
+    lock.synchronized(() async {
+      // Double-check inside lock in case disposal happened during synchronization
+      if (!_eventCallbacks.containsKey(ctx.address)) return;
+
       while (true) {
         final event = mpv.mpv_wait_event(ctx, 0);
         if (event == nullptr) return;
