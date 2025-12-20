@@ -13,12 +13,44 @@ import 'package:test/test.dart';
 import 'package:media_kit/ffi/ffi.dart';
 
 import 'package:media_kit/src/player/native/core/initializer.dart';
+import 'package:media_kit/src/player/native/core/initializer_isolate.dart';
+import 'package:media_kit/src/player/native/core/initializer_native_callable.dart';
 import 'package:media_kit/src/player/native/core/native_library.dart';
+import 'package:media_kit/src/player/native/core/execmem_restriction.dart';
+import 'package:media_kit/src/values.dart';
 
 import 'package:media_kit/generated/libmpv/bindings.dart';
 
 MPV? _mpv;
 MPV get mpv => _mpv!;
+
+Future<Pointer<mpv_handle>> _createProductionLikeHandle(
+  Future<void> Function(Pointer<mpv_event>) callback, {
+  Map<String, String> options = const {},
+}) {
+  // `Initializer` intentionally forces `InitializerIsolate` in debug mode to
+  // avoid hot-restart related issues with `NativeCallable` trampolines.
+  // These unit tests, however, want to exercise production behavior.
+  if (kDebugMode) {
+    if (!isExecmemRestricted) {
+      return InitializerNativeCallable(mpv).create(callback, options: options);
+    }
+    return InitializerIsolate().create(callback, options: options);
+  }
+  return Initializer(mpv).create(callback, options: options);
+}
+
+void _disposeProductionLikeHandle(Pointer<mpv_handle> handle) {
+  if (kDebugMode) {
+    if (!isExecmemRestricted) {
+      InitializerNativeCallable(mpv).dispose(handle);
+    } else {
+      InitializerIsolate().dispose(mpv, handle);
+    }
+    return;
+  }
+  Initializer(mpv).dispose(handle);
+}
 
 void main() {
   setUp(() {
@@ -29,7 +61,7 @@ void main() {
     'initializer-init',
     () {
       expect(
-        Initializer(mpv).create((_) async {}),
+        _createProductionLikeHandle((_) async {}),
         completes,
       );
     },
@@ -38,7 +70,7 @@ void main() {
     'initializer-create',
     () {
       expect(
-        Initializer(mpv).create((_) async {}),
+        _createProductionLikeHandle((_) async {}),
         completes,
       );
     },
@@ -46,9 +78,9 @@ void main() {
   test(
     'initializer-dispose',
     () async {
-      final handle = await Initializer(mpv).create((_) async {});
+      final handle = await _createProductionLikeHandle((_) async {});
       expect(
-        () => Initializer(mpv).dispose(handle),
+        () => _disposeProductionLikeHandle(handle),
         returnsNormally,
       );
     },
@@ -68,7 +100,7 @@ void main() {
         expect(true, isTrue);
       });
 
-      final handle = await Initializer(mpv).create(
+      final handle = await _createProductionLikeHandle(
         (event) async {
           if (event.ref.event_id == mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
             final prop = event.ref.data.cast<mpv_event_property>();
@@ -114,13 +146,13 @@ void main() {
 
       await Future.delayed(const Duration(seconds: 5));
 
-      Initializer(mpv).dispose(handle);
+      _disposeProductionLikeHandle(handle);
     },
   );
   test(
     'initializer-options-with-callback',
     () async {
-      final handle = await Initializer(mpv).create(
+      final handle = await _createProductionLikeHandle(
         (_) async {},
         options: {
           'config': 'yes',
@@ -154,7 +186,7 @@ void main() {
 
       await Future.delayed(const Duration(seconds: 5));
 
-      Initializer(mpv).dispose(handle);
+      _disposeProductionLikeHandle(handle);
     },
   );
 }
