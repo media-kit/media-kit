@@ -43,7 +43,7 @@ class Initializer {
     // registered `NativeCallable` trampolines. In debug mode, prefer the isolate
     // based implementation to avoid native -> Dart callbacks that can outlive
     // the isolate and crash with "Callback invoked after it has been deleted".
-    // See: https://github.com/media-kit/media-kit/issues/1348
+    // See: https://github.com/media-kit/media-kit/issues/1340
     if (kDebugMode) {
       return InitializerIsolate().create(callback, options: options);
     }
