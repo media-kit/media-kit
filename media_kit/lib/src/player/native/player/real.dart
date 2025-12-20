@@ -101,36 +101,11 @@ class NativePlayer extends PlatformPlayer {
 
       await super.dispose();
 
-      // Clear the wakeup callback before destroying
       Initializer(mpv).dispose(ctx);
 
-      // Send quit command and wait for MPV_EVENT_SHUTDOWN before destroying
-      // This ensures all mpv threads and callbacks have been properly cleaned up
-      try {
-        _shutdownCompleter = Completer<void>();
-
-        final cmd = 'quit'.toNativeUtf8();
-        try {
-          mpv.mpv_command_string(ctx, cmd.cast());
-        } finally {
-          calloc.free(cmd);
-        }
-
-        // Wait for shutdown event with timeout to prevent hanging
-        await _shutdownCompleter!.future.timeout(
-          const Duration(seconds: 3),
-          onTimeout: () {
-            print('media_kit: Warning - Shutdown event timeout, proceeding with forced termination');
-          },
-        );
-      } catch (e) {
-        print('media_kit: Error during graceful shutdown: $e');
-      } finally {
-        _shutdownCompleter = null;
-      }
-
-      // Now it's safe to terminate and destroy the mpv context
-      mpv.mpv_terminate_destroy(ctx);
+      Future.delayed(const Duration(seconds: 5), () {
+        mpv.mpv_terminate_destroy(ctx);
+      });
     }
 
     if (synchronized) {
@@ -1398,14 +1373,6 @@ class NativePlayer extends PlatformPlayer {
   }
 
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
-    // Handle shutdown event to signal safe disposal
-    if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_SHUTDOWN) {
-      if (_shutdownCompleter != null && !_shutdownCompleter!.isCompleted) {
-        _shutdownCompleter!.complete();
-      }
-      return;
-    }
-
     if (event.ref.event_id ==
         generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
       final prop = event.ref.data.cast<generated.mpv_event_property>();
@@ -2568,7 +2535,6 @@ class NativePlayer extends PlatformPlayer {
   int _asyncRequestNumber = 0;
   final Map<int, Completer<int>> _setPropertyRequests = {};
   final Map<int, Completer<int>> _commandRequests = {};
-  Completer<void>? _shutdownCompleter;
 
   Future<void> _setProperty(String name, int format, Pointer<Void> data) async {
     final requestNumber = _asyncRequestNumber++;
