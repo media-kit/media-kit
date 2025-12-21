@@ -10,3 +10,5 @@ dependency_overrides:
     path: ../../macos/media_kit_libs_macos_video
   media_kit_libs_windows_video:
     path: ../../windows/media_kit_libs_windows_video
+  media_kit_libs_ohos:
+    path: ../../ohos/media_kit_libs_ohos

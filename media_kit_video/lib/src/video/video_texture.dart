@@ -153,6 +153,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   late bool _visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
 
   bool _pauseDueToPauseUponEnteringBackgroundMode = false;
+
   // Public API:
   bool isFullscreen() {
     return media_kit_video_controls.isFullscreen(_contextNotifier.value!);
@@ -493,7 +494,10 @@ Future<void> defaultEnterNativeFullscreen() async {
           ),
         ],
       );
-    } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+    } else if (Platform.isMacOS ||
+        Platform.isWindows ||
+        Platform.isLinux ||
+        Platform.operatingSystem == 'ohos') {
       await const MethodChannel('com.alexmercerind/media_kit_video')
           .invokeMethod(
         'Utils.EnterNativeFullscreen',
@@ -520,7 +524,10 @@ Future<void> defaultExitNativeFullscreen() async {
           ),
         ],
       );
-    } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+    } else if (Platform.isMacOS ||
+        Platform.isWindows ||
+        Platform.isLinux ||
+        Platform.operatingSystem == 'ohos') {
       await const MethodChannel('com.alexmercerind/media_kit_video')
           .invokeMethod(
         'Utils.ExitNativeFullscreen',
