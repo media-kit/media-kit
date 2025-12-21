@@ -6,6 +6,10 @@
 // Use of this source code is governed by MIT license that can be found in the
 // LICENSE file.
 
+// The file is moded for the purpose of triple buffering using mailbox model.
+// Copyright © 2025 Predidit
+// All rights reserved.
+
 #ifndef VIDEO_OUTPUT_H_
 #define VIDEO_OUTPUT_H_
 
@@ -15,6 +19,7 @@
 #include "mpv/client.h"
 #include "mpv/render.h"
 #include "mpv/render_gl.h"
+#include "gl_render_thread.h"
 
 typedef struct _VideoOutputConfiguration {
   gint64 width;
@@ -50,18 +55,17 @@ G_DECLARE_FINAL_TYPE(VideoOutput,
  * @brief Creates a new |VideoOutput| instance for given |handle|.
  *
  * @param texture_registrar |FlTextureRegistrar| reference.
+ * @param view |FlView| reference.
  * @param handle |mpv_handle| reference casted to gint64.
- * @param width Preferred width of the video. Pass `NULL` for using texture
- * dimensions based on video's resolution.
- * @param height Preferred height of the video. Pass `NULL` for using texture
- * dimensions based on video's resolution.
- * @param enable_hardware_acceleration Whether to enable hardware acceleration.
+ * @param configuration Video output configuration.
+ * @param gl_render_thread |GLRenderThread| reference for dedicated GL rendering.
  * @return VideoOutput*
  */
 VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                               FlView* view,
                               gint64 handle,
-                              VideoOutputConfiguration configuration);
+                              VideoOutputConfiguration configuration,
+                              GLRenderThread* gl_render_thread);
 
 /**
  * @brief Sets the callback invoked when the texture ID updates i.e. video
@@ -98,6 +102,8 @@ EGLContext video_output_get_egl_context(VideoOutput* self);
 
 EGLSurface video_output_get_egl_surface(VideoOutput* self);
 
+GLRenderThread* video_output_get_gl_render_thread(VideoOutput* self);
+
 guint8* video_output_get_pixel_buffer(VideoOutput* self);
 
 gint64 video_output_get_width(VideoOutput* self);
@@ -107,5 +113,11 @@ gint64 video_output_get_height(VideoOutput* self);
 gint64 video_output_get_texture_id(VideoOutput* self);
 
 void video_output_notify_texture_update(VideoOutput* self);
+
+void video_output_notify_render(VideoOutput* self);
+
+void video_output_check_and_resize(VideoOutput* self);
+
+void video_output_render(VideoOutput* self);
 
 #endif  // VIDEO_OUTPUT_H_

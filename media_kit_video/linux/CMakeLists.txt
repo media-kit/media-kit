@@ -18,6 +18,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     "media_kit_video_plugin.cc"
     "texture_gl.cc"
     "texture_sw.cc"
+    "gl_render_thread.cc"
     "video_output_manager.cc"
     "video_output.cc"
     "utils.cc"
