@@ -4,6 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:ffi';
+import 'dart:isolate';
 
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 import 'package:media_kit/src/player/native/core/execmem_restriction.dart';
@@ -44,7 +45,8 @@ class Initializer {
     // based implementation to avoid native -> Dart callbacks that can outlive
     // the isolate and crash with "Callback invoked after it has been deleted".
     // See: https://github.com/media-kit/media-kit/issues/1340
-    if (kDebugMode) {
+    // We still use NativeCallable based implementation in release mode and unit tests for better performance.
+    if (kDebugMode && isMainIsolate()) {
       return InitializerIsolate().create(callback, options: options);
     }
     if (!isExecmemRestricted) {
@@ -56,7 +58,7 @@ class Initializer {
 
   /// Disposes [Pointer<mpv_handle>].
   void dispose(Pointer<generated.mpv_handle> ctx) {
-    if (kDebugMode) {
+    if (kDebugMode && isMainIsolate()) {
       InitializerIsolate().dispose(mpv, ctx);
       return;
     }
@@ -65,5 +67,10 @@ class Initializer {
     } else {
       InitializerIsolate().dispose(mpv, ctx);
     }
+  }
+
+  bool isMainIsolate() {
+    final name = Isolate.current.debugName;
+    return name == 'main';
   }
 }
