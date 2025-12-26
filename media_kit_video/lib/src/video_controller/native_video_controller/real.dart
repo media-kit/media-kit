@@ -50,6 +50,8 @@ class NativeVideoController extends PlatformVideoController {
   /// [Lock] used to synchronize [onLoadHooks], [onUnloadHooks] & [subscription].
   final lock = Lock();
 
+  var _disposed = false;
+
   NativePlayer get platform => player.platform as NativePlayer;
 
   Future<void> setProperty(String key, String value) async {
@@ -74,7 +76,7 @@ class NativeVideoController extends PlatformVideoController {
         height = configuration.height {
     videoParamsSubscription = player.stream.videoParams.listen(
       (event) => lock.synchronized(() async {
-        if ([0, null].contains(event.dw) || [0, null].contains(event.dh)) {
+        if (_disposed || [0, null].contains(event.dw) || [0, null].contains(event.dh)) {
           return;
         }
 
@@ -91,7 +93,7 @@ class NativeVideoController extends PlatformVideoController {
           height = event.dw ?? 0;
         }
 
-        if (videoParamsWidth == width && videoParamsHeight == height) {
+        if (_disposed || videoParamsWidth == width && videoParamsHeight == height) {
           return;
         }
 
@@ -237,6 +239,7 @@ class NativeVideoController extends PlatformVideoController {
 
   /// Disposes the instance. Releases allocated resources back to the system.
   Future<void> _dispose() async {
+    _disposed = true;
     super.dispose();
     await videoParamsSubscription?.cancel();
     final handle = await player.handle;
