@@ -230,6 +230,9 @@ class MaterialVideoControlsThemeData {
   /// Custom builder for seek indicator.
   final Widget Function(BuildContext, double)? speedUpIndicatorBuilder;
 
+  /// Whether to always show the controls when the video is paused.
+  final bool controlsVisibleOnPause;
+
   // BUTTON BAR
 
   /// Buttons to be displayed in the primary button bar.
@@ -324,6 +327,7 @@ class MaterialVideoControlsThemeData {
     this.onBrightnessReset,
     this.seekIndicatorBuilder,
     this.speedUpIndicatorBuilder,
+    this.controlsVisibleOnPause = false,
     this.primaryButtonBar = const [
       Spacer(flex: 2),
       MaterialSkipPreviousButton(),
@@ -611,6 +615,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       _brightnessValue = _theme(context).initialBrightness ?? 0.5;
       _onBrightnessReset = _theme(context).onBrightnessReset;
 
+      final controlsHoverDuration = _theme(context).controlsHoverDuration;
       subscriptions.addAll(
         [
           controller(context).player.stream.playlist.listen(
@@ -627,10 +632,35 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
               });
             },
           ),
+          controller(context).player.stream.playing.listen(
+            (playing) {
+              if (context.mounted && playing && visible) {
+                _timer?.cancel();
+                _timer = Timer(
+                  controlsHoverDuration,
+                  () {
+                    if (mounted) {
+                      setState(() {
+                        visible = false;
+                      });
+                      unshiftSubtitle();
+                    }
+                  },
+                );
+              }
+            },
+          )
         ],
       );
 
       if (_theme(context).visibleOnMount) {
+        final isPlaying = controller(context).player.state.playing;
+        final isControlsVisibleOnPause = _theme(context).controlsVisibleOnPause;
+        if (!isPlaying && isControlsVisibleOnPause) {
+          _timer?.cancel();
+          return;
+        }
+
         _timer = Timer(
           _theme(context).controlsHoverDuration,
           () {
@@ -687,6 +717,12 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       });
       shiftSubtitle();
       _timer?.cancel();
+
+      if (!controller(context).player.state.playing &&
+          _theme(context).controlsVisibleOnPause) {
+        return;
+      }
+
       _timer = Timer(_theme(context).controlsHoverDuration, () {
         if (mounted) {
           setState(() {
@@ -1034,6 +1070,19 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                         _timer = Timer(
                                           _theme(context).controlsHoverDuration,
                                           () {
+                                            final isPlaying =
+                                                controller(context)
+                                                    .player
+                                                    .state
+                                                    .playing;
+                                            final isControlsVisibleOnPause =
+                                                _theme(context)
+                                                    .controlsVisibleOnPause;
+                                            if (!isPlaying &&
+                                                isControlsVisibleOnPause) {
+                                              return;
+                                            }
+
                                             if (mounted) {
                                               setState(() {
                                                 visible = false;
@@ -1586,6 +1635,8 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   }
 
   void onPointerMove(PointerMoveEvent e, BoxConstraints constraints) {
+    if (!mounted) return;
+
     final percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       tapped = true;
@@ -1602,6 +1653,8 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   }
 
   void onPointerUp() {
+    if (!mounted) return;
+
     widget.onSeekEnd?.call();
     setState(() {
       // Explicitly set the position to prevent the slider from jumping.
@@ -1930,7 +1983,7 @@ class MaterialCustomButton extends StatelessWidget {
   final Color? iconColor;
 
   /// The callback that is called when the button is tapped or otherwise activated.
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   const MaterialCustomButton({
     super.key,
