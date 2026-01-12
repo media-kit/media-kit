@@ -3,21 +3,20 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:io';
 import 'dart:async';
-import 'package:flutter/widgets.dart';
-import 'package:flutter/services.dart';
-import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
+import 'dart:io';
 
-import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
+import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
+import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
-
 import 'package:media_kit_video/src/utils/wakelock.dart';
-import 'package:media_kit_video/src/video_view_parameters.dart';
-import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
+import 'package:media_kit_video/src/video_controller/video_controller.dart';
+import 'package:media_kit_video/src/video_view_parameters.dart';
 
 /// {@template video}
 ///
@@ -116,6 +115,8 @@ class Video extends StatefulWidget {
   /// FocusNode for keyboard input.
   final FocusNode? focusNode;
 
+  final Widget? thumbnail;
+
   /// {@macro video}
   const Video({
     super.key,
@@ -135,6 +136,7 @@ class Video extends StatefulWidget {
     this.onEnterFullscreen = defaultEnterNativeFullscreen,
     this.onExitFullscreen = defaultExitNativeFullscreen,
     this.focusNode,
+    this.thumbnail,
   });
 
   @override
@@ -151,6 +153,8 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   late int? _width = widget.controller.player.state.width;
   late int? _height = widget.controller.player.state.height;
   late bool _visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
+  // If autoplay is false then show thumbnail initially.
+  late bool _showThumbnail = !widget.controller.player.state.playing;
 
   bool _pauseDueToPauseUponEnteringBackgroundMode = false;
   // Public API:
@@ -330,6 +334,29 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
             }
           },
         ),
+        widget.controller.player.stream.playing.listen(
+          (value) {
+            if (value && !_showThumbnail) return;
+            setState(() {
+              // Using seconds instead of Duration.zero, because the position
+              // sometimes reports milliseconds non zero even when autoplay is false.
+              _showThumbnail =
+                  widget.controller.player.state.position.inSeconds == 0;
+            });
+          },
+        ),
+        widget.controller.player.stream.position.listen(
+          (value) {
+            final playing = widget.controller.player.state.playing;
+            if (playing && !_showThumbnail) return;
+
+            setState(() {
+              // Using seconds instead of Duration.zero, because the position
+              // sometimes reports milliseconds non zero even when autoplay is false.
+              _showThumbnail = value.inSeconds == 0;
+            });
+          },
+        ),
       ],
     );
     // --------------------------------------------------
@@ -447,6 +474,10 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                     ),
                   ),
                 ),
+                if (widget.thumbnail != null && _showThumbnail)
+                  Positioned.fill(
+                    child: widget.thumbnail!,
+                  ),
                 if (videoViewParameters.subtitleViewConfiguration.visible &&
                     !(widget.controller.player.platform?.configuration.libass ??
                         false))
