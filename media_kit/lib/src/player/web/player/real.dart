@@ -330,6 +330,12 @@ class WebPlayer extends PlatformPlayer {
         trackController.add(state.track);
       }
 
+      // Revoke subtitle blob URL if exists
+      if (_subtitleBlobUrl != null) {
+        web.URL.revokeObjectURL(_subtitleBlobUrl!);
+        _subtitleBlobUrl = null;
+      }
+
       disposed = true;
 
       element
@@ -1337,30 +1343,23 @@ class WebPlayer extends PlatformPlayer {
         if (track.uri) {
           uri = track.id;
         } else if (track.data) {
-          var array = JSArray();
-          final blobParts = [track.id];
-          for (var i = 0; i < blobParts.length; i++) {
-            array.add(blobParts[i].toJS);
+          if (_subtitleBlobUrl != null) {
+            web.URL.revokeObjectURL(_subtitleBlobUrl!);
+            _subtitleBlobUrl = null;
           }
-          // Create object URL from subtitle data using modern web API.
-          final blob = web.Blob(array as JSArray<web.BlobPart>);
+          final bytes = Uint8List.fromList(utf8.encode(track.id));
+          final blob = web.Blob(<JSUint8Array>[bytes.toJS].toJS);
           final src = web.URL.createObjectURL(blob);
-
-          // Revoke the object URL upon disposal.
-          release.add(() async {
-            web.URL.revokeObjectURL(src);
-          });
+          _subtitleBlobUrl = src;
           uri = src;
         } else {
           return;
         }
 
         final child = web.HTMLTrackElement();
-        child.src = uri;
         child.kind = 'subtitles';
         child.label = track.title ?? "";
         child.srclang = track.language ?? "";
-        element.appendChild(child);
 
         state = state.copyWith(track: state.track.copyWith(subtitle: track));
         if (!trackController.isClosed) {
@@ -1373,47 +1372,55 @@ class WebPlayer extends PlatformPlayer {
           subtitleController.add(['', '']);
         }
 
-        final tracks = element.textTracks;
-        if (tracks.length > 0) {
-          final firstTrack = tracks[0];
-          firstTrack.mode = 'hidden';
-
-          // Use modern event listener for cue changes.
-          firstTrack.oncuechange = (event) {
-            try {
-              // UNTESTED! I have no idea if this works. ~Eric Apostal
-              // it's pretty sketchy, so it has a very good chance of not working.
-              final activeCues = firstTrack.activeCues;
-              if (activeCues != null) {
-                final data = List<String>.from(
-                  (activeCues.dartify as dynamic).map((cue) {
-                    final text = (cue as dynamic).text as String;
-                    return text
+        // Set up the cue change handler function
+        void handleCueChange(web.Event event) {
+          try {
+            final textTrack = child.track;
+            final activeCues = textTrack.activeCues;
+            if (activeCues != null) {
+              final cueList = <String>[];
+              for (var i = 0; i < activeCues.length; i++) {
+                final cue = activeCues[i];
+                // VTTCue has a 'text' property
+                final text = (cue as dynamic).text as String?;
+                if (text != null) {
+                  cueList.add(
+                    text
                         .replaceAll(RegExp('<[^>]*>'), ' ')
-                        .replaceAll(RegExp('\\s+'), ' ')
-                        .trim();
-                  }),
-                );
-
-                final subtitle = ['', ''];
-                if (data.length == 1) {
-                  subtitle[0] = data[0];
-                } else if (data.length >= 2) {
-                  subtitle[0] = data[0];
-                  subtitle[1] = data.skip(1).join('\n');
-                }
-
-                state = state.copyWith(subtitle: subtitle);
-                if (!subtitleController.isClosed) {
-                  subtitleController.add(subtitle);
+                        .replaceAll(RegExp(r'\s+'), ' ')
+                        .trim(),
+                  );
                 }
               }
-            } catch (exception, stacktrace) {
-              print(exception);
-              print(stacktrace);
+
+              final subtitle = ['', ''];
+              if (cueList.length == 1) {
+                subtitle[0] = cueList[0];
+              } else if (cueList.length >= 2) {
+                subtitle[0] = cueList[0];
+                subtitle[1] = cueList.skip(1).join('\n');
+              }
+
+              state = state.copyWith(subtitle: subtitle);
+              if (!subtitleController.isClosed) {
+                subtitleController.add(subtitle);
+              }
             }
-          } as dynamic;
+          } catch (exception, stacktrace) {
+            print(exception);
+            print(stacktrace);
+          }
         }
+
+        child.onLoad.listen((_) {
+          final textTrack = child.track;
+          textTrack.mode = 'hidden';
+          textTrack.oncuechange = handleCueChange.toJS;
+        });
+
+        element.appendChild(child);
+        child.src = uri;
+        child.track.mode = 'hidden';
       } else {
         throw UnsupportedError(
           '[Player.setSubtitleTrack] is only supported with [SubtitleTrack.uri] & [SubtitleTrack.data] on web',
@@ -1645,6 +1652,9 @@ class WebPlayer extends PlatformPlayer {
 
   /// Whether the [Player] has been disposed.
   bool disposed = false;
+
+  /// Current subtitle blob URL to revoke when changing tracks or disposing.
+  String? _subtitleBlobUrl;
 
   /// Synchronization & mutual exclusion between methods of this class.
   final Lock lock = Lock();
