@@ -22,6 +22,7 @@ dependencies:
 
   synchronized: ^3.1.0
   wakelock_plus: ^1.1.6
+  wakelock_plus_ohos: ^0.0.3
   universal_platform: ^1.0.0+1
   plugin_platform_interface: ^2.0.2
   web: ^1.1.0
@@ -43,6 +44,9 @@ flutter:
       ios:
         pluginClass: MediaKitVideoPlugin
       android:
+        package: com.alexmercerind.media_kit_video
+        pluginClass: MediaKitVideoPlugin
+      ohos:
         package: com.alexmercerind.media_kit_video
         pluginClass: MediaKitVideoPlugin
       web:
