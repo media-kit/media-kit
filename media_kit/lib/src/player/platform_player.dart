@@ -6,20 +6,20 @@
 
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:meta/meta.dart';
-import 'package:collection/collection.dart';
 
-import 'package:media_kit/src/models/track.dart';
-import 'package:media_kit/src/models/playable.dart';
-import 'package:media_kit/src/models/playlist.dart';
-import 'package:media_kit/src/models/player_log.dart';
-import 'package:media_kit/src/models/media/media.dart';
+import 'package:collection/collection.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
-import 'package:media_kit/src/models/video_params.dart';
+import 'package:media_kit/src/models/media/media.dart';
+import 'package:media_kit/src/models/playable.dart';
+import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/player_state.dart';
-import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_stream.dart';
+import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/playlist_mode.dart';
+import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/video_params.dart';
+import 'package:meta/meta.dart';
 
 /// {@template platform_player}
 /// PlatformPlayer
@@ -514,6 +514,14 @@ class PlayerConfiguration {
   /// Learn more: https://ffmpeg.org/ffmpeg-protocols.html#Protocol-Options
   final List<String> protocolWhitelist;
 
+  /// Do not terminate when playing or seeking beyond the end of the file,
+  /// and there is no next file to be played (and --loop is not used). Instead,
+  /// pause the player. When trying to seek beyond end of the file, the player
+  /// will attempt to seek to the last frame.
+  ///
+  /// Default: `MPVKeepOpen.yes`.
+  final MPVKeepOpen keepOpen;
+
   /// {@macro player_configuration}
   const PlayerConfiguration({
     this.vo = 'null',
@@ -539,6 +547,7 @@ class PlayerConfiguration {
       'https',
       'crypto',
     ],
+    this.keepOpen = MPVKeepOpen.yes,
   });
 }
 
@@ -575,4 +584,15 @@ enum MPVLogLevel {
 
   /// Extremely noisy.
   trace,
+}
+
+enum MPVKeepOpen {
+  /// If the current file ends, go to the next file or terminate.
+  no,
+
+  /// Don't terminate if the current file is the last playlist entry.
+  yes,
+
+  /// Like yes, but also applies to files before the last playlist entry. This means playback will never automatically advance to the next file.
+  always,
 }
