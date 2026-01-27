@@ -1067,9 +1067,15 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                         _timer?.cancel();
                                       },
                                       onSeekEnd: () {
+                                        if (!mounted) return;
+
                                         _timer = Timer(
                                           _theme(context).controlsHoverDuration,
                                           () {
+                                            if (!mounted) {
+                                              return;
+                                            }
+
                                             final isPlaying =
                                                 controller(context)
                                                     .player
@@ -1083,12 +1089,10 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                               return;
                                             }
 
-                                            if (mounted) {
-                                              setState(() {
-                                                visible = false;
-                                              });
-                                              unshiftSubtitle();
-                                            }
+                                            setState(() {
+                                              visible = false;
+                                            });
+                                            unshiftSubtitle();
                                           },
                                         );
                                       },
