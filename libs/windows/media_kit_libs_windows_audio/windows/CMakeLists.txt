@@ -5,6 +5,7 @@
 # Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 cmake_minimum_required(VERSION 3.14)
+cmake_policy(SET CMP0175 NEW)
 
 # This option is read by the other packages which are part of package:media_kit.
 option(MEDIA_KIT_LIBS_AVAILABLE "package:media_kit libraries are available." ON)
@@ -101,6 +102,7 @@ if(NOT LIBMPV_SRC_VALID)
     message(STATUS "Using 7zip for extraction: ${SEVENZ_EXECUTABLE}")
     add_custom_command(
       TARGET "${PROJECT_NAME}_LIBMPV_EXTRACT"
+      POST_BUILD
       COMMAND "${SEVENZ_EXECUTABLE}" x -y "\"${LIBMPV_ARCHIVE}\""
       COMMAND xcopy "\"${LIBMPV_SRC}/include/mpv\"" "\"${LIBMPV_SRC}/mpv\"" /E /H /C /I
       COMMAND rmdir "\"${LIBMPV_SRC}/include\"" /S /Q
@@ -111,6 +113,7 @@ if(NOT LIBMPV_SRC_VALID)
     message(STATUS "7zip not found, falling back to CMake tar")
     add_custom_command(
       TARGET "${PROJECT_NAME}_LIBMPV_EXTRACT"
+      POST_BUILD
       COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${LIBMPV_ARCHIVE}\""
       COMMAND xcopy "\"${LIBMPV_SRC}/include/mpv\"" "\"${LIBMPV_SRC}/mpv\"" /E /H /C /I
       COMMAND rmdir "\"${LIBMPV_SRC}/include\"" /S /Q
