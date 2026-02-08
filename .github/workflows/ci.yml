@@ -27,6 +27,31 @@ jobs:
       - run: dart pub get
       - run: dart test
 
+  media_kit-tests-windows-arm64:
+    name: package:media_kit tests (Windows ARM64)
+    runs-on: windows-11-arm
+    defaults:
+      run:
+        working-directory: media_kit
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+
+      - name: Setup libmpv for Windows ARM64
+        run: |
+          curl -LO https://github.com/media-kit/libmpv-win32-video-cmake/releases/download/20241021/mpv-dev-aarch64-20241021-git-0f78584.7z
+          cmake -E md5sum mpv-dev-aarch64-20241021-git-0f78584.7z | find /i "5b507a35db13eee6cb7eb21e8be7c83d" > nul || exit 1
+          cmake -E tar x mpv-dev-aarch64-20241021-git-0f78584.7z libmpv-2.dll
+        shell: cmd
+
+      - run: dart pub get
+      - run: dart test
+
   media_kit-tests-linux:
     name: package:media_kit tests (Linux)
     runs-on: ubuntu-latest
@@ -117,6 +142,36 @@ jobs:
           tag_name: "vnext"
           files: |
             media_kit_test/media_kit_test_win32_x64.7z
+
+  windows-arm64:
+    name: Windows ARM64
+    runs-on: windows-11-arm
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - run: flutter pub get
+      - run: flutter build windows --target-platform windows-arm64 --verbose
+      - run: cmake -E tar "cfv" "media_kit_test_winarm64.7z" --format=7zip "build\windows\arm64\runner\Release"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: media_kit_test_winarm64
+          path: media_kit_test/media_kit_test_winarm64.7z
+      - uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          draft: true
+          prerelease: false
+          tag_name: "vnext"
+          files: |
+            media_kit_test/media_kit_test_winarm64.7z
 
   linux:
     name: Linux
@@ -308,6 +363,30 @@ jobs:
         shell: cmd
       - run: flutter pub get
       - run: flutter build windows --verbose
+
+  optional-libs-windows-arm64:
+    name: Windows ARM64 (optional libs)
+    runs-on: windows-11-arm
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          "C:\Program Files\Git\usr\bin\sed.exe" -i "/media_kit_libs_/d" pubspec.yaml
+          type pubspec.yaml
+          "C:\Program Files\Git\usr\bin\sed.exe" -i "/media_kit_libs_/d" pubspec_overrides.yaml
+          type pubspec_overrides.yaml
+        shell: cmd
+      - run: flutter pub get
+      - run: flutter build windows --target-platform windows-arm64 --verbose
 
   optional-libs-linux:
     name: Linux (optional libs)
