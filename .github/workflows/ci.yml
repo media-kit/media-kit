@@ -158,7 +158,7 @@ jobs:
           channel: "master"
           cache: true
       - run: flutter pub get
-      - run: flutter build windows --target-platform windows-arm64 --verbose
+      - run: flutter build windows --verbose
       - run: cmake -E tar "cfv" "media_kit_test_winarm64.7z" --format=7zip "build\windows\arm64\runner\Release"
       - uses: actions/upload-artifact@v4
         with:
@@ -386,7 +386,7 @@ jobs:
           type pubspec_overrides.yaml
         shell: cmd
       - run: flutter pub get
-      - run: flutter build windows --target-platform windows-arm64 --verbose
+      - run: flutter build windows --verbose
 
   optional-libs-linux:
     name: Linux (optional libs)
