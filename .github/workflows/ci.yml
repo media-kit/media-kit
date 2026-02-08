@@ -39,7 +39,7 @@ jobs:
           submodules: "true"
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
           cache: true
 
       - name: Setup libmpv for Windows ARM64
@@ -155,7 +155,7 @@ jobs:
           submodules: "true"
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
           cache: true
       - run: flutter pub get
       - run: flutter build windows --target-platform windows-arm64 --verbose
@@ -376,7 +376,7 @@ jobs:
           submodules: "true"
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
           cache: true
       - name: Remove `media_kit_libs_*` dependencies
         run: |
