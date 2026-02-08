@@ -67,16 +67,21 @@ endfunction()
 # Detect architecture and set appropriate libmpv archive
 if(${FLUTTER_TARGET_PLATFORM} STREQUAL "windows-x64")
   set(LIBMPV_ARCH "x86_64")
-  set(LIBMPV "mpv-dev-x86_64-20241021-git-0f78584.7z")
-  set(LIBMPV_MD5 "6ecf18e85b093c3f7edb16f3ee6603f3")
+  #set(LIBMPV "mpv-dev-x86_64-20241021-git-0f78584.7z")
+  #set(LIBMPV_MD5 "6ecf18e85b093c3f7edb16f3ee6603f3")
+  set(LIBMPV "mpv-dev-x86_64-20260207-git-9ccd889.7z")
+  set(LIBMPV_MD5 "bbeaff722c31a8e07084f3ca6834c00b")
 else()
   set(LIBMPV_ARCH "aarch64")
-  set(LIBMPV "mpv-dev-aarch64-20241021-git-0f78584.7z")
-  set(LIBMPV_MD5 "5b507a35db13eee6cb7eb21e8be7c83d")
+  set(LIBMPV "mpv-dev-aarch64-20260207-git-9ccd889.7z")
+  set(LIBMPV_MD5 "e35274b211d4fd2acea02c8089548714")
+  #set(LIBMPV "mpv-dev-aarch64-20241021-git-0f78584.7z")
+  #set(LIBMPV_MD5 "5b507a35db13eee6cb7eb21e8be7c83d")
 endif()
 
 # Download URL for the libmpv archive from the latest release
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-cmake/releases/download/20241021/${LIBMPV}")
+#set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-cmake/releases/download/20241021/${LIBMPV}")
+set(LIBMPV_URL "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260207/${LIBMPV}")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
