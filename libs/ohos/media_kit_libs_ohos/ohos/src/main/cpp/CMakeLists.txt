@@ -52,7 +52,7 @@ endfunction()
 set(LIBMPV "libmpv_aarch64.zip")
 
 # Download URL & SHA256 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/ErBWs/libmpv-ohos-build/releases/download/20251110/${LIBMPV}")
+set(LIBMPV_URL "https://github.com/mpv-ohos/libmpv-ohos-build/releases/download/20260207/${LIBMPV}")
 set(LIBMPV_SHA "5e9c41ef80996c6691f4d860c24278c43933511559d71683f24488a2b5bd6d7d")
 
 # Download location of the libmpv archive.
