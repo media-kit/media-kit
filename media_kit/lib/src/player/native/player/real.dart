@@ -51,8 +51,17 @@ void nativeEnsureInitialized({String? libmpv}) {
     print('$tag Found ${references.length} reference(s).');
     print('$tag Disposing:\n${references.map((e) => e.address).join('\n')}');
 
-    // I can only get quit to work; [mpv_terminate_destroy] causes direct crash.
+    // First, clear wakeup callbacks on all old handles to prevent mpv from
+    // invoking deleted Dart NativeCallable trampolines (SIGABRT on Flutter 3.38+).
+    // mpv_set_wakeup_callback is synchronous: once it returns, mpv will never
+    // call the old (dead) trampoline again.
+    // See: https://github.com/media-kit/media-kit/issues/1314
     final mpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
+    for (final reference in references) {
+      mpv.mpv_set_wakeup_callback(reference.cast(), nullptr, nullptr);
+    }
+
+    // Now it's safe to send quit; mpv won't try to notify Dart anymore.
     final cmd = 'quit'.toNativeUtf8();
     try {
       for (final reference in references) {
