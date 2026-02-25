@@ -67,16 +67,21 @@ endfunction()
 # Detect architecture and set appropriate libmpv archive
 if(${FLUTTER_TARGET_PLATFORM} STREQUAL "windows-x64")
   set(LIBMPV_ARCH "x86_64")
-  set(LIBMPV "mpv-dev-x86_64-20241021-git-0f78584.7z")
-  set(LIBMPV_MD5 "6ecf18e85b093c3f7edb16f3ee6603f3")
+  #set(LIBMPV "mpv-dev-x86_64-20241021-git-0f78584.7z")
+  #set(LIBMPV_MD5 "6ecf18e85b093c3f7edb16f3ee6603f3")
+  set(LIBMPV "mpv-dev-x86_64-20260221-git-534b2d2.7z")
+  set(LIBMPV_MD5 "42940fdd4ef96d9986b503d315f2290a")
 else()
   set(LIBMPV_ARCH "aarch64")
-  set(LIBMPV "mpv-dev-aarch64-20241021-git-0f78584.7z")
-  set(LIBMPV_MD5 "5b507a35db13eee6cb7eb21e8be7c83d")
+  set(LIBMPV "mpv-dev-aarch64-20260221-git-534b2d2.7z")
+  set(LIBMPV_MD5 "047eab18da3fda6228dfca6c303cc05a")
+  #set(LIBMPV "mpv-dev-aarch64-20241021-git-0f78584.7z")
+  #set(LIBMPV_MD5 "5b507a35db13eee6cb7eb21e8be7c83d")
 endif()
 
 # Download URL for the libmpv archive from the latest release
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-cmake/releases/download/20241021/${LIBMPV}")
+#set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-cmake/releases/download/20241021/${LIBMPV}")
+set(LIBMPV_URL "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260221/${LIBMPV}")
 
 # Download location of the libmpv archive.
 set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
@@ -91,7 +96,12 @@ download_and_verify(
 check_directory_exists_and_not_empty(${LIBMPV_SRC} LIBMPV_SRC_VALID)
 
 # Find 7zip for extraction (preferred for .7z files)
-find_program(SEVENZ_EXECUTABLE NAMES 7z 7za)
+find_program(SEVENZ_EXECUTABLE 
+  NAMES 7z 7za
+  PATHS 
+    "C:/Program Files/7-Zip"
+    "C:/Program Files (x86)/7-Zip"
+)
 
 # Extract the libmpv archive.
 if(NOT LIBMPV_SRC_VALID)
@@ -127,11 +137,16 @@ endif()
 # ------------------------------------------------------------------------------
 
 # ANGLE archive containing the pre-built shared libraries & headers.
-set(ANGLE "ANGLE.7z")
-
-# Download URL & MD5 hash of the ANGLE archive.
-set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.1/ANGLE.7z")
-set(ANGLE_MD5 "e866f13e8d552348058afaafe869b1ed")
+# Detect architecture and set appropriate ANGLE archive
+if(${FLUTTER_TARGET_PLATFORM} STREQUAL "windows-x64")
+  set(ANGLE "ANGLE.7z")
+  set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.1/ANGLE.7z")
+  set(ANGLE_MD5 "e866f13e8d552348058afaafe869b1ed")
+else()
+  set(ANGLE "ANGLE_WINARM64.7z")
+  set(ANGLE_URL "https://github.com/talynone/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.1/ANGLE_WINARM64.7z")
+  set(ANGLE_MD5 "b56aaae894ccf6c8ee90b59ee642a787")
+endif()
 
 # Download location of the ANGLE archive.
 set(ANGLE_ARCHIVE "${CMAKE_BINARY_DIR}/${ANGLE}")
@@ -163,6 +178,7 @@ if(NOT ANGLE_SRC_VALID)
     message(STATUS "7zip not found, falling back to CMake tar")
     add_custom_command(
       TARGET "${PROJECT_NAME}_ANGLE_EXTRACT"
+      POST_BUILD
       COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${ANGLE_ARCHIVE}\""
       WORKING_DIRECTORY "${ANGLE_SRC}"
     )
