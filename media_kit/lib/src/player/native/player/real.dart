@@ -51,8 +51,18 @@ void nativeEnsureInitialized({String? libmpv}) {
     print('$tag Found ${references.length} reference(s).');
     print('$tag Disposing:\n${references.map((e) => e.address).join('\n')}');
 
-    // I can only get quit to work; [mpv_terminate_destroy] causes direct crash.
     final mpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
+
+    // Clear wakeup callbacks on all stale handles BEFORE sending quit.
+    // mpv_set_wakeup_callback is synchronous: once it returns, mpv will
+    // never invoke the old (dead) NativeCallable trampoline again.
+    // Without this, sending 'quit' triggers mpv event processing which
+    // invokes the deleted callback → SIGABRT on Flutter 3.38+.
+    // See: https://github.com/media-kit/media-kit/issues/1340
+    for (final reference in references) {
+      mpv.mpv_set_wakeup_callback(reference.cast(), nullptr, nullptr);
+    }
+
     final cmd = 'quit'.toNativeUtf8();
     try {
       for (final reference in references) {
