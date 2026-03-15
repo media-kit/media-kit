@@ -1,3 +1,7 @@
+## 1.1.5
+
+- build: bump dependencies
+
 ## 1.1.4
 
 - fix: DTS support ([#437](https://github.com/media-kit/media-kit/issues/437))

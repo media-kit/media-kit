@@ -1,3 +1,21 @@
+## 1.2.6
+
+- fix(windows): long file path support
+
+## 1.2.5
+
+- fix(windows): long file path support
+
+## 1.2.4
+
+- fix(windows): long file path support
+
+## 1.2.3
+
+- fix(native): setShuffle behavior
+- refactor(web): remove duplicate internal state
+- feat: add `isDefault` property to `Track`
+
 ## 1.2.2
 
 - feat: allow overriding `PlatformPlayer` in `Player` constructor
@@ -9,39 +27,39 @@
 
 ## 1.2.0
 
- - **REFACTOR**: InitializerNativeCallable & InitializerIsolate.
- - **REFACTOR**: migrate NativePlayer Initializer to NativeCallable.
- - **REFACTOR**: hook NativeReferenceHolder.
- - **REFACTOR**: TempFile.
- - **REFACTOR**: remove InitializerNativeEventLoop.
- - **PERF**: observe playlist-playing-pos instead of playlist.
- - **PERF**: use loadlist in NativePlayer.open.
- - **FIX**: increase retry count for flaky player subtitle test.
- - **FIX**: bump web to 1.1.0.
- - **FIX**: comment out unsupported headers on web.
- - **FIX**: proper function signature.
- - **FIX**: pass http headers to hls.js.
- - **FIX**: emit position in stop.
- - **FIX**: NativePlayer.remove.
- - **FIX**: player.stream.playlist in add/remove.
- - **FIX**: player-open-playable-playlist-start-end.
- - **FIX**: playlist emit.
- - **FIX**: emit playlist from open.
- - **FIX**: add more formats to FallbackBitrateHandler.
- - **FIX**: delete temporary file in `NativePlayer`.
- - **FIX**: video_player black screen.
- - **FIX**: handle incorrect encoding in toDartString.
- - **FIX**: catch observe property callback exception.
- - **FIX**: NativeReferenceHolder on 32-bit systems.
- - **FIX**: do not reset audioParams & audioBitrate in stop.
- - **FIX**: Initializer._callback.
- - **FIX**: supply callback to NativeReferenceHolder.
- - **FIX**(android): libass font support.
- - **FEAT**: PlayerConfiguration.async.
- - **FEAT**: NativeReferenceHolder.remove.
- - **FEAT**: NativeReferenceHolder.
- - **FEAT**: waitForInitialization.
- - **FEAT**: Add support for including libass subtitles in screenshots.
+- **REFACTOR**: InitializerNativeCallable & InitializerIsolate.
+- **REFACTOR**: migrate NativePlayer Initializer to NativeCallable.
+- **REFACTOR**: hook NativeReferenceHolder.
+- **REFACTOR**: TempFile.
+- **REFACTOR**: remove InitializerNativeEventLoop.
+- **PERF**: observe playlist-playing-pos instead of playlist.
+- **PERF**: use loadlist in NativePlayer.open.
+- **FIX**: increase retry count for flaky player subtitle test.
+- **FIX**: bump web to 1.1.0.
+- **FIX**: comment out unsupported headers on web.
+- **FIX**: proper function signature.
+- **FIX**: pass http headers to hls.js.
+- **FIX**: emit position in stop.
+- **FIX**: NativePlayer.remove.
+- **FIX**: player.stream.playlist in add/remove.
+- **FIX**: player-open-playable-playlist-start-end.
+- **FIX**: playlist emit.
+- **FIX**: emit playlist from open.
+- **FIX**: add more formats to FallbackBitrateHandler.
+- **FIX**: delete temporary file in `NativePlayer`.
+- **FIX**: video_player black screen.
+- **FIX**: handle incorrect encoding in toDartString.
+- **FIX**: catch observe property callback exception.
+- **FIX**: NativeReferenceHolder on 32-bit systems.
+- **FIX**: do not reset audioParams & audioBitrate in stop.
+- **FIX**: Initializer.\_callback.
+- **FIX**: supply callback to NativeReferenceHolder.
+- **FIX**(android): libass font support.
+- **FEAT**: PlayerConfiguration.async.
+- **FEAT**: NativeReferenceHolder.remove.
+- **FEAT**: NativeReferenceHolder.
+- **FEAT**: waitForInitialization.
+- **FEAT**: Add support for including libass subtitles in screenshots.
 
 ## 1.1.11
 

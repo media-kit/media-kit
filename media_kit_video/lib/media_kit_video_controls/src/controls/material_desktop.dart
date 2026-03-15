@@ -374,8 +374,8 @@ class _MaterialDesktopVideoControls extends StatefulWidget {
 /// {@macro material_desktop_video_controls}
 class _MaterialDesktopVideoControlsState
     extends State<_MaterialDesktopVideoControls> {
-  late bool mount = _theme(context).visibleOnMount;
-  late bool visible = _theme(context).visibleOnMount;
+  late bool mount;
+  late bool visible;
 
   Timer? _timer;
 
@@ -404,6 +404,9 @@ class _MaterialDesktopVideoControlsState
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (subscriptions.isEmpty) {
+      mount = _theme(context).visibleOnMount;
+      visible = _theme(context).visibleOnMount;
+
       subscriptions.addAll(
         [
           controller(context).player.stream.playlist.listen(

@@ -46,8 +46,8 @@
 
 ```yaml
 dependencies:
-  media_kit: ^1.2.2 # Primary package.
-  media_kit_video: ^2.0.0 # For video rendering.
+  media_kit: ^1.2.6 # Primary package.
+  media_kit_video: ^2.0.1 # For video rendering.
   media_kit_libs_video: ^1.0.7 # Native video dependencies.
 ```
 
@@ -55,7 +55,7 @@ dependencies:
 
 ```yaml
 dependencies:
-  media_kit: ^1.2.2 # Primary package.
+  media_kit: ^1.2.6 # Primary package.
   media_kit_libs_audio: ^1.0.7 # Native audio dependencies.
 ```
 
@@ -472,7 +472,7 @@ The following state(s) are available as events:
 | `Stream<bool>`              | `buffering`    | Whether buffering or not.                                                                                |
 | `Stream<Duration>`          | `buffer`       | Current buffer position. This indicates how much of the stream has been decoded & cached by the demuxer. |
 | `Stream<PlaylistMode>`      | `playlistMode` | Current playlist mode.                                                                                   |
-| `Stream<bool>`              | `shuffle`      | Whether playlist is shuffled or not.
+| `Stream<bool>`              | `shuffle`      | Whether playlist is shuffled or not.                                                                     |
 | `Stream<AudioParams>`       | `audioParams`  | Audio parameters of the currently playing media source e.g. sample rate, channels, etc.                  |
 | `Stream<VideoParams>`       | `videoParams`  | Video parameters of the currently playing media source e.g. width, height, rotation etc.                 |
 | `Stream<double?>`           | `audioBitrate` | Audio bitrate of the currently playing media source.                                                     |
