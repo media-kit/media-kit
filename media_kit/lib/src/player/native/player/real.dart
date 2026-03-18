@@ -2407,14 +2407,18 @@ class NativePlayer extends PlatformPlayer {
         'dscale': 'bilinear',
         'dither': 'no',
         'cache': 'yes',
-        'cache-on-disk': 'yes',
+        'cache-on-disk': configuration.cacheOnDisk ? 'yes' : 'no',
         'hr-seek': 'yes',
         'hr-seek-framedrop': 'no',
         'correct-downscaling': 'no',
         'linear-downscaling': 'no',
         'sigmoid-upscaling': 'no',
         'hdr-compute-peak': 'no',
-        if (AndroidHelper.isPhysicalDevice || AndroidHelper.APILevel > 25)
+        // Audio output driver: use explicit configuration if provided,
+        // otherwise fall back to platform defaults.
+        if (configuration.ao != null)
+          'ao': configuration.ao!
+        else if (AndroidHelper.isPhysicalDevice || AndroidHelper.APILevel > 25)
           'ao': 'opensles'
         // Disable audio output on older Android emulators with API Level < 25.
         // OpenSL ES audio output seems to be broken on some of these.

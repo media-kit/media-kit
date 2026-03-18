@@ -514,6 +514,19 @@ class PlayerConfiguration {
   /// Learn more: https://ffmpeg.org/ffmpeg-protocols.html#Protocol-Options
   final List<String> protocolWhitelist;
 
+  /// Sets the audio output driver for native backend.
+  ///
+  /// Examples: `'wasapi'`, `'directsound'`, `'opensles'`, `'null'`.
+  /// When `null`, mpv selects the best available output automatically.
+  ///
+  /// Default: `null`.
+  final String? ao;
+
+  /// Whether to enable mpv disk cache.
+  ///
+  /// Default: `true`.
+  final bool cacheOnDisk;
+
   /// {@macro player_configuration}
   const PlayerConfiguration({
     this.vo = 'null',
@@ -539,6 +552,8 @@ class PlayerConfiguration {
       'https',
       'crypto',
     ],
+    this.ao,
+    this.cacheOnDisk = true,
   });
 }
 
