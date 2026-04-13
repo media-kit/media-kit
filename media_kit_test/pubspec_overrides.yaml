@@ -1,0 +1,18 @@
+# melos_managed_dependency_overrides: media_kit,media_kit_libs_android_video,media_kit_libs_ios_video,media_kit_libs_linux,media_kit_libs_macos_video,media_kit_libs_video,media_kit_libs_windows_video,media_kit_video
+dependency_overrides:
+  media_kit:
+    path: ../media_kit
+  media_kit_libs_android_video:
+    path: ../libs/android/media_kit_libs_android_video
+  media_kit_libs_ios_video:
+    path: ../libs/ios/media_kit_libs_ios_video
+  media_kit_libs_linux:
+    path: ../libs/linux/media_kit_libs_linux
+  media_kit_libs_macos_video:
+    path: ../libs/macos/media_kit_libs_macos_video
+  media_kit_libs_video:
+    path: ../libs/universal/media_kit_libs_video
+  media_kit_libs_windows_video:
+    path: ../libs/windows/media_kit_libs_windows_video
+  media_kit_video:
+    path: ../media_kit_video

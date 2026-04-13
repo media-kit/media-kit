@@ -1,0 +1,1678 @@
+/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+///
+/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+/// All rights reserved.
+/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+import 'dart:async';
+import 'dart:convert';
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
+import 'dart:typed_data';
+import 'dart:collection';
+import 'package:web/web.dart' as web;
+import 'package:meta/meta.dart';
+import 'package:synchronized/synchronized.dart';
+
+import 'package:media_kit/src/player/platform_player.dart';
+
+import 'package:media_kit/src/player/web/utils/hls.dart';
+import 'package:media_kit/src/player/web/utils/duration.dart';
+
+import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/playable.dart';
+import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/media/media.dart';
+import 'package:media_kit/src/models/audio_device.dart';
+import 'package:media_kit/src/models/player_state.dart';
+import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/video_params.dart';
+import 'package:media_kit/src/models/playlist_mode.dart';
+
+/// Initializes the web backend for package:media_kit.
+void webEnsureInitialized({String? libmpv}) {}
+
+/// {@template web_player}
+///
+/// WebPlayer
+/// ---------
+///
+/// HTML `<video>` implementation of [PlatformPlayer].
+///
+/// {@endtemplate}
+class WebPlayer extends PlatformPlayer {
+  /// {@macro web_player}
+  WebPlayer({required super.configuration}) {
+    var idProperty = globalContext.getProperty(kInstanceCount.toJS);
+    if (idProperty.isUndefinedOrNull) {
+      id = 0;
+    } else {
+      id = int.parse(idProperty.toString());
+    }
+    element = web.HTMLVideoElement();
+
+    lock.synchronized(() async {
+      element
+        // Do not add autoplay=false attribute: https://stackoverflow.com/a/19664804/12825435
+        /* ..autoplay = false */
+        ..controls = false
+        ..muted = test
+        ..style.width = '100%'
+        ..style.height = '100%'
+        ..style.border = 'none'
+        /* ..setAttribute('autoplay', 'false') */
+        ..setAttribute('playsinline', 'true')
+        ..pause();
+      // Initialize or increment the instance count.
+      globalContext[kInstanceCount] ??= 0.toJS;
+      globalContext[kInstanceCount] =
+          (int.parse((globalContext[kInstanceCount]!).toString()) + 1).toJS;
+      // Store the [html.VideoElement] instance in [globalContext].
+      globalContext[kInstances] ??= JSObject();
+      (globalContext[kInstances] as JSObject)
+          .setProperty(id.toString().toJS, element);
+      // --------------------------------------------------
+      // Event streams handling:
+      element.onPlay.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.playing & PlayerState.stream.playing
+          state = state.copyWith(playing: true);
+          if (!playingController.isClosed) {
+            playingController.add(true);
+          }
+        });
+      });
+      element.onPause.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.playing & PlayerState.stream.playing
+          state = state.copyWith(playing: false);
+          if (!playingController.isClosed) {
+            playingController.add(false);
+          }
+        });
+      });
+      element.onPlaying.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.playing & PlayerState.stream.playing
+          // PlayerState.state.buffering & PlayerState.stream.buffering
+          state = state.copyWith(
+            playing: true,
+            completed: false,
+          );
+          if (!playingController.isClosed) {
+            playingController.add(true);
+          }
+          if (!completedController.isClosed) {
+            completedController.add(false);
+          }
+        });
+      });
+      element.onEnded.listen((_) {
+        lock.synchronized(() async {
+          // NOTE: Playlist index transition.
+          await _transition();
+        });
+      });
+      element.onTimeUpdate.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.position & PlayerState.stream.position
+          Duration? position = convertNumVideoDurationToPluginDuration(
+            element.currentTime,
+          );
+
+          // Clamp between current [Media]'s start & end.
+          try {
+            if (state.playlist.index >= 0 &&
+                state.playlist.index < state.playlist.medias.length) {
+              final start = state
+                  .playlist.medias[state.playlist.index].start?.inMilliseconds;
+              final end = state
+                  .playlist.medias[state.playlist.index].end?.inMilliseconds;
+              if (position != null) {
+                position = Duration(
+                  milliseconds: position.inMilliseconds.clamp(
+                    start ?? 0,
+                    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+                    end ?? 9007199254740991,
+                  ),
+                );
+
+                if (position ==
+                    state.playlist.medias[state.playlist.index].end) {
+                  // NOTE: Playlist index transition. onEnded callback will not be invoked.
+                  await _transition();
+                  return;
+                }
+              }
+            }
+          } catch (exception, stacktrace) {
+            print(exception.toString());
+            print(stacktrace.toString());
+          }
+
+          if (position != null) {
+            state = state.copyWith(position: position);
+            if (!positionController.isClosed) {
+              positionController.add(position);
+            }
+            // PlayerState.state.buffer & PlayerState.stream.buffer
+            final i = element.buffered.length - 1;
+            if (i >= 0) {
+              final buffer = convertNumVideoDurationToPluginDuration(
+                element.buffered.end(i),
+              );
+              if (buffer != null) {
+                state = state.copyWith(buffer: buffer);
+                if (!bufferController.isClosed) {
+                  bufferController.add(buffer);
+                }
+              }
+            }
+          }
+        });
+      });
+      element.onDurationChange.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.duration & PlayerState.stream.duration
+          final duration = convertNumVideoDurationToPluginDuration(
+            element.duration,
+          );
+          if (duration != null) {
+            state = state.copyWith(duration: duration);
+            if (!durationController.isClosed) {
+              durationController.add(duration);
+            }
+          }
+        });
+      });
+      element.onWaiting.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.buffering & PlayerState.stream.buffering
+          state = state.copyWith(buffering: true);
+          if (!bufferingController.isClosed) {
+            bufferingController.add(true);
+          }
+          // PlayerState.state.buffer & PlayerState.stream.buffer
+          final i = element.buffered.length - 1;
+          if (i >= 0) {
+            final value = element.buffered.end(i) * 1000 ~/ 1;
+            final buffer = Duration(milliseconds: value);
+            if (!bufferController.isClosed) {
+              bufferController.add(buffer);
+            }
+          }
+        });
+      });
+      element.onCanPlay.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.buffering & PlayerState.stream.buffering
+          state = state.copyWith(buffering: false);
+          if (!bufferingController.isClosed) {
+            bufferingController.add(false);
+          }
+        });
+      });
+      element.onCanPlayThrough.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.buffering & PlayerState.stream.buffering
+          state = state.copyWith(buffering: false);
+          if (!bufferingController.isClosed) {
+            bufferingController.add(false);
+          }
+        });
+      });
+      element.onVolumeChange.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.volume & PlayerState.stream.volume
+          final volume = element.volume * 100.0;
+          state = state.copyWith(volume: volume);
+          if (!volumeController.isClosed) {
+            volumeController.add(volume);
+          }
+        });
+      });
+      element.onRateChange.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.speed & PlayerState.stream.speed
+          final rate = element.playbackRate * 1.0;
+          state = state.copyWith(rate: rate);
+          if (!rateController.isClosed) {
+            rateController.add(rate);
+          }
+        });
+      });
+      element.onError.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.buffering & PlayerState.stream.buffering
+          state = state.copyWith(buffering: false);
+          if (!bufferingController.isClosed) {
+            bufferingController.add(false);
+          }
+          // PlayerStream.error
+          final error = element.error!;
+          if (!errorController.isClosed) {
+            errorController.add(error.message);
+          }
+        });
+      });
+      element.onResize.listen((_) {
+        lock.synchronized(() async {
+          // PlayerState.state.width & PlayerState.stream.width
+          // PlayerState.state.height & PlayerState.stream.height
+          final width = element.videoWidth;
+          final height = element.videoHeight;
+          state = state.copyWith(
+            width: width,
+            height: height,
+          );
+          if (!widthController.isClosed) {
+            widthController.add(width);
+          }
+          if (!heightController.isClosed) {
+            heightController.add(height);
+          }
+        });
+      });
+
+      if (configuration.muted) {
+        element.muted = true;
+        state = state.copyWith(volume: 0.0);
+        if (!volumeController.isClosed) {
+          volumeController.add(0.0);
+        }
+      }
+
+      await HLS.ensureInitialized(
+        hls: test ? HLS.kHLSCDN : null,
+      );
+      completer.complete();
+      try {
+        configuration.ready?.call();
+      } catch (_) {}
+      // --------------------------------------------------
+    });
+  }
+
+  @override
+  Future<void> dispose({bool synchronized = true}) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      // To match NativePlayer behavior.
+
+      await pause(synchronized: false);
+
+      state = state.copyWith(
+        track: state.track.copyWith(
+          video: VideoTrack.no(),
+        ),
+      );
+      if (!trackController.isClosed) {
+        trackController.add(state.track);
+      }
+      state = state.copyWith(
+        track: state.track.copyWith(
+          audio: AudioTrack.no(),
+        ),
+      );
+      if (!trackController.isClosed) {
+        trackController.add(state.track);
+      }
+      state = state.copyWith(
+        track: state.track.copyWith(
+          subtitle: SubtitleTrack.no(),
+        ),
+      );
+      if (!trackController.isClosed) {
+        trackController.add(state.track);
+      }
+
+      // Revoke subtitle blob URL if exists
+      if (_subtitleBlobUrl != null) {
+        web.URL.revokeObjectURL(_subtitleBlobUrl!);
+        _subtitleBlobUrl = null;
+      }
+
+      disposed = true;
+
+      element
+        ..src = ''
+        ..load()
+        ..remove();
+
+      // Remove the [html.VideoElement] instance from global [js.context].
+      (globalContext[kInstances] as JSObject).delete(id.toString().toJS);
+
+      await super.dispose();
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> open(
+    Playable playable, {
+    bool play = true,
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      final int index;
+      final List<Media> playlist = <Media>[];
+      if (playable is Media) {
+        index = 0;
+        playlist.add(playable);
+      } else if (playable is Playlist) {
+        index = playable.index;
+        playlist.addAll(playable.medias);
+      } else {
+        index = -1;
+      }
+
+      // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, subtitle=['', ''] etc.
+      await stop(
+        open: true,
+        synchronized: false,
+      );
+
+      element.pause();
+      // Enter paused state.
+      // NOTE: Handled as part of [stop] logic.
+      // state = state.copyWith(playing: false);
+      // if (!playingController.isClosed) {
+      //   playingController.add(false);
+      // }
+
+      _playlistBeforeShuffle.clear();
+
+      state = state.copyWith(
+        shuffle: false,
+        playlist: Playlist(
+          playlist,
+          index: index,
+        ),
+      );
+      if (!playlistController.isClosed) {
+        playlistController.add(
+          Playlist(
+            playlist,
+            index: index,
+          ),
+        );
+      }
+
+      _loadSource(state.playlist.medias[state.playlist.index]);
+
+      if (play) {
+        element.play().toDart.catchError((error) {
+          final e = error as web.DOMException;
+          if (!errorController.isClosed) {
+            errorController.add(e.message);
+          }
+          return null;
+        });
+      } else {
+        // A minimal quirk to match the native backend behavior.
+        state = state.copyWith(
+          buffering: true,
+        );
+        if (!bufferingController.isClosed) {
+          bufferingController.add(true);
+        }
+        // [onCanPlay] & [onCanPlayThrough] will emit buffering = false.
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Stops the [Player].
+  /// Unloads the current [Media] or [Playlist] from the [Player]. This method is similar to [dispose] but does not release the resources & [Player] is still usable.
+  @override
+  Future<void> stop({
+    bool open = false,
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      element.innerHTML = ''.toJS;
+      state = state.copyWith(track: Track());
+      if (!trackController.isClosed) {
+        trackController.add(Track());
+      }
+
+      element
+        ..src = ''
+        ..load();
+
+      _playlistBeforeShuffle.clear();
+
+      // Reset the remaining attributes.
+      state = PlayerState().copyWith(
+        volume: state.volume,
+        rate: state.rate,
+        pitch: state.pitch,
+        playlistMode: state.playlistMode,
+        shuffle: false,
+        audioDevice: state.audioDevice,
+        audioDevices: state.audioDevices,
+        playlist: const Playlist([]),
+      );
+      if (!open) {
+        // Do not emit PlayerStream.playlist if invoked from [open].
+        if (!playlistController.isClosed) {
+          playlistController.add(Playlist([]));
+        }
+      }
+      if (!playingController.isClosed) {
+        playingController.add(false);
+      }
+      if (!completedController.isClosed) {
+        completedController.add(false);
+      }
+      if (!positionController.isClosed) {
+        positionController.add(Duration.zero);
+      }
+      if (!durationController.isClosed) {
+        durationController.add(Duration.zero);
+      }
+      // if (!volumeController.isClosed) {
+      //   volumeController.add(0.0);
+      // }
+      // if (!rateController.isClosed) {
+      //   rateController.add(0.0);
+      // }
+      // if (!pitchController.isClosed) {
+      //   pitchController.add(0.0);
+      // }
+      if (!bufferingController.isClosed) {
+        bufferingController.add(false);
+      }
+      if (!bufferController.isClosed) {
+        bufferController.add(Duration.zero);
+      }
+      // if (!playlistModeController.isClosed) {
+      //   playlistModeController.add(PlaylistMode.none);
+      // }
+      if (!shuffleController.isClosed) {
+        shuffleController.add(false);
+      }
+      if (!audioParamsController.isClosed) {
+        audioParamsController.add(const AudioParams());
+      }
+      if (!videoParamsController.isClosed) {
+        videoParamsController.add(const VideoParams());
+      }
+      if (!audioBitrateController.isClosed) {
+        audioBitrateController.add(null);
+      }
+      // if (!audioDeviceController.isClosed) {
+      //   audioDeviceController.add(AudioDevice.auto());
+      // }
+      // if (!audioDevicesController.isClosed) {
+      //   audioDevicesController.add([AudioDevice.auto()]);
+      // }
+      if (!trackController.isClosed) {
+        trackController.add(Track());
+      }
+      if (!tracksController.isClosed) {
+        tracksController.add(Tracks());
+      }
+      if (!widthController.isClosed) {
+        widthController.add(null);
+      }
+      if (!heightController.isClosed) {
+        heightController.add(null);
+      }
+      if (!subtitleController.isClosed) {
+        subtitleController.add(['', '']);
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> play({bool synchronized = true}) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      element.play().toDart.catchError(
+        (error) {
+          // PlayerStream.error
+          final e = error as web.DOMException;
+          if (!errorController.isClosed) {
+            errorController.add(e.message);
+          }
+          return null;
+        },
+      );
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> pause({bool synchronized = true}) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      element.pause();
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> playOrPause({bool synchronized = true}) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      if (element.paused) {
+        await play(synchronized: false);
+      } else {
+        await pause(synchronized: false);
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> add(
+    Media media, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      state = state.copyWith(
+        playlist: state.playlist.copyWith(
+          medias: [...state.playlist.medias, media],
+        ),
+      );
+      if (!playlistController.isClosed) {
+        playlistController.add(state.playlist);
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> remove(
+    int index, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      // If we remove the last item in the playlist while playlist mode is none or single, then playback will stop.
+      // In this situation, the playlist doesn't seem to be updated, so we manually update it.
+      if (state.playlist.index == index &&
+          state.playlist.medias.length - 1 == index &&
+          [
+            PlaylistMode.none,
+            PlaylistMode.single,
+          ].contains(state.playlistMode)) {
+        state = state.copyWith(
+          // Allow playOrPause /w state.completed code-path to play the playlist again.
+          completed: true,
+          playing: false,
+          playlist: state.playlist.copyWith(
+            index: state.playlist.medias.length - 2 < 0
+                ? 0
+                : state.playlist.medias.length - 2,
+            medias: state.playlist.medias
+                .sublist(0, state.playlist.medias.length - 1),
+          ),
+        );
+        if (!playingController.isClosed) {
+          playingController.add(false);
+        }
+        if (!completedController.isClosed) {
+          completedController.add(true);
+        }
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+        await pause(synchronized: false);
+      }
+      // If we remove the last item in the playlist while playlist mode is loop, jump to the index 0.
+      else if (state.playlist.index == index &&
+          state.playlist.medias.length - 1 == index &&
+          state.playlistMode == PlaylistMode.loop) {
+        element.innerHTML = ''.toJS;
+        state = state.copyWith(track: Track());
+        if (!trackController.isClosed) {
+          trackController.add(Track());
+        }
+
+        final medias =
+            state.playlist.medias.sublist(0, state.playlist.medias.length - 1);
+        state = state.copyWith(
+          // Allow playOrPause /w state.completed code-path to play the playlist again.
+          completed: true,
+          playlist: state.playlist.copyWith(
+            medias: medias,
+            index: 0,
+          ),
+        );
+        _loadSource(state.playlist.medias[state.playlist.index]);
+        await play(synchronized: false);
+        if (!completedController.isClosed) {
+          completedController.add(true);
+        }
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+      }
+
+      // Default
+      else {
+        state = state.copyWith(
+          playlist: state.playlist.copyWith(
+            index: state.playlist.index > index
+                ? state.playlist.index - 1
+                : state.playlist.index,
+            medias: [...state.playlist.medias]..removeAt(index),
+          ),
+        );
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> next({
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      Future<void> start() async {
+        state = state.copyWith(
+          playlist: state.playlist.copyWith(
+            index: state.playlist.index,
+          ),
+        );
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+
+        element.innerHTML = ''.toJS;
+        state = state.copyWith(track: Track());
+        if (!trackController.isClosed) {
+          trackController.add(Track());
+        }
+        _loadSource(state.playlist.medias[state.playlist.index]);
+        await play(synchronized: false);
+
+        state = state.copyWith(playing: true);
+        if (!playingController.isClosed) {
+          playingController.add(true);
+        }
+      }
+
+      switch (state.playlistMode) {
+        case PlaylistMode.none:
+          {
+            if (state.playlist.index < state.playlist.medias.length - 1) {
+              state = state.copyWith(
+                playlist: state.playlist.copyWith(
+                  index: state.playlist.index + 1,
+                ),
+              );
+              await start();
+            } else {
+              // No transition.
+            }
+            break;
+          }
+        case PlaylistMode.single:
+          {
+            if (state.playlist.index < state.playlist.medias.length - 1) {
+              state = state.copyWith(
+                playlist: state.playlist.copyWith(
+                  index: state.playlist.index + 1,
+                ),
+              );
+              await start();
+            } else {
+              // No transition.
+            }
+            break;
+          }
+        case PlaylistMode.loop:
+          {
+            state = state.copyWith(
+              playlist: state.playlist.copyWith(
+                index:
+                    (state.playlist.index + 1) % state.playlist.medias.length,
+              ),
+            );
+            await start();
+            break;
+          }
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> previous({
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      Future<void> start() async {
+        state = state.copyWith(
+          playlist: state.playlist.copyWith(
+            index: state.playlist.index,
+          ),
+        );
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+
+        element.innerHTML = ''.toJS;
+        state = state.copyWith(track: Track());
+        if (!trackController.isClosed) {
+          trackController.add(Track());
+        }
+        _loadSource(state.playlist.medias[state.playlist.index]);
+        await play(synchronized: false);
+
+        state = state.copyWith(playing: true);
+        if (!playingController.isClosed) {
+          playingController.add(true);
+        }
+      }
+
+      switch (state.playlistMode) {
+        case PlaylistMode.none:
+          {
+            if (state.playlist.index > 0) {
+              state = state.copyWith(
+                playlist: state.playlist.copyWith(
+                  index: state.playlist.index - 1,
+                ),
+              );
+              await start();
+            } else {
+              // No transition.
+            }
+            break;
+          }
+        case PlaylistMode.single:
+          {
+            if (state.playlist.index > 0) {
+              state = state.copyWith(
+                playlist: state.playlist.copyWith(
+                  index: state.playlist.index - 1,
+                ),
+              );
+              await start();
+            } else {
+              // No transition.
+            }
+            break;
+          }
+        case PlaylistMode.loop:
+          {
+            state = state.copyWith(
+              playlist: state.playlist.copyWith(
+                index:
+                    (state.playlist.index - 1) % state.playlist.medias.length,
+              ),
+            );
+            await start();
+            break;
+          }
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> jump(
+    int index, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      state = state.copyWith(
+        playlist: state.playlist.copyWith(
+          index: index,
+        ),
+      );
+
+      element.innerHTML = ''.toJS;
+      state = state.copyWith(track: Track());
+      if (!trackController.isClosed) {
+        trackController.add(Track());
+      }
+      _loadSource(state.playlist.medias[state.playlist.index]);
+      await play(synchronized: false);
+
+      state = state.copyWith(playing: true);
+      if (!playingController.isClosed) {
+        playingController.add(true);
+      }
+
+      if (!playlistController.isClosed) {
+        playlistController.add(state.playlist);
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> move(
+    int from,
+    int to, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      // ---------------------------------------------
+      final map = SplayTreeMap<double, Media>.from(
+        state.playlist.medias
+            .asMap()
+            .map((key, value) => MapEntry(key * 1.0, value)),
+      );
+      final item = map.remove(from * 1.0);
+      if (item != null) {
+        map[to - 0.5] = item;
+      }
+      final keys = map.keys.toList();
+      final values = map.values.toList();
+
+      final current = state.playlist.index;
+
+      state = state.copyWith(
+        playlist: Playlist(
+          values,
+          index: keys.contains(current * 1.0)
+              ? keys.indexOf(current * 1.0)
+              : keys.indexOf(to - 0.5),
+        ),
+      );
+      // ---------------------------------------------
+
+      if (!playlistController.isClosed) {
+        playlistController.add(state.playlist);
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> seek(
+    Duration duration, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      element.currentTime = duration.inMilliseconds.toDouble() / 1000.0;
+
+      // It is self explanatory that PlayerState.completed & PlayerStreams.completed must enter the false state if seek is called. Typically after EOF.
+      // https://github.com/media-kit/media-kit/issues/221
+      state = state.copyWith(completed: false);
+      if (!completedController.isClosed) {
+        completedController.add(false);
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> setPlaylistMode(
+    PlaylistMode playlistMode, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      state = state.copyWith(playlistMode: playlistMode);
+      if (!playlistModeController.isClosed) {
+        playlistModeController.add(playlistMode);
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> setVolume(
+    double volume, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      // Unmute the player before setting the volume.
+      if (element.muted) {
+        element.muted = false;
+      }
+
+      element.volume = volume / 100.0;
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> setRate(
+    double rate, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      if (rate <= 0.0) {
+        throw ArgumentError.value(
+          rate,
+          'rate',
+          'Must be greater than 0.0',
+        );
+      }
+      element.playbackRate = rate;
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> setPitch(
+    double pitch, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      throw UnsupportedError('[Player.setPitch] is not supported on web');
+
+      // if (pitch <= 0.0) {
+      //   throw ArgumentError.value(
+      //     pitch,
+      //     'pitch',
+      //     'Must be greater than 0.0',
+      //   );
+      // }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> setShuffle(
+    bool shuffle, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      final current = state.playlist.medias.atOrNull(state.playlist.index);
+
+      if (current == null) return;
+
+      if (shuffle && _playlistBeforeShuffle.isEmpty) {
+        _playlistBeforeShuffle.addAll(state.playlist.medias);
+
+        final shuffledPlaylist = <Media>[...state.playlist.medias]..shuffle();
+
+        state = state.copyWith(
+          shuffle: shuffle,
+          playlist: state.playlist.copyWith(
+            index: shuffledPlaylist.indexOf(current),
+            medias: shuffledPlaylist,
+          ),
+        );
+
+        if (!shuffleController.isClosed) {
+          shuffleController.add(shuffle);
+        }
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+      } else if (!shuffle && _playlistBeforeShuffle.isNotEmpty) {
+        final restoredPlaylist = <Media>[..._playlistBeforeShuffle];
+        state = state.copyWith(
+          shuffle: shuffle,
+          playlist: state.playlist.copyWith(
+            index: restoredPlaylist.indexOf(current),
+            medias: restoredPlaylist,
+          ),
+        );
+
+        _playlistBeforeShuffle.clear();
+
+        if (!playlistController.isClosed) {
+          playlistController.add(state.playlist);
+        }
+        if (!shuffleController.isClosed) {
+          shuffleController.add(shuffle);
+        }
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> setAudioDevice(
+    AudioDevice audioDevice, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      throw UnsupportedError('[Player.setAudioDevice] is not supported on web');
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> setVideoTrack(
+    VideoTrack track, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+      throw UnsupportedError(
+        '[Player.setVideoTrack] is not supported on web',
+      );
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> setAudioTrack(
+    AudioTrack track, {
+    bool synchronized = true,
+  }) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      if (track.uri) {
+        final children = <web.Element>[];
+        for (var i = 0; i < element.children.length; i++) {
+          final child = element.children.item(i);
+          if (child != null) {
+            children.add(child);
+          }
+        }
+
+        // Remove all <source> elements.
+        for (final child in children) {
+          if (child.tagName.toLowerCase() == 'source') {
+            element.removeChild(child);
+          }
+        }
+
+        // Create a new <source> element.
+        final source = web.document.createElement('source');
+        source.setAttribute('src', track.id);
+
+        // Append the new <source> element.
+        element.appendChild(source);
+
+        final child = web.HTMLSourceElement();
+        child.src = track.id;
+        element.append(child);
+
+        state = state.copyWith(track: state.track.copyWith(audio: track));
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
+      } else {
+        throw UnsupportedError(
+          '[Player.setAudioTrack] is only supported with [AudioTrack.uri] on web',
+        );
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  @override
+  Future<void> setSubtitleTrack(SubtitleTrack track,
+      {bool synchronized = true}) async {
+    Future<void> function() async {
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      // Reset existing Player.state.subtitle & Player.stream.subtitle.
+      state = state.copyWith(
+        subtitle: const PlayerState().subtitle,
+      );
+      if (!subtitleController.isClosed) {
+        subtitleController.add(state.subtitle);
+      }
+
+      if (['no', 'auto'].contains(track.id)) {
+        // No action needed for these tracks.
+      } else if (track.uri || track.data) {
+        final String uri;
+        if (track.uri) {
+          uri = track.id;
+        } else if (track.data) {
+          if (_subtitleBlobUrl != null) {
+            web.URL.revokeObjectURL(_subtitleBlobUrl!);
+            _subtitleBlobUrl = null;
+          }
+          final bytes = Uint8List.fromList(utf8.encode(track.id));
+          final blob = web.Blob(<JSUint8Array>[bytes.toJS].toJS);
+          final src = web.URL.createObjectURL(blob);
+          _subtitleBlobUrl = src;
+          uri = src;
+        } else {
+          return;
+        }
+
+        final child = web.HTMLTrackElement();
+        child.kind = 'subtitles';
+        child.label = track.title ?? "";
+        child.srclang = track.language ?? "";
+
+        state = state.copyWith(track: state.track.copyWith(subtitle: track));
+        if (!trackController.isClosed) {
+          trackController.add(state.track);
+        }
+
+        // To match NativePlayer behavior.
+        state = state.copyWith(subtitle: ['', '']);
+        if (!subtitleController.isClosed) {
+          subtitleController.add(['', '']);
+        }
+
+        // Set up the cue change handler function
+        void handleCueChange(web.Event event) {
+          try {
+            final textTrack = child.track;
+            final activeCues = textTrack.activeCues;
+            if (activeCues != null) {
+              final cueList = <String>[];
+              for (var i = 0; i < activeCues.length; i++) {
+                final cue = activeCues[i];
+                // VTTCue has a 'text' property
+                final text = (cue as dynamic).text as String?;
+                if (text != null) {
+                  cueList.add(
+                    text
+                        .replaceAll(RegExp('<[^>]*>'), ' ')
+                        .replaceAll(RegExp(r'\s+'), ' ')
+                        .trim(),
+                  );
+                }
+              }
+
+              final subtitle = ['', ''];
+              if (cueList.length == 1) {
+                subtitle[0] = cueList[0];
+              } else if (cueList.length >= 2) {
+                subtitle[0] = cueList[0];
+                subtitle[1] = cueList.skip(1).join('\n');
+              }
+
+              state = state.copyWith(subtitle: subtitle);
+              if (!subtitleController.isClosed) {
+                subtitleController.add(subtitle);
+              }
+            }
+          } catch (exception, stacktrace) {
+            print(exception);
+            print(stacktrace);
+          }
+        }
+
+        child.onLoad.listen((_) {
+          final textTrack = child.track;
+          textTrack.mode = 'hidden';
+          textTrack.oncuechange = handleCueChange.toJS;
+        });
+
+        element.appendChild(child);
+        child.src = uri;
+        child.track.mode = 'hidden';
+      } else {
+        throw UnsupportedError(
+          '[Player.setSubtitleTrack] is only supported with [SubtitleTrack.uri] & [SubtitleTrack.data] on web',
+        );
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  /// Takes the snapshot of the current frame & returns encoded image bytes as [Uint8List].
+  ///
+  /// The [format] parameter specifies the format of the image to be returned. Supported values are:
+  /// * `image/jpeg`
+  /// * `image/png`
+  ///
+  /// [includeLibassSubtitles] is ignored.
+  @override
+  Future<Uint8List?> screenshot({
+    String? format = 'image/jpeg',
+    bool synchronized = true,
+    bool includeLibassSubtitles = false,
+  }) async {
+    Future<Uint8List?> function() async {
+      if (![
+        'image/jpeg',
+        'image/png',
+      ].contains(format)) {
+        throw ArgumentError.value(
+          format,
+          'format',
+          'Supported values are: image/jpeg, image/png',
+        );
+      }
+
+      if (disposed) {
+        throw AssertionError('[Player] has been disposed');
+      }
+
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+
+      try {
+        // Kind of limited in usage:
+        // https://stackoverflow.com/questions/35244215/html5-video-screenshot-via-canvas-using-cors
+        final canvas = web.HTMLCanvasElement();
+        canvas.width = element.videoWidth;
+        canvas.height = element.videoHeight;
+
+        final context = canvas.context2D;
+        context.drawImage(element, 0, 0);
+
+        final data = canvas.toDataURL(format!);
+        final bytes = base64.decode(data.split(',').last);
+
+        canvas.remove();
+
+        return bytes;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    if (synchronized) {
+      return lock.synchronized(function);
+    } else {
+      return function();
+    }
+  }
+
+  void _loadSource(Media media) {
+    try {
+      if (_isHLS(media.uri)) {
+        void setHlsHTTPHeaders(web.XMLHttpRequest xhr, String url) {
+          for (final header in media.httpHeaders!.entries) {
+            xhr.setRequestHeader(header.key, header.value);
+          }
+        }
+
+        final hls = Hls(
+          HlsOptions(
+            xhrSetup: media.httpHeaders != null
+                ? setHlsHTTPHeaders.toJS as XHRSetupCallback
+                : null,
+          ),
+        );
+
+        hls.loadSource(media.uri);
+        hls.attachMedia(element);
+      } else {
+        // Default
+        String src = media.uri;
+
+        // https://www.w3.org/TR/media-frags/
+        if (media.start != null || media.end != null) {
+          src += '#t=';
+          final start = media.start?.inSeconds ?? 0;
+          final end = media.end?.inSeconds ?? 0;
+          src += [start, if (end != 0) end].join(',');
+        }
+
+        element.src = src;
+      }
+    } catch (exception) {
+      // PlayerStream.error
+      final e = exception as web.DOMException;
+      if (!errorController.isClosed) {
+        errorController.add(e.message);
+      }
+    }
+  }
+
+  bool _isHLS(String src) {
+    final userAgent = web.window.navigator.userAgent;
+    final isAndroidChrome =
+        userAgent.contains("Android") && userAgent.contains("Chrome");
+
+    if (!isAndroidChrome &&
+        element.canPlayType('application/vnd.apple.mpegurl') != '') {
+      return false;
+    }
+    if (isHLSSupported() && src.toLowerCase().contains('m3u8')) {
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _transition() async {
+    // PlayerState.state.playing & PlayerState.stream.playing
+    // PlayerState.state.completed & PlayerState.stream.completed
+    // PlayerState.state.buffering & PlayerState.stream.buffering
+
+    // A minimal quirk to match the NativePlayer behavior.
+    state = state.copyWith(
+      buffering: true,
+    );
+    if (!bufferingController.isClosed) {
+      bufferingController.add(true);
+    }
+
+    state = state.copyWith(
+      playing: false,
+      completed: true,
+      buffering: false,
+    );
+    if (!playingController.isClosed) {
+      playingController.add(false);
+    }
+    if (!completedController.isClosed) {
+      completedController.add(true);
+    }
+    if (!bufferingController.isClosed) {
+      bufferingController.add(false);
+    }
+
+    element.innerHTML = ''.toJS;
+    state = state.copyWith(track: Track());
+    if (!trackController.isClosed) {
+      trackController.add(Track());
+    }
+
+    // PlayerState.state.playlist.index & PlayerState.stream.playlist.index
+    switch (state.playlistMode) {
+      case PlaylistMode.none:
+        {
+          if (state.playlist.index < state.playlist.medias.length - 1) {
+            state = state.copyWith(
+              playlist: state.playlist.copyWith(
+                index: state.playlist.index + 1,
+              ),
+            );
+            final current = state.playlist.medias[state.playlist.index];
+            _loadSource(current);
+            await play(synchronized: false);
+          } else {
+            // Playback must end.
+          }
+          break;
+        }
+      case PlaylistMode.single:
+        {
+          final current = state.playlist.medias[state.playlist.index];
+          _loadSource(current);
+          await play(synchronized: false);
+          break;
+        }
+      case PlaylistMode.loop:
+        {
+          state = state.copyWith(
+            playlist: state.playlist.copyWith(
+              index: (state.playlist.index + 1) % state.playlist.medias.length,
+            ),
+          );
+          final current = state.playlist.medias[state.playlist.index];
+          _loadSource(current);
+          await play(synchronized: false);
+          break;
+        }
+    }
+    // Update:
+    if (!playlistController.isClosed) {
+      playlistController.add(state.playlist);
+    }
+  }
+
+  // --------------------------------------------------
+
+  /// Original playlist stored when shuffle is enabled.
+  final List<Media> _playlistBeforeShuffle = [];
+
+  // --------------------------------------------------
+
+  /// Internal platform specific identifier for this [Player] instance.
+  ///
+  /// Since, [int] is a primitive type, it can be used to pass this [Player] instance to native code without directly depending upon this library.
+  ///
+  @override
+  Future<int> get handle => Future.value(id);
+
+  /// Unique handle of this [Player] instance.
+  late int id;
+
+  /// [html.VideoElement] instance reference.
+  late web.HTMLVideoElement element;
+
+  /// Whether the [Player] has been disposed.
+  bool disposed = false;
+
+  /// Current subtitle blob URL to revoke when changing tracks or disposing.
+  String? _subtitleBlobUrl;
+
+  /// Synchronization & mutual exclusion between methods of this class.
+  final Lock lock = Lock();
+
+  /// JavaScript object attribute used to store various [VideoElement] instances in [js.context].
+  static const kInstances = '\$com.alexmercerind.media_kit.instances';
+
+  /// JavaScript object attribute used to store the instance count of [Player] in [js.context].
+  static const kInstanceCount = '\$com.alexmercerind.media_kit.instance_count';
+
+  /// Whether the [WebPlayer] is initialized for unit-testing.
+  @visibleForTesting
+  static bool test = false;
+}
+
+/// Extensions for [List].
+extension ListExtension<T> on List<T> {
+  /// Returns the element at the given [index] or `null` if the [index] is out of bounds.
+  T? atOrNull(int? index) =>
+      (index != null && index >= 0 && index < length) ? this[index] : null;
+}

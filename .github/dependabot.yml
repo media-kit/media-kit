@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions" 
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "pub"
+    directories:
+      - "/"
+      - "/example"
+      - "/media_kit"
+      - "/media_kit_test"
+      - "/media_kit_video"
+      - "/media_kit_video/example"
+      - "/video_player_media_kit"
+      - "/video_player_media_kit/example"
+    schedule:
+      interval: "weekly"

@@ -1,0 +1,539 @@
+name: Github Actions
+on: [push, pull_request]
+
+jobs:
+  media_kit-tests-windows:
+    name: package:media_kit tests (Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: media_kit
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+
+      - name: Setup libmpv for Windows
+        run: |
+          curl -LO https://github.com/media-kit/libmpv-win32-video-build/releases/download/2023-08-11/mpv-dev-x86_64-20230811-git-140ec21.7z
+          cmake -E md5sum mpv-dev-x86_64-20230811-git-140ec21.7z | find /i "c7d1d766a6404d58a876aca403e0f53a" > nul || exit 1
+          cmake -E tar x mpv-dev-x86_64-20230811-git-140ec21.7z libmpv-2.dll
+        shell: cmd
+
+      - run: dart pub get
+      - run: dart test
+
+  media_kit-tests-linux:
+    name: package:media_kit tests (Linux)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - run: sudo apt-get update
+      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - run: dart pub get
+      - run: dart test
+
+  media_kit-tests-macos:
+    name: package:media_kit tests (macOS)
+    runs-on: macos-latest
+    env:
+      LIBMPV_LIBRARY_PATH: ${{ format('{0}/{1}', github.workspace, 'media_kit/test/ci/macos/libs/libmpv.dylib') }}
+    defaults:
+      run:
+        working-directory: media_kit
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - run: sh test/ci/macos/scripts/setup_dylibs.sh
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - run: dart pub get
+      - run: dart test
+
+  media_kit-tests-web:
+    name: package:media_kit tests (Web)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - run: sudo apt-get update
+      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      # Delete tests which import native code & depend upon dart:ffi
+      - run: rm -r test/src/player/native
+      - run: dart pub get
+      - run: dart test --platform chrome
+      
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - run: flutter pub get
+      - run: flutter build windows --verbose
+      - run: cmake -E tar "cfv" "media_kit_test_win32_x64.7z" --format=7zip "build\windows\x64\runner\Release"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: media_kit_test_win32_x64
+          path: media_kit_test/media_kit_test_win32_x64.7z
+      - uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          draft: true
+          prerelease: false
+          tag_name: "vnext"
+          files: |
+            media_kit_test/media_kit_test_win32_x64.7z
+
+  linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - run: sudo apt-get update
+      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - run: flutter pub get
+      - run: flutter build linux --verbose
+      - run: 7z a media_kit_test_linux_x64.7z build/linux/x64/release/bundle
+      - uses: actions/upload-artifact@v4
+        with:
+          name: media_kit_test_linux_x64
+          path: media_kit_test/media_kit_test_linux_x64.7z
+      - uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          draft: true
+          prerelease: false
+          tag_name: "vnext"
+          files: |
+            media_kit_test/media_kit_test_linux_x64.7z
+
+  macos:
+    name: macOS
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - run: flutter pub get
+      - run: flutter build macos --verbose
+      - run: 7z a media_kit_test_macos_universal.7z build/macos/Build/Products/Release/media_kit_test.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: media_kit_test_macos_universal
+          path: media_kit_test/media_kit_test_macos_universal.7z
+      - uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          draft: true
+          prerelease: false
+          tag_name: "vnext"
+          files: |
+            media_kit_test/media_kit_test_macos_universal.7z
+
+  ios:
+    name: iOS
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - run: flutter pub get
+      - run: flutter build ios --verbose --no-codesign
+      - run: 7z a media_kit_test_ios_arm64.7z build/ios/iphoneos/Runner.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: media_kit_test_ios_arm64
+          path: media_kit_test/media_kit_test_ios_arm64.7z
+      - uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          draft: true
+          prerelease: false
+          tag_name: "vnext"
+          files: |
+            media_kit_test/media_kit_test_ios_arm64.7z
+
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'zulu'
+            java-version: '17'
+            # cache: 'gradle'
+            # check-latest: true
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - run: flutter pub get
+      - run: flutter build apk --split-per-abi --verbose
+      - run: |
+          mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/media_kit_test_android-armeabi-v7a.apk
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/media_kit_test_android-arm64-v8a.apk
+          mv build/app/outputs/flutter-apk/app-x86_64-release.apk build/app/outputs/flutter-apk/media_kit_test_android-x86_64.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: media_kit_test_android-armeabi-v7a
+          path: media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-armeabi-v7a.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: media_kit_test_android-arm64-v8a
+          path: media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-arm64-v8a.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: media_kit_test_android-x86_64
+          path: media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-x86_64.apk
+      - uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          draft: true
+          prerelease: false
+          tag_name: "vnext"
+          files: |
+            media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-armeabi-v7a.apk
+            media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-arm64-v8a.apk
+            media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-x86_64.apk
+  build_web:
+    name: Build Flutter Web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: Build Flutter Web
+        run: flutter build web --release
+
+      - name: Build Flutter Web WASM
+        run: flutter build web --release --wasm
+
+  optional-libs-windows:
+    name: Windows (optional libs)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          "C:\Program Files\Git\usr\bin\sed.exe" -i "/media_kit_libs_/d" pubspec.yaml
+          type pubspec.yaml
+          "C:\Program Files\Git\usr\bin\sed.exe" -i "/media_kit_libs_/d" pubspec_overrides.yaml
+          type pubspec_overrides.yaml
+        shell: cmd
+      - run: flutter pub get
+      - run: flutter build windows --verbose
+
+  optional-libs-linux:
+    name: Linux (optional libs)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - run: sudo apt-get update
+      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '/media_kit_libs_/d' pubspec.yaml
+          cat pubspec.yaml
+          sed -i '/media_kit_libs_/d' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml   
+      - run: flutter pub get
+      - run: flutter build linux --verbose
+
+  optional-libs-macos:
+    name: macOS (optional libs)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '' '/media_kit_libs_/d' pubspec.yaml
+          cat pubspec.yaml
+          sed -i '' '/media_kit_libs_/d' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml   
+      - run: flutter pub get
+      - run: flutter build macos --verbose
+
+  optional-libs-ios:
+    name: iOS (optional libs)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '' '/media_kit_libs_/d' pubspec.yaml
+          cat pubspec.yaml
+          sed -i '' '/media_kit_libs_/d' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml   
+      - run: flutter pub get
+      - run: flutter build ios --verbose --no-codesign
+
+  optional-libs-android:
+    name: Android (optional libs)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'zulu'
+            java-version: '17'
+            # cache: 'gradle'
+            # check-latest: true
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '/media_kit_libs_/d' pubspec.yaml
+          cat pubspec.yaml
+          sed -i '/media_kit_libs_/d' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml   
+      - run: flutter pub get
+      - run: flutter build apk --split-per-abi --verbose
+
+  audio-libs-windows:
+    name: Windows (audio libs)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          "C:\Program Files\Git\usr\bin\sed.exe" -i "s/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g" pubspec.yaml
+          type pubspec.yaml
+          "C:\Program Files\Git\usr\bin\sed.exe" -i "s/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g" pubspec_overrides.yaml
+          pubspec_overrides.yaml
+        shell: cmd
+      - run: flutter pub get
+      - run: flutter build windows --verbose
+        # TODO(@alexmercerind): package:media_kit_video won't build with package:media_kit_libs_windows_audio due to missing ANGLE headers.
+        continue-on-error: true
+
+  audio-libs-linux:
+    name: Linux (audio libs)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - run: sudo apt-get update
+      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
+          cat pubspec.yaml
+          sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml
+      - run: flutter pub get
+      - run: flutter build linux --verbose
+
+  audio-libs-macos:
+    name: macOS (audio libs)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '' 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
+          cat pubspec.yaml
+          sed -i '' 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml
+      - run: flutter pub get
+      - run: flutter build macos --verbose
+
+  audio-libs-ios:
+    name: iOS (audio libs)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i '' 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
+          cat pubspec.yaml
+          sed -i '' 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml
+      - run: flutter pub get
+      - run: flutter build ios --verbose --no-codesign
+
+  audio-libs-android:
+    name: Android (audio libs)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: media_kit_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'zulu'
+            java-version: '17'
+            # cache: 'gradle'
+            # check-latest: true
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - name: Remove `media_kit_libs_*` dependencies
+        run: |
+          sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
+          cat pubspec.yaml
+          sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec_overrides.yaml
+          cat pubspec_overrides.yaml
+
+      - run: flutter pub get
+      - run: flutter build apk --split-per-abi --verbose

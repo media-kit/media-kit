@@ -1,0 +1,14 @@
+# melos_managed_dependency_overrides: media_kit,media_kit_libs_linux,media_kit_libs_macos_video,media_kit_libs_windows_video,media_kit_video,video_player_media_kit
+dependency_overrides:
+  media_kit:
+    path: ../../media_kit
+  media_kit_libs_linux:
+    path: ../../libs/linux/media_kit_libs_linux
+  media_kit_libs_macos_video:
+    path: ../../libs/macos/media_kit_libs_macos_video
+  media_kit_libs_windows_video:
+    path: ../../libs/windows/media_kit_libs_windows_video
+  media_kit_video:
+    path: ../../media_kit_video
+  video_player_media_kit:
+    path: ..
