@@ -9,6 +9,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
 
+import 'package:media_kit_video/src/picture_in_picture/pip_config.dart';
+import 'package:media_kit_video/src/picture_in_picture/pip_event.dart';
 import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
@@ -116,6 +118,20 @@ class Video extends StatefulWidget {
   /// FocusNode for keyboard input.
   final FocusNode? focusNode;
 
+  /// Optional Picture-in-Picture configuration.
+  ///
+  /// When non-null and the platform supports Picture-in-Picture (iOS 15+ or
+  /// Android 8.0+), the widget transparently drives
+  /// [VideoController.pictureInPicture] using this configuration. When
+  /// [PipConfig.autoEnter] is `true`, note that
+  /// [pauseUponEnteringBackgroundMode] should be `false` — otherwise the
+  /// player pauses before the Picture-in-Picture window starts.
+  final PipConfig? pip;
+
+  /// Optional callback invoked for every Picture-in-Picture lifecycle or
+  /// playback-control event emitted by the platform.
+  final ValueChanged<PipEvent>? onPipEvent;
+
   /// {@macro video}
   const Video({
     super.key,
@@ -135,6 +151,8 @@ class Video extends StatefulWidget {
     this.onEnterFullscreen = defaultEnterNativeFullscreen,
     this.onExitFullscreen = defaultExitNativeFullscreen,
     this.focusNode,
+    this.pip,
+    this.onPipEvent,
   });
 
   @override
@@ -153,6 +171,10 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   late bool _visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
 
   bool _pauseDueToPauseUponEnteringBackgroundMode = false;
+
+  StreamSubscription<PipEvent>? _pipEventSubscription;
+  bool _pipAttached = false;
+  bool _pipAttachInFlight = false;
   // Public API:
   bool isFullscreen() {
     return media_kit_video_controls.isFullscreen(_contextNotifier.value!);
@@ -349,6 +371,68 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
         ),
       );
     }
+    if (widget.pip != null) {
+      _initPictureInPicture();
+      _subscriptions.add(
+        widget.controller.player.stream.width.listen((_) {
+          _maybeAttachPictureInPicture();
+        }),
+      );
+      _subscriptions.add(
+        widget.controller.player.stream.height.listen((_) {
+          _maybeAttachPictureInPicture();
+        }),
+      );
+    }
+  }
+
+  Future<void> _initPictureInPicture() async {
+    final pipController = widget.controller.pictureInPicture;
+    if (!await pipController.isSupported()) {
+      return;
+    }
+    _pipEventSubscription = pipController.events.listen((event) {
+      widget.onPipEvent?.call(event);
+      if (event is PipSetPlaying) {
+        if (event.playing) {
+          widget.controller.player.play();
+        } else {
+          widget.controller.player.pause();
+        }
+      } else if (event is PipClosed) {
+        widget.controller.player.pause();
+      }
+    });
+    _maybeAttachPictureInPicture();
+  }
+
+  Future<void> _maybeAttachPictureInPicture() async {
+    if (_pipAttached || _pipAttachInFlight) return;
+    final config = widget.pip;
+    if (config == null) return;
+    final player = widget.controller.player;
+    final width = player.state.width ?? 0;
+    final height = player.state.height ?? 0;
+    if (width <= 0 || height <= 0) return;
+
+    final pipController = widget.controller.pictureInPicture;
+    if (!await pipController.isSupported()) return;
+
+    _pipAttachInFlight = true;
+    try {
+      final handle = await player.handle;
+      final size = config.preferredSize ??
+          Size(width.toDouble(), height.toDouble());
+      await pipController.start(
+        handle: handle,
+        videoSize: size,
+        autoEnter: config.autoEnter,
+        startImmediately: config.startImmediately,
+      );
+      _pipAttached = true;
+    } finally {
+      _pipAttachInFlight = false;
+    }
   }
 
   @override
@@ -357,6 +441,10 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     _wakelock.disable();
     for (final subscription in _subscriptions) {
       subscription.cancel();
+    }
+    _pipEventSubscription?.cancel();
+    if (_pipAttached) {
+      widget.controller.pictureInPicture.stop();
     }
     if (_disposeNotifiers) {
       videoViewParametersNotifier.dispose();
