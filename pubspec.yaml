@@ -1,6 +1,28 @@
 name: media_kit_workspace
-
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ^3.6.0
+
+workspace:
+  - libs/android/media_kit_libs_android_audio
+  - libs/android/media_kit_libs_android_video
+  - libs/ios/media_kit_libs_ios_audio
+  - libs/ios/media_kit_libs_ios_video
+  - libs/linux/media_kit_libs_linux
+  - libs/macos/media_kit_libs_macos_audio
+  - libs/macos/media_kit_libs_macos_video
+  - libs/universal/media_kit_libs_audio
+  - libs/universal/media_kit_libs_video
+  - libs/windows/media_kit_libs_windows_audio
+  - libs/windows/media_kit_libs_windows_video
+  - media_kit
+  - media_kit_test
+  - media_kit_video
+  - video_player_media_kit
+
 dev_dependencies:
-  melos: ^6.1.0
+  melos: ^7.7.0
+
+melos:
+  scripts:
+    upgrade_major_versions:
+      run: melos exec -- flutter pub upgrade --major-versions
