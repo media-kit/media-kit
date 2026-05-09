@@ -1,5 +1,8 @@
-name: Github Actions
-on: [push, pull_request]
+name: GitHub Actions
+
+on:
+  - push
+  - pull_request
 
 jobs:
   media_kit-tests-windows:
@@ -38,7 +41,9 @@ jobs:
         with:
           submodules: "true"
       - run: sudo apt-get update
-      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - run: >
+          sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev
+          mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
@@ -77,16 +82,16 @@ jobs:
         with:
           submodules: "true"
       - run: sudo apt-get update
-      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - run: >
+          sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev
+          mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
           cache: true
-      # Delete tests which import native code & depend upon dart:ffi
       - run: rm -r test/src/player/native
       - run: dart pub get
       - run: dart test --platform chrome
-      
 
   windows:
     name: Windows
@@ -104,7 +109,9 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter build windows --verbose
-      - run: cmake -E tar "cfv" "media_kit_test_win32_x64.7z" --format=7zip "build\windows\x64\runner\Release"
+      - run: >
+          cmake -E tar "cfv" "media_kit_test_win32_x64.7z" --format=7zip
+          "build\windows\x64\runner\Release"
       - uses: actions/upload-artifact@v7
         with:
           name: media_kit_test_win32_x64
@@ -129,7 +136,9 @@ jobs:
         with:
           submodules: "true"
       - run: sudo apt-get update
-      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - run: >
+          sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev
+          mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
@@ -166,7 +175,9 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter build macos --verbose
-      - run: 7z a media_kit_test_macos_universal.7z build/macos/Build/Products/Release/media_kit_test.app
+      - run: >
+          7z a media_kit_test_macos_universal.7z
+          build/macos/Build/Products/Release/media_kit_test.app
       - uses: actions/upload-artifact@v7
         with:
           name: media_kit_test_macos_universal
@@ -223,10 +234,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
-            distribution: 'zulu'
-            java-version: '17'
-            # cache: 'gradle'
-            # check-latest: true
+          distribution: "zulu"
+          java-version: "17"
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
@@ -259,6 +268,7 @@ jobs:
             media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-armeabi-v7a.apk
             media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-arm64-v8a.apk
             media_kit_test/build/app/outputs/flutter-apk/media_kit_test_android-x86_64.apk
+
   build_web:
     name: Build Flutter Web
     runs-on: ubuntu-latest
@@ -318,7 +328,9 @@ jobs:
         with:
           submodules: "true"
       - run: sudo apt-get update
-      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - run: >
+          sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev
+          mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
@@ -385,10 +397,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
-            distribution: 'zulu'
-            java-version: '17'
-            # cache: 'gradle'
-            # check-latest: true
+          distribution: "zulu"
+          java-version: "17"
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
@@ -435,7 +445,9 @@ jobs:
         with:
           submodules: "true"
       - run: sudo apt-get update
-      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
+      - run: >
+          sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev
+          mpv libmpv-dev dpkg-dev p7zip-full p7zip-rar
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
@@ -502,10 +514,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
-            distribution: 'zulu'
-            java-version: '17'
-            # cache: 'gradle'
-            # check-latest: true
+          distribution: "zulu"
+          java-version: "17"
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
@@ -514,6 +524,5 @@ jobs:
         run: |
           sed -i 's/\bmedia_kit_libs\([^[ ]*\)_video\b/media_kit_libs\1_audio/g' pubspec.yaml
           cat pubspec.yaml
-
       - run: flutter pub get
       - run: flutter build apk --split-per-abi --verbose
