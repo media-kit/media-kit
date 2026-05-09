@@ -108,9 +108,6 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
         }
         resource = dataSource.uri!;
         break;
-
-      default:
-        throw UnsupportedError('${dataSource.sourceType} is not supported');
     }
 
     await player.open(
