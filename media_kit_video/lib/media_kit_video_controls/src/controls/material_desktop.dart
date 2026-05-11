@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
+import 'package:media_kit/media_kit.dart' show Playlist;
 import 'package:media_kit_video/media_kit_video.dart';
 
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
@@ -379,8 +380,16 @@ class _MaterialDesktopVideoControlsState
 
   Timer? _timer;
 
-  late /* private */ var playlist = controller(context).player.state.playlist;
-  late bool buffering = controller(context).player.state.buffering;
+  late Playlist playlist;
+  late bool buffering;
+
+  // Cached controller reference. Resolved in [didChangeDependencies] so that
+  // keyboard / pointer / scroll / tap callbacks never have to look up the
+  // [VideoStateInheritedWidget] via [BuildContext] — which can return null
+  // when the widget tree rebuilds during a queued event, causing
+  // `Null check operator used on a null value` crashes from
+  // `VideoStateInheritedWidget.of(context)`.
+  VideoController? _controller;
 
   DateTime last = DateTime.now();
 
@@ -403,20 +412,32 @@ class _MaterialDesktopVideoControlsState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final newController = controller(context);
+    if (!identical(_controller, newController)) {
+      // Inherited widget swapped to a different VideoController. Tear down
+      // any existing subscriptions so we re-attach to the new player below.
+      for (final subscription in subscriptions) {
+        subscription.cancel();
+      }
+      subscriptions.clear();
+      _controller = newController;
+    }
     if (subscriptions.isEmpty) {
       mount = _theme(context).visibleOnMount;
       visible = _theme(context).visibleOnMount;
+      playlist = newController.player.state.playlist;
+      buffering = newController.player.state.buffering;
 
       subscriptions.addAll(
         [
-          controller(context).player.stream.playlist.listen(
+          newController.player.stream.playlist.listen(
             (event) {
               setState(() {
                 playlist = event;
               });
             },
           ),
-          controller(context).player.stream.buffering.listen(
+          newController.player.stream.buffering.listen(
             (event) {
               setState(() {
                 buffering = event;
@@ -447,6 +468,7 @@ class _MaterialDesktopVideoControlsState
     for (final subscription in subscriptions) {
       subscription.cancel();
     }
+    _controller = null;
     super.dispose();
   }
 
@@ -529,44 +551,56 @@ class _MaterialDesktopVideoControlsState
               // Default key-board shortcuts.
               // https://support.google.com/youtube/answer/7631406
               const SingleActivator(LogicalKeyboardKey.mediaPlay): () =>
-                  controller(context).player.play(),
+                  _controller?.player.play(),
               const SingleActivator(LogicalKeyboardKey.mediaPause): () =>
-                  controller(context).player.pause(),
+                  _controller?.player.pause(),
               const SingleActivator(LogicalKeyboardKey.mediaPlayPause): () =>
-                  controller(context).player.playOrPause(),
+                  _controller?.player.playOrPause(),
               const SingleActivator(LogicalKeyboardKey.mediaTrackNext): () =>
-                  controller(context).player.next(),
+                  _controller?.player.next(),
               const SingleActivator(LogicalKeyboardKey.mediaTrackPrevious):
-                  () => controller(context).player.previous(),
+                  () => _controller?.player.previous(),
               const SingleActivator(LogicalKeyboardKey.space): () =>
-                  controller(context).player.playOrPause(),
+                  _controller?.player.playOrPause(),
               const SingleActivator(LogicalKeyboardKey.keyJ): () {
-                final rate = controller(context).player.state.position -
+                final ctrl = _controller;
+                if (ctrl == null) return;
+                final rate = ctrl.player.state.position -
                     const Duration(seconds: 10);
-                controller(context).player.seek(rate);
+                ctrl.player.seek(rate);
               },
               const SingleActivator(LogicalKeyboardKey.keyI): () {
-                final rate = controller(context).player.state.position +
+                final ctrl = _controller;
+                if (ctrl == null) return;
+                final rate = ctrl.player.state.position +
                     const Duration(seconds: 10);
-                controller(context).player.seek(rate);
+                ctrl.player.seek(rate);
               },
               const SingleActivator(LogicalKeyboardKey.arrowLeft): () {
-                final rate = controller(context).player.state.position -
+                final ctrl = _controller;
+                if (ctrl == null) return;
+                final rate = ctrl.player.state.position -
                     const Duration(seconds: 2);
-                controller(context).player.seek(rate);
+                ctrl.player.seek(rate);
               },
               const SingleActivator(LogicalKeyboardKey.arrowRight): () {
-                final rate = controller(context).player.state.position +
+                final ctrl = _controller;
+                if (ctrl == null) return;
+                final rate = ctrl.player.state.position +
                     const Duration(seconds: 2);
-                controller(context).player.seek(rate);
+                ctrl.player.seek(rate);
               },
               const SingleActivator(LogicalKeyboardKey.arrowUp): () {
-                final volume = controller(context).player.state.volume + 5.0;
-                controller(context).player.setVolume(volume.clamp(0.0, 100.0));
+                final ctrl = _controller;
+                if (ctrl == null) return;
+                final volume = ctrl.player.state.volume + 5.0;
+                ctrl.player.setVolume(volume.clamp(0.0, 100.0));
               },
               const SingleActivator(LogicalKeyboardKey.arrowDown): () {
-                final volume = controller(context).player.state.volume - 5.0;
-                controller(context).player.setVolume(volume.clamp(0.0, 100.0));
+                final ctrl = _controller;
+                if (ctrl == null) return;
+                final volume = ctrl.player.state.volume - 5.0;
+                ctrl.player.setVolume(volume.clamp(0.0, 100.0));
               },
               const SingleActivator(LogicalKeyboardKey.keyF): () =>
                   toggleFullscreen(context),
@@ -591,19 +625,15 @@ class _MaterialDesktopVideoControlsState
                 onPointerSignal: _theme(context).modifyVolumeOnScroll
                     ? (e) {
                         if (e is PointerScrollEvent) {
+                          final ctrl = _controller;
+                          if (ctrl == null) return;
                           if (e.delta.dy > 0) {
-                            final volume =
-                                controller(context).player.state.volume - 5.0;
-                            controller(context)
-                                .player
-                                .setVolume(volume.clamp(0.0, 100.0));
+                            final volume = ctrl.player.state.volume - 5.0;
+                            ctrl.player.setVolume(volume.clamp(0.0, 100.0));
                           }
                           if (e.delta.dy < 0) {
-                            final volume =
-                                controller(context).player.state.volume + 5.0;
-                            controller(context)
-                                .player
-                                .setVolume(volume.clamp(0.0, 100.0));
+                            final volume = ctrl.player.state.volume + 5.0;
+                            ctrl.player.setVolume(volume.clamp(0.0, 100.0));
                           }
                         }
                       }
@@ -624,7 +654,7 @@ class _MaterialDesktopVideoControlsState
                                       tapPadding) {
                             // Only play and pause when the bottom seek bar is visible
                             // and when clicking outside of the bottom seek bar region
-                            controller(context).player.playOrPause();
+                            _controller?.player.playOrPause();
                           }
                         },
                   onTapUp: !_theme(context).toggleFullscreenOnDoublePress
@@ -639,19 +669,15 @@ class _MaterialDesktopVideoControlsState
                         },
                   onPanUpdate: _theme(context).modifyVolumeOnScroll
                       ? (e) {
+                          final ctrl = _controller;
+                          if (ctrl == null) return;
                           if (e.delta.dy > 0) {
-                            final volume =
-                                controller(context).player.state.volume - 5.0;
-                            controller(context)
-                                .player
-                                .setVolume(volume.clamp(0.0, 100.0));
+                            final volume = ctrl.player.state.volume - 5.0;
+                            ctrl.player.setVolume(volume.clamp(0.0, 100.0));
                           }
                           if (e.delta.dy < 0) {
-                            final volume =
-                                controller(context).player.state.volume + 5.0;
-                            controller(context)
-                                .player
-                                .setVolume(volume.clamp(0.0, 100.0));
+                            final volume = ctrl.player.state.volume + 5.0;
+                            ctrl.player.setVolume(volume.clamp(0.0, 100.0));
                           }
                         }
                       : null,
@@ -903,10 +929,18 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
   bool click = false;
   double slider = 0.0;
 
-  late bool playing = controller(context).player.state.playing;
-  late Duration position = controller(context).player.state.position;
-  late Duration duration = controller(context).player.state.duration;
-  late Duration buffer = controller(context).player.state.buffer;
+  bool playing = false;
+  Duration position = Duration.zero;
+  Duration duration = Duration.zero;
+  Duration buffer = Duration.zero;
+
+  // Cached controller reference. Resolved in [didChangeDependencies] so that
+  // pointer handlers and stream callbacks never have to look up the
+  // [VideoStateInheritedWidget] via [BuildContext] — which can return null
+  // when the widget tree rebuilds during a queued pointer event, causing
+  // `Null check operator used on a null value` crashes from
+  // `VideoStateInheritedWidget.of(context)`.
+  VideoController? _controller;
 
   final List<StreamSubscription> subscriptions = [];
 
@@ -920,30 +954,45 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final newController = controller(context);
+    if (!identical(_controller, newController)) {
+      // Inherited widget swapped to a different VideoController. Tear down
+      // any existing subscriptions so we re-attach to the new player below.
+      for (final subscription in subscriptions) {
+        subscription.cancel();
+      }
+      subscriptions.clear();
+      _controller = newController;
+    }
     if (subscriptions.isEmpty) {
+      playing = newController.player.state.playing;
+      position = newController.player.state.position;
+      duration = newController.player.state.duration;
+      buffer = newController.player.state.buffer;
+
       subscriptions.addAll(
         [
-          controller(context).player.stream.playing.listen((event) {
+          newController.player.stream.playing.listen((event) {
             setState(() {
               playing = event;
             });
           }),
-          controller(context).player.stream.completed.listen((event) {
+          newController.player.stream.completed.listen((event) {
             setState(() {
               position = Duration.zero;
             });
           }),
-          controller(context).player.stream.position.listen((event) {
+          newController.player.stream.position.listen((event) {
             setState(() {
               if (!click) position = event;
             });
           }),
-          controller(context).player.stream.duration.listen((event) {
+          newController.player.stream.duration.listen((event) {
             setState(() {
               duration = event;
             });
           }),
-          controller(context).player.stream.buffer.listen((event) {
+          newController.player.stream.buffer.listen((event) {
             setState(() {
               buffer = event;
             });
@@ -958,19 +1007,22 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
     for (final subscription in subscriptions) {
       subscription.cancel();
     }
+    _controller = null;
     super.dispose();
   }
 
   void onPointerMove(PointerMoveEvent e, BoxConstraints constraints) {
+    if (!mounted) return;
     final percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       hover = true;
       slider = percent.clamp(0.0, 1.0);
     });
-    controller(context).player.seek(duration * slider);
+    _controller?.player.seek(duration * slider);
   }
 
   void onPointerDown() {
+    if (!mounted) return;
     widget.onSeekStart?.call();
     setState(() {
       click = true;
@@ -978,16 +1030,18 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
   }
 
   void onPointerUp() {
+    if (!mounted) return;
     widget.onSeekEnd?.call();
     setState(() {
       // Explicitly set the position to prevent the slider from jumping.
       click = false;
       position = duration * slider;
     });
-    controller(context).player.seek(duration * slider);
+    _controller?.player.seek(duration * slider);
   }
 
   void onHover(PointerHoverEvent e, BoxConstraints constraints) {
+    if (!mounted) return;
     final percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       hover = true;
@@ -996,6 +1050,7 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
   }
 
   void onEnter(PointerEnterEvent e, BoxConstraints constraints) {
+    if (!mounted) return;
     final percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       hover = true;
@@ -1004,6 +1059,7 @@ class MaterialDesktopSeekBarState extends State<MaterialDesktopSeekBar> {
   }
 
   void onExit(PointerExitEvent e, BoxConstraints constraints) {
+    if (!mounted) return;
     setState(() {
       hover = false;
       slider = 0.0;
@@ -1371,7 +1427,15 @@ class MaterialDesktopVolumeButton extends StatefulWidget {
 class MaterialDesktopVolumeButtonState
     extends State<MaterialDesktopVolumeButton>
     with SingleTickerProviderStateMixin {
-  late double volume = controller(context).player.state.volume;
+  late double volume;
+
+  // Cached controller reference. Resolved in [didChangeDependencies] so that
+  // pointer / scroll / press / slider callbacks never have to look up the
+  // [VideoStateInheritedWidget] via [BuildContext] — which can return null
+  // when the widget tree rebuilds during a queued event, causing
+  // `Null check operator used on a null value` crashes from
+  // `VideoStateInheritedWidget.of(context)`.
+  VideoController? _controller;
 
   StreamSubscription<double>? subscription;
 
@@ -1390,16 +1454,28 @@ class MaterialDesktopVolumeButtonState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    subscription ??= controller(context).player.stream.volume.listen((event) {
-      setState(() {
-        volume = event;
+    final newController = controller(context);
+    if (!identical(_controller, newController)) {
+      // Inherited widget swapped to a different VideoController. Tear down
+      // any existing subscription so we re-attach to the new player below.
+      subscription?.cancel();
+      subscription = null;
+      _controller = newController;
+    }
+    if (subscription == null) {
+      volume = newController.player.state.volume;
+      subscription = newController.player.stream.volume.listen((event) {
+        setState(() {
+          volume = event;
+        });
       });
-    });
+    }
   }
 
   @override
   void dispose() {
     subscription?.cancel();
+    _controller = null;
     super.dispose();
   }
 
@@ -1419,15 +1495,13 @@ class MaterialDesktopVolumeButtonState
       child: Listener(
         onPointerSignal: (event) {
           if (event is PointerScrollEvent) {
+            final ctrl = _controller;
+            if (ctrl == null) return;
             if (event.scrollDelta.dy < 0) {
-              controller(context).player.setVolume(
-                    (volume + 5.0).clamp(0.0, 100.0),
-                  );
+              ctrl.player.setVolume((volume + 5.0).clamp(0.0, 100.0));
             }
             if (event.scrollDelta.dy > 0) {
-              controller(context).player.setVolume(
-                    (volume - 5.0).clamp(0.0, 100.0),
-                  );
+              ctrl.player.setVolume((volume - 5.0).clamp(0.0, 100.0));
             }
           }
         },
@@ -1436,18 +1510,20 @@ class MaterialDesktopVolumeButtonState
             const SizedBox(width: 4.0),
             IconButton(
               onPressed: () async {
+                final ctrl = _controller;
+                if (ctrl == null) return;
                 if (mute) {
-                  await controller(context).player.setVolume(_volume);
+                  await ctrl.player.setVolume(_volume);
                   mute = !mute;
                 }
                 // https://github.com/media-kit/media-kit/pull/250#issuecomment-1605588306
                 else if (volume == 0.0) {
                   _volume = 100.0;
-                  await controller(context).player.setVolume(100.0);
+                  await ctrl.player.setVolume(100.0);
                   mute = false;
                 } else {
                   _volume = volume;
-                  await controller(context).player.setVolume(0.0);
+                  await ctrl.player.setVolume(0.0);
                   mute = !mute;
                 }
 
@@ -1512,7 +1588,9 @@ class MaterialDesktopVolumeButtonState
                             min: 0.0,
                             max: 100.0,
                             onChanged: (value) async {
-                              await controller(context).player.setVolume(value);
+                              final ctrl = _controller;
+                              if (ctrl == null) return;
+                              await ctrl.player.setVolume(value);
                               mute = false;
                               setState(() {});
                             },
