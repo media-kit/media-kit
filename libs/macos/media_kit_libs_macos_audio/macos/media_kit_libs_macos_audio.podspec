@@ -16,8 +16,11 @@ Pod::Spec.new do |s|
   s.author           = { 'Hitesh Kumar Saini' => 'saini123hitesh@gmail.com' }
 
   s.source           = { :path => '.' }
-  s.source_files     = 'Classes/**/*'
+  s.source_files     = 'media_kit_libs_macos_audio/Sources/media_kit_libs_macos_audio/**/*.swift'
   s.dependency 'FlutterMacOS'
+  s.resource_bundles = {
+    'media_kit_libs_macos_audio_privacy' => ['media_kit_libs_macos_audio/Sources/media_kit_libs_macos_audio/PrivacyInfo.xcprivacy']
+  }
 
   s.vendored_frameworks = 'Frameworks/*.xcframework'
 

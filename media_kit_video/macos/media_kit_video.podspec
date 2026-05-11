@@ -26,12 +26,15 @@ Pod::Spec.new do |s|
   s.platform         = :osx, '10.9'
   s.swift_version    = '5.0'
   s.dependency         'FlutterMacOS'
+  s.resource_bundles = {
+    'media_kit_video_privacy' => ['media_kit_video/Sources/media_kit_video/PrivacyInfo.xcprivacy']
+  }
 
   if mku.libs_found
     # Define paths to frameworks dir
     framework_search_paths_macosx = sprintf('$(PROJECT_DIR)/../Flutter/ephemeral/.symlinks/plugins/%s/macos/Frameworks/.symlinks/mpv/macos', mku.libs_package)
 
-    s.source_files        = 'Classes/plugin/**/*.swift', 'Headers/**/*.h'
+    s.source_files        = 'media_kit_video/Sources/media_kit_video/plugin/**/*.swift', 'Headers/**/*.h'
     s.pod_target_xcconfig = {
       'DEFINES_MODULE'                      => 'YES',
       'GCC_WARN_INHIBIT_ALL_WARNINGS'       => 'YES',
@@ -40,7 +43,7 @@ Pod::Spec.new do |s|
       'OTHER_LDFLAGS'                       => '"$(inherited)" -framework Mpv',
     }
   else
-    s.source_files        = 'Classes/stub/**/*.swift'
+    s.source_files        = 'media_kit_video/Sources/media_kit_video/stub/**/*.swift'
     s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   end
 end

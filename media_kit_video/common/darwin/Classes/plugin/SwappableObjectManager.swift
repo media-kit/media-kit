@@ -1,3 +1,5 @@
+import Foundation
+
 // This class was created to prevent a frameBuffer read by Flutter from being
 // concurrently modified by a write method (mpv's renderer).
 //

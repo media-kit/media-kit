@@ -1,3 +1,7 @@
+#if SWIFT_PACKAGE
+  import Mpv
+#endif
+
 public class MPVVideoOutParams {
   public let dw: Int64
   public let dh: Int64

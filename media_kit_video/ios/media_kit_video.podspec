@@ -26,13 +26,16 @@ Pod::Spec.new do |s|
   s.platform         = :ios, '9.0'
   s.swift_version    = '5.0'
   s.dependency         'Flutter'
+  s.resource_bundles = {
+    'media_kit_video_privacy' => ['media_kit_video/Sources/media_kit_video/PrivacyInfo.xcprivacy']
+  }
   
   if mku.libs_found
     # Define paths to frameworks dir
     framework_search_paths_iphoneos        = sprintf('$(PROJECT_DIR)/../.symlinks/plugins/%s/ios/Frameworks/.symlinks/mpv/ios', mku.libs_package)
     framework_search_paths_iphonesimulator = sprintf('$(PROJECT_DIR)/../.symlinks/plugins/%s/ios/Frameworks/.symlinks/mpv/ios-simulator', mku.libs_package)
 
-    s.source_files        = 'Classes/plugin/**/*.swift', 'Headers/**/*.h'
+    s.source_files        = 'media_kit_video/Sources/media_kit_video/plugin/**/*.swift', 'Headers/**/*.h'
     s.pod_target_xcconfig = {
       'DEFINES_MODULE'                               => 'YES',
       'GCC_WARN_INHIBIT_ALL_WARNINGS'                => 'YES',
@@ -44,7 +47,7 @@ Pod::Spec.new do |s|
       'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
     }
   else
-    s.source_files        = 'Classes/stub/**/*.swift'
+    s.source_files        = 'media_kit_video/Sources/media_kit_video/stub/**/*.swift'
     s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   end
 end
