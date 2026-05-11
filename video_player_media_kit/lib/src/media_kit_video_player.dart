@@ -257,8 +257,19 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
       streamSubscriptions.add(
         player.stream.videoParams.listen(
           (event) {
-            width = event.dw;
-            height = event.dh;
+            // Check for rotation metadata
+            final rotate = event.rotate ?? 0;
+
+            // Swap dimensions for portrait-oriented videos stored as landscape
+            if (rotate == 90 || rotate == 270) {
+              width = event.dh;
+              height = event.dw;
+            } else {
+              width = event.dw;
+              height = event.dh;
+            }
+
+            // Notify the platform interface with corrected dimensions
             if ((width ?? 0) > 0 && (height ?? 0) > 0) {
               notify();
             }
