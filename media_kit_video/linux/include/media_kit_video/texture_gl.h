@@ -23,6 +23,13 @@ G_DECLARE_FINAL_TYPE(TextureGL, texture_gl, TEXTURE_GL, TEXTURE_GL, FlTextureGL)
 TextureGL* texture_gl_new(VideoOutput* video_output);
 
 /**
+ * @brief Checks whether EGLImage texture sharing is available in the current
+ * EGL context.
+ */
+gboolean texture_gl_can_create_egl_images(EGLDisplay display,
+                                          EGLContext context);
+
+/**
  * @brief Populates texture with video frame.
  */
 gboolean texture_gl_populate_texture(FlTextureGL* texture,

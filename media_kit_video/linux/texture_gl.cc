@@ -27,13 +27,33 @@ static PFNEGLDESTROYIMAGEKHRPROC eglDestroyImageKHR = NULL;
 static PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES = NULL;
 #endif
 
-static void init_egl_image_extensions() {
+static gboolean init_egl_image_extensions() {
   static gboolean initialized = FALSE;
   if (!initialized) {
     eglCreateImageKHR = (PFNEGLCREATEIMAGEKHRPROC)eglGetProcAddress("eglCreateImageKHR");
     eglDestroyImageKHR = (PFNEGLDESTROYIMAGEKHRPROC)eglGetProcAddress("eglDestroyImageKHR");
     glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
     initialized = TRUE;
+  }
+  return eglCreateImageKHR != NULL && eglDestroyImageKHR != NULL &&
+         glEGLImageTargetTexture2DOES != NULL;
+}
+
+// Restore the context that Flutter had current before rendering through mpv's
+// isolated EGL context. If Flutter did not have one current, clear mpv's context
+// so the next Flutter/GTK operation starts from a neutral EGL state.
+static void restore_egl_context(EGLDisplay display,
+                                EGLSurface draw_surface,
+                                EGLSurface read_surface,
+                                EGLContext context,
+                                EGLDisplay fallback_display) {
+  if (display != EGL_NO_DISPLAY && context != EGL_NO_CONTEXT) {
+    eglMakeCurrent(display, draw_surface, read_surface, context);
+    return;
+  }
+  EGLDisplay clear_display = display != EGL_NO_DISPLAY ? display : fallback_display;
+  if (clear_display != EGL_NO_DISPLAY) {
+    eglMakeCurrent(clear_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
   }
 }
 
@@ -100,8 +120,8 @@ static void texture_gl_dispose(GObject* object) {
         self->fbo = 0;
       }
       
-      // Restore previous context
-      eglMakeCurrent(current_display, current_draw, current_read, current_context);
+      restore_egl_context(current_display, current_draw, current_read,
+                          current_context, egl_display);
     }
   }
   
@@ -121,6 +141,55 @@ TextureGL* texture_gl_new(VideoOutput* video_output) {
   TextureGL* self = TEXTURE_GL(g_object_new(texture_gl_get_type(), NULL));
   self->video_output = video_output;
   return self;
+}
+
+gboolean texture_gl_can_create_egl_images(EGLDisplay display,
+                                          EGLContext context) {
+  if (display == EGL_NO_DISPLAY || context == EGL_NO_CONTEXT) {
+    return FALSE;
+  }
+  if (eglGetCurrentContext() != context) {
+    return FALSE;
+  }
+  if (!init_egl_image_extensions()) {
+    g_printerr("media_kit: TextureGL: EGLImage extension functions are unavailable.\n");
+    return FALSE;
+  }
+
+  GLuint texture = 0;
+  glGenTextures(1, &texture);
+  if (texture == 0) {
+    g_printerr("media_kit: TextureGL: Failed to create EGLImage test texture.\n");
+    return FALSE;
+  }
+
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA,
+               GL_UNSIGNED_BYTE, NULL);
+
+  EGLint egl_image_attribs[] = { EGL_NONE };
+  EGLImageKHR image = eglCreateImageKHR(
+      display,
+      context,
+      EGL_GL_TEXTURE_2D_KHR,
+      (EGLClientBuffer)(guintptr)texture,
+      egl_image_attribs);
+
+  gboolean supported = image != EGL_NO_IMAGE_KHR;
+  if (supported) {
+    eglDestroyImageKHR(display, image);
+  } else {
+    g_printerr("media_kit: TextureGL: Failed to create EGLImage. Error: 0x%x\n",
+               eglGetError());
+  }
+
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glDeleteTextures(1, &texture);
+  return supported;
 }
 
 gboolean texture_gl_populate_texture(FlTextureGL* texture,
@@ -187,6 +256,15 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
           EGL_GL_TEXTURE_2D_KHR,
           (EGLClientBuffer)(guintptr)self->mpv_texture,
           egl_image_attribs);
+      if (self->egl_image == EGL_NO_IMAGE_KHR) {
+        g_printerr("media_kit: TextureGL: Failed to create EGLImage. Error: 0x%x\n",
+                   eglGetError());
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        restore_egl_context(flutter_display, flutter_draw, flutter_read,
+                            flutter_context, egl_display);
+        return FALSE;
+      }
       
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
       glBindTexture(GL_TEXTURE_2D, 0);
@@ -195,7 +273,8 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       glFlush();
       
       // Switch back to Flutter's context to create/update Flutter's texture
-      eglMakeCurrent(flutter_display, flutter_draw, flutter_read, flutter_context);
+      restore_egl_context(flutter_display, flutter_draw, flutter_read,
+                          flutter_context, egl_display);
       
       // Free previous Flutter texture
       if (!first_frame && self->name != 0) {
@@ -253,8 +332,8 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     // Flush to ensure rendering is complete
     glFlush();
     
-    // Restore Flutter's context
-    eglMakeCurrent(flutter_display, flutter_draw, flutter_read, flutter_context);
+    restore_egl_context(flutter_display, flutter_draw, flutter_read,
+                        flutter_context, egl_display);
   }
   
   *target = GL_TEXTURE_2D;
