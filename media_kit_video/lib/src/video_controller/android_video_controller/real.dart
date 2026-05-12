@@ -33,6 +33,8 @@ class AndroidVideoController extends PlatformVideoController {
   /// [Lock] used to synchronize [onLoadHooks], [onUnloadHooks] & [subscription].
   final lock = Lock();
 
+  var _disposed = false;
+
   NativePlayer get platform => player.platform as NativePlayer;
 
   Future<void> setProperty(String key, String value) async {
@@ -48,6 +50,9 @@ class AndroidVideoController extends PlatformVideoController {
   /// Listener for updating the --wid property.
   Future<void> widListener() {
     return lock.synchronized(() async {
+      if (_disposed) {
+        return;
+      }
       final width = rect.value?.width.toInt() ?? 1;
       final height = rect.value?.height.toInt() ?? 1;
       final androidSurfaceSizeValue = [width, height].join('x');
@@ -56,7 +61,13 @@ class AndroidVideoController extends PlatformVideoController {
       final voValue = widValue == '0' ? 'null' : configuration.vo!;
       final vidValue = widValue == '0' ? 'no' : 'auto';
       // It is important to re-initialize --vo after --android-surface-size.
+      if (_disposed) {
+        return;
+      }
       await setProperty('vo', 'null');
+      if (_disposed) {
+        return;
+      }
       await setProperties(
         {
           // ORDER IS IMPORTANT.
@@ -71,6 +82,9 @@ class AndroidVideoController extends PlatformVideoController {
       // Instead of seeking to the start (Duration.zero), seek to the current playback position
       // without jumping the user to the start of the media.
       final currentPosition = player.state.position;
+      if (_disposed) {
+        return;
+      }
       await player.seek(currentPosition);
     });
   }
@@ -86,6 +100,9 @@ class AndroidVideoController extends PlatformVideoController {
     wid.addListener(widListener);
     videoParamsSubscription = player.stream.videoParams.listen(
       (event) => lock.synchronized(() async {
+        if (_disposed) {
+          return;
+        }
         final int width;
         final int height;
         if (event.rotate == 0 || event.rotate == 180) {
@@ -229,6 +246,7 @@ class AndroidVideoController extends PlatformVideoController {
 
   /// Disposes the instance. Releases allocated resources back to the system.
   Future<void> _dispose() async {
+    _disposed = true;
     super.dispose();
     wid.dispose();
     wid.removeListener(widListener);
