@@ -514,6 +514,23 @@ class PlayerConfiguration {
   /// Learn more: https://ffmpeg.org/ffmpeg-protocols.html#Protocol-Options
   final List<String> protocolWhitelist;
 
+  /// Whether [Player] should let mpv configure and activate the global
+  /// `AVAudioSession` on iOS.
+  ///
+  /// When `false`, the AudioUnit audio output skips `setCategory`,
+  /// `setActive:YES` on init, and `setActive:NO` on dispose — leaving the
+  /// session under the embedder's control.
+  ///
+  /// `AVAudioSession` is process-wide on iOS, so when more than one
+  /// component manages audio (e.g. another player or a custom coordinator),
+  /// only one of them should own the session — otherwise their category and
+  /// activation calls will conflict and cause playback issues.
+  ///
+  /// No effect on platforms other than iOS.
+  ///
+  /// Default: `true`.
+  final bool iosManageAudioSession;
+
   /// {@macro player_configuration}
   const PlayerConfiguration({
     this.vo = 'null',
@@ -539,6 +556,7 @@ class PlayerConfiguration {
       'https',
       'crypto',
     ],
+    this.iosManageAudioSession = true,
   });
 }
 
