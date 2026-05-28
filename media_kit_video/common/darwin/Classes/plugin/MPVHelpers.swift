@@ -1,3 +1,10 @@
+import Darwin
+import Foundation
+
+#if SWIFT_PACKAGE
+  import Mpv
+#endif
+
 public enum MPVHelpers {
   public static func checkError(_ status: CInt) {
     if status < 0 {

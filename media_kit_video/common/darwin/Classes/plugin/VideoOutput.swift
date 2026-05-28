@@ -1,3 +1,6 @@
+import CoreGraphics
+import Foundation
+
 #if canImport(Flutter)
   import Flutter
 #elseif canImport(FlutterMacOS)

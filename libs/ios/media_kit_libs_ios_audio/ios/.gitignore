@@ -1,2 +1,5 @@
 .cache
 Frameworks
+.build
+.swiftpm
+Package.resolved

@@ -1,3 +1,5 @@
+import Foundation
+
 // https://stackoverflow.com/questions/49043257/how-to-ensure-to-run-some-code-on-same-background-thread/49075382#49075382
 class Worker {
   public typealias Job = () -> Void

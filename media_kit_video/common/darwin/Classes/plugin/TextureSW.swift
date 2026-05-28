@@ -1,3 +1,11 @@
+import CoreGraphics
+import CoreVideo
+import Foundation
+
+#if SWIFT_PACKAGE
+  import Mpv
+#endif
+
 #if canImport(Flutter)
   import Flutter
 #elseif canImport(FlutterMacOS)

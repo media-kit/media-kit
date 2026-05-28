@@ -1,3 +1,7 @@
+import CoreGraphics
+import CoreVideo
+import Foundation
+
 public class TextureSWContext {
   public let pixelBuffer: CVPixelBuffer
 

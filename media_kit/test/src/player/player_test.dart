@@ -1065,6 +1065,9 @@ void main() {
       // Wait for EOF.
       await completer.future;
 
+      // NOTE: VOLUNTARY DELAY.
+      await Future.delayed(const Duration(seconds: 5));
+
       final expectPosition = expectAsync1(
         (value) {
           print(value);
@@ -1080,9 +1083,6 @@ void main() {
         print(event);
         expectPosition(event);
       });
-
-      // NOTE: VOLUNTARY DELAY.
-      await Future.delayed(const Duration(seconds: 5));
 
       // Begin test.
 
