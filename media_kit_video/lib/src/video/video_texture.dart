@@ -421,8 +421,8 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     _pipAttachInFlight = true;
     try {
       final handle = await player.handle;
-      final size = config.preferredSize ??
-          Size(width.toDouble(), height.toDouble());
+      final size =
+          config.preferredSize ?? Size(width.toDouble(), height.toDouble());
       await pipController.start(
         handle: handle,
         videoSize: size,

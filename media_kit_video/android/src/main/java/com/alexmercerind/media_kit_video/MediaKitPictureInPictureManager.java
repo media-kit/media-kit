@@ -13,6 +13,7 @@ import android.os.Build;
 import android.util.Log;
 import android.util.Rational;
 
+import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -29,10 +30,9 @@ import io.flutter.plugin.common.MethodChannel;
  * {@code com.alexmercerind/media_kit_video/pip} Flutter channels.
  * <p>
  * PiP is available from API 26 (Android 8.0); on older devices every method
- * either returns {@code false}/{@code null} or silently no-ops. The
- * {@link Activity#addOnPictureInPictureModeChangedListener} callback is only
- * available from API 31; on API 26-30 lifecycle events are limited to
- * {@code willStart}.
+ * either returns {@code false}/{@code null} or silently no-ops. Mode-changed
+ * events are routed through {@link ComponentActivity}'s listener API, which
+ * Flutter's host activity provides on every supported Flutter version.
  */
 final class MediaKitPictureInPictureManager {
     private static final String TAG = "MediaKitVideoPiP";
@@ -206,10 +206,13 @@ final class MediaKitPictureInPictureManager {
     }
 
     private void registerModeChangedListener() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || activity == null) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || activity == null) {
             return;
         }
-        activity.addOnPictureInPictureModeChangedListener(info -> {
+        if (!(activity instanceof ComponentActivity)) {
+            return;
+        }
+        ((ComponentActivity) activity).addOnPictureInPictureModeChangedListener(info -> {
             if (info.isInPictureInPictureMode()) {
                 dispatchEvent("didStart", null);
             } else {

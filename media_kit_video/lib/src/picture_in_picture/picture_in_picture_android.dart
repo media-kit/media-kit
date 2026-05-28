@@ -93,11 +93,8 @@ class PictureInPictureAndroid implements PictureInPictureController {
   }
 
   @override
-  Stream<PipEvent> get events =>
-      _eventStream ??= _events
-          .receiveBroadcastStream()
-          .map(_mapEvent)
-          .asBroadcastStream();
+  Stream<PipEvent> get events => _eventStream ??=
+      _events.receiveBroadcastStream().map(_mapEvent).asBroadcastStream();
 
   PipEvent _mapEvent(dynamic raw) {
     if (raw is! Map) return const PipFailed('invalid_payload');

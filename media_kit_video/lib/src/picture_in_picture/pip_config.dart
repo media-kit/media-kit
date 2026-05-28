@@ -45,6 +45,5 @@ class PipConfig {
           other.preferredSize == preferredSize);
 
   @override
-  int get hashCode =>
-      Object.hash(autoEnter, startImmediately, preferredSize);
+  int get hashCode => Object.hash(autoEnter, startImmediately, preferredSize);
 }
