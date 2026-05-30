@@ -9,6 +9,8 @@ package com.alexmercerind.media_kit_video;
 
 import android.app.Activity;
 import android.app.PictureInPictureParams;
+import android.content.ComponentCallbacks;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.util.Log;
 import android.util.Rational;
@@ -51,6 +53,31 @@ final class MediaKitPictureInPictureManager {
     private int preferredWidth = 16;
     private int preferredHeight = 9;
 
+    // Last PiP mode dispatched to Dart, used to de-duplicate transitions that
+    // can arrive from more than one source (ComponentActivity listener and the
+    // ComponentCallbacks config-change fallback below).
+    private boolean lastPipMode = false;
+
+    // Detects PiP enter/exit on a plain Activity. FlutterActivity extends
+    // android.app.Activity (NOT androidx ComponentActivity), so the
+    // ComponentActivity listener never fires here. Entering/leaving PiP is a
+    // configuration change, which a registered ComponentCallbacks receives even
+    // on a plain Activity; we then read isInPictureInPictureMode().
+    private final ComponentCallbacks pipConfigCallbacks = new ComponentCallbacks() {
+        @Override
+        public void onConfigurationChanged(@NonNull Configuration newConfig) {
+            final Activity a = activity;
+            if (a == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                return;
+            }
+            handlePipModeChanged(a.isInPictureInPictureMode());
+        }
+
+        @Override
+        public void onLowMemory() {
+        }
+    };
+
     MediaKitPictureInPictureManager(@NonNull BinaryMessenger messenger) {
         methodChannel = new MethodChannel(messenger, METHOD_CHANNEL);
         eventChannel = new EventChannel(messenger, EVENT_CHANNEL);
@@ -77,6 +104,32 @@ final class MediaKitPictureInPictureManager {
     void detachActivity() {
         unregisterModeChangedListener();
         this.activity = null;
+    }
+
+    /**
+     * Invoked by the plugin when the user is about to leave the Activity
+     * (e.g. pressed Home).
+     * <p>
+     * {@link Activity#setPictureInPictureParams} with auto-enter only exists
+     * from API 31 (S). On API 26–30 there is no system auto-enter, so the
+     * {@code autoEnter} contract is fulfilled here by entering PiP manually on
+     * the user-leave signal. On API 31+ this is intentionally a no-op because
+     * the system already enters automatically via {@link #applyAutoEnter()},
+     * and on pre-26 PiP does not exist — leaving the original behavior on both
+     * ends unchanged.
+     */
+    void onUserLeaveHint() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // API 31+ relies on setAutoEnterEnabled(); avoid entering twice.
+            return;
+        }
+        if (!autoEnter || activity == null) {
+            return;
+        }
+        enterPictureInPictureNow();
     }
 
     void dispose() {
@@ -144,8 +197,12 @@ final class MediaKitPictureInPictureManager {
         final Boolean startImmediately = call.argument("startImmediately");
 
         if (width != null && width > 0 && height != null && height > 0) {
-            preferredWidth = clampAspect((int) Math.round(width));
-            preferredHeight = clampAspect((int) Math.round(height));
+            // Store the raw video dimensions. The aspect ratio is derived
+            // (and clamped to Android's accepted range) at build time in
+            // buildAspectRatio(); clamping each dimension here would distort
+            // the shape (e.g. 1920x1080 would collapse to a square).
+            preferredWidth = (int) Math.round(width);
+            preferredHeight = (int) Math.round(height);
         }
         autoEnter = Boolean.TRUE.equals(autoEnterArg);
 
@@ -164,7 +221,7 @@ final class MediaKitPictureInPictureManager {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
                 final PictureInPictureParams params = new PictureInPictureParams.Builder()
-                        .setAspectRatio(new Rational(preferredWidth, preferredHeight))
+                        .setAspectRatio(buildAspectRatio())
                         .setAutoEnterEnabled(autoEnter)
                         .build();
                 activity.setPictureInPictureParams(params);
@@ -181,7 +238,7 @@ final class MediaKitPictureInPictureManager {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 final PictureInPictureParams params = new PictureInPictureParams.Builder()
-                        .setAspectRatio(new Rational(preferredWidth, preferredHeight))
+                        .setAspectRatio(buildAspectRatio())
                         .build();
                 dispatchEvent("willStart", null);
                 final boolean ok = activity.enterPictureInPictureMode(params);
@@ -209,27 +266,50 @@ final class MediaKitPictureInPictureManager {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || activity == null) {
             return;
         }
-        if (!(activity instanceof ComponentActivity)) {
+        lastPipMode = false;
+        // Primary path: works on every Activity (incl. plain FlutterActivity).
+        activity.registerComponentCallbacks(pipConfigCallbacks);
+        // Forward-compat path: if the host ever becomes a ComponentActivity its
+        // listener also routes through handlePipModeChanged(), which de-dupes.
+        if (activity instanceof ComponentActivity) {
+            ((ComponentActivity) activity).addOnPictureInPictureModeChangedListener(
+                    info -> handlePipModeChanged(info.isInPictureInPictureMode()));
+        }
+    }
+
+    /**
+     * Routes a PiP mode transition to Dart exactly once, regardless of which
+     * source observed it. Emits {@code didStart} on entry and
+     * {@code willStop}+{@code didStop}/{@code closed} on exit.
+     */
+    private void handlePipModeChanged(boolean inPip) {
+        if (inPip == lastPipMode) {
             return;
         }
-        ((ComponentActivity) activity).addOnPictureInPictureModeChangedListener(info -> {
-            if (info.isInPictureInPictureMode()) {
-                dispatchEvent("didStart", null);
+        lastPipMode = inPip;
+        if (inPip) {
+            dispatchEvent("didStart", null);
+        } else {
+            dispatchEvent("willStop", null);
+            final Activity a = activity;
+            if (a != null && a.isFinishing()) {
+                dispatchEvent("closed", null);
             } else {
-                dispatchEvent("willStop", null);
-                final Activity a = activity;
-                if (a != null && a.isFinishing()) {
-                    dispatchEvent("closed", null);
-                } else {
-                    dispatchEvent("didStop", null);
-                }
+                dispatchEvent("didStop", null);
             }
-        });
+        }
     }
 
     private void unregisterModeChangedListener() {
-        // The Activity cleans up listeners when it is destroyed; detaching
-        // our reference is sufficient.
+        final Activity a = activity;
+        if (a != null) {
+            try {
+                a.unregisterComponentCallbacks(pipConfigCallbacks);
+            } catch (Throwable ignored) {
+                // Not registered (e.g. pre-O attach) — safe to ignore.
+            }
+        }
+        lastPipMode = false;
     }
 
     private void dispatchEvent(@NonNull String name, @Nullable String reason) {
@@ -241,9 +321,32 @@ final class MediaKitPictureInPictureManager {
         sink.success(payload);
     }
 
-    private static int clampAspect(int value) {
-        if (value < 1) return 1;
-        if (value > 1000) return 1000;
-        return value;
+    /**
+     * Builds the Picture-in-Picture aspect ratio from the preferred video
+     * dimensions, preserving the video's shape.
+     * <p>
+     * {@link Rational} compares by value, so the magnitude of the
+     * numerator/denominator is irrelevant — only the ratio matters; the raw
+     * pixel dimensions are passed straight through. Android rejects ratios
+     * outside roughly {@code 1:2.39}–{@code 2.39:1} with an
+     * {@link IllegalArgumentException}, so only the *ratio* is clamped (by
+     * adjusting a single dimension), never both dimensions independently.
+     */
+    private Rational buildAspectRatio() {
+        int w = preferredWidth > 0 ? preferredWidth : 16;
+        int h = preferredHeight > 0 ? preferredHeight : 9;
+        final double maxRatio = 2.39;            // Android's upper bound
+        final double minRatio = 1.0 / maxRatio;  // ... and lower bound
+        final double ratio = (double) w / (double) h;
+        if (ratio > maxRatio) {
+            // Too wide: grow height so the ratio drops to <= maxRatio.
+            h = (int) Math.ceil(w / maxRatio);
+        } else if (ratio < minRatio) {
+            // Too tall: grow width so the ratio rises to >= minRatio.
+            w = (int) Math.ceil(h * minRatio);
+        }
+        if (w < 1) w = 1;
+        if (h < 1) h = 1;
+        return new Rational(w, h);
     }
 }

@@ -8,6 +8,7 @@
 package com.alexmercerind.media_kit_video;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.HashMap;
 
@@ -18,6 +19,7 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugin.common.PluginRegistry;
 
 /**
  * MediaKitVideoPlugin
@@ -26,6 +28,20 @@ public class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler, Ac
     private MethodChannel channel;
     private VideoOutputManager videoOutputManager;
     private MediaKitPictureInPictureManager pictureInPictureManager;
+
+    // Bridges Activity#onUserLeaveHint to the PiP manager so API 26–30 devices
+    // can auto-enter PiP on Home press (API 31+ uses setAutoEnterEnabled).
+    @Nullable
+    private ActivityPluginBinding activityBinding;
+    private final PluginRegistry.UserLeaveHintListener userLeaveHintListener =
+            new PluginRegistry.UserLeaveHintListener() {
+                @Override
+                public void onUserLeaveHint() {
+                    if (pictureInPictureManager != null) {
+                        pictureInPictureManager.onUserLeaveHint();
+                    }
+                }
+            };
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
@@ -94,27 +110,37 @@ public class MediaKitVideoPlugin implements FlutterPlugin, MethodCallHandler, Ac
 
     @Override
     public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
-        if (pictureInPictureManager != null) {
-            pictureInPictureManager.attachActivity(binding.getActivity());
-        }
+        bindActivity(binding);
     }
 
     @Override
     public void onDetachedFromActivityForConfigChanges() {
-        if (pictureInPictureManager != null) {
-            pictureInPictureManager.detachActivity();
-        }
+        unbindActivity();
     }
 
     @Override
     public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
+        bindActivity(binding);
+    }
+
+    @Override
+    public void onDetachedFromActivity() {
+        unbindActivity();
+    }
+
+    private void bindActivity(@NonNull ActivityPluginBinding binding) {
+        activityBinding = binding;
+        binding.addOnUserLeaveHintListener(userLeaveHintListener);
         if (pictureInPictureManager != null) {
             pictureInPictureManager.attachActivity(binding.getActivity());
         }
     }
 
-    @Override
-    public void onDetachedFromActivity() {
+    private void unbindActivity() {
+        if (activityBinding != null) {
+            activityBinding.removeOnUserLeaveHintListener(userLeaveHintListener);
+            activityBinding = null;
+        }
         if (pictureInPictureManager != null) {
             pictureInPictureManager.detachActivity();
         }

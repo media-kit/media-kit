@@ -16,7 +16,9 @@ class PipConfig {
   /// When `true`, the system may enter Picture-in-Picture automatically when
   /// the application moves to the background. On iOS this maps to
   /// `AVPictureInPictureController.canStartPictureInPictureAutomaticallyFromInline`.
-  /// On Android this maps to `Activity.setAutoEnterEnabled` (API 31+).
+  /// On Android API 31+ this maps to `Activity.setAutoEnterEnabled`; on API
+  /// 26–30, which lack that API, the session is entered manually on
+  /// `Activity.onUserLeaveHint` to honor the same contract.
   final bool autoEnter;
 
   /// When `true`, Picture-in-Picture is started as soon as the first video
