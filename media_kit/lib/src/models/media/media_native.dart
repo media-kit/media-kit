@@ -168,7 +168,13 @@ class Media extends Playable {
     switch (parser.type) {
       case URIType.file:
         {
-          return parser.file!.path;
+          var path = parser.file!.path;
+          if (Platform.isWindows) {
+            path = path.replaceAll(RegExp(r'^[\/\\]+[\?\\]+[\/\\]+'), '');
+            path = path.replaceAll('/', '\\');
+            path = path.toLowerCase();
+          }
+          return path;
         }
       case URIType.network:
         {
