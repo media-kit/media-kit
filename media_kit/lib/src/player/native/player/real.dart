@@ -110,10 +110,14 @@ class NativePlayer extends PlatformPlayer {
 
       await super.dispose();
 
-      Initializer(mpv).dispose(ctx);
+      final callable = Initializer(mpv).dispose(ctx);
 
       Future.delayed(const Duration(seconds: 5), () {
         mpv.mpv_terminate_destroy(ctx);
+        // Close the NativeCallable only after mpv_terminate_destroy has
+        // synchronously joined the mpv core thread. At this point no
+        // wakeup can ever fire again, so the trampoline is safe to tear down.
+        callable?.close();
       });
     }
 

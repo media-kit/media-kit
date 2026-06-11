@@ -57,15 +57,19 @@ class Initializer {
   }
 
   /// Disposes [Pointer<mpv_handle>].
-  void dispose(Pointer<generated.mpv_handle> ctx) {
+  ///
+  /// Returns the [WakeUpNativeCallable] if one was used, so the caller can
+  /// close it after `mpv_terminate_destroy` has joined the mpv core thread.
+  WakeUpNativeCallable? dispose(Pointer<generated.mpv_handle> ctx) {
     if (kDebugMode && isMainIsolate()) {
       InitializerIsolate().dispose(mpv, ctx);
-      return;
+      return null;
     }
     if (!isExecmemRestricted) {
-      InitializerNativeCallable(mpv).dispose(ctx);
+      return InitializerNativeCallable(mpv).dispose(ctx);
     } else {
       InitializerIsolate().dispose(mpv, ctx);
+      return null;
     }
   }
 

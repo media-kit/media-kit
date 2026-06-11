@@ -57,15 +57,21 @@ class InitializerNativeCallable {
   }
 
   /// Disposes [Pointer<mpv_handle>].
-  void dispose(Pointer<generated.mpv_handle> ctx) {
+  ///
+  /// Returns the [WakeUpNativeCallable] associated with [ctx] so the caller
+  /// can close it **after** `mpv_terminate_destroy` has joined the mpv core
+  /// thread. Closing the callable before that point risks a SIGABRT on
+  /// Flutter 3.38+ ("Callback invoked after it has been deleted").
+  WakeUpNativeCallable? dispose(Pointer<generated.mpv_handle> ctx) {
     _locks.remove(ctx.address);
     _eventCallbacks.remove(ctx.address);
 
-    // Clear the wakeup callback in libmpv before closing NativeCallable
-    // to prevent libmpv from invoking a deleted callback
+    // Clear the wakeup callback in libmpv so it stops *scheduling* new
+    // invocations, but do NOT close the NativeCallable yet — an in-flight
+    // wakeup on the mpv core thread may still land.
     mpv.mpv_set_wakeup_callback(ctx, nullptr, nullptr);
-    
-    _wakeUpNativeCallables.remove(ctx.address)?.close();
+
+    return _wakeUpNativeCallables.remove(ctx.address);
   }
 
   void _callback(Pointer<generated.mpv_handle> ctx) {
