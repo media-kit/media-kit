@@ -139,6 +139,12 @@ class VideoController {
     }();
   }
 
+  void dispose() {
+    notifier.dispose();
+    id.dispose();
+    rect.dispose();
+  }
+
   /// Sets the required size of the video output.
   /// This may yield substantial performance improvements if a small [width] & [height] is specified.
   ///
