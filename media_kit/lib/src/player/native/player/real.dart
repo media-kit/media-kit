@@ -2332,6 +2332,10 @@ class NativePlayer extends PlatformPlayer {
         // Set --vid=no by default to prevent redundant video decoding.
         // [VideoController] internally sets --vid=auto upon attachment to enable video rendering & decoding.
         if (!test) 'vid': 'no',
+        // Skip mpv's AVAudioSession management when the embedder owns the
+        // session. iOS-specific.
+        if (Platform.isIOS && !configuration.iosManageAudioSession)
+          'audiounit-skip-session-management': 'yes',
       };
 
       if (Platform.isAndroid &&

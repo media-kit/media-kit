@@ -36,7 +36,7 @@ let package = Package(
         .iOS("9.0")
     ],
     products: [
-        .library(name: "media-kit-libs-ios-audio", targets: ["media_kit_libs_ios_audio"] + libmpvTargets)
+        .library(name: "media-kit-libs-ios-audio", targets: ["media_kit_libs_ios_audio"] + libmpvTargets),
         .library(name: "Mpv", targets: ["Mpv"])
     ],
     dependencies: [],

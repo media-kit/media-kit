@@ -38,7 +38,7 @@ dependencies:
   image: ^4.8.0
   meta: ^1.15.0
   path: ^1.9.1
-  safe_local_storage: ^2.0.3
+  safe_local_storage: ^2.0.4
   synchronized: ^3.3.0
   universal_platform: ^1.1.0
   uri_parser: ^3.0.2
