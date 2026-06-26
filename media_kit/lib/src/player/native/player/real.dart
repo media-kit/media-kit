@@ -1308,7 +1308,7 @@ class NativePlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
     }
 
-    if (observed.containsKey(property)) {
+    if (observedProperties.containsKey(property)) {
       throw ArgumentError.value(
         property,
         'property',
@@ -1316,7 +1316,7 @@ class NativePlayer extends PlatformPlayer {
       );
     }
     final reply = property.hashCode;
-    observed[property] = listener;
+    observedProperties[property] = listener;
     final name = property.toNativeUtf8();
     mpv.mpv_observe_property(
       ctx,
@@ -1347,7 +1347,7 @@ class NativePlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
     }
 
-    if (!observed.containsKey(property)) {
+    if (!observedProperties.containsKey(property)) {
       throw ArgumentError.value(
         property,
         'property',
@@ -1355,8 +1355,69 @@ class NativePlayer extends PlatformPlayer {
       );
     }
     final reply = property.hashCode;
-    observed.remove(property);
+    observedProperties.remove(property);
     mpv.mpv_unobserve_property(ctx, reply);
+  }
+
+  /// Observes event for the internal libmpv instance of this [Player].
+  /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
+  ///
+  /// See:
+  /// * https://mpv.io/manual/master/#list-of-events
+  ///
+  Future<void> observeEvent(
+    int event,
+    Future<void> Function(Pointer<generated.mpv_event>) listener, {
+    bool waitForInitialization = true,
+  }) async {
+    if (disposed) {
+      throw AssertionError('[Player] has been disposed');
+    }
+
+    if (waitForInitialization) {
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+    }
+
+    if (observedEvents.containsKey(event)) {
+      throw ArgumentError.value(
+        event,
+        'event',
+        'Already observed',
+      );
+    }
+    observedEvents[event] = listener;
+    _logError(mpv.mpv_request_event(ctx, event, 1), 'observeEvent($event)');
+  }
+
+  /// Unobserves event for the internal libmpv instance of this [Player].
+  /// Please use this method only if you know what you are doing, existing methods in [Player] implementation are suited for the most use cases.
+  ///
+  /// See:
+  /// * https://mpv.io/manual/master/#list-of-events
+  ///
+  Future<void> unobserveEvent(
+    int event, {
+    bool waitForInitialization = true,
+  }) async {
+    if (disposed) {
+      throw AssertionError('[Player] has been disposed');
+    }
+
+    if (waitForInitialization) {
+      await waitForPlayerInitialization;
+      await waitForVideoControllerInitializationIfAttached;
+    }
+
+    if (!observedEvents.containsKey(event)) {
+      throw ArgumentError.value(
+        event,
+        'event',
+        'Not observed',
+      );
+    }
+    observedEvents.remove(event);
+    _logError(mpv.mpv_request_event(ctx, event, 0), 'unobserveEvent($event)');
   }
 
   /// Invokes command for the internal libmpv instance of this [Player].
@@ -1384,6 +1445,8 @@ class NativePlayer extends PlatformPlayer {
   Future<void> _handler(Pointer<generated.mpv_event> event) async {
     if (event.ref.event_id ==
         generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
+      // Following properties are unrelated to the playback lifecycle. Thus, these can be accessed before initialization is complete.
+      // e.g. audio-device & audio-device-list seem to be emitted before idle-active.
       final prop = event.ref.data.cast<generated.mpv_event_property>();
       if (prop.ref.name.cast<Utf8>().toDartString() == 'idle-active' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
@@ -1393,8 +1456,6 @@ class NativePlayer extends PlatformPlayer {
           completer.complete();
         }
       }
-      // Following properties are unrelated to the playback lifecycle. Thus, these can be accessed before initialization is complete.
-      // e.g. audio-device & audio-device-list seem to be emitted before idle-active.
       if (prop.ref.name.cast<Utf8>().toDartString() == 'audio-device' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_NODE) {
         final value = prop.ref.data.cast<generated.mpv_node>();
@@ -1464,6 +1525,16 @@ class NativePlayer extends PlatformPlayer {
       }
     }
 
+    final fn = observedEvents[event.ref.event_id];
+    if (fn != null) {
+      try {
+        await fn.call(event);
+      } catch (exception, stacktrace) {
+        print(exception);
+        print(stacktrace);
+      }
+    }
+
     if (!completer.isCompleted) {
       // Ignore the events which are fired before the initialization.
       return;
@@ -1492,27 +1563,28 @@ class NativePlayer extends PlatformPlayer {
         bufferingController.add(true);
       }
     }
-    // NOTE: Now, --keep-open=yes is used. Thus, eof-reached property is used instead of this.
-    // if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_END_FILE) {
-    //   // Check for mpv_end_file_reason.MPV_END_FILE_REASON_EOF before modifying state.completed.
-    //   if (event.ref.data.cast<generated.mpv_event_end_file>().ref.reason == generated.mpv_end_file_reason.MPV_END_FILE_REASON_EOF) {
-    //     if (isPlayingStateChangeAllowed) {
-    //       state = state.copyWith(
-    //         playing: false,
-    //         completed: true,
-    //       );
-    //       if (!playingController.isClosed) {
-    //         playingController.add(false);
-    //       }
-    //       if (!completedController.isClosed) {
-    //         completedController.add(true);
-    //       }
-    //     }
-    //   }
-    // }
     if (event.ref.event_id ==
         generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
       final prop = event.ref.data.cast<generated.mpv_event_property>();
+      if (observedProperties
+          .containsKey(prop.ref.name.cast<Utf8>().toDartString())) {
+        if (prop.ref.format == generated.mpv_format.MPV_FORMAT_NONE) {
+          final fn =
+              observedProperties[prop.ref.name.cast<Utf8>().toDartString()];
+          if (fn != null) {
+            final data = mpv.mpv_get_property_string(ctx, prop.ref.name);
+            if (data != nullptr) {
+              try {
+                await fn.call(data.cast<Utf8>().toDartString());
+              } catch (exception, stacktrace) {
+                print(exception);
+                print(stacktrace);
+              }
+              mpv.mpv_free(data.cast());
+            }
+          }
+        }
+      }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
         final playing = prop.ref.data.cast<Int8>().value == 0;
@@ -2057,23 +2129,6 @@ class NativePlayer extends PlatformPlayer {
           }
         }
       }
-      if (observed.containsKey(prop.ref.name.cast<Utf8>().toDartString())) {
-        if (prop.ref.format == generated.mpv_format.MPV_FORMAT_NONE) {
-          final fn = observed[prop.ref.name.cast<Utf8>().toDartString()];
-          if (fn != null) {
-            final data = mpv.mpv_get_property_string(ctx, prop.ref.name);
-            if (data != nullptr) {
-              try {
-                await fn.call(data.cast<Utf8>().toDartString());
-              } catch (exception, stacktrace) {
-                print(exception);
-                print(stacktrace);
-              }
-              mpv.mpv_free(data.cast());
-            }
-          }
-        }
-      }
     }
     if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_LOG_MESSAGE) {
       final eventLogMessage =
@@ -2332,8 +2387,7 @@ class NativePlayer extends PlatformPlayer {
         // Set --vid=no by default to prevent redundant video decoding.
         // [VideoController] internally sets --vid=auto upon attachment to enable video rendering & decoding.
         if (!test) 'vid': 'no',
-        // Skip mpv's AVAudioSession management when the embedder owns the
-        // session. iOS-specific.
+        // Skip mpv's AVAudioSession management when the embedder owns the session. iOS-specific.
         if (Platform.isIOS && !configuration.iosManageAudioSession)
           'audiounit-skip-session-management': 'yes',
       };
@@ -2706,8 +2760,13 @@ class NativePlayer extends PlatformPlayer {
   List<Media> current = <Media>[];
 
   /// Currently observed properties through [observeProperty].
-  final HashMap<String, Future<void> Function(String)> observed =
+  final HashMap<String, Future<void> Function(String)> observedProperties =
       HashMap<String, Future<void> Function(String)>();
+
+  /// Currently observed events through [observeEvent].
+  final HashMap<int, Future<void> Function(Pointer<generated.mpv_event>)>
+      observedEvents =
+      HashMap<int, Future<void> Function(Pointer<generated.mpv_event>)>();
 
   /// The methods which must execute synchronously before playback of a source can begin.
   final List<Future<void> Function()> onLoadHooks = [];
