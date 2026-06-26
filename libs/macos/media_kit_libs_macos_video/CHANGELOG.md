@@ -1,3 +1,8 @@
+## 1.1.5
+
+- feat: add Swift Package Manager support
+- feat: add mpv `--audiounit-skip-session-management` support
+
 ## 1.1.4
 
 - feat: AV1 support ([#429](https://github.com/media-kit/media-kit/issues/429))

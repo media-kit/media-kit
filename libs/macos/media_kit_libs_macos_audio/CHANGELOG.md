@@ -1,3 +1,8 @@
+## 1.1.6
+
+- feat: add Swift Package Manager support
+- feat: add mpv `--audiounit-skip-session-management` support
+
 ## 1.1.5
 
 - build: bump dependencies
