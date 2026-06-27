@@ -8,7 +8,7 @@
 PRODUCT_NAME = media_kit_test
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.mediaKitTest
+PRODUCT_BUNDLE_IDENTIFIER = com.mediakit.mediaKitTest
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2023 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.mediakit. All rights reserved.

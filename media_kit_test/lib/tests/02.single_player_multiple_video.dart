@@ -70,7 +70,7 @@ class _SinglePlayerMultipleVideoScreenState
             heroTag: 'file',
             tooltip: 'Open [File]',
             onPressed: () async {
-              final result = await FilePicker.platform.pickFiles(
+              final result = await FilePicker.pickFiles(
                 type: FileType.any,
               );
               if (result?.files.isNotEmpty ?? false) {
