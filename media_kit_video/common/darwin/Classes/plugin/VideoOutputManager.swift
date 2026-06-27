@@ -53,4 +53,15 @@ public class VideoOutputManager: NSObject {
 
     self.videoOutputs[handle] = nil
   }
+
+  public func setOnFrameRendered(
+    handle: Int64,
+    _ callback: ((CVPixelBuffer) -> Void)?
+  ) {
+    videoOutputs[handle]?.setOnFrameRendered(callback)
+  }
+
+  public func videoOutput(forHandle handle: Int64) -> VideoOutput? {
+    return videoOutputs[handle]
+  }
 }

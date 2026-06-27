@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:media_kit/media_kit.dart';
 
+import 'package:media_kit_video/src/picture_in_picture/picture_in_picture_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 
 import 'package:media_kit_video/src/video_controller/native_video_controller/native_video_controller.dart';
@@ -67,6 +68,16 @@ class VideoController {
 
   /// [Rect] of the video output, received from the native implementation.
   final ValueNotifier<Rect?> rect = ValueNotifier<Rect?>(null);
+
+  /// Picture-in-Picture controller associated with this [VideoController].
+  ///
+  /// The instance is platform-specific (iOS / Android) and falls back to a
+  /// no-op implementation on unsupported platforms. It is typically driven
+  /// indirectly by passing a [PipConfig] to [Video.pip]; use this getter
+  /// only for advanced imperative control (manual start/stop, event
+  /// subscription).
+  late final PictureInPictureController pictureInPicture =
+      PictureInPictureController.platform();
 
   /// {@macro video_controller}
   VideoController(
