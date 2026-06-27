@@ -14,5 +14,13 @@ dependency_overrides:
     path: ../libs/universal/media_kit_libs_video
   media_kit_libs_windows_video:
     path: ../libs/windows/media_kit_libs_windows_video
+  media_kit_libs_ohos:
+    path: ../libs/ohos/media_kit_libs_ohos
   media_kit_video:
     path: ../media_kit_video
+
+# Uncomment below to support ohos
+#  path_provider:
+#    git:
+#      url: https://gitcode.com/openharmony-tpc/flutter_packages.git
+#      path: packages/path_provider/path_provider
