@@ -28,11 +28,21 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
       utils: utils
     )
     registrar.addMethodCallDelegate(instance, channel: channel)
+
+    #if canImport(Flutter)
+      instance.pipPlugin = MediaKitPictureInPicturePlugin(
+        registrar: registrar,
+        outputManager: instance.videoOutputManager
+      )
+    #endif
   }
 
   private let channel: FlutterMethodChannel
   private let videoOutputManager: VideoOutputManager
   private let utils: UtilsProtocol?
+  #if canImport(Flutter)
+    private var pipPlugin: MediaKitPictureInPicturePlugin?
+  #endif
 
   init(
     registry: FlutterTextureRegistry,

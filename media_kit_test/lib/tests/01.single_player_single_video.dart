@@ -10,10 +10,12 @@ class SinglePlayerSingleVideoScreen extends StatefulWidget {
   const SinglePlayerSingleVideoScreen({super.key});
 
   @override
-  State<SinglePlayerSingleVideoScreen> createState() => _SinglePlayerSingleVideoScreenState();
+  State<SinglePlayerSingleVideoScreen> createState() =>
+      _SinglePlayerSingleVideoScreenState();
 }
 
-class _SinglePlayerSingleVideoScreenState extends State<SinglePlayerSingleVideoScreen> {
+class _SinglePlayerSingleVideoScreenState
+    extends State<SinglePlayerSingleVideoScreen> {
   late final Player player = Player();
   late final VideoController controller = VideoController(
     player,
@@ -134,7 +136,8 @@ Enjoy watching the video!
 
   @override
   Widget build(BuildContext context) {
-    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal =
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: const Text('package:media_kit'),
@@ -146,7 +149,8 @@ Enjoy watching the video!
         children: [
           FloatingActionButton(
             heroTag: 'subtitles',
-            tooltip: subtitlesEnabled ? 'Disable Subtitles' : 'Enable Subtitles',
+            tooltip:
+                subtitlesEnabled ? 'Disable Subtitles' : 'Enable Subtitles',
             onPressed: _toggleSubtitles,
             backgroundColor: subtitlesEnabled ? Colors.green : null,
             child: Icon(
@@ -187,7 +191,8 @@ Enjoy watching the video!
                               margin: const EdgeInsets.all(32.0),
                               child: Video(
                                 controller: controller,
-                                subtitleViewConfiguration: const SubtitleViewConfiguration(
+                                subtitleViewConfiguration:
+                                    const SubtitleViewConfiguration(
                                   style: TextStyle(
                                     height: 1.4,
                                     fontSize: 32.0,

@@ -114,6 +114,12 @@ class Video extends StatefulWidget {
   /// FocusNode for keyboard input.
   final FocusNode? focusNode;
 
+  /// Picture-in-Picture configuration. Ignored on web.
+  final PipConfig? pip;
+
+  /// Picture-in-Picture event callback. Never invoked on web.
+  final ValueChanged<PipEvent>? onPipEvent;
+
   /// {@macro video}
   const Video({
     super.key,
@@ -133,6 +139,8 @@ class Video extends StatefulWidget {
     this.onEnterFullscreen = defaultEnterNativeFullscreen,
     this.onExitFullscreen = defaultExitNativeFullscreen,
     this.focusNode,
+    this.pip,
+    this.onPipEvent,
   });
 
   @override
