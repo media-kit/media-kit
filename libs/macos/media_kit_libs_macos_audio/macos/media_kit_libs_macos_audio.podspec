@@ -6,7 +6,7 @@ Pod::Spec.new do |s|
   system("make")
 
   s.name             = 'media_kit_libs_macos_audio'
-  s.version          = '1.0.4'
+  s.version          = '1.1.6'
   s.summary          = 'macOS dependency package for package:media_kit'
   s.description      = <<-DESC
   macOS dependency package for package:media_kit.

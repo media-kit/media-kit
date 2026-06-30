@@ -3993,7 +3993,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
         },
       );
       expect(
-        (player.platform as dynamic).observed.containsKey(property),
+        (player.platform as dynamic).observedProperties.containsKey(property),
         isTrue,
       );
 
@@ -4004,7 +4004,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 
       await (player.platform as dynamic).unobserveProperty(property);
       expect(
-        (player.platform as dynamic).observed.containsKey(property),
+        (player.platform as dynamic).observedProperties.containsKey(property),
         isFalse,
       );
 
