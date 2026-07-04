@@ -41,9 +41,7 @@ class _SinglePlayerMultipleVideoScreenState
           ListTile(
             title: Text(
               'Video $i',
-              style: const TextStyle(
-                fontSize: 14.0,
-              ),
+              style: const TextStyle(fontSize: 14.0),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -58,9 +56,7 @@ class _SinglePlayerMultipleVideoScreenState
     final horizontal =
         MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('package:media_kit'),
-      ),
+      appBar: AppBar(title: const Text('package:media_kit')),
       floatingActionButton: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.end,
@@ -70,11 +66,9 @@ class _SinglePlayerMultipleVideoScreenState
             heroTag: 'file',
             tooltip: 'Open [File]',
             onPressed: () async {
-              final result = await FilePicker.pickFiles(
-                type: FileType.any,
-              );
-              if (result?.files.isNotEmpty ?? false) {
-                await player.open(Media(result!.files.first.path!));
+              final result = await FilePicker.pickFiles(type: FileType.any);
+              if (result.isNotEmpty) {
+                await player.open(Media(result.first.path!));
               }
             },
             child: const Icon(Icons.file_open),
@@ -139,12 +133,7 @@ class _SinglePlayerMultipleVideoScreenState
                     ),
                   ),
                   const VerticalDivider(width: 1.0, thickness: 1.0),
-                  Expanded(
-                    flex: 1,
-                    child: ListView(
-                      children: items,
-                    ),
-                  ),
+                  Expanded(flex: 1, child: ListView(children: items)),
                 ],
               )
             : ListView(

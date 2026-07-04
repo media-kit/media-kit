@@ -1,7 +1,8 @@
 import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
-import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart' as path;
 
 /// List of sample videos available for playback.
@@ -19,11 +20,7 @@ Future<void> prepareSources() async {
   for (int i = 0; i < uris.length; i++) {
     progress.value = 'Downloading sample video ${(i + 1)} of ${uris.length}...';
     final file = File(
-      path.join(
-        directory.path,
-        'media_kit_test',
-        'video$i.mp4',
-      ),
+      path.join(directory.path, 'media_kit_test', 'video$i.mp4'),
     );
     if (!await file.exists()) {
       final response = await http.get(Uri.parse(uris[i]));

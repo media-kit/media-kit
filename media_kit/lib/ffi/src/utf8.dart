@@ -2,8 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-import 'dart:ffi';
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:media_kit/ffi/src/allocation.dart';
@@ -77,7 +77,8 @@ extension Utf8Pointer on Pointer<Utf8> {
   void _ensureNotNullptr(String operation) {
     if (this == nullptr) {
       throw UnsupportedError(
-          "Operation '$operation' not allowed on a 'nullptr'.");
+        "Operation '$operation' not allowed on a 'nullptr'.",
+      );
     }
   }
 }

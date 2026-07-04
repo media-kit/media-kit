@@ -3,17 +3,17 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:io';
+
 import 'dart:async';
 import 'dart:collection';
-import 'package:flutter/services.dart';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
-import 'package:synchronized/synchronized.dart';
-
+import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
-
 import 'package:media_kit_video/src/utils/query_decoders.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
+import 'package:synchronized/synchronized.dart';
 
 /// {@template android_video_controller}
 ///
@@ -57,17 +57,15 @@ class AndroidVideoController extends PlatformVideoController {
       final vidValue = widValue == '0' ? 'no' : 'auto';
       // It is important to re-initialize --vo after --android-surface-size.
       await setProperty('vo', 'null');
-      await setProperties(
-        {
-          // ORDER IS IMPORTANT.
-          'android-surface-size': androidSurfaceSizeValue,
-          'wid': widValue,
-          'vo': voValue,
-          // It is important to re-initialize --vid in-case of --vo=mediacodec_embed.
-          // Not doing so causes error "Could not open codec." & video never gets rendered.
-          if (configuration.vo == 'mediacodec_embed') 'vid': vidValue,
-        },
-      );
+      await setProperties({
+        // ORDER IS IMPORTANT.
+        'android-surface-size': androidSurfaceSizeValue,
+        'wid': widValue,
+        'vo': voValue,
+        // It is important to re-initialize --vid in-case of --vo=mediacodec_embed.
+        // Not doing so causes error "Could not open codec." & video never gets rendered.
+        if (configuration.vo == 'mediacodec_embed') 'vid': vidValue,
+      });
       // Instead of seeking to the start (Duration.zero), seek to the current playback position
       // without jumping the user to the start of the media.
       final currentPosition = player.state.position;
@@ -79,10 +77,7 @@ class AndroidVideoController extends PlatformVideoController {
   StreamSubscription<VideoParams>? videoParamsSubscription;
 
   /// {@macro android_video_controller}
-  AndroidVideoController._(
-    super.player,
-    super.configuration,
-  ) {
+  AndroidVideoController._(super.player, super.configuration) {
     wid.addListener(widListener);
     videoParamsSubscription = player.stream.videoParams.listen(
       (event) => lock.synchronized(() async {
@@ -106,14 +101,11 @@ class AndroidVideoController extends PlatformVideoController {
 
         final handle = await player.handle;
 
-        await _channel.invokeMethod(
-          'VideoOutputManager.SetSurfaceSize',
-          {
-            'handle': handle.toString(),
-            'width': width.toString(),
-            'height': height.toString(),
-          },
-        );
+        await _channel.invokeMethod('VideoOutputManager.SetSurfaceSize', {
+          'handle': handle.toString(),
+          'width': width.toString(),
+          'height': height.toString(),
+        });
 
         rect.value = Rect.fromLTWH(
           0.0,
@@ -173,10 +165,7 @@ class AndroidVideoController extends PlatformVideoController {
     }
 
     // Creation:
-    final controller = AndroidVideoController._(
-      player,
-      configuration,
-    );
+    final controller = AndroidVideoController._(player, configuration);
 
     // Register [_dispose] for execution upon [Player.dispose].
     player.platform?.release.add(controller._dispose);
@@ -184,28 +173,23 @@ class AndroidVideoController extends PlatformVideoController {
     // Store the [VideoController] in the [_controllers].
     _controllers[handle] = controller;
 
-    await _channel.invokeMethod(
-      'VideoOutputManager.Create',
-      {
-        'handle': handle.toString(),
-      },
-    );
+    await _channel.invokeMethod('VideoOutputManager.Create', {
+      'handle': handle.toString(),
+    });
 
-    await controller.setProperties(
-      {
-        // It is necessary to set vo=null here to avoid SIGSEGV, --wid must be assigned before vo=gpu is set.
-        'vo': 'null',
-        'hwdec': configuration.hwdec!,
-        'vid': 'auto',
-        'opengl-es': 'yes',
-        'force-window': 'yes',
-        'gpu-context': 'android',
-        'sub-use-margins': 'no',
-        'sub-font-provider': 'none',
-        'sub-scale-with-window': 'yes',
-        'hwdec-codecs': 'h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1',
-      },
-    );
+    await controller.setProperties({
+      // It is necessary to set vo=null here to avoid SIGSEGV, --wid must be assigned before vo=gpu is set.
+      'vo': 'null',
+      'hwdec': configuration.hwdec!,
+      'vid': 'auto',
+      'opengl-es': 'yes',
+      'force-window': 'yes',
+      'gpu-context': 'android',
+      'sub-use-margins': 'no',
+      'sub-font-provider': 'none',
+      'sub-scale-with-window': 'yes',
+      'hwdec-codecs': 'h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1',
+    });
 
     // Return the [PlatformVideoController].
     return controller;
@@ -218,10 +202,7 @@ class AndroidVideoController extends PlatformVideoController {
   /// * “Premature optimization is the root of all evil”
   /// * “With great power comes great responsibility”
   @override
-  Future<void> setSize({
-    int? width,
-    int? height,
-  }) {
+  Future<void> setSize({int? width, int? height}) {
     throw UnsupportedError(
       '[AndroidVideoController.setSize] is not available on Android',
     );
@@ -235,65 +216,60 @@ class AndroidVideoController extends PlatformVideoController {
     await videoParamsSubscription?.cancel();
     final handle = await player.handle;
     _controllers.remove(handle);
-    await _channel.invokeMethod(
-      'VideoOutputManager.Dispose',
-      {
-        'handle': handle.toString(),
-      },
-    );
+    await _channel.invokeMethod('VideoOutputManager.Dispose', {
+      'handle': handle.toString(),
+    });
   }
 
   /// Currently created [AndroidVideoController]s.
   static final _controllers = HashMap<int, AndroidVideoController>();
 
   /// [MethodChannel] for invoking platform specific native implementation.
-  static final _channel =
-      const MethodChannel('com.alexmercerind/media_kit_video')
-        ..setMethodCallHandler(
-          (MethodCall call) async {
-            try {
-              debugPrint(call.method.toString());
-              debugPrint(call.arguments.toString());
-              switch (call.method) {
-                case 'VideoOutput.Resize':
-                  {
-                    // Notify about updated texture ID & [Rect].
-                    final int handle = call.arguments['handle'];
-                    final Rect rect = Rect.fromLTWH(
-                      call.arguments['rect']['left'] * 1.0,
-                      call.arguments['rect']['top'] * 1.0,
-                      call.arguments['rect']['width'] * 1.0,
-                      call.arguments['rect']['height'] * 1.0,
-                    );
-                    final int id = call.arguments['id'];
-                    final int wid = call.arguments['wid'];
-                    _controllers[handle]?.rect.value = rect;
-                    _controllers[handle]?.id.value = id;
-                    _controllers[handle]?.wid.value = wid;
-                    break;
-                  }
-                case 'VideoOutput.WaitUntilFirstFrameRenderedNotify':
-                  {
-                    // Notify about updated texture ID & [Rect].
-                    final int handle = call.arguments['handle'];
-                    debugPrint(handle.toString());
-                    // Notify about the first frame being rendered.
-                    final completer = _controllers[handle]
-                        ?.waitUntilFirstFrameRenderedCompleter;
-                    if (!(completer?.isCompleted ?? true)) {
-                      completer?.complete();
-                    }
-                    break;
-                  }
-                default:
-                  {
-                    break;
-                  }
-              }
-            } catch (exception, stacktrace) {
-              debugPrint(exception.toString());
-              debugPrint(stacktrace.toString());
+  static final _channel = const MethodChannel(
+    'com.alexmercerind/media_kit_video',
+  )..setMethodCallHandler((MethodCall call) async {
+      try {
+        debugPrint(call.method.toString());
+        debugPrint(call.arguments.toString());
+        switch (call.method) {
+          case 'VideoOutput.Resize':
+            {
+              // Notify about updated texture ID & [Rect].
+              final int handle = call.arguments['handle'];
+              final Rect rect = Rect.fromLTWH(
+                call.arguments['rect']['left'] * 1.0,
+                call.arguments['rect']['top'] * 1.0,
+                call.arguments['rect']['width'] * 1.0,
+                call.arguments['rect']['height'] * 1.0,
+              );
+              final int id = call.arguments['id'];
+              final int wid = call.arguments['wid'];
+              _controllers[handle]?.rect.value = rect;
+              _controllers[handle]?.id.value = id;
+              _controllers[handle]?.wid.value = wid;
+              break;
             }
-          },
-        );
+          case 'VideoOutput.WaitUntilFirstFrameRenderedNotify':
+            {
+              // Notify about updated texture ID & [Rect].
+              final int handle = call.arguments['handle'];
+              debugPrint(handle.toString());
+              // Notify about the first frame being rendered.
+              final completer =
+                  _controllers[handle]?.waitUntilFirstFrameRenderedCompleter;
+              if (!(completer?.isCompleted ?? true)) {
+                completer?.complete();
+              }
+              break;
+            }
+          default:
+            {
+              break;
+            }
+        }
+      } catch (exception, stacktrace) {
+        debugPrint(exception.toString());
+        debugPrint(stacktrace.toString());
+      }
+    });
 }
