@@ -1275,16 +1275,19 @@ class NativePlayer extends PlatformPlayer {
     }
 
     final name = property.toNativeUtf8();
-    final value = mpv.mpv_get_property_string(ctx, name.cast());
-    if (value != nullptr) {
-      final result = value.cast<Utf8>().toDartString();
+    try {
+      final value = mpv.mpv_get_property_string(ctx, name.cast());
+      if (value != nullptr) {
+        try {
+          return value.cast<Utf8>().toDartString();
+        } finally {
+          mpv.mpv_free(value.cast());
+        }
+      }
+      return '';
+    } finally {
       calloc.free(name);
-      mpv.mpv_free(value.cast());
-
-      return result;
     }
-
-    return "";
   }
 
   /// Observes property for the internal libmpv instance of this [Player].
@@ -2604,33 +2607,38 @@ class NativePlayer extends PlatformPlayer {
   final Map<int, Completer<int>> _commandRequests = {};
 
   Future<void> _setProperty(String name, int format, Pointer<Void> data) async {
-    final requestNumber = _asyncRequestNumber++;
-    final completer = _setPropertyRequests[requestNumber] = Completer<int>();
     final namePtr = name.toNativeUtf8();
-    if (configuration.async) {
-      final immediate = mpv.mpv_set_property_async(
-        ctx,
-        requestNumber,
-        namePtr.cast(),
-        format,
-        data,
-      );
-      final text = '_setProperty($name, $format)';
-      if (immediate < 0) {
-        // Sending failed.
-        _logError(immediate, text);
-        return;
+    try {
+      if (configuration.async) {
+        final requestNumber = _asyncRequestNumber++;
+        final completer =
+            _setPropertyRequests[requestNumber] = Completer<int>();
+        final immediate = mpv.mpv_set_property_async(
+          ctx,
+          requestNumber,
+          namePtr.cast(),
+          format,
+          data,
+        );
+        final text = '_setProperty($name, $format)';
+        if (immediate < 0) {
+          // Sending failed, so no reply event will remove this request.
+          _setPropertyRequests.remove(requestNumber);
+          _logError(immediate, text);
+          return;
+        }
+        _logError(await completer.future, text);
+      } else {
+        mpv.mpv_set_property(
+          ctx,
+          namePtr.cast(),
+          format,
+          data,
+        );
       }
-      _logError(await completer.future, text);
-    } else {
-      mpv.mpv_set_property(
-        ctx,
-        namePtr.cast(),
-        format,
-        data,
-      );
+    } finally {
+      calloc.free(namePtr);
     }
-    calloc.free(namePtr);
   }
 
   Future<void> _setPropertyFlag(String name, bool value) async {
@@ -2680,27 +2688,30 @@ class NativePlayer extends PlatformPlayer {
   Future<void> _command(List<String> args) async {
     final pointers = args.map<Pointer<Utf8>>((e) => e.toNativeUtf8()).toList();
     final arr = calloc<Pointer<Utf8>>(128);
-    for (int i = 0; i < args.length; i++) {
-      (arr + i).value = pointers[i];
-    }
-
-    if (configuration.async) {
-      final requestNumber = _asyncRequestNumber++;
-      final completer = _commandRequests[requestNumber] = Completer<int>();
-      final immediate = mpv.mpv_command_async(ctx, requestNumber, arr.cast());
-      final text = '_command(${args.join(', ')})';
-      if (immediate < 0) {
-        // Sending failed.
-        _logError(immediate, text);
-        return;
+    try {
+      for (int i = 0; i < args.length; i++) {
+        (arr + i).value = pointers[i];
       }
-      _logError(await completer.future, text);
-    } else {
-      mpv.mpv_command(ctx, arr.cast());
-    }
 
-    calloc.free(arr);
-    pointers.forEach(calloc.free);
+      if (configuration.async) {
+        final requestNumber = _asyncRequestNumber++;
+        final completer = _commandRequests[requestNumber] = Completer<int>();
+        final immediate = mpv.mpv_command_async(ctx, requestNumber, arr.cast());
+        final text = '_command(${args.join(', ')})';
+        if (immediate < 0) {
+          // Sending failed, so no reply event will remove this request.
+          _commandRequests.remove(requestNumber);
+          _logError(immediate, text);
+          return;
+        }
+        _logError(await completer.future, text);
+      } else {
+        mpv.mpv_command(ctx, arr.cast());
+      }
+    } finally {
+      calloc.free(arr);
+      pointers.forEach(calloc.free);
+    }
   }
 
   String _sanitizeUri(String uri) {
