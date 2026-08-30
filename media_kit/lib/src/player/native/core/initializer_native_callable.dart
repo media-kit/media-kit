@@ -64,7 +64,7 @@ class InitializerNativeCallable {
     // Clear the wakeup callback in libmpv before closing NativeCallable
     // to prevent libmpv from invoking a deleted callback
     mpv.mpv_set_wakeup_callback(ctx, nullptr, nullptr);
-    
+
     _wakeUpNativeCallables.remove(ctx.address)?.close();
   }
 
