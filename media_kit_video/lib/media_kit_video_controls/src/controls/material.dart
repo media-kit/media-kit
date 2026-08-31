@@ -829,6 +829,11 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   @override
   Widget build(BuildContext context) {
+    final verticalGesturesEnabled = ((_theme(context).brightnessGesture &&
+            _theme(context).onBrightnessChanged != null) ||
+        (_theme(context).volumeGesture &&
+            _theme(context).onVolumeChanged != null));
+
     var seekOnDoubleTapEnabledWhileControlsAreVisible =
         (_theme(context).seekOnDoubleTap &&
             _theme(context).seekOnDoubleTapEnabledWhileControlsVisible);
@@ -930,49 +935,41 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                             onHorizontalDragEnd: (details) {
                               onHorizontalDragEnd();
                             },
-                            onVerticalDragUpdate: (e) async {
-                              final delta = e.delta.dy;
-                              final Offset position = e.localPosition;
+                            onVerticalDragUpdate: verticalGesturesEnabled
+                                ? (e) async {
+                                    final delta = e.delta.dy;
+                                    final Offset position = e.localPosition;
 
-                              if (position.dx <= widgetWidth(context) / 2) {
-                                // Left side of screen swiped
-                                if ((!mount &&
-                                        _theme(context).brightnessGesture &&
-                                        _theme(context).onBrightnessChanged !=
-                                            null) ||
-                                    (_theme(context).brightnessGesture &&
-                                        _theme(context)
-                                            .gesturesEnabledWhileControlsVisible &&
-                                        _theme(context).onBrightnessChanged !=
-                                            null)) {
-                                  final brightness = _brightnessValue -
-                                      delta /
-                                          _theme(context)
-                                              .verticalGestureSensitivity;
-                                  final result = brightness.clamp(0.0, 1.0);
-                                  setBrightness(result);
-                                }
-                              } else {
-                                // Right side of screen swiped
+                                    if (position.dx <=
+                                        widgetWidth(context) / 2) {
+                                      // Left side of screen swiped
+                                      if ((!mount) ||
+                                          (_theme(context)
+                                              .gesturesEnabledWhileControlsVisible)) {
+                                        final brightness = _brightnessValue -
+                                            delta /
+                                                _theme(context)
+                                                    .verticalGestureSensitivity;
+                                        final result =
+                                            brightness.clamp(0.0, 1.0);
+                                        setBrightness(result);
+                                      }
+                                    } else {
+                                      // Right side of screen swiped
 
-                                if ((!mount &&
-                                        _theme(context).volumeGesture &&
-                                        _theme(context).onVolumeChanged !=
-                                            null) ||
-                                    (_theme(context).volumeGesture &&
-                                        _theme(context)
-                                            .gesturesEnabledWhileControlsVisible &&
-                                        _theme(context).onVolumeChanged !=
-                                            null)) {
-                                  final volume = _volumeValue -
-                                      delta /
-                                          _theme(context)
-                                              .verticalGestureSensitivity;
-                                  final result = volume.clamp(0.0, 1.0);
-                                  setVolume(result);
-                                }
-                              }
-                            },
+                                      if ((!mount) ||
+                                          (_theme(context)
+                                              .gesturesEnabledWhileControlsVisible)) {
+                                        final volume = _volumeValue -
+                                            delta /
+                                                _theme(context)
+                                                    .verticalGestureSensitivity;
+                                        final result = volume.clamp(0.0, 1.0);
+                                        setVolume(result);
+                                      }
+                                    }
+                                  }
+                                : null,
                             child: Container(
                               color: const Color(0x00000000),
                             ),
