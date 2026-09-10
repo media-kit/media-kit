@@ -8,6 +8,8 @@
 
 #include "video_output_manager.h"
 
+std::mutex VideoOutputManager::global_mutex_;
+
 VideoOutputManager::VideoOutputManager(
     flutter::PluginRegistrarWindows* registrar)
     : registrar_(registrar) {}
@@ -17,7 +19,7 @@ void VideoOutputManager::Create(
     VideoOutputConfiguration configuration,
     std::function<void(int64_t, int64_t, int64_t)> texture_update_callback) {
   std::thread([=]() {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(global_mutex_);
     if (video_outputs_.find(handle) == video_outputs_.end()) {
       auto instance = std::make_unique<VideoOutput>(
           handle, configuration, registrar_, thread_pool_.get());
@@ -31,7 +33,7 @@ void VideoOutputManager::SetSize(int64_t handle,
                                  std::optional<int64_t> width,
                                  std::optional<int64_t> height) {
   std::thread([=]() {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(global_mutex_);
     if (video_outputs_.find(handle) != video_outputs_.end()) {
       video_outputs_[handle]->SetSize(width, height);
     }
@@ -40,7 +42,7 @@ void VideoOutputManager::SetSize(int64_t handle,
 
 void VideoOutputManager::Dispose(int64_t handle) {
   std::thread([=]() {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(global_mutex_);
     if (video_outputs_.find(handle) != video_outputs_.end()) {
       video_outputs_.erase(handle);
     }
@@ -48,7 +50,7 @@ void VideoOutputManager::Dispose(int64_t handle) {
 }
 
 VideoOutputManager::~VideoOutputManager() {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(global_mutex_);
   // |VideoOutput| destructor will do the relevant cleanup.
   video_outputs_.clear();
   // This destructor is only called when the plugin is being destroyed i.e. the

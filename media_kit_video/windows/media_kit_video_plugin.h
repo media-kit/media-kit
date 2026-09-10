@@ -14,6 +14,7 @@
 #include <functional>
 #include <queue>
 #include <mutex>
+#include <unordered_map>
 
 #include "video_output_manager.h"
 
@@ -49,7 +50,8 @@ class MediaKitVideoPlugin : public flutter::Plugin {
   WNDPROC original_window_proc_ = nullptr;
   std::queue<std::function<void()>> main_thread_tasks_;
   std::mutex main_thread_tasks_mutex_;
-  static MediaKitVideoPlugin* instance_;
+  static std::unordered_map<HWND, MediaKitVideoPlugin*> instances_;
+  static std::mutex instances_mutex_;
 };
 
 }  // namespace media_kit_video
