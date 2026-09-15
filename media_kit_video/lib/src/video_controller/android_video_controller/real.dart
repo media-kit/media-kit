@@ -68,9 +68,16 @@ class AndroidVideoController extends PlatformVideoController {
           if (configuration.vo == 'mediacodec_embed') 'vid': vidValue,
         },
       );
-      // Instead of seeking to the start (Duration.zero), seek to the current playback position
-      // without jumping the user to the start of the media.
+      // vo=null → vo=gpu already queues a 0-seek (UPDATE_VO). An extra Dart
+      // seek at EOF clears stop_play to KEEP_PLAYING; loop-playlist then
+      // re-enters play_current_file and SIGABRTs (mpv#13778 / PR#14135).
       final currentPosition = player.state.position;
+      final duration = player.state.duration;
+      final atEof = player.state.completed ||
+          (duration > Duration.zero && currentPosition >= duration);
+      if (atEof || currentPosition <= Duration.zero) {
+        return;
+      }
       await player.seek(currentPosition);
     });
   }

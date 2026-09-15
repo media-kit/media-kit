@@ -178,16 +178,19 @@ class NativePlayer extends PlatformPlayer {
       }
       // ---------------------------------------------
 
-      // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, subtitle=['', ''] etc.
-      await stop(
-        open: true,
-        synchronized: false,
-      );
-
-      // Enter paused state.
+      // Enter paused state first so replace starts paused when [play] is false.
       await _setPropertyFlag('pause', true);
 
-      if (playlist.any((media) => media.uri.startsWith('fd://'))) {
+      // `loadfile replace` / `loadlist replace` is one command that sets
+      // stop_play = PT_CURRENT_ENTRY. The old stop + loadlist append +
+      // playlist-pos path re-entered play_current_file after a VO reinit
+      // seek had cleared stop_play (mpv#13778 / PR#14135, Android SIGABRT).
+      // Do not playlist-pos when index is 0: replace already starts that
+      // entry. Idle-wait after stop is also wrong — it forces
+      // handle_force_window, the same VO-reinit seek.
+      if (playlist.isEmpty || index < 0) {
+        await stop(open: true, synchronized: false);
+      } else if (playlist.any((media) => media.uri.startsWith('fd://'))) {
         // The fd:// scheme is used to reference content:// URIs on Android.
         // The loadlist command does not support this by default, yielding "Refusing to load potentially unsafe URL from a playlist."
         // So, we fallback to loading each file individually.
@@ -196,10 +199,21 @@ class NativePlayer extends PlatformPlayer {
             [
               'loadfile',
               _sanitizeUri(playlist[i].uri),
-              'append',
+              i == 0 ? 'replace' : 'append',
             ],
           );
         }
+        if (index != 0) {
+          await _setPropertyInt64('playlist-pos', index);
+        }
+      } else if (playlist.length == 1 && index == 0) {
+        await _command(
+          [
+            'loadfile',
+            _sanitizeUri(playlist.first.uri),
+            'replace',
+          ],
+        );
       } else {
         final file = await TempFile.create();
         final buffer = StringBuffer();
@@ -214,13 +228,17 @@ class NativePlayer extends PlatformPlayer {
           [
             'loadlist',
             file.path,
-            'append',
+            'replace',
           ],
         );
 
         Future.delayed(const Duration(seconds: 5), () {
           file.delete_();
         });
+
+        if (index != 0) {
+          await _setPropertyInt64('playlist-pos', index);
+        }
       }
 
       // If [play] is `true`, then exit paused state.
@@ -232,9 +250,6 @@ class NativePlayer extends PlatformPlayer {
           playingController.add(true);
         }
       }
-
-      // Jump to the specified [index] (in both cases either [play] is `true` or `false`).
-      await _setPropertyInt64('playlist-pos', index);
     }
 
     if (synchronized) {
