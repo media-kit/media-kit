@@ -7,6 +7,8 @@
 // LICENSE file.
 #include "angle_surface_manager.h"
 
+#include "utils.h"
+
 #include <iostream>
 
 #pragma comment(lib, "dxgi.lib")
@@ -26,7 +28,7 @@ int ANGLESurfaceManager::instance_count_ = 0;
 
 ANGLESurfaceManager::ANGLESurfaceManager(int32_t width, int32_t height)
     : width_(width), height_(height) {
-  mutex_ = ::CreateMutex(NULL, FALSE, NULL);
+  mutex_ = ::CreateMutex(nullptr, FALSE, nullptr);
   Create();
   instance_count_++;
 }
@@ -51,7 +53,7 @@ void ANGLESurfaceManager::Draw(std::function<void()> callback) {
   ::WaitForSingleObject(mutex_, INFINITE);
   MakeCurrent(true);
   callback();
-  SwapBuffers();
+  FinishRendering();
   MakeCurrent(false);
   ::ReleaseMutex(mutex_);
 }
@@ -74,7 +76,7 @@ void ANGLESurfaceManager::MakeCurrent(bool value) {
   }
 }
 
-void ANGLESurfaceManager::SwapBuffers() {
+void ANGLESurfaceManager::FinishRendering() {
   glFinish();
 }
 
@@ -155,7 +157,7 @@ bool ANGLESurfaceManager::CreateD3DTexture() {
 
     // NOTE: Automatically selecting adapter on Windows 10 RTM or greater.
     if (Utils::IsWindows10RTMOrGreater()) {
-      adapter = NULL;
+      adapter = nullptr;
       driver_type = D3D_DRIVER_TYPE_HARDWARE;
     } else {
       IDXGIFactory* dxgi = nullptr;
@@ -243,13 +245,13 @@ bool ANGLESurfaceManager::CreateEGLDisplay() {
                                           EGL_DEFAULT_DISPLAY,
                                           kD3D11DisplayAttributes);
       if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
-        display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
-                                            EGL_DEFAULT_DISPLAY,
-                                            kD3D11_9_3DisplayAttributes);
+        display_ = eglGetPlatformDisplayEXT(
+            EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY,
+            kD3D11FeatureLevel9_3DisplayAttributes);
         if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
           display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
                                               EGL_DEFAULT_DISPLAY,
-                                              kWrapDisplayAttributes);
+                                              kD3D11FallbackDisplayAttributes);
           if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
             FAIL("eglGetPlatformDisplayEXT");
           }

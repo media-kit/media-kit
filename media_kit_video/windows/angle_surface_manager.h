@@ -17,11 +17,8 @@
 
 #include <Windows.h>
 
-#include <d3d.h>
 #include <d3d11.h>
 #include <wrl.h>
-
-#include "utils.h"
 
 #include <cstdint>
 #include <functional>
@@ -37,24 +34,35 @@
 
 class ANGLESurfaceManager {
  public:
-  const int32_t width() const { return width_; }
-  const int32_t height() const { return height_; }
-  const HANDLE handle() const { return handle_; }
+  int32_t width() const { return width_; }
+  int32_t height() const { return height_; }
+  HANDLE handle() const { return handle_; }
 
   ANGLESurfaceManager(int32_t width, int32_t height);
 
   ~ANGLESurfaceManager();
 
+  ANGLESurfaceManager(const ANGLESurfaceManager&) = delete;
+  ANGLESurfaceManager& operator=(const ANGLESurfaceManager&) = delete;
+
+  // Recreates the surface and shared textures, changing |handle| while
+  // preserving the EGL display and context. Must not overlap |Draw| or |Read|.
   void SetSize(int32_t width, int32_t height);
 
+  // Invokes |callback| with the EGL context current, waits for its GPU work
+  // to finish, then unbinds the context. Serialized with |Read|.
   void Draw(std::function<void()> callback);
 
+  // Copies the completed frame to the texture exposed through |handle|.
+  // Called by Flutter's texture callback; does not render through libmpv.
   void Read();
 
+  // Binds or unbinds the EGL context on the calling thread. The caller must
+  // serialize context use and unbind it before another thread can bind it.
   void MakeCurrent(bool value);
 
  private:
-  void SwapBuffers();
+  void FinishRendering();
 
   void Create();
 
@@ -101,7 +109,7 @@ class ANGLESurfaceManager {
       EGL_TRUE,
       EGL_NONE,
   };
-  static constexpr EGLint kD3D11_9_3DisplayAttributes[] = {
+  static constexpr EGLint kD3D11FeatureLevel9_3DisplayAttributes[] = {
       EGL_PLATFORM_ANGLE_TYPE_ANGLE,
       EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
       EGL_PLATFORM_ANGLE_MAX_VERSION_MAJOR_ANGLE,
@@ -112,7 +120,7 @@ class ANGLESurfaceManager {
       EGL_TRUE,
       EGL_NONE,
   };
-  static constexpr EGLint kWrapDisplayAttributes[] = {
+  static constexpr EGLint kD3D11FallbackDisplayAttributes[] = {
       EGL_PLATFORM_ANGLE_TYPE_ANGLE,
       EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
       EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE,

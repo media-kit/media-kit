@@ -10,11 +10,16 @@ set(PROJECT_NAME "media_kit_video")
 set(CMAKE_CXX_STANDARD 17)
 project(${PROJECT_NAME} LANGUAGES CXX)
 
+# Opt in to policies supported by Flutter's minimum CMake version.
+cmake_policy(VERSION 3.14...3.25)
+
 set(PLUGIN_NAME "media_kit_video_plugin")
 
 # This is shipped as part of package:media_kit_libs_*** package(s).
 # Must be built before this target.
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
+set(LIBMPV_INCLUDE_DIR "${LIBMPV_SRC}/include/mpv")
+set(LIBMPV_IMPORT_LIBRARY "${LIBMPV_SRC}/libmpv.dll.a")
 set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
 
 # Deal with MSVC incompatiblity
@@ -22,13 +27,14 @@ add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
 
 if(MEDIA_KIT_LIBS_AVAILABLE)
   include_directories(
-    "${LIBMPV_SRC}/include"
+    "${LIBMPV_INCLUDE_DIR}"
     "${ANGLE_SRC}/include"
   )
 
   add_library(
     ${PLUGIN_NAME} SHARED
     "angle_surface_manager.cc"
+    "include/media_kit_video/media_kit_video_plugin_c_api.h"
     "media_kit_video_plugin_c_api.cc"
     "media_kit_video_plugin.cc"
     "video_output_manager.cc"
@@ -59,7 +65,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     flutter_wrapper_plugin
 
     # Link to libmpv & ANGLE.
-    "${LIBMPV_SRC}/libmpv.dll.a"
+    "${LIBMPV_IMPORT_LIBRARY}"
     "${ANGLE_SRC}/lib/libEGL.dll.lib"
     "${ANGLE_SRC}/lib/libGLESv2.dll.lib"
   )
@@ -68,6 +74,7 @@ else()
 
   add_library(
     ${PLUGIN_NAME} SHARED
+    "include/media_kit_video/media_kit_video_plugin_c_api.h"
     "media_kit_video_plugin_c_api.cc"
     ${PLUGIN_SOURCES}
   )
