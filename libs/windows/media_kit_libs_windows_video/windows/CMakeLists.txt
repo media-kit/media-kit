@@ -46,6 +46,52 @@ function(download_and_verify url md5 locationForArchive)
   endif()
 endfunction()
 
+function(download_and_verify_sha256 url sha256 locationForArchive)
+  if(EXISTS "${locationForArchive}")
+    file(SHA256 "${locationForArchive}" ARCHIVE_SHA256)
+
+    if(NOT "${sha256}" STREQUAL "${ARCHIVE_SHA256}")
+      file(REMOVE "${locationForArchive}")
+      message(STATUS "SHA-256 mismatch. File deleted.")
+    endif()
+  endif()
+
+  if(NOT EXISTS "${locationForArchive}")
+    message(STATUS "Downloading archive from ${url}...")
+    file(
+      DOWNLOAD
+      "${url}"
+      "${locationForArchive}"
+      EXPECTED_HASH "SHA256=${sha256}"
+      STATUS DOWNLOAD_STATUS
+      TLS_VERIFY ON
+      TIMEOUT 300
+      INACTIVITY_TIMEOUT 30
+    )
+    list(GET DOWNLOAD_STATUS 0 DOWNLOAD_STATUS_CODE)
+    list(GET DOWNLOAD_STATUS 1 DOWNLOAD_STATUS_MESSAGE)
+
+    if(NOT DOWNLOAD_STATUS_CODE EQUAL 0)
+      file(REMOVE "${locationForArchive}")
+      message(
+        FATAL_ERROR
+        "Failed to download ${url}: ${DOWNLOAD_STATUS_MESSAGE}"
+      )
+    endif()
+  endif()
+
+  file(SHA256 "${locationForArchive}" ARCHIVE_SHA256)
+
+  if(NOT "${sha256}" STREQUAL "${ARCHIVE_SHA256}")
+    message(
+      FATAL_ERROR
+      "${locationForArchive} SHA-256 verification failed."
+    )
+  endif()
+
+  message(STATUS "${locationForArchive} SHA-256 verification successful.")
+endfunction()
+
 function(check_directory_exists_and_not_empty dir result_var)
   # Check if the directory exists
   if(EXISTS "${dir}")
@@ -127,47 +173,112 @@ endif()
 # ------------------------------------------------------------------------------
 
 # ANGLE archive containing the pre-built shared libraries & headers.
-set(ANGLE "ANGLE.7z")
+set(ANGLE_VERSION "1.1.0")
+set(ANGLE_REVISION_SHORT "d10b3bd2324e")
 
-# Download URL & MD5 hash of the ANGLE archive.
-set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.1/ANGLE.7z")
-set(ANGLE_MD5 "e866f13e8d552348058afaafe869b1ed")
+if("${FLUTTER_TARGET_PLATFORM}" STREQUAL "windows-x64")
+  set(ANGLE_ARCH "x64")
+  set(
+    ANGLE_SHA256
+    "81005450bf6968524776a967b9f9d640a77990a273dbc42dc1d050fcb65fdc97"
+  )
+elseif("${FLUTTER_TARGET_PLATFORM}" STREQUAL "windows-arm64")
+  set(ANGLE_ARCH "arm64")
+  set(
+    ANGLE_SHA256
+    "886e8c78c87e670a2681198574092585ef9a7d95a8a5d94c5aa06e27d03dc38c"
+  )
+else()
+  message(
+    FATAL_ERROR
+    "Unsupported FLUTTER_TARGET_PLATFORM for ANGLE: "
+    "${FLUTTER_TARGET_PLATFORM}. Expected windows-x64 or windows-arm64."
+  )
+endif()
+
+set(ANGLE "ANGLE-${ANGLE_REVISION_SHORT}-windows-${ANGLE_ARCH}.7z")
+set(
+  ANGLE_URL
+  "https://github.com/Carapacik/flutter-windows-ANGLE-OpenGL-ES/releases/download/v${ANGLE_VERSION}/${ANGLE}"
+)
 
 # Download location of the ANGLE archive.
 set(ANGLE_ARCHIVE "${CMAKE_BINARY_DIR}/${ANGLE}")
 set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
+set(ANGLE_INCLUDE_DIR "${ANGLE_SRC}/include")
+set(ANGLE_LIB_DIR "${ANGLE_SRC}/lib")
 
-download_and_verify(
-  ${ANGLE_URL}
-  ${ANGLE_MD5}
-  ${ANGLE_ARCHIVE}
+download_and_verify_sha256(
+  "${ANGLE_URL}"
+  "${ANGLE_SHA256}"
+  "${ANGLE_ARCHIVE}"
 )
 
-check_directory_exists_and_not_empty(${ANGLE_SRC} ANGLE_SRC_VALID)
+set(
+  ANGLE_REQUIRED_FILES
+  "${ANGLE_INCLUDE_DIR}/EGL/egl.h"
+  "${ANGLE_INCLUDE_DIR}/GLES2/gl2.h"
+  "${ANGLE_INCLUDE_DIR}/GLES3/gl3.h"
+  "${ANGLE_INCLUDE_DIR}/KHR/khrplatform.h"
+  "${ANGLE_LIB_DIR}/d3dcompiler_47.dll"
+  "${ANGLE_LIB_DIR}/libEGL.dll"
+  "${ANGLE_LIB_DIR}/libGLESv2.dll"
+  "${ANGLE_LIB_DIR}/vulkan-1.dll"
+  "${ANGLE_LIB_DIR}/vk_swiftshader.dll"
+  "${ANGLE_LIB_DIR}/vk_swiftshader_icd.json"
+  "${ANGLE_LIB_DIR}/libEGL.dll.lib"
+  "${ANGLE_LIB_DIR}/libGLESv2.dll.lib"
+)
 
-# Extract the ANGLE archive.
-if(NOT ANGLE_SRC_VALID)
-  message(STATUS "Extracting ${ANGLE}...")
-  make_directory("${ANGLE_SRC}")
-  add_custom_target("${PROJECT_NAME}_ANGLE_EXTRACT" ALL)
-  
-  if(SEVENZ_EXECUTABLE)
-    message(STATUS "Using 7zip for extraction: ${SEVENZ_EXECUTABLE}")
-    add_custom_command(
-      TARGET "${PROJECT_NAME}_ANGLE_EXTRACT"
-      POST_BUILD
-      COMMAND "${SEVENZ_EXECUTABLE}" x -y "\"${ANGLE_ARCHIVE}\""
-      WORKING_DIRECTORY "${ANGLE_SRC}"
-    )
-  else()
-    message(STATUS "7zip not found, falling back to CMake tar")
-    add_custom_command(
-      TARGET "${PROJECT_NAME}_ANGLE_EXTRACT"
-      COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${ANGLE_ARCHIVE}\""
-      WORKING_DIRECTORY "${ANGLE_SRC}"
+# Always recreate staging from the verified archive to prevent stale files.
+message(STATUS "Extracting ${ANGLE}...")
+file(REMOVE_RECURSE "${ANGLE_SRC}")
+file(MAKE_DIRECTORY "${ANGLE_SRC}")
+
+if(SEVENZ_EXECUTABLE)
+  message(STATUS "Using 7zip for extraction: ${SEVENZ_EXECUTABLE}")
+  execute_process(
+    COMMAND "${SEVENZ_EXECUTABLE}" x -y "${ANGLE_ARCHIVE}"
+    WORKING_DIRECTORY "${ANGLE_SRC}"
+    RESULT_VARIABLE ANGLE_EXTRACT_RESULT
+    OUTPUT_VARIABLE ANGLE_EXTRACT_OUTPUT
+    ERROR_VARIABLE ANGLE_EXTRACT_ERROR
+  )
+else()
+  message(STATUS "7zip not found, falling back to CMake tar")
+  execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E tar xvf "${ANGLE_ARCHIVE}"
+    WORKING_DIRECTORY "${ANGLE_SRC}"
+    RESULT_VARIABLE ANGLE_EXTRACT_RESULT
+    OUTPUT_VARIABLE ANGLE_EXTRACT_OUTPUT
+    ERROR_VARIABLE ANGLE_EXTRACT_ERROR
+  )
+endif()
+
+if(NOT ANGLE_EXTRACT_RESULT EQUAL 0)
+  file(REMOVE_RECURSE "${ANGLE_SRC}")
+  message(
+    FATAL_ERROR
+    "Failed to extract ${ANGLE_ARCHIVE}:\n"
+    "${ANGLE_EXTRACT_OUTPUT}\n${ANGLE_EXTRACT_ERROR}"
+  )
+endif()
+
+file(
+  REMOVE
+  "${ANGLE_LIB_DIR}/zlib.dll"
+  "${ANGLE_LIB_DIR}/libc++.dll"
+)
+
+foreach(ANGLE_REQUIRED_FILE IN LISTS ANGLE_REQUIRED_FILES)
+  if(NOT EXISTS "${ANGLE_REQUIRED_FILE}")
+    file(REMOVE_RECURSE "${ANGLE_SRC}")
+    message(
+      FATAL_ERROR
+      "ANGLE archive is missing required file: ${ANGLE_REQUIRED_FILE}"
     )
   endif()
-endif()
+endforeach()
 
 # ------------------------------------------------------------------------------
 set(PLUGIN_NAME "media_kit_libs_windows_video_plugin")
@@ -206,11 +317,11 @@ target_link_libraries(
 set(
   media_kit_libs_windows_video_bundled_libraries
   "${LIBMPV_SRC}/libmpv-2.dll"
-  "${ANGLE_SRC}/d3dcompiler_47.dll"
-  "${ANGLE_SRC}/libEGL.dll"
-  "${ANGLE_SRC}/libGLESv2.dll"
-  "${ANGLE_SRC}/vk_swiftshader.dll"
-  "${ANGLE_SRC}/vulkan-1.dll"
-  "${ANGLE_SRC}/zlib.dll"
+  "${ANGLE_LIB_DIR}/d3dcompiler_47.dll"
+  "${ANGLE_LIB_DIR}/libEGL.dll"
+  "${ANGLE_LIB_DIR}/libGLESv2.dll"
+  "${ANGLE_LIB_DIR}/vulkan-1.dll"
+  "${ANGLE_LIB_DIR}/vk_swiftshader.dll"
+  "${ANGLE_LIB_DIR}/vk_swiftshader_icd.json"
   PARENT_SCOPE
 )

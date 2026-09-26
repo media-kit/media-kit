@@ -112,13 +112,6 @@ class ANGLESurfaceManager {
       EGL_TRUE,
       EGL_NONE,
   };
-  static constexpr EGLint kD3D9DisplayAttributes[] = {
-      EGL_PLATFORM_ANGLE_TYPE_ANGLE,
-      EGL_PLATFORM_ANGLE_TYPE_D3D9_ANGLE,
-      EGL_PLATFORM_ANGLE_DEVICE_TYPE_ANGLE,
-      EGL_PLATFORM_ANGLE_DEVICE_TYPE_HARDWARE_ANGLE,
-      EGL_NONE,
-  };
   static constexpr EGLint kWrapDisplayAttributes[] = {
       EGL_PLATFORM_ANGLE_TYPE_ANGLE,
       EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
