@@ -3,15 +3,15 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 // ignore_for_file: library_private_types_in_public_api
 import 'dart:collection';
 import 'dart:js_interop';
 import 'dart:typed_data';
-import 'package:web/web.dart' as html;
 
 import 'package:media_kit/src/models/playable.dart';
-
 import 'package:media_kit/src/player/web/utils/asset_loader.dart';
+import 'package:web/web.dart' as web;
 
 /// {@template media}
 ///
@@ -48,7 +48,7 @@ class Media extends Playable {
     // Media.memory : Revoke the object URL.
     try {
       if (memory) {
-        html.URL.revokeObjectURL(uri);
+        web.URL.revokeObjectURL(uri);
       }
     } catch (exeception, stacktrace) {
       print(exeception);
@@ -116,30 +116,16 @@ class Media extends Playable {
       httpHeaders: this.httpHeaders,
     );
     // Attach [this] instance to [Finalizer].
-    _finalizer.attach(
-      this,
-      _MediaFinalizerContext(
-        uri,
-        memory,
-      ),
-    );
+    _finalizer.attach(this, _MediaFinalizerContext(uri, memory));
   }
 
   /// Creates a [Media] instance from [Uint8List].
   ///
   /// The [type] parameter is optional and is used to specify the MIME type of the media on web.
-  static Future<Media> memory(
-    Uint8List data, {
-    String? type,
-  }) {
-    final blob = html.Blob(<JSUint8Array>[data.toJS].toJS);
-    final object = html.URL.createObjectURL(blob);
-    return Future.value(
-      Media._(
-        object,
-        memory: true,
-      ),
-    );
+  static Future<Media> memory(Uint8List data, {String? type}) {
+    final blob = web.Blob(<JSUint8Array>[data.toJS].toJS);
+    final object = web.URL.createObjectURL(blob);
+    return Future.value(Media._(object, memory: true));
   }
 
   /// Normalizes the passed URI.
@@ -212,10 +198,7 @@ class _MediaCache {
   final Map<String, String>? httpHeaders;
 
   /// {@macro _media_cache}
-  const _MediaCache({
-    this.extras,
-    this.httpHeaders,
-  });
+  const _MediaCache({this.extras, this.httpHeaders});
 
   @override
   String toString() => '_MediaCache('
