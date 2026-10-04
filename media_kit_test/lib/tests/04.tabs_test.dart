@@ -25,9 +25,7 @@ class TabsTest extends StatelessWidget {
                 GestureDetector(
                   onTap: () {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => const Seamless(),
-                      ),
+                      MaterialPageRoute(builder: (context) => const Seamless()),
                     );
                   },
                   child: Container(
@@ -46,9 +44,7 @@ class TabsTest extends StatelessWidget {
                           TextSpan(
                             text: ' provides practical & efficient example.',
                           ),
-                          TextSpan(
-                            text: '\n',
-                          ),
+                          TextSpan(text: '\n'),
                           TextSpan(
                             text: 'This is only for testing race conditions.',
                           ),
@@ -67,10 +63,7 @@ class TabsTest extends StatelessWidget {
                     labelStyle: const TextStyle(fontSize: 14.0),
                     unselectedLabelStyle: const TextStyle(fontSize: 14.0),
                     tabs: [
-                      for (int i = 0; i < count; i++)
-                        Tab(
-                          text: 'Video $i',
-                        ),
+                      for (int i = 0; i < count; i++) Tab(text: 'Video $i'),
                     ],
                   ),
                 ),
@@ -79,9 +72,7 @@ class TabsTest extends StatelessWidget {
           ),
         ),
         body: TabBarView(
-          children: [
-            for (int i = 0; i < count; i++) TabView(i),
-          ],
+          children: [for (int i = 0; i < count; i++) TabView(i)],
         ),
       ),
     );
@@ -90,7 +81,9 @@ class TabsTest extends StatelessWidget {
 
 class TabView extends StatefulWidget {
   final int i;
+
   const TabView(this.i, {super.key});
+
   @override
   State<TabView> createState() => TabViewState();
 }
@@ -119,9 +112,6 @@ class TabViewState extends State<TabView> {
 
   @override
   Widget build(BuildContext context) {
-    return Video(
-      controller: controller,
-      controls: NoVideoControls,
-    );
+    return Video(controller: controller, controls: NoVideoControls);
   }
 }

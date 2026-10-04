@@ -5,7 +5,7 @@
 import FlutterMacOS
 import Foundation
 
-import file_picker
+import file_picker_darwin
 import media_kit_libs_macos_video
 import media_kit_video
 import package_info_plus

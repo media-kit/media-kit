@@ -28,6 +28,8 @@
 typedef struct _VideoOutputConfiguration {
   std::optional<int64_t> width;
   std::optional<int64_t> height;
+  // Prefers OpenGL/ANGLE rendering, with software rendering as fallback.
+  // Hardware video decoding is configured separately through mpv.
   bool enable_hardware_acceleration;
 
   _VideoOutputConfiguration(std::optional<int64_t> width = std::nullopt,
@@ -64,6 +66,8 @@ class VideoOutput {
     return height_.value_or(1);
   }
 
+  // Initialization and destruction wait for work queued on |thread_pool_ref|;
+  // neither may run on that worker. The pool must outlive this output.
   VideoOutput(int64_t handle,
               VideoOutputConfiguration configuration,
               flutter::PluginRegistrarWindows* registrar,
@@ -71,9 +75,14 @@ class VideoOutput {
 
   ~VideoOutput();
 
+  // Immediately reports (texture ID, width, height) on the calling thread;
+  // later resize notifications run on the rendering worker. Marshal any
+  // platform-channel work to Flutter's platform thread.
   void SetTextureUpdateCallback(
       std::function<void(int64_t, int64_t, int64_t)> callback);
 
+  // Queues size overrides; nullopt uses the video's corresponding dimension.
+  // The texture is resized when the next render update is processed.
   void SetSize(std::optional<int64_t> width, std::optional<int64_t> height);
 
  private:
@@ -121,8 +130,7 @@ class VideoOutput {
   std::unordered_map<int64_t, std::unique_ptr<FlutterDesktopPixelBuffer>>
       pixel_buffer_textures_ = {};
 
-  // Public notifier. This is called when a new texture is registered & texture
-  // ID is changed. Only happens when video output resolution changes.
+  // Reports the initial texture and subsequent texture or dimension changes.
   std::function<void(int64_t, int64_t, int64_t)> texture_update_callback_ =
       [](int64_t, int64_t, int64_t) {};
 };
