@@ -20,7 +20,8 @@ workspace:
   - video_player_media_kit
 
 dev_dependencies:
-  melos: ^7.7.0
+  flutter_lints: any
+  melos: ^8.9.0
 
 melos:
   scripts:

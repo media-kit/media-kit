@@ -3,16 +3,15 @@
 /// Copyright © 2023 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
 import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
-
-// https://github.com/dart-lang/linter/issues/1381
-// ignore_for_file: close_sinks
 
 /// package:media_kit implementation of [VideoPlayerPlatform].
 ///
@@ -26,7 +25,7 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
   final _completers = HashMap<int, Completer<void>>();
   final _videoControllers = HashMap<int, VideoController>();
   final _streamControllers = HashMap<int, StreamController<VideoEvent>>();
-  final _streamSubscriptions = HashMap<int, List<StreamSubscription>>();
+  final _streamSubscriptions = HashMap<int, List<StreamSubscription<Object>>>();
 
   /// Registers this class as the default instance of [VideoPlayerPlatform].
   static void registerWith() {
@@ -68,11 +67,11 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
   @override
   Future<int?> create(DataSource dataSource) async {
     final player = Player();
-    final completer = Completer();
+    final completer = Completer<void>();
     final videoController = VideoController(player);
     // NOTE: [StreamController] without broadcast buffers events.
     final streamController = StreamController<VideoEvent>();
-    final streamSubscriptions = <StreamSubscription>[];
+    final streamSubscriptions = <StreamSubscription<Object>>[];
 
     final textureId = player.hashCode;
 
@@ -110,13 +109,7 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
         break;
     }
 
-    await player.open(
-      Media(
-        resource,
-        httpHeaders: httpHeaders,
-      ),
-      play: false,
-    );
+    await player.open(Media(resource, httpHeaders: httpHeaders), play: false);
 
     return textureId;
   }
@@ -126,7 +119,8 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
   Stream<VideoEvent> videoEventsFor(int textureId) {
     if (_streamControllers[textureId] == null) {
       throw StateError(
-          'VideoPlayer for textureId $textureId is not found, Check if its disposed.');
+        'VideoPlayer for textureId $textureId is not found, Check if its disposed.',
+      );
     }
     return _streamControllers[textureId]!.stream;
   }
@@ -180,7 +174,8 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
   Widget buildView(int textureId) {
     if (_videoControllers[textureId] == null) {
       throw StateError(
-          'VideoPlayer for textureId $textureId is not found, Check if its disposed.');
+        'VideoPlayer for textureId $textureId is not found, Check if its disposed.',
+      );
     }
     return Video(
       key: ValueKey(_videoControllers[textureId]!),
@@ -229,10 +224,7 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
             streamController.add(
               VideoEvent(
                 eventType: VideoEventType.initialized,
-                size: Size(
-                  (width ?? 0) * 1.0,
-                  (height ?? 0) * 1.0,
-                ),
+                size: Size((width ?? 0) * 1.0, (height ?? 0) * 1.0),
                 duration: player.state.duration,
               ),
             );
@@ -242,114 +234,88 @@ class MediaKitVideoPlayer extends VideoPlayerPlatform {
       }
 
       streamSubscriptions.add(
-        player.stream.duration.listen(
-          (event) {
-            if (event > Duration.zero) {
-              duration = event;
-              notify();
-            }
-          },
-        ),
+        player.stream.duration.listen((event) {
+          if (event > Duration.zero) {
+            duration = event;
+            notify();
+          }
+        }),
       );
       streamSubscriptions.add(
-        player.stream.videoParams.listen(
-          (event) {
-            width = event.dw;
-            height = event.dh;
-            if ((width ?? 0) > 0 && (height ?? 0) > 0) {
-              notify();
-            }
-          },
-        ),
+        player.stream.videoParams.listen((event) {
+          width = event.dw;
+          height = event.dh;
+          if ((width ?? 0) > 0 && (height ?? 0) > 0) {
+            notify();
+          }
+        }),
       );
       streamSubscriptions.add(
-        player.stream.tracks.listen(
-          (event) {
-            // No video track is available i.e. an audio file.
-            if (event.video.length == 2 && event.audio.length > 2) {
-              width = 0;
-              height = 0;
-              notify();
-            }
-          },
-        ),
+        player.stream.tracks.listen((event) {
+          // No video track is available i.e. an audio file.
+          if (event.video.length == 2 && event.audio.length > 2) {
+            width = 0;
+            height = 0;
+            notify();
+          }
+        }),
       );
       // VideoEventType.isPlayingStateUpdate
       streamSubscriptions.add(
-        player.stream.playing.listen(
-          (event) async {
-            await completer.future;
-            streamController.add(
-              VideoEvent(
-                eventType: VideoEventType.isPlayingStateUpdate,
-                isPlaying: event,
-              ),
-            );
-          },
-        ),
+        player.stream.playing.listen((event) async {
+          await completer.future;
+          streamController.add(
+            VideoEvent(
+              eventType: VideoEventType.isPlayingStateUpdate,
+              isPlaying: event,
+            ),
+          );
+        }),
       );
       // VideoEventType.completed
       streamSubscriptions.add(
-        player.stream.completed.listen(
-          (event) async {
-            await completer.future;
-            if (event) {
-              streamController.add(
-                VideoEvent(
-                  eventType: VideoEventType.completed,
-                ),
-              );
-            }
-          },
-        ),
+        player.stream.completed.listen((event) async {
+          await completer.future;
+          if (event) {
+            streamController.add(
+              VideoEvent(eventType: VideoEventType.completed),
+            );
+          }
+        }),
       );
       // VideoEventType.bufferingStart
       streamSubscriptions.add(
-        player.stream.buffering.listen(
-          (event) async {
-            await completer.future;
-            streamController.add(
-              VideoEvent(
-                eventType: event
-                    ? VideoEventType.bufferingStart
-                    : VideoEventType.bufferingEnd,
-              ),
-            );
-          },
-        ),
+        player.stream.buffering.listen((event) async {
+          await completer.future;
+          streamController.add(
+            VideoEvent(
+              eventType: event
+                  ? VideoEventType.bufferingStart
+                  : VideoEventType.bufferingEnd,
+            ),
+          );
+        }),
       );
       // VideoEventType.bufferingUpdate
       streamSubscriptions.add(
-        player.stream.buffer.listen(
-          (event) async {
-            await completer.future;
-            streamController.add(
-              VideoEvent(
-                eventType: VideoEventType.bufferingUpdate,
-                buffered: [
-                  DurationRange(
-                    Duration.zero,
-                    event,
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+        player.stream.buffer.listen((event) async {
+          await completer.future;
+          streamController.add(
+            VideoEvent(
+              eventType: VideoEventType.bufferingUpdate,
+              buffered: [DurationRange(Duration.zero, event)],
+            ),
+          );
+        }),
       );
 
       streamSubscriptions.add(
-        player.stream.error.listen(
-          (event) async {
-            await completer.future;
-            streamController.addError(
-              PlatformException(
-                code: '',
-                message: event,
-              ),
-            );
-          },
-        ),
+        player.stream.error.listen((event) async {
+          await completer.future;
+          streamController.addError(
+            PlatformException(code: '', message: event),
+          );
+        }),
       );
     }
   }
