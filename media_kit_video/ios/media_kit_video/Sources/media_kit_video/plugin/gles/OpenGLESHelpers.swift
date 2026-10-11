@@ -3,13 +3,20 @@ import UIKit
 
 public class OpenGLESHelpers {
   static public func createContext() -> EAGLContext {
-    let context = EAGLContext(api: .openGLES3)
-    return context!
+    tryCreateContext()!
   }
 
-  static public func createTextureCache(
+  static func tryCreateContext() -> EAGLContext? {
+    EAGLContext(api: .openGLES3)
+  }
+
+  static public func createTextureCache(_ context: EAGLContext) -> CVOpenGLESTextureCache {
+    tryCreateTextureCache(context)!
+  }
+
+  static func tryCreateTextureCache(
     _ context: EAGLContext
-  ) -> CVOpenGLESTextureCache {
+  ) -> CVOpenGLESTextureCache? {
     var textureCache: CVOpenGLESTextureCache?
 
     let cvret: CVReturn = CVOpenGLESTextureCacheCreate(
@@ -19,9 +26,8 @@ public class OpenGLESHelpers {
       nil,
       &textureCache
     )
-    assert(cvret == kCVReturnSuccess, "CVOpenGLESTextureCacheCreate")
-
-    return textureCache!
+    guard cvret == kCVReturnSuccess else { return nil }
+    return textureCache
   }
 
   static public func createPixelBuffer(_ size: CGSize) -> CVPixelBuffer {

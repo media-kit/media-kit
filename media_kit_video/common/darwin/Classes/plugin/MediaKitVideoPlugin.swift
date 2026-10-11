@@ -28,6 +28,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
       utils: utils
     )
     registrar.addMethodCallDelegate(instance, channel: channel)
+    registrar.publish(instance)
   }
 
   private let channel: FlutterMethodChannel
@@ -44,6 +45,30 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
       registry: registry
     )
     self.utils = utils
+  }
+
+  /// Native renderer API for integrations such as iOS sample-buffer PiP.
+  /// Must run on the platform thread. Suspend the player's video track before
+  /// calling and restore it after completion, even when the request fails.
+  /// `changed` means the replacement context is initialized and its Flutter
+  /// texture is registered; it does not wait for a frame while vid is disabled.
+  public func setSoftwareRendering(
+    handle: Int64,
+    enabled: Bool,
+    completion: @escaping (VideoOutputRenderingResult) -> Void
+  ) {
+    videoOutputManager.setSoftwareRendering(handle: handle, enabled: enabled, completion: completion)
+  }
+
+  /// Override the renderer of future outputs without changing the original
+  /// configuration. Existing outputs still require setSoftwareRendering.
+  public func setSoftwareRenderingForNewOutputs(_ enabled: Bool) {
+    videoOutputManager.setSoftwareRenderingForNewOutputs(enabled)
+  }
+
+  /// Handles that need their original GPU preference restored after PiP.
+  public var softwareRenderingHandles: [Int64] {
+    videoOutputManager.softwareRenderingHandles
   }
 
   public func handle(
@@ -68,7 +93,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
 
   private func handleCreateMethodCall(
     _ arguments: Any?,
-    _ result: FlutterResult
+    _ result: @escaping FlutterResult
   ) {
     let args = arguments as? [String: Any]
     let handleStr = args?["handle"] as! String
@@ -95,10 +120,15 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
             ],
           ] as [String: Any]
         )
+      },
+      completion: { ready in
+        if ready {
+          result(nil)
+        } else {
+          result(FlutterError(code: "video_output", message: "Could not initialize the video output.", details: nil))
+        }
       }
     )
-
-    result(nil)
   }
 
   private func handleSetSizeMethodCall(
@@ -127,7 +157,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
 
   private func handleDisposeMethodCall(
     _ arguments: Any?,
-    _ result: FlutterResult
+    _ result: @escaping FlutterResult
   ) {
     let args = arguments as? [String: Any]
     let handleStr = args?["handle"] as! String
@@ -136,10 +166,9 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
     assert(handle != nil, "handle must be an Int64")
 
     videoOutputManager.destroy(
-      handle: handle!
+      handle: handle!,
+      completion: { result(nil) }
     )
-
-    result(nil)
   }
 
   private func handleEnterNativeFullscreenMethodCall(
