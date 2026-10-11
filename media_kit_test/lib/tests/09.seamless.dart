@@ -30,10 +30,7 @@ class _SeamlessState extends State<Seamless> {
   @override
   void initState() {
     // First two pages are loaded initially.
-    Future.wait([
-      createPlayer(0),
-      createPlayer(1),
-    ]).then((_) {
+    Future.wait([createPlayer(0), createPlayer(1)]).then((_) {
       // First video must be played initially.
       players[0]?.play();
     });
@@ -78,9 +75,7 @@ class _SeamlessState extends State<Seamless> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('package:media_kit'),
-      ),
+      appBar: AppBar(title: const Text('package:media_kit')),
       body: Stack(
         children: [
           PageView.builder(
@@ -89,21 +84,17 @@ class _SeamlessState extends State<Seamless> {
               players[i]?.play();
 
               // Dispose the [Player]s & [VideoController]s of the pages that are not visible & not adjacent to the current page.
-              players.removeWhere(
-                (page, player) {
-                  final remove = ![i, i - 1, i + 1].contains(page);
-                  if (remove) {
-                    player.dispose();
-                  }
-                  return remove;
-                },
-              );
-              controllers.removeWhere(
-                (page, controller) {
-                  final remove = ![i, i - 1, i + 1].contains(page);
-                  return remove;
-                },
-              );
+              players.removeWhere((page, player) {
+                final remove = ![i, i - 1, i + 1].contains(page);
+                if (remove) {
+                  player.dispose();
+                }
+                return remove;
+              });
+              controllers.removeWhere((page, controller) {
+                final remove = ![i, i - 1, i + 1].contains(page);
+                return remove;
+              });
 
               // Pause other pages' videos.
               for (final e in players.entries) {
@@ -133,9 +124,7 @@ class _SeamlessState extends State<Seamless> {
               if (controller == null) {
                 early.add(i);
                 return const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xffffffff),
-                  ),
+                  child: CircularProgressIndicator(color: Color(0xffffffff)),
                 );
               }
 

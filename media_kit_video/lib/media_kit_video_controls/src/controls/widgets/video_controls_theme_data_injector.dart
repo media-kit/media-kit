@@ -3,8 +3,8 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'package:flutter/widgets.dart';
 
+import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/cupertino.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/material.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/material_desktop.dart';

@@ -15,19 +15,10 @@ class MultiplePlayerMultipleVideoScreen extends StatefulWidget {
 
 class _MultiplePlayerMultipleVideoScreenState
     extends State<MultiplePlayerMultipleVideoScreen> {
-  late final List<Player> players = [
-    Player(),
-    Player(),
-  ];
+  late final List<Player> players = [Player(), Player()];
   late final List<VideoController> controllers = [
-    VideoController(
-      players[0],
-      configuration: configuration.value,
-    ),
-    VideoController(
-      players[1],
-      configuration: configuration.value,
-    ),
+    VideoController(players[0], configuration: configuration.value),
+    VideoController(players[1], configuration: configuration.value),
   ];
 
   @override
@@ -52,9 +43,7 @@ class _MultiplePlayerMultipleVideoScreenState
           ListTile(
             title: Text(
               'Video $j',
-              style: const TextStyle(
-                fontSize: 14.0,
-              ),
+              style: const TextStyle(fontSize: 14.0),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -80,9 +69,7 @@ class _MultiplePlayerMultipleVideoScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('package:media_kit'),
-      ),
+      appBar: AppBar(title: const Text('package:media_kit')),
       body:
           MediaQuery.of(context).size.width > MediaQuery.of(context).size.height
               ? Row(
@@ -106,7 +93,7 @@ class _MultiplePlayerMultipleVideoScreenState
                     for (int i = 0; i < 2; i++) ...[
                       getVideoForIndex(context, i),
                       ...getAssetsListForIndex(context, i),
-                    ]
+                    ],
                   ],
                 ),
     );

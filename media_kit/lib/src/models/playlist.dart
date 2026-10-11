@@ -5,8 +5,8 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'package:collection/collection.dart';
-import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/media/media.dart';
+import 'package:media_kit/src/models/playable.dart';
 
 /// {@template playlist}
 ///
@@ -37,19 +37,10 @@ class Playlist extends Playable {
   final int index;
 
   /// {@macro playlist}
-  const Playlist(
-    this.medias, {
-    this.index = 0,
-  });
+  const Playlist(this.medias, {this.index = 0});
 
-  Playlist copyWith({
-    List<Media>? medias,
-    int? index,
-  }) {
-    return Playlist(
-      medias ?? this.medias,
-      index: index ?? this.index,
-    );
+  Playlist copyWith({List<Media>? medias, int? index}) {
+    return Playlist(medias ?? this.medias, index: index ?? this.index);
   }
 
   @override

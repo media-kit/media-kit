@@ -3,13 +3,12 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'package:flutter/material.dart';
-import 'package:synchronized/synchronized.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
-
 import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_controls_theme_data_injector.dart';
+import 'package:synchronized/synchronized.dart';
 
 /// Whether a [Video] present in the current [BuildContext] is in fullscreen or not.
 bool isFullscreen(BuildContext context) =>
@@ -22,8 +21,9 @@ Future<void> enterFullscreen(BuildContext context) {
       if (context.mounted) {
         final stateValue = state(context);
         final contextNotifierValue = contextNotifier(context);
-        final videoViewParametersNotifierValue =
-            videoViewParametersNotifier(context);
+        final videoViewParametersNotifierValue = videoViewParametersNotifier(
+          context,
+        );
         final controllerValue = controller(context);
         Navigator.of(context, rootNavigator: true).push(
           PageRouteBuilder(
