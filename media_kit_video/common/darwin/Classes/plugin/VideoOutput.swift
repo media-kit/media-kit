@@ -1,11 +1,36 @@
 import CoreGraphics
 import Foundation
+#if canImport(UIKit)
+  import UIKit
+#endif
 
 #if canImport(Flutter)
   import Flutter
 #elseif canImport(FlutterMacOS)
   import FlutterMacOS
 #endif
+
+// Closing the gate waits for an in-progress GL resize/render to finish. No
+// platform dispatch or mpv property access is permitted inside runIfEnabled.
+final class VideoOutputRenderGate {
+  private let lock = NSLock()
+  private var enabled = true
+
+  func setEnabled(_ enabled: Bool) {
+    lock.lock()
+    self.enabled = enabled
+    lock.unlock()
+  }
+
+  @discardableResult
+  func runIfEnabled(_ body: () -> Void) -> Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    guard enabled else { return false }
+    body()
+    return true
+  }
+}
 
 // This class creates and manipulates the different types of FlutterTexture,
 // handles resizing, rendering calls, and notify Flutter when a new frame is
@@ -29,6 +54,8 @@ public class VideoOutput: NSObject {
 
   private let handle: OpaquePointer
   private let enableHardwareAcceleration: Bool
+  // Read on the platform thread only after initializationCompletion.
+  private(set) var usesHardwareAcceleration = false
   private let registry: FlutterTextureRegistry
   private let textureUpdateCallback: TextureUpdateCallback
   private let worker: Worker = .init()
@@ -38,12 +65,15 @@ public class VideoOutput: NSObject {
   private var textureId: Int64 = -1
   private var currentSize: CGSize = CGSize.zero
   private var disposed: Bool = false
+  private let renderGate = VideoOutputRenderGate()
+  private var lifecycleObservers: [NSObjectProtocol] = []
 
   init(
     handle: Int64,
     configuration: VideoOutputConfiguration,
     registry: FlutterTextureRegistry,
-    textureUpdateCallback: @escaping TextureUpdateCallback
+    textureUpdateCallback: @escaping TextureUpdateCallback,
+    initializationCompletion: @escaping (Bool) -> Void = { _ in }
   ) {
     let handle = OpaquePointer(bitPattern: Int(handle))
     assert(handle != nil, "handle casting")
@@ -57,12 +87,30 @@ public class VideoOutput: NSObject {
 
     super.init()
 
+    #if canImport(UIKit)
+      renderGate.setEnabled(UIApplication.shared.applicationState == .active)
+      lifecycleObservers = [
+        NotificationCenter.default.addObserver(
+          forName: UIApplication.willResignActiveNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+          self?.renderGate.setEnabled(false)
+        },
+        NotificationCenter.default.addObserver(
+          forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+          self?.renderGate.setEnabled(true)
+          self?.updateCallback()
+        },
+      ]
+    #endif
+
     worker.enqueue {
-      self._init()
+      self._init(completion: initializationCompletion)
     }
   }
 
   deinit {
+    lifecycleObservers.forEach { NotificationCenter.default.removeObserver($0) }
     worker.cancel()
 
     disposed = true
@@ -71,12 +119,26 @@ public class VideoOutput: NSObject {
 
   public func setSize(width: Int64?, height: Int64?) {
     worker.enqueue {
+      guard !self.disposed else { return }
       self.width = width
       self.height = height
     }
   }
 
-  private func _init() {
+  public func dispose(completion: @escaping () -> Void) {
+    // Drain rendering on its worker without blocking the platform thread,
+    // which pending render jobs may still need for texture notifications.
+    worker.enqueue {
+      self.disposed = true
+      self.texture?.dispose()
+      self.disposeTextureId {
+        self.worker.cancel()
+        completion()
+      }
+    }
+  }
+
+  private func _init(completion: @escaping (Bool) -> Void) {
     let enableHardwareAcceleration =
       VideoOutput.isSimulator ? false : enableHardwareAcceleration
 
@@ -90,32 +152,38 @@ public class VideoOutput: NSObject {
       )
     }
 
+    let update: () -> Void = { [weak self] in
+      self?.updateCallback()
+    }
+    var hardwareTexture: ResizableTextureProtocol?
     if enableHardwareAcceleration {
-      texture = SafeResizableTexture(
-        TextureHW(
-          handle: handle,
-          // Use `weak self` to prevent memory leaks
-          updateCallback: { [weak self]() in
-            guard let that = self else {
-              return
-            }
-            that.updateCallback()
+      #if canImport(UIKit)
+        // Keep the state check and GL initialization in one platform-thread
+        // turn: an activation change must not slip between them while the
+        // worker is queued. Rendering remains on the worker, with the same
+        // EAGLContext made current by TextureHW for every render operation.
+        DispatchQueue.main.sync {
+          guard UIApplication.shared.applicationState == .active else { return }
+          renderGate.runIfEnabled {
+            hardwareTexture = TextureHW(handle: handle, updateCallback: update)
           }
-        )
-      )
+        }
+      #else
+        hardwareTexture = TextureHW(handle: handle, updateCallback: update)
+      #endif
+    }
+    if let hardwareTexture = hardwareTexture {
+      usesHardwareAcceleration = true
+      texture = SafeResizableTexture(hardwareTexture)
     } else {
-      texture = SafeResizableTexture(
-        TextureSW(
-          handle: handle,
-          // Use `weak self` to prevent memory leaks
-          updateCallback: { [weak self]() in
-            guard let that = self else {
-              return
-            }
-            that.updateCallback()
-          }
-        )
-      )
+      if enableHardwareAcceleration {
+        NSLog("VideoOutput: hardware rendering unavailable; using software rendering")
+      }
+      guard let softwareTexture = TextureSW(handle: handle, updateCallback: update) else {
+        DispatchQueue.main.async { completion(false) }
+        return
+      }
+      texture = SafeResizableTexture(softwareTexture)
     }
 
     DispatchQueue.main.sync { [weak self]() in
@@ -123,6 +191,7 @@ public class VideoOutput: NSObject {
         return
       }
       that.registerTextureId()
+      completion(true)
     }
   }
 
@@ -134,13 +203,16 @@ public class VideoOutput: NSObject {
     textureUpdateCallback(textureId, CGSize(width: 0, height: 0))
   }
 
-  private func disposeTextureId() {
+  private func disposeTextureId(completion: @escaping () -> Void = {}) {
     let registry_ = self.registry
     let textureId_ = self.textureId
     textureId = -1
     DispatchQueue.main.async {
       // Textures must be unregistered on the platform thread
-      registry_.unregisterTexture(textureId_)
+      if textureId_ >= 0 {
+        registry_.unregisterTexture(textureId_)
+      }
+      completion()
     }
   }
 
@@ -151,31 +223,34 @@ public class VideoOutput: NSObject {
   }
 
   private func _updateCallback() {
+    guard !disposed, texture != nil else { return }
     let size = videoSize
 
     if size.width == 0 || size.height == 0 {
       return
     }
 
-    if currentSize != size {
-      currentSize = size
-
-      texture.resize(size)
-      DispatchQueue.main.sync { [weak self] in
-        guard let that = self else { return }
-        // textureUpdateCallback must run on the main thread
-        that.textureUpdateCallback(that.textureId, size)
+    let resized = currentSize != size
+    let render = {
+      if resized {
+        self.currentSize = size
+        self.texture.resize(size)
       }
+      self.texture.render(size)
     }
-
-    if disposed {
-      return
+    if usesHardwareAcceleration {
+      // The main-thread resign-active handler waits for this short GL section.
+      // Keep all main.sync notifications and mpv property reads outside it.
+      guard renderGate.runIfEnabled(render) else { return }
+    } else {
+      render()
     }
-
-    texture.render(size)
     DispatchQueue.main.sync { [weak self] in
       guard let that = self else { return }
-      // Textures must be marked as available from the main thread
+      if resized {
+        that.textureUpdateCallback(that.textureId, size)
+      }
+      // Textures must be marked as available from the main thread.
       that.registry.textureFrameAvailable(that.textureId)
     }
   }

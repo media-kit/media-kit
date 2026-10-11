@@ -23,7 +23,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
     skipCheckArgs: true
   )
 
-  init(
+  init?(
     handle: OpaquePointer,
     updateCallback: @escaping UpdateCallback
   ) {
@@ -32,13 +32,17 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
 
     super.init()
 
-    DispatchQueue.main.async {
-      self.initMPV()
-    }
+    // Construct on the output worker so readiness means the context exists,
+    // and disposal can never overtake a deferred main-thread initialization.
+    guard self.initMPV() else { return nil }
   }
 
   deinit {
     disposePixelBuffer()
+    disposeMPV()
+  }
+
+  public func dispose() {
     disposeMPV()
   }
 
@@ -51,7 +55,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
     return Unmanaged.passRetained(textureContext!.pixelBuffer)
   }
 
-  private func initMPV() {
+  private func initMPV() -> Bool {
     let api = UnsafeMutableRawPointer(
       mutating: (MPV_RENDER_API_TYPE_SW as NSString).utf8String
     )
@@ -60,9 +64,11 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
       mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
     ]
 
-    MPVHelpers.checkError(
-      mpv_render_context_create(&renderContext, handle, &params)
-    )
+    let status = mpv_render_context_create(&renderContext, handle, &params)
+    guard status >= 0, renderContext != nil else {
+      NSLog("TextureSW: render context initialization failed (%d)", status)
+      return false
+    }
 
     mpv_render_context_set_update_callback(
       renderContext,
@@ -74,11 +80,14 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
       },
       UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
     )
+    return true
   }
 
   private func disposeMPV() {
+    guard let renderContext = renderContext else { return }
     mpv_render_context_set_update_callback(renderContext, nil, nil)
     mpv_render_context_free(renderContext)
+    self.renderContext = nil
   }
 
   public func resize(_ size: CGSize) {
@@ -108,6 +117,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   public func render(_ size: CGSize) {
+    guard renderContext != nil else { return }
     let textureContext = textureContexts.nextAvailable()
     if textureContext == nil {
       return
