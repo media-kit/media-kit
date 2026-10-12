@@ -40,7 +40,9 @@ static void init_egl_image_extensions() {
 struct _TextureGL {
   FlTextureGL parent_instance;
   guint32 name;              // Flutter's texture name
-  guint32 fbo;               // mpv's FBO
+  guint32 fbo;               // mpv's FBO (render target, never referred to by an EGLImage)
+  guint32 export_texture;    // blit target the EGLImage refers to
+  guint32 export_fbo;        // FBO of |export_texture|               // mpv's FBO
   guint32 mpv_texture;       // mpv's texture
   EGLImageKHR egl_image;     // EGLImage for sharing between contexts
   guint32 current_width;
@@ -53,6 +55,8 @@ G_DEFINE_TYPE(TextureGL, texture_gl, fl_texture_gl_get_type())
 static void texture_gl_init(TextureGL* self) {
   self->name = 0;
   self->fbo = 0;
+  self->export_texture = 0;
+  self->export_fbo = 0;
   self->mpv_texture = 0;
   self->egl_image = EGL_NO_IMAGE_KHR;
   self->current_width = 1;
@@ -97,6 +101,8 @@ static void texture_gl_dispose(GObject* object) {
       }
       if (self->fbo != 0) {
         glDeleteFramebuffers(1, &self->fbo);
+        glDeleteTextures(1, &self->export_texture);
+        glDeleteFramebuffers(1, &self->export_fbo);
         self->fbo = 0;
       }
       
@@ -179,20 +185,39 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                              GL_TEXTURE_2D, self->mpv_texture, 0);
       
-      // Create EGLImage from mpv's texture
+      // Create a separate export texture. The EGLImage is created from THIS texture
+      // and not from mpv's render target: on Mesa (tested 25.0.7, Intel Xe2) creating
+      // an EGLImageKHR from a texture makes that texture stop receiving renders —
+      // mpv_render_context_render() then only leaves the FBO cleared (uniform black,
+      // no GL/mpv error). The frame is copied over with a GPU blit each frame.
+      glGenTextures(1, &self->export_texture);
+      glBindTexture(GL_TEXTURE_2D, self->export_texture);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, required_width, required_height,
+                   0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      glGenFramebuffers(1, &self->export_fbo);
+      glBindFramebuffer(GL_FRAMEBUFFER, self->export_fbo);
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             GL_TEXTURE_2D, self->export_texture, 0);
+      glFinish();
+      
+      // Create EGLImage from the export texture
       EGLint egl_image_attribs[] = { EGL_NONE };
       self->egl_image = eglCreateImageKHR(
           egl_display,
           egl_context,
           EGL_GL_TEXTURE_2D_KHR,
-          (EGLClientBuffer)(guintptr)self->mpv_texture,
+          (EGLClientBuffer)(guintptr)self->export_texture,
           egl_image_attribs);
       
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
       glBindTexture(GL_TEXTURE_2D, 0);
       
       // Flush to ensure mpv's texture is ready
-      glFlush();
+      glFinish();
       
       // Switch back to Flutter's context to create/update Flutter's texture
       eglMakeCurrent(flutter_display, flutter_draw, flutter_read, flutter_context);
@@ -249,11 +274,18 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     };
     mpv_render_context_render(render_context, params);
     
+    // Copy the frame into the texture the EGLImage refers to.
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, self->fbo);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, self->export_fbo);
+    glBlitFramebuffer(0, 0, required_width, required_height,
+                      0, 0, required_width, required_height,
+                      GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    
     // Unbind FBO
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
     // Flush to ensure rendering is complete
-    glFlush();
+    glFinish();
     
     // Restore Flutter's context
     eglMakeCurrent(flutter_display, flutter_draw, flutter_read, flutter_context);
