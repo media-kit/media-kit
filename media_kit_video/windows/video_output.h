@@ -89,6 +89,10 @@ class VideoOutput {
 
   int64_t GetVideoHeight();
 
+  // Tells Dart, once, that the texture can no longer show a picture: the
+  // texture update callback gets the ID 0, which is never given otherwise.
+  void ReportDeviceLost();
+
   std::optional<int64_t> height_ = std::nullopt;
   std::optional<int64_t> width_ = std::nullopt;
   VideoOutputConfiguration configuration_ = VideoOutputConfiguration{};
@@ -102,6 +106,9 @@ class VideoOutput {
   // deletion after unregister in |Resize|) access this object after
   // destruction.
   bool destroyed_ = false;
+  // The Direct3D device of |surface_manager_| was lost. Only read and written
+  // on the thread pool, which has one worker.
+  bool device_lost_ = false;
 
   std::mutex textures_mutex_ = std::mutex();
 
