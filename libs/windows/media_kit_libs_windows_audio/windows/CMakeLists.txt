@@ -14,15 +14,15 @@ set(PROJECT_NAME "media_kit_libs_windows_audio")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 # ------------------------------------------------------------------------------
-function(download_and_verify url md5 locationForArchive)
+function(download_and_verify url sha256 locationForArchive)
   # Check if the archive exists.
   if(EXISTS "${locationForArchive}")
-    file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+    file(SHA256 "${locationForArchive}" ARCHIVE_SHA256)
 
-    # If MD5 doesn't match, delete the archive to download again.
-    if(NOT md5 STREQUAL ARCHIVE_MD5)
+    # If SHA-256 doesn't match, delete the archive to download again.
+    if(NOT sha256 STREQUAL ARCHIVE_SHA256)
       file(REMOVE "${locationForArchive}")
-      message(STATUS "MD5 mismatch. File deleted.")
+      message(STATUS "SHA-256 mismatch. File deleted.")
     endif()
   endif()
 
@@ -32,10 +32,10 @@ function(download_and_verify url md5 locationForArchive)
     file(DOWNLOAD "${url}" "${locationForArchive}")
     message(STATUS "Downloaded archive to ${locationForArchive}.")
 
-    # Verify MD5 of the newly downloaded file.
-    file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+    # Verify SHA-256 of the newly downloaded file.
+    file(SHA256 "${locationForArchive}" ARCHIVE_SHA256)
 
-    if(md5 STREQUAL ARCHIVE_MD5)
+    if(sha256 STREQUAL ARCHIVE_SHA256)
       message(STATUS "${locationForArchive} Verification successful.")
     else()
       message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to re-build project again.")
@@ -67,11 +67,11 @@ endfunction()
 if(${FLUTTER_TARGET_PLATFORM} STREQUAL "windows-x64")
   set(LIBMPV_ARCH "x86_64")
   set(LIBMPV "mpv-dev-x86_64-20251213-git-140ec21.7z")
-  set(LIBMPV_MD5 "bf77216724f0f290dd14d2b1bc9826df")
+  set(LIBMPV_SHA256 "a4d4e82a7bf218ef939e4090e0c19e11a0f660aae9d9297a2973c1582c2239a0")
 else()
   set(LIBMPV_ARCH "aarch64")
   set(LIBMPV "mpv-dev-aarch64-20251213-git-140ec21.7z")
-  set(LIBMPV_MD5 "fc3c09cd5bed08db58f888460da9059f")
+  set(LIBMPV_SHA256 "904062ce25811025af5c96b02fc90612eff9567659378caf30cc13a1953eb654")
 endif()
 
 # Download URL for the libmpv archive from the latest release
@@ -83,7 +83,7 @@ set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
 
 download_and_verify(
   ${LIBMPV_URL}
-  ${LIBMPV_MD5}
+  ${LIBMPV_SHA256}
   ${LIBMPV_ARCHIVE}
 )
 
