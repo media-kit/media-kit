@@ -21,6 +21,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     "video_output_manager.cc"
     "video_output.cc"
     "utils.cc"
+    "isolated_egl.cc"
   )
 
   apply_standard_settings(${PLUGIN_NAME})
