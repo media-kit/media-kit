@@ -22,15 +22,15 @@ if(MIMALLOC_USE_STATIC_LIBS)
   #
   # Refer to "Static Override" section in mimalloc's documentation:
   # https://github.com/microsoft/mimalloc#static-override
-  function(download_and_verify url md5 locationForArchive)
+  function(download_and_verify url sha256 locationForArchive)
     # Check if the archive exists.
     if(EXISTS "${locationForArchive}")
-      file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+      file(SHA256 "${locationForArchive}" ARCHIVE_SHA256)
 
-      # If MD5 doesn't match, delete the archive to download again.
-      if(NOT md5 STREQUAL ARCHIVE_MD5)
+      # If SHA-256 doesn't match, delete the archive to download again.
+      if(NOT sha256 STREQUAL ARCHIVE_SHA256)
         file(REMOVE "${locationForArchive}")
-        message(STATUS "MD5 mismatch. File deleted.")
+        message(STATUS "SHA-256 mismatch. File deleted.")
       endif()
     endif()
 
@@ -40,10 +40,10 @@ if(MIMALLOC_USE_STATIC_LIBS)
       file(DOWNLOAD "${url}" "${locationForArchive}")
       message(STATUS "Downloaded archive to ${locationForArchive}.")
 
-      # Verify MD5 of the newly downloaded file.
-      file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+      # Verify SHA-256 of the newly downloaded file.
+      file(SHA256 "${locationForArchive}" ARCHIVE_SHA256)
 
-      if(md5 STREQUAL ARCHIVE_MD5)
+      if(sha256 STREQUAL ARCHIVE_SHA256)
         message(STATUS "${locationForArchive} Verification successful.")
       else()
         message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to rebuild project again.")
@@ -55,14 +55,14 @@ if(MIMALLOC_USE_STATIC_LIBS)
   set(MIMALLOC "mimalloc-2.1.2.tar.gz")
 
   set(MIMALLOC_URL "https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz")
-  set(MIMALLOC_MD5 "5179c8f5cf1237d2300e2d8559a7bc55")
+  set(MIMALLOC_SHA256 "2b1bff6f717f9725c70bf8d79e4786da13de8a270059e4ba0bdd262ae7be46eb")
 
   set(MIMALLOC_ARCHIVE "${CMAKE_BINARY_DIR}/${MIMALLOC}")
   set(MIMALLOC_SRC "${CMAKE_BINARY_DIR}/mimalloc")
 
   download_and_verify(
     ${MIMALLOC_URL}
-    ${MIMALLOC_MD5}
+    ${MIMALLOC_SHA256}
     ${MIMALLOC_ARCHIVE}
   )
 
