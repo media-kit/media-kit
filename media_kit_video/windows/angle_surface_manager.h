@@ -53,6 +53,11 @@ class ANGLESurfaceManager {
 
   void MakeCurrent(bool value);
 
+  // Whether the Direct3D 11 device was removed (a driver update or reset, a
+  // GPU switched or gone): nothing drawn or made on it shows any more, and
+  // only a new surface manager, on a new device, does.
+  bool IsDeviceLost() const;
+
  private:
   void SwapBuffers();
 

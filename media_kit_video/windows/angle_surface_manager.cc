@@ -42,9 +42,20 @@ void ANGLESurfaceManager::SetSize(int32_t width, int32_t height) {
   if (width == width_ && height == height_) {
     return;
   }
+  // |Read| may run on Flutter's raster thread at this moment, for the texture
+  // being replaced; it copies between the two textures that |Create| releases
+  // and makes again. Both wait for |mutex_|, so that the copy never reaches a
+  // released texture.
+  ::WaitForSingleObject(mutex_, INFINITE);
   width_ = width;
   height_ = height;
-  Create();
+  try {
+    Create();
+  } catch (...) {
+    ::ReleaseMutex(mutex_);
+    throw;
+  }
+  ::ReleaseMutex(mutex_);
 }
 
 void ANGLESurfaceManager::Draw(std::function<void()> callback) {
@@ -64,6 +75,13 @@ void ANGLESurfaceManager::Read() {
     d3d_11_device_context_->Flush();
   }
   ::ReleaseMutex(mutex_);
+}
+
+bool ANGLESurfaceManager::IsDeviceLost() const {
+  // ID3D11Device is free threaded: this may run on the thread pool of
+  // |VideoOutput| while Flutter reads the texture on its raster thread.
+  return d3d_11_device_ != nullptr &&
+         d3d_11_device_->GetDeviceRemovedReason() != S_OK;
 }
 
 void ANGLESurfaceManager::MakeCurrent(bool value) {
