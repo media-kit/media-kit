@@ -15,6 +15,8 @@ set(PLUGIN_NAME "media_kit_video_plugin")
 # This is shipped as part of package:media_kit_libs_*** package(s).
 # Must be built before this target.
 set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
+set(LIBMPV_INCLUDE_DIR "${LIBMPV_SRC}/include/mpv")
+set(LIBMPV_IMPORT_LIBRARY "${LIBMPV_SRC}/libmpv.dll.a")
 set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
 
 # Deal with MSVC incompatiblity
@@ -22,7 +24,7 @@ add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
 
 if(MEDIA_KIT_LIBS_AVAILABLE)
   include_directories(
-    "${LIBMPV_SRC}/include"
+    "${LIBMPV_INCLUDE_DIR}"
     "${ANGLE_SRC}/include"
   )
 
@@ -59,7 +61,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     flutter_wrapper_plugin
 
     # Link to libmpv & ANGLE.
-    "${LIBMPV_SRC}/libmpv.dll.a"
+    "${LIBMPV_IMPORT_LIBRARY}"
     "${ANGLE_SRC}/lib/libEGL.dll.lib"
     "${ANGLE_SRC}/lib/libGLESv2.dll.lib"
   )

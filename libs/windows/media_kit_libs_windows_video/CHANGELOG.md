@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix ANGLE hardware-device detection and device reference cleanup in mpv 0.41.0 (upstream `1d15686142fd`, `40c998a1ca2a`).
+- Enable OpenGL and ANGLE in Windows ARM64 libmpv builds.
 - Update ANGLE to chromium/8078 (`9fe55a5`).
 
 ## 1.0.12
