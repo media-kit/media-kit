@@ -7,6 +7,8 @@
 // LICENSE file.
 #include "angle_surface_manager.h"
 
+#include "utils.h"
+
 #include <iostream>
 
 #pragma comment(lib, "dxgi.lib")
@@ -26,7 +28,7 @@ int ANGLESurfaceManager::instance_count_ = 0;
 
 ANGLESurfaceManager::ANGLESurfaceManager(int32_t width, int32_t height)
     : width_(width), height_(height) {
-  mutex_ = ::CreateMutex(NULL, FALSE, NULL);
+  mutex_ = ::CreateMutex(nullptr, FALSE, nullptr);
   Create();
   instance_count_++;
 }
@@ -51,7 +53,7 @@ void ANGLESurfaceManager::Draw(std::function<void()> callback) {
   ::WaitForSingleObject(mutex_, INFINITE);
   MakeCurrent(true);
   callback();
-  SwapBuffers();
+  FinishRendering();
   MakeCurrent(false);
   ::ReleaseMutex(mutex_);
 }
@@ -74,7 +76,7 @@ void ANGLESurfaceManager::MakeCurrent(bool value) {
   }
 }
 
-void ANGLESurfaceManager::SwapBuffers() {
+void ANGLESurfaceManager::FinishRendering() {
   glFinish();
 }
 
@@ -100,9 +102,6 @@ void ANGLESurfaceManager::Create() {
 
 void ANGLESurfaceManager::CleanUp(bool release_context) {
   if (release_context) {
-    if (display_ != EGL_NO_DISPLAY && surface_ != EGL_NO_SURFACE) {
-      eglReleaseTexImage(display_, surface_, EGL_BACK_BUFFER);
-    }
     if (display_ != EGL_NO_DISPLAY && context_ != EGL_NO_CONTEXT) {
       eglDestroyContext(display_, context_);
       context_ = EGL_NO_CONTEXT;
@@ -150,7 +149,6 @@ bool ANGLESurfaceManager::CreateD3DTexture() {
         D3D_FEATURE_LEVEL_11_0,
         D3D_FEATURE_LEVEL_10_1,
         D3D_FEATURE_LEVEL_10_0,
-        D3D_FEATURE_LEVEL_9_3,
     };
 
     IDXGIAdapter* adapter = nullptr;
@@ -158,7 +156,7 @@ bool ANGLESurfaceManager::CreateD3DTexture() {
 
     // NOTE: Automatically selecting adapter on Windows 10 RTM or greater.
     if (Utils::IsWindows10RTMOrGreater()) {
-      adapter = NULL;
+      adapter = nullptr;
       driver_type = D3D_DRIVER_TYPE_HARDWARE;
     } else {
       IDXGIFactory* dxgi = nullptr;
@@ -246,22 +244,7 @@ bool ANGLESurfaceManager::CreateEGLDisplay() {
                                           EGL_DEFAULT_DISPLAY,
                                           kD3D11DisplayAttributes);
       if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
-        display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
-                                            EGL_DEFAULT_DISPLAY,
-                                            kD3D11_9_3DisplayAttributes);
-        if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
-          display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
-                                              EGL_DEFAULT_DISPLAY,
-                                              kD3D9DisplayAttributes);
-          if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
-            display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
-                                                EGL_DEFAULT_DISPLAY,
-                                                kWrapDisplayAttributes);
-            if (eglInitialize(display_, 0, 0) == EGL_FALSE) {
-              FAIL("eglGetPlatformDisplayEXT");
-            }
-          }
-        }
+        FAIL("eglInitialize");
       }
     } else {
       FAIL("eglGetProcAddress");
@@ -297,11 +280,7 @@ bool ANGLESurfaceManager::CreateAndBindEGLSurface() {
   if (surface_ == EGL_NO_SURFACE) {
     FAIL("eglCreatePbufferFromClientBuffer");
   }
-  GLuint t;
-  glGenTextures(1, &t);
-  glBindTexture(GL_TEXTURE_2D, t);
-  eglBindTexImage(display_, surface_, EGL_BACK_BUFFER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  // libmpv renders directly into the pbuffer back buffer. Flutter binds the
+  // copied shared texture on the consumer side.
   return true;
 }
