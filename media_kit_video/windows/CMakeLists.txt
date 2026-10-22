@@ -10,6 +10,9 @@ set(PROJECT_NAME "media_kit_video")
 set(CMAKE_CXX_STANDARD 17)
 project(${PROJECT_NAME} LANGUAGES CXX)
 
+# Opt in to policies supported by Flutter's minimum CMake version.
+cmake_policy(VERSION 3.14...3.25)
+
 set(PLUGIN_NAME "media_kit_video_plugin")
 
 # This is shipped as part of package:media_kit_libs_*** package(s).
@@ -31,6 +34,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
   add_library(
     ${PLUGIN_NAME} SHARED
     "angle_surface_manager.cc"
+    "include/media_kit_video/media_kit_video_plugin_c_api.h"
     "media_kit_video_plugin_c_api.cc"
     "media_kit_video_plugin.cc"
     "video_output_manager.cc"
@@ -70,6 +74,7 @@ else()
 
   add_library(
     ${PLUGIN_NAME} SHARED
+    "include/media_kit_video/media_kit_video_plugin_c_api.h"
     "media_kit_video_plugin_c_api.cc"
     ${PLUGIN_SOURCES}
   )

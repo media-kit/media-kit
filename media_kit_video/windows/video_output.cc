@@ -63,8 +63,8 @@ VideoOutput::VideoOutput(int64_t handle,
               render_context_,
               [](void* context) {
                 // Notify Flutter that a new frame is available. The actual
-                // rendering will take place in the |Render| method, which will
-                // be called by Flutter on the render thread.
+                // rendering will take place in the |Render| method on the
+                // rendering worker before notifying Flutter.
                 auto that = reinterpret_cast<VideoOutput*>(context);
                 that->NotifyRender();
               },
@@ -95,8 +95,8 @@ VideoOutput::VideoOutput(int64_t handle,
             render_context_,
             [](void* context) {
               // Notify Flutter that a new frame is available. The actual
-              // rendering will take place in the |Render| method, which will be
-              // called by Flutter on the render thread.
+              // rendering will take place in the |Render| method on the
+              // rendering worker before notifying Flutter.
               auto that = reinterpret_cast<VideoOutput*>(context);
               that->NotifyRender();
             },
@@ -228,7 +228,7 @@ void VideoOutput::SetSize(std::optional<int64_t> width,
       }
       // S/W
       if (pixel_buffer_ != nullptr) {
-        // Limit width if software rendering is being used.
+        // Limit height if software rendering is being used.
         height_ = std::clamp(height.value(), static_cast<int64_t>(0),
                              static_cast<int64_t>(SW_RENDERING_MAX_HEIGHT));
       }
@@ -405,7 +405,7 @@ int64_t VideoOutput::GetVideoWidth() {
       return SW_RENDERING_MAX_WIDTH;
     }
     if (height >= SW_RENDERING_MAX_HEIGHT) {
-      return width / height * SW_RENDERING_MAX_HEIGHT;
+      return width * SW_RENDERING_MAX_HEIGHT / height;
     }
   }
 
@@ -454,7 +454,7 @@ int64_t VideoOutput::GetVideoHeight() {
       return SW_RENDERING_MAX_HEIGHT;
     }
     if (width >= SW_RENDERING_MAX_WIDTH) {
-      return height / width * SW_RENDERING_MAX_WIDTH;
+      return height * SW_RENDERING_MAX_WIDTH / width;
     }
   }
 

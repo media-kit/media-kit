@@ -8,6 +8,7 @@
 #include "include/media_kit_video/media_kit_video_plugin_c_api.h"
 
 #include <flutter/plugin_registrar_windows.h>
+#include <iostream>
 
 #ifndef MEDIA_KIT_LIBS_NOT_FOUND
 
@@ -18,14 +19,14 @@ void MediaKitVideoPluginCApiRegisterWithRegistrar(
   media_kit_video::MediaKitVideoPlugin::RegisterWithRegistrar(
       flutter::PluginRegistrarManager::GetInstance()
           ->GetRegistrar<flutter::PluginRegistrarWindows>(registrar));
+  std::cout << "package:media_kit_video registered." << std::endl;
 }
 
 #else
 
-#include <iostream>
-
 void MediaKitVideoPluginCApiRegisterWithRegistrar(
     FlutterDesktopPluginRegistrarRef registrar) {
+  (void)registrar;
   std::cout << "media_kit: WARNING: package:media_kit_libs_*** not found."
             << std::endl;
 }
