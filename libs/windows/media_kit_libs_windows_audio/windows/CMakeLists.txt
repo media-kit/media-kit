@@ -5,13 +5,16 @@
 # Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 cmake_minimum_required(VERSION 3.14)
-cmake_policy(SET CMP0175 NEW)
 
 # This option is read by the other packages which are part of package:media_kit.
 option(MEDIA_KIT_LIBS_AVAILABLE "package:media_kit libraries are available." ON)
 
 set(PROJECT_NAME "media_kit_libs_windows_audio")
 project(${PROJECT_NAME} LANGUAGES CXX)
+
+# Opt in to policies supported by Flutter's minimum CMake version without
+# requiring policies introduced by newer CMake releases.
+cmake_policy(VERSION 3.14...3.25)
 
 # ------------------------------------------------------------------------------
 function(download_and_verify url md5 locationForArchive)

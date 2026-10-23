@@ -3,10 +3,12 @@
 /// Copyright © 2021 & onwards, WanJiMi.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
 import 'dart:js_interop';
-import 'package:web/web.dart' as web;
+
 import 'package:synchronized/synchronized.dart';
+import 'package:web/web.dart' as web;
 
 // --------------------------------------------------
 
@@ -83,18 +85,16 @@ external bool isHLSSupported();
 abstract class XHRSetupCallback {}
 
 extension on XHRSetupCallback {
+  // TODO: is this even important? I am not familiar with this.
   // ignore: unused_element
   external void call(web.XMLHttpRequest xhr, String url);
-  // todo: is this even important? I am not familiar with this.
 }
 
 @JS()
 @anonymous
 @staticInterop
 class HlsOptions {
-  external factory HlsOptions({
-    XHRSetupCallback? xhrSetup,
-  });
+  external factory HlsOptions({XHRSetupCallback? xhrSetup});
 }
 
 @JS()
@@ -105,6 +105,7 @@ class Hls {
 
 extension ExtensionHls on Hls {
   external void loadSource(String src);
+
   external void attachMedia(web.HTMLVideoElement video);
 }
 

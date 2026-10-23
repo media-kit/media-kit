@@ -48,23 +48,19 @@ class _StressTestScreenState extends State<StressTestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final children = controllers.map(
-      (e) {
-        final video = Video(controller: e);
-        if (Theme.of(context).platform == TargetPlatform.android) {
-          return video;
-        }
-        return Card(
-          margin: EdgeInsets.zero,
-          clipBehavior: Clip.antiAlias,
-          child: video,
-        );
-      },
-    ).toList();
+    final children = controllers.map((e) {
+      final video = Video(controller: e);
+      if (Theme.of(context).platform == TargetPlatform.android) {
+        return video;
+      }
+      return Card(
+        margin: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        child: video,
+      );
+    }).toList();
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('package:media_kit'),
-      ),
+      appBar: AppBar(title: const Text('package:media_kit')),
       body: GridView.extent(
         maxCrossAxisExtent: 480.0,
         padding: const EdgeInsets.all(16.0),

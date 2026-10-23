@@ -3,11 +3,12 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:collection';
 
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
+import 'package:media_kit_video/src/utils/dispose_safe_notifier.dart';
 
 /// {@template video_state_inherited_widget}
 ///
@@ -20,6 +21,7 @@ class VideoStateInheritedWidget extends InheritedWidget {
   final ValueNotifier<VideoViewParameters> videoViewParametersNotifier;
 
   final bool disposeNotifiers;
+
   VideoStateInheritedWidget({
     super.key,
     required this.state,
@@ -44,10 +46,7 @@ class VideoStateInheritedWidget extends InheritedWidget {
 
   static VideoStateInheritedWidget of(BuildContext context) {
     final VideoStateInheritedWidget? result = maybeOf(context);
-    assert(
-      result != null,
-      'No [VideoStateInheritedWidget] found in [context]',
-    );
+    assert(result != null, 'No [VideoStateInheritedWidget] found in [context]');
     return result!;
   }
 
