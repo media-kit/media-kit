@@ -24,24 +24,30 @@ func packageExists(at relativePath: String) -> Bool {
 
 let libsPath = "../media_kit_libs_ios_video"
 let hasLibs = packageExists(at: libsPath)
+let packageDependencies: [Package.Dependency] = [
+    .package(name: "FlutterFramework", path: "../FlutterFramework")
+] + (hasLibs ? [
+    .package(name: "media_kit_libs_ios_video", path: libsPath)
+] : [])
+let targetDependencies: [Target.Dependency] = [
+    .product(name: "FlutterFramework", package: "FlutterFramework")
+] + (hasLibs ? [
+    .product(name: "Mpv", package: "media_kit_libs_ios_video")
+] : [])
 
 let package = Package(
     name: "media_kit_video",
     platforms: [
-        .iOS("9.0")
+        .iOS("13.0")
     ],
     products: [
         .library(name: "media-kit-video", targets: ["media_kit_video"])
     ],
-    dependencies: hasLibs
-        ? [.package(name: "media_kit_libs_ios_video", path: libsPath)]
-        : [],
+    dependencies: packageDependencies,
     targets: [
         .target(
             name: "media_kit_video",
-            dependencies: hasLibs
-                ? [.product(name: "Mpv", package: "media_kit_libs_ios_video")]
-                : [],
+            dependencies: targetDependencies,
             sources: hasLibs
                 ? ["plugin"]
                 : ["stub"],

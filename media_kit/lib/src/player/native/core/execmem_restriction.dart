@@ -3,8 +3,8 @@
 /// Copyright © 2024 & onwards, cillyvms <cillyvms@estrogen.dev>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-// ignore_for_file: constant_identifier_names
 
+// ignore_for_file: constant_identifier_names
 import 'dart:ffi';
 import 'dart:io';
 
@@ -55,9 +55,21 @@ const MAP_PRIVATE = 0x2;
 const MAP_ANONYMOUS = 0x20;
 
 typedef MmapFunctionNative = Pointer<Void> Function(
-    Pointer<Void>, Size, Int32, Int32, Int32, Long);
+  Pointer<Void>,
+  Size,
+  Int32,
+  Int32,
+  Int32,
+  Long,
+);
 typedef MmapFunctionDart = Pointer<Void> Function(
-    Pointer<Void>, int, int, int, int, int);
+  Pointer<Void>,
+  int,
+  int,
+  int,
+  int,
+  int,
+);
 
 typedef MunmapFunctionNative = Int32 Function(Pointer<Void>, Size);
 typedef MunmapFunctionDart = int Function(Pointer<Void>, int);

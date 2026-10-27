@@ -23,7 +23,7 @@ Pod::Spec.new do |s|
   s.author           = { 'Hitesh Kumar Saini' => 'saini123hitesh@gmail.com' }
 
   s.source           = { :path => '.' }
-  s.platform         = :osx, '10.9'
+  s.platform         = :osx, '10.15'
   s.swift_version    = '5.0'
   s.dependency         'FlutterMacOS'
   s.resource_bundles = {

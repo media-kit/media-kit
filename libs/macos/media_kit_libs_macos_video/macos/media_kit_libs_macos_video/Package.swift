@@ -50,13 +50,15 @@ let libmpvProductTargets: [String] = ["media_kit_libs_macos_video"] + libmpvTarg
 let package = Package(
     name: "media_kit_libs_macos_video",
     platforms: [
-        .macOS("10.9")
+        .macOS("10.15")
     ],
     products: [
         .library(name: "media-kit-libs-macos-video", targets: libmpvProductTargets),
         .library(name: "Mpv", targets: ["Mpv"])
     ],
-    dependencies: [],
+    dependencies: [
+        .package(name: "FlutterFramework", path: "../FlutterFramework")
+    ],
     targets: libmpvTargets.map { framework in
         .binaryTarget(
             name: framework,
@@ -66,7 +68,9 @@ let package = Package(
     } + [
         .target(
             name: "media_kit_libs_macos_video",
-            dependencies: libmpvTargets.map { framework in .target(name: framework) },
+            dependencies: [
+                .product(name: "FlutterFramework", package: "FlutterFramework")
+            ] + libmpvTargets.map { framework in .target(name: framework) },
             resources: [
                 .process("PrivacyInfo.xcprivacy")
             ]
