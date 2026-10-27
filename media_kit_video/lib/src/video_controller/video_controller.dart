@@ -3,14 +3,14 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:media_kit/media_kit.dart';
-
-import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
-
-import 'package:media_kit_video/src/video_controller/native_video_controller/native_video_controller.dart';
 import 'package:media_kit_video/src/video_controller/android_video_controller/android_video_controller.dart';
+import 'package:media_kit_video/src/video_controller/native_video_controller/native_video_controller.dart';
+import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 import 'package:media_kit_video/src/video_controller/web_video_controller/web_video_controller.dart';
 
 /// {@template video_controller}
@@ -97,10 +97,7 @@ class VideoController {
           platform.complete(result);
           notifier.value = result;
         } else if (WebVideoController.supported) {
-          final result = await WebVideoController.create(
-            player,
-            configuration,
-          );
+          final result = await WebVideoController.create(player, configuration);
           platform.complete(result);
           notifier.value = result;
         }
@@ -145,15 +142,9 @@ class VideoController {
   /// Remember:
   /// * “Premature optimization is the root of all evil”
   /// * “With great power comes great responsibility”
-  Future<void> setSize({
-    int? width,
-    int? height,
-  }) async {
+  Future<void> setSize({int? width, int? height}) async {
     final instance = await platform.future;
-    return instance.setSize(
-      width: width,
-      height: height,
-    );
+    return instance.setSize(width: width, height: height);
   }
 
   /// A [Future] that completes when the first video frame has been rendered.

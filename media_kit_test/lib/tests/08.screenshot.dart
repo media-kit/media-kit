@@ -51,10 +51,7 @@ class _ScreenshotState extends State<Screenshot> {
           ),
         ),
         const SizedBox(height: 16.0),
-        if (image != null)
-          Center(
-            child: image!,
-          ),
+        if (image != null) Center(child: image!),
         const SizedBox(height: 16.0),
       ];
 
@@ -63,9 +60,7 @@ class _ScreenshotState extends State<Screenshot> {
     final horizontal =
         MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('package:media_kit'),
-      ),
+      appBar: AppBar(title: const Text('package:media_kit')),
       floatingActionButton: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.end,
@@ -102,9 +97,7 @@ class _ScreenshotState extends State<Screenshot> {
                             child: Card(
                               clipBehavior: Clip.antiAlias,
                               margin: const EdgeInsets.all(32.0),
-                              child: Video(
-                                controller: controller,
-                              ),
+                              child: Video(controller: controller),
                             ),
                           ),
                           const SizedBox(height: 32.0),
@@ -113,12 +106,7 @@ class _ScreenshotState extends State<Screenshot> {
                     ),
                   ),
                   const VerticalDivider(width: 1.0, thickness: 1.0),
-                  Expanded(
-                    flex: 1,
-                    child: ListView(
-                      children: items,
-                    ),
-                  ),
+                  Expanded(flex: 1, child: ListView(children: items)),
                 ],
               )
             : ListView(
