@@ -49,14 +49,7 @@ dev_dependencies:
   lints: any
   test: any
 
-ffigen:
-  name: MPV
-  output: bin/generated/libmpv/bindings.dart
-  headers:
-    entry-points:
-      - headers/client.h
-  dart-bool: true
-
 flutter:
   assets:
-    - assets/web/
+    - path: assets/web/
+      platforms: [ web ]

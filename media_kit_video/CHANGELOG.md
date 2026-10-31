@@ -1,3 +1,7 @@
+## Unreleased
+
+- Drop Windows Direct3D feature levels below 10_0.
+
 ## 2.0.1
 
 - fix: flutter 3.38.x crash

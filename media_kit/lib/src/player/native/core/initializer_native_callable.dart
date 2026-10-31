@@ -3,6 +3,7 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:collection';
 import 'dart:ffi';
 
@@ -64,7 +65,7 @@ class InitializerNativeCallable {
     // Clear the wakeup callback in libmpv before closing NativeCallable
     // to prevent libmpv from invoking a deleted callback
     mpv.mpv_set_wakeup_callback(ctx, nullptr, nullptr);
-    
+
     _wakeUpNativeCallables.remove(ctx.address)?.close();
   }
 

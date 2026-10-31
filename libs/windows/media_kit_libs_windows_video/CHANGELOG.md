@@ -1,3 +1,8 @@
+## Unreleased
+
+- Update libmpv to 0.41.0.
+- Update ANGLE to chromium/8078 and enable OpenGL/ANGLE support in Windows ARM64 builds.
+
 ## 1.0.12
 
 - feat: support ARM64

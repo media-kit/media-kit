@@ -4,10 +4,9 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-import 'package:universal_platform/universal_platform.dart';
-
 import 'package:media_kit/src/player/native/player/player.dart';
 import 'package:media_kit/src/player/web/player/player.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 /// {@template media_kit}
 ///
