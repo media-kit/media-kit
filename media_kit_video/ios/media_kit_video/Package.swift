@@ -28,7 +28,7 @@ let hasLibs = packageExists(at: libsPath)
 let package = Package(
     name: "media_kit_video",
     platforms: [
-        .iOS("9.0")
+        .iOS("15.0")
     ],
     products: [
         .library(name: "media-kit-video", targets: ["media_kit_video"])
