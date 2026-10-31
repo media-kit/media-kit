@@ -58,6 +58,10 @@ abstract class PictureInPictureController {
     bool startImmediately = false,
   });
 
+  /// Enters Picture-in-Picture now, on a session previously attached with
+  /// [start]. Without an attached session this is a no-op.
+  Future<void> enter();
+
   /// Stops any active Picture-in-Picture session and releases platform
   /// resources.
   Future<void> stop();

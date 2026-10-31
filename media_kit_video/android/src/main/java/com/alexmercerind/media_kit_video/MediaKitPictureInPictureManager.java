@@ -158,6 +158,11 @@ final class MediaKitPictureInPictureManager {
                 handleStart(call, result);
                 break;
             }
+            case "enter": {
+                enterPictureInPictureNow();
+                result.success(null);
+                break;
+            }
             case "stop": {
                 // Android has no programmatic way to leave PiP; the system
                 // handles it when the user restores the app. We clear local

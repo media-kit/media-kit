@@ -117,6 +117,11 @@
       }
     }
 
+    func enter() {
+      startAttempts = 0
+      attemptStart()
+    }
+
     func stop() {
       if let controller = pipController, controller.isPictureInPictureActive {
         DispatchQueue.main.async { controller.stopPictureInPicture() }

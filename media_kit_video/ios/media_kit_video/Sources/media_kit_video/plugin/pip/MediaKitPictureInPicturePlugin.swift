@@ -61,6 +61,13 @@
         }
       case "start":
         handleStart(call.arguments, result: result)
+      case "enter":
+        if #available(iOS 15.0, *),
+          let controller = controllerBox as? MediaKitPictureInPictureController
+        {
+          controller.enter()
+        }
+        result(nil)
       case "stop":
         if #available(iOS 15.0, *),
           let controller = controllerBox as? MediaKitPictureInPictureController

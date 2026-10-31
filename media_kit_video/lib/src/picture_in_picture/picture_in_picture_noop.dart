@@ -28,6 +28,9 @@ class PictureInPictureNoop implements PictureInPictureController {
   }) async {}
 
   @override
+  Future<void> enter() async {}
+
+  @override
   Future<void> stop() async {}
 
   @override

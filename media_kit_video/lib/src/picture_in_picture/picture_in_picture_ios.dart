@@ -67,6 +67,17 @@ class PictureInPictureIOS implements PictureInPictureController {
   }
 
   @override
+  Future<void> enter() async {
+    try {
+      await _method.invokeMethod<void>('enter');
+    } on PlatformException {
+      // Reported through the failed event.
+    } on MissingPluginException {
+      // no-op
+    }
+  }
+
+  @override
   Future<void> stop() async {
     try {
       await _method.invokeMethod<void>('stop');
