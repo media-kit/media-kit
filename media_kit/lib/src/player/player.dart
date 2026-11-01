@@ -318,7 +318,9 @@ class Player {
   /// On the native backend, if [includeLibassSubtitles] is `true` *and*
   /// [PlayerConfiguration.libass] is `true`, then the screenshot will include
   /// the on-screen subtitles. This option is ignored by the web backend.
-  Future<Uint8List?> screenshot({String? format = 'image/jpeg', bool includeLibassSubtitles = false}) async {
+  Future<Uint8List?> screenshot(
+      {String? format = 'image/jpeg',
+      bool includeLibassSubtitles = false}) async {
     return platform?.screenshot(
       format: format,
       includeLibassSubtitles: includeLibassSubtitles,

@@ -76,6 +76,16 @@ public class VideoOutput: NSObject {
     }
   }
 
+  public func setOnFrameRendered(_ callback: ((CVPixelBuffer) -> Void)?) {
+    worker.enqueue {
+      self.texture?.onFrameRendered = callback
+    }
+  }
+
+  public var currentTextureId: Int64 {
+    return textureId
+  }
+
   private func _init() {
     let enableHardwareAcceleration =
       VideoOutput.isSimulator ? false : enableHardwareAcceleration

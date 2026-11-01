@@ -18,6 +18,8 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
     skipCheckArgs: true
   )
 
+  public var onFrameRendered: ((CVPixelBuffer) -> Void)?
+
   init(
     handle: OpaquePointer,
     updateCallback: @escaping UpdateCallback
@@ -185,6 +187,8 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
     glFlush()
 
     textureContexts.pushAsReady(textureContext!)
+
+    onFrameRendered?(textureContext!.pixelBuffer)
   }
 
   static private func getProcAddress(

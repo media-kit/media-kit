@@ -1105,6 +1105,38 @@ CupertinoVideoControlsTheme(
 - Theming:
   - No theming applicable.
 
+### Picture-in-Picture
+
+Declarative Picture-in-Picture is available on iOS 15+ and Android 8.0+ (API 26). Pass a `PipConfig` to `Video`:
+
+```dart
+Video(
+  controller: videoController,
+  pip: const PipConfig(autoEnter: true),
+  onPipEvent: (event) {
+    // Optional: observe lifecycle + play/pause events.
+  },
+)
+```
+
+For imperative control use `videoController.pictureInPicture`:
+
+```dart
+await videoController.pictureInPicture.start(
+  handle: await player.handle,
+  videoSize: const Size(1280, 720),
+);
+await videoController.pictureInPicture.stop();
+videoController.pictureInPicture.events.listen((event) {});
+```
+
+Platform setup:
+
+- **iOS** — enable the `audio` background mode in `Info.plist`.
+- **Android** — mark the host Activity with `android:supportsPictureInPicture="true"` in `AndroidManifest.xml`.
+
+Runtime gating is handled by the package: iOS < 15 and Android < 26 silently no-op, and desktop (macOS/Linux/Windows) and web use a no-op implementation (`PipConfig` is ignored). See [package:media_kit_video](https://github.com/media-kit/media-kit/tree/main/media_kit_video) for full setup and limitations.
+
 ### Next steps
 
 This guide follows a tutorial-like structure & covers nearly all features that [package:media_kit](https://github.com/media-kit/media-kit) offers. However, it is _not complete_ by any means. You are free to improve this page & add more documentation, which newcomers may find helpful. The following places can help you learn more:
