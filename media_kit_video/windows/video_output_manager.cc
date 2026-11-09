@@ -38,12 +38,17 @@ void VideoOutputManager::SetSize(int64_t handle,
   }).detach();
 }
 
-void VideoOutputManager::Dispose(int64_t handle) {
-  std::thread([=]() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (video_outputs_.find(handle) != video_outputs_.end()) {
+void VideoOutputManager::Dispose(int64_t handle,
+                                 std::function<void()> on_disposed) {
+  std::thread([this, handle, on_disposed = std::move(on_disposed)]() {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
       video_outputs_.erase(handle);
+      // The destructor queues mpv_render_context_free after unregistering the
+      // Flutter texture. Finish that work before allowing engine shutdown.
+      thread_pool_->Post([]() {}).wait();
     }
+    on_disposed();
   }).detach();
 }
 
