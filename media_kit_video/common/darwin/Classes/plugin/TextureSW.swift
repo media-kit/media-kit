@@ -12,8 +12,8 @@ import Foundation
   import FlutterMacOS
 #endif
 
-public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
-  public typealias UpdateCallback = () -> Void
+class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
+  typealias UpdateCallback = () -> Void
 
   private let handle: OpaquePointer
   private let updateCallback: UpdateCallback
@@ -42,7 +42,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
     disposeMPV()
   }
 
-  public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
+  func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
     let textureContext = textureContexts.current
     if textureContext == nil {
       return nil
@@ -81,7 +81,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
     mpv_render_context_free(renderContext)
   }
 
-  public func resize(_ size: CGSize) {
+  func resize(_ size: CGSize) {
     if size.width == 0 || size.height == 0 {
       return
     }
@@ -107,7 +107,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
     textureContexts.reinit(objects: [], skipCheckArgs: true)
   }
 
-  public func render(_ size: CGSize) {
+  func render(_ size: CGSize) {
     let textureContext = textureContexts.nextAvailable()
     if textureContext == nil {
       return
