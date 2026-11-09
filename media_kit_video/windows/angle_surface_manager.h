@@ -47,7 +47,8 @@ class ANGLESurfaceManager {
 
   void SetSize(int32_t width, int32_t height);
 
-  void Draw(std::function<void()> callback);
+  // Returns the callback's result: whether it drew a frame.
+  bool Draw(std::function<bool()> callback);
 
   void Read();
 
@@ -68,18 +69,22 @@ class ANGLESurfaceManager {
 
   int32_t width_ = 1;
   int32_t height_ = 1;
-  HANDLE internal_handle_ = nullptr;
+  // Two internal textures, so |Read| copies the last drawn one
+  // while |Draw| renders the next into the other instead of waiting for it.
+  HANDLE internal_handles_[2] = {};
+  // The internal texture |Read| copies.
+  int32_t front_ = 0;
   HANDLE handle_ = nullptr;
 
-  // Sync |Draw| & |Read| calls.
+  // Sync the swap of |front_| in |Draw| & |Read| calls.
   HANDLE mutex_ = nullptr;
   // D3D 11
   ID3D11Device* d3d_11_device_ = nullptr;
   ID3D11DeviceContext* d3d_11_device_context_ = nullptr;
-  Microsoft::WRL::ComPtr<ID3D11Texture2D> internal_d3d_11_texture_2D_;
+  Microsoft::WRL::ComPtr<ID3D11Texture2D> internal_d3d_11_textures_2D_[2];
   Microsoft::WRL::ComPtr<ID3D11Texture2D> d3d_11_texture_2D_;
   // ANGLE
-  EGLSurface surface_ = EGL_NO_SURFACE;
+  EGLSurface surfaces_[2] = {EGL_NO_SURFACE, EGL_NO_SURFACE};
   EGLDisplay display_ = EGL_NO_DISPLAY;
   EGLContext context_ = nullptr;
   EGLConfig config_ = nullptr;
