@@ -15,6 +15,7 @@
 #include <render.h>
 #include <render_gl.h>
 
+#include <atomic>
 #include <future>
 #include <memory>
 
@@ -81,6 +82,8 @@ class VideoOutput {
 
   void Render();
 
+  bool NeedsRender();
+
   void CheckAndResize();
 
   void Resize(int64_t required_width, int64_t required_height);
@@ -102,6 +105,10 @@ class VideoOutput {
   // deletion after unregister in |Resize|) access this object after
   // destruction.
   bool destroyed_ = false;
+  // A render task is queued and not yet started.
+  std::atomic<bool> render_pending_ = false;
+  // The surface was recreated and holds no frame yet.
+  bool redraw_ = false;
 
   std::mutex textures_mutex_ = std::mutex();
 

@@ -151,15 +151,28 @@ void VideoOutput::NotifyRender() {
   if (destroyed_) {
     return;
   }
-  thread_pool_ref_->Post(std::bind(&VideoOutput::CheckAndResize, this));
-  thread_pool_ref_->Post(std::bind(&VideoOutput::Render, this));
+  // One queued render serves every notification before it runs,
+  // so a render slower than the notifications does not build a backlog.
+  if (render_pending_.exchange(true)) {
+    return;
+  }
+  thread_pool_ref_->Post([this]() {
+    render_pending_ = false;
+    CheckAndResize();
+    Render();
+  });
 }
 
 void VideoOutput::Render() {
   if (texture_id_) {
     // H/W
     if (surface_manager_ != nullptr) {
-      surface_manager_->Draw([&]() {
+      auto rendered = surface_manager_->Draw([&]() {
+        // The update runs with the context current, since it can
+        // load the hardware decoding interop.
+        if (!NeedsRender()) {
+          return false;
+        }
         mpv_opengl_fbo fbo{
             0,
             surface_manager_->width(),
@@ -171,10 +184,17 @@ void VideoOutput::Render() {
             {MPV_RENDER_PARAM_INVALID, nullptr},
         };
         mpv_render_context_render(render_context_, params);
+        return true;
       });
+      if (!rendered) {
+        return;
+      }
     }
     // S/W
     if (pixel_buffer_ != nullptr) {
+      if (!NeedsRender()) {
+        return;
+      }
       int32_t size[]{
           static_cast<int32_t>(pixel_buffer_textures_.at(texture_id_)->width),
           static_cast<int32_t>(pixel_buffer_textures_.at(texture_id_)->height),
@@ -196,6 +216,19 @@ void VideoOutput::Render() {
       // Prevent any redundant exceptions if the texture is unregistered etc.
     }
   }
+}
+
+bool VideoOutput::NeedsRender() {
+  // mpv also notifies without a new frame, and rendering the
+  // current one again repeats the whole shader chain; a recreated surface
+  // still needs it drawn.
+  auto frame =
+      mpv_render_context_update(render_context_) & MPV_RENDER_UPDATE_FRAME;
+  if (!frame && !redraw_) {
+    return false;
+  }
+  redraw_ = false;
+  return true;
 }
 
 void VideoOutput::SetTextureUpdateCallback(
@@ -294,6 +327,7 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
         });
     texture_id_ = 0;
   }
+  redraw_ = true;
   // H/W
   if (surface_manager_ != nullptr) {
     // Destroy internal ID3D11Texture2D & EGLSurface & create new with updated
