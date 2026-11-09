@@ -33,6 +33,12 @@ class SafeResizableTexture:
     }
   }
 
+  func dispose() {
+    locked {
+      child.dispose()
+    }
+  }
+
   func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
     return child.copyPixelBuffer()
   }

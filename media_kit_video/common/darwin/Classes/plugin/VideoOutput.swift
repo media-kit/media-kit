@@ -66,7 +66,24 @@ public class VideoOutput: NSObject {
     worker.cancel()
 
     disposed = true
-    disposeTextureId()
+    if textureId != -1 {
+      disposeTextureId()
+    }
+  }
+
+  // mpv aborts when its handle is destroyed while a render context still
+  // exists, and media_kit destroys it five seconds after disposal. The worker
+  // frees the context, then the texture is unregistered and completion runs on
+  // the main thread; until then queued jobs keep this output alive.
+  public func dispose(_ completion: @escaping () -> Void) {
+    worker.enqueue {
+      self.disposed = true
+      self.texture.dispose()
+      self.disposeTextureId()
+      DispatchQueue.main.async {
+        completion()
+      }
+    }
   }
 
   public func setSize(width: Int64?, height: Int64?) {
@@ -151,6 +168,10 @@ public class VideoOutput: NSObject {
   }
 
   private func _updateCallback() {
+    if disposed {
+      return
+    }
+
     let size = videoSize
 
     if size.width == 0 || size.height == 0 {
@@ -166,10 +187,6 @@ public class VideoOutput: NSObject {
         // textureUpdateCallback must run on the main thread
         that.textureUpdateCallback(that.textureId, size)
       }
-    }
-
-    if disposed {
-      return
     }
 
     texture.render(size)
