@@ -18,6 +18,7 @@ class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   private let handle: OpaquePointer
   private let updateCallback: UpdateCallback
   private var renderContext: OpaquePointer?
+  private var redraw = false
   private var textureContexts = SwappableObjectManager<TextureSWContext>(
     objects: [],
     skipCheckArgs: true
@@ -106,21 +107,29 @@ class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
       ],
       skipCheckArgs: true
     )
+    redraw = true
   }
 
   private func disposePixelBuffer() {
     textureContexts.reinit(objects: [], skipCheckArgs: true)
   }
 
-  func render(_ size: CGSize) {
+  func render(_ size: CGSize) -> Bool {
     if renderContext == nil {
-      return
+      return false
+    }
+
+    // mpv also notifies without a new frame; see TextureHW.render.
+    let update = mpv_render_context_update(renderContext)
+    if update & UInt64(MPV_RENDER_UPDATE_FRAME.rawValue) == 0 && !redraw {
+      return false
     }
 
     let textureContext = textureContexts.nextAvailable()
     if textureContext == nil {
-      return
+      return false
     }
+    redraw = false
 
     CVPixelBufferLockBaseAddress(
       textureContext!.pixelBuffer,
@@ -159,5 +168,6 @@ class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
     mpv_render_context_render(renderContext, &params)
 
     textureContexts.pushAsReady(textureContext!)
+    return true
   }
 }
