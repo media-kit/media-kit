@@ -38,7 +38,7 @@ Pod::Spec.new do |s|
     s.pod_target_xcconfig = {
       'DEFINES_MODULE'                      => 'YES',
       'GCC_WARN_INHIBIT_ALL_WARNINGS'       => 'YES',
-      'GCC_PREPROCESSOR_DEFINITIONS'        => '"$(inherited)" GL_SILENCE_DEPRECATION COREVIDEO_SILENCE_GL_DEPRECATION',
+      'GCC_PREPROCESSOR_DEFINITIONS'        => '$(inherited) GL_SILENCE_DEPRECATION COREVIDEO_SILENCE_GL_DEPRECATION',
       'FRAMEWORK_SEARCH_PATHS[sdk=macosx*]' => sprintf('"$(inherited)" "%s"', framework_search_paths_macosx),
       'OTHER_LDFLAGS'                       => '"$(inherited)" -framework Mpv',
     }

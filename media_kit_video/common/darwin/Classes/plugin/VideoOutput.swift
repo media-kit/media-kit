@@ -38,6 +38,8 @@ public class VideoOutput: NSObject {
   private var textureId: Int64 = -1
   private var currentSize: CGSize = CGSize.zero
   private var disposed: Bool = false
+  private let renderLock = NSLock()
+  private var renderPending = false
 
   init(
     handle: Int64,
@@ -66,13 +68,32 @@ public class VideoOutput: NSObject {
     worker.cancel()
 
     disposed = true
-    disposeTextureId()
+    if textureId != -1 {
+      disposeTextureId()
+    }
+  }
+
+  // mpv aborts when its handle is destroyed while a render context still
+  // exists, and media_kit destroys it five seconds after disposal. The worker
+  // frees the context, then the texture is unregistered and completion runs on
+  // the main thread; until then queued jobs keep this output alive.
+  public func dispose(_ completion: @escaping () -> Void) {
+    worker.enqueue {
+      self.disposed = true
+      self.texture.dispose()
+      self.disposeTextureId()
+      DispatchQueue.main.async {
+        completion()
+      }
+    }
   }
 
   public func setSize(width: Int64?, height: Int64?) {
     worker.enqueue {
       self.width = width
       self.height = height
+      // A paused player sends no update that would apply the size.
+      self.updateCallback()
     }
   }
 
@@ -144,13 +165,31 @@ public class VideoOutput: NSObject {
     }
   }
 
+  // One queued render serves every notification before it starts,
+  // so a render slower than the notifications does not build a backlog.
   public func updateCallback() {
+    renderLock.lock()
+    let pending = renderPending
+    renderPending = true
+    renderLock.unlock()
+    if pending {
+      return
+    }
+
     worker.enqueue {
       self._updateCallback()
     }
   }
 
   private func _updateCallback() {
+    renderLock.lock()
+    renderPending = false
+    renderLock.unlock()
+
+    if disposed {
+      return
+    }
+
     let size = videoSize
 
     if size.width == 0 || size.height == 0 {
@@ -168,11 +207,9 @@ public class VideoOutput: NSObject {
       }
     }
 
-    if disposed {
+    if !texture.render(size) {
       return
     }
-
-    texture.render(size)
     DispatchQueue.main.sync { [weak self] in
       guard let that = self else { return }
       // Textures must be marked as available from the main thread
