@@ -3,14 +3,15 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:ffi';
-import 'dart:collection';
-import 'package:synchronized/synchronized.dart';
-// ignore_for_file: unused_import, implementation_imports
-import 'package:media_kit/ffi/ffi.dart';
-import 'package:media_kit/src/player/native/core/native_library.dart';
 
+// ignore_for_file: implementation_imports
+import 'dart:collection';
+import 'dart:ffi';
+
+import 'package:media_kit/ffi/ffi.dart';
 import 'package:media_kit/generated/libmpv/bindings.dart';
+import 'package:media_kit/src/player/native/core/native_library.dart';
+import 'package:synchronized/synchronized.dart';
 
 /// Returns the list of available decoders available in libavcodec.
 /// Takes raw address to `mpv_handle*` as [handle].

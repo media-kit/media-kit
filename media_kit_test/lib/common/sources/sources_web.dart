@@ -1,9 +1,7 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
-
 import 'dart:js_interop';
 
-import 'package:web/web.dart' as html;
 import 'package:flutter/foundation.dart';
+import 'package:web/web.dart' as web;
 
 /// List of sample videos available for playback.
 final sources = [
@@ -19,11 +17,9 @@ Future<void> prepareSources() async {
 }
 
 String convertBytesToURL(Uint8List bytes) {
-  final blob = html.Blob(<JSUint8Array>[(bytes).toJS].toJS);
-  final object = html.URL.createObjectURL(blob);
+  final blob = web.Blob(<JSUint8Array>[(bytes).toJS].toJS);
+  final object = web.URL.createObjectURL(blob);
   return object;
 }
 
-final ValueNotifier<String> progress = ValueNotifier<String>(
-  '',
-);
+final ValueNotifier<String> progress = ValueNotifier<String>('');

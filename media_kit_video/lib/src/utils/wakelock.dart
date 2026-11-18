@@ -3,6 +3,7 @@
 /// Copyright © 2021 & onwards, Julien Muret <birros@protonmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 /// {@template wakelock}

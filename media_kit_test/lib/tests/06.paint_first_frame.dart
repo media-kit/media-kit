@@ -7,34 +7,13 @@ import '../common/sources/sources.dart';
 
 Future<void> paintFirstFrame(BuildContext context) async {
   // Create [Player] and [VideoController] instances.
-  final players = [
-    Player(),
-    Player(),
-    Player(),
-    Player(),
-    Player(),
-  ];
+  final players = [Player(), Player(), Player(), Player(), Player()];
   final controllers = [
-    VideoController(
-      players[0],
-      configuration: configuration.value,
-    ),
-    VideoController(
-      players[1],
-      configuration: configuration.value,
-    ),
-    VideoController(
-      players[2],
-      configuration: configuration.value,
-    ),
-    VideoController(
-      players[3],
-      configuration: configuration.value,
-    ),
-    VideoController(
-      players[4],
-      configuration: configuration.value,
-    ),
+    VideoController(players[0], configuration: configuration.value),
+    VideoController(players[1], configuration: configuration.value),
+    VideoController(players[2], configuration: configuration.value),
+    VideoController(players[3], configuration: configuration.value),
+    VideoController(players[4], configuration: configuration.value),
   ];
 
   for (final controller in controllers) {
@@ -46,10 +25,7 @@ Future<void> paintFirstFrame(BuildContext context) async {
   // Open some [Playable]s. Do not start playback i.e. play: false.
   for (int i = 0; i < 5; i++) {
     await players[i].open(
-      Playlist(
-        sources.map((e) => Media(e)).toList(),
-        index: i,
-      ),
+      Playlist(sources.map((e) => Media(e)).toList(), index: i),
       play: false,
     );
   }
@@ -60,10 +36,8 @@ Future<void> paintFirstFrame(BuildContext context) async {
   if (context.mounted) {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => PaintFirstFrameScreen(
-          players: players,
-          controllers: controllers,
-        ),
+        builder: (context) =>
+            PaintFirstFrameScreen(players: players, controllers: controllers),
       ),
     );
   }
@@ -76,6 +50,7 @@ Future<void> paintFirstFrame(BuildContext context) async {
 class PaintFirstFrameScreen extends StatelessWidget {
   final List<Player> players;
   final List<VideoController> controllers;
+
   const PaintFirstFrameScreen({
     super.key,
     required this.players,
@@ -85,9 +60,7 @@ class PaintFirstFrameScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('package:media_kit'),
-      ),
+      appBar: AppBar(title: const Text('package:media_kit')),
       body: ListView.separated(
         itemCount: controllers.length,
         itemBuilder: (context, i) {

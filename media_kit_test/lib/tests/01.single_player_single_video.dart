@@ -10,10 +10,12 @@ class SinglePlayerSingleVideoScreen extends StatefulWidget {
   const SinglePlayerSingleVideoScreen({super.key});
 
   @override
-  State<SinglePlayerSingleVideoScreen> createState() => _SinglePlayerSingleVideoScreenState();
+  State<SinglePlayerSingleVideoScreen> createState() =>
+      _SinglePlayerSingleVideoScreenState();
 }
 
-class _SinglePlayerSingleVideoScreenState extends State<SinglePlayerSingleVideoScreen> {
+class _SinglePlayerSingleVideoScreenState
+    extends State<SinglePlayerSingleVideoScreen> {
   late final Player player = Player();
   late final VideoController controller = VideoController(
     player,
@@ -75,11 +77,7 @@ Enjoy watching the video!
       });
     } else {
       player.setSubtitleTrack(
-        SubtitleTrack.data(
-          subtitleData,
-          title: 'English',
-          language: 'en',
-        ),
+        SubtitleTrack.data(subtitleData, title: 'English', language: 'en'),
       );
       setState(() {
         subtitlesEnabled = true;
@@ -90,11 +88,7 @@ Enjoy watching the video!
   void _openVideoWithSubtitles() {
     player.open(Media(videoWithSubtitles));
     player.setSubtitleTrack(
-      SubtitleTrack.data(
-        subtitleData,
-        title: 'English',
-        language: 'en',
-      ),
+      SubtitleTrack.data(subtitleData, title: 'English', language: 'en'),
     );
     setState(() {
       subtitlesEnabled = true;
@@ -105,10 +99,7 @@ Enjoy watching the video!
         ListTile(
           title: const Text(
             'Video with Subtitles (Sintel)',
-            style: TextStyle(
-              fontSize: 14.0,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -120,9 +111,7 @@ Enjoy watching the video!
           ListTile(
             title: Text(
               'Video $i',
-              style: const TextStyle(
-                fontSize: 14.0,
-              ),
+              style: const TextStyle(fontSize: 14.0),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -134,11 +123,10 @@ Enjoy watching the video!
 
   @override
   Widget build(BuildContext context) {
-    final horizontal = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final horizontal =
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('package:media_kit'),
-      ),
+      appBar: AppBar(title: const Text('package:media_kit')),
       floatingActionButton: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.end,
@@ -146,7 +134,8 @@ Enjoy watching the video!
         children: [
           FloatingActionButton(
             heroTag: 'subtitles',
-            tooltip: subtitlesEnabled ? 'Disable Subtitles' : 'Enable Subtitles',
+            tooltip:
+                subtitlesEnabled ? 'Disable Subtitles' : 'Enable Subtitles',
             onPressed: _toggleSubtitles,
             backgroundColor: subtitlesEnabled ? Colors.green : null,
             child: Icon(
@@ -187,7 +176,8 @@ Enjoy watching the video!
                               margin: const EdgeInsets.all(32.0),
                               child: Video(
                                 controller: controller,
-                                subtitleViewConfiguration: const SubtitleViewConfiguration(
+                                subtitleViewConfiguration:
+                                    const SubtitleViewConfiguration(
                                   style: TextStyle(
                                     height: 1.4,
                                     fontSize: 32.0,
@@ -205,12 +195,7 @@ Enjoy watching the video!
                     ),
                   ),
                   const VerticalDivider(width: 1.0, thickness: 1.0),
-                  Expanded(
-                    flex: 1,
-                    child: ListView(
-                      children: items,
-                    ),
-                  ),
+                  Expanded(flex: 1, child: ListView(children: items)),
                 ],
               )
             : ListView(
