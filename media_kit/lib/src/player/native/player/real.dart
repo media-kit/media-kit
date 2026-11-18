@@ -1389,8 +1389,9 @@ class NativePlayer extends PlatformPlayer {
         'Already observed',
       );
     }
+    final eventId = generated.mpv_event_id.fromValue(event);
     observedEvents[event] = listener;
-    _logError(mpv.mpv_request_event(ctx, event, 1), 'observeEvent($event)');
+    _logError(mpv.mpv_request_event(ctx, eventId, 1), 'observeEvent($event)');
   }
 
   /// Unobserves event for the internal libmpv instance of this [Player].
@@ -1419,8 +1420,9 @@ class NativePlayer extends PlatformPlayer {
         'Not observed',
       );
     }
+    final eventId = generated.mpv_event_id.fromValue(event);
     observedEvents.remove(event);
-    _logError(mpv.mpv_request_event(ctx, event, 0), 'unobserveEvent($event)');
+    _logError(mpv.mpv_request_event(ctx, eventId, 0), 'unobserveEvent($event)');
   }
 
   /// Invokes command for the internal libmpv instance of this [Player].
@@ -1528,7 +1530,7 @@ class NativePlayer extends PlatformPlayer {
       }
     }
 
-    final fn = observedEvents[event.ref.event_id];
+    final fn = observedEvents[event.ref.event_id.value];
     if (fn != null) {
       try {
         await fn.call(event);
@@ -2074,6 +2076,8 @@ class NativePlayer extends PlatformPlayer {
             case generated.mpv_format.MPV_FORMAT_STRING:
               data[key] = value.u.string.cast<Utf8>().toDartString();
               break;
+            default:
+              break;
           }
         }
 
@@ -2525,7 +2529,7 @@ class NativePlayer extends PlatformPlayer {
       }
 
       // Observe the properties to update the state & feed event stream.
-      <String, int>{
+      <String, generated.mpv_format>{
         'pause': generated.mpv_format.MPV_FORMAT_FLAG,
         'time-pos': generated.mpv_format.MPV_FORMAT_DOUBLE,
         'duration': generated.mpv_format.MPV_FORMAT_DOUBLE,
@@ -2606,7 +2610,11 @@ class NativePlayer extends PlatformPlayer {
   final Map<int, Completer<int>> _setPropertyRequests = {};
   final Map<int, Completer<int>> _commandRequests = {};
 
-  Future<void> _setProperty(String name, int format, Pointer<Void> data) async {
+  Future<void> _setProperty(
+    String name,
+    generated.mpv_format format,
+    Pointer<Void> data,
+  ) async {
     final namePtr = name.toNativeUtf8();
     try {
       if (configuration.async) {
@@ -2874,6 +2882,8 @@ Uint8List? _screenshot(_ScreenshotData data) {
               bytes = data.asTypedList(value.u.ba.ref.size);
               break;
           }
+          break;
+        default:
           break;
       }
     }

@@ -18,9 +18,11 @@ workspace:
   - media_kit_test
   - media_kit_video
   - video_player_media_kit
+  - video_player_media_kit/example
 
 dev_dependencies:
-  melos: ^7.7.0
+  flutter_lints: any
+  melos: ^8.10.1
 
 melos:
   scripts:
