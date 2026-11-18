@@ -1,0 +1,10 @@
+name: media_kit_libmpv_generator
+publish_to: none
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  ffigen: 23.0.0
+
+dev_dependencies:
+  test: ^1.25.0
