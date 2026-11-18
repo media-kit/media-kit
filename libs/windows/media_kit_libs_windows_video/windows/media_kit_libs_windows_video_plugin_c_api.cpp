@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include <flutter/plugin_registrar_windows.h>
-
-void MediaKitLibsWindowsVideoPluginCApiRegisterWithRegistrar(FlutterDesktopPluginRegistrarRef registrar) {
+void MediaKitLibsWindowsVideoPluginCApiRegisterWithRegistrar(
+    FlutterDesktopPluginRegistrarRef registrar) {
+  (void)registrar;
   std::cout << "package:media_kit_libs_windows_video registered." << std::endl;
 }

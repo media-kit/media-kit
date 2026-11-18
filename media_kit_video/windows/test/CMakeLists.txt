@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.14)
+project(media_kit_video_frame_size_tests LANGUAGES CXX)
+enable_testing()
+
+add_executable(video_frame_size_test video_frame_size_test.cpp)
+target_compile_features(video_frame_size_test PRIVATE cxx_std_17)
+if(MSVC)
+  target_compile_options(video_frame_size_test PRIVATE /W4 /WX /EHsc)
+else()
+  target_compile_options(video_frame_size_test PRIVATE -Wall -Wextra -Werror)
+endif()
+add_test(NAME video_frame_size COMMAND video_frame_size_test)

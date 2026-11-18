@@ -10,13 +10,6 @@
 
 #include <algorithm>
 
-// Limit the frame size to 1080p in software rendering.
-// This is for performance reasons & to avoid allocating too much memory.
-#define SW_RENDERING_MAX_WIDTH 1920
-#define SW_RENDERING_MAX_HEIGHT 1080
-#define SW_RENDERING_PIXEL_BUFFER_SIZE \
-  (SW_RENDERING_MAX_WIDTH) * (SW_RENDERING_MAX_HEIGHT) * (4)
-
 VideoOutput::VideoOutput(int64_t handle,
                          VideoOutputConfiguration configuration,
                          flutter::PluginRegistrarWindows* registrar,
@@ -41,11 +34,13 @@ VideoOutput::VideoOutput(int64_t handle,
     if (configuration.enable_hardware_acceleration) {
       try {
         // OpenGL context needs to be set before |mpv_render_context_create|.
-        surface_manager_ = std::make_unique<ANGLESurfaceManager>(
-            static_cast<int32_t>(width_.value_or(1)),
-            static_cast<int32_t>(height_.value_or(1)));
+        const auto size =
+            media_kit::ResolveVideoFrameSize(1, 1, 0, width_, height_, false)
+                .value_or(media_kit::VideoFrameSize{1, 1});
+        surface_manager_ =
+            std::make_unique<ANGLESurfaceManager>(size.width, size.height);
         surface_manager_->MakeCurrent(true);
-        Resize(width_.value_or(1), height_.value_or(1));
+        Resize(size.width, size.height);
         mpv_opengl_init_params gl_init_params{
             [](auto, auto name) {
               return reinterpret_cast<void*>(eglGetProcAddress(name));
@@ -63,8 +58,8 @@ VideoOutput::VideoOutput(int64_t handle,
               render_context_,
               [](void* context) {
                 // Notify Flutter that a new frame is available. The actual
-                // rendering will take place in the |Render| method, which will
-                // be called by Flutter on the render thread.
+                // rendering will take place in the |Render| method on the
+                // rendering worker before notifying Flutter.
                 auto that = reinterpret_cast<VideoOutput*>(context);
                 that->NotifyRender();
               },
@@ -84,8 +79,11 @@ VideoOutput::VideoOutput(int64_t handle,
       std::cout << "media_kit: VideoOutput: Using S/W rendering." << std::endl;
       // Allocate a "large enough" buffer ahead of time.
       pixel_buffer_ =
-          std::make_unique<uint8_t[]>(SW_RENDERING_PIXEL_BUFFER_SIZE);
-      Resize(width_.value_or(1), height_.value_or(1));
+          std::make_unique<uint8_t[]>(media_kit::kSoftwareBufferCapacity);
+      const auto size =
+          media_kit::ResolveVideoFrameSize(1, 1, 0, width_, height_, true)
+              .value_or(media_kit::VideoFrameSize{1, 1});
+      Resize(size.width, size.height);
       mpv_render_param params[] = {
           {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_SW},
           {MPV_RENDER_PARAM_INVALID, nullptr},
@@ -95,8 +93,8 @@ VideoOutput::VideoOutput(int64_t handle,
             render_context_,
             [](void* context) {
               // Notify Flutter that a new frame is available. The actual
-              // rendering will take place in the |Render| method, which will be
-              // called by Flutter on the render thread.
+              // rendering will take place in the |Render| method on the
+              // rendering worker before notifying Flutter.
               auto that = reinterpret_cast<VideoOutput*>(context);
               that->NotifyRender();
             },
@@ -179,7 +177,11 @@ void VideoOutput::Render() {
           static_cast<int32_t>(pixel_buffer_textures_.at(texture_id_)->width),
           static_cast<int32_t>(pixel_buffer_textures_.at(texture_id_)->height),
       };
-      auto pitch = 4 * size[0];
+      const auto layout = media_kit::GetSoftwareFrameLayout(
+          {size[0], size[1]}, media_kit::kSoftwareBufferCapacity);
+      if (!layout)
+        return;
+      size_t pitch = layout->stride;
       mpv_render_param params[]{
           {MPV_RENDER_PARAM_SW_SIZE, size},
           {MPV_RENDER_PARAM_SW_FORMAT, "rgb0"},
@@ -201,50 +203,31 @@ void VideoOutput::Render() {
 void VideoOutput::SetTextureUpdateCallback(
     std::function<void(int64_t, int64_t, int64_t)> callback) {
   texture_update_callback_ = callback;
-  texture_update_callback_(texture_id_, GetVideoWidth(), GetVideoHeight());
+  const auto size = GetVideoSize();
+  texture_update_callback_(texture_id_, size ? size->width : 0,
+                           size ? size->height : 0);
 }
 
 void VideoOutput::SetSize(std::optional<int64_t> width,
                           std::optional<int64_t> height) {
   thread_pool_ref_->Post([&, width, height]() {
-    if (width.has_value()) {
-      // H/W
-      if (surface_manager_ != nullptr) {
-        width_ = width.value();
-      }
-      // S/W
-      if (pixel_buffer_ != nullptr) {
-        // Limit width if software rendering is being used.
-        width_ = std::clamp(width.value(), static_cast<int64_t>(0),
-                            static_cast<int64_t>(SW_RENDERING_MAX_WIDTH));
-      }
-    } else {
-      width_ = std::nullopt;
-    }
-    if (height.has_value()) {
-      // H/W
-      if (surface_manager_ != nullptr) {
-        height_ = height.value();
-      }
-      // S/W
-      if (pixel_buffer_ != nullptr) {
-        // Limit width if software rendering is being used.
-        height_ = std::clamp(height.value(), static_cast<int64_t>(0),
-                             static_cast<int64_t>(SW_RENDERING_MAX_HEIGHT));
-      }
-    } else {
-      height_ = std::nullopt;
-    }
+    // Preserve the requested pair; software scaling is applied uniformly.
+    width_ = width;
+    height_ = height;
+    // Paused playback may not produce another render update. Resize and redraw
+    // the current frame on the same worker that applies the requested size.
+    CheckAndResize();
+    Render();
   });
 }
 
 void VideoOutput::CheckAndResize() {
   // Check if a new texture with different dimensions is needed.
-  auto required_width = GetVideoWidth(), required_height = GetVideoHeight();
-  if (required_width < 1 || required_height < 1) {
-    // Invalid.
+  const auto size = GetVideoSize();
+  if (!size)
     return;
-  }
+  const auto required_width = size->width;
+  const auto required_height = size->height;
   int64_t current_width = -1, current_height = -1;
   if (surface_manager_ != nullptr) {
     current_width = surface_manager_->width();
@@ -363,100 +346,29 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
   }
 }
 
-int64_t VideoOutput::GetVideoWidth() {
-  // Fixed width.
-  if (width_) {
-    return width_.value();
-  }
-  // Video resolution dependent width.
-  int64_t width = 0;
-  int64_t height = 0;
-
-  mpv_node params;
-  mpv_get_property(handle_, "video-out-params", MPV_FORMAT_NODE, &params);
-
+std::optional<media_kit::VideoFrameSize> VideoOutput::GetVideoSize() {
   int64_t dw = 0, dh = 0, rotate = 0;
-  if (params.format == MPV_FORMAT_NODE_MAP) {
-    for (int32_t i = 0; i < params.u.list->num; i++) {
-      char* key = params.u.list->keys[i];
-      auto value = params.u.list->values[i];
-      if (value.format == MPV_FORMAT_INT64) {
-        if (strcmp(key, "dw") == 0) {
-          dw = value.u.int64;
-        }
-        if (strcmp(key, "dh") == 0) {
-          dh = value.u.int64;
-        }
-        if (strcmp(key, "rotate") == 0) {
-          rotate = value.u.int64;
+  // One snapshot for both sides. A missing property is normal before open or
+  // for audio-only media; never inspect an uninitialized mpv_node.
+  mpv_node params{};
+  if (mpv_get_property(handle_, "video-out-params", MPV_FORMAT_NODE, &params) >=
+      0) {
+    if (params.format == MPV_FORMAT_NODE_MAP && params.u.list != nullptr) {
+      for (int32_t i = 0; i < params.u.list->num; ++i) {
+        const char* key = params.u.list->keys[i];
+        const auto& value = params.u.list->values[i];
+        if (key != nullptr && value.format == MPV_FORMAT_INT64) {
+          if (strcmp(key, "dw") == 0)
+            dw = value.u.int64;
+          if (strcmp(key, "dh") == 0)
+            dh = value.u.int64;
+          if (strcmp(key, "rotate") == 0)
+            rotate = value.u.int64;
         }
       }
     }
     mpv_free_node_contents(&params);
   }
-
-  width = rotate == 0 || rotate == 180 ? dw : dh;
-  height = rotate == 0 || rotate == 180 ? dh : dw;
-
-  if (pixel_buffer_ != nullptr) {
-    // Make sure |width| & |height| fit between |SW_RENDERING_MAX_WIDTH| &
-    // |SW_RENDERING_MAX_HEIGHT| while maintaining aspect-ratio.
-    if (width >= SW_RENDERING_MAX_WIDTH) {
-      return SW_RENDERING_MAX_WIDTH;
-    }
-    if (height >= SW_RENDERING_MAX_HEIGHT) {
-      return width / height * SW_RENDERING_MAX_HEIGHT;
-    }
-  }
-
-  return width;
-}
-
-int64_t VideoOutput::GetVideoHeight() {
-  // Fixed height.
-  if (height_) {
-    return height_.value();
-  }
-  // Video resolution dependent height.
-  int64_t width = 0;
-  int64_t height = 0;
-
-  mpv_node params;
-  mpv_get_property(handle_, "video-out-params", MPV_FORMAT_NODE, &params);
-
-  int64_t dw = 0, dh = 0, rotate = 0;
-  if (params.format == MPV_FORMAT_NODE_MAP) {
-    for (int32_t i = 0; i < params.u.list->num; i++) {
-      char* key = params.u.list->keys[i];
-      auto value = params.u.list->values[i];
-      if (value.format == MPV_FORMAT_INT64) {
-        if (strcmp(key, "dw") == 0) {
-          dw = value.u.int64;
-        }
-        if (strcmp(key, "dh") == 0) {
-          dh = value.u.int64;
-        }
-        if (strcmp(key, "rotate") == 0) {
-          rotate = value.u.int64;
-        }
-      }
-    }
-    mpv_free_node_contents(&params);
-  }
-
-  width = rotate == 0 || rotate == 180 ? dw : dh;
-  height = rotate == 0 || rotate == 180 ? dh : dw;
-
-  if (pixel_buffer_ != NULL) {
-    // Make sure |width| & |height| fit between |SW_RENDERING_MAX_WIDTH| &
-    // |SW_RENDERING_MAX_HEIGHT| while maintaining aspect-ratio.
-    if (height >= SW_RENDERING_MAX_HEIGHT) {
-      return SW_RENDERING_MAX_HEIGHT;
-    }
-    if (width >= SW_RENDERING_MAX_WIDTH) {
-      return height / width * SW_RENDERING_MAX_WIDTH;
-    }
-  }
-
-  return height;
+  return media_kit::ResolveVideoFrameSize(dw, dh, rotate, width_, height_,
+                                          pixel_buffer_ != nullptr);
 }

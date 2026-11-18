@@ -102,8 +102,10 @@ class NativeVideoController extends PlatformVideoController {
           'VideoOutputManager.SetSize',
           {
             'handle': handle.toString(),
-            'width': width.toString(),
-            'height': height.toString(),
+            // Windows resolves automatic dimensions from one native snapshot.
+            // Preserve explicit output sizes when the video source changes.
+            'width': (Platform.isWindows ? this.width : width).toString(),
+            'height': (Platform.isWindows ? this.height : height).toString(),
           },
         );
       }),
@@ -228,8 +230,12 @@ class NativeVideoController extends PlatformVideoController {
         'VideoOutputManager.SetSize',
         {
           'handle': handle.toString(),
-          'width': videoParamsWidth?.toString() ?? 'null',
-          'height': videoParamsHeight?.toString() ?? 'null',
+          'width': Platform.isWindows
+              ? 'null'
+              : videoParamsWidth?.toString() ?? 'null',
+          'height': Platform.isWindows
+              ? 'null'
+              : videoParamsHeight?.toString() ?? 'null',
         },
       );
     }
