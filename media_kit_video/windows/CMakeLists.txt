@@ -27,6 +27,8 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     "angle_surface_manager.cpp"
     "angle_surface_manager.h"
     "media_kit_video_plugin.cpp"
+    "platform_task_runner.cpp"
+    "platform_task_runner.h"
     "media_kit_video_plugin.h"
     "thread_pool.h"
     "video_frame_size.h"
