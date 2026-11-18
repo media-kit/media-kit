@@ -24,39 +24,41 @@ let libmpvTargets = [
     "Xml2"
 ]
 
-let libmpvArtifactBase = "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default"
+let libmpvArtifactBase = "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.3/libmpv-xcframeworks_v0.7.3_macos-universal-video-default"
 let libmpvChecksums = [
-    "Ass": "a2ee62e663698533443b160dce1f1a9e5806df5cbb80d632abdafca5fa857cff",
-    "Avcodec": "5249e4ca10b8176ab7f3b353300a7cdedee0beec85a301ac7171db2cae49890a",
-    "Avfilter": "58ad9ea3ec51013e9b051a5836d992d9c18c7a832568b705be37d9a2085c234f",
-    "Avformat": "302601edb397ac0845a9ded886615ab8f9689807b0d2987056e1d8a20d590370",
-    "Avutil": "1a3e9e3952807793477b491a2ea5832a67a316021fb2be92fc87fb5890bd4fbb",
-    "Dav1d": "a16c707091b643a2356d4393e9310ec9a4782076676442a7c3edb7debd6a2eea",
-    "Freetype": "55250debc9ebdb68529630ba00f9e5c19875ee6dd75f1c8556d0f8ef3ff82857",
-    "Fribidi": "46a684eb89ebc69712b7e623aedb151745a799f4e4dd81306c3b9fe1502cdc1d",
-    "Harfbuzz": "f91b9609e1e4383678d4a1cbb6e376d19e11bbf81410bc20b1d7f942a1147a33",
-    "Mbedcrypto": "4620bae7d478aed05c33ea43c0baa040691a97fff76ed6a2919a5324d2ff09a2",
-    "Mbedtls": "e51e42c65b914433c2822677cecc5289adbabd365bc0b6df17bd3bbe17ab113a",
-    "Mbedx509": "fb76ec7dcd8c145a6f8140ee801dcd93492b5e5b0555233154cf0a2f220b09dd",
-    "Mpv": "5884589503b2dc7380666cc2bdc370be79a2e67cafe1159941901ef4e099ba90",
-    "Png16": "5606ce2919f3fa1e8b0190c4ed62322ae5555e66eea2716d91c53fd526c79c96",
-    "Swresample": "62f3ac54a07b370ac5146d676a5a75321908b19ece546a4e3b1ed2c3f3213166",
-    "Swscale": "26201930bfb7bfcd02eea2ad78a3d6bcf593e85bb1a894cf3925316800f3c54a",
-    "Uchardet": "14beb98e593abdda240c057f0098eefd2231849a20b084145e00a3c8894e0b86",
-    "Xml2": "af478e048164312c9f53ec8b5e870679e52290b6ebb3ff472c31367db0b0e2ce"
+    "Ass": "b9205e08fae29705045da9492fc048689800b2568384598e1225448379dc3611",
+    "Avcodec": "b0bb836c0de99f392f4c32b3c5dda67ff7b3a5e2958c34e5542aca365c0db14b",
+    "Avfilter": "1842b77bda3dfdbe3db3133b0cd63488f247b9824c902ac236b36dfec3717b12",
+    "Avformat": "099e4fda22cdd8c312048b8a50cbe7e86e2d09b3c1f8c30f7c5cc2c210bfa261",
+    "Avutil": "e78a3e58ab409dace08edcca6a07fc3817cc203fe4de2057bf19a7df36ad0951",
+    "Dav1d": "fb33d26dd7a00788a6cc1396bea90913b66f4cee21f8b6453f270003a26e68e4",
+    "Freetype": "6c5e315bd3db608175698e55da812e9399a4f83f9271da85e39fe97f98061fd5",
+    "Fribidi": "d908dcf4f305f9208fbcc9065b364bffc71702d4c8acb3092a61148f52906444",
+    "Harfbuzz": "26cd02d73a4ba8f2321f97eec366e9b535099f807bf30635e2cd19d89916f8ae",
+    "Mbedcrypto": "7bce20b522a9ba04d80e518c5666adad9b2690c722d670a1797aef6cbddf1b97",
+    "Mbedtls": "f5184efc51f8e9d05cacaa6c4f84ee772ecb593c2f5e21fd5227f386f462bd41",
+    "Mbedx509": "64df36246fe6438f994d2a0e7ef1b3f954291f553b043d9a5b73b7cf5cac2115",
+    "Mpv": "6c772cf3725ddbfb5e63e9a0baeeeef83c2c9d1bbde573f61e1f2ef8a4a1fef2",
+    "Png16": "680661f662846246294078a005fbd3cfc53df79a8a7ecdbc521e6974347a7c7a",
+    "Swresample": "164fe56722fd78d89d3aa6e575096bedfab4585e1e161f8d5cec3128ff4cd14c",
+    "Swscale": "f451f442e3344e1a7bbe375427028ccb714c789b370de05b0c6957dcf8fb872c",
+    "Uchardet": "e0e37082ba56b79ef0c56ed2317402e49c730c46636f9aeac25a9adcc9db8518",
+    "Xml2": "5dff9facc16c3d9572128c957f3404fff26e9cc92e4d438ec165da040af9f1b1"
 ]
 let libmpvProductTargets: [String] = ["media_kit_libs_macos_video"] + libmpvTargets
 
 let package = Package(
     name: "media_kit_libs_macos_video",
     platforms: [
-        .macOS("10.9")
+        .macOS("12.0")
     ],
     products: [
         .library(name: "media-kit-libs-macos-video", targets: libmpvProductTargets),
         .library(name: "Mpv", targets: ["Mpv"])
     ],
-    dependencies: [],
+    dependencies: [
+        .package(name: "FlutterFramework", path: "../FlutterFramework")
+    ],
     targets: libmpvTargets.map { framework in
         .binaryTarget(
             name: framework,
@@ -66,7 +68,9 @@ let package = Package(
     } + [
         .target(
             name: "media_kit_libs_macos_video",
-            dependencies: libmpvTargets.map { framework in .target(name: framework) },
+            dependencies: [
+                .product(name: "FlutterFramework", package: "FlutterFramework")
+            ] + libmpvTargets.map { framework in .target(name: framework) },
             resources: [
                 .process("PrivacyInfo.xcprivacy")
             ]
