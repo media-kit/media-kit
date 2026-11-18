@@ -1,6 +1,7 @@
 ## Unreleased
 
-- Update ANGLE to chromium/8127 (`cb3a38f`).
+- Update libmpv to 0.42.0.
+- Update ANGLE to chromium/8127 (`cb3a38f`) and enable OpenGL/ANGLE support in Windows ARM64 builds.
 
 ## 1.0.12
 

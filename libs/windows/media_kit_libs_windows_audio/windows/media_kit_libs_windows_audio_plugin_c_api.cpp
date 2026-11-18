@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include <flutter/plugin_registrar_windows.h>
-
-void MediaKitLibsWindowsAudioPluginCApiRegisterWithRegistrar(FlutterDesktopPluginRegistrarRef registrar) {
+void MediaKitLibsWindowsAudioPluginCApiRegisterWithRegistrar(
+    FlutterDesktopPluginRegistrarRef registrar) {
+  (void)registrar;
   std::cout << "package:media_kit_libs_windows_audio registered." << std::endl;
 }

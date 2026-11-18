@@ -18,24 +18,22 @@
 
 // Creates & disposes |VideoOutput| instances for video embedding.
 //
-// The methods in this class are thread-safe & run on separate worker thread so
-// that they don't block Flutter's UI thread while platform channels are being
-// invoked.
+// Create, SetSize and Dispose dispatch asynchronously and synchronize access
+// to the outputs. Rendering uses a shared single-worker |ThreadPool|.
 class VideoOutputManager {
  public:
   VideoOutputManager(flutter::PluginRegistrarWindows* registrar);
 
-  // Creates a new |VideoOutput| instance. It's texture ID may be used to render
-  // the video. The changes in it's texture ID & video dimensions will be
-  // notified via the |texture_update_callback|.
+  // Creates a new |VideoOutput| unless |handle| already exists. The callback
+  // reports (texture ID, width, height) initially and after resizing, from
+  // background threads; platform-channel work must be dispatched separately.
   void Create(
       int64_t handle,
       VideoOutputConfiguration configuration,
       std::function<void(int64_t, int64_t, int64_t)> texture_update_callback);
 
-  // Sets the required video output size.
-  // This forces |VideoOutput| to resize the internal OpenGL surface / D3D
-  // texture.
+  // Queues size overrides for an existing output; nullopt follows the video.
+  // The surface / texture is resized on the next render update.
   void SetSize(int64_t handle,
                std::optional<int64_t> width,
                std::optional<int64_t> height);
@@ -75,8 +73,7 @@ class VideoOutputManager {
   //   textures (|flutter::GpuSurfaceTexture| & |flutter::PixelBufferTexture|).
   //
   // Creating a |ThreadPool| with maximum number of worker threads as 1, ensures
-  // that all the posted tasks are performed on a single thread orderly. This
-  // also makes usage of any |std::mutex| unnecessary (for the good).
+  // that all the posted tasks are performed on a single thread orderly.
   std::unique_ptr<ThreadPool> thread_pool_ = std::make_unique<ThreadPool>(1);
   flutter::PluginRegistrarWindows* registrar_ = nullptr;
   std::unordered_map<int64_t, std::unique_ptr<VideoOutput>> video_outputs_ = {};
