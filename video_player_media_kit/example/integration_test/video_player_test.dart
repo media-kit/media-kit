@@ -17,9 +17,8 @@ import 'package:video_player_media_kit/video_player_media_kit.dart';
 const Duration _playDuration = Duration(seconds: 1);
 
 // Use WebM for web to allow CI to use Chromium.
-const String _videoAssetKey = kIsWeb
-    ? 'assets/Butterfly-209.webm'
-    : 'assets/Butterfly-209.mp4';
+const String _videoAssetKey =
+    kIsWeb ? 'assets/Butterfly-209.webm' : 'assets/Butterfly-209.mp4';
 
 // Returns the URL to load an asset from this example app as a network source.
 //
@@ -224,15 +223,15 @@ void main() {
                   future: started(),
                   builder:
                       (BuildContext context, AsyncSnapshot<bool> snapshot) {
-                        if (snapshot.data ?? false) {
-                          return AspectRatio(
-                            aspectRatio: controller.value.aspectRatio,
-                            child: VideoPlayer(controller),
-                          );
-                        } else {
-                          return const Text('waiting for video to load');
-                        }
-                      },
+                    if (snapshot.data ?? false) {
+                      return AspectRatio(
+                        aspectRatio: controller.value.aspectRatio,
+                        child: VideoPlayer(controller),
+                      );
+                    } else {
+                      return const Text('waiting for video to load');
+                    }
+                  },
                 ),
               ),
             ),
@@ -319,8 +318,8 @@ void main() {
       skip:
           // MEDIA_ELEMENT_ERROR on web, see https://github.com/flutter/flutter/issues/169219
           kIsWeb ||
-          // Hanging on Android, see https://github.com/flutter/flutter/issues/160797
-          defaultTargetPlatform == TargetPlatform.android,
+              // Hanging on Android, see https://github.com/flutter/flutter/issues/160797
+              defaultTargetPlatform == TargetPlatform.android,
     );
   });
 

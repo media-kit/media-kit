@@ -3,18 +3,18 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 // ignore_for_file: library_private_types_in_public_api
-import 'dart:io';
 import 'dart:collection';
+import 'dart:io';
 import 'dart:typed_data';
-import 'package:uri_parser/uri_parser.dart';
-import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/src/models/playable.dart';
-
-import 'package:media_kit/src/player/native/utils/temp_file.dart';
-import 'package:media_kit/src/player/native/utils/asset_loader.dart';
 import 'package:media_kit/src/player/native/utils/android_content_uri_provider.dart';
+import 'package:media_kit/src/player/native/utils/asset_loader.dart';
+import 'package:media_kit/src/player/native/utils/temp_file.dart';
+import 'package:safe_local_storage/safe_local_storage.dart';
+import 'package:uri_parser/uri_parser.dart';
 
 /// {@template media}
 ///
@@ -37,44 +37,42 @@ class Media extends Playable {
   /// 2. Close the file descriptor created by [AndroidContentUriProvider] to handle content:// URIs on Android.
   /// 3. Delete the temporary file created by [Media.memory].
   static final Finalizer<_MediaFinalizerContext> _finalizer =
-      Finalizer<_MediaFinalizerContext>(
-    (context) async {
-      final uri = context.uri;
-      final memory = context.memory;
-      // Decrement reference count.
-      final references = ((ref[uri] ?? 0) - 1).clamp(0, 1 << 32);
-      ref[uri] = references;
-      // Remove [Media] instance from [cache] if reference count is 0.
-      if (references == 0) {
-        cache.remove(uri);
-        ref.remove(uri);
-      }
-      // content:// : Close the possible file descriptor on Android.
-      try {
-        if (Platform.isAndroid) {
-          final data = Uri.parse(uri);
-          if (references == 0 && data.isScheme('FD')) {
-            final fd = int.parse(data.authority);
-            if (fd > 0) {
-              await AndroidContentUriProvider.closeFileDescriptor(uri);
-            }
+      Finalizer<_MediaFinalizerContext>((context) async {
+    final uri = context.uri;
+    final memory = context.memory;
+    // Decrement reference count.
+    final references = ((ref[uri] ?? 0) - 1).clamp(0, 1 << 32);
+    ref[uri] = references;
+    // Remove [Media] instance from [cache] if reference count is 0.
+    if (references == 0) {
+      cache.remove(uri);
+      ref.remove(uri);
+    }
+    // content:// : Close the possible file descriptor on Android.
+    try {
+      if (Platform.isAndroid) {
+        final data = Uri.parse(uri);
+        if (references == 0 && data.isScheme('FD')) {
+          final fd = int.parse(data.authority);
+          if (fd > 0) {
+            await AndroidContentUriProvider.closeFileDescriptor(uri);
           }
         }
-      } catch (exeception, stacktrace) {
-        print(exeception);
-        print(stacktrace);
       }
-      // Media.memory : Delete the temporary file.
-      try {
-        if (memory) {
-          await File(uri).delete_();
-        }
-      } catch (exeception, stacktrace) {
-        print(exeception);
-        print(stacktrace);
+    } catch (exeception, stacktrace) {
+      print(exeception);
+      print(stacktrace);
+    }
+    // Media.memory : Delete the temporary file.
+    try {
+      if (memory) {
+        await File(uri).delete_();
       }
-    },
-  );
+    } catch (exeception, stacktrace) {
+      print(exeception);
+      print(stacktrace);
+    }
+  });
 
   /// URI of the [Media].
   final String uri;
@@ -136,28 +134,16 @@ class Media extends Playable {
       httpHeaders: this.httpHeaders,
     );
     // Attach [this] instance to [Finalizer].
-    _finalizer.attach(
-      this,
-      _MediaFinalizerContext(
-        uri,
-        memory,
-      ),
-    );
+    _finalizer.attach(this, _MediaFinalizerContext(uri, memory));
   }
 
   /// Creates a [Media] instance from [Uint8List].
   ///
   /// The [type] parameter is optional and is used to specify the MIME type of the media on web.
-  static Future<Media> memory(
-    Uint8List data, {
-    String? type,
-  }) async {
+  static Future<Media> memory(Uint8List data, {String? type}) async {
     final file = await TempFile.create();
     await file.write_(data);
-    return Media._(
-      file.path,
-      memory: true,
-    );
+    return Media._(file.path, memory: true);
   }
 
   /// Normalizes the passed URI.
@@ -258,10 +244,7 @@ class _MediaCache {
   final Map<String, String>? httpHeaders;
 
   /// {@macro _media_cache}
-  const _MediaCache({
-    this.extras,
-    this.httpHeaders,
-  });
+  const _MediaCache({this.extras, this.httpHeaders});
 
   @override
   String toString() => '_MediaCache('

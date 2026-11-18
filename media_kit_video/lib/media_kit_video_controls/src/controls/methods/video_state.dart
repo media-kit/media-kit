@@ -3,9 +3,10 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
+import 'package:media_kit_video/src/utils/dispose_safe_notifier.dart';
 
 /// Returns the [VideoState] associated with the [Video] present in the current [BuildContext].
 VideoState state(BuildContext context) =>
@@ -17,7 +18,8 @@ DisposeSafeNotifier<BuildContext?> contextNotifier(BuildContext context) =>
 
 /// Returns the [ValueNotifier<VideoViewParameters>] associated with the [Video] present in the current [BuildContext].
 ValueNotifier<VideoViewParameters> videoViewParametersNotifier(
-        BuildContext context) =>
+  BuildContext context,
+) =>
     VideoStateInheritedWidget.of(context).videoViewParametersNotifier;
 
 /// Returns the [VideoController] associated with the [Video] present in the current [BuildContext].

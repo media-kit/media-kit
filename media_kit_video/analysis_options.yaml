@@ -3,3 +3,11 @@ analyzer:
   errors:
     dangling_library_doc_comments: ignore
     unintended_html_in_doc_comment: ignore
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**

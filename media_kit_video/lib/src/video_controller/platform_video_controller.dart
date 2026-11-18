@@ -3,11 +3,11 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
+
 import 'package:flutter/widgets.dart';
-
 import 'package:media_kit/media_kit.dart';
-
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
 /// {@template platform_video_controller}
@@ -35,10 +35,7 @@ abstract class PlatformVideoController {
   final ValueNotifier<Rect?> rect = ValueNotifier<Rect?>(null);
 
   /// {@macro platform_video_controller}
-  PlatformVideoController(
-    this.player,
-    this.configuration,
-  );
+  PlatformVideoController(this.player, this.configuration);
 
   /// Sets the required size of the video output.
   /// This may yield substantial performance improvements if a small [width] & [height] is specified.
@@ -46,10 +43,7 @@ abstract class PlatformVideoController {
   /// Remember:
   /// * “Premature optimization is the root of all evil”
   /// * “With great power comes great responsibility”
-  Future<void> setSize({
-    int? width,
-    int? height,
-  });
+  Future<void> setSize({int? width, int? height});
 
   /// A [Future] that completes when the first video frame has been rendered.
   Future<void> get waitUntilFirstFrameRendered =>
