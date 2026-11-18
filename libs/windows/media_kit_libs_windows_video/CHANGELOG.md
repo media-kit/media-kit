@@ -1,3 +1,7 @@
+## Unreleased
+
+- Update ANGLE to chromium/8127 (`cb3a38f`).
+
 ## 1.0.12
 
 - feat: support ARM64
