@@ -59,4 +59,5 @@ ffigen:
 
 flutter:
   assets:
-    - assets/web/
+    - path: assets/web/
+      platforms: [ web ]
