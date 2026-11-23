@@ -7,6 +7,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart' show Playlist;
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
@@ -550,8 +551,16 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   bool showSwipeDuration = false; // Whether to show the seek duration overlay
 
   bool _speedUpIndicator = false;
-  late /* private */ var playlist = controller(context).player.state.playlist;
-  late bool buffering = controller(context).player.state.buffering;
+  late Playlist playlist;
+  late bool buffering;
+
+  // Cached controller reference. Resolved in [didChangeDependencies] so that
+  // pointer / drag / long-press / seek-indicator callbacks never look up
+  // [VideoStateInheritedWidget] via [BuildContext] — which can return null
+  // when the widget tree rebuilds during a queued event, causing
+  // `Null check operator used on a null value` crashes from
+  // `VideoStateInheritedWidget.of(context)`.
+  VideoController? _controller;
 
   bool _mountSeekBackwardButton = false;
   bool _mountSeekForwardButton = false;
@@ -580,18 +589,22 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   }
 
   void _handleLongPress() {
+    if (!mounted) return;
+    final ctrl = _controller;
+    if (ctrl == null) return;
     setState(() {
       _speedUpIndicator = true;
     });
-    _currentRate = controller(context).player.state.rate;
-    controller(context).player.setRate(_theme(context).speedUpFactor);
+    _currentRate = ctrl.player.state.rate;
+    ctrl.player.setRate(_theme(context).speedUpFactor);
   }
 
   void _handleLongPressEnd(LongPressEndDetails details) {
+    if (!mounted) return;
     setState(() {
       _speedUpIndicator = false;
     });
-    controller(context).player.setRate(_currentRate);
+    _controller?.player.setRate(_currentRate);
   }
 
   @override
@@ -604,23 +617,35 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final newController = controller(context);
+    if (!identical(_controller, newController)) {
+      // Inherited widget swapped to a different VideoController. Tear down
+      // any existing subscriptions so we re-attach to the new player below.
+      for (final subscription in subscriptions) {
+        subscription.cancel();
+      }
+      subscriptions.clear();
+      _controller = newController;
+    }
     if (subscriptions.isEmpty) {
       mount = _theme(context).visibleOnMount;
       visible = _theme(context).visibleOnMount;
       _volumeValue = _theme(context).initialVolume ?? 0.5;
       _brightnessValue = _theme(context).initialBrightness ?? 0.5;
       _onBrightnessReset = _theme(context).onBrightnessReset;
+      playlist = newController.player.state.playlist;
+      buffering = newController.player.state.buffering;
 
       subscriptions.addAll(
         [
-          controller(context).player.stream.playlist.listen(
+          newController.player.stream.playlist.listen(
             (event) {
               setState(() {
                 playlist = event;
               });
             },
           ),
-          controller(context).player.stream.buffering.listen(
+          newController.player.stream.buffering.listen(
             (event) {
               setState(() {
                 buffering = event;
@@ -654,6 +679,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     _onBrightnessReset?.call();
     _timerSeekBackwardButton?.cancel();
     _timerSeekForwardButton?.cancel();
+    _controller = null;
     super.dispose();
   }
 
@@ -717,14 +743,18 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   }
 
   void onHorizontalDragUpdate(DragUpdateDetails details) {
+    if (!mounted) return;
     if (_dragInitialDelta == Offset.zero) {
       _dragInitialDelta = details.localPosition;
       return;
     }
 
+    final ctrl = _controller;
+    if (ctrl == null) return;
+
     final diff = _dragInitialDelta.dx - details.localPosition.dx;
-    final duration = controller(context).player.state.duration.inSeconds;
-    final position = controller(context).player.state.position.inSeconds;
+    final duration = ctrl.player.state.duration.inSeconds;
+    final position = ctrl.player.state.position.inSeconds;
 
     final seconds =
         -(diff * duration / _theme(context).horizontalGestureSensitivity)
@@ -741,14 +771,16 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   }
 
   void onHorizontalDragEnd() {
-    if (swipeDuration != 0) {
-      Duration newPosition = controller(context).player.state.position +
-          Duration(seconds: swipeDuration);
+    if (!mounted) return;
+    final ctrl = _controller;
+    if (swipeDuration != 0 && ctrl != null) {
+      Duration newPosition =
+          ctrl.player.state.position + Duration(seconds: swipeDuration);
       newPosition = newPosition.clamp(
         Duration.zero,
-        controller(context).player.state.duration,
+        ctrl.player.state.duration,
       );
-      controller(context).player.seek(newPosition);
+      ctrl.player.seek(newPosition);
     }
 
     setState(() {
@@ -1399,19 +1431,15 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                         setState(() {
                                           _hideSeekBackwardButton = true;
                                         });
-                                        var result = controller(context)
-                                                .player
-                                                .state
-                                                .position -
-                                            value;
+                                        final ctrl = _controller;
+                                        if (ctrl == null) return;
+                                        var result =
+                                            ctrl.player.state.position - value;
                                         result = result.clamp(
                                           Duration.zero,
-                                          controller(context)
-                                              .player
-                                              .state
-                                              .duration,
+                                          ctrl.player.state.duration,
                                         );
-                                        controller(context).player.seek(result);
+                                        ctrl.player.seek(result);
                                       },
                                     ),
                                   )
@@ -1455,19 +1483,15 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                           _hideSeekForwardButton = true;
                                         });
 
-                                        var result = controller(context)
-                                                .player
-                                                .state
-                                                .position +
-                                            value;
+                                        final ctrl = _controller;
+                                        if (ctrl == null) return;
+                                        var result =
+                                            ctrl.player.state.position + value;
                                         result = result.clamp(
                                           Duration.zero,
-                                          controller(context)
-                                              .player
-                                              .state
-                                              .duration,
+                                          ctrl.player.state.duration,
                                         );
-                                        controller(context).player.seek(result);
+                                        ctrl.player.seek(result);
                                       },
                                     ),
                                   )
@@ -1511,10 +1535,18 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   bool tapped = false;
   double slider = 0.0;
 
-  late bool playing = controller(context).player.state.playing;
-  late Duration position = controller(context).player.state.position;
-  late Duration duration = controller(context).player.state.duration;
-  late Duration buffer = controller(context).player.state.buffer;
+  bool playing = false;
+  Duration position = Duration.zero;
+  Duration duration = Duration.zero;
+  Duration buffer = Duration.zero;
+
+  // Cached controller reference. Resolved in [didChangeDependencies] so that
+  // pointer handlers and stream callbacks never have to look up the
+  // [VideoStateInheritedWidget] via [BuildContext] — which can return null
+  // when the widget tree rebuilds during a queued pointer event, causing
+  // `Null check operator used on a null value` crashes from
+  // `VideoStateInheritedWidget.of(context)`.
+  VideoController? _controller;
 
   final List<StreamSubscription> subscriptions = [];
 
@@ -1526,9 +1558,12 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   }
 
   void listener() {
+    if (!mounted) return;
+    final pos = _controller?.player.state.position;
+    if (pos == null) return;
+    final delta = widget.delta?.value ?? Duration.zero;
     setState(() {
-      final delta = widget.delta?.value ?? Duration.zero;
-      position = controller(context).player.state.position + delta;
+      position = pos + delta;
     });
   }
 
@@ -1541,32 +1576,47 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final newController = controller(context);
+    if (!identical(_controller, newController)) {
+      // Inherited widget swapped to a different VideoController. Tear down
+      // any existing subscriptions so we re-attach to the new player below.
+      for (final subscription in subscriptions) {
+        subscription.cancel();
+      }
+      subscriptions.clear();
+      _controller = newController;
+    }
     if (subscriptions.isEmpty && widget.delta == null) {
+      playing = newController.player.state.playing;
+      position = newController.player.state.position;
+      duration = newController.player.state.duration;
+      buffer = newController.player.state.buffer;
+
       subscriptions.addAll(
         [
-          controller(context).player.stream.playing.listen((event) {
+          newController.player.stream.playing.listen((event) {
             setState(() {
               playing = event;
             });
           }),
-          controller(context).player.stream.completed.listen((event) {
+          newController.player.stream.completed.listen((event) {
             setState(() {
               position = Duration.zero;
             });
           }),
-          controller(context).player.stream.position.listen((event) {
+          newController.player.stream.position.listen((event) {
             setState(() {
               if (!tapped) {
                 position = event;
               }
             });
           }),
-          controller(context).player.stream.duration.listen((event) {
+          newController.player.stream.duration.listen((event) {
             setState(() {
               duration = event;
             });
           }),
-          controller(context).player.stream.buffer.listen((event) {
+          newController.player.stream.buffer.listen((event) {
             setState(() {
               buffer = event;
             });
@@ -1582,19 +1632,22 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
     for (final subscription in subscriptions) {
       subscription.cancel();
     }
+    _controller = null;
     super.dispose();
   }
 
   void onPointerMove(PointerMoveEvent e, BoxConstraints constraints) {
+    if (!mounted) return;
     final percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       tapped = true;
       slider = percent.clamp(0.0, 1.0);
     });
-    controller(context).player.seek(duration * slider);
+    _controller?.player.seek(duration * slider);
   }
 
   void onPointerDown() {
+    if (!mounted) return;
     widget.onSeekStart?.call();
     setState(() {
       tapped = true;
@@ -1602,16 +1655,18 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   }
 
   void onPointerUp() {
+    if (!mounted) return;
     widget.onSeekEnd?.call();
     setState(() {
       // Explicitly set the position to prevent the slider from jumping.
       tapped = false;
       position = duration * slider;
     });
-    controller(context).player.seek(duration * slider);
+    _controller?.player.seek(duration * slider);
   }
 
   void onPanStart(DragStartDetails e, BoxConstraints constraints) {
+    if (!mounted) return;
     final percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       tapped = true;
@@ -1620,6 +1675,7 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   }
 
   void onPanDown(DragDownDetails e, BoxConstraints constraints) {
+    if (!mounted) return;
     final percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       tapped = true;
@@ -1628,6 +1684,7 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   }
 
   void onPanUpdate(DragUpdateDetails e, BoxConstraints constraints) {
+    if (!mounted) return;
     final percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       tapped = true;
