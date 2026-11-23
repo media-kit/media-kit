@@ -29,7 +29,6 @@ class ThreadPool {
 
   std::mutex queue_mutex_;
   std::condition_variable condition_;
-  std::condition_variable condition_producers_;
   bool stop_;
 };
 
@@ -45,9 +44,6 @@ inline ThreadPool::ThreadPool(size_t threads) : stop_(false) {
             return;
           task = std::move(tasks_.front());
           tasks_.pop();
-          if (tasks_.empty()) {
-            condition_producers_.notify_one();
-          }
         }
         task();
       }
@@ -79,7 +75,7 @@ decltype(auto) ThreadPool::Post(F&& f, Args&&... args) {
 inline ThreadPool::~ThreadPool() {
   {
     std::unique_lock<std::mutex> lock(queue_mutex_);
-    condition_producers_.wait(lock, [this] { return tasks_.empty(); });
+    // Reject new tasks. Finish all accepted tasks before exit.
     stop_ = true;
   }
   condition_.notify_all();
