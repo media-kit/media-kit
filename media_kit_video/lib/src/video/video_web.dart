@@ -5,6 +5,7 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 // ignore_for_file: avoid_web_libraries_in_flutter
 import 'dart:js_interop';
+import 'package:media_kit_video/src/video/video.dart' as platform_video;
 
 import 'package:web/web.dart';
 import 'dart:async';
@@ -16,6 +17,8 @@ import 'package:media_kit_video/media_kit_video_controls/media_kit_video_control
 import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
 
 import 'package:media_kit_video/src/utils/wakelock.dart';
+
+export 'package:media_kit_video/src/video_view_parameters.dart' show VideoControlsBuilder;
 
 /// {@template video}
 ///
@@ -88,7 +91,7 @@ class Video extends StatefulWidget {
   final FilterQuality filterQuality;
 
   /// Video controls builder.
-  final /* VideoControlsBuilder? */ dynamic controls;
+  final VideoControlsBuilder? controls;
 
   /// Whether to acquire wake lock while playing the video.
   final bool wakelock;
@@ -189,7 +192,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     Alignment? alignment,
     double? aspectRatio,
     FilterQuality? filterQuality,
-    /* VideoControlsBuilder? */ dynamic controls,
+    VideoControlsBuilder? controls,
     SubtitleViewConfiguration? subtitleViewConfiguration,
     FocusNode? focusNode,
   }) {
@@ -363,7 +366,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       videoViewParametersNotifier.dispose();
       _contextNotifier.dispose();
       // ignore: collection_methods_unrelated_type
-      VideoStateInheritedWidgetContextNotifierState.fallback.remove(this);
+      VideoStateInheritedWidgetContextNotifierState.fallback.remove(this as platform_video.VideoState);
     }
 
     super.dispose();
@@ -378,7 +381,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return media_kit_video_controls.VideoStateInheritedWidget(
-      state: this as dynamic,
+      state: this as platform_video.VideoState,
       contextNotifier: _contextNotifier,
       videoViewParametersNotifier: videoViewParametersNotifier,
       child: ValueListenableBuilder<VideoViewParameters>(
@@ -447,7 +450,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
                   ),
                 if (videoViewParameters.controls != null)
                   Positioned.fill(
-                    child: videoViewParameters.controls!.call(this as dynamic),
+                    child: videoViewParameters.controls!.call(this as platform_video.VideoState),
                   ),
               ],
             ),

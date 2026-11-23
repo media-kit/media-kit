@@ -19,6 +19,8 @@ import 'package:media_kit_video/src/video_view_parameters.dart';
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 
+export 'package:media_kit_video/src/video_view_parameters.dart' show VideoControlsBuilder;
+
 /// {@template video}
 ///
 /// Video
@@ -470,8 +472,6 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     );
   }
 }
-
-typedef VideoControlsBuilder = Widget Function(VideoState state);
 
 // --------------------------------------------------
 

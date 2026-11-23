@@ -3,17 +3,17 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:io';
+
 import 'dart:async';
 import 'dart:collection';
-import 'package:flutter/services.dart';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
-import 'package:synchronized/synchronized.dart';
-
+import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
-
 import 'package:media_kit_video/src/utils/query_decoders.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
+import 'package:synchronized/synchronized.dart';
 
 /// {@template native_video_controller}
 ///
@@ -53,7 +53,9 @@ class NativeVideoController extends PlatformVideoController {
   NativePlayer get platform => player.platform as NativePlayer;
 
   Future<void> setProperty(String key, String value) async {
+    _checkActive();
     await platform.setProperty(key, value, waitForInitialization: false);
+    _checkActive();
   }
 
   Future<void> setProperties(Map<String, String> properties) async {
@@ -65,20 +67,33 @@ class NativeVideoController extends PlatformVideoController {
 
   /// [StreamSubscription] for listening to video [Rect].
   StreamSubscription<VideoParams>? videoParamsSubscription;
+  bool _disposed = false;
+  bool _nativeCreateRequested = false;
+  Future<void>? _disposal;
+  Future<PlatformVideoController>? _creation;
+  final _textureReady = Completer<void>();
+
+  void _checkActive() {
+    if (_disposed || platform.disposeRequested.isCompleted) {
+      throw StateError('Video controller is disposing');
+    }
+  }
 
   /// {@macro native_video_controller}
-  NativeVideoController._(
-    super.player,
-    super.configuration,
-  )   : width = configuration.width,
+  NativeVideoController._(super.player, super.configuration)
+      : width = configuration.width,
         height = configuration.height {
+    _textureReady.future.ignore();
+    waitUntilFirstFrameRenderedCompleter.future.ignore();
     videoParamsSubscription = player.stream.videoParams.listen(
       (event) => lock.synchronized(() async {
+        if (_disposed) return;
         if ([0, null].contains(event.dw) || [0, null].contains(event.dh)) {
           return;
         }
 
         final int handle = await player.handle;
+        if (_disposed) return;
 
         final int width;
         final int height;
@@ -95,17 +110,19 @@ class NativeVideoController extends PlatformVideoController {
           return;
         }
 
+        await _channel.invokeMethod('VideoOutputManager.SetSize', {
+          'handle': handle.toString(),
+          // Windows reads both automatic dimensions from one native snapshot.
+          // Keep fixed configuration sizes when video parameters change.
+          'width': (Platform.isWindows ? this.width : width).toString(),
+          'height': (Platform.isWindows ? this.height : height).toString(),
+        });
         videoParamsWidth = width;
         videoParamsHeight = height;
-
-        await _channel.invokeMethod(
-          'VideoOutputManager.SetSize',
-          {
-            'handle': handle.toString(),
-            'width': width.toString(),
-            'height': height.toString(),
-          },
-        );
+      }).catchError((Object error, StackTrace stack) {
+        // Stream listeners do not consume asynchronous callback errors.
+        // Leave dimensions unchanged so a subsequent update can retry.
+        debugPrint('$error\n$stack');
       }),
     );
   }
@@ -123,9 +140,12 @@ class NativeVideoController extends PlatformVideoController {
 
     // Retrieve the native handle of the [Player].
     final handle = await player.handle;
-    // Return the existing [VideoController] if it's already created.
+    if (player.platform!.disposeRequested.isCompleted) {
+      throw StateError('Player is disposing');
+    }
+    // Concurrent callers must await the same completed initialization.
     if (_controllers.containsKey(handle)) {
-      return _controllers[handle]!;
+      return _controllers[handle]!._creation!;
     }
 
     // In case no video-decoders are found, this means media_kit_libs_***_audio is being used.
@@ -141,57 +161,52 @@ class NativeVideoController extends PlatformVideoController {
       );
     }
 
-    // Creation:
-    final controller = NativeVideoController._(
-      player,
-      configuration,
-    );
-
-    // Register [_dispose] for execution upon [Player.dispose].
-    player.platform?.release.add(controller._dispose);
-
-    // Store the [NativeVideoController] in the [_controllers].
-    _controllers[handle] = controller;
-
-    await controller.setProperties(
-      {
-        'vo': configuration.vo!,
-        'hwdec': configuration.hwdec!,
-        'vid': 'auto',
-      },
-    );
-
-    // Wait until first texture ID is received.
-    // We are not waiting on the native-side itself because it will block the UI thread.
-    final completer = Completer<void>();
-    void listener() {
-      final value = controller.id.value;
-      if (value != null) {
-        debugPrint('NativeVideoController: Texture ID: $value');
-        completer.complete();
-      }
+    if (player.platform!.disposeRequested.isCompleted) {
+      throw StateError('Player is disposing');
     }
+    if (_controllers.containsKey(handle)) {
+      return _controllers[handle]!._creation!;
+    }
+    final controller = NativeVideoController._(player, configuration);
+    player.platform?.release.add(controller._dispose);
+    _controllers[handle] = controller;
+    return controller._creation = controller._initialize(handle);
+  }
 
-    controller.id.addListener(listener);
+  Future<PlatformVideoController> _initialize(int handle) async {
+    try {
+      await Future.any<void>([
+        _createNative(handle),
+        platform.disposeRequested.future.then((_) {
+          throw StateError('Video controller creation cancelled by dispose');
+        }),
+      ]);
+      _checkActive();
+      return this;
+    } catch (_) {
+      await _dispose();
+      rethrow;
+    }
+  }
 
-    await _channel.invokeMethod(
-      'VideoOutputManager.Create',
-      {
-        'handle': handle.toString(),
-        'configuration': {
-          'width': configuration.width.toString(),
-          'height': configuration.height.toString(),
-          'enableHardwareAcceleration':
-              configuration.enableHardwareAcceleration,
-        },
+  Future<void> _createNative(int handle) async {
+    await setProperties({
+      'vo': configuration.vo!,
+      'hwdec': configuration.hwdec!,
+      'vid': 'auto',
+    });
+    _checkActive();
+    _nativeCreateRequested = true;
+    await _channel.invokeMethod('VideoOutputManager.Create', {
+      'handle': handle.toString(),
+      'configuration': {
+        'width': configuration.width.toString(),
+        'height': configuration.height.toString(),
+        'enableHardwareAcceleration': configuration.enableHardwareAcceleration,
       },
-    );
-
-    await completer.future;
-    controller.id.removeListener(listener);
-
-    // Return the [VideoController].
-    return controller;
+    });
+    _checkActive();
+    await _textureReady.future;
   }
 
   /// Sets the required size of the video output.
@@ -201,11 +216,10 @@ class NativeVideoController extends PlatformVideoController {
   /// * “Premature optimization is the root of all evil”
   /// * “With great power comes great responsibility”
   @override
-  Future<void> setSize({
-    int? width,
-    int? height,
-  }) async {
+  Future<void> setSize({int? width, int? height}) async {
+    if (_disposed) return;
     final handle = await player.handle;
+    if (_disposed) return;
     if (this.width == width && this.height == height) {
       // No need to resize if the requested size is same as the current size.
       return;
@@ -213,40 +227,51 @@ class NativeVideoController extends PlatformVideoController {
     if (width != null && height != null) {
       this.width = width;
       this.height = height;
-      await _channel.invokeMethod(
-        'VideoOutputManager.SetSize',
-        {
-          'handle': handle.toString(),
-          'width': width.toString(),
-          'height': height.toString(),
-        },
-      );
+      await _channel.invokeMethod('VideoOutputManager.SetSize', {
+        'handle': handle.toString(),
+        'width': width.toString(),
+        'height': height.toString(),
+      });
     } else {
       this.width = null;
       this.height = null;
-      await _channel.invokeMethod(
-        'VideoOutputManager.SetSize',
-        {
-          'handle': handle.toString(),
-          'width': videoParamsWidth?.toString() ?? 'null',
-          'height': videoParamsHeight?.toString() ?? 'null',
-        },
-      );
+      await _channel.invokeMethod('VideoOutputManager.SetSize', {
+        'handle': handle.toString(),
+        'width': Platform.isWindows
+            ? 'null'
+            : videoParamsWidth?.toString() ?? 'null',
+        'height': Platform.isWindows
+            ? 'null'
+            : videoParamsHeight?.toString() ?? 'null',
+      });
     }
   }
 
   /// Disposes the instance. Releases allocated resources back to the system.
-  Future<void> _dispose() async {
-    super.dispose();
-    await videoParamsSubscription?.cancel();
+  Future<void> _dispose() => _disposal ??= _disposeOnce();
+
+  Future<void> _disposeOnce() async {
+    _disposed = true;
+    final error = StateError('Video controller disposed before becoming ready');
+    if (!_textureReady.isCompleted) _textureReady.completeError(error);
+    if (!waitUntilFirstFrameRenderedCompleter.isCompleted) {
+      waitUntilFirstFrameRenderedCompleter.completeError(error);
+    }
     final handle = await player.handle;
-    _controllers.remove(handle);
-    await _channel.invokeMethod(
-      'VideoOutputManager.Dispose',
-      {
-        'handle': handle.toString(),
-      },
-    );
+    if (identical(_controllers[handle], this)) _controllers.remove(handle);
+    player.platform?.release.remove(_dispose);
+    try {
+      await videoParamsSubscription?.cancel();
+      await lock.synchronized(() async {
+        if (_nativeCreateRequested) {
+          await _channel.invokeMethod('VideoOutputManager.Dispose', {
+            'handle': handle.toString(),
+          });
+        }
+      });
+    } finally {
+      super.dispose();
+    }
   }
 
   /// Currently created [NativeVideoController]s.
@@ -256,44 +281,47 @@ class NativeVideoController extends PlatformVideoController {
   /// [MethodChannel] for invoking platform specific native implementation.
   static final _channel =
       const MethodChannel('com.alexmercerind/media_kit_video')
-        ..setMethodCallHandler(
-          (MethodCall call) async {
-            try {
-              debugPrint(call.method.toString());
-              debugPrint(call.arguments.toString());
-              switch (call.method) {
-                case 'VideoOutput.Resize':
-                  {
-                    // Notify about updated texture ID & [Rect].
-                    final int handle = call.arguments['handle'];
-                    final Rect rect = Rect.fromLTWH(
-                      call.arguments['rect']['left'] * 1.0,
-                      call.arguments['rect']['top'] * 1.0,
-                      call.arguments['rect']['width'] * 1.0,
-                      call.arguments['rect']['height'] * 1.0,
-                    );
-                    final int id = call.arguments['id'];
-                    _controllers[handle]?.rect.value = rect;
-                    _controllers[handle]?.id.value = id;
-                    // Notify about the first frame being rendered.
-                    if (rect.width > 0 && rect.height > 0) {
-                      final completer = _controllers[handle]
-                          ?.waitUntilFirstFrameRenderedCompleter;
-                      if (!(completer?.isCompleted ?? true)) {
-                        completer?.complete();
-                      }
+        ..setMethodCallHandler((MethodCall call) async {
+          try {
+            debugPrint(call.method.toString());
+            debugPrint(call.arguments.toString());
+            switch (call.method) {
+              case 'VideoOutput.Resize':
+                {
+                  // Notify about updated texture ID & [Rect].
+                  final int handle = call.arguments['handle'];
+                  if (_controllers[handle]?._disposed ?? true) return;
+                  final Rect rect = Rect.fromLTWH(
+                    call.arguments['rect']['left'] * 1.0,
+                    call.arguments['rect']['top'] * 1.0,
+                    call.arguments['rect']['width'] * 1.0,
+                    call.arguments['rect']['height'] * 1.0,
+                  );
+                  final int id = call.arguments['id'];
+                  _controllers[handle]?.rect.value = rect;
+                  _controllers[handle]?.id.value = id;
+                  final ready = _controllers[handle]?._textureReady;
+                  if (id >= 0 && ready != null && !ready.isCompleted) {
+                    ready.complete();
+                  }
+                  // Notify about the first frame being rendered.
+                  if (rect.width > 0 && rect.height > 0) {
+                    final completer = _controllers[handle]
+                        ?.waitUntilFirstFrameRenderedCompleter;
+                    if (!(completer?.isCompleted ?? true)) {
+                      completer?.complete();
                     }
-                    break;
                   }
-                default:
-                  {
-                    break;
-                  }
-              }
-            } catch (exception, stacktrace) {
-              debugPrint(exception.toString());
-              debugPrint(stacktrace.toString());
+                  break;
+                }
+              default:
+                {
+                  break;
+                }
             }
-          },
-        );
+          } catch (exception, stacktrace) {
+            debugPrint(exception.toString());
+            debugPrint(stacktrace.toString());
+          }
+        });
 }

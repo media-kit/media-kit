@@ -11,4 +11,4 @@ import 'package:media_kit_video/media_kit_video.dart';
 /// Disables [Video] controls.
 ///
 /// {@endtemplate}
-const NoVideoControls = null;
+const VideoControlsBuilder? NoVideoControls = null;

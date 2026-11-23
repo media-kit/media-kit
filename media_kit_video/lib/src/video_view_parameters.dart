@@ -9,6 +9,8 @@ import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/src/video/video.dart';
 import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 
+typedef VideoControlsBuilder = Widget Function(VideoState state);
+
 /// {@template video_view_parameters}
 ///
 /// VideoViewParameters
@@ -25,7 +27,7 @@ class VideoViewParameters {
   final Alignment alignment;
   final double? aspectRatio;
   final FilterQuality filterQuality;
-  final /* VideoControlsBuilder? */ dynamic controls;
+  final VideoControlsBuilder? controls;
   final SubtitleViewConfiguration subtitleViewConfiguration;
   final FocusNode? focusNode;
 
@@ -51,7 +53,7 @@ class VideoViewParameters {
     Alignment? alignment,
     double? aspectRatio,
     FilterQuality? filterQuality,
-    /* VideoControlsBuilder? */ dynamic controls,
+    VideoControlsBuilder? controls,
     bool? pauseUponEnteringBackgroundMode,
     bool? resumeUponEnteringForegroundMode,
     SubtitleViewConfiguration? subtitleViewConfiguration,

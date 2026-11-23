@@ -21,7 +21,7 @@ Widget AdaptiveVideoControls(VideoState state) {
     case TargetPlatform.windows:
     case TargetPlatform.linux:
       return MaterialDesktopVideoControls(state);
-    default:
-      return NoVideoControls(state);
+    case TargetPlatform.fuchsia:
+      return const SizedBox.shrink();
   }
 }
