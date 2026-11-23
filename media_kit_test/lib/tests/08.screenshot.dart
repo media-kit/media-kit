@@ -1,10 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_test/common/globals.dart';
+import 'package:media_kit_test/common/sources/sources.dart';
+import 'package:media_kit_test/common/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-
-import '../common/globals.dart';
-import '../common/sources/sources.dart';
-import '../common/widgets.dart';
 
 class Screenshot extends StatefulWidget {
   const Screenshot({super.key});
@@ -36,11 +37,11 @@ class _ScreenshotState extends State<Screenshot> {
   }
 
   List<Widget> get items => [
-        const SizedBox(height: 16.0),
+        const SizedBox(height: 16),
         Center(
           child: ElevatedButton(
             onPressed: () async {
-              final screenshot = await player.screenshot();
+              final Uint8List? screenshot = await player.screenshot();
               if (screenshot != null) {
                 setState(() {
                   image = Image.memory(screenshot);
@@ -50,26 +51,20 @@ class _ScreenshotState extends State<Screenshot> {
             child: const Text('Screenshot'),
           ),
         ),
-        const SizedBox(height: 16.0),
-        if (image != null)
-          Center(
-            child: image!,
-          ),
-        const SizedBox(height: 16.0),
+        const SizedBox(height: 16),
+        if (image != null) Center(child: image),
+        const SizedBox(height: 16),
       ];
 
   @override
   Widget build(BuildContext context) {
-    final horizontal =
+    final bool horizontal =
         MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('package:media_kit'),
-      ),
+      appBar: AppBar(title: const Text('package:media_kit')),
       floatingActionButton: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           FloatingActionButton(
             heroTag: 'file',
@@ -77,7 +72,7 @@ class _ScreenshotState extends State<Screenshot> {
             onPressed: () => showFilePicker(context, player),
             child: const Icon(Icons.file_open),
           ),
-          const SizedBox(width: 16.0),
+          const SizedBox(width: 16),
           FloatingActionButton(
             heroTag: 'uri',
             tooltip: 'Open [Uri]',
@@ -101,24 +96,17 @@ class _ScreenshotState extends State<Screenshot> {
                           Expanded(
                             child: Card(
                               clipBehavior: Clip.antiAlias,
-                              margin: const EdgeInsets.all(32.0),
-                              child: Video(
-                                controller: controller,
-                              ),
+                              margin: const EdgeInsets.all(32),
+                              child: Video(controller: controller),
                             ),
                           ),
-                          const SizedBox(height: 32.0),
+                          const SizedBox(height: 32),
                         ],
                       ),
                     ),
                   ),
-                  const VerticalDivider(width: 1.0, thickness: 1.0),
-                  Expanded(
-                    flex: 1,
-                    child: ListView(
-                      children: items,
-                    ),
-                  ),
+                  const VerticalDivider(width: 1, thickness: 1),
+                  Expanded(child: ListView(children: items)),
                 ],
               )
             : ListView(

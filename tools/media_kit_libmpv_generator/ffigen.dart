@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:ffigen/ffigen.dart';
 
 Future<void> main() async {
-  final root = Platform.script.resolve('../../media_kit/');
-  final header = Platform.script.resolve('headers/mpv/client.h');
+  final Uri root = Platform.script.resolve('../../media_kit/');
+  final Uri header = Platform.script.resolve('headers/mpv/client.h');
   await FfiGenerator(
     input: Input(entryPoints: [header]),
     output: Output(
-      style: DynamicLibraryBindings(wrapperName: 'MPV'),
+      style: const DynamicLibraryBindings(wrapperName: 'MPV'),
       preamble:
           '// Generated from mpv v0.42.0 (Client API 2.6) with ffigen 23.0.0.',
       dart: DartOutput(

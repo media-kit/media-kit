@@ -1,20 +1,19 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-// ignore_for_file: avoid_web_libraries_in_flutter
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
-import 'package:web/web.dart' as web;
-
 import 'dart:ui_web';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/foundation.dart';
-import 'package:media_kit/media_kit.dart';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
+import 'package:web/web.dart' as web;
 
 /// {@template web_video_controller}
 ///
@@ -25,14 +24,11 @@ import 'package:media_kit_video/src/video_controller/platform_video_controller.d
 ///
 /// {@endtemplate}
 class WebVideoController extends PlatformVideoController {
+  /// {@macro web_video_controller}
+  WebVideoController._(super.player, super.configuration);
+
   /// Whether [WebVideoController] is supported on the current platform or not.
   static const bool supported = kIsWeb;
-
-  /// {@macro web_video_controller}
-  WebVideoController._(
-    super.player,
-    super.configuration,
-  );
 
   /// {@macro web_video_controller}
   static Future<PlatformVideoController> create(
@@ -40,18 +36,17 @@ class WebVideoController extends PlatformVideoController {
     VideoControllerConfiguration configuration,
   ) async {
     // Retrieve the native handle of the [Player].
-    final handle = await player.handle;
+    final int handle = await player.handle;
 
-    final controller = WebVideoController._(
-      player,
-      configuration,
-    );
+    final controller = WebVideoController._(player, configuration);
     // Register [_dispose] for execution upon [Player.dispose].
     player.platform?.release.add(controller._dispose);
 
     // Retrieve the [html.VideoElement] instance from [js.context].
-    final instances = globalContext.getProperty(_kInstances.toJS) as JSObject;
-    final element = instances.getProperty(handle.toJS) as web.HTMLVideoElement;
+    final JSObject instances =
+        globalContext.getProperty<JSObject>(_kInstances.toJS);
+    final web.HTMLVideoElement element =
+        instances.getProperty<web.HTMLVideoElement>(handle.toJS);
     controller._element = element;
     // Register the [html.VideoElement] as platform view.
     platformViewRegistry.registerViewFactory(
@@ -64,20 +59,21 @@ class WebVideoController extends PlatformVideoController {
     controller.id.value = handle;
 
     // Listen to the resize event of the [html.VideoElement].
-    controller._resizeStreamSubscription = controller._element?.onResize.listen(
-      (event) {
-        debugPrint(
-          'media_kit: WebVideoController: ${controller._element?.videoWidth}, ${controller._element?.videoHeight}',
-        );
-        // Update the size of the [PlatformVideoController].
-        controller.rect.value = Rect.fromLTWH(
-          0.0,
-          0.0,
-          controller._element?.videoWidth.toDouble() ?? 0.0,
-          controller._element?.videoHeight.toDouble() ?? 0.0,
-        );
-      },
-    );
+    controller._resizeStreamSubscription =
+        controller._element?.onResize.listen((
+      event,
+    ) {
+      debugPrint(
+        'media_kit: WebVideoController: ${controller._element?.videoWidth}, ${controller._element?.videoHeight}',
+      );
+      // Update the size of the [PlatformVideoController].
+      controller.rect.value = Rect.fromLTWH(
+        0,
+        0,
+        controller._element?.videoWidth.toDouble() ?? 0.0,
+        controller._element?.videoHeight.toDouble() ?? 0.0,
+      );
+    });
 
     // Notify about the first frame being rendered.
     // Case: If some [Media] is already playing when [VideoController] is created.
@@ -87,14 +83,12 @@ class WebVideoController extends PlatformVideoController {
       }
     }
 
-    controller._element?.onCanPlayThrough.listen(
-      (_) {
-        // Notify about first frame being rendered.
-        if (!controller.waitUntilFirstFrameRenderedCompleter.isCompleted) {
-          controller.waitUntilFirstFrameRenderedCompleter.complete();
-        }
-      },
-    );
+    controller._element?.onCanPlayThrough.listen((_) {
+      // Notify about first frame being rendered.
+      if (!controller.waitUntilFirstFrameRenderedCompleter.isCompleted) {
+        controller.waitUntilFirstFrameRenderedCompleter.complete();
+      }
+    });
 
     // Return the [PlatformVideoController].
     return controller;
@@ -107,10 +101,7 @@ class WebVideoController extends PlatformVideoController {
   /// * “Premature optimization is the root of all evil”
   /// * “With great power comes great responsibility”
   @override
-  Future<void> setSize({
-    int? width,
-    int? height,
-  }) {
+  Future<void> setSize({int? width, int? height}) {
     throw UnsupportedError(
       '[AndroidVideoController.setSize] is not available on web',
     );
@@ -122,11 +113,11 @@ class WebVideoController extends PlatformVideoController {
     await _resizeStreamSubscription?.cancel();
   }
 
-  /// HTML [html.HTMLVideoElement] instance reference.
+  /// HTML `html.HTMLVideoElement` instance reference.
   web.HTMLVideoElement? _element;
 
   StreamSubscription<web.Event>? _resizeStreamSubscription;
 
-  /// JavaScript object attribute used to store various [VideoElement] instances in [js.context].
-  static const _kInstances = '\$com.alexmercerind.media_kit.instances';
+  /// JavaScript object attribute used to store various `VideoElement` instances in `js.context`.
+  static const _kInstances = r'$com.alexmercerind.media_kit.instances';
 }

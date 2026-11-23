@@ -1,32 +1,32 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright (c) 2021 & onwards, Domingo Montesdeoca González <DomingoMG97@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright (c) 2021 & onwards, Domingo Montesdeoca González <DomingoMG97@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
+import 'package:meta/meta.dart';
 
 /// {@template audio_device}
 ///
 /// AudioDevice
 /// -----------
 ///
-/// Represents an audio device which may be used for output in [Player].
+/// Represents an audio device which may be used for output in `Player`.
 ///
 /// {@endtemplate}
+@immutable
 class AudioDevice {
+  /// {@macro audio_device}
+  const AudioDevice(this.name, this.description);
+
+  /// [AudioDevice] with automatic device selection.
+  factory AudioDevice.auto() => const AudioDevice('auto', '');
+
   /// Name.
   final String name;
 
   /// Description.
   final String description;
-
-  /// {@macro audio_device}
-  const AudioDevice(
-    this.name,
-    this.description,
-  );
-
-  /// [AudioDevice] with automatic device selection.
-  factory AudioDevice.auto() => const AudioDevice('auto', '');
 
   @override
   bool operator ==(Object other) {

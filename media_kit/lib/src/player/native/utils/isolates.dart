@@ -31,18 +31,24 @@ typedef ComputeCallback<Q, R> = FutureOr<R> Function(Q message);
 /// The `debugLabel` argument can be specified to provide a name to add to the
 /// [Timeline]. This is useful when profiling an application.
 typedef ComputeImpl = Future<R> Function<Q, R>(
-    ComputeCallback<Q, R> callback, Q message,
-    {String? debugLabel});
+  ComputeCallback<Q, R> callback,
+  Q message, {
+  String? debugLabel,
+});
 
-/// The dart:io implementation of [isolate.compute].
-Future<R> compute<Q, R>(ComputeCallback<Q, R> callback, Q message,
-    {String? debugLabel}) async {
-  debugLabel ??=
-      bool.fromEnvironment('dart.vm.product') ? 'compute' : callback.toString();
+/// The dart:io implementation of `isolate.compute`.
+Future<R> compute<Q, R>(
+  ComputeCallback<Q, R> callback,
+  Q message, {
+  String? debugLabel,
+}) async {
+  debugLabel ??= const bool.fromEnvironment('dart.vm.product')
+      ? 'compute'
+      : callback.toString();
 
   final Flow flow = Flow.begin();
   Timeline.startSync('$debugLabel: start', flow: flow);
-  final RawReceivePort port = RawReceivePort();
+  final port = RawReceivePort();
   Timeline.finishSync();
 
   void timeEndAndCleanup() {
@@ -51,11 +57,13 @@ Future<R> compute<Q, R>(ComputeCallback<Q, R> callback, Q message,
     Timeline.finishSync();
   }
 
-  final Completer<dynamic> completer = Completer<dynamic>();
-  port.handler = (dynamic msg) {
+  final completer = Completer<Object?>();
+  void handleResponse(Object? msg) {
     timeEndAndCleanup();
     completer.complete(msg);
-  };
+  }
+
+  port.handler = handleResponse;
 
   try {
     await Isolate.spawn<_IsolateConfiguration<Q, R>>(
@@ -76,7 +84,7 @@ Future<R> compute<Q, R>(ComputeCallback<Q, R> callback, Q message,
     rethrow;
   }
 
-  final dynamic response = await completer.future;
+  final Object? response = await completer.future;
   if (response == null) {
     throw RemoteError('Isolate exited without result or error.', '');
   }
@@ -94,10 +102,9 @@ Future<R> compute<Q, R>(ComputeCallback<Q, R> callback, Q message,
 
     // native error; see Isolate.addErrorListener
     case 2:
-      await Future<Never>.error(RemoteError(
-        response[0] as String,
-        response[1] as String,
-      ));
+      await Future<Never>.error(
+        RemoteError(response[0] as String, response[1] as String),
+      );
 
     // caught error; see _buildErrorResponse
     case 3:
@@ -112,15 +119,15 @@ Future<R> compute<Q, R>(ComputeCallback<Q, R> callback, Q message,
 }
 
 class _IsolateConfiguration<Q, R> {
-  const _IsolateConfiguration(
-    this.callback,
-    this.message,
+  _IsolateConfiguration(
+    ComputeCallback<Q, R> callback,
+    Q message,
     this.resultPort,
     this.debugLabel,
     this.flowId,
-  );
-  final ComputeCallback<Q, R> callback;
-  final Q message;
+  ) : _invoke = (() => callback(message));
+
+  final FutureOr<R> Function() _invoke;
   final SendPort resultPort;
   final String debugLabel;
   final int flowId;
@@ -128,7 +135,7 @@ class _IsolateConfiguration<Q, R> {
   FutureOr<R> applyAndTime() {
     return Timeline.timeSync(
       debugLabel,
-      () => callback(message),
+      _invoke,
       flow: Flow.step(flowId),
     );
   }
@@ -147,9 +154,10 @@ Future<void> _spawn<Q, R>(_IsolateConfiguration<Q, R> configuration) async {
   late final List<dynamic> computationResult;
 
   try {
-    computationResult =
-        _buildSuccessResponse(await configuration.applyAndTime());
-  } catch (e, s) {
+    computationResult = _buildSuccessResponse(
+      await configuration.applyAndTime(),
+    );
+  } on Object catch (e, s) {
     computationResult = _buildErrorResponse(e, s);
   }
 

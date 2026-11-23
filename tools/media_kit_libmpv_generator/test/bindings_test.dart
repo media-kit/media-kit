@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:test/test.dart';
 
 // This standalone tool package deliberately does not depend on media_kit.
-// ignore: avoid_relative_lib_imports
-import '../../../media_kit/lib/generated/libmpv/bindings.dart';
+// ignore: depend_on_referenced_packages
+import 'package:media_kit/generated/libmpv/bindings.dart';
 
 int _apiVersion() => 2 << 16;
 
@@ -14,13 +14,13 @@ void main() {
     // The process itself need not export any mpv symbols.
     MPV(DynamicLibrary.process());
     final lookedUp = <String>[];
-    final version = Pointer.fromFunction<UnsignedLong Function()>(
-      _apiVersion,
-      0,
-    );
-    final mpv = MPV.fromLookup(<T extends NativeType>(String name) {
+    final Pointer<NativeFunction<UnsignedLong Function()>> version =
+        Pointer.fromFunction<UnsignedLong Function()>(_apiVersion, 0);
+    final mpv = MPV.fromLookup(<T extends NativeType>(name) {
       lookedUp.add(name);
-      if (name == 'mpv_client_api_version') return version.cast<T>();
+      if (name == 'mpv_client_api_version') {
+        return version.cast<T>();
+      }
       throw ArgumentError('Symbol unavailable in Client API 2.0: $name');
     });
     expect(lookedUp, isEmpty);
@@ -46,11 +46,11 @@ void main() {
           return 0;
         }, exceptionalReturn: -1);
     try {
-      final mpv = MPV.fromLookup(<T extends NativeType>(String name) {
+      final mpv = MPV.fromLookup(<T extends NativeType>(name) {
         expect(name, 'mpv_request_event');
         return request.nativeFunction.cast<T>();
       });
-      final event = mpv_event_id.fromValue(25);
+      final mpv_event_id event = mpv_event_id.fromValue(25);
       expect(event, mpv_event_id.MPV_EVENT_HOOK);
       expect(event.index, isNot(event.value));
       expect(mpv.mpv_request_event(nullptr, event, 1), 0);
@@ -61,7 +61,7 @@ void main() {
   });
 
   test('C struct sizes and enum values match Dart FFI', () async {
-    final header =
+    final String header =
         Platform.environment['MPV_HEADER'] ??
         File('headers/mpv/client.h').absolute.path;
     final sizes = <String, int>{
@@ -84,37 +84,35 @@ void main() {
       for (final entry in mpv_format.values) entry.name: entry.value,
       for (final entry in mpv_log_level.values) entry.name: entry.value,
     };
-    final temporary = Directory.systemTemp.createTempSync('mpv-abi-');
+    final Directory temporary = Directory.systemTemp.createTempSync('mpv-abi-');
     try {
-      final source = File('${temporary.path}/probe.c');
-      source.writeAsStringSync(
-        [
-          '#include <stdio.h>',
-          '#include "${header.replaceAll('\\', '/')}"',
-          'int main(void) {',
-          for (final name in sizes.keys)
-            'printf("$name=%zu\\n", sizeof($name));',
-          for (final name in enums.keys) 'printf("$name=%d\\n", (int)$name);',
-          for (final name in [
-            'mpv_format',
-            'mpv_event_id',
-            'mpv_log_level',
-            'mpv_end_file_reason',
-            'mpv_error',
-          ])
-            '_Static_assert(sizeof($name) == sizeof(int), "enum ABI");',
-          'return 0; }',
-        ].join('\n'),
-      );
+      final source = File('${temporary.path}/probe.c')
+        ..writeAsStringSync(
+          [
+            '#include <stdio.h>',
+            '#include "${header.replaceAll(r'\', '/')}"',
+            'int main(void) {',
+            for (final name in sizes.keys)
+              'printf("$name=%zu\\n", sizeof($name));',
+            for (final name in enums.keys) 'printf("$name=%d\\n", (int)$name);',
+            for (final name in [
+              'mpv_format',
+              'mpv_event_id',
+              'mpv_log_level',
+              'mpv_end_file_reason',
+              'mpv_error',
+            ])
+              '_Static_assert(sizeof($name) == sizeof(int), "enum ABI");',
+            'return 0; }',
+          ].join('\n'),
+        );
       final executable = '${temporary.path}/probe';
-      final compile = await Process.run(Platform.environment['CC'] ?? 'cc', [
-        '-std=c11',
-        source.path,
-        '-o',
-        executable,
-      ]);
+      final ProcessResult compile = await Process.run(
+        Platform.environment['CC'] ?? 'cc',
+        ['-std=c11', source.path, '-o', executable],
+      );
       expect(compile.exitCode, 0, reason: '${compile.stderr}');
-      final run = await Process.run(executable, []);
+      final ProcessResult run = await Process.run(executable, []);
       expect(run.exitCode, 0, reason: '${run.stderr}');
       final actual = <String, int>{
         for (final line in (run.stdout as String).trim().split('\n'))

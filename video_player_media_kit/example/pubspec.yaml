@@ -27,7 +27,6 @@ dev_dependencies:
     sdk: flutter
 
   build_runner: ^2.15.0
-  flutter_lints: any
   path_provider: ^2.1.5
   test: any
 

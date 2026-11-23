@@ -1,12 +1,14 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, WanJiMi.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, WanJiMi.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
 import 'dart:js_interop';
-import 'package:web/web.dart' as web;
+
 import 'package:synchronized/synchronized.dart';
+import 'package:web/web.dart' as web;
 
 // --------------------------------------------------
 
@@ -24,7 +26,7 @@ abstract class HLS {
       if (_initialized) {
         return;
       }
-      final completer = Completer();
+      final completer = Completer<void>();
       try {
         final script = web.HTMLScriptElement()
           ..async = true
@@ -49,7 +51,7 @@ abstract class HLS {
           web.document.append(head);
         }
         head.append(script);
-      } catch (_) {
+      } on Object {
         if (!completer.isCompleted) {
           completer.completeError(Exception('Failed to load HLS.js'));
         }
@@ -57,9 +59,9 @@ abstract class HLS {
       try {
         await completer.future;
         _initialized = true;
-      } catch (exception, stacktrace) {
-        print(exception.toString());
-        print(stacktrace.toString());
+      } on Object catch (exception, stacktrace) {
+        print(exception);
+        print(stacktrace);
       }
     });
   }
@@ -85,16 +87,14 @@ abstract class XHRSetupCallback {}
 extension on XHRSetupCallback {
   // ignore: unused_element
   external void call(web.XMLHttpRequest xhr, String url);
-  // todo: is this even important? I am not familiar with this.
+  // TODO(media-kit): Verify whether hls.js requires this call signature.
 }
 
 @JS()
 @anonymous
 @staticInterop
 class HlsOptions {
-  external factory HlsOptions({
-    XHRSetupCallback? xhrSetup,
-  });
+  external factory HlsOptions({XHRSetupCallback? xhrSetup});
 }
 
 @JS()
@@ -105,6 +105,7 @@ class Hls {
 
 extension ExtensionHls on Hls {
   external void loadSource(String src);
+
   external void attachMedia(web.HTMLVideoElement video);
 }
 

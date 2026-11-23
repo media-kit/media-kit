@@ -1,12 +1,13 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
 import 'dart:math';
-import 'package:flutter/material.dart';
 
+import 'package:flutter/material.dart';
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
 /// {@template subtitle_view}
@@ -14,22 +15,22 @@ import 'package:media_kit_video/src/video_controller/video_controller.dart';
 /// SubtitleView
 /// ------------
 ///
-/// [SubtitleView] widget is used to display the subtitles on top of the [Video].
+/// [SubtitleView] widget is used to display the subtitles on top of the `Video`.
 ///
 /// {@endtemplate}
 class SubtitleView extends StatefulWidget {
-  /// The [VideoController] reference to control this [SubtitleView] output.
-  final VideoController controller;
-
-  /// The configuration to be used for the subtitles.
-  final SubtitleViewConfiguration configuration;
-
   /// {@macro subtitle_view}
   const SubtitleView({
     super.key,
     required this.controller,
     required this.configuration,
   });
+
+  /// The [VideoController] reference to control this [SubtitleView] output.
+  final VideoController controller;
+
+  /// The configuration to be used for the subtitles.
+  final SubtitleViewConfiguration configuration;
 
   @override
   SubtitleViewState createState() => SubtitleViewState();
@@ -45,6 +46,7 @@ class SubtitleViewState extends State<SubtitleView> {
 
   // The reference width for calculating the visible text scale factor.
   static const kTextScaleFactorReferenceWidth = 1920.0;
+
   // The reference height for calculating the visible text scale factor.
   static const kTextScaleFactorReferenceHeight = 1080.0;
 
@@ -88,12 +90,12 @@ class SubtitleViewState extends State<SubtitleView> {
       builder: (context, constraints) {
         // Calculate the visible text scale factor.
 
-        final nr = (constraints.maxWidth * constraints.maxHeight);
-        const dr =
+        final double nr = constraints.maxWidth * constraints.maxHeight;
+        const double dr =
             kTextScaleFactorReferenceWidth * kTextScaleFactorReferenceHeight;
-        final textScaleFactor = sqrt((nr / dr).clamp(0.0, 1.0));
+        final double textScaleFactor = sqrt((nr / dr).clamp(0.0, 1.0));
 
-        final textScaler = widget.configuration.textScaler ??
+        final TextScaler textScaler = widget.configuration.textScaler ??
             TextScaler.linear(textScaleFactor);
         return Material(
           color: Colors.transparent,
@@ -124,6 +126,23 @@ class SubtitleViewState extends State<SubtitleView> {
 /// Configurable options for customizing the [SubtitleView] behaviour.
 /// {@endtemplate}
 class SubtitleViewConfiguration {
+  /// {@macro subtitle_view_configuration}
+  const SubtitleViewConfiguration({
+    this.visible = true,
+    this.style = const TextStyle(
+      height: 1.4,
+      fontSize: 32,
+      letterSpacing: 0,
+      wordSpacing: 0,
+      color: Color(0xffffffff),
+      fontWeight: FontWeight.normal,
+      backgroundColor: Color(0xaa000000),
+    ),
+    this.textAlign = TextAlign.center,
+    this.textScaler,
+    this.padding = const EdgeInsets.fromLTRB(16, 0, 16, 24),
+  });
+
   /// Whether the subtitles should be visible or not.
   final bool visible;
 
@@ -138,26 +157,4 @@ class SubtitleViewConfiguration {
 
   /// The padding to be used for the subtitles.
   final EdgeInsets padding;
-
-  /// {@macro subtitle_view_configuration}
-  const SubtitleViewConfiguration({
-    this.visible = true,
-    this.style = const TextStyle(
-      height: 1.4,
-      fontSize: 32.0,
-      letterSpacing: 0.0,
-      wordSpacing: 0.0,
-      color: Color(0xffffffff),
-      fontWeight: FontWeight.normal,
-      backgroundColor: Color(0xaa000000),
-    ),
-    this.textAlign = TextAlign.center,
-    this.textScaler,
-    this.padding = const EdgeInsets.fromLTRB(
-      16.0,
-      0.0,
-      16.0,
-      24.0,
-    ),
-  });
 }

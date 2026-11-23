@@ -1,14 +1,15 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:io';
+
+import 'package:media_kit/src/player/native/utils/android_helper.dart';
 import 'package:path/path.dart';
 import 'package:safe_local_storage/safe_local_storage.dart';
 import 'package:uuid/uuid.dart';
-
-import 'package:media_kit/src/player/native/utils/android_helper.dart';
 
 /// {@template temp_file}
 ///
@@ -40,7 +41,7 @@ abstract class TempFile {
 
   /// Creates a temporary file & returns it.
   static Future<File> create() async {
-    final file = File(join(directory, Uuid().v4()));
+    final file = File(join(directory, const Uuid().v4()));
     await file.create_();
     return file;
   }

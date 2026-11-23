@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_test/common/globals.dart';
+import 'package:media_kit_test/common/sources/sources.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-
-import '../common/globals.dart';
-import '../common/sources/sources.dart';
 
 class MultiplePlayerMultipleVideoScreen extends StatefulWidget {
   const MultiplePlayerMultipleVideoScreen({super.key});
@@ -15,25 +14,16 @@ class MultiplePlayerMultipleVideoScreen extends StatefulWidget {
 
 class _MultiplePlayerMultipleVideoScreenState
     extends State<MultiplePlayerMultipleVideoScreen> {
-  late final List<Player> players = [
-    Player(),
-    Player(),
-  ];
+  late final List<Player> players = [Player(), Player()];
   late final List<VideoController> controllers = [
-    VideoController(
-      players[0],
-      configuration: configuration.value,
-    ),
-    VideoController(
-      players[1],
-      configuration: configuration.value,
-    ),
+    VideoController(players[0], configuration: configuration.value),
+    VideoController(players[1], configuration: configuration.value),
   ];
 
   @override
   void initState() {
     super.initState();
-    for (final player in players) {
+    for (final Player player in players) {
       player.open(Media(sources[0]));
       player.stream.error.listen((error) => debugPrint(error));
     }
@@ -41,7 +31,7 @@ class _MultiplePlayerMultipleVideoScreenState
 
   @override
   void dispose() {
-    for (final player in players) {
+    for (final Player player in players) {
       player.dispose();
     }
     super.dispose();
@@ -52,9 +42,7 @@ class _MultiplePlayerMultipleVideoScreenState
           ListTile(
             title: Text(
               'Video $j',
-              style: const TextStyle(
-                fontSize: 14.0,
-              ),
+              style: const TextStyle(fontSize: 14),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -68,7 +56,7 @@ class _MultiplePlayerMultipleVideoScreenState
       MediaQuery.of(context).size.width > MediaQuery.of(context).size.height
           ? Card(
               clipBehavior: Clip.antiAlias,
-              margin: const EdgeInsets.all(32.0),
+              margin: const EdgeInsets.all(32),
               child: Video(controller: controllers[i]),
             )
           : Video(
@@ -80,9 +68,7 @@ class _MultiplePlayerMultipleVideoScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('package:media_kit'),
-      ),
+      appBar: AppBar(title: const Text('package:media_kit')),
       body:
           MediaQuery.of(context).size.width > MediaQuery.of(context).size.height
               ? Row(
@@ -106,7 +92,7 @@ class _MultiplePlayerMultipleVideoScreenState
                     for (int i = 0; i < 2; i++) ...[
                       getVideoForIndex(context, i),
                       ...getAssetsListForIndex(context, i),
-                    ]
+                    ],
                   ],
                 ),
     );

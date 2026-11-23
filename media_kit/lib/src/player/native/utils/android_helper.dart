@@ -1,11 +1,12 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 // ignore_for_file: non_constant_identifier_names, camel_case_types
-import 'dart:io';
 import 'dart:ffi';
+import 'dart:io';
 
 import 'package:media_kit/ffi/ffi.dart';
 
@@ -26,67 +27,60 @@ abstract class AndroidHelper {
         // * libmpv.so
         // * libavcodec.so
         // * libmediakitandroidhelper.so.
-        DynamicLibrary? libmpv, libavcodec, libmediakitandroidhelper;
+        DynamicLibrary? libmpv;
+        DynamicLibrary? libavcodec;
+        DynamicLibrary? libmediakitandroidhelper;
         try {
-          libmpv = DynamicLibrary.open(
-            'libmpv.so',
-          );
-        } catch (_) {}
+          libmpv = DynamicLibrary.open('libmpv.so');
+        } on Object catch (_) {}
         try {
-          libavcodec = DynamicLibrary.open(
-            'libavcodec.so',
-          );
-        } catch (_) {}
+          libavcodec = DynamicLibrary.open('libavcodec.so');
+        } on Object catch (_) {}
         try {
           libmediakitandroidhelper = DynamicLibrary.open(
             'libmediakitandroidhelper.so',
           );
-        } catch (_) {}
+        } on Object catch (_) {}
         // Look for the required symbols.
         try {
           _mpv_lavc_set_java_vm = libmpv?.lookupFunction<
-              mpv_lavc_set_java_vmCXX, mpv_lavc_set_java_vmDart>(
-            'mpv_lavc_set_java_vm',
-          );
-        } catch (_) {}
+              mpv_lavc_set_java_vmCXX,
+              mpv_lavc_set_java_vmDart>('mpv_lavc_set_java_vm');
+        } on Object catch (_) {}
         try {
           _av_jni_set_java_vm = libavcodec
               ?.lookupFunction<av_jni_set_java_vmCXX, av_jni_set_java_vmDart>(
             'av_jni_set_java_vm',
           );
-        } catch (_) {}
+        } on Object catch (_) {}
         try {
           _MediaKitAndroidHelperGetJavaVM =
               libmediakitandroidhelper?.lookupFunction<
-                  MediaKitAndroidHelperGetJavaVMCXX,
-                  MediaKitAndroidHelperGetJavaVMDart>(
-            'MediaKitAndroidHelperGetJavaVM',
-          );
-        } catch (_) {}
+                      MediaKitAndroidHelperGetJavaVMCXX,
+                      MediaKitAndroidHelperGetJavaVMDart>(
+                  'MediaKitAndroidHelperGetJavaVM');
+        } on Object catch (_) {}
         try {
           MediaKitAndroidHelperGetFilesDir =
               libmediakitandroidhelper?.lookupFunction<
-                  MediaKitAndroidHelperGetFilesDirCXX,
-                  MediaKitAndroidHelperGetFilesDirDart>(
-            'MediaKitAndroidHelperGetFilesDir',
-          );
-        } catch (_) {}
+                      MediaKitAndroidHelperGetFilesDirCXX,
+                      MediaKitAndroidHelperGetFilesDirDart>(
+                  'MediaKitAndroidHelperGetFilesDir');
+        } on Object catch (_) {}
         try {
           _MediaKitAndroidHelperIsEmulator =
               libmediakitandroidhelper?.lookupFunction<
-                  MediaKitAndroidHelperIsEmulatorCXX,
-                  MediaKitAndroidHelperIsEmulatorDart>(
-            'MediaKitAndroidHelperIsEmulator',
-          );
-        } catch (_) {}
+                      MediaKitAndroidHelperIsEmulatorCXX,
+                      MediaKitAndroidHelperIsEmulatorDart>(
+                  'MediaKitAndroidHelperIsEmulator');
+        } on Object catch (_) {}
         try {
           _MediaKitAndroidHelperGetAPILevel =
               libmediakitandroidhelper?.lookupFunction<
-                  MediaKitAndroidHelperGetAPILevelCXX,
-                  MediaKitAndroidHelperGetAPILevelDart>(
-            'MediaKitAndroidHelperGetAPILevel',
-          );
-        } catch (_) {}
+                      MediaKitAndroidHelperGetAPILevelCXX,
+                      MediaKitAndroidHelperGetAPILevelDart>(
+                  'MediaKitAndroidHelperGetAPILevel');
+        } on Object catch (_) {}
 
         if ((_mpv_lavc_set_java_vm ?? _av_jni_set_java_vm) == null) {
           throw UnsupportedError(
@@ -110,7 +104,8 @@ abstract class AndroidHelper {
               // Following patch exposes mpv_lavc_set_java_vm which internally calls av_jni_set_java_vm.
               // https://github.com/media-kit/libmpv-android-video-build/blob/main/buildscripts/patches/mpv/mpv_lavc_set_java_vm.patch
               // https://github.com/media-kit/libmpv-android-audio-build/blob/main/buildscripts/patches/mpv/mpv_lavc_set_java_vm.patch
-              final fn = _mpv_lavc_set_java_vm ?? _av_jni_set_java_vm;
+              final int Function(Pointer<Void> vm)? fn =
+                  _mpv_lavc_set_java_vm ?? _av_jni_set_java_vm;
               if (fn != null) {
                 fn(vm);
                 break;
@@ -120,12 +115,12 @@ abstract class AndroidHelper {
           sleep(const Duration(milliseconds: 20));
         }
       }
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 
   static String? get filesDir {
     if (Platform.isAndroid) {
-      final filesDir = MediaKitAndroidHelperGetFilesDir?.call();
+      final Pointer<Utf8>? filesDir = MediaKitAndroidHelperGetFilesDir?.call();
       if (filesDir != null) {
         if (filesDir != nullptr) {
           return filesDir.toDartString();

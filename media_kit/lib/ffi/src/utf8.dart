@@ -2,8 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-import 'dart:ffi';
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:media_kit/ffi/src/allocation.dart';
@@ -23,7 +23,7 @@ extension Utf8Pointer on Pointer<Utf8> {
   /// first zero code unit.
   int get length {
     _ensureNotNullptr('length');
-    final codeUnits = cast<Uint8>();
+    final Pointer<Uint8> codeUnits = cast<Uint8>();
     return _length(codeUnits);
   }
 
@@ -40,28 +40,26 @@ extension Utf8Pointer on Pointer<Utf8> {
   /// but not including  the first NUL character.
   String toDartString({int? length}) {
     _ensureNotNullptr('toDartString');
-    final codeUnits = cast<Uint8>();
+    final Pointer<Uint8> codeUnits = cast<Uint8>();
     if (length != null) {
       RangeError.checkNotNegative(length, 'length');
-    } else {
-      length = _length(codeUnits);
     }
 
-    final bytes = codeUnits.asTypedList(length);
-    final result = utf8.decode(bytes, allowMalformed: true);
+    final Uint8List bytes = codeUnits.asTypedList(length ?? _length(codeUnits));
+    final String result = utf8.decode(bytes, allowMalformed: true);
 
     // Try to decode bad characters from libmpv.
     try {
       if (result.contains('�')) {
-        final characters = result.split('');
-        for (int i = 0; i < length; i++) {
+        final List<String> characters = result.split('');
+        for (var i = 0; i < bytes.length; i++) {
           if (characters[i] == '�' && kHTMLCharset.containsKey(bytes[i])) {
             characters[i] = kHTMLCharset[bytes[i]]!;
           }
         }
-        return characters.join('');
+        return characters.join();
       }
-    } catch (_) {}
+    } on Object catch (_) {}
 
     return result;
   }
@@ -77,7 +75,8 @@ extension Utf8Pointer on Pointer<Utf8> {
   void _ensureNotNullptr(String operation) {
     if (this == nullptr) {
       throw UnsupportedError(
-          "Operation '$operation' not allowed on a 'nullptr'.");
+        "Operation '$operation' not allowed on a 'nullptr'.",
+      );
     }
   }
 }
@@ -96,11 +95,11 @@ extension StringUtf8Pointer on String {
   ///
   /// Returns an [allocator]-allocated pointer to the result.
   Pointer<Utf8> toNativeUtf8({Allocator allocator = malloc}) {
-    final units = utf8.encode(this);
+    final Uint8List units = utf8.encode(this);
     final Pointer<Uint8> result = allocator<Uint8>(units.length + 1);
-    final Uint8List nativeString = result.asTypedList(units.length + 1);
-    nativeString.setAll(0, units);
-    nativeString[units.length] = 0;
+    result.asTypedList(units.length + 1)
+      ..setAll(0, units)
+      ..[units.length] = 0;
     return result.cast();
   }
 }
@@ -112,10 +111,10 @@ const Map<int, String> kHTMLCharset = {
   33: '!',
   34: '"',
   35: '#',
-  36: '\$',
+  36: r'$',
   37: '%',
   38: '&',
-  39: '\'',
+  39: "'",
   40: '(',
   41: ')',
   42: '*',
@@ -168,7 +167,7 @@ const Map<int, String> kHTMLCharset = {
   89: 'Y',
   90: 'Z',
   91: '[',
-  92: '\\',
+  92: r'\',
   93: ']',
   94: '^',
   95: '_',

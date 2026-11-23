@@ -1,11 +1,10 @@
 // Copyright (c) 2019, the Dart project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-//
-// Explicit arena used for managing resources.
 
-import 'dart:ffi';
+// Explicit arena used for managing resources.
 import 'dart:async';
+import 'dart:ffi';
 
 import 'package:media_kit/ffi/src/allocation.dart';
 
@@ -22,6 +21,12 @@ import 'package:media_kit/ffi/src/allocation.dart';
 /// An [Allocator] can be provided to do the actual allocation and freeing.
 /// Defaults to using [calloc].
 class Arena implements Allocator {
+  /// Creates a arena of allocations.
+  ///
+  /// The [allocator] is used to do the actual allocation and freeing of
+  /// memory. It defaults to using [calloc].
+  Arena([Allocator allocator = calloc]) : _wrappedAllocator = allocator;
+
   /// The [Allocator] used for allocation and freeing.
   final Allocator _wrappedAllocator;
 
@@ -33,12 +38,6 @@ class Arena implements Allocator {
 
   bool _inUse = true;
 
-  /// Creates a arena of allocations.
-  ///
-  /// The [allocator] is used to do the actual allocation and freeing of
-  /// memory. It defaults to using [calloc].
-  Arena([Allocator allocator = calloc]) : _wrappedAllocator = allocator;
-
   /// Allocates memory and includes it in the arena.
   ///
   /// Uses the allocator provided to the [Arena] constructor to do the
@@ -49,7 +48,8 @@ class Arena implements Allocator {
   @override
   Pointer<T> allocate<T extends NativeType>(int byteCount, {int? alignment}) {
     _ensureInUse();
-    final p = _wrappedAllocator.allocate<T>(byteCount, alignment: alignment);
+    final Pointer<T> p =
+        _wrappedAllocator.allocate<T>(byteCount, alignment: alignment);
     _managedMemoryPointers.add(p);
     return p;
   }
@@ -62,8 +62,9 @@ class Arena implements Allocator {
   /// `arena.using(resource, ...)` where the resource is allocated.
   T using<T>(T resource, void Function(T) releaseCallback) {
     _ensureInUse();
-    releaseCallback = Zone.current.bindUnaryCallback(releaseCallback);
-    _managedResourceReleaseCallbacks.add(() => releaseCallback(resource));
+    final void Function(T) boundRelease =
+        Zone.current.bindUnaryCallback(releaseCallback);
+    _managedResourceReleaseCallbacks.add(() => boundRelease(resource));
     return resource;
   }
 
@@ -90,7 +91,7 @@ class Arena implements Allocator {
     while (_managedResourceReleaseCallbacks.isNotEmpty) {
       _managedResourceReleaseCallbacks.removeLast()();
     }
-    for (final p in _managedMemoryPointers) {
+    for (final Pointer<NativeType> p in _managedMemoryPointers) {
       _wrappedAllocator.free(p);
     }
     _managedMemoryPointers.clear();
@@ -103,7 +104,8 @@ class Arena implements Allocator {
   void _ensureInUse() {
     if (!_inUse) {
       throw StateError(
-          'Arena no longer in use, `releaseAll(reuse: false)` was called.');
+        'Arena no longer in use, `releaseAll(reuse: false)` was called.',
+      );
     }
   }
 }
@@ -116,15 +118,17 @@ class Arena implements Allocator {
 ///
 /// If the isolate is shut down, through `Isolate.kill()`, resources are _not_
 /// cleaned up.
-R using<R>(R Function(Arena) computation,
-    [Allocator wrappedAllocator = calloc]) {
+R using<R>(
+  R Function(Arena) computation, [
+  Allocator wrappedAllocator = calloc,
+]) {
   final arena = Arena(wrappedAllocator);
-  bool isAsync = false;
+  var isAsync = false;
   try {
-    final result = computation(arena);
+    final R result = computation(arena);
     if (result is Future) {
       isAsync = true;
-      return (result.whenComplete(arena.releaseAll) as R);
+      return result.whenComplete(arena.releaseAll) as R;
     }
     return result;
   } finally {
@@ -140,19 +144,19 @@ R using<R>(R Function(Arena) computation,
 ///
 /// If the isolate is shut down, through `Isolate.kill()`, resources are _not_
 /// cleaned up.
-R withZoneArena<R>(R Function() computation,
-    [Allocator wrappedAllocator = calloc]) {
+R withZoneArena<R>(
+  R Function() computation, [
+  Allocator wrappedAllocator = calloc,
+]) {
   final arena = Arena(wrappedAllocator);
-  var arenaHolder = [arena];
-  bool isAsync = false;
+  final arenaHolder = [arena];
+  var isAsync = false;
   try {
     return runZoned(() {
-      final result = computation();
+      final R result = computation();
       if (result is Future) {
         isAsync = true;
-        return result.whenComplete(() {
-          arena.releaseAll();
-        }) as R;
+        return result.whenComplete(arena.releaseAll) as R;
       }
       return result;
     }, zoneValues: {#_arena: arenaHolder});

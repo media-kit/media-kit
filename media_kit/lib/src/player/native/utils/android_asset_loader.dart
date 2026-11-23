@@ -1,13 +1,13 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:ffi';
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:collection';
+import 'dart:ffi';
 
 import 'package:media_kit/ffi/ffi.dart';
-
 import 'package:media_kit/src/player/native/utils/isolates.dart';
 
 /// {@template android_asset_loader}
@@ -24,22 +24,22 @@ import 'package:media_kit/src/player/native/utils/isolates.dart';
 abstract class AndroidAssetLoader {
   /// Copies an asset bundled with the application to the external files directory & returns it absolute path.
   static Future<String> load(String asset) async {
-    final lookup = _loaded[asset];
+    final String? lookup = _loaded[asset];
     if (lookup != null) {
       return lookup;
     }
-    final path = await compute(_copyAssetToFilesDir, asset);
+    final String path = await compute(_copyAssetToFilesDir, asset);
     _loaded[asset] = path;
     return path;
   }
 
   /// Copies an asset bundled with the application to the files directory & returns it absolute path.
   static String loadSync(String asset) {
-    final lookup = _loaded[asset];
+    final String? lookup = _loaded[asset];
     if (lookup != null) {
       return lookup;
     }
-    final path = _copyAssetToFilesDir(asset);
+    final String path = _copyAssetToFilesDir(asset);
     _loaded[asset] = path;
     return path;
   }
@@ -47,15 +47,17 @@ abstract class AndroidAssetLoader {
   /// The native implementation for [load] & [loadSync].
   static String _copyAssetToFilesDir(String asset) {
     final lib = DynamicLibrary.open('libmediakitandroidhelper.so');
-    final fn = lib.lookupFunction<FnCXX, FnDart>(
+    final FnDart fn = lib.lookupFunction<FnCXX, FnDart>(
       'MediaKitAndroidHelperCopyAssetToFilesDir',
     );
-    final name = asset.toNativeUtf8();
-    final result = List.generate(4096, (index) => ' ').join('').toNativeUtf8();
+    final Pointer<Utf8> name = asset.toNativeUtf8();
+    final Pointer<Utf8> result =
+        List.generate(4096, (index) => ' ').join().toNativeUtf8();
     fn.call(name.cast(), result.cast());
-    final path = result.cast<Utf8>().toDartString().trim();
-    calloc.free(name);
-    calloc.free(result);
+    final String path = result.cast<Utf8>().toDartString().trim();
+    calloc
+      ..free(name)
+      ..free(result);
     return path;
   }
 

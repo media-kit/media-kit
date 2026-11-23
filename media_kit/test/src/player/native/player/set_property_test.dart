@@ -32,34 +32,40 @@ void main() {
         }
       });
 
-      test('unknown properties report an error and do not block later writes',
-          () async {
-        final error = player.stream.log.firstWhere(
-          (log) =>
-              log.prefix == 'media_kit' &&
-              log.level == 'error' &&
-              log.text.contains('_setProperty(media-kit-unknown-property,'),
-        );
-        await native.setProperty('media-kit-unknown-property', 'yes');
-        expect((await error.timeout(const Duration(seconds: 2))).text,
-            contains('property not found'));
-        await native.setProperty('volume', '35');
-        expect(double.parse(await native.getProperty('volume')), 35);
-      });
+      test(
+        'unknown properties report an error and do not block later writes',
+        () async {
+          final Future<PlayerLog> error = player.stream.log.firstWhere(
+            (log) =>
+                log.prefix == 'media_kit' &&
+                log.level == 'error' &&
+                log.text.contains('_setProperty(media-kit-unknown-property,'),
+          );
+          await native.setProperty('media-kit-unknown-property', 'yes');
+          expect(
+            (await error.timeout(const Duration(seconds: 2))).text,
+            contains('property not found'),
+          );
+          await native.setProperty('volume', '35');
+          expect(double.parse(await native.getProperty('volume')), 35);
+        },
+      );
 
-      test('invalid values report an error and leave the property unchanged',
-          () async {
-        await native.setProperty('volume', '40');
-        final error = player.stream.log.firstWhere(
-          (log) =>
-              log.prefix == 'media_kit' &&
-              log.level == 'error' &&
-              log.text.contains('_setProperty(volume,'),
-        );
-        await native.setProperty('volume', 'not-a-number');
-        await error.timeout(const Duration(seconds: 2));
-        expect(double.parse(await native.getProperty('volume')), 40);
-      });
+      test(
+        'invalid values report an error and leave the property unchanged',
+        () async {
+          await native.setProperty('volume', '40');
+          final Future<PlayerLog> error = player.stream.log.firstWhere(
+            (log) =>
+                log.prefix == 'media_kit' &&
+                log.level == 'error' &&
+                log.text.contains('_setProperty(volume,'),
+          );
+          await native.setProperty('volume', 'not-a-number');
+          await error.timeout(const Duration(seconds: 2));
+          expect(double.parse(await native.getProperty('volume')), 40);
+        },
+      );
 
       test('dispose rejects subsequent writes', () async {
         await player.dispose();
@@ -76,7 +82,8 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 50));
         var completed = false;
         Object? failure;
-        final write = native.setProperty('volume', '30').then<void>(
+        final Future<void> write =
+            native.setProperty('volume', '30').then<void>(
           (_) {
             completed = true;
           },

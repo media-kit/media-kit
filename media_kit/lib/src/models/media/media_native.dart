@@ -1,27 +1,28 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-// ignore_for_file: library_private_types_in_public_api
-import 'dart:io';
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:collection';
+import 'dart:io';
 import 'dart:typed_data';
-import 'package:uri_parser/uri_parser.dart';
-import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/src/models/playable.dart';
-
-import 'package:media_kit/src/player/native/utils/temp_file.dart';
-import 'package:media_kit/src/player/native/utils/asset_loader.dart';
 import 'package:media_kit/src/player/native/utils/android_content_uri_provider.dart';
+import 'package:media_kit/src/player/native/utils/asset_loader.dart';
+import 'package:media_kit/src/player/native/utils/temp_file.dart';
+// ignore_for_file: library_private_types_in_public_api
+import 'package:meta/meta.dart';
+import 'package:safe_local_storage/safe_local_storage.dart';
+import 'package:uri_parser/uri_parser.dart';
 
 /// {@template media}
 ///
 /// Media
 /// -----
 ///
-/// A [Media] object to open inside a [Player] for playback.
+/// A [Media] object to open inside a `Player` for playback.
 ///
 /// ```dart
 /// final player = Player();
@@ -30,51 +31,90 @@ import 'package:media_kit/src/player/native/utils/android_content_uri_provider.d
 /// ```
 ///
 /// {@endtemplate}
+@immutable
 class Media extends Playable {
+  /// {@macro media}
+  factory Media(
+    String resource, {
+    Map<String, dynamic>? extras,
+    Map<String, String>? httpHeaders,
+    Duration? start,
+    Duration? end,
+  }) {
+    return Media._(
+      resource,
+      extras: extras,
+      httpHeaders: httpHeaders,
+      start: start,
+      end: end,
+      memory: false,
+    );
+  }
+
+  Media._(
+    String resource, {
+    required bool memory,
+    Map<String, dynamic>? extras,
+    Map<String, String>? httpHeaders,
+    this.start,
+    this.end,
+  })  : uri = normalizeURI(resource),
+        extras = extras ?? cache[normalizeURI(resource)]?.extras,
+        httpHeaders =
+            httpHeaders ?? cache[normalizeURI(resource)]?.httpHeaders {
+    // Increment reference count.
+    ref[uri] = ((ref[uri] ?? 0) + 1).clamp(0, 1 << 32);
+    // Store [this] instance in [cache].
+    cache[uri] = _MediaCache(
+      extras: this.extras,
+      httpHeaders: this.httpHeaders,
+    );
+    // Attach [this] instance to [Finalizer].
+    _finalizer.attach(this, _MediaFinalizerContext(uri, memory));
+  }
+
   /// The [Finalizer] is invoked when the [Media] instance is garbage collected.
   /// This has been done to:
   /// 1. Evict the [Media] instance from [cache].
   /// 2. Close the file descriptor created by [AndroidContentUriProvider] to handle content:// URIs on Android.
   /// 3. Delete the temporary file created by [Media.memory].
   static final Finalizer<_MediaFinalizerContext> _finalizer =
-      Finalizer<_MediaFinalizerContext>(
-    (context) async {
-      final uri = context.uri;
-      final memory = context.memory;
-      // Decrement reference count.
-      final references = ((ref[uri] ?? 0) - 1).clamp(0, 1 << 32);
-      ref[uri] = references;
-      // Remove [Media] instance from [cache] if reference count is 0.
-      if (references == 0) {
-        cache.remove(uri);
-        ref.remove(uri);
-      }
-      // content:// : Close the possible file descriptor on Android.
-      try {
-        if (Platform.isAndroid) {
-          final data = Uri.parse(uri);
-          if (references == 0 && data.isScheme('FD')) {
-            final fd = int.parse(data.authority);
-            if (fd > 0) {
-              await AndroidContentUriProvider.closeFileDescriptor(uri);
-            }
+      Finalizer<_MediaFinalizerContext>((context) async {
+    final String uri = context.uri;
+    final bool memory = context.memory;
+    // Decrement reference count.
+    final int references = ((ref[uri] ?? 0) - 1).clamp(0, 1 << 32);
+    ref[uri] = references;
+    // Remove [Media] instance from [cache] if reference count is 0.
+    if (references == 0) {
+      cache.remove(uri);
+      ref.remove(uri);
+    }
+    // content:// : Close the possible file descriptor on Android.
+    try {
+      if (Platform.isAndroid) {
+        final Uri data = Uri.parse(uri);
+        if (references == 0 && data.isScheme('FD')) {
+          final int fd = int.parse(data.authority);
+          if (fd > 0) {
+            await AndroidContentUriProvider.closeFileDescriptor(uri);
           }
         }
-      } catch (exeception, stacktrace) {
-        print(exeception);
-        print(stacktrace);
       }
-      // Media.memory : Delete the temporary file.
-      try {
-        if (memory) {
-          await File(uri).delete_();
-        }
-      } catch (exeception, stacktrace) {
-        print(exeception);
-        print(stacktrace);
+    } on Object catch (exeception, stacktrace) {
+      print(exeception);
+      print(stacktrace);
+    }
+    // Media.memory : Delete the temporary file.
+    try {
+      if (memory) {
+        await File(uri).delete_();
       }
-    },
-  );
+    } on Object catch (exeception, stacktrace) {
+      print(exeception);
+      print(stacktrace);
+    }
+  });
 
   /// URI of the [Media].
   final String uri;
@@ -99,65 +139,13 @@ class Media extends Playable {
   /// Default: `null`.
   final Duration? end;
 
-  /// {@macro media}
-  factory Media(
-    String resource, {
-    Map<String, dynamic>? extras,
-    Map<String, String>? httpHeaders,
-    Duration? start,
-    Duration? end,
-  }) {
-    return Media._(
-      resource,
-      extras: extras,
-      httpHeaders: httpHeaders,
-      start: start,
-      end: end,
-      memory: false,
-    );
-  }
-
-  Media._(
-    String resource, {
-    Map<String, dynamic>? extras,
-    Map<String, String>? httpHeaders,
-    this.start,
-    this.end,
-    required bool memory,
-  })  : uri = normalizeURI(resource),
-        extras = extras ?? cache[normalizeURI(resource)]?.extras,
-        httpHeaders =
-            httpHeaders ?? cache[normalizeURI(resource)]?.httpHeaders {
-    // Increment reference count.
-    ref[uri] = ((ref[uri] ?? 0) + 1).clamp(0, 1 << 32);
-    // Store [this] instance in [cache].
-    cache[uri] = _MediaCache(
-      extras: this.extras,
-      httpHeaders: this.httpHeaders,
-    );
-    // Attach [this] instance to [Finalizer].
-    _finalizer.attach(
-      this,
-      _MediaFinalizerContext(
-        uri,
-        memory,
-      ),
-    );
-  }
-
   /// Creates a [Media] instance from [Uint8List].
   ///
   /// The [type] parameter is optional and is used to specify the MIME type of the media on web.
-  static Future<Media> memory(
-    Uint8List data, {
-    String? type,
-  }) async {
-    final file = await TempFile.create();
+  static Future<Media> memory(Uint8List data, {String? type}) async {
+    final File file = await TempFile.create();
     await file.write_(data);
-    return Media._(
-      file.path,
-      memory: true,
-    );
+    return Media._(file.path, memory: true);
   }
 
   /// Normalizes the passed URI.
@@ -170,13 +158,13 @@ class Media extends Playable {
     try {
       if (Platform.isAndroid) {
         if (Uri.parse(uri).isScheme('CONTENT')) {
-          final fd = AndroidContentUriProvider.openFileDescriptorSync(uri);
+          final int fd = AndroidContentUriProvider.openFileDescriptorSync(uri);
           if (fd > 0) {
             return 'fd://$fd';
           }
         }
       }
-    } catch (exception, stacktrace) {
+    } on Object catch (exception, stacktrace) {
       print(exception);
       print(stacktrace);
     }
@@ -192,7 +180,8 @@ class Media extends Playable {
         {
           return parser.uri!.toString();
         }
-      default:
+      case URIType.directory:
+      case URIType.other:
         return uri;
     }
   }
@@ -210,7 +199,7 @@ class Media extends Playable {
   @override
   int get hashCode => uri.hashCode;
 
-  /// Creates a copy of [this] instance with the given fields replaced with the new values.
+  /// Creates a copy of `this` instance with the given fields replaced with the new values.
   Media copyWith({
     String? uri,
     Map<String, dynamic>? extras,
@@ -247,6 +236,9 @@ class Media extends Playable {
 /// A simple class to pack optional arguments in [Media] together.
 /// {@endtemplate}
 class _MediaCache {
+  /// {@macro _media_cache}
+  const _MediaCache({this.extras, this.httpHeaders});
+
   /// Additional optional user data.
   ///
   /// Default: `null`.
@@ -256,12 +248,6 @@ class _MediaCache {
   ///
   /// Default: `null`.
   final Map<String, String>? httpHeaders;
-
-  /// {@macro _media_cache}
-  const _MediaCache({
-    this.extras,
-    this.httpHeaders,
-  });
 
   @override
   String toString() => '_MediaCache('
@@ -274,10 +260,10 @@ class _MediaCache {
 /// A simple class to pack the required attributes into [Finalizer] argument.
 /// {@endtemplate}
 class _MediaFinalizerContext {
+  const _MediaFinalizerContext(this.uri, this.memory);
+
   final String uri;
   final bool memory;
-
-  const _MediaFinalizerContext(this.uri, this.memory);
 
   @override
   String toString() => '_MediaFinalizerContext(uri: $uri, memory: $memory)';

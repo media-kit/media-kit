@@ -1,13 +1,14 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2023 & onwards, Abdelaziz Mahdy <abdelaziz.h.mahdy@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:async';
-import 'package:flutter/widgets.dart';
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2023 & onwards, Abdelaziz Mahdy <abdelaziz.h.mahdy@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-import 'package:media_kit_video/src/video/video.dart';
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
+import 'package:media_kit_video/src/video/video.dart';
 
 typedef VideoControlsBuilder = Widget Function(VideoState state);
 
@@ -19,20 +20,10 @@ typedef VideoControlsBuilder = Widget Function(VideoState state);
 /// The attributes of a [Video] widget composed into a single class.
 ///
 /// {@endtemplate}
+@immutable
 class VideoViewParameters {
-  final double? width;
-  final double? height;
-  final BoxFit fit;
-  final Color fill;
-  final Alignment alignment;
-  final double? aspectRatio;
-  final FilterQuality filterQuality;
-  final VideoControlsBuilder? controls;
-  final SubtitleViewConfiguration subtitleViewConfiguration;
-  final FocusNode? focusNode;
-
   /// {@macro video_view_parameters}
-  VideoViewParameters({
+  const VideoViewParameters({
     required this.width,
     required this.height,
     required this.fit,
@@ -44,6 +35,17 @@ class VideoViewParameters {
     required this.subtitleViewConfiguration,
     this.focusNode,
   });
+
+  final double? width;
+  final double? height;
+  final BoxFit fit;
+  final Color fill;
+  final Alignment alignment;
+  final double? aspectRatio;
+  final FilterQuality filterQuality;
+  final VideoControlsBuilder? controls;
+  final SubtitleViewConfiguration subtitleViewConfiguration;
+  final FocusNode? focusNode;
 
   VideoViewParameters copyWith({
     double? width,

@@ -1,12 +1,14 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 // ignore_for_file: non_constant_identifier_names
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/extensions/duration.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
@@ -18,9 +20,7 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/vi
 ///
 /// {@endtemplate}
 Widget MaterialVideoControls(VideoState state) {
-  return const VideoControlsThemeDataInjector(
-    child: _MaterialVideoControls(),
-  );
+  return const VideoControlsThemeDataInjector(child: _MaterialVideoControls());
 }
 
 /// [MaterialVideoControlsThemeData] available in this [context].
@@ -37,69 +37,31 @@ const kDefaultMaterialVideoControlsThemeData = MaterialVideoControlsThemeData();
 /// Default [MaterialVideoControlsThemeData] for fullscreen.
 const kDefaultMaterialVideoControlsThemeDataFullscreen =
     MaterialVideoControlsThemeData(
-  displaySeekBar: true,
-  automaticallyImplySkipNextButton: true,
-  automaticallyImplySkipPreviousButton: true,
   volumeGesture: true,
   brightnessGesture: true,
   seekGesture: true,
-  gesturesEnabledWhileControlsVisible: true,
   seekOnDoubleTap: true,
-  seekOnDoubleTapEnabledWhileControlsVisible: true,
-  visibleOnMount: false,
-  speedUpOnLongPress: false,
-  speedUpFactor: 2.0,
+  speedUpFactor: 2,
   verticalGestureSensitivity: 100,
   horizontalGestureSensitivity: 1000,
-  backdropColor: Color(0x66000000),
-  padding: null,
-  controlsHoverDuration: Duration(seconds: 3),
-  controlsTransitionDuration: Duration(milliseconds: 300),
-  bufferingIndicatorBuilder: null,
-  volumeIndicatorBuilder: null,
-  brightnessIndicatorBuilder: null,
-  seekIndicatorBuilder: null,
-  speedUpIndicatorBuilder: null,
   primaryButtonBar: [
     Spacer(flex: 2),
     MaterialSkipPreviousButton(),
     Spacer(),
-    MaterialPlayOrPauseButton(iconSize: 56.0),
+    MaterialPlayOrPauseButton(iconSize: 56),
     Spacer(),
     MaterialSkipNextButton(),
     Spacer(flex: 2),
   ],
-  topButtonBar: [],
-  topButtonBarMargin: EdgeInsets.symmetric(
-    horizontal: 16.0,
-  ),
-  bottomButtonBar: [
-    MaterialPositionIndicator(),
-    Spacer(),
-    MaterialFullscreenButton(),
-  ],
   bottomButtonBarMargin: EdgeInsets.only(
-    left: 16.0,
-    right: 8.0,
-    bottom: 42.0,
+    left: 16,
+    right: 8,
+    bottom: 42,
   ),
-  buttonBarHeight: 56.0,
-  buttonBarButtonSize: 24.0,
-  buttonBarButtonColor: Color(0xFFFFFFFF),
-  seekBarMargin: EdgeInsets.only(
-    left: 16.0,
-    right: 16.0,
-    bottom: 42.0,
-  ),
-  seekBarHeight: 2.4,
-  seekBarContainerHeight: 36.0,
-  seekBarColor: Color(0x3DFFFFFF),
-  seekBarPositionColor: Color(0xFFFF0000),
-  seekBarBufferColor: Color(0x3DFFFFFF),
-  seekBarThumbSize: 12.8,
-  seekBarThumbColor: Color(0xFFFF0000),
-  seekBarAlignment: Alignment.bottomCenter,
-  shiftSubtitlesOnControlsVisibilityChange: false,
+  buttonBarHeight: 56,
+  buttonBarButtonSize: 24,
+  seekBarMargin: EdgeInsets.only(left: 16, right: 16, bottom: 42),
+  seekBarContainerHeight: 36,
 );
 
 /// {@template material_video_controls_theme_data}
@@ -108,6 +70,72 @@ const kDefaultMaterialVideoControlsThemeDataFullscreen =
 ///
 /// {@endtemplate}
 class MaterialVideoControlsThemeData {
+  /// {@macro material_video_controls_theme_data}
+  const MaterialVideoControlsThemeData({
+    this.displaySeekBar = true,
+    this.automaticallyImplySkipNextButton = true,
+    this.automaticallyImplySkipPreviousButton = true,
+    this.volumeGesture = false,
+    this.brightnessGesture = false,
+    this.seekGesture = false,
+    this.gesturesEnabledWhileControlsVisible = true,
+    this.seekOnDoubleTap = false,
+    this.seekOnDoubleTapEnabledWhileControlsVisible = true,
+    this.seekOnDoubleTapLayoutTapsRatios = const [1, 1, 1],
+    this.seekOnDoubleTapLayoutWidgetRatios = const [1, 1, 1],
+    this.seekOnDoubleTapBackwardDuration = const Duration(seconds: 10),
+    this.seekOnDoubleTapForwardDuration = const Duration(seconds: 10),
+    this.visibleOnMount = false,
+    this.speedUpOnLongPress = false,
+    this.speedUpFactor = 2.0,
+    this.verticalGestureSensitivity = 100,
+    this.horizontalGestureSensitivity = 1000,
+    this.backdropColor = const Color(0x66000000),
+    this.padding,
+    this.controlsHoverDuration = const Duration(seconds: 3),
+    this.controlsTransitionDuration = const Duration(milliseconds: 300),
+    this.bufferingIndicatorBuilder,
+    this.volumeIndicatorBuilder,
+    this.brightnessIndicatorBuilder,
+    this.onVolumeChanged,
+    this.initialVolume,
+    this.onBrightnessChanged,
+    this.initialBrightness,
+    this.onBrightnessReset,
+    this.seekIndicatorBuilder,
+    this.speedUpIndicatorBuilder,
+    this.primaryButtonBar = const [
+      Spacer(flex: 2),
+      MaterialSkipPreviousButton(),
+      Spacer(),
+      MaterialPlayOrPauseButton(iconSize: 48),
+      Spacer(),
+      MaterialSkipNextButton(),
+      Spacer(flex: 2),
+    ],
+    this.topButtonBar = const [],
+    this.topButtonBarMargin = const EdgeInsets.symmetric(horizontal: 16),
+    this.bottomButtonBar = const [
+      MaterialPositionIndicator(),
+      Spacer(),
+      MaterialFullscreenButton(),
+    ],
+    this.bottomButtonBarMargin = const EdgeInsets.only(left: 16, right: 8),
+    this.buttonBarHeight = 56.0,
+    this.buttonBarButtonSize = 24.0,
+    this.buttonBarButtonColor = const Color(0xFFFFFFFF),
+    this.seekBarMargin = EdgeInsets.zero,
+    this.seekBarHeight = 2.4,
+    this.seekBarContainerHeight = 36.0,
+    this.seekBarColor = const Color(0x3DFFFFFF),
+    this.seekBarPositionColor = const Color(0xFFFF0000),
+    this.seekBarBufferColor = const Color(0x3DFFFFFF),
+    this.seekBarThumbSize = 12.8,
+    this.seekBarThumbColor = const Color(0xFFFF0000),
+    this.seekBarAlignment = Alignment.bottomCenter,
+    this.shiftSubtitlesOnControlsVisibilityChange = false,
+  });
+
   // BEHAVIOR
 
   /// Whether to display seek bar.
@@ -290,72 +318,6 @@ class MaterialVideoControlsThemeData {
   /// Whether to shift the subtitles upwards when the controls are visible.
   final bool shiftSubtitlesOnControlsVisibilityChange;
 
-  /// {@macro material_video_controls_theme_data}
-  const MaterialVideoControlsThemeData({
-    this.displaySeekBar = true,
-    this.automaticallyImplySkipNextButton = true,
-    this.automaticallyImplySkipPreviousButton = true,
-    this.volumeGesture = false,
-    this.brightnessGesture = false,
-    this.seekGesture = false,
-    this.gesturesEnabledWhileControlsVisible = true,
-    this.seekOnDoubleTap = false,
-    this.seekOnDoubleTapEnabledWhileControlsVisible = true,
-    this.seekOnDoubleTapLayoutTapsRatios = const [1, 1, 1],
-    this.seekOnDoubleTapLayoutWidgetRatios = const [1, 1, 1],
-    this.seekOnDoubleTapBackwardDuration = const Duration(seconds: 10),
-    this.seekOnDoubleTapForwardDuration = const Duration(seconds: 10),
-    this.visibleOnMount = false,
-    this.speedUpOnLongPress = false,
-    this.speedUpFactor = 2.0,
-    this.verticalGestureSensitivity = 100,
-    this.horizontalGestureSensitivity = 1000,
-    this.backdropColor = const Color(0x66000000),
-    this.padding,
-    this.controlsHoverDuration = const Duration(seconds: 3),
-    this.controlsTransitionDuration = const Duration(milliseconds: 300),
-    this.bufferingIndicatorBuilder,
-    this.volumeIndicatorBuilder,
-    this.brightnessIndicatorBuilder,
-    this.onVolumeChanged,
-    this.initialVolume,
-    this.onBrightnessChanged,
-    this.initialBrightness,
-    this.onBrightnessReset,
-    this.seekIndicatorBuilder,
-    this.speedUpIndicatorBuilder,
-    this.primaryButtonBar = const [
-      Spacer(flex: 2),
-      MaterialSkipPreviousButton(),
-      Spacer(),
-      MaterialPlayOrPauseButton(iconSize: 48.0),
-      Spacer(),
-      MaterialSkipNextButton(),
-      Spacer(flex: 2),
-    ],
-    this.topButtonBar = const [],
-    this.topButtonBarMargin = const EdgeInsets.symmetric(horizontal: 16.0),
-    this.bottomButtonBar = const [
-      MaterialPositionIndicator(),
-      Spacer(),
-      MaterialFullscreenButton(),
-    ],
-    this.bottomButtonBarMargin = const EdgeInsets.only(left: 16.0, right: 8.0),
-    this.buttonBarHeight = 56.0,
-    this.buttonBarButtonSize = 24.0,
-    this.buttonBarButtonColor = const Color(0xFFFFFFFF),
-    this.seekBarMargin = EdgeInsets.zero,
-    this.seekBarHeight = 2.4,
-    this.seekBarContainerHeight = 36.0,
-    this.seekBarColor = const Color(0x3DFFFFFF),
-    this.seekBarPositionColor = const Color(0xFFFF0000),
-    this.seekBarBufferColor = const Color(0x3DFFFFFF),
-    this.seekBarThumbSize = 12.8,
-    this.seekBarThumbColor = const Color(0xFFFF0000),
-    this.seekBarAlignment = Alignment.bottomCenter,
-    this.shiftSubtitlesOnControlsVisibilityChange = false,
-  });
-
   /// Creates a copy of this [MaterialVideoControlsThemeData] with the given fields replaced by the non-null parameter values.
   MaterialVideoControlsThemeData copyWith({
     bool? displaySeekBar,
@@ -491,14 +453,15 @@ class MaterialVideoControlsThemeData {
 ///
 /// {@endtemplate}
 class MaterialVideoControlsTheme extends InheritedWidget {
-  final MaterialVideoControlsThemeData normal;
-  final MaterialVideoControlsThemeData fullscreen;
   const MaterialVideoControlsTheme({
     super.key,
     required this.normal,
     required this.fullscreen,
     required super.child,
   });
+
+  final MaterialVideoControlsThemeData normal;
+  final MaterialVideoControlsThemeData fullscreen;
 
   static MaterialVideoControlsTheme? maybeOf(BuildContext context) {
     return context
@@ -534,11 +497,11 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   late bool visible;
   Timer? _timer;
 
-  double _brightnessValue = 0.0;
+  double _brightnessValue = 0;
   bool _brightnessIndicator = false;
   Timer? _brightnessTimer;
-  double _currentRate = 1.0;
-  double _volumeValue = 0.0;
+  double _currentRate = 1;
+  double _volumeValue = 0;
   bool _volumeIndicator = false;
   Timer? _volumeTimer;
 
@@ -550,7 +513,8 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   bool showSwipeDuration = false; // Whether to show the seek duration overlay
 
   bool _speedUpIndicator = false;
-  late /* private */ var playlist = controller(context).player.state.playlist;
+  late /* private */ Playlist playlist =
+      controller(context).player.state.playlist;
   late bool buffering = controller(context).player.state.buffering;
 
   bool _mountSeekBackwardButton = false;
@@ -563,7 +527,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   final ValueNotifier<Duration> _seekBarDeltaValueNotifier =
       ValueNotifier<Duration>(Duration.zero);
 
-  final List<StreamSubscription> subscriptions = [];
+  final List<StreamSubscription<Object?>> subscriptions = [];
 
   double get subtitleVerticalShiftOffset =>
       (_theme(context).padding?.bottom ?? 0.0) +
@@ -611,44 +575,35 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       _brightnessValue = _theme(context).initialBrightness ?? 0.5;
       _onBrightnessReset = _theme(context).onBrightnessReset;
 
-      subscriptions.addAll(
-        [
-          controller(context).player.stream.playlist.listen(
-            (event) {
-              setState(() {
-                playlist = event;
-              });
-            },
-          ),
-          controller(context).player.stream.buffering.listen(
-            (event) {
-              setState(() {
-                buffering = event;
-              });
-            },
-          ),
-        ],
-      );
+      subscriptions.addAll([
+        controller(context).player.stream.playlist.listen((event) {
+          setState(() {
+            playlist = event;
+          });
+        }),
+        controller(context).player.stream.buffering.listen((event) {
+          setState(() {
+            buffering = event;
+          });
+        }),
+      ]);
 
       if (_theme(context).visibleOnMount) {
-        _timer = Timer(
-          _theme(context).controlsHoverDuration,
-          () {
-            if (mounted) {
-              setState(() {
-                visible = false;
-              });
-              unshiftSubtitle();
-            }
-          },
-        );
+        _timer = Timer(_theme(context).controlsHoverDuration, () {
+          if (mounted) {
+            setState(() {
+              visible = false;
+            });
+            unshiftSubtitle();
+          }
+        });
       }
     }
   }
 
   @override
   void dispose() {
-    for (final subscription in subscriptions) {
+    for (final StreamSubscription<dynamic> subscription in subscriptions) {
       subscription.cancel();
     }
     _onBrightnessReset?.call();
@@ -661,12 +616,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
     if (_theme(context).shiftSubtitlesOnControlsVisibilityChange) {
       state(context).setSubtitleViewPadding(
         state(context).widget.subtitleViewConfiguration.padding +
-            EdgeInsets.fromLTRB(
-              0.0,
-              0.0,
-              0.0,
-              subtitleVerticalShiftOffset,
-            ),
+            EdgeInsets.fromLTRB(0, 0, 0, subtitleVerticalShiftOffset),
       );
     }
   }
@@ -722,14 +672,14 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
       return;
     }
 
-    final diff = _dragInitialDelta.dx - details.localPosition.dx;
-    final duration = controller(context).player.state.duration.inSeconds;
-    final position = controller(context).player.state.position.inSeconds;
+    final double diff = _dragInitialDelta.dx - details.localPosition.dx;
+    final int duration = controller(context).player.state.duration.inSeconds;
+    final int position = controller(context).player.state.position.inSeconds;
 
-    final seconds =
+    final int seconds =
         -(diff * duration / _theme(context).horizontalGestureSensitivity)
             .round();
-    final relativePosition = position + seconds;
+    final int relativePosition = position + seconds;
 
     if (relativePosition <= duration && relativePosition >= 0) {
       setState(() {
@@ -759,15 +709,16 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   bool _isInSegment(double localX, int segmentIndex) {
     // Local variable with the list of ratios
-    List<int> segmentRatios = _theme(context).seekOnDoubleTapLayoutTapsRatios;
+    final List<int> segmentRatios =
+        _theme(context).seekOnDoubleTapLayoutTapsRatios;
 
-    int totalRatios = segmentRatios.reduce((a, b) => a + b);
+    final int totalRatios = segmentRatios.reduce((a, b) => a + b);
 
-    double segmentWidthMultiplier = widgetWidth(context) / totalRatios;
+    final double segmentWidthMultiplier = widgetWidth(context) / totalRatios;
     double start = 0;
     double end;
 
-    for (int i = 0; i < segmentRatios.length; i++) {
+    for (var i = 0; i < segmentRatios.length; i++) {
       end = start + (segmentWidthMultiplier * segmentRatios[i]);
 
       // Check if the current index matches the segmentIndex and if localX falls within it
@@ -829,13 +780,17 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
 
   @override
   Widget build(BuildContext context) {
-    var seekOnDoubleTapEnabledWhileControlsAreVisible =
-        (_theme(context).seekOnDoubleTap &&
-            _theme(context).seekOnDoubleTapEnabledWhileControlsVisible);
-    assert(_theme(context).seekOnDoubleTapLayoutTapsRatios.length == 3,
-        "The number of seekOnDoubleTapLayoutTapsRatios must be 3, i.e. [1, 1, 1]");
-    assert(_theme(context).seekOnDoubleTapLayoutWidgetRatios.length == 3,
-        "The number of seekOnDoubleTapLayoutWidgetRatios must be 3, i.e. [1, 1, 1]");
+    final bool seekOnDoubleTapEnabledWhileControlsAreVisible =
+        _theme(context).seekOnDoubleTap &&
+            _theme(context).seekOnDoubleTapEnabledWhileControlsVisible;
+    assert(
+      _theme(context).seekOnDoubleTapLayoutTapsRatios.length == 3,
+      'The number of seekOnDoubleTapLayoutTapsRatios must be 3, i.e. [1, 1, 1]',
+    );
+    assert(
+      _theme(context).seekOnDoubleTapLayoutWidgetRatios.length == 3,
+      'The number of seekOnDoubleTapLayoutWidgetRatios must be 3, i.e. [1, 1, 1]',
+    );
     return Theme(
       data: Theme.of(context).copyWith(
         focusColor: const Color(0x00000000),
@@ -851,7 +806,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
           focusNode: videoViewParametersNotifier(context).value.focusNode,
           autofocus: true,
           child: Material(
-            elevation: 0.0,
+            elevation: 0,
             borderOnForeground: false,
             animationDuration: Duration.zero,
             color: const Color(0x00000000),
@@ -878,19 +833,17 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                     alignment: Alignment.center,
                     children: [
                       Positioned.fill(
-                        child: Container(
-                          color: _theme(context).backdropColor,
-                        ),
+                        child: Container(color: _theme(context).backdropColor),
                       ),
                       // We are adding 16.0 boundary around the actual controls (which contain the vertical drag gesture detectors).
                       // This will make the hit-test on edges (e.g. swiping to: show status-bar, show navigation-bar, go back in navigation) not activate the swipe gesture annoyingly.
                       Positioned.fill(
-                        left: 16.0,
-                        top: 16.0,
-                        right: 16.0,
+                        left: 16,
+                        top: 16,
+                        right: 16,
                         bottom: 16.0 + subtitleVerticalShiftOffset,
                         child: Listener(
-                          onPointerDown: (event) => _handlePointerDown(event),
+                          onPointerDown: _handlePointerDown,
                           child: GestureDetector(
                             onDoubleTapDown: _handleDoubleTapDown,
                             onLongPress: _theme(context).speedUpOnLongPress
@@ -922,8 +875,9 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                             onHorizontalDragUpdate: (details) {
                               if ((!mount && _theme(context).seekGesture) ||
                                   (_theme(context).seekGesture &&
-                                      _theme(context)
-                                          .gesturesEnabledWhileControlsVisible)) {
+                                      _theme(
+                                        context,
+                                      ).gesturesEnabledWhileControlsVisible)) {
                                 onHorizontalDragUpdate(details);
                               }
                             },
@@ -931,7 +885,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                               onHorizontalDragEnd();
                             },
                             onVerticalDragUpdate: (e) async {
-                              final delta = e.delta.dy;
+                              final double delta = e.delta.dy;
                               final Offset position = e.localPosition;
 
                               if (position.dx <= widgetWidth(context) / 2) {
@@ -941,15 +895,17 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                         _theme(context).onBrightnessChanged !=
                                             null) ||
                                     (_theme(context).brightnessGesture &&
-                                        _theme(context)
-                                            .gesturesEnabledWhileControlsVisible &&
+                                        _theme(
+                                          context,
+                                        ).gesturesEnabledWhileControlsVisible &&
                                         _theme(context).onBrightnessChanged !=
                                             null)) {
-                                  final brightness = _brightnessValue -
+                                  final double brightness = _brightnessValue -
                                       delta /
                                           _theme(context)
                                               .verticalGestureSensitivity;
-                                  final result = brightness.clamp(0.0, 1.0);
+                                  final double result =
+                                      brightness.clamp(0.0, 1.0);
                                   setBrightness(result);
                                 }
                               } else {
@@ -960,22 +916,21 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                         _theme(context).onVolumeChanged !=
                                             null) ||
                                     (_theme(context).volumeGesture &&
-                                        _theme(context)
-                                            .gesturesEnabledWhileControlsVisible &&
+                                        _theme(
+                                          context,
+                                        ).gesturesEnabledWhileControlsVisible &&
                                         _theme(context).onVolumeChanged !=
                                             null)) {
-                                  final volume = _volumeValue -
+                                  final double volume = _volumeValue -
                                       delta /
                                           _theme(context)
                                               .verticalGestureSensitivity;
-                                  final result = volume.clamp(0.0, 1.0);
+                                  final double result = volume.clamp(0.0, 1.0);
                                   setVolume(result);
                                 }
                               }
                             },
-                            child: Container(
-                              color: const Color(0x00000000),
-                            ),
+                            child: Container(color: const Color(0x00000000)),
                           ),
                         ),
                       ),
@@ -989,16 +944,12 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                       : EdgeInsets.zero),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Container(
                                 height: _theme(context).buttonBarHeight,
                                 margin: _theme(context).topButtonBarMargin,
                                 child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: _theme(context).topButtonBar,
                                 ),
                               ),
@@ -1014,8 +965,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                       mainAxisSize: MainAxisSize.min,
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
                                       children:
                                           _theme(context).primaryButtonBar,
                                     ),
@@ -1049,11 +998,6 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                     margin:
                                         _theme(context).bottomButtonBarMargin,
                                     child: Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
                                       children: _theme(context).bottomButtonBar,
                                     ),
                                   ),
@@ -1107,7 +1051,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           child: Center(
                             child: TweenAnimationBuilder<double>(
                               tween: Tween<double>(
-                                begin: 0.0,
+                                begin: 0,
                                 end: buffering ? 1.0 : 0.0,
                               ),
                               duration:
@@ -1158,18 +1102,17 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: const Color(0x88000000),
-                            borderRadius: BorderRadius.circular(64.0),
+                            borderRadius: BorderRadius.circular(64),
                           ),
-                          height: 52.0,
-                          width: 108.0,
+                          height: 52,
+                          width: 108,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Container(
-                                height: 52.0,
-                                width: 42.0,
+                                height: 52,
+                                width: 42,
                                 alignment: Alignment.centerRight,
                                 child: Icon(
                                   _volumeValue == 0.0
@@ -1178,21 +1121,21 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                           ? Icons.volume_down
                                           : Icons.volume_up,
                                   color: const Color(0xFFFFFFFF),
-                                  size: 24.0,
+                                  size: 24,
                                 ),
                               ),
-                              const SizedBox(width: 8.0),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   '${(_volumeValue * 100.0).round()}%',
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
-                                    fontSize: 14.0,
+                                    fontSize: 14,
                                     color: Color(0xFFFFFFFF),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 16.0),
+                              const SizedBox(width: 16),
                             ],
                           ),
                         ),
@@ -1216,18 +1159,17 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: const Color(0x88000000),
-                            borderRadius: BorderRadius.circular(64.0),
+                            borderRadius: BorderRadius.circular(64),
                           ),
-                          height: 52.0,
-                          width: 108.0,
+                          height: 52,
+                          width: 108,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Container(
-                                height: 52.0,
-                                width: 42.0,
+                                height: 52,
+                                width: 42,
                                 alignment: Alignment.centerRight,
                                 child: Icon(
                                   _brightnessValue < 1.0 / 3.0
@@ -1236,21 +1178,21 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                           ? Icons.brightness_medium
                                           : Icons.brightness_high,
                                   color: const Color(0xFFFFFFFF),
-                                  size: 24.0,
+                                  size: 24,
                                 ),
                               ),
-                              const SizedBox(width: 8.0),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   '${(_brightnessValue * 100.0).round()}%',
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
-                                    fontSize: 14.0,
+                                    fontSize: 14,
                                     color: Color(0xFFFFFFFF),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 16.0),
+                              const SizedBox(width: 16),
                             ],
                           ),
                         ),
@@ -1278,48 +1220,48 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                             opacity: _speedUpIndicator ? 1 : 0,
                             child: _theme(context)
                                     .speedUpIndicatorBuilder
-                                    ?.call(context,
-                                        _theme(context).speedUpFactor) ??
+                                    ?.call(
+                                      context,
+                                      _theme(context).speedUpFactor,
+                                    ) ??
                                 Container(
                                   alignment: Alignment.topCenter,
                                   child: Container(
-                                    margin: const EdgeInsets.all(16.0),
+                                    margin: const EdgeInsets.all(16),
                                     alignment: Alignment.center,
                                     decoration: BoxDecoration(
                                       color: const Color(0x88000000),
-                                      borderRadius: BorderRadius.circular(64.0),
+                                      borderRadius: BorderRadius.circular(64),
                                     ),
-                                    height: 48.0,
-                                    width: 108.0,
+                                    height: 48,
+                                    width: 108,
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
                                       children: [
-                                        const SizedBox(width: 16.0),
+                                        const SizedBox(width: 16),
                                         Expanded(
                                           child: Text(
                                             '${_theme(context).speedUpFactor.toStringAsFixed(1)}x',
                                             textAlign: TextAlign.center,
                                             style: const TextStyle(
-                                              fontSize: 14.0,
+                                              fontSize: 14,
                                               color: Color(0xFFFFFFFF),
                                             ),
                                           ),
                                         ),
                                         Container(
-                                          height: 48.0,
+                                          height: 48,
                                           width: 48.0 - 16.0,
                                           alignment: Alignment.centerRight,
                                           child: const Icon(
                                             Icons.fast_forward,
                                             color: Color(0xFFFFFFFF),
-                                            size: 24.0,
+                                            size: 24,
                                           ),
                                         ),
-                                        const SizedBox(width: 16.0),
+                                        const SizedBox(width: 16),
                                       ],
                                     ),
                                   ),
@@ -1346,17 +1288,17 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: const Color(0x88000000),
-                            borderRadius: BorderRadius.circular(64.0),
+                            borderRadius: BorderRadius.circular(64),
                           ),
-                          height: 52.0,
-                          width: 108.0,
+                          height: 52,
+                          width: 108,
                           child: Text(
                             swipeDuration > 0
-                                ? "+ ${Duration(seconds: swipeDuration).label()}"
-                                : "- ${Duration(seconds: swipeDuration).label()}",
+                                ? '+ ${Duration(seconds: swipeDuration).label()}'
+                                : '- ${Duration(seconds: swipeDuration).label()}',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                              fontSize: 14.0,
+                              fontSize: 14,
                               color: Color(0xFFFFFFFF),
                             ),
                           ),
@@ -1399,7 +1341,7 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                         setState(() {
                                           _hideSeekBackwardButton = true;
                                         });
-                                        var result = controller(context)
+                                        Duration result = controller(context)
                                                 .player
                                                 .state
                                                 .position -
@@ -1442,20 +1384,21 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
                                       onSubmitted: (value) {
                                         _timerSeekForwardButton?.cancel();
                                         _timerSeekForwardButton = Timer(
-                                            const Duration(milliseconds: 200),
-                                            () {
-                                          if (_hideSeekForwardButton) {
-                                            setState(() {
-                                              _hideSeekForwardButton = false;
-                                              _mountSeekForwardButton = false;
-                                            });
-                                          }
-                                        });
+                                          const Duration(milliseconds: 200),
+                                          () {
+                                            if (_hideSeekForwardButton) {
+                                              setState(() {
+                                                _hideSeekForwardButton = false;
+                                                _mountSeekForwardButton = false;
+                                              });
+                                            }
+                                          },
+                                        );
                                         setState(() {
                                           _hideSeekForwardButton = true;
                                         });
 
-                                        var result = controller(context)
+                                        Duration result = controller(context)
                                                 .player
                                                 .state
                                                 .position +
@@ -1485,17 +1428,13 @@ class _MaterialVideoControlsState extends State<_MaterialVideoControls> {
   }
 
   double widgetWidth(BuildContext context) =>
-      (context.findRenderObject() as RenderBox).paintBounds.width;
+      (context.findRenderObject()! as RenderBox).paintBounds.width;
 }
 
 // SEEK BAR
 
 /// Material design seek bar.
 class MaterialSeekBar extends StatefulWidget {
-  final ValueNotifier<Duration>? delta;
-  final VoidCallback? onSeekStart;
-  final VoidCallback? onSeekEnd;
-
   const MaterialSeekBar({
     super.key,
     this.delta,
@@ -1503,20 +1442,24 @@ class MaterialSeekBar extends StatefulWidget {
     this.onSeekEnd,
   });
 
+  final ValueNotifier<Duration>? delta;
+  final VoidCallback? onSeekStart;
+  final VoidCallback? onSeekEnd;
+
   @override
   MaterialSeekBarState createState() => MaterialSeekBarState();
 }
 
 class MaterialSeekBarState extends State<MaterialSeekBar> {
   bool tapped = false;
-  double slider = 0.0;
+  double slider = 0;
 
   late bool playing = controller(context).player.state.playing;
   late Duration position = controller(context).player.state.position;
   late Duration duration = controller(context).player.state.duration;
   late Duration buffer = controller(context).player.state.buffer;
 
-  final List<StreamSubscription> subscriptions = [];
+  final List<StreamSubscription<Object?>> subscriptions = [];
 
   @override
   void setState(VoidCallback fn) {
@@ -1527,7 +1470,7 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
 
   void listener() {
     setState(() {
-      final delta = widget.delta?.value ?? Duration.zero;
+      final Duration delta = widget.delta?.value ?? Duration.zero;
       position = controller(context).player.state.position + delta;
     });
   }
@@ -1542,51 +1485,49 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (subscriptions.isEmpty && widget.delta == null) {
-      subscriptions.addAll(
-        [
-          controller(context).player.stream.playing.listen((event) {
-            setState(() {
-              playing = event;
-            });
-          }),
-          controller(context).player.stream.completed.listen((event) {
-            setState(() {
-              position = Duration.zero;
-            });
-          }),
-          controller(context).player.stream.position.listen((event) {
-            setState(() {
-              if (!tapped) {
-                position = event;
-              }
-            });
-          }),
-          controller(context).player.stream.duration.listen((event) {
-            setState(() {
-              duration = event;
-            });
-          }),
-          controller(context).player.stream.buffer.listen((event) {
-            setState(() {
-              buffer = event;
-            });
-          }),
-        ],
-      );
+      subscriptions.addAll([
+        controller(context).player.stream.playing.listen((event) {
+          setState(() {
+            playing = event;
+          });
+        }),
+        controller(context).player.stream.completed.listen((event) {
+          setState(() {
+            position = Duration.zero;
+          });
+        }),
+        controller(context).player.stream.position.listen((event) {
+          setState(() {
+            if (!tapped) {
+              position = event;
+            }
+          });
+        }),
+        controller(context).player.stream.duration.listen((event) {
+          setState(() {
+            duration = event;
+          });
+        }),
+        controller(context).player.stream.buffer.listen((event) {
+          setState(() {
+            buffer = event;
+          });
+        }),
+      ]);
     }
   }
 
   @override
   void dispose() {
     widget.delta?.removeListener(listener);
-    for (final subscription in subscriptions) {
+    for (final StreamSubscription<dynamic> subscription in subscriptions) {
       subscription.cancel();
     }
     super.dispose();
   }
 
   void onPointerMove(PointerMoveEvent e, BoxConstraints constraints) {
-    final percent = e.localPosition.dx / constraints.maxWidth;
+    final double percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       tapped = true;
       slider = percent.clamp(0.0, 1.0);
@@ -1612,7 +1553,7 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   }
 
   void onPanStart(DragStartDetails e, BoxConstraints constraints) {
-    final percent = e.localPosition.dx / constraints.maxWidth;
+    final double percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       tapped = true;
       slider = percent.clamp(0.0, 1.0);
@@ -1620,7 +1561,7 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   }
 
   void onPanDown(DragDownDetails e, BoxConstraints constraints) {
-    final percent = e.localPosition.dx / constraints.maxWidth;
+    final double percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       tapped = true;
       slider = percent.clamp(0.0, 1.0);
@@ -1628,7 +1569,7 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   }
 
   void onPanUpdate(DragUpdateDetails e, BoxConstraints constraints) {
-    final percent = e.localPosition.dx / constraints.maxWidth;
+    final double percent = e.localPosition.dx / constraints.maxWidth;
     setState(() {
       tapped = true;
       slider = percent.clamp(0.0, 1.0);
@@ -1638,9 +1579,9 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   /// Returns the current playback position in percentage.
   double get positionPercent {
     if (position == Duration.zero || duration == Duration.zero) {
-      return 0.0;
+      return 0;
     } else {
-      final value = position.inMilliseconds / duration.inMilliseconds;
+      final double value = position.inMilliseconds / duration.inMilliseconds;
       return value.clamp(0.0, 1.0);
     }
   }
@@ -1648,9 +1589,9 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   /// Returns the current playback buffer position in percentage.
   double get bufferPercent {
     if (buffer == Duration.zero || duration == Duration.zero) {
-      return 0.0;
+      return 0;
     } else {
-      final value = buffer.inMilliseconds / duration.inMilliseconds;
+      final double value = buffer.inMilliseconds / duration.inMilliseconds;
       return value.clamp(0.0, 1.0);
     }
   }
@@ -1658,7 +1599,6 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      clipBehavior: Clip.none,
       margin: _theme(context).seekBarMargin,
       child: LayoutBuilder(
         builder: (context, constraints) => MouseRegion(
@@ -1739,17 +1679,13 @@ class MaterialSeekBarState extends State<MaterialSeekBar> {
 
 /// A material design play/pause button.
 class MaterialPlayOrPauseButton extends StatefulWidget {
+  const MaterialPlayOrPauseButton({super.key, this.iconSize, this.iconColor});
+
   /// Overriden icon size for [MaterialSkipPreviousButton].
   final double? iconSize;
 
   /// Overriden icon color for [MaterialSkipPreviousButton].
   final Color? iconColor;
-
-  const MaterialPlayOrPauseButton({
-    super.key,
-    this.iconSize,
-    this.iconColor,
-  });
 
   @override
   MaterialPlayOrPauseButtonState createState() =>
@@ -1814,6 +1750,13 @@ class MaterialPlayOrPauseButtonState extends State<MaterialPlayOrPauseButton>
 
 /// Material design skip next button.
 class MaterialSkipNextButton extends StatelessWidget {
+  const MaterialSkipNextButton({
+    super.key,
+    this.icon,
+    this.iconSize,
+    this.iconColor,
+  });
+
   /// Icon for [MaterialSkipNextButton].
   final Widget? icon;
 
@@ -1822,13 +1765,6 @@ class MaterialSkipNextButton extends StatelessWidget {
 
   /// Overriden icon color for [MaterialSkipNextButton].
   final Color? iconColor;
-
-  const MaterialSkipNextButton({
-    super.key,
-    this.icon,
-    this.iconSize,
-    this.iconColor,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -1850,6 +1786,13 @@ class MaterialSkipNextButton extends StatelessWidget {
 
 /// Material design skip previous button.
 class MaterialSkipPreviousButton extends StatelessWidget {
+  const MaterialSkipPreviousButton({
+    super.key,
+    this.icon,
+    this.iconSize,
+    this.iconColor,
+  });
+
   /// Icon for [MaterialSkipPreviousButton].
   final Widget? icon;
 
@@ -1858,13 +1801,6 @@ class MaterialSkipPreviousButton extends StatelessWidget {
 
   /// Overriden icon color for [MaterialSkipPreviousButton].
   final Color? iconColor;
-
-  const MaterialSkipPreviousButton({
-    super.key,
-    this.icon,
-    this.iconSize,
-    this.iconColor,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -1886,6 +1822,13 @@ class MaterialSkipPreviousButton extends StatelessWidget {
 
 /// Material design fullscreen button.
 class MaterialFullscreenButton extends StatelessWidget {
+  const MaterialFullscreenButton({
+    super.key,
+    this.icon,
+    this.iconSize,
+    this.iconColor,
+  });
+
   /// Icon for [MaterialFullscreenButton].
   final Widget? icon;
 
@@ -1894,13 +1837,6 @@ class MaterialFullscreenButton extends StatelessWidget {
 
   /// Overriden icon color for [MaterialFullscreenButton].
   final Color? iconColor;
-
-  const MaterialFullscreenButton({
-    super.key,
-    this.icon,
-    this.iconSize,
-    this.iconColor,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -1920,6 +1856,14 @@ class MaterialFullscreenButton extends StatelessWidget {
 
 /// Material design custom button.
 class MaterialCustomButton extends StatelessWidget {
+  const MaterialCustomButton({
+    required this.onPressed,
+    super.key,
+    this.icon,
+    this.iconSize,
+    this.iconColor,
+  });
+
   /// Icon for [MaterialCustomButton].
   final Widget? icon;
 
@@ -1931,14 +1875,6 @@ class MaterialCustomButton extends StatelessWidget {
 
   /// The callback that is called when the button is tapped or otherwise activated.
   final VoidCallback onPressed;
-
-  const MaterialCustomButton({
-    super.key,
-    this.icon,
-    this.iconSize,
-    this.iconColor,
-    required this.onPressed,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -1956,9 +1892,10 @@ class MaterialCustomButton extends StatelessWidget {
 
 /// Material design position indicator.
 class MaterialPositionIndicator extends StatefulWidget {
+  const MaterialPositionIndicator({super.key, this.style});
+
   /// Overriden [TextStyle] for the [MaterialPositionIndicator].
   final TextStyle? style;
-  const MaterialPositionIndicator({super.key, this.style});
 
   @override
   MaterialPositionIndicatorState createState() =>
@@ -1969,7 +1906,7 @@ class MaterialPositionIndicatorState extends State<MaterialPositionIndicator> {
   late Duration position = controller(context).player.state.position;
   late Duration duration = controller(context).player.state.duration;
 
-  final List<StreamSubscription> subscriptions = [];
+  final List<StreamSubscription<Object?>> subscriptions = [];
 
   @override
   void setState(VoidCallback fn) {
@@ -1982,26 +1919,24 @@ class MaterialPositionIndicatorState extends State<MaterialPositionIndicator> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (subscriptions.isEmpty) {
-      subscriptions.addAll(
-        [
-          controller(context).player.stream.position.listen((event) {
-            setState(() {
-              position = event;
-            });
-          }),
-          controller(context).player.stream.duration.listen((event) {
-            setState(() {
-              duration = event;
-            });
-          }),
-        ],
-      );
+      subscriptions.addAll([
+        controller(context).player.stream.position.listen((event) {
+          setState(() {
+            position = event;
+          });
+        }),
+        controller(context).player.stream.duration.listen((event) {
+          setState(() {
+            duration = event;
+          });
+        }),
+      ]);
     }
   }
 
   @override
   void dispose() {
-    for (final subscription in subscriptions) {
+    for (final StreamSubscription<dynamic> subscription in subscriptions) {
       subscription.cancel();
     }
     super.dispose();
@@ -2013,8 +1948,8 @@ class MaterialPositionIndicatorState extends State<MaterialPositionIndicator> {
       '${position.label(reference: duration)} / ${duration.label(reference: duration)}',
       style: widget.style ??
           TextStyle(
-            height: 1.0,
-            fontSize: 12.0,
+            height: 1,
+            fontSize: 12,
             color: _theme(context).buttonBarButtonColor,
           ),
     );
@@ -2022,14 +1957,15 @@ class MaterialPositionIndicatorState extends State<MaterialPositionIndicator> {
 }
 
 class _BackwardSeekIndicator extends StatefulWidget {
-  final Duration duration;
-  final void Function(Duration) onChanged;
-  final void Function(Duration) onSubmitted;
   const _BackwardSeekIndicator({
     required this.duration,
     required this.onChanged,
     required this.onSubmitted,
   });
+
+  final Duration duration;
+  final void Function(Duration) onChanged;
+  final void Function(Duration) onSubmitted;
 
   @override
   State<_BackwardSeekIndicator> createState() => _BackwardSeekIndicatorState();
@@ -2068,15 +2004,10 @@ class _BackwardSeekIndicatorState extends State<_BackwardSeekIndicator> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0x88767676),
-            Color(0x00767676),
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+          colors: [Color(0x88767676), Color(0x00767676)],
         ),
       ),
       child: InkWell(
@@ -2086,18 +2017,17 @@ class _BackwardSeekIndicatorState extends State<_BackwardSeekIndicator> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Icon(
                 Icons.fast_rewind,
-                size: 24.0,
+                size: 24,
                 color: Color(0xFFFFFFFF),
               ),
-              const SizedBox(height: 8.0),
+              const SizedBox(height: 8),
               Text(
                 '${value.inSeconds} seconds',
                 style: const TextStyle(
-                  fontSize: 12.0,
+                  fontSize: 12,
                   color: Color(0xFFFFFFFF),
                 ),
               ),
@@ -2110,14 +2040,15 @@ class _BackwardSeekIndicatorState extends State<_BackwardSeekIndicator> {
 }
 
 class _ForwardSeekIndicator extends StatefulWidget {
-  final Duration duration;
-  final void Function(Duration) onChanged;
-  final void Function(Duration) onSubmitted;
   const _ForwardSeekIndicator({
     required this.duration,
     required this.onChanged,
     required this.onSubmitted,
   });
+
+  final Duration duration;
+  final void Function(Duration) onChanged;
+  final void Function(Duration) onSubmitted;
 
   @override
   State<_ForwardSeekIndicator> createState() => _ForwardSeekIndicatorState();
@@ -2156,15 +2087,10 @@ class _ForwardSeekIndicatorState extends State<_ForwardSeekIndicator> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0x00767676),
-            Color(0x88767676),
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+          colors: [Color(0x00767676), Color(0x88767676)],
         ),
       ),
       child: InkWell(
@@ -2174,18 +2100,17 @@ class _ForwardSeekIndicatorState extends State<_ForwardSeekIndicator> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Icon(
                 Icons.fast_forward,
-                size: 24.0,
+                size: 24,
                 color: Color(0xFFFFFFFF),
               ),
-              const SizedBox(height: 8.0),
+              const SizedBox(height: 8),
               Text(
                 '${value.inSeconds} seconds',
                 style: const TextStyle(
-                  fontSize: 12.0,
+                  fontSize: 12,
                   color: Color(0xFFFFFFFF),
                 ),
               ),

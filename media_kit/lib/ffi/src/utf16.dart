@@ -3,7 +3,6 @@
 // BSD-style license that can be found in the LICENSE file.
 
 import 'dart:ffi';
-import 'dart:typed_data';
 
 import 'package:media_kit/ffi/src/allocation.dart';
 
@@ -23,7 +22,7 @@ extension Utf16Pointer on Pointer<Utf16> {
   /// the first zero code unit.
   int get length {
     _ensureNotNullptr('length');
-    final codeUnits = cast<Uint16>();
+    final Pointer<Uint16> codeUnits = cast<Uint16>();
     return _length(codeUnits);
   }
 
@@ -40,7 +39,7 @@ extension Utf16Pointer on Pointer<Utf16> {
   /// but not including  the first NUL character.
   String toDartString({int? length}) {
     _ensureNotNullptr('toDartString');
-    final codeUnits = cast<Uint16>();
+    final Pointer<Uint16> codeUnits = cast<Uint16>();
     if (length == null) {
       return _toUnknownLengthString(codeUnits);
     } else {
@@ -56,7 +55,7 @@ extension Utf16Pointer on Pointer<Utf16> {
     final buffer = StringBuffer();
     var i = 0;
     while (true) {
-      final char = (codeUnits + i).value;
+      final int char = (codeUnits + i).value;
       if (char == 0) {
         return buffer.toString();
       }
@@ -76,7 +75,8 @@ extension Utf16Pointer on Pointer<Utf16> {
   void _ensureNotNullptr(String operation) {
     if (this == nullptr) {
       throw UnsupportedError(
-          "Operation '$operation' not allowed on a 'nullptr'.");
+        "Operation '$operation' not allowed on a 'nullptr'.",
+      );
     }
   }
 }
@@ -91,11 +91,11 @@ extension StringUtf16Pointer on String {
   ///
   /// Returns an [allocator]-allocated pointer to the result.
   Pointer<Utf16> toNativeUtf16({Allocator allocator = malloc}) {
-    final units = codeUnits;
+    final List<int> units = codeUnits;
     final Pointer<Uint16> result = allocator<Uint16>(units.length + 1);
-    final Uint16List nativeString = result.asTypedList(units.length + 1);
-    nativeString.setRange(0, units.length, units);
-    nativeString[units.length] = 0;
+    result.asTypedList(units.length + 1)
+      ..setRange(0, units.length, units)
+      ..[units.length] = 0;
     return result.cast();
   }
 }

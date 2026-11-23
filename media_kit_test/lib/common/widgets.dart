@@ -5,12 +5,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 
-import '../common/sources/sources.dart';
+import 'package:media_kit_test/common/sources/sources.dart';
 
 class TracksSelector extends StatefulWidget {
-  final Player player;
-
   const TracksSelector({super.key, required this.player});
+
+  final Player player;
 
   @override
   State<TracksSelector> createState() => _TracksSelectorState();
@@ -20,7 +20,7 @@ class _TracksSelectorState extends State<TracksSelector> {
   late Track track = widget.player.state.track;
   late Tracks tracks = widget.player.state.tracks;
 
-  List<StreamSubscription> subscriptions = [];
+  List<StreamSubscription<Object?>> subscriptions = [];
 
   @override
   void initState() {
@@ -44,7 +44,7 @@ class _TracksSelectorState extends State<TracksSelector> {
   @override
   void dispose() {
     super.dispose();
-    for (final s in subscriptions) {
+    for (final StreamSubscription<dynamic> s in subscriptions) {
       s.cancel();
     }
   }
@@ -53,7 +53,6 @@ class _TracksSelectorState extends State<TracksSelector> {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: DropdownButton<VideoTrack>(
@@ -65,10 +64,10 @@ class _TracksSelectorState extends State<TracksSelector> {
                   (e) => DropdownMenuItem(
                     value: e,
                     child: Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(8),
                       child: Text(
                         '${e.id} • ${e.title} • ${e.language}',
-                        style: const TextStyle(fontSize: 14.0),
+                        style: const TextStyle(fontSize: 14),
                       ),
                     ),
                   ),
@@ -82,7 +81,7 @@ class _TracksSelectorState extends State<TracksSelector> {
             },
           ),
         ),
-        const SizedBox(width: 16.0),
+        const SizedBox(width: 16),
         Expanded(
           child: DropdownButton<AudioTrack>(
             isExpanded: true,
@@ -93,10 +92,10 @@ class _TracksSelectorState extends State<TracksSelector> {
                   (e) => DropdownMenuItem(
                     value: e,
                     child: Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(8),
                       child: Text(
                         '${e.id} • ${e.title} • ${e.language}',
-                        style: const TextStyle(fontSize: 14.0),
+                        style: const TextStyle(fontSize: 14),
                       ),
                     ),
                   ),
@@ -110,7 +109,7 @@ class _TracksSelectorState extends State<TracksSelector> {
             },
           ),
         ),
-        const SizedBox(width: 16.0),
+        const SizedBox(width: 16),
         Expanded(
           child: DropdownButton<SubtitleTrack>(
             isExpanded: true,
@@ -121,10 +120,10 @@ class _TracksSelectorState extends State<TracksSelector> {
                   (e) => DropdownMenuItem(
                     value: e,
                     child: Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(8),
                       child: Text(
                         '${e.id} • ${e.title} • ${e.language}',
-                        style: const TextStyle(fontSize: 14.0),
+                        style: const TextStyle(fontSize: 14),
                       ),
                     ),
                   ),
@@ -144,9 +143,9 @@ class _TracksSelectorState extends State<TracksSelector> {
 }
 
 class SeekBar extends StatefulWidget {
-  final Player player;
-
   const SeekBar({super.key, required this.player});
+
+  final Player player;
 
   @override
   State<SeekBar> createState() => _SeekBarState();
@@ -160,7 +159,7 @@ class _SeekBarState extends State<SeekBar> {
 
   bool seeking = false;
 
-  List<StreamSubscription> subscriptions = [];
+  List<StreamSubscription<Object?>> subscriptions = [];
 
   @override
   void initState() {
@@ -182,7 +181,9 @@ class _SeekBarState extends State<SeekBar> {
       }),
       widget.player.stream.position.listen((event) {
         setState(() {
-          if (!seeking) position = event;
+          if (!seeking) {
+            position = event;
+          }
         });
       }),
       widget.player.stream.duration.listen((event) {
@@ -201,7 +202,7 @@ class _SeekBarState extends State<SeekBar> {
   @override
   void dispose() {
     super.dispose();
-    for (final s in subscriptions) {
+    for (final StreamSubscription<dynamic> s in subscriptions) {
       s.cancel();
     }
   }
@@ -210,22 +211,21 @@ class _SeekBarState extends State<SeekBar> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const SizedBox(height: 16.0),
+        const SizedBox(height: 16),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(width: 48.0),
+            const SizedBox(width: 48),
             IconButton(
               onPressed: widget.player.playOrPause,
               icon: Icon(playing ? Icons.pause : Icons.play_arrow),
               color: Theme.of(context).primaryColor,
-              iconSize: 36.0,
+              iconSize: 36,
             ),
-            const SizedBox(width: 24.0),
+            const SizedBox(width: 24),
             Text(position.toString().substring(2, 7)),
             Expanded(
               child: Slider(
-                min: 0.0,
+                min: 0,
                 max: duration.inMilliseconds.toDouble(),
                 value: position.inMilliseconds.toDouble().clamp(
                       0.0,
@@ -252,7 +252,7 @@ class _SeekBarState extends State<SeekBar> {
               ),
             ),
             Text(duration.toString().substring(2, 7)),
-            const SizedBox(width: 48.0),
+            const SizedBox(width: 48),
           ],
         ),
       ],
@@ -261,11 +261,11 @@ class _SeekBarState extends State<SeekBar> {
 }
 
 Future<void> showFilePicker(BuildContext context, Player player) async {
-  final result = await FilePicker.pickFiles(type: FileType.any);
+  final List<PlatformFile> result = await FilePicker.pickFiles();
   if (result.isNotEmpty) {
-    final file = result.first;
+    final PlatformFile file = result.first;
     if (kIsWeb) {
-      final bytes = await file.readAsBytes();
+      final Uint8List bytes = await file.readAsBytes();
       await player.open(Media(convertBytesToURL(bytes)));
     } else {
       await player.open(Media(file.path!));
@@ -283,15 +283,12 @@ Future<void> showURIPicker(BuildContext context, Player player) async {
       child: Form(
         key: key,
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               TextFormField(
                 controller: src,
-                style: const TextStyle(fontSize: 14.0),
+                style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
                   border: UnderlineInputBorder(),
                   labelText: 'Video URI',
@@ -304,7 +301,7 @@ Future<void> showURIPicker(BuildContext context, Player player) async {
                 },
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 child: ElevatedButton(
                   onPressed: () {
                     if (key.currentState!.validate()) {

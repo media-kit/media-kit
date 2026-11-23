@@ -3,11 +3,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_test/common/globals.dart';
+import 'package:media_kit_test/common/sources/sources.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
-
-import '../common/globals.dart';
-import '../common/sources/sources.dart';
 
 // A simple example to show how buffering & initial black screen can be avoided by writing code effectively.
 
@@ -19,7 +18,7 @@ class Seamless extends StatefulWidget {
 }
 
 class _SeamlessState extends State<Seamless> {
-  final pageController = PageController(initialPage: 0);
+  final pageController = PageController();
 
   // To efficiently call [setState] if required for re-build.
   final early = HashSet<int>();
@@ -30,10 +29,7 @@ class _SeamlessState extends State<Seamless> {
   @override
   void initState() {
     // First two pages are loaded initially.
-    Future.wait([
-      createPlayer(0),
-      createPlayer(1),
-    ]).then((_) {
+    Future.wait([createPlayer(0), createPlayer(1)]).then((_) {
       // First video must be played initially.
       players[0]?.play();
     });
@@ -43,7 +39,7 @@ class _SeamlessState extends State<Seamless> {
 
   @override
   void dispose() {
-    for (final player in players.values) {
+    for (final Player player in players.values) {
       player.dispose();
     }
     super.dispose();
@@ -78,9 +74,7 @@ class _SeamlessState extends State<Seamless> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('package:media_kit'),
-      ),
+      appBar: AppBar(title: const Text('package:media_kit')),
       body: Stack(
         children: [
           PageView.builder(
@@ -89,24 +83,20 @@ class _SeamlessState extends State<Seamless> {
               players[i]?.play();
 
               // Dispose the [Player]s & [VideoController]s of the pages that are not visible & not adjacent to the current page.
-              players.removeWhere(
-                (page, player) {
-                  final remove = ![i, i - 1, i + 1].contains(page);
-                  if (remove) {
-                    player.dispose();
-                  }
-                  return remove;
-                },
-              );
-              controllers.removeWhere(
-                (page, controller) {
-                  final remove = ![i, i - 1, i + 1].contains(page);
-                  return remove;
-                },
-              );
+              players.removeWhere((page, player) {
+                final bool remove = ![i, i - 1, i + 1].contains(page);
+                if (remove) {
+                  player.dispose();
+                }
+                return remove;
+              });
+              controllers.removeWhere((page, controller) {
+                final bool remove = ![i, i - 1, i + 1].contains(page);
+                return remove;
+              });
 
               // Pause other pages' videos.
-              for (final e in players.entries) {
+              for (final MapEntry<int, Player> e in players.entries) {
                 if (e.key != i) {
                   e.value.pause();
                   e.value.seek(Duration.zero);
@@ -129,13 +119,11 @@ class _SeamlessState extends State<Seamless> {
               debugPrint('controllers: ${controllers.keys}');
             },
             itemBuilder: (context, i) {
-              final controller = controllers[i];
+              final VideoController? controller = controllers[i];
               if (controller == null) {
                 early.add(i);
                 return const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xffffffff),
-                  ),
+                  child: CircularProgressIndicator(color: Color(0xffffffff)),
                 );
               }
 
@@ -165,7 +153,7 @@ class _SeamlessState extends State<Seamless> {
                         alignment: Alignment.center,
                         child: const Icon(
                           Icons.expand_less,
-                          size: 28.0,
+                          size: 28,
                           color: Colors.white,
                         ),
                       ),
@@ -187,7 +175,7 @@ class _SeamlessState extends State<Seamless> {
                         alignment: Alignment.center,
                         child: const Icon(
                           Icons.expand_more,
-                          size: 28.0,
+                          size: 28,
                           color: Colors.white,
                         ),
                       ),

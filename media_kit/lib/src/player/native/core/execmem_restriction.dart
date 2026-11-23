@@ -1,10 +1,10 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2024 & onwards, cillyvms <cillyvms@estrogen.dev>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-// ignore_for_file: constant_identifier_names
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2024 & onwards, cillyvms <cillyvms@estrogen.dev>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
+// ignore_for_file: constant_identifier_names
 import 'dart:ffi';
 import 'dart:io';
 
@@ -12,21 +12,22 @@ import 'dart:io';
 final bool isExecmemRestricted = _checkIfExecmemRestricted();
 
 /// Checks if creating new anonymous executable memory mappings is blocked by the system.
-/// Only applies to Linux-based systems, since Dart doesn't use them for [NativeCallback]s on Fuchsia and Apple systems.
+/// Only applies to Linux-based systems, since Dart doesn't use them for `NativeCallback`s on Fuchsia and Apple systems.
 bool _checkIfExecmemRestricted() {
   if (Platform.isLinux || Platform.isAndroid) {
     try {
       final libs = DynamicLibrary.process();
-      final mmap = libs.lookupFunction<MmapFunctionNative, MmapFunctionDart>(
+      final MmapFunctionDart mmap =
+          libs.lookupFunction<MmapFunctionNative, MmapFunctionDart>(
         'mmap',
         isLeaf: true,
       );
-      final munmap =
+      final MunmapFunctionDart munmap =
           libs.lookupFunction<MunmapFunctionNative, MunmapFunctionDart>(
         'munmap',
         isLeaf: true,
       );
-      final mapping = mmap(
+      final Pointer<Void> mapping = mmap(
         nullptr,
         4096,
         PROT_READ | PROT_EXEC,
@@ -39,7 +40,7 @@ bool _checkIfExecmemRestricted() {
         return true;
       }
       munmap(mapping, 4096);
-    } catch (_) {}
+    } on Object catch (_) {}
   }
   return false;
 }
@@ -55,9 +56,21 @@ const MAP_PRIVATE = 0x2;
 const MAP_ANONYMOUS = 0x20;
 
 typedef MmapFunctionNative = Pointer<Void> Function(
-    Pointer<Void>, Size, Int32, Int32, Int32, Long);
+  Pointer<Void>,
+  Size,
+  Int32,
+  Int32,
+  Int32,
+  Long,
+);
 typedef MmapFunctionDart = Pointer<Void> Function(
-    Pointer<Void>, int, int, int, int, int);
+  Pointer<Void>,
+  int,
+  int,
+  int,
+  int,
+  int,
+);
 
 typedef MunmapFunctionNative = Int32 Function(Pointer<Void>, Size);
 typedef MunmapFunctionDart = int Function(Pointer<Void>, int);

@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:media_kit/media_kit.dart';
 import 'package:media_kit/generated/libmpv/bindings.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:media_kit/src/player/native/core/initializer.dart';
 import 'package:test/test.dart';
 
@@ -27,8 +27,8 @@ void main() {
 
     // The property request holds the player lock; dispose must cancel it before
     // trying to acquire that same lock. The command waits independently.
-    final property = cancelled(player.setVolume(25));
-    final command = cancelled(native.stop(synchronized: false));
+    final Future<void> property = cancelled(player.setVolume(25));
+    final Future<void> command = cancelled(native.stop(synchronized: false));
     await Future<void>.delayed(const Duration(milliseconds: 50));
     expect(finished, 0);
     await player.dispose().timeout(const Duration(seconds: 3));
@@ -38,19 +38,22 @@ void main() {
     await expectLater(player.setVolume(50), throwsA(isA<AssertionError>()));
   });
 
-  test('dispose during initialization and repeat dispose finish once',
-      () async {
-    final player = Player();
-    var released = 0;
-    player.platform!.release.add(() async => released++);
-    await Future.wait([player.dispose(), player.dispose()])
-        .timeout(const Duration(seconds: 5));
-    expect(released, 1);
-  });
+  test(
+    'dispose during initialization and repeat dispose finish once',
+    () async {
+      final player = Player();
+      var released = 0;
+      player.platform!.release.add(() async => released++);
+      await Future.wait([player.dispose(), player.dispose()])
+          .timeout(const Duration(seconds: 5));
+      expect(released, 1);
+    },
+  );
 
   test('cleanup callbacks may remove themselves', () async {
-    final player =
-        Player(configuration: const PlayerConfiguration(async: false));
+    final player = Player(
+      configuration: const PlayerConfiguration(async: false),
+    );
     var released = 0;
     late Future<void> Function() first;
     first = () async {

@@ -1,15 +1,15 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'package:flutter/material.dart';
-import 'package:synchronized/synchronized.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
-
 import 'package:media_kit_video/media_kit_video_controls/src/controls/widgets/video_controls_theme_data_injector.dart';
+import 'package:media_kit_video/src/utils/dispose_safe_notifier.dart';
+import 'package:synchronized/synchronized.dart';
 
 /// Whether a [Video] present in the current [BuildContext] is in fullscreen or not.
 bool isFullscreen(BuildContext context) =>
@@ -20,11 +20,14 @@ Future<void> enterFullscreen(BuildContext context) {
   return lock.synchronized(() async {
     if (!isFullscreen(context)) {
       if (context.mounted) {
-        final stateValue = state(context);
-        final contextNotifierValue = contextNotifier(context);
-        final videoViewParametersNotifierValue =
-            videoViewParametersNotifier(context);
-        final controllerValue = controller(context);
+        final VideoState stateValue = state(context);
+        final DisposeSafeNotifier<BuildContext?> contextNotifierValue =
+            contextNotifier(context);
+        final ValueNotifier<VideoViewParameters>
+            videoViewParametersNotifierValue = videoViewParametersNotifier(
+          context,
+        );
+        final VideoController controllerValue = controller(context);
         Navigator.of(context, rootNavigator: true).push(
           PageRouteBuilder(
             pageBuilder: (_, __, ___) => Material(
@@ -48,8 +51,7 @@ Future<void> enterFullscreen(BuildContext context) {
                       child: Video(
                         controller: controllerValue,
                         // Do not restrict the video's width & height in fullscreen mode:
-                        width: null,
-                        height: null,
+
                         fit: videoViewParametersNotifierValue.value.fit,
                         fill: videoViewParametersNotifierValue.value.fill,
                         alignment:
