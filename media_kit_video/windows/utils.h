@@ -10,6 +10,7 @@
 #define UTILS_H_
 
 #include <cstdint>
+#include <unordered_map>
 
 #include <Windows.h>
 
@@ -26,8 +27,13 @@ class Utils {
  private:
   static constexpr auto kFlutterViewWindowClassName = L"FLUTTERVIEW";
 
-  static bool fullscreen_;
-  static RECT rect_before_fullscreen_;
+  struct FullscreenState {
+    LONG_PTR style;
+    RECT rect_before_fullscreen;
+    bool changed_style = false;
+  };
+
+  static std::unordered_map<HWND, FullscreenState> fullscreen_states_;
 };
 
 #endif  // UTILS_H_

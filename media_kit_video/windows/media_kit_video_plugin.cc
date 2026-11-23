@@ -12,7 +12,9 @@
 
 namespace media_kit_video {
 
-MediaKitVideoPlugin* MediaKitVideoPlugin::instance_ = nullptr;
+std::unordered_map<HWND, MediaKitVideoPlugin*>
+    MediaKitVideoPlugin::instances_;
+std::mutex MediaKitVideoPlugin::instances_mutex_;
 
 void MediaKitVideoPlugin::RegisterWithRegistrar(
     flutter::PluginRegistrarWindows* registrar) {
@@ -24,12 +26,15 @@ MediaKitVideoPlugin::MediaKitVideoPlugin(
     flutter::PluginRegistrarWindows* registrar)
     : registrar_(registrar),
       video_output_manager_(std::make_unique<VideoOutputManager>(registrar)) {
-  instance_ = this;
   flutter_window_ =
       ::GetAncestor(registrar->GetView()->GetNativeWindow(), GA_ROOT);
   original_window_proc_ = reinterpret_cast<WNDPROC>(
       ::SetWindowLongPtr(flutter_window_, GWLP_WNDPROC,
                          reinterpret_cast<LONG_PTR>(WindowProcDelegate)));
+  {
+    std::lock_guard<std::mutex> lock(instances_mutex_);
+    instances_[flutter_window_] = this;
+  }
 
   channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
       registrar->messenger(), "com.alexmercerind/media_kit_video",
@@ -40,12 +45,13 @@ MediaKitVideoPlugin::MediaKitVideoPlugin(
 }
 
 MediaKitVideoPlugin::~MediaKitVideoPlugin() {
+  {
+    std::lock_guard<std::mutex> lock(instances_mutex_);
+    instances_.erase(flutter_window_);
+  }
   if (flutter_window_ && original_window_proc_) {
     ::SetWindowLongPtr(flutter_window_, GWLP_WNDPROC,
                        reinterpret_cast<LONG_PTR>(original_window_proc_));
-  }
-  if (instance_ == this) {
-    instance_ = nullptr;
   }
 }
 
@@ -66,13 +72,22 @@ LRESULT CALLBACK MediaKitVideoPlugin::WindowProcDelegate(HWND hwnd,
                                                          UINT message,
                                                          WPARAM wParam,
                                                          LPARAM lParam) {
-  if (message == kMainThreadTaskMessage && instance_) {
-    instance_->ProcessMainThreadTasks();
+  MediaKitVideoPlugin* instance = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(instances_mutex_);
+    const auto it = instances_.find(hwnd);
+    if (it != instances_.end()) {
+      instance = it->second;
+    }
+  }
+
+  if (message == kMainThreadTaskMessage && instance) {
+    instance->ProcessMainThreadTasks();
     return 0;
   }
 
-  if (instance_ && instance_->original_window_proc_) {
-    return ::CallWindowProc(instance_->original_window_proc_, hwnd, message,
+  if (instance && instance->original_window_proc_) {
+    return ::CallWindowProc(instance->original_window_proc_, hwnd, message,
                             wParam, lParam);
   }
 

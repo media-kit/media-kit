@@ -14,10 +14,9 @@ typedef LONG NTSTATUS, *PNTSTATUS;
 typedef NTSTATUS(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
 void Utils::EnterNativeFullscreen(HWND window) {
-  if (fullscreen_) {
+  if (fullscreen_states_.find(window) != fullscreen_states_.end()) {
     return;
   }
-  fullscreen_ = true;
 
   // The primary idea here is to revolve around |WS_OVERLAPPEDWINDOW| &
   // detect/set fullscreen based on it. In the window procedure, this is
@@ -27,13 +26,15 @@ void Utils::EnterNativeFullscreen(HWND window) {
   // |WM_NCCALCSIZE|.
 
   auto style = ::GetWindowLongPtr(window, GWL_STYLE);
+  auto& state = fullscreen_states_[window];
+  state.style = style;
   if (style & WS_OVERLAPPEDWINDOW) {
     auto monitor = MONITORINFO{};
     auto placement = WINDOWPLACEMENT{};
     monitor.cbSize = sizeof(MONITORINFO);
     placement.length = sizeof(WINDOWPLACEMENT);
     ::GetWindowPlacement(window, &placement);
-    rect_before_fullscreen_ = RECT{
+    state.rect_before_fullscreen = RECT{
         placement.rcNormalPosition.left,
         placement.rcNormalPosition.top,
         placement.rcNormalPosition.right,
@@ -42,6 +43,7 @@ void Utils::EnterNativeFullscreen(HWND window) {
     ::GetMonitorInfo(::MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST),
                      &monitor);
     ::SetWindowLongPtr(window, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+    state.changed_style = true;
     ::SetWindowPos(window, HWND_TOP, monitor.rcMonitor.left,
                    monitor.rcMonitor.top,
                    monitor.rcMonitor.right - monitor.rcMonitor.left,
@@ -51,14 +53,15 @@ void Utils::EnterNativeFullscreen(HWND window) {
 }
 
 void Utils::ExitNativeFullscreen(HWND window) {
-  if (!fullscreen_) {
+  const auto iterator = fullscreen_states_.find(window);
+  if (iterator == fullscreen_states_.end()) {
     return;
   }
-  fullscreen_ = false;
+  const auto state = iterator->second;
+  fullscreen_states_.erase(iterator);
 
-  auto style = ::GetWindowLongPtr(window, GWL_STYLE);
-  if (!(style & WS_OVERLAPPEDWINDOW)) {
-    ::SetWindowLongPtr(window, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
+  if (state.changed_style) {
+    ::SetWindowLongPtr(window, GWL_STYLE, state.style);
     if (::IsZoomed(window)) {
       // Refresh the parent window.
       ::SetWindowPos(window, nullptr, 0, 0, 0, 0,
@@ -73,11 +76,11 @@ void Utils::ExitNativeFullscreen(HWND window) {
                      SWP_NOACTIVATE | SWP_NOZORDER);
     } else {
       ::SetWindowPos(
-          window, nullptr, rect_before_fullscreen_.left,
-          rect_before_fullscreen_.top,
-          rect_before_fullscreen_.right - rect_before_fullscreen_.left,
-          rect_before_fullscreen_.bottom - rect_before_fullscreen_.top,
-          SWP_NOACTIVATE | SWP_NOZORDER);
+          window, nullptr, state.rect_before_fullscreen.left,
+          state.rect_before_fullscreen.top,
+          state.rect_before_fullscreen.right - state.rect_before_fullscreen.left,
+          state.rect_before_fullscreen.bottom - state.rect_before_fullscreen.top,
+          SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED);
     }
   }
 }
@@ -102,6 +105,4 @@ bool Utils::IsWindows10RTMOrGreater() {
   return GetWindowsVersion().dwBuildNumber >= 10240;
 }
 
-bool Utils::fullscreen_ = false;
-
-RECT Utils::rect_before_fullscreen_ = RECT{};
+std::unordered_map<HWND, Utils::FullscreenState> Utils::fullscreen_states_;
