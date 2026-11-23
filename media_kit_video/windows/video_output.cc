@@ -165,11 +165,13 @@ void VideoOutput::RetireTexture() {
 
 void VideoOutput::NotifyRender() {
   std::lock_guard<std::mutex> lock(notification_mutex_);
-  if (destroyed_)
+  if (destroyed_ || render_queued_)
     return;
   thread_pool_ref_->Post([this]() {
     {
       std::lock_guard<std::mutex> notification_lock(notification_mutex_);
+      // Updates during this render may queue one more pass for this output.
+      render_queued_ = false;
       if (destroyed_)
         return;
     }
@@ -181,6 +183,7 @@ void VideoOutput::NotifyRender() {
                 << std::endl;
     }
   });
+  render_queued_ = true;
 }
 
 void VideoOutput::Render() {
@@ -252,6 +255,14 @@ void VideoOutput::SetSize(std::optional<int64_t> width,
       return;
     width_ = width;
     height_ = height;
+    // A paused player may never issue another update callback.
+    try {
+      CheckAndResize();
+      Render();
+    } catch (const std::exception& error) {
+      std::cerr << "media_kit: VideoOutput resize failed: " << error.what()
+                << std::endl;
+    }
   });
 }
 

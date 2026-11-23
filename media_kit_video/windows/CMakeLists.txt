@@ -22,6 +22,8 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     "d3d11_surface_manager.cc"
     "d3d11_surface_manager.h"
     "media_kit_video_plugin.cc"
+    "platform_task_runner.cc"
+    "platform_task_runner.h"
     "media_kit_video_plugin.h"
     "thread_pool.h"
     "video_frame_size.h"

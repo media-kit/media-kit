@@ -63,7 +63,7 @@ class VideoOutput {
       std::function<void(int64_t, int64_t, int64_t)> callback);
 
   // Pass nullopt to use the video dimension for that axis.
-  // The rendering worker uses the new size for the next frame.
+  // The rendering worker resizes and redraws the frame even during pause.
   void SetSize(std::optional<int64_t> width, std::optional<int64_t> height);
 
  private:
@@ -114,6 +114,7 @@ class VideoOutput {
   const std::atomic<bool>* shutting_down_ = nullptr;
   // Use this lock to stop new render requests before teardown.
   std::mutex notification_mutex_;
+  bool render_queued_ = false;  // Protected by notification_mutex_.
   std::atomic<bool> destroyed_{false};
   std::unique_ptr<D3D11SurfaceManager> surface_manager_;
   bool software_ = false;
