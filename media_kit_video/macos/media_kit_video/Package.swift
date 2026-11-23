@@ -53,6 +53,11 @@ let package = Package(
                 : ["stub"],
             resources: [
                 .process("PrivacyInfo.xcprivacy")
+            ],
+            cSettings: [
+                // libmpv renders hardware-backed video frames through OpenGL on macOS.
+                .define("GL_SILENCE_DEPRECATION"),
+                .define("COREVIDEO_SILENCE_GL_DEPRECATION")
             ]
         )
     ]
