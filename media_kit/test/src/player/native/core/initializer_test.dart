@@ -53,70 +53,62 @@ void main() {
       );
     },
   );
-  test(
-    'initializer-callback',
-    () async {
-      final shutdown = Completer();
-
-      final expectPauseTrue = expectAsync1((value) {
-        print(value);
-        expect(value, isTrue);
+  test('initializer-callback', () async {
+    final initialPause = Completer<bool>();
+    final paused = Completer<void>();
+    final shutdown = Completer<void>();
+    final values = <bool>[];
+    final handle = await Initializer(mpv).create((event) async {
+      if (event.ref.event_id == mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
+        final prop = event.ref.data.cast<mpv_event_property>();
+        if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
+            prop.ref.format == mpv_format.MPV_FORMAT_FLAG) {
+          final value = prop.ref.data.cast<Int32>().value != 0;
+          values.add(value);
+          if (!initialPause.isCompleted) initialPause.complete(value);
+          if (value && !paused.isCompleted) paused.complete();
+        }
+      }
+      if (event.ref.event_id == mpv_event_id.MPV_EVENT_SHUTDOWN &&
+          !shutdown.isCompleted) {
         shutdown.complete();
-      });
-      final expectShutdown = expectAsync0(() {
-        print('shutdown');
-        expect(true, isTrue);
-      });
+      }
+    }, options: {'config': 'no', 'pause': 'no'});
 
-      final handle = await Initializer(mpv).create(
-        (event) async {
-          if (event.ref.event_id == mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
-            final prop = event.ref.data.cast<mpv_event_property>();
-            if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
-                prop.ref.format == mpv_format.MPV_FORMAT_FLAG) {
-              final value = prop.ref.data.cast<Bool>().value;
-              expectPauseTrue(value);
-            }
-          }
-          if (event.ref.event_id == mpv_event_id.MPV_EVENT_SHUTDOWN) {
-            expectShutdown();
-          }
-        },
-      );
-      await Future.delayed(Duration(seconds: 5));
-      {
-        final name = 'pause'.toNativeUtf8();
-        mpv.mpv_observe_property(
-          handle,
-          0,
-          name.cast(),
-          mpv_format.MPV_FORMAT_FLAG,
+    int command(String value) {
+      final pointer = value.toNativeUtf8();
+      try {
+        return mpv.mpv_command_string(handle, pointer.cast());
+      } finally {
+        calloc.free(pointer);
+      }
+    }
+
+    try {
+      final name = 'pause'.toNativeUtf8();
+      try {
+        expect(
+          mpv.mpv_observe_property(
+              handle, 0, name.cast(), mpv_format.MPV_FORMAT_FLAG),
+          greaterThanOrEqualTo(0),
         );
+      } finally {
         calloc.free(name);
       }
-      {
-        final command = 'cycle pause'.toNativeUtf8();
-        mpv.mpv_command_string(
-          handle,
-          command.cast(),
-        );
-        calloc.free(command);
-      }
-      await shutdown.future;
-      {
-        final command = 'quit 0'.toNativeUtf8();
-        mpv.mpv_command_string(
-          handle,
-          command.cast(),
-        );
-        calloc.free(command);
-      }
-
-      await Future.delayed(const Duration(seconds: 5));
-
+      // Observing a property reports its current value before later changes.
+      // Wait for that notification so mpv cannot coalesce it with the update.
+      expect(await initialPause.future.timeout(const Duration(seconds: 5)),
+          isFalse);
+      expect(command('set pause yes'), greaterThanOrEqualTo(0));
+      await paused.future.timeout(const Duration(seconds: 5));
+      expect(values, containsAllInOrder([false, true]));
+      expect(command('quit 0'), greaterThanOrEqualTo(0));
+      await shutdown.future.timeout(const Duration(seconds: 5));
+    } finally {
+      if (!shutdown.isCompleted) command('quit 0');
       Initializer(mpv).dispose(handle);
-    },
-  );
+    }
+  });
   test(
     'initializer-options-with-callback',
     () async {

@@ -1931,120 +1931,69 @@ void main() {
 
     await player.dispose();
   }, timeout: Timeout(const Duration(minutes: 1)));
-  test('player-buffering-upon-seek', () async {
+  Future<void> checkBufferingAfterSeek({
+    required bool pauseWhileBuffering,
+  }) async {
     final player = Player();
-    player.stream.buffering.listen((e) => print(e));
-
-    expect(
-      player.stream.buffering,
-      emitsInOrder([
-        // Player.open: buffering = false
-        false,
-        // Player.open: buffering = true
-        true,
-        // Player.open: buffering = false
-        false,
-        // Player.seek: buffering = true
-        true,
-        // Player.seek: buffering = false
-        false,
-        // EOF
-        true,
-        false,
-        // Player.dispose
-        emitsDone,
-      ]),
-    );
-
-    // Seek to the end of the stream to trigger buffering.
-    player.stream.duration.listen((event) async {
-      if (event > Duration.zero) {
-        // VOLUNTARY DELAY.
-        await Future.delayed(const Duration(seconds: 5));
-
-        print('Seek');
-
-        await player.seek(event - const Duration(seconds: 30));
-      }
-    });
+    addTearDown(player.dispose);
+    const remaining = Duration(seconds: 30);
 
     await player.open(
       Media(
         'https://github.com/media-kit/media-kit/assets/28951144/efb4057c-6fd3-4644-a0b1-42d5fb420ce9',
       ),
     );
-
-    await Future.delayed(const Duration(minutes: 1));
-
-    await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1, seconds: 30)));
-  test('player-buffering-pause-play', () async {
-    // When pausing in buffering state, the player must exit buffering state once resumed.
-    // https://github.com/media-kit/media-kit/issues/367
-    final player = Player();
-
-    player.stream.buffering.listen((e) => print(e));
-
-    expect(
-      player.stream.buffering,
-      emitsInOrder([
-        // Player.open: buffering = false
-        false,
-        // Player.open: buffering = true
-        true,
-        // Player.open: buffering = false
-        false,
-        // Player.seek: buffering = true
-        true,
-        // Player.play: buffering = false
-        false,
-        // EOF
-        true,
-        false,
-        // Player.dispose
-        emitsDone,
-      ]),
+    await player.stream.position.firstWhere(
+      (position) =>
+          position >= const Duration(seconds: 2) &&
+          player.state.duration > remaining &&
+          !player.state.buffering,
     );
 
-    // Seek to the end of the stream to trigger buffering.
-    player.stream.duration.listen((event) async {
-      if (event > Duration.zero) {
-        // VOLUNTARY DELAY.
-        await Future.delayed(const Duration(seconds: 5));
-
-        print('Seek');
-
-        await player.seek(event - const Duration(seconds: 30));
-
-        print('Buffering...');
-
-        // Wait until buffering is started.
-        await player.stream.buffering.firstWhere((e) => e);
-
-        print('Wait...');
-        print('Pause');
-
-        await player.pause();
-
-        // VOLUNTARY DELAY.
-        await Future.delayed(const Duration(seconds: 5));
-
-        print('Play');
-
-        await player.play();
-      }
-    });
-
-    await player.open(
-      Media(
-        'https://github.com/media-kit/media-kit/assets/28951144/efb4057c-6fd3-4644-a0b1-42d5fb420ce9',
-      ),
+    final target = player.state.duration - remaining;
+    // Start observing before the seek, after any buffering during startup.
+    final buffering = StreamIterator(
+      player.stream.buffering.skipWhile((value) => !value),
     );
+    addTearDown(buffering.cancel);
+    final enteredBuffering = buffering.moveNext();
+    await player.seek(target);
+    expect(await enteredBuffering, isTrue);
+    expect(buffering.current, isTrue);
 
-    await Future.delayed(const Duration(minutes: 1));
+    if (pauseWhileBuffering) {
+      // Regression test for https://github.com/media-kit/media-kit/issues/367.
+      expect(player.state.buffering, isTrue);
+      final paused = player.stream.playing.firstWhere((playing) => !playing);
+      await player.pause();
+      await paused;
+      await Future<void>.delayed(const Duration(seconds: 2));
+      await player.play();
+    }
 
-    await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1, seconds: 30)));
+    expect(await buffering.moveNext(), isTrue);
+    expect(buffering.current, isFalse);
+    await player.stream.position.firstWhere(
+      (position) =>
+          position >= target + const Duration(seconds: 1) &&
+          position < player.state.duration &&
+          player.state.playing &&
+          !player.state.buffering,
+    );
+    await player.stream.completed.firstWhere((completed) => completed);
+    expect(player.state.buffering, isFalse);
+  }
+
+  test(
+    'player-buffering-upon-seek',
+    () => checkBufferingAfterSeek(pauseWhileBuffering: false),
+    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
+  );
+  test(
+    'player-buffering-pause-play',
+    () => checkBufferingAfterSeek(pauseWhileBuffering: true),
+    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
+  );
   test('player-buffering-playlist', () async {
     final player = Player();
 
