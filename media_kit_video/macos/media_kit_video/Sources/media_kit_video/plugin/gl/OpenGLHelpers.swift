@@ -4,6 +4,10 @@ import OpenGL.GL3
 
 public class OpenGLHelpers {
   static public func createPixelFormat() -> CGLPixelFormatObj {
+    tryCreatePixelFormat()!
+  }
+
+  static func tryCreatePixelFormat() -> CGLPixelFormatObj? {
     // from mpv
     let attributes: [CGLPixelFormatAttribute] = [
       kCGLPFAOpenGLProfile,
@@ -20,29 +24,39 @@ public class OpenGLHelpers {
 
     var npix: GLint = 0
     var pixelFormat: CGLPixelFormatObj?
-    CGLChoosePixelFormat(attributes, &pixelFormat, &npix)
-
-    return pixelFormat!
+    guard CGLChoosePixelFormat(attributes, &pixelFormat, &npix) == kCGLNoError else { return nil }
+    return pixelFormat
   }
 
   static public func createContext(
     _ pixelFormat: CGLPixelFormatObj
   ) -> CGLContextObj {
+    tryCreateContext(pixelFormat)!
+  }
+
+  static func tryCreateContext(_ pixelFormat: CGLPixelFormatObj) -> CGLContextObj? {
     var context: CGLContextObj?
     let error = CGLCreateContext(pixelFormat, nil, &context)
     if error != kCGLNoError {
       let errS = String(cString: CGLErrorString(error))
       NSLog(errS)
-      exit(1)
+      return nil
     }
 
-    return context!
+    return context
   }
 
   static public func createTextureCache(
     _ context: CGLContextObj,
     _ pixelFormat: CGLPixelFormatObj
   ) -> CVOpenGLTextureCache {
+    tryCreateTextureCache(context, pixelFormat)!
+  }
+
+  static func tryCreateTextureCache(
+    _ context: CGLContextObj,
+    _ pixelFormat: CGLPixelFormatObj
+  ) -> CVOpenGLTextureCache? {
     var textureCache: CVOpenGLTextureCache?
 
     let cvret: CVReturn = CVOpenGLTextureCacheCreate(
@@ -53,9 +67,8 @@ public class OpenGLHelpers {
       nil,
       &textureCache
     )
-    assert(cvret == kCVReturnSuccess, "CVOpenGLTextureCacheCreate")
-
-    return textureCache!
+    guard cvret == kCVReturnSuccess else { return nil }
+    return textureCache
   }
 
   static public func createPixelBuffer(_ size: CGSize) -> CVPixelBuffer {
