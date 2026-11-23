@@ -1,3 +1,9 @@
+## 1.1.0
+
+- Ship libmpv 0.42.0 with the D3D11 render API.
+- Use a Windows video plugin that supports D3D11 or software rendering.
+- Remove the separate ANGLE libraries from the package.
+
 ## 1.0.12
 
 - feat: support ARM64

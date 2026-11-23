@@ -13,7 +13,7 @@ Pod::Spec.new do |s|
   mku = MediaKitUtils.new(MediaKitUtils::Platform::IOS)
 
   s.name             = 'media_kit_video'
-  s.version          = '0.0.1'
+  s.version          = '2.1.0'
   s.summary          = 'Native implementation for video playback in package:media_kit'
   s.description      = <<-DESC
   Native implementation for video playback in package:media_kit.
