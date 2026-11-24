@@ -43,14 +43,18 @@ public class VideoOutputManager: NSObject {
     )
   }
 
+  // Completion runs on the main thread once the render context is freed and
+  // the texture unregistered.
   public func destroy(
-    handle: Int64
+    handle: Int64,
+    completion: @escaping () -> Void
   ) {
     let videoOutput = self.videoOutputs[handle]
     if videoOutput == nil {
-      return
+      return completion()
     }
 
     self.videoOutputs[handle] = nil
+    videoOutput!.dispose(completion)
   }
 }

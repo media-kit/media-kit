@@ -9,7 +9,7 @@ import Foundation
 #endif
 
 // This class avoids data race when called from a thread
-public class SafeResizableTexture:
+class SafeResizableTexture:
   NSObject,
   FlutterTexture,
   ResizableTextureProtocol
@@ -21,19 +21,25 @@ public class SafeResizableTexture:
     self.child = child
   }
 
-  public func resize(_ size: CGSize) {
+  func resize(_ size: CGSize) {
     return locked {
       return child.resize(size)
     }
   }
 
-  public func render(_ size: CGSize) {
+  func render(_ size: CGSize) -> Bool {
     return locked {
       return child.render(size)
     }
   }
 
-  public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
+  func dispose() {
+    locked {
+      child.dispose()
+    }
+  }
+
+  func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
     return child.copyPixelBuffer()
   }
 

@@ -127,7 +127,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
 
   private func handleDisposeMethodCall(
     _ arguments: Any?,
-    _ result: FlutterResult
+    _ result: @escaping FlutterResult
   ) {
     let args = arguments as? [String: Any]
     let handleStr = args?["handle"] as! String
@@ -137,9 +137,9 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
 
     videoOutputManager.destroy(
       handle: handle!
-    )
-
-    result(nil)
+    ) {
+      result(nil)
+    }
   }
 
   private func handleEnterNativeFullscreenMethodCall(
