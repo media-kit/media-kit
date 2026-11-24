@@ -1243,15 +1243,17 @@ class NativePlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
     }
 
-    final name = property.toNativeUtf8();
-    final data = value.toNativeUtf8();
-    mpv.mpv_set_property_string(
-      ctx,
-      name.cast(),
-      data.cast(),
-    );
-    calloc.free(name);
-    calloc.free(data);
+    // Go through the same path as [command] so that, when
+    // [PlayerConfiguration.async] is enabled, the property is applied by
+    // libmpv on its own thread via mpv_set_property_async.
+    //
+    // A synchronous mpv_set_property_string runs the option-change handlers on
+    // the *calling* thread. For --wid / --vo (set by the platform video
+    // controllers whenever the surface is (re)attached) that means the whole
+    // video-output re-initialization & hardware decoder creation run on the
+    // Dart UI thread, freezing it for hundreds of milliseconds.
+    // See: https://github.com/media-kit/media-kit/issues/1395
+    await _setPropertyString(property, value);
   }
 
   /// Retrieves the value of a property from the internal libmpv instance of this [Player].
