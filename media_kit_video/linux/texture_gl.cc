@@ -7,6 +7,7 @@
 // LICENSE file.
 
 #include "include/media_kit_video/texture_gl.h"
+#include "include/media_kit_video/isolated_egl.h"
 
 #include <epoxy/gl.h>
 #include <epoxy/egl.h>
@@ -37,9 +38,60 @@ static void init_egl_image_extensions() {
   }
 }
 
+// Flutter's texture names are made in Flutter's context on the raster thread,
+// while an output is mostly disposed of on the platform thread, where another
+// context is current (GDK's). A name is deleted in the context that made it: at
+// once when that one is current, else at the next populate of a texture in it,
+// so that neither another context's texture nor the frame the name holds
+// through its EGLImage is lost.
+typedef struct {
+  EGLContext context;
+  guint32 name;
+} TextureGLPendingName;
+
+static GMutex texture_gl_pending_mutex;
+static GArray* texture_gl_pending_names = NULL;
+
+static void texture_gl_delete_name(EGLContext context, guint32 name) {
+  if (name == 0) {
+    return;
+  }
+  if (context == EGL_NO_CONTEXT || eglGetCurrentContext() == context) {
+    glDeleteTextures(1, &name);
+    return;
+  }
+  g_mutex_lock(&texture_gl_pending_mutex);
+  if (texture_gl_pending_names == NULL) {
+    texture_gl_pending_names =
+        g_array_new(FALSE, FALSE, sizeof(TextureGLPendingName));
+  }
+  TextureGLPendingName pending{context, name};
+  g_array_append_val(texture_gl_pending_names, pending);
+  g_mutex_unlock(&texture_gl_pending_mutex);
+}
+
+static void texture_gl_delete_pending_names() {
+  EGLContext current = eglGetCurrentContext();
+  g_mutex_lock(&texture_gl_pending_mutex);
+  if (texture_gl_pending_names != NULL) {
+    for (guint i = 0; i < texture_gl_pending_names->len;) {
+      TextureGLPendingName* pending =
+          &g_array_index(texture_gl_pending_names, TextureGLPendingName, i);
+      if (pending->context == current) {
+        glDeleteTextures(1, &pending->name);
+        g_array_remove_index_fast(texture_gl_pending_names, i);
+      } else {
+        i++;
+      }
+    }
+  }
+  g_mutex_unlock(&texture_gl_pending_mutex);
+}
+
 struct _TextureGL {
   FlTextureGL parent_instance;
   guint32 name;              // Flutter's texture name
+  EGLContext name_context;   // The EGL context |name| was made in
   guint32 fbo;               // mpv's FBO
   guint32 mpv_texture;       // mpv's texture
   EGLImageKHR egl_image;     // EGLImage for sharing between contexts
@@ -52,6 +104,7 @@ G_DEFINE_TYPE(TextureGL, texture_gl, fl_texture_gl_get_type())
 
 static void texture_gl_init(TextureGL* self) {
   self->name = 0;
+  self->name_context = EGL_NO_CONTEXT;
   self->fbo = 0;
   self->mpv_texture = 0;
   self->egl_image = EGL_NO_IMAGE_KHR;
@@ -64,17 +117,9 @@ static void texture_gl_dispose(GObject* object) {
   TextureGL* self = TEXTURE_GL(object);
   VideoOutput* video_output = self->video_output;
   
-  // Save current context
-  EGLDisplay current_display = eglGetCurrentDisplay();
-  EGLContext current_context = eglGetCurrentContext();
-  EGLSurface current_draw = eglGetCurrentSurface(EGL_DRAW);
-  EGLSurface current_read = eglGetCurrentSurface(EGL_READ);
-  
   // Clean up Flutter's texture (in Flutter's context)
-  if (self->name != 0) {
-    glDeleteTextures(1, &self->name);
-    self->name = 0;
-  }
+  texture_gl_delete_name(self->name_context, self->name);
+  self->name = 0;
   
   // Clean up EGLImage
   if (self->egl_image != EGL_NO_IMAGE_KHR && video_output != NULL) {
@@ -84,25 +129,28 @@ static void texture_gl_dispose(GObject* object) {
   }
   
   // Clean up mpv's OpenGL resources (in mpv's isolated context)
-  if (video_output != NULL) {
+  if (video_output != NULL && (self->mpv_texture != 0 || self->fbo != 0)) {
     EGLDisplay egl_display = video_output_get_egl_display(video_output);
     EGLContext egl_context = video_output_get_egl_context(video_output);
     
     if (egl_context != EGL_NO_CONTEXT) {
-      eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_context);
-      
-      if (self->mpv_texture != 0) {
-        glDeleteTextures(1, &self->mpv_texture);
-        self->mpv_texture = 0;
+      // Whatever this thread had current (GDK's GL context on the platform
+      // thread) is put aside, then comes back
+      IsolatedEglSaved saved;
+      EGLint error = EGL_SUCCESS;
+      if (isolated_egl_enter(egl_display, egl_context, &saved, &error)) {
+        if (self->mpv_texture != 0) {
+          glDeleteTextures(1, &self->mpv_texture);
+        }
+        if (self->fbo != 0) {
+          glDeleteFramebuffers(1, &self->fbo);
+        }
       }
-      if (self->fbo != 0) {
-        glDeleteFramebuffers(1, &self->fbo);
-        self->fbo = 0;
-      }
-      
-      // Restore previous context
-      eglMakeCurrent(current_display, current_draw, current_read, current_context);
+      isolated_egl_leave(egl_display, &saved);
     }
+    // Without the isolated context, they went with it (eglDestroyContext)
+    self->mpv_texture = 0;
+    self->fbo = 0;
   }
   
   self->current_width = 1;
@@ -131,6 +179,8 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
                                      GError** error) {
   TextureGL* self = TEXTURE_GL(texture);
   VideoOutput* video_output = self->video_output;
+  // Names of disposed textures made in this context
+  texture_gl_delete_pending_names();
   
   gint32 required_width = (guint32)video_output_get_width(video_output);
   gint32 required_height = (guint32)video_output_get_height(video_output);
@@ -197,13 +247,15 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       // Switch back to Flutter's context to create/update Flutter's texture
       eglMakeCurrent(flutter_display, flutter_draw, flutter_read, flutter_context);
       
-      // Free previous Flutter texture
-      if (!first_frame && self->name != 0) {
+      // Free previous Flutter texture (the 1x1 one made before the first
+      // frame too)
+      if (self->name != 0) {
         glDeleteTextures(1, &self->name);
       }
       
       // Create Flutter's texture from EGLImage
       glGenTextures(1, &self->name);
+      self->name_context = eglGetCurrentContext();
       glBindTexture(GL_TEXTURE_2D, self->name);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -267,6 +319,7 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
   if (self->name == 0) {
     // First frame not yet available - create dummy texture in Flutter's context
     glGenTextures(1, &self->name);
+    self->name_context = eglGetCurrentContext();
     glBindTexture(GL_TEXTURE_2D, self->name);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
