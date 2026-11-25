@@ -1,6 +1,6 @@
 name: media_kit_workspace
 environment:
-  sdk: ^3.6.0
+  sdk: ^3.10.0
 
 workspace:
   - libs/android/media_kit_libs_android_audio
@@ -17,6 +17,7 @@ workspace:
   - media_kit
   - media_kit_test
   - media_kit_video
+  - tools/media_kit_libmpv_generator
   - video_player_media_kit
   - video_player_media_kit/example
 
