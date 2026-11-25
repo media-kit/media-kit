@@ -8,23 +8,15 @@
 
 #include "utils.h"
 
-typedef LONG NTSTATUS, *PNTSTATUS;
-#define STATUS_SUCCESS (0x00000000)
-
-typedef NTSTATUS(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
-
 void Utils::EnterNativeFullscreen(HWND window) {
   if (fullscreen_) {
     return;
   }
   fullscreen_ = true;
 
-  // The primary idea here is to revolve around |WS_OVERLAPPEDWINDOW| &
-  // detect/set fullscreen based on it. In the window procedure, this is
-  // separately handled. If there is no |WS_OVERLAPPEDWINDOW| style on the
-  // window i.e. in fullscreen, then no area is left for |WM_NCHITTEST|,
-  // accordingly client area is also expanded to fill whole monitor using
-  // |WM_NCCALCSIZE|.
+  // Remove WS_OVERLAPPEDWINDOW to enter full screen.
+  // The window procedure handles WM_NCCALCSIZE to extend the client area
+  // across the monitor.
 
   auto style = ::GetWindowLongPtr(window, GWL_STYLE);
   if (style & WS_OVERLAPPEDWINDOW) {
@@ -80,26 +72,6 @@ void Utils::ExitNativeFullscreen(HWND window) {
           SWP_NOACTIVATE | SWP_NOZORDER);
     }
   }
-}
-
-RTL_OSVERSIONINFOW Utils::GetWindowsVersion() {
-  HMODULE handle = ::LoadLibraryW(L"ntdll.dll");
-  RTL_OSVERSIONINFOW rtl_os_version_info = {0};
-  rtl_os_version_info.dwBuildNumber = 0;
-  rtl_os_version_info.dwOSVersionInfoSize = sizeof(rtl_os_version_info);
-  if (handle) {
-    RtlGetVersionPtr rtl_get_version_ptr = reinterpret_cast<RtlGetVersionPtr>(
-        ::GetProcAddress(handle, "RtlGetVersion"));
-    if (rtl_get_version_ptr != nullptr) {
-      rtl_get_version_ptr(&rtl_os_version_info);
-    }
-    ::FreeLibrary(handle);
-  }
-  return rtl_os_version_info;
-}
-
-bool Utils::IsWindows10RTMOrGreater() {
-  return GetWindowsVersion().dwBuildNumber >= 10240;
 }
 
 bool Utils::fullscreen_ = false;

@@ -12,6 +12,29 @@
 
 namespace media_kit_video {
 
+namespace {
+using Microsoft::WRL::ComPtr;
+
+// Recent Flutter SDKs expose the engine adapter before Flutter creates a view.
+template <class Registrar>
+auto GraphicsAdapter(Registrar* registrar, int)
+    -> decltype(registrar->GetGraphicsAdapter(
+                    static_cast<IDXGIAdapter**>(nullptr)),
+                ComPtr<IDXGIAdapter>{}) {
+  ComPtr<IDXGIAdapter> adapter;
+  registrar->GetGraphicsAdapter(adapter.GetAddressOf());
+  return adapter;
+}
+
+template <class Registrar>
+ComPtr<IDXGIAdapter> GraphicsAdapter(Registrar* registrar, long) {
+  ComPtr<IDXGIAdapter> adapter;
+  if (auto* view = registrar->GetView())
+    adapter.Attach(view->GetGraphicsAdapter());
+  return adapter;
+}
+}  // namespace
+
 MediaKitVideoPlugin* MediaKitVideoPlugin::instance_ = nullptr;
 
 void MediaKitVideoPlugin::RegisterWithRegistrar(
@@ -23,7 +46,9 @@ void MediaKitVideoPlugin::RegisterWithRegistrar(
 MediaKitVideoPlugin::MediaKitVideoPlugin(
     flutter::PluginRegistrarWindows* registrar)
     : registrar_(registrar),
-      video_output_manager_(std::make_unique<VideoOutputManager>(registrar)) {
+      video_output_manager_(
+          std::make_unique<VideoOutputManager>(registrar->texture_registrar(),
+                                               GraphicsAdapter(registrar, 0))) {
   instance_ = this;
   flutter_window_ =
       ::GetAncestor(registrar->GetView()->GetNativeWindow(), GA_ROOT);
@@ -40,6 +65,7 @@ MediaKitVideoPlugin::MediaKitVideoPlugin(
 }
 
 MediaKitVideoPlugin::~MediaKitVideoPlugin() {
+  video_output_manager_.reset();
   if (flutter_window_ && original_window_proc_) {
     ::SetWindowLongPtr(flutter_window_, GWLP_WNDPROC,
                        reinterpret_cast<LONG_PTR>(original_window_proc_));
@@ -128,6 +154,9 @@ void MediaKitVideoPlugin::HandleMethodCall(
     configuration_value.enable_hardware_acceleration =
         configuration_enable_hardware_acceleration;
 
+    auto response =
+        std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>>(
+            std::move(result));
     video_output_manager_->Create(
         handle_value, configuration_value,
         [this, handle = handle_value](auto id, auto width, auto height) {
@@ -167,16 +196,27 @@ void MediaKitVideoPlugin::HandleMethodCall(
                 }),
                 nullptr);
           });
+        },
+        [this, response](std::string error) {
+          RunOnMainThread([response, error]() {
+            if (error.empty())
+              response->Success();
+            else
+              response->Error("VideoOutput.Create", error);
+          });
         });
-    result->Success(flutter::EncodableValue(std::monostate{}));
   } else if (method_call.method_name().compare("VideoOutputManager.Dispose") ==
              0) {
     auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
     auto handle =
         std::get<std::string>(arguments[flutter::EncodableValue("handle")]);
     auto handle_value = static_cast<int64_t>(std::stoll(handle.c_str()));
-    video_output_manager_->Dispose(handle_value);
-    result->Success(flutter::EncodableValue(std::monostate{}));
+    auto response =
+        std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>>(
+            std::move(result));
+    video_output_manager_->Dispose(handle_value, [this, response]() {
+      RunOnMainThread([response]() { response->Success(); });
+    });
   } else if (method_call.method_name().compare("VideoOutputManager.SetSize") ==
              0) {
     auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());
@@ -199,12 +239,20 @@ void MediaKitVideoPlugin::HandleMethodCall(
     result->Success(flutter::EncodableValue(std::monostate{}));
   } else if (method_call.method_name().compare("Utils.EnterNativeFullscreen") ==
              0) {
+    if (!registrar_->GetView()) {
+      result->Error("unavailable", "Native fullscreen requires a target view");
+      return;
+    }
     auto window =
         ::GetAncestor(registrar_->GetView()->GetNativeWindow(), GA_ROOT);
     Utils::EnterNativeFullscreen(window);
     result->Success(flutter::EncodableValue(std::monostate{}));
   } else if (method_call.method_name().compare("Utils.ExitNativeFullscreen") ==
              0) {
+    if (!registrar_->GetView()) {
+      result->Error("unavailable", "Native fullscreen requires a target view");
+      return;
+    }
     auto window =
         ::GetAncestor(registrar_->GetView()->GetNativeWindow(), GA_ROOT);
     Utils::ExitNativeFullscreen(window);

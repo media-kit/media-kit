@@ -5,212 +5,189 @@
 # Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 cmake_minimum_required(VERSION 3.14)
-cmake_policy(SET CMP0175 NEW)
 
-# This option is read by the other packages which are part of package:media_kit.
+# Other media_kit plugins read this option to find the native libraries.
 option(MEDIA_KIT_LIBS_AVAILABLE "package:media_kit libraries are available." ON)
 
 set(PROJECT_NAME "media_kit_libs_windows_video")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
-# Deal with MSVC incompatiblity
-add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
+# Use policies through CMake 3.25 when available.
+# Keep compatibility with CMake 3.14.
+cmake_policy(VERSION 3.14...3.25)
 
 # ------------------------------------------------------------------------------
-function(download_and_verify url md5 locationForArchive)
-  # Check if the archive exists.
+function(download_and_verify_sha256 url sha256 locationForArchive)
   if(EXISTS "${locationForArchive}")
-    file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+    file(SHA256 "${locationForArchive}" ARCHIVE_SHA256)
 
-    # If MD5 doesn't match, delete the archive to download again.
-    if(NOT md5 STREQUAL ARCHIVE_MD5)
+    if(NOT "${sha256}" STREQUAL "${ARCHIVE_SHA256}")
       file(REMOVE "${locationForArchive}")
-      message(STATUS "MD5 mismatch. File deleted.")
+      message(STATUS "SHA-256 mismatch. File deleted.")
     endif()
   endif()
 
-  # Download the archive if it doesn't exist.
   if(NOT EXISTS "${locationForArchive}")
     message(STATUS "Downloading archive from ${url}...")
-    file(DOWNLOAD "${url}" "${locationForArchive}")
-    message(STATUS "Downloaded archive to ${locationForArchive}.")
+    file(
+      DOWNLOAD
+      "${url}"
+      "${locationForArchive}"
+      EXPECTED_HASH "SHA256=${sha256}"
+      STATUS DOWNLOAD_STATUS
+    )
+    list(GET DOWNLOAD_STATUS 0 DOWNLOAD_STATUS_CODE)
+    list(GET DOWNLOAD_STATUS 1 DOWNLOAD_STATUS_MESSAGE)
 
-    # Verify MD5 of the newly downloaded file.
-    file(MD5 "${locationForArchive}" ARCHIVE_MD5)
-
-    if(md5 STREQUAL ARCHIVE_MD5)
-      message(STATUS "${locationForArchive} Verification successful.")
-    else()
-      message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to re-build project again.")
+    if(NOT DOWNLOAD_STATUS_CODE EQUAL 0)
+      file(REMOVE "${locationForArchive}")
+      message(
+        FATAL_ERROR
+        "Failed to download ${url}: ${DOWNLOAD_STATUS_MESSAGE}"
+      )
     endif()
   endif()
-endfunction()
 
-function(check_directory_exists_and_not_empty dir result_var)
-  # Check if the directory exists
-  if(EXISTS "${dir}")
-    # Check if the directory is not empty
-    file(GLOB dir_contents "${dir}/*")
+  file(SHA256 "${locationForArchive}" ARCHIVE_SHA256)
 
-    if(dir_contents)
-      set(${result_var} TRUE PARENT_SCOPE)
-    else()
-      set(${result_var} FALSE PARENT_SCOPE)
-      message(STATUS "Directory ${dir} exists but is empty!")
-    endif()
-  else()
-    set(${result_var} FALSE PARENT_SCOPE)
-    message(STATUS "Directory ${dir} does not exist!")
+  if(NOT "${sha256}" STREQUAL "${ARCHIVE_SHA256}")
+    message(
+      FATAL_ERROR
+      "${locationForArchive} SHA-256 verification failed."
+    )
   endif()
+
+  message(STATUS "${locationForArchive} SHA-256 verification successful.")
 endfunction()
 
-# Detect architecture and set appropriate libmpv archive
-if(${FLUTTER_TARGET_PLATFORM} STREQUAL "windows-x64")
-  set(LIBMPV_ARCH "x86_64")
-  set(LIBMPV "mpv-dev-x86_64-20241021-git-0f78584.7z")
-  set(LIBMPV_MD5 "6ecf18e85b093c3f7edb16f3ee6603f3")
-else()
-  set(LIBMPV_ARCH "aarch64")
-  set(LIBMPV "mpv-dev-aarch64-20241021-git-0f78584.7z")
-  set(LIBMPV_MD5 "5b507a35db13eee6cb7eb21e8be7c83d")
-endif()
-
-# Download URL for the libmpv archive from the latest release
-set(LIBMPV_URL "https://github.com/media-kit/libmpv-win32-video-cmake/releases/download/20241021/${LIBMPV}")
-
-# Download location of the libmpv archive.
-set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
-set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
-
-download_and_verify(
-  ${LIBMPV_URL}
-  ${LIBMPV_MD5}
-  ${LIBMPV_ARCHIVE}
-)
-
-check_directory_exists_and_not_empty(${LIBMPV_SRC} LIBMPV_SRC_VALID)
-
-# Find 7zip for extraction (preferred for .7z files)
+# Use 7-Zip if available. Otherwise, use CMake to extract the archive.
 find_program(SEVENZ_EXECUTABLE NAMES 7z 7za)
 
-# Extract the libmpv archive.
-if(NOT LIBMPV_SRC_VALID)
-  message(STATUS "Extracting ${LIBMPV}...")
-  make_directory("${LIBMPV_SRC}")
-  add_custom_target("${PROJECT_NAME}_LIBMPV_EXTRACT" ALL)
-  
-  if(SEVENZ_EXECUTABLE)
-    message(STATUS "Using 7zip for extraction: ${SEVENZ_EXECUTABLE}")
-    add_custom_command(
-      TARGET "${PROJECT_NAME}_LIBMPV_EXTRACT"
-      POST_BUILD
-      COMMAND "${SEVENZ_EXECUTABLE}" x -y "\"${LIBMPV_ARCHIVE}\""
-      COMMAND xcopy "\"${LIBMPV_SRC}/include/mpv\"" "\"${LIBMPV_SRC}/mpv\"" /E /H /C /I
-      COMMAND rmdir "\"${LIBMPV_SRC}/include\"" /S /Q
-      COMMAND ren "\"${LIBMPV_SRC}/mpv\"" "\"include\""
-      WORKING_DIRECTORY "${LIBMPV_SRC}"
-    )
-  else()
-    message(STATUS "7zip not found, falling back to CMake tar")
-    add_custom_command(
-      TARGET "${PROJECT_NAME}_LIBMPV_EXTRACT"
-      POST_BUILD
-      COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${LIBMPV_ARCHIVE}\""
-      COMMAND xcopy "\"${LIBMPV_SRC}/include/mpv\"" "\"${LIBMPV_SRC}/mpv\"" /E /H /C /I
-      COMMAND rmdir "\"${LIBMPV_SRC}/include\"" /S /Q
-      COMMAND ren "\"${LIBMPV_SRC}/mpv\"" "\"include\""
-      WORKING_DIRECTORY "${LIBMPV_SRC}"
-    )
-  endif()
+# Select the libmpv SDK for the target architecture.
+set(LIBMPV_RELEASE "20261123")
+set(LIBMPV_BUILD_DATE "20261123")
+set(LIBMPV_REVISION_SHORT "b0841e8c4d")
+
+if("${FLUTTER_TARGET_PLATFORM}" STREQUAL "windows-x64")
+  set(LIBMPV_ARCH "x86_64")
+  set(
+    LIBMPV_SHA256
+    "437191bc801cd6f9f87c24e79a7f4afd117d07f609d196184a031634bcc1dcd3"
+  )
+elseif("${FLUTTER_TARGET_PLATFORM}" STREQUAL "windows-arm64")
+  set(LIBMPV_ARCH "aarch64")
+  set(
+    LIBMPV_SHA256
+    "872992724225bc772353546acdc5ff0194f9d9013feb8b1960a7b7c76bbed738"
+  )
+else()
+  message(
+    FATAL_ERROR
+    "Unsupported FLUTTER_TARGET_PLATFORM for libmpv: "
+    "${FLUTTER_TARGET_PLATFORM}. Expected windows-x64 or windows-arm64."
+  )
 endif()
 
-# ------------------------------------------------------------------------------
-
-# ANGLE archive containing the pre-built shared libraries & headers.
-set(ANGLE "ANGLE.7z")
-
-# Download URL & MD5 hash of the ANGLE archive.
-set(ANGLE_URL "https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.1/ANGLE.7z")
-set(ANGLE_MD5 "e866f13e8d552348058afaafe869b1ed")
-
-# Download location of the ANGLE archive.
-set(ANGLE_ARCHIVE "${CMAKE_BINARY_DIR}/${ANGLE}")
-set(ANGLE_SRC "${CMAKE_BINARY_DIR}/ANGLE")
-
-download_and_verify(
-  ${ANGLE_URL}
-  ${ANGLE_MD5}
-  ${ANGLE_ARCHIVE}
+set(
+  LIBMPV
+  "mpv-dev-${LIBMPV_ARCH}-${LIBMPV_BUILD_DATE}-git-${LIBMPV_REVISION_SHORT}.7z"
+)
+set(
+  LIBMPV_URL
+  "https://github.com/media-kit/libmpv-win32-video-cmake/releases/download/${LIBMPV_RELEASE}/${LIBMPV}"
 )
 
-check_directory_exists_and_not_empty(${ANGLE_SRC} ANGLE_SRC_VALID)
+set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
+set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
+set(LIBMPV_INCLUDE_DIR "${LIBMPV_SRC}/include/mpv")
+set(LIBMPV_IMPORT_LIBRARY "${LIBMPV_SRC}/libmpv.dll.a")
+set(LIBMPV_RUNTIME_LIBRARY "${LIBMPV_SRC}/libmpv-2.dll")
 
-# Extract the ANGLE archive.
-if(NOT ANGLE_SRC_VALID)
-  message(STATUS "Extracting ${ANGLE}...")
-  make_directory("${ANGLE_SRC}")
-  add_custom_target("${PROJECT_NAME}_ANGLE_EXTRACT" ALL)
-  
-  if(SEVENZ_EXECUTABLE)
-    message(STATUS "Using 7zip for extraction: ${SEVENZ_EXECUTABLE}")
-    add_custom_command(
-      TARGET "${PROJECT_NAME}_ANGLE_EXTRACT"
-      POST_BUILD
-      COMMAND "${SEVENZ_EXECUTABLE}" x -y "\"${ANGLE_ARCHIVE}\""
-      WORKING_DIRECTORY "${ANGLE_SRC}"
-    )
-  else()
-    message(STATUS "7zip not found, falling back to CMake tar")
-    add_custom_command(
-      TARGET "${PROJECT_NAME}_ANGLE_EXTRACT"
-      COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${ANGLE_ARCHIVE}\""
-      WORKING_DIRECTORY "${ANGLE_SRC}"
-    )
-  endif()
+download_and_verify_sha256(
+  "${LIBMPV_URL}"
+  "${LIBMPV_SHA256}"
+  "${LIBMPV_ARCHIVE}"
+)
+
+set(
+  LIBMPV_REQUIRED_FILES
+  "${LIBMPV_INCLUDE_DIR}/client.h"
+  "${LIBMPV_INCLUDE_DIR}/render.h"
+  "${LIBMPV_INCLUDE_DIR}/render_d3d11.h"
+  "${LIBMPV_INCLUDE_DIR}/stream_cb.h"
+  "${LIBMPV_IMPORT_LIBRARY}"
+  "${LIBMPV_RUNTIME_LIBRARY}"
+)
+
+# Extract the verified SDK into an empty directory.
+message(STATUS "Extracting ${LIBMPV}...")
+file(REMOVE_RECURSE "${LIBMPV_SRC}")
+file(MAKE_DIRECTORY "${LIBMPV_SRC}")
+
+if(SEVENZ_EXECUTABLE)
+  message(STATUS "Using 7zip for extraction: ${SEVENZ_EXECUTABLE}")
+  execute_process(
+    COMMAND "${SEVENZ_EXECUTABLE}" x -y "${LIBMPV_ARCHIVE}"
+    WORKING_DIRECTORY "${LIBMPV_SRC}"
+    RESULT_VARIABLE LIBMPV_EXTRACT_RESULT
+    OUTPUT_VARIABLE LIBMPV_EXTRACT_OUTPUT
+    ERROR_VARIABLE LIBMPV_EXTRACT_ERROR
+  )
+else()
+  message(STATUS "7zip not found, falling back to CMake tar")
+  execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E tar xvf "${LIBMPV_ARCHIVE}"
+    WORKING_DIRECTORY "${LIBMPV_SRC}"
+    RESULT_VARIABLE LIBMPV_EXTRACT_RESULT
+    OUTPUT_VARIABLE LIBMPV_EXTRACT_OUTPUT
+    ERROR_VARIABLE LIBMPV_EXTRACT_ERROR
+  )
 endif()
 
+if(NOT LIBMPV_EXTRACT_RESULT EQUAL 0)
+  file(REMOVE_RECURSE "${LIBMPV_SRC}")
+  message(
+    FATAL_ERROR
+    "Failed to extract ${LIBMPV_ARCHIVE}:\n"
+    "${LIBMPV_EXTRACT_OUTPUT}\n${LIBMPV_EXTRACT_ERROR}"
+  )
+endif()
+
+foreach(LIBMPV_REQUIRED_FILE IN LISTS LIBMPV_REQUIRED_FILES)
+  if(NOT EXISTS "${LIBMPV_REQUIRED_FILE}")
+    file(REMOVE_RECURSE "${LIBMPV_SRC}")
+    message(
+      FATAL_ERROR
+      "libmpv archive is missing required file: ${LIBMPV_REQUIRED_FILE}"
+    )
+  endif()
+endforeach()
+
 # ------------------------------------------------------------------------------
+
+# Flutter uses this target name in its plugin build.
 set(PLUGIN_NAME "media_kit_libs_windows_video_plugin")
 
-add_library(
-  ${PLUGIN_NAME} SHARED
+add_library(${PLUGIN_NAME} SHARED
   "include/media_kit_libs_windows_video/media_kit_libs_windows_video_plugin_c_api.h"
   "media_kit_libs_windows_video_plugin_c_api.cpp"
 )
 
 apply_standard_settings(${PLUGIN_NAME})
 
-set_target_properties(
-  ${PLUGIN_NAME}
-  PROPERTIES
-  CXX_VISIBILITY_PRESET
-  hidden
-)
-target_compile_definitions(
-  ${PLUGIN_NAME}
-  PRIVATE
+set_target_properties(${PLUGIN_NAME} PROPERTIES
+  CXX_VISIBILITY_PRESET hidden)
+target_compile_definitions(${PLUGIN_NAME} PRIVATE
   FLUTTER_PLUGIN_IMPL
+  _DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR
 )
 
-target_include_directories(
-  ${PLUGIN_NAME} INTERFACE
-  "${CMAKE_CURRENT_SOURCE_DIR}/include"
-)
-target_link_libraries(
-  ${PLUGIN_NAME}
-  PRIVATE
-  flutter
-  flutter_wrapper_plugin
-)
+target_include_directories(${PLUGIN_NAME} INTERFACE
+  "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(${PLUGIN_NAME} PRIVATE flutter flutter_wrapper_plugin)
 
 set(
   media_kit_libs_windows_video_bundled_libraries
-  "${LIBMPV_SRC}/libmpv-2.dll"
-  "${ANGLE_SRC}/d3dcompiler_47.dll"
-  "${ANGLE_SRC}/libEGL.dll"
-  "${ANGLE_SRC}/libGLESv2.dll"
-  "${ANGLE_SRC}/vk_swiftshader.dll"
-  "${ANGLE_SRC}/vulkan-1.dll"
-  "${ANGLE_SRC}/zlib.dll"
+  "${LIBMPV_RUNTIME_LIBRARY}"
   PARENT_SCOPE
 )
