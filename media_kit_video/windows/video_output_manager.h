@@ -35,6 +35,7 @@ class VideoOutputManager {
       std::function<void(std::string)> completion);
 
   // Pass nullopt to use the video dimension for that axis.
+  // The rendering worker applies the size change even during pause.
   void SetSize(int64_t handle,
                std::optional<int64_t> width,
                std::optional<int64_t> height);
