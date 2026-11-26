@@ -8,13 +8,14 @@
 #ifndef MEDIA_KIT_VIDEO_PLUGIN_H_
 #define MEDIA_KIT_VIDEO_PLUGIN_H_
 
+#include <Windows.h>
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
-#include <Windows.h>
+#include <atomic>
 #include <functional>
-#include <queue>
-#include <mutex>
+#include <memory>
 
+#include "platform_task_runner.h"
 #include "video_output_manager.h"
 
 namespace media_kit_video {
@@ -27,29 +28,24 @@ class MediaKitVideoPlugin : public flutter::Plugin {
 
   virtual ~MediaKitVideoPlugin();
 
+  // Disallow copy and assign.
   MediaKitVideoPlugin(const MediaKitVideoPlugin&) = delete;
   MediaKitVideoPlugin& operator=(const MediaKitVideoPlugin&) = delete;
 
  private:
-  static constexpr UINT kMainThreadTaskMessage = WM_USER + 1001;
-
   void HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
 
+  // Posts callbacks to the platform thread independently of any Flutter view.
   void RunOnMainThread(std::function<void()> task);
-  static LRESULT CALLBACK WindowProcDelegate(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-  void ProcessMainThreadTasks();
-  
+
   flutter::PluginRegistrarWindows* registrar_ = nullptr;
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel_ =
       nullptr;
+  PlatformTaskRunner platform_tasks_;
   std::unique_ptr<VideoOutputManager> video_output_manager_ = nullptr;
-  HWND flutter_window_ = nullptr;
-  WNDPROC original_window_proc_ = nullptr;
-  std::queue<std::function<void()>> main_thread_tasks_;
-  std::mutex main_thread_tasks_mutex_;
-  static MediaKitVideoPlugin* instance_;
+  std::atomic<bool> shutting_down_{false};
 };
 
 }  // namespace media_kit_video

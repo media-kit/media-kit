@@ -9,454 +9,362 @@
 #include "video_output.h"
 
 #include <algorithm>
+#include <cstring>
+#include <iostream>
+#include <stdexcept>
 
-// Limit the frame size to 1080p in software rendering.
-// This is for performance reasons & to avoid allocating too much memory.
-#define SW_RENDERING_MAX_WIDTH 1920
-#define SW_RENDERING_MAX_HEIGHT 1080
-#define SW_RENDERING_PIXEL_BUFFER_SIZE \
-  (SW_RENDERING_MAX_WIDTH) * (SW_RENDERING_MAX_HEIGHT) * (4)
+namespace {
+// The software renderer scales the frame before rotation.
+// The GPU renderer applies rotation itself.
+void RotateSoftwareFrame(const uint8_t* source, uint8_t* destination,
+                         int width, int height, int clockwise) {
+  const int output_width = clockwise == 180 ? width : height;
+  for (int y = 0; y < height; ++y) {
+    int index;
+    int step;
+    if (clockwise == 90) {
+      index = height - 1 - y;
+      step = output_width;
+    } else if (clockwise == 270) {
+      index = (width - 1) * output_width + y;
+      step = -output_width;
+    } else {
+      index = (height - y) * output_width - 1;
+      step = -1;
+    }
+    for (int x = 0; x < width; ++x, index += step, source += 4)
+      std::memcpy(destination + index * 4, source, 4);
+  }
+}
+}  // namespace
 
 VideoOutput::VideoOutput(int64_t handle,
                          VideoOutputConfiguration configuration,
-                         flutter::PluginRegistrarWindows* registrar,
-                         ThreadPool* thread_pool_ref)
-    : handle_(reinterpret_cast<mpv_handle*>(handle)),
-      width_(configuration.width),
+                         flutter::TextureRegistrar* registrar,
+                         ThreadPool* thread_pool_ref,
+                         const std::atomic<bool>* shutting_down,
+                         IDXGIAdapter* adapter)
+    : width_(configuration.width),
       height_(configuration.height),
       configuration_(configuration),
+      handle_(reinterpret_cast<mpv_handle*>(handle)),
       registrar_(registrar),
-      thread_pool_ref_(thread_pool_ref) {
-  // The constructor must be invoked through the thread pool, because
-  // |ANGLESurfaceManager| & libmpv render context creation can conflict with
-  // the existing |Render| or |Resize| calls from another |VideoOutput|
-  // instances (which will result in access violation).
-  auto future = thread_pool_ref_->Post([&]() {
-    mpv_set_option_string(handle_, "video-sync", "audio");
-    mpv_set_option_string(handle_, "video-timing-offset", "0");
-    // First try to initialize video playback with hardware acceleration &
-    // |ANGLESurfaceManager|, use S/W API as fallback.
-    auto is_hardware_acceleration_enabled = false;
-    // Attempt to use H/W rendering.
-    if (configuration.enable_hardware_acceleration) {
-      try {
-        // OpenGL context needs to be set before |mpv_render_context_create|.
-        surface_manager_ = std::make_unique<ANGLESurfaceManager>(
-            static_cast<int32_t>(width_.value_or(1)),
-            static_cast<int32_t>(height_.value_or(1)));
-        surface_manager_->MakeCurrent(true);
-        Resize(width_.value_or(1), height_.value_or(1));
-        mpv_opengl_init_params gl_init_params{
-            [](auto, auto name) {
-              return reinterpret_cast<void*>(eglGetProcAddress(name));
-            },
-            nullptr,
-        };
-        mpv_render_param params[] = {
-            {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL},
-            {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, &gl_init_params},
-            {MPV_RENDER_PARAM_INVALID, nullptr},
-        };
-        // Create render context.
-        if (mpv_render_context_create(&render_context_, handle_, params) == 0) {
-          mpv_render_context_set_update_callback(
-              render_context_,
-              [](void* context) {
-                // Notify Flutter that a new frame is available. The actual
-                // rendering will take place in the |Render| method, which will
-                // be called by Flutter on the render thread.
-                auto that = reinterpret_cast<VideoOutput*>(context);
-                that->NotifyRender();
-              },
-              reinterpret_cast<void*>(this));
-          // Set flag to true, indicating that H/W rendering is supported.
-          is_hardware_acceleration_enabled = true;
-          std::cout << "media_kit: VideoOutput: Using H/W rendering."
+      thread_pool_ref_(thread_pool_ref),
+      shutting_down_(shutting_down) {
+  // All outputs share one worker for D3D11 and libmpv rendering.
+  auto future = thread_pool_ref_->Post([this, configuration, adapter]() {
+    try {
+      mpv_set_option_string(handle_, "video-sync", "audio");
+      mpv_set_option_string(handle_, "video-timing-offset", "0");
+      std::shared_ptr<D3D11SurfaceManager::Surface> first_target;
+      if (configuration.enable_hardware_acceleration) {
+        try {
+          surface_manager_ = std::make_unique<D3D11SurfaceManager>(adapter);
+          const auto size =
+              media_kit::ResolveVideoFrameSize(1, 1, 0, width_, height_, false)
+                  .value_or(media_kit::VideoFrameSize{1, 1});
+          first_target =
+              surface_manager_->CreateSurface(size.width, size.height);
+          mpv_d3d11_init_params init{surface_manager_->device()};
+          mpv_render_param params[] = {
+              {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_D3D11},
+              {MPV_RENDER_PARAM_D3D11_INIT_PARAMS, &init},
+              {MPV_RENDER_PARAM_INVALID, nullptr}};
+          const auto error =
+              mpv_render_context_create(&render_context_, handle_, params);
+          if (error < 0)
+            throw std::runtime_error(mpv_error_string(error));
+        } catch (const std::exception& error) {
+          std::cerr << "media_kit: D3D11 fallback: " << error.what()
                     << std::endl;
+          first_target.reset();
+          surface_manager_.reset();
         }
-      } catch (...) {
-        // Do nothing.
-        // Likely received an |std::runtime_error| from |ANGLESurfaceManager|,
-        // which indicates that H/W rendering is not supported.
       }
-    }
-    if (!is_hardware_acceleration_enabled) {
-      std::cout << "media_kit: VideoOutput: Using S/W rendering." << std::endl;
-      // Allocate a "large enough" buffer ahead of time.
-      pixel_buffer_ =
-          std::make_unique<uint8_t[]>(SW_RENDERING_PIXEL_BUFFER_SIZE);
-      Resize(width_.value_or(1), height_.value_or(1));
-      mpv_render_param params[] = {
-          {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_SW},
-          {MPV_RENDER_PARAM_INVALID, nullptr},
-      };
-      if (mpv_render_context_create(&render_context_, handle_, params) == 0) {
-        mpv_render_context_set_update_callback(
-            render_context_,
-            [](void* context) {
-              // Notify Flutter that a new frame is available. The actual
-              // rendering will take place in the |Render| method, which will be
-              // called by Flutter on the render thread.
-              auto that = reinterpret_cast<VideoOutput*>(context);
-              that->NotifyRender();
-            },
-            reinterpret_cast<void*>(this));
+      software_ = !surface_manager_;
+      if (software_) {
+        mpv_render_param params[] = {
+            {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_SW},
+            {MPV_RENDER_PARAM_INVALID, nullptr}};
+        const auto error =
+            mpv_render_context_create(&render_context_, handle_, params);
+        if (error < 0)
+          throw std::runtime_error(mpv_error_string(error));
       }
+      const auto size =
+          media_kit::ResolveVideoFrameSize(1, 1, 0, width_, height_, software_)
+              .value_or(media_kit::VideoFrameSize{1, 1});
+      Resize(size.width, size.height, std::move(first_target));
+      mpv_render_context_set_update_callback(
+          render_context_,
+          [](void* context) {
+            static_cast<VideoOutput*>(context)->NotifyRender();
+          },
+          this);
+      std::cout << "media_kit: VideoOutput: Using "
+                << (software_ ? "S/W" : "D3D11") << " rendering." << std::endl;
+    } catch (...) {
+      CleanUp();
+      throw;
     }
   });
-  future.wait();
+  // Wait for initialization. Report any error to the caller.
+  future.get();
 }
 
 VideoOutput::~VideoOutput() {
-  destroyed_ = true;
-  auto promise = std::promise<void>();
-  if (texture_id_) {
-    registrar_->texture_registrar()->UnregisterTexture(
-        texture_id_, [&, texture_id = texture_id_]() {
-          // Add one more task into the thread pool queue & exit the destructor
-          // only when it gets executed. This will ensure that all the tasks
-          // posted to the thread pool i.e. render or resize before this are
-          // executed (and won't reference the dead object anymore), most
-          // notably |CheckAndResize| & |Render|.
-          auto future = thread_pool_ref_->Post([&, id = texture_id]() {
-            std::cout << "media_kit: VideoOutput: Free Texture: " << id
-                      << std::endl;
-            std::cout << "VideoOutput::~VideoOutput: "
-                      << reinterpret_cast<int64_t>(handle_) << std::endl;
-            std::lock_guard<std::mutex> lock(textures_mutex_);
-            texture_variants_.clear();
-            // H/W
-            textures_.clear();
-            // S/W
-            pixel_buffer_textures_.clear();
-            // Free (call destructor) |ANGLESurfaceManager| through the thread
-            // pool. This will ensure synchronized EGL or ANGLE usage & won't
-            // conflict with |Render| or |CheckAndResize| of other
-            // |VideoOutput|s.
-            surface_manager_.reset(nullptr);
-            promise.set_value();
-          });
-        });
+  {
+    std::lock_guard<std::mutex> lock(notification_mutex_);
+    destroyed_ = true;
   }
+  // The worker finishes all accepted tasks before cleanup.
+  // The shutdown flag blocks new render requests.
+  // Unregister callbacks retain their own resources.
+  thread_pool_ref_->Post([this]() { CleanUp(); }).get();
+  for (auto& retirement : retirements_) {
+    while (retirement.wait_for(std::chrono::milliseconds(10)) !=
+           std::future_status::ready) {
+      if (shutting_down_ && shutting_down_->load())
+        break;
+    }
+  }
+}
 
-  promise.get_future().wait();
-  texture_id_ = 0;
+void VideoOutput::CleanUp() {
+  if (render_context_) {
+    mpv_render_context_set_update_callback(render_context_, nullptr, nullptr);
+    mpv_render_context_free(render_context_);
+    render_context_ = nullptr;
+  }
+  RetireTexture();
+  surface_manager_.reset();
+}
 
-  thread_pool_ref_->Post([render_context = render_context_]() {
-    mpv_render_context_free(render_context);
-  });
+void VideoOutput::RetireTexture() {
+  if (!texture_)
+    return;
+  auto retired = std::move(texture_);
+  auto completion = std::make_shared<std::promise<void>>();
+  retirements_.erase(
+      std::remove_if(retirements_.begin(), retirements_.end(),
+                     [](auto& future) {
+                       return future.wait_for(std::chrono::seconds(0)) ==
+                              std::future_status::ready;
+                     }),
+      retirements_.end());
+  retirements_.push_back(completion->get_future());
+  const auto id = retired->id;
+  registrar_->UnregisterTexture(
+      id, [retired = std::move(retired), completion]() mutable {
+        // Keep the callback, descriptors, and COM references alive until
+        // the engine releases this registration.
+        retired.reset();
+        completion->set_value();
+      });
 }
 
 void VideoOutput::NotifyRender() {
-  if (destroyed_) {
+  std::lock_guard<std::mutex> lock(notification_mutex_);
+  if (destroyed_ || render_queued_)
     return;
-  }
-  thread_pool_ref_->Post(std::bind(&VideoOutput::CheckAndResize, this));
-  thread_pool_ref_->Post(std::bind(&VideoOutput::Render, this));
+  thread_pool_ref_->Post([this]() {
+    {
+      std::lock_guard<std::mutex> notification_lock(notification_mutex_);
+      // Updates during this render may queue one more pass for this output.
+      render_queued_ = false;
+      if (destroyed_)
+        return;
+    }
+    try {
+      CheckAndResize();
+      Render();
+    } catch (const std::exception& error) {
+      std::cerr << "media_kit: VideoOutput render failed: " << error.what()
+                << std::endl;
+    }
+  });
+  render_queued_ = true;
 }
 
 void VideoOutput::Render() {
-  if (texture_id_) {
-    // H/W
-    if (surface_manager_ != nullptr) {
-      surface_manager_->Draw([&]() {
-        mpv_opengl_fbo fbo{
-            0,
-            surface_manager_->width(),
-            surface_manager_->height(),
-            0,
-        };
-        mpv_render_param params[]{
-            {MPV_RENDER_PARAM_OPENGL_FBO, &fbo},
-            {MPV_RENDER_PARAM_INVALID, nullptr},
-        };
-        mpv_render_context_render(render_context_, params);
-      });
+  if (!texture_ || !render_context_)
+    return;
+  const auto& frame = texture_->frame;
+  if (surface_manager_) {
+    auto target = std::move(frame->first_target);
+    if (!target)
+      target = surface_manager_->CreateSurface(frame->size.width,
+                                               frame->size.height);
+    mpv_d3d11_fbo fbo{target->texture.Get()};
+    mpv_render_param params[] = {{MPV_RENDER_PARAM_D3D11_FBO, &fbo},
+                                 {MPV_RENDER_PARAM_INVALID, nullptr}};
+    const auto error = mpv_render_context_render(render_context_, params);
+    if (error < 0)
+      throw std::runtime_error(mpv_error_string(error));
+    surface_manager_->WaitForWrites();
+    std::atomic_store(&frame->latest, std::move(target));
+  } else {
+    // Flutter releases this lock only after uploading the returned pixel data.
+    std::lock_guard<std::mutex> lock(frame->pixels_mutex);
+    const auto layout =
+        media_kit::GetSoftwareFrameLayout(frame->size, frame->pixels.size());
+    if (!layout)
+      throw std::runtime_error("Invalid software frame capacity");
+    int size[]{frame->size.width, frame->size.height};
+    size_t stride = layout->stride;
+    auto* pixels = frame->pixels.data();
+    if (software_rotation_) {
+      if (software_rotation_ != 180)
+        std::swap(size[0], size[1]);
+      stride = static_cast<size_t>(size[0]) * 4;
+      unrotated_pixels_.resize(layout->bytes);
+      pixels = unrotated_pixels_.data();
     }
-    // S/W
-    if (pixel_buffer_ != nullptr) {
-      int32_t size[]{
-          static_cast<int32_t>(pixel_buffer_textures_.at(texture_id_)->width),
-          static_cast<int32_t>(pixel_buffer_textures_.at(texture_id_)->height),
-      };
-      auto pitch = 4 * size[0];
-      mpv_render_param params[]{
-          {MPV_RENDER_PARAM_SW_SIZE, size},
-          {MPV_RENDER_PARAM_SW_FORMAT, "rgb0"},
-          {MPV_RENDER_PARAM_SW_STRIDE, &pitch},
-          {MPV_RENDER_PARAM_SW_POINTER, pixel_buffer_.get()},
-          {MPV_RENDER_PARAM_INVALID, nullptr},
-      };
-      mpv_render_context_render(render_context_, params);
-    }
-    try {
-      // Notify Flutter that a new frame is available.
-      registrar_->texture_registrar()->MarkTextureFrameAvailable(texture_id_);
-    } catch (...) {
-      // Prevent any redundant exceptions if the texture is unregistered etc.
-    }
+    mpv_render_param params[] = {
+        {MPV_RENDER_PARAM_SW_SIZE, size},
+        {MPV_RENDER_PARAM_SW_FORMAT, "rgb0"},
+        {MPV_RENDER_PARAM_SW_STRIDE, &stride},
+        {MPV_RENDER_PARAM_SW_POINTER, pixels},
+        {MPV_RENDER_PARAM_INVALID, nullptr}};
+    const auto error = mpv_render_context_render(render_context_, params);
+    if (error < 0)
+      throw std::runtime_error(mpv_error_string(error));
+    if (software_rotation_)
+      RotateSoftwareFrame(pixels, frame->pixels.data(), size[0], size[1],
+                          software_rotation_);
   }
+  registrar_->MarkTextureFrameAvailable(texture_->id);
 }
 
 void VideoOutput::SetTextureUpdateCallback(
     std::function<void(int64_t, int64_t, int64_t)> callback) {
-  texture_update_callback_ = callback;
-  texture_update_callback_(texture_id_, GetVideoWidth(), GetVideoHeight());
+  thread_pool_ref_
+      ->Post([this, callback = std::move(callback)]() {
+        texture_update_callback_ = callback;
+        const auto size = GetVideoSize();
+        texture_update_callback_(texture_->id, size ? size->width : 0,
+                                 size ? size->height : 0);
+      })
+      .get();
 }
 
 void VideoOutput::SetSize(std::optional<int64_t> width,
                           std::optional<int64_t> height) {
-  thread_pool_ref_->Post([&, width, height]() {
-    if (width.has_value()) {
-      // H/W
-      if (surface_manager_ != nullptr) {
-        width_ = width.value();
-      }
-      // S/W
-      if (pixel_buffer_ != nullptr) {
-        // Limit width if software rendering is being used.
-        width_ = std::clamp(width.value(), static_cast<int64_t>(0),
-                            static_cast<int64_t>(SW_RENDERING_MAX_WIDTH));
-      }
-    } else {
-      width_ = std::nullopt;
-    }
-    if (height.has_value()) {
-      // H/W
-      if (surface_manager_ != nullptr) {
-        height_ = height.value();
-      }
-      // S/W
-      if (pixel_buffer_ != nullptr) {
-        // Limit width if software rendering is being used.
-        height_ = std::clamp(height.value(), static_cast<int64_t>(0),
-                             static_cast<int64_t>(SW_RENDERING_MAX_HEIGHT));
-      }
-    } else {
-      height_ = std::nullopt;
+  thread_pool_ref_->Post([this, width, height]() {
+    if (destroyed_)
+      return;
+    width_ = width;
+    height_ = height;
+    // A paused player may never issue another update callback.
+    try {
+      CheckAndResize();
+      Render();
+    } catch (const std::exception& error) {
+      std::cerr << "media_kit: VideoOutput resize failed: " << error.what()
+                << std::endl;
     }
   });
 }
 
 void VideoOutput::CheckAndResize() {
-  // Check if a new texture with different dimensions is needed.
-  auto required_width = GetVideoWidth(), required_height = GetVideoHeight();
-  if (required_width < 1 || required_height < 1) {
-    // Invalid.
+  const auto size = GetVideoSize();
+  if (!size)
     return;
-  }
-  int64_t current_width = -1, current_height = -1;
-  if (surface_manager_ != nullptr) {
-    current_width = surface_manager_->width();
-    current_height = surface_manager_->height();
-  }
-  if (pixel_buffer_ != nullptr) {
-    current_width = pixel_buffer_textures_.at(texture_id_)->width;
-    current_height = pixel_buffer_textures_.at(texture_id_)->height;
-  }
-  // Currently rendered video output dimensions.
-  // Either H/W or S/W rendered.
-  assert(current_width > 0);
-  assert(current_height > 0);
-  if (required_width == current_width && required_height == current_height) {
-    // No creation of new texture required.
+  if (texture_ && texture_->frame->size.width == size->width &&
+      texture_->frame->size.height == size->height)
     return;
-  }
-  Resize(required_width, required_height);
+  Resize(size->width, size->height);
 }
 
-void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
-  std::cout << required_width << " " << required_height << std::endl;
-  // Unregister previously registered texture & delete underlying objects.
-  if (texture_id_) {
-    registrar_->texture_registrar()->UnregisterTexture(
-        texture_id_, [&, id = texture_id_]() {
-          if (id) {
-            std::cout << "media_kit: VideoOutput: Free Texture: " << id
-                      << std::endl;
-            std::lock_guard<std::mutex> lock(textures_mutex_);
-            if (destroyed_) {
-              return;
-            }
-            if (texture_variants_.find(id) != texture_variants_.end()) {
-              texture_variants_.erase(id);
-            }
-            // H/W
-            if (textures_.find(id) != textures_.end()) {
-              textures_.erase(id);
-            }
-            // S/W
-            if (pixel_buffer_textures_.find(id) !=
-                pixel_buffer_textures_.end()) {
-              pixel_buffer_textures_.erase(id);
-            }
-          }
-        });
-    texture_id_ = 0;
-  }
-  // H/W
-  if (surface_manager_ != nullptr) {
-    // Destroy internal ID3D11Texture2D & EGLSurface & create new with updated
-    // dimensions while preserving previous EGLDisplay & EGLContext.
-    surface_manager_->SetSize(static_cast<int32_t>(required_width),
-                              static_cast<int32_t>(required_height));
-    auto texture = std::make_unique<FlutterDesktopGpuSurfaceDescriptor>();
-    texture->struct_size = sizeof(FlutterDesktopGpuSurfaceDescriptor);
-    texture->handle = surface_manager_->handle();
-    texture->width = texture->visible_width = surface_manager_->width();
-    texture->height = texture->visible_height = surface_manager_->height();
-    texture->release_context = nullptr;
-    texture->release_callback = [](void*) {};
-    texture->format = kFlutterDesktopPixelFormatBGRA8888;
-    auto texture_variant =
+void VideoOutput::Resize(
+    int64_t required_width,
+    int64_t required_height,
+    std::shared_ptr<D3D11SurfaceManager::Surface> first_target) {
+  auto next = std::make_shared<TextureRegistration>();
+  auto frame = std::make_shared<Frame>();
+  frame->size = {static_cast<int32_t>(required_width),
+                 static_cast<int32_t>(required_height)};
+  next->frame = frame;
+  const auto register_texture = [&]() {
+    next->id = registrar_->RegisterTexture(next->variant.get());
+    if (next->id < 0)
+      throw std::runtime_error("Flutter texture registration failed");
+  };
+  if (surface_manager_) {
+    // Allocate the new surface before replacing the current registration.
+    frame->first_target = first_target
+                              ? std::move(first_target)
+                              : surface_manager_->CreateSurface(
+                                    frame->size.width, frame->size.height);
+    auto& descriptor = frame->gpu_descriptor;
+    descriptor.struct_size = sizeof(descriptor);
+    descriptor.width = descriptor.visible_width = frame->size.width;
+    descriptor.height = descriptor.visible_height = frame->size.height;
+    descriptor.format = kFlutterDesktopPixelFormatBGRA8888;
+    next->variant =
         std::make_unique<flutter::TextureVariant>(flutter::GpuSurfaceTexture(
-            kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle, [&](auto, auto) {
-              std::lock_guard<std::mutex> lock(textures_mutex_);
-              if (texture_id_) {
-                surface_manager_->Read();
-                return textures_.at(texture_id_).get();
-              } else {
-                return (FlutterDesktopGpuSurfaceDescriptor*)nullptr;
-              }
+            kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle,
+            [frame](auto, auto) -> const FlutterDesktopGpuSurfaceDescriptor* {
+              frame->imported = std::atomic_load(&frame->latest);
+              if (!frame->imported)
+                return nullptr;
+              frame->gpu_descriptor.handle = frame->imported->handle;
+              return &frame->gpu_descriptor;
             }));
-    // Register new texture.
-    texture_id_ =
-        registrar_->texture_registrar()->RegisterTexture(texture_variant.get());
-    std::cout << "media_kit: VideoOutput: Create Texture: " << texture_id_
-              << std::endl;
-    std::lock_guard<std::mutex> lock(textures_mutex_);
-    textures_.emplace(std::make_pair(texture_id_, std::move(texture)));
-    texture_variants_.emplace(
-        std::make_pair(texture_id_, std::move(texture_variant)));
-    // Notify public texture update callback.
-    texture_update_callback_(texture_id_, required_width, required_height);
-  }
-  // S/W
-  if (pixel_buffer_ != nullptr) {
-    auto pixel_buffer_texture = std::make_unique<FlutterDesktopPixelBuffer>();
-    pixel_buffer_texture->buffer = pixel_buffer_.get();
-    pixel_buffer_texture->width = required_width;
-    pixel_buffer_texture->height = required_height;
-    pixel_buffer_texture->release_context = nullptr;
-    pixel_buffer_texture->release_callback = [](void*) {};
-    auto texture_variant = std::make_unique<flutter::TextureVariant>(
-        flutter::PixelBufferTexture([&](auto, auto) {
-          std::lock_guard<std::mutex> lock(textures_mutex_);
-          if (texture_id_) {
-            return pixel_buffer_textures_.at(texture_id_).get();
-          } else {
-            return (FlutterDesktopPixelBuffer*)nullptr;
-          }
+    register_texture();
+  } else {
+    const auto layout = media_kit::GetSoftwareFrameLayout(
+        frame->size, media_kit::kSoftwareBufferCapacity);
+    if (!layout)
+      throw std::runtime_error("Invalid software texture size");
+    frame->pixels.resize(layout->bytes);
+    auto& descriptor = frame->pixel_descriptor;
+    descriptor.buffer = frame->pixels.data();
+    descriptor.width = frame->size.width;
+    descriptor.height = frame->size.height;
+    descriptor.release_context = frame.get();
+    descriptor.release_callback = [](void* context) {
+      static_cast<Frame*>(context)->pixels_mutex.unlock();
+    };
+    next->variant = std::make_unique<flutter::TextureVariant>(
+        flutter::PixelBufferTexture([frame](auto, auto) {
+          frame->pixels_mutex.lock();
+          return &frame->pixel_descriptor;
         }));
-    // Register new texture.
-    texture_id_ =
-        registrar_->texture_registrar()->RegisterTexture(texture_variant.get());
-    std::cout << "media_kit: VideoOutput: Create Texture: " << texture_id_
-              << std::endl;
-    std::lock_guard<std::mutex> lock(textures_mutex_);
-    pixel_buffer_textures_.emplace(
-        std::make_pair(texture_id_, std::move(pixel_buffer_texture)));
-    texture_variants_.emplace(
-        std::make_pair(texture_id_, std::move(texture_variant)));
-    // Notify public texture update callback.
-    texture_update_callback_(texture_id_, required_width, required_height);
+    register_texture();
   }
+  // The new callback owns its resources before Flutter can call it.
+  RetireTexture();
+  texture_ = std::move(next);
+  texture_update_callback_(texture_->id, required_width, required_height);
 }
-
-int64_t VideoOutput::GetVideoWidth() {
-  // Fixed width.
-  if (width_) {
-    return width_.value();
-  }
-  // Video resolution dependent width.
-  int64_t width = 0;
-  int64_t height = 0;
-
-  mpv_node params;
-  mpv_get_property(handle_, "video-out-params", MPV_FORMAT_NODE, &params);
-
+std::optional<media_kit::VideoFrameSize> VideoOutput::GetVideoSize() {
   int64_t dw = 0, dh = 0, rotate = 0;
-  if (params.format == MPV_FORMAT_NODE_MAP) {
-    for (int32_t i = 0; i < params.u.list->num; i++) {
-      char* key = params.u.list->keys[i];
-      auto value = params.u.list->values[i];
-      if (value.format == MPV_FORMAT_INT64) {
-        if (strcmp(key, "dw") == 0) {
-          dw = value.u.int64;
-        }
-        if (strcmp(key, "dh") == 0) {
-          dh = value.u.int64;
-        }
-        if (strcmp(key, "rotate") == 0) {
-          rotate = value.u.int64;
+  // Read both dimensions from the same mpv property.
+  // mpv can omit this property before playback or for audio-only media.
+  mpv_node params{};
+  if (mpv_get_property(handle_, "video-out-params", MPV_FORMAT_NODE, &params) >=
+      0) {
+    if (params.format == MPV_FORMAT_NODE_MAP && params.u.list != nullptr) {
+      for (int32_t i = 0; i < params.u.list->num; ++i) {
+        const char* key = params.u.list->keys[i];
+        const auto& value = params.u.list->values[i];
+        if (key != nullptr && value.format == MPV_FORMAT_INT64) {
+          if (strcmp(key, "dw") == 0)
+            dw = value.u.int64;
+          if (strcmp(key, "dh") == 0)
+            dh = value.u.int64;
+          if (strcmp(key, "rotate") == 0)
+            rotate = value.u.int64;
         }
       }
     }
     mpv_free_node_contents(&params);
   }
-
-  width = rotate == 0 || rotate == 180 ? dw : dh;
-  height = rotate == 0 || rotate == 180 ? dh : dw;
-
-  if (pixel_buffer_ != nullptr) {
-    // Make sure |width| & |height| fit between |SW_RENDERING_MAX_WIDTH| &
-    // |SW_RENDERING_MAX_HEIGHT| while maintaining aspect-ratio.
-    if (width >= SW_RENDERING_MAX_WIDTH) {
-      return SW_RENDERING_MAX_WIDTH;
-    }
-    if (height >= SW_RENDERING_MAX_HEIGHT) {
-      return width / height * SW_RENDERING_MAX_HEIGHT;
-    }
+  if (software_) {
+    const int angle = static_cast<int>((rotate % 360 + 360) % 360);
+    software_rotation_ = angle % 90 == 0 ? angle : 0;
   }
-
-  return width;
-}
-
-int64_t VideoOutput::GetVideoHeight() {
-  // Fixed height.
-  if (height_) {
-    return height_.value();
-  }
-  // Video resolution dependent height.
-  int64_t width = 0;
-  int64_t height = 0;
-
-  mpv_node params;
-  mpv_get_property(handle_, "video-out-params", MPV_FORMAT_NODE, &params);
-
-  int64_t dw = 0, dh = 0, rotate = 0;
-  if (params.format == MPV_FORMAT_NODE_MAP) {
-    for (int32_t i = 0; i < params.u.list->num; i++) {
-      char* key = params.u.list->keys[i];
-      auto value = params.u.list->values[i];
-      if (value.format == MPV_FORMAT_INT64) {
-        if (strcmp(key, "dw") == 0) {
-          dw = value.u.int64;
-        }
-        if (strcmp(key, "dh") == 0) {
-          dh = value.u.int64;
-        }
-        if (strcmp(key, "rotate") == 0) {
-          rotate = value.u.int64;
-        }
-      }
-    }
-    mpv_free_node_contents(&params);
-  }
-
-  width = rotate == 0 || rotate == 180 ? dw : dh;
-  height = rotate == 0 || rotate == 180 ? dh : dw;
-
-  if (pixel_buffer_ != NULL) {
-    // Make sure |width| & |height| fit between |SW_RENDERING_MAX_WIDTH| &
-    // |SW_RENDERING_MAX_HEIGHT| while maintaining aspect-ratio.
-    if (height >= SW_RENDERING_MAX_HEIGHT) {
-      return SW_RENDERING_MAX_HEIGHT;
-    }
-    if (width >= SW_RENDERING_MAX_WIDTH) {
-      return height / width * SW_RENDERING_MAX_WIDTH;
-    }
-  }
-
-  return height;
+  return media_kit::ResolveVideoFrameSize(dw, dh, rotate, width_, height_,
+                                          software_);
 }

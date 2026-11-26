@@ -75,18 +75,31 @@ class VideoController {
         const VideoControllerConfiguration(),
   }) {
     player.platform?.isVideoControllerAttached = true;
-
+    platform.future.ignore();
     () async {
       final completer = Completer();
       WidgetsBinding.instance.addPostFrameCallback((_) => completer.complete());
-      await completer.future;
-
       try {
+        final disposing = player.platform?.disposeRequested;
+        await Future.any([
+          completer.future,
+          if (disposing != null)
+            disposing.future.then((_) {
+              throw StateError(
+                  'Video controller creation cancelled by dispose');
+            }),
+        ]);
+        if (disposing?.isCompleted ?? false) {
+          throw StateError('Player is disposing');
+        }
         if (NativeVideoController.supported) {
           final result = await NativeVideoController.create(
             player,
             configuration,
           );
+          if (disposing?.isCompleted ?? false) {
+            throw StateError('Player is disposing');
+          }
           platform.complete(result);
           notifier.value = result;
         } else if (AndroidVideoController.supported) {
@@ -94,13 +107,16 @@ class VideoController {
             player,
             configuration,
           );
+          if (disposing?.isCompleted ?? false) {
+            throw StateError('Player is disposing');
+          }
           platform.complete(result);
           notifier.value = result;
         } else if (WebVideoController.supported) {
-          final result = await WebVideoController.create(
-            player,
-            configuration,
-          );
+          final result = await WebVideoController.create(player, configuration);
+          if (disposing?.isCompleted ?? false) {
+            throw StateError('Player is disposing');
+          }
           platform.complete(result);
           notifier.value = result;
         }
@@ -128,7 +144,9 @@ class VideoController {
           );
         }
       } catch (exception, stacktrace) {
-        platform.completeError(exception);
+        if (!platform.isCompleted) {
+          platform.completeError(exception, stacktrace);
+        }
         debugPrint(exception.toString());
         debugPrint(stacktrace.toString());
       }

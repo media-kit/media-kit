@@ -58,7 +58,7 @@ class InitializerIsolate {
         } else if (!completer.isCompleted && message is int) {
           handle = Pointer.fromAddress(message);
           // Intialiation complete.
-          completer.complete();
+          if (!completer.isCompleted) completer.complete();
         }
         // Forward events to the supplied callback.
         else if (message != null) {
@@ -122,13 +122,13 @@ class InitializerIsolate {
           options = message;
         } else if (message is String) {
           mpv = generated.MPV(DynamicLibrary.open(message));
-          completer.complete();
+          if (!completer.isCompleted) completer.complete();
         } else if (message is bool) {
-          completer.complete();
+          if (!completer.isCompleted) completer.complete();
         } else if (message == null) {
           if (handle != null) {
             disposed = true;
-            completer.complete();
+            if (!completer.isCompleted) completer.complete();
           }
         }
       },

@@ -64,13 +64,13 @@ class InitializerNativeCallable {
     // Clear the wakeup callback in libmpv before closing NativeCallable
     // to prevent libmpv from invoking a deleted callback
     mpv.mpv_set_wakeup_callback(ctx, nullptr, nullptr);
-    
+
     _wakeUpNativeCallables.remove(ctx.address)?.close();
   }
 
   void _callback(Pointer<generated.mpv_handle> ctx) {
     _locks[ctx.address]?.synchronized(() async {
-      while (true) {
+      while (_eventCallbacks.containsKey(ctx.address)) {
         final event = mpv.mpv_wait_event(ctx, 0);
         if (event == nullptr) return;
         if (event.ref.event_id == generated.mpv_event_id.MPV_EVENT_NONE) return;
