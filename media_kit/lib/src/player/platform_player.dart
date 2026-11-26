@@ -1,45 +1,45 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:meta/meta.dart';
-import 'package:collection/collection.dart';
 
-import 'package:media_kit/src/models/track.dart';
-import 'package:media_kit/src/models/playable.dart';
-import 'package:media_kit/src/models/playlist.dart';
-import 'package:media_kit/src/models/player_log.dart';
-import 'package:media_kit/src/models/media/media.dart';
+import 'package:collection/collection.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
-import 'package:media_kit/src/models/video_params.dart';
+import 'package:media_kit/src/models/media/media.dart';
+import 'package:media_kit/src/models/playable.dart';
+import 'package:media_kit/src/models/player_log.dart';
 import 'package:media_kit/src/models/player_state.dart';
-import 'package:media_kit/src/models/playlist_mode.dart';
 import 'package:media_kit/src/models/player_stream.dart';
+import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/playlist_mode.dart';
+import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/video_params.dart';
+import 'package:meta/meta.dart';
 
 /// {@template platform_player}
 /// PlatformPlayer
 /// --------------
 ///
-/// This class provides the interface for platform specific [Player] implementations.
+/// This class provides the interface for platform specific `Player` implementations.
 /// The platform specific implementations are expected to implement the methods accordingly.
 ///
-/// The subclasses are then used in composition with the [Player] class, based on the platform the application is running on.
+/// The subclasses are then used in composition with the `Player` class, based on the platform the application is running on.
 ///
 /// {@endtemplate}
 abstract class PlatformPlayer {
   /// {@macro platform_player}
   PlatformPlayer({required this.configuration});
 
-  /// User defined configuration for [Player].
+  /// User defined configuration for `Player`.
   final PlayerConfiguration configuration;
 
   /// Current state of the player.
-  late PlayerState state = PlayerState();
+  late PlayerState state = const PlayerState();
 
   /// Current state of the player available as listenable [Stream]s.
   late PlayerStream stream = PlayerStream(
@@ -61,12 +61,8 @@ abstract class PlatformPlayer {
     volumeController.stream.distinct(
       (previous, current) => previous == current,
     ),
-    rateController.stream.distinct(
-      (previous, current) => previous == current,
-    ),
-    pitchController.stream.distinct(
-      (previous, current) => previous == current,
-    ),
+    rateController.stream.distinct((previous, current) => previous == current),
+    pitchController.stream.distinct((previous, current) => previous == current),
     bufferingController.stream.distinct(
       (previous, current) => previous == current,
     ),
@@ -93,144 +89,109 @@ abstract class PlatformPlayer {
       (previous, current) => previous == current,
     ),
     audioDevicesController.stream.distinct(
-      (previous, current) => ListEquality().equals(previous, current),
+      (previous, current) => const ListEquality().equals(previous, current),
     ),
-    trackController.stream.distinct(
-      (previous, current) => previous == current,
-    ),
+    trackController.stream.distinct((previous, current) => previous == current),
     tracksController.stream.distinct(
       (previous, current) => previous == current,
     ),
-    widthController.stream.distinct(
-      (previous, current) => previous == current,
-    ),
+    widthController.stream.distinct((previous, current) => previous == current),
     heightController.stream.distinct(
       (previous, current) => previous == current,
     ),
     subtitleController.stream.distinct(
-      (previous, current) => ListEquality().equals(previous, current),
+      (previous, current) => const ListEquality().equals(previous, current),
     ),
-    logController.stream.distinct(
-      (previous, current) => previous == current,
-    ),
+    logController.stream.distinct((previous, current) => previous == current),
     /* ERROR STREAM SHOULD NOT BE DISTINCT */
     errorController.stream,
   );
 
   @mustCallSuper
   Future<void> dispose() async {
-    await Future.wait(
-      [
-        playlistController.close(),
-        playingController.close(),
-        completedController.close(),
-        positionController.close(),
-        durationController.close(),
-        volumeController.close(),
-        rateController.close(),
-        pitchController.close(),
-        bufferingController.close(),
-        bufferingPercentageController.close(),
-        bufferController.close(),
-        playlistModeController.close(),
-        shuffleController.close(),
-        audioParamsController.close(),
-        videoParamsController.close(),
-        audioBitrateController.close(),
-        audioDeviceController.close(),
-        audioDevicesController.close(),
-        trackController.close(),
-        tracksController.close(),
-        widthController.close(),
-        heightController.close(),
-        subtitleController.close(),
-        logController.close(),
-        errorController.close(),
-      ],
-    );
-    for (final callback in release) {
+    await Future.wait([
+      playlistController.close(),
+      playingController.close(),
+      completedController.close(),
+      positionController.close(),
+      durationController.close(),
+      volumeController.close(),
+      rateController.close(),
+      pitchController.close(),
+      bufferingController.close(),
+      bufferingPercentageController.close(),
+      bufferController.close(),
+      playlistModeController.close(),
+      shuffleController.close(),
+      audioParamsController.close(),
+      videoParamsController.close(),
+      audioBitrateController.close(),
+      audioDeviceController.close(),
+      audioDevicesController.close(),
+      trackController.close(),
+      tracksController.close(),
+      widthController.close(),
+      heightController.close(),
+      subtitleController.close(),
+      logController.close(),
+      errorController.close(),
+    ]);
+    for (final Future<void> Function() callback in List.of(release)) {
       try {
         await callback.call();
-      } catch (exception, stacktrace) {
-        print(exception.toString());
-        print(stacktrace.toString());
+      } on Object catch (exception, stacktrace) {
+        print(exception);
+        print(stacktrace);
       }
     }
   }
 
-  Future<void> open(
-    Playable playable, {
-    bool play = true,
-  }) {
-    throw UnimplementedError(
-      '[PlatformPlayer.open] is not implemented',
-    );
+  Future<void> open(Playable playable, {bool play = true}) {
+    throw UnimplementedError('[PlatformPlayer.open] is not implemented');
   }
 
   Future<void> stop() {
-    throw UnimplementedError(
-      '[PlatformPlayer.stop] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.stop] is not implemented');
   }
 
   Future<void> play() {
-    throw UnimplementedError(
-      '[PlatformPlayer.play] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.play] is not implemented');
   }
 
   Future<void> pause() {
-    throw UnimplementedError(
-      '[PlatformPlayer.pause] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.pause] is not implemented');
   }
 
   Future<void> playOrPause() {
-    throw UnimplementedError(
-      '[PlatformPlayer.playOrPause] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.playOrPause] is not implemented');
   }
 
   Future<void> add(Media media) {
-    throw UnimplementedError(
-      '[PlatformPlayer.add] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.add] is not implemented');
   }
 
   Future<void> remove(int index) {
-    throw UnimplementedError(
-      '[PlatformPlayer.remove] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.remove] is not implemented');
   }
 
   Future<void> next() {
-    throw UnimplementedError(
-      '[PlatformPlayer.next] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.next] is not implemented');
   }
 
   Future<void> previous() {
-    throw UnimplementedError(
-      '[PlatformPlayer.previous] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.previous] is not implemented');
   }
 
   Future<void> jump(int index) {
-    throw UnimplementedError(
-      '[PlatformPlayer.jump] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.jump] is not implemented');
   }
 
   Future<void> move(int from, int to) {
-    throw UnimplementedError(
-      '[PlatformPlayer.move] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.move] is not implemented');
   }
 
   Future<void> seek(Duration duration) {
-    throw UnimplementedError(
-      '[PlatformPlayer.seek] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.seek] is not implemented');
   }
 
   Future<void> setPlaylistMode(PlaylistMode playlistMode) {
@@ -240,27 +201,19 @@ abstract class PlatformPlayer {
   }
 
   Future<void> setVolume(double volume) {
-    throw UnimplementedError(
-      '[PlatformPlayer.volume] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.volume] is not implemented');
   }
 
   Future<void> setRate(double rate) {
-    throw UnimplementedError(
-      '[PlatformPlayer.rate] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.rate] is not implemented');
   }
 
   Future<void> setPitch(double pitch) {
-    throw UnimplementedError(
-      '[PlatformPlayer.pitch] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.pitch] is not implemented');
   }
 
   Future<void> setShuffle(bool shuffle) {
-    throw UnimplementedError(
-      '[PlatformPlayer.shuffle] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.shuffle] is not implemented');
   }
 
   Future<void> setAudioDevice(AudioDevice audioDevice) {
@@ -287,18 +240,15 @@ abstract class PlatformPlayer {
     );
   }
 
-  Future<Uint8List?> screenshot(
-      {String? format = 'image/jpeg',
-      bool includeLibassSubtitles = false}) async {
-    throw UnimplementedError(
-      '[PlatformPlayer.screenshot] is not implemented',
-    );
+  Future<Uint8List?> screenshot({
+    String? format = 'image/jpeg',
+    bool includeLibassSubtitles = false,
+  }) async {
+    throw UnimplementedError('[PlatformPlayer.screenshot] is not implemented');
   }
 
   Future<int> get handle {
-    throw UnimplementedError(
-      '[PlatformPlayer.handle] is not implemented',
-    );
+    throw UnimplementedError('[PlatformPlayer.handle] is not implemented');
   }
 
   @protected
@@ -409,18 +359,22 @@ abstract class PlatformPlayer {
 
   // --------------------------------------------------
 
-  /// [bool] for signaling [VideoController] (from `package:media_kit_video`) initialization.
+  /// [bool] for signaling `VideoController` (from `package:media_kit_video`) initialization.
   bool isVideoControllerAttached = false;
 
-  /// [Completer] for signaling [VideoController] (from `package:media_kit_video`) initialization.
+  /// [Completer] for signaling `VideoController` (from `package:media_kit_video`) initialization.
   final Completer<void> videoControllerCompleter = Completer<void>();
 
-  /// [Future<void>] to wait for [VideoController] (from `package:media_kit_video`) initialization.
+  /// Signals the start of disposal so attached controllers can cancel creation.
+  /// This is distinct from completion of native resource cleanup.
+  final Completer<void> disposeRequested = Completer<void>();
+
+  /// [Future<void>] to wait for `VideoController` (from `package:media_kit_video`) initialization.
   Future<void> get waitForVideoControllerInitializationIfAttached {
     if (isVideoControllerAttached) {
       return videoControllerCompleter.future;
     }
-    return Future.value(null);
+    return Future.value();
   }
 
   // --------------------------------------------------
@@ -433,10 +387,38 @@ abstract class PlatformPlayer {
 ///
 /// PlayerConfiguration
 /// --------------------
-/// Configurable options for customizing the [Player] behavior.
+/// Configurable options for customizing the `Player` behavior.
 ///
 /// {@endtemplate}
 class PlayerConfiguration {
+  /// {@macro player_configuration}
+  const PlayerConfiguration({
+    this.vo = 'null',
+    this.osc = false,
+    this.pitch = false,
+    this.title = 'package:media_kit',
+    this.ready,
+    this.muted = false,
+    this.async = true,
+    this.libass = false,
+    this.libassAndroidFont,
+    this.libassAndroidFontName,
+    this.logLevel = MPVLogLevel.error,
+    this.bufferSize = 32 * 1024 * 1024,
+    this.protocolWhitelist = const [
+      'udp',
+      'rtp',
+      'tcp',
+      'tls',
+      'data',
+      'file',
+      'http',
+      'https',
+      'crypto',
+    ],
+    this.iosManageAudioSession = true,
+  });
+
   /// Sets the video output driver for native backend.
   ///
   /// Default: `null`.
@@ -464,12 +446,12 @@ class PlayerConfiguration {
   /// Default: `null`.
   final String title;
 
-  /// Optional callback invoked when the internals of the [Player] are initialized & ready for playback.
+  /// Optional callback invoked when the internals of the `Player` are initialized & ready for playback.
   ///
   /// Default: `null`.
   final void Function()? ready;
 
-  /// Whether [Player] must be started in muted state.
+  /// Whether `Player` must be started in muted state.
   ///
   /// Default: `false`.
   final bool muted;
@@ -514,7 +496,7 @@ class PlayerConfiguration {
   /// Learn more: https://ffmpeg.org/ffmpeg-protocols.html#Protocol-Options
   final List<String> protocolWhitelist;
 
-  /// Whether [Player] should let mpv configure and activate the global
+  /// Whether `Player` should let mpv configure and activate the global
   /// `AVAudioSession` on iOS.
   ///
   /// When `false`, the AudioUnit audio output skips `setCategory`,
@@ -530,41 +512,13 @@ class PlayerConfiguration {
   ///
   /// Default: `true`.
   final bool iosManageAudioSession;
-
-  /// {@macro player_configuration}
-  const PlayerConfiguration({
-    this.vo = 'null',
-    this.osc = false,
-    this.pitch = false,
-    this.title = 'package:media_kit',
-    this.ready,
-    this.muted = false,
-    this.async = true,
-    this.libass = false,
-    this.libassAndroidFont,
-    this.libassAndroidFontName,
-    this.logLevel = MPVLogLevel.error,
-    this.bufferSize = 32 * 1024 * 1024,
-    this.protocolWhitelist = const [
-      'udp',
-      'rtp',
-      'tcp',
-      'tls',
-      'data',
-      'file',
-      'http',
-      'https',
-      'crypto',
-    ],
-    this.iosManageAudioSession = true,
-  });
 }
 
 /// {@template mpv_log_level}
 ///
 /// MPVLogLevel
 /// --------------------
-/// Options to customise the [Player] native backend log level.
+/// Options to customise the `Player` native backend log level.
 ///
 /// {@endtemplate}
 enum MPVLogLevel {

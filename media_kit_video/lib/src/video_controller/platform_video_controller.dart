@@ -1,13 +1,13 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
+
 import 'package:flutter/widgets.dart';
-
 import 'package:media_kit/media_kit.dart';
-
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
 /// {@template platform_video_controller}
@@ -22,6 +22,9 @@ import 'package:media_kit_video/src/video_controller/video_controller.dart';
 ///
 /// {@endtemplate}
 abstract class PlatformVideoController {
+  /// {@macro platform_video_controller}
+  PlatformVideoController(this.player, this.configuration);
+
   /// The [Player] instance associated with this instance.
   final Player player;
 
@@ -34,22 +37,13 @@ abstract class PlatformVideoController {
   /// [Rect] of the video output, received from the native implementation.
   final ValueNotifier<Rect?> rect = ValueNotifier<Rect?>(null);
 
-  /// {@macro platform_video_controller}
-  PlatformVideoController(
-    this.player,
-    this.configuration,
-  );
-
   /// Sets the required size of the video output.
   /// This may yield substantial performance improvements if a small [width] & [height] is specified.
   ///
   /// Remember:
   /// * “Premature optimization is the root of all evil”
   /// * “With great power comes great responsibility”
-  Future<void> setSize({
-    int? width,
-    int? height,
-  });
+  Future<void> setSize({int? width, int? height});
 
   /// A [Future] that completes when the first video frame has been rendered.
   Future<void> get waitUntilFirstFrameRendered =>
@@ -74,6 +68,17 @@ abstract class PlatformVideoController {
 ///
 /// {@endtemplate}
 class VideoControllerConfiguration {
+  /// {@macro video_controller_configuration}
+  const VideoControllerConfiguration({
+    this.vo,
+    this.hwdec,
+    this.width,
+    this.height,
+    this.scale = 1.0,
+    this.enableHardwareAcceleration = true,
+    this.androidAttachSurfaceAfterVideoParameters,
+  });
+
   /// Sets the [`--vo`](https://mpv.io/manual/stable/#options-vo) property on native backend.
   ///
   /// Default: Platform specific.
@@ -108,6 +113,9 @@ class VideoControllerConfiguration {
 
   /// Whether to enable hardware acceleration.
   ///
+  /// On Windows, set this option to `false` to use software rendering.
+  /// Use [hwdec] to select the decoder. Set [hwdec] to `no` to decode on the CPU.
+  ///
   /// DO NOT DISABLE THIS OPTION MEANINGLESSLY.
   /// THE BATTERY WILL DRAIN, THE DEVICE MAY HEAT UP & CPU USAGE WILL BE HIGH.
   ///
@@ -120,17 +128,6 @@ class VideoControllerConfiguration {
   /// * [vo] == gpu : `true`
   /// * [vo] != gpu : `false`
   final bool? androidAttachSurfaceAfterVideoParameters;
-
-  /// {@macro video_controller_configuration}
-  const VideoControllerConfiguration({
-    this.vo,
-    this.hwdec,
-    this.width,
-    this.height,
-    this.scale = 1.0,
-    this.enableHardwareAcceleration = true,
-    this.androidAttachSurfaceAfterVideoParameters,
-  });
 
   /// Returns a copy of this class with the given fields replaced by the new values.
   VideoControllerConfiguration copyWith({

@@ -1,15 +1,16 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:ffi';
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
-import 'dart:isolate';
 import 'dart:collection';
+import 'dart:ffi';
+import 'dart:isolate';
 
 import 'package:media_kit/ffi/ffi.dart';
-import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
+import 'package:media_kit/generated/libmpv/bindings.dart' as libmpv_bindings;
 import 'package:media_kit/src/player/native/core/native_library.dart';
 import 'package:media_kit/src/values.dart';
 
@@ -21,60 +22,58 @@ import 'package:media_kit/src/values.dart';
 ///
 /// {@endtemplate}
 class InitializerIsolate {
-  /// Singleton instance.
-  static InitializerIsolate? _instance;
-
-  /// {@macro initializer_isolate}
-  InitializerIsolate._(this.libmpv);
-
   /// {@macro initializer_isolate}
   factory InitializerIsolate() {
     _instance ??= InitializerIsolate._(NativeLibrary.path);
     return _instance!;
   }
 
+  /// {@macro initializer_isolate}
+  InitializerIsolate._(this.libmpv);
+
+  /// Singleton instance.
+  static InitializerIsolate? _instance;
+
   /// Resolved libmpv dynamic library.
   final String libmpv;
 
   /// Creates [Pointer<mpv_handle>].
-  Future<Pointer<generated.mpv_handle>> create(
-    Future<void> Function(Pointer<generated.mpv_event>) callback, {
+  Future<Pointer<libmpv_bindings.mpv_handle>> create(
+    Future<void> Function(Pointer<libmpv_bindings.mpv_event>) callback, {
     Map<String, String> options = const {},
   }) async {
-    final completer = Completer();
+    final completer = Completer<void>();
     final receiver = ReceivePort();
     late SendPort port;
-    late Pointer<generated.mpv_handle> handle;
-    final isolate = await Isolate.spawn(
-      _mainloop,
-      receiver.sendPort,
-    );
-    receiver.listen(
-      (message) async {
-        if (!completer.isCompleted && message is SendPort) {
-          port = message;
-          port.send(options);
-          port.send(libmpv);
-        } else if (!completer.isCompleted && message is int) {
-          handle = Pointer.fromAddress(message);
-          // Intialiation complete.
+    late Pointer<libmpv_bindings.mpv_handle> handle;
+    final Isolate isolate = await Isolate.spawn(_mainloop, receiver.sendPort);
+    receiver.listen((message) async {
+      if (!completer.isCompleted && message is SendPort) {
+        port = message
+          ..send(options)
+          ..send(libmpv);
+      } else if (!completer.isCompleted && message is int) {
+        handle = Pointer.fromAddress(message);
+        // Intialiation complete.
+        if (!completer.isCompleted) {
           completer.complete();
         }
-        // Forward events to the supplied callback.
-        else if (message != null) {
-          Pointer<generated.mpv_event> event = Pointer.fromAddress(message);
-          try {
-            await callback(event);
-          } catch (exception, stacktrace) {
-            print(exception.toString());
-            print(stacktrace.toString());
-          }
-          port.send(true);
-        } else {
-          receiver.close();
+      }
+      // Forward events to the supplied callback.
+      else if (message != null) {
+        final Pointer<libmpv_bindings.mpv_event> event =
+            Pointer.fromAddress(message as int);
+        try {
+          await callback(event);
+        } on Object catch (exception, stacktrace) {
+          print(exception);
+          print(stacktrace);
         }
-      },
-    );
+        port.send(true);
+      } else {
+        receiver.close();
+      }
+    });
     // Awaiting the retrieval of [Pointer<mpv_handle>].
     await completer.future;
 
@@ -86,9 +85,10 @@ class InitializerIsolate {
   }
 
   /// Disposes [Pointer<mpv_handle>].
-  void dispose(generated.MPV mpv, Pointer<generated.mpv_handle> handle) {
-    final port = _ports[handle.address];
-    final isolate = _isolates[handle.address];
+  void dispose(
+      libmpv_bindings.MPV mpv, Pointer<libmpv_bindings.mpv_handle> handle) {
+    final SendPort? port = _ports[handle.address];
+    final Isolate? isolate = _isolates[handle.address];
     if (port != null && isolate != null) {
       port.send(null);
 
@@ -103,47 +103,52 @@ class InitializerIsolate {
     }
   }
 
-  static void _mainloop(SendPort port) async {
-    Completer completer = Completer();
+  static Future<void> _mainloop(SendPort port) async {
+    var completer = Completer<void>();
 
     final receiver = ReceivePort();
     port.send(receiver.sendPort);
 
     late Map<String, String> options;
-    late generated.MPV mpv;
+    late libmpv_bindings.MPV mpv;
 
-    bool disposed = false;
+    var disposed = false;
 
-    Pointer<generated.mpv_handle>? handle;
+    Pointer<libmpv_bindings.mpv_handle>? handle;
 
-    receiver.listen(
-      (message) {
-        if (message is Map<String, String>) {
-          options = message;
-        } else if (message is String) {
-          mpv = generated.MPV(DynamicLibrary.open(message));
+    receiver.listen((message) {
+      if (message is Map<String, String>) {
+        options = message;
+      } else if (message is String) {
+        mpv = libmpv_bindings.MPV(DynamicLibrary.open(message));
+        if (!completer.isCompleted) {
           completer.complete();
-        } else if (message is bool) {
+        }
+      } else if (message is bool) {
+        if (!completer.isCompleted) {
           completer.complete();
-        } else if (message == null) {
-          if (handle != null) {
-            disposed = true;
+        }
+      } else if (message == null) {
+        if (handle != null) {
+          disposed = true;
+          if (!completer.isCompleted) {
             completer.complete();
           }
         }
-      },
-    );
+      }
+    });
 
     await completer.future;
 
     handle ??= mpv.mpv_create();
 
-    for (final entry in options.entries) {
-      final name = entry.key.toNativeUtf8();
-      final value = entry.value.toNativeUtf8();
+    for (final MapEntry<String, String> entry in options.entries) {
+      final Pointer<Utf8> name = entry.key.toNativeUtf8();
+      final Pointer<Utf8> value = entry.value.toNativeUtf8();
       mpv.mpv_set_option_string(handle, name.cast(), value.cast());
-      calloc.free(name);
-      calloc.free(value);
+      calloc
+        ..free(name)
+        ..free(value);
     }
 
     mpv.mpv_initialize(handle);
@@ -151,11 +156,12 @@ class InitializerIsolate {
 
     while (!disposed) {
       completer = Completer();
-      final event = mpv.mpv_wait_event(handle, kReleaseMode ? -1 : 0.1);
+      final Pointer<libmpv_bindings.mpv_event> event =
+          mpv.mpv_wait_event(handle, kReleaseMode ? -1 : 0.1);
       if (disposed) {
         break;
       }
-      if (event.ref.event_id != generated.mpv_event_id.MPV_EVENT_NONE) {
+      if (event.ref.event_id != libmpv_bindings.mpv_event_id.MPV_EVENT_NONE) {
         port.send(event.address);
         await completer.future;
       } else {

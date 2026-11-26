@@ -1,11 +1,11 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 
 /// {@template fullscreen_inherited_widget}
@@ -14,13 +14,13 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/vi
 ///
 /// {@endtemplate}
 class FullscreenInheritedWidget extends InheritedWidget {
-  final VideoState parent;
-
   FullscreenInheritedWidget({
     super.key,
     required this.parent,
     required Widget child,
   }) : super(child: _FullscreenInheritedWidgetPopScope(child: child));
+
+  final VideoState parent;
 
   static FullscreenInheritedWidget? maybeOf(BuildContext context) {
     return context
@@ -29,10 +29,7 @@ class FullscreenInheritedWidget extends InheritedWidget {
 
   static FullscreenInheritedWidget of(BuildContext context) {
     final FullscreenInheritedWidget? result = maybeOf(context);
-    assert(
-      result != null,
-      'No [FullscreenInheritedWidget] found in [context]',
-    );
+    assert(result != null, 'No [FullscreenInheritedWidget] found in [context]');
     return result!;
   }
 
@@ -47,10 +44,9 @@ class FullscreenInheritedWidget extends InheritedWidget {
 ///
 /// {@endtemplate}
 class _FullscreenInheritedWidgetPopScope extends StatefulWidget {
+  const _FullscreenInheritedWidgetPopScope({required this.child});
+
   final Widget child;
-  const _FullscreenInheritedWidgetPopScope({
-    required this.child,
-  });
 
   @override
   State<_FullscreenInheritedWidgetPopScope> createState() =>

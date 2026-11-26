@@ -9,8 +9,6 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-#include <cstdint>
-
 #include <Windows.h>
 
 class Utils {
@@ -18,10 +16,6 @@ class Utils {
   static void EnterNativeFullscreen(HWND window);
 
   static void ExitNativeFullscreen(HWND window);
-
-  static RTL_OSVERSIONINFOW GetWindowsVersion();
-
-  static bool IsWindows10RTMOrGreater();
 
  private:
   static constexpr auto kFlutterViewWindowClassName = L"FLUTTERVIEW";

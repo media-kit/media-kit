@@ -25,11 +25,10 @@ void main() {
 
   testWidgets(
     'can substitute one controller by another without crashing',
-    (WidgetTester tester) async {
+    (tester) async {
       // Use WebM for web to allow CI to use Chromium.
-      const videoAssetKey = kIsWeb
-          ? 'assets/Butterfly-209.webm'
-          : 'assets/Butterfly-209.mp4';
+      const videoAssetKey =
+          kIsWeb ? 'assets/Butterfly-209.webm' : 'assets/Butterfly-209.mp4';
 
       final controller = VideoPlayerController.asset(videoAssetKey);
       final another = VideoPlayerController.asset(videoAssetKey);
@@ -83,7 +82,7 @@ void main() {
 
   // TODO(tarrinneal): Remove once other test is enabled,
   // https://github.com/flutter/flutter/issues/164651
-  testWidgets('no-op', (WidgetTester tester) async {
+  testWidgets('no-op', (tester) async {
     expect(true, true);
   });
 }

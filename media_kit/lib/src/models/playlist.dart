@@ -1,12 +1,13 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'package:collection/collection.dart';
-import 'package:media_kit/src/models/playable.dart';
 import 'package:media_kit/src/models/media/media.dart';
+import 'package:media_kit/src/models/playable.dart';
+import 'package:meta/meta.dart';
 
 /// {@template playlist}
 ///
@@ -14,7 +15,7 @@ import 'package:media_kit/src/models/media/media.dart';
 /// --------
 ///
 /// A [Playlist] represents a list of [Media]s & currently playing [index].
-/// This may be opened in [Player] for playback.
+/// This may be opened in `Player` for playback.
 ///
 /// ```dart
 /// final playable = Playlist(
@@ -29,38 +30,30 @@ import 'package:media_kit/src/models/media/media.dart';
 /// ```
 ///
 /// {@endtemplate}
+@immutable
 class Playlist extends Playable {
+  /// {@macro playlist}
+  const Playlist(this.medias, {this.index = 0});
+
   /// Currently opened [List] of [Media]s.
   final List<Media> medias;
 
   /// Currently playing [index].
   final int index;
 
-  /// {@macro playlist}
-  const Playlist(
-    this.medias, {
-    this.index = 0,
-  });
-
-  Playlist copyWith({
-    List<Media>? medias,
-    int? index,
-  }) {
-    return Playlist(
-      medias ?? this.medias,
-      index: index ?? this.index,
-    );
+  Playlist copyWith({List<Media>? medias, int? index}) {
+    return Playlist(medias ?? this.medias, index: index ?? this.index);
   }
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is Playlist &&
-          ListEquality().equals(medias, other.medias) &&
+          const ListEquality().equals(medias, other.medias) &&
           index == other.index;
 
   @override
-  int get hashCode => ListEquality().hash(medias) ^ index.hashCode;
+  int get hashCode => const ListEquality().hash(medias) ^ index.hashCode;
 
   @override
   String toString() => 'Playlist(medias: $medias, index: $index)';

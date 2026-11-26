@@ -1,32 +1,31 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
-import 'dart:collection';
-import 'package:web/web.dart' as web;
+
+import 'package:media_kit/src/models/audio_device.dart';
+import 'package:media_kit/src/models/audio_params.dart';
+import 'package:media_kit/src/models/media/media.dart';
+import 'package:media_kit/src/models/playable.dart';
+import 'package:media_kit/src/models/player_state.dart';
+import 'package:media_kit/src/models/playlist.dart';
+import 'package:media_kit/src/models/playlist_mode.dart';
+import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/video_params.dart';
+import 'package:media_kit/src/player/platform_player.dart';
+import 'package:media_kit/src/player/web/utils/duration.dart';
+import 'package:media_kit/src/player/web/utils/hls.dart';
 import 'package:meta/meta.dart';
 import 'package:synchronized/synchronized.dart';
-
-import 'package:media_kit/src/player/platform_player.dart';
-
-import 'package:media_kit/src/player/web/utils/hls.dart';
-import 'package:media_kit/src/player/web/utils/duration.dart';
-
-import 'package:media_kit/src/models/track.dart';
-import 'package:media_kit/src/models/playable.dart';
-import 'package:media_kit/src/models/playlist.dart';
-import 'package:media_kit/src/models/media/media.dart';
-import 'package:media_kit/src/models/audio_device.dart';
-import 'package:media_kit/src/models/player_state.dart';
-import 'package:media_kit/src/models/audio_params.dart';
-import 'package:media_kit/src/models/video_params.dart';
-import 'package:media_kit/src/models/playlist_mode.dart';
+import 'package:web/web.dart' as web;
 
 /// Initializes the web backend for package:media_kit.
 void webEnsureInitialized({String? libmpv}) {}
@@ -42,7 +41,7 @@ void webEnsureInitialized({String? libmpv}) {}
 class WebPlayer extends PlatformPlayer {
   /// {@macro web_player}
   WebPlayer({required super.configuration}) {
-    var idProperty = globalContext.getProperty(kInstanceCount.toJS);
+    final JSAny? idProperty = globalContext.getProperty(kInstanceCount.toJS);
     if (idProperty.isUndefinedOrNull) {
       id = 0;
     } else {
@@ -68,8 +67,10 @@ class WebPlayer extends PlatformPlayer {
           (int.parse((globalContext[kInstanceCount]!).toString()) + 1).toJS;
       // Store the [html.VideoElement] instance in [globalContext].
       globalContext[kInstances] ??= JSObject();
-      (globalContext[kInstances] as JSObject)
-          .setProperty(id.toString().toJS, element);
+      globalContext.getProperty<JSObject>(kInstances.toJS).setProperty(
+            id.toString().toJS,
+            element,
+          );
       // --------------------------------------------------
       // Event streams handling:
       element.onPlay.listen((_) {
@@ -94,10 +95,7 @@ class WebPlayer extends PlatformPlayer {
         lock.synchronized(() async {
           // PlayerState.state.playing & PlayerState.stream.playing
           // PlayerState.state.buffering & PlayerState.stream.buffering
-          state = state.copyWith(
-            playing: true,
-            completed: false,
-          );
+          state = state.copyWith(playing: true, completed: false);
           if (!playingController.isClosed) {
             playingController.add(true);
           }
@@ -123,9 +121,9 @@ class WebPlayer extends PlatformPlayer {
           try {
             if (state.playlist.index >= 0 &&
                 state.playlist.index < state.playlist.medias.length) {
-              final start = state
+              final int? start = state
                   .playlist.medias[state.playlist.index].start?.inMilliseconds;
-              final end = state
+              final int? end = state
                   .playlist.medias[state.playlist.index].end?.inMilliseconds;
               if (position != null) {
                 position = Duration(
@@ -144,9 +142,9 @@ class WebPlayer extends PlatformPlayer {
                 }
               }
             }
-          } catch (exception, stacktrace) {
-            print(exception.toString());
-            print(stacktrace.toString());
+          } on Object catch (exception, stacktrace) {
+            print(exception);
+            print(stacktrace);
           }
 
           if (position != null) {
@@ -155,9 +153,9 @@ class WebPlayer extends PlatformPlayer {
               positionController.add(position);
             }
             // PlayerState.state.buffer & PlayerState.stream.buffer
-            final i = element.buffered.length - 1;
+            final int i = element.buffered.length - 1;
             if (i >= 0) {
-              final buffer = convertNumVideoDurationToPluginDuration(
+              final Duration? buffer = convertNumVideoDurationToPluginDuration(
                 element.buffered.end(i),
               );
               if (buffer != null) {
@@ -173,7 +171,7 @@ class WebPlayer extends PlatformPlayer {
       element.onDurationChange.listen((_) {
         lock.synchronized(() async {
           // PlayerState.state.duration & PlayerState.stream.duration
-          final duration = convertNumVideoDurationToPluginDuration(
+          final Duration? duration = convertNumVideoDurationToPluginDuration(
             element.duration,
           );
           if (duration != null) {
@@ -192,9 +190,9 @@ class WebPlayer extends PlatformPlayer {
             bufferingController.add(true);
           }
           // PlayerState.state.buffer & PlayerState.stream.buffer
-          final i = element.buffered.length - 1;
+          final int i = element.buffered.length - 1;
           if (i >= 0) {
-            final value = element.buffered.end(i) * 1000 ~/ 1;
+            final int value = element.buffered.end(i) * 1000 ~/ 1;
             final buffer = Duration(milliseconds: value);
             if (!bufferController.isClosed) {
               bufferController.add(buffer);
@@ -223,7 +221,7 @@ class WebPlayer extends PlatformPlayer {
       element.onVolumeChange.listen((_) {
         lock.synchronized(() async {
           // PlayerState.state.volume & PlayerState.stream.volume
-          final volume = element.volume * 100.0;
+          final double volume = element.volume * 100.0;
           state = state.copyWith(volume: volume);
           if (!volumeController.isClosed) {
             volumeController.add(volume);
@@ -233,7 +231,7 @@ class WebPlayer extends PlatformPlayer {
       element.onRateChange.listen((_) {
         lock.synchronized(() async {
           // PlayerState.state.speed & PlayerState.stream.speed
-          final rate = element.playbackRate * 1.0;
+          final double rate = element.playbackRate * 1.0;
           state = state.copyWith(rate: rate);
           if (!rateController.isClosed) {
             rateController.add(rate);
@@ -248,7 +246,7 @@ class WebPlayer extends PlatformPlayer {
             bufferingController.add(false);
           }
           // PlayerStream.error
-          final error = element.error!;
+          final web.MediaError error = element.error!;
           if (!errorController.isClosed) {
             errorController.add(error.message);
           }
@@ -258,12 +256,9 @@ class WebPlayer extends PlatformPlayer {
         lock.synchronized(() async {
           // PlayerState.state.width & PlayerState.stream.width
           // PlayerState.state.height & PlayerState.stream.height
-          final width = element.videoWidth;
-          final height = element.videoHeight;
-          state = state.copyWith(
-            width: width,
-            height: height,
-          );
+          final int width = element.videoWidth;
+          final int height = element.videoHeight;
+          state = state.copyWith(width: width, height: height);
           if (!widthController.isClosed) {
             widthController.add(width);
           }
@@ -275,19 +270,17 @@ class WebPlayer extends PlatformPlayer {
 
       if (configuration.muted) {
         element.muted = true;
-        state = state.copyWith(volume: 0.0);
+        state = state.copyWith(volume: 0);
         if (!volumeController.isClosed) {
-          volumeController.add(0.0);
+          volumeController.add(0);
         }
       }
 
-      await HLS.ensureInitialized(
-        hls: test ? HLS.kHLSCDN : null,
-      );
+      await HLS.ensureInitialized(hls: test ? HLS.kHLSCDN : null);
       completer.complete();
       try {
         configuration.ready?.call();
-      } catch (_) {}
+      } on Object catch (_) {}
       // --------------------------------------------------
     });
   }
@@ -306,25 +299,19 @@ class WebPlayer extends PlatformPlayer {
       await pause(synchronized: false);
 
       state = state.copyWith(
-        track: state.track.copyWith(
-          video: VideoTrack.no(),
-        ),
+        track: state.track.copyWith(video: VideoTrack.no()),
       );
       if (!trackController.isClosed) {
         trackController.add(state.track);
       }
       state = state.copyWith(
-        track: state.track.copyWith(
-          audio: AudioTrack.no(),
-        ),
+        track: state.track.copyWith(audio: AudioTrack.no()),
       );
       if (!trackController.isClosed) {
         trackController.add(state.track);
       }
       state = state.copyWith(
-        track: state.track.copyWith(
-          subtitle: SubtitleTrack.no(),
-        ),
+        track: state.track.copyWith(subtitle: SubtitleTrack.no()),
       );
       if (!trackController.isClosed) {
         trackController.add(state.track);
@@ -344,15 +331,17 @@ class WebPlayer extends PlatformPlayer {
         ..remove();
 
       // Remove the [html.VideoElement] instance from global [js.context].
-      (globalContext[kInstances] as JSObject).delete(id.toString().toJS);
+      globalContext
+          .getProperty<JSObject>(kInstances.toJS)
+          .delete(id.toString().toJS);
 
       await super.dispose();
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
@@ -370,7 +359,7 @@ class WebPlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
 
       final int index;
-      final List<Media> playlist = <Media>[];
+      final playlist = <Media>[];
       if (playable is Media) {
         index = 0;
         playlist.add(playable);
@@ -382,10 +371,7 @@ class WebPlayer extends PlatformPlayer {
       }
 
       // Restore original state & reset public [PlayerState] & [PlayerStream] values e.g. width=null, height=null, subtitle=['', ''] etc.
-      await stop(
-        open: true,
-        synchronized: false,
-      );
+      await stop(open: true, synchronized: false);
 
       element.pause();
       // Enter paused state.
@@ -399,35 +385,25 @@ class WebPlayer extends PlatformPlayer {
 
       state = state.copyWith(
         shuffle: false,
-        playlist: Playlist(
-          playlist,
-          index: index,
-        ),
+        playlist: Playlist(playlist, index: index),
       );
       if (!playlistController.isClosed) {
-        playlistController.add(
-          Playlist(
-            playlist,
-            index: index,
-          ),
-        );
+        playlistController.add(Playlist(playlist, index: index));
       }
 
       _loadSource(state.playlist.medias[state.playlist.index]);
 
       if (play) {
-        element.play().toDart.catchError((error) {
+        unawaited(element.play().toDart.catchError((error) {
           final e = error as web.DOMException;
           if (!errorController.isClosed) {
             errorController.add(e.message);
           }
           return null;
-        });
+        }));
       } else {
         // A minimal quirk to match the native backend behavior.
-        state = state.copyWith(
-          buffering: true,
-        );
+        state = state.copyWith(buffering: true);
         if (!bufferingController.isClosed) {
           bufferingController.add(true);
         }
@@ -436,19 +412,16 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
-  /// Stops the [Player].
-  /// Unloads the current [Media] or [Playlist] from the [Player]. This method is similar to [dispose] but does not release the resources & [Player] is still usable.
+  /// Stops the `Player`.
+  /// Unloads the current [Media] or [Playlist] from the `Player`. This method is similar to [dispose] but does not release the resources & `Player` is still usable.
   @override
-  Future<void> stop({
-    bool open = false,
-    bool synchronized = true,
-  }) async {
+  Future<void> stop({bool open = false, bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -457,9 +430,9 @@ class WebPlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
 
       element.innerHTML = ''.toJS;
-      state = state.copyWith(track: Track());
+      state = state.copyWith(track: const Track());
       if (!trackController.isClosed) {
-        trackController.add(Track());
+        trackController.add(const Track());
       }
 
       element
@@ -469,7 +442,7 @@ class WebPlayer extends PlatformPlayer {
       _playlistBeforeShuffle.clear();
 
       // Reset the remaining attributes.
-      state = PlayerState().copyWith(
+      state = const PlayerState().copyWith(
         volume: state.volume,
         rate: state.rate,
         pitch: state.pitch,
@@ -482,7 +455,7 @@ class WebPlayer extends PlatformPlayer {
       if (!open) {
         // Do not emit PlayerStream.playlist if invoked from [open].
         if (!playlistController.isClosed) {
-          playlistController.add(Playlist([]));
+          playlistController.add(const Playlist([]));
         }
       }
       if (!playingController.isClosed) {
@@ -534,10 +507,10 @@ class WebPlayer extends PlatformPlayer {
       //   audioDevicesController.add([AudioDevice.auto()]);
       // }
       if (!trackController.isClosed) {
-        trackController.add(Track());
+        trackController.add(const Track());
       }
       if (!tracksController.isClosed) {
-        tracksController.add(Tracks());
+        tracksController.add(const Tracks());
       }
       if (!widthController.isClosed) {
         widthController.add(null);
@@ -551,9 +524,9 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
@@ -565,22 +538,20 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      element.play().toDart.catchError(
-        (error) {
-          // PlayerStream.error
-          final e = error as web.DOMException;
-          if (!errorController.isClosed) {
-            errorController.add(e.message);
-          }
-          return null;
-        },
-      );
+      unawaited(element.play().toDart.catchError((error) {
+        // PlayerStream.error
+        final e = error as web.DOMException;
+        if (!errorController.isClosed) {
+          errorController.add(e.message);
+        }
+        return null;
+      }));
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
@@ -596,9 +567,9 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
@@ -618,17 +589,14 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
   @override
-  Future<void> add(
-    Media media, {
-    bool synchronized = true,
-  }) async {
+  Future<void> add(Media media, {bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -647,17 +615,14 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
   @override
-  Future<void> remove(
-    int index, {
-    bool synchronized = true,
-  }) async {
+  Future<void> remove(int index, {bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -681,8 +646,10 @@ class WebPlayer extends PlatformPlayer {
             index: state.playlist.medias.length - 2 < 0
                 ? 0
                 : state.playlist.medias.length - 2,
-            medias: state.playlist.medias
-                .sublist(0, state.playlist.medias.length - 1),
+            medias: state.playlist.medias.sublist(
+              0,
+              state.playlist.medias.length - 1,
+            ),
           ),
         );
         if (!playingController.isClosed) {
@@ -701,20 +668,19 @@ class WebPlayer extends PlatformPlayer {
           state.playlist.medias.length - 1 == index &&
           state.playlistMode == PlaylistMode.loop) {
         element.innerHTML = ''.toJS;
-        state = state.copyWith(track: Track());
+        state = state.copyWith(track: const Track());
         if (!trackController.isClosed) {
-          trackController.add(Track());
+          trackController.add(const Track());
         }
 
-        final medias =
-            state.playlist.medias.sublist(0, state.playlist.medias.length - 1);
+        final List<Media> medias = state.playlist.medias.sublist(
+          0,
+          state.playlist.medias.length - 1,
+        );
         state = state.copyWith(
           // Allow playOrPause /w state.completed code-path to play the playlist again.
           completed: true,
-          playlist: state.playlist.copyWith(
-            medias: medias,
-            index: 0,
-          ),
+          playlist: state.playlist.copyWith(medias: medias, index: 0),
         );
         _loadSource(state.playlist.medias[state.playlist.index]);
         await play(synchronized: false);
@@ -725,7 +691,6 @@ class WebPlayer extends PlatformPlayer {
           playlistController.add(state.playlist);
         }
       }
-
       // Default
       else {
         state = state.copyWith(
@@ -743,16 +708,14 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
   @override
-  Future<void> next({
-    bool synchronized = true,
-  }) async {
+  Future<void> next({bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -762,18 +725,16 @@ class WebPlayer extends PlatformPlayer {
 
       Future<void> start() async {
         state = state.copyWith(
-          playlist: state.playlist.copyWith(
-            index: state.playlist.index,
-          ),
+          playlist: state.playlist.copyWith(index: state.playlist.index),
         );
         if (!playlistController.isClosed) {
           playlistController.add(state.playlist);
         }
 
         element.innerHTML = ''.toJS;
-        state = state.copyWith(track: Track());
+        state = state.copyWith(track: const Track());
         if (!trackController.isClosed) {
-          trackController.add(Track());
+          trackController.add(const Track());
         }
         _loadSource(state.playlist.medias[state.playlist.index]);
         await play(synchronized: false);
@@ -828,16 +789,14 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
   @override
-  Future<void> previous({
-    bool synchronized = true,
-  }) async {
+  Future<void> previous({bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -847,18 +806,16 @@ class WebPlayer extends PlatformPlayer {
 
       Future<void> start() async {
         state = state.copyWith(
-          playlist: state.playlist.copyWith(
-            index: state.playlist.index,
-          ),
+          playlist: state.playlist.copyWith(index: state.playlist.index),
         );
         if (!playlistController.isClosed) {
           playlistController.add(state.playlist);
         }
 
         element.innerHTML = ''.toJS;
-        state = state.copyWith(track: Track());
+        state = state.copyWith(track: const Track());
         if (!trackController.isClosed) {
-          trackController.add(Track());
+          trackController.add(const Track());
         }
         _loadSource(state.playlist.medias[state.playlist.index]);
         await play(synchronized: false);
@@ -913,17 +870,14 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
   @override
-  Future<void> jump(
-    int index, {
-    bool synchronized = true,
-  }) async {
+  Future<void> jump(int index, {bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -931,16 +885,12 @@ class WebPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      state = state.copyWith(
-        playlist: state.playlist.copyWith(
-          index: index,
-        ),
-      );
+      state = state.copyWith(playlist: state.playlist.copyWith(index: index));
 
       element.innerHTML = ''.toJS;
-      state = state.copyWith(track: Track());
+      state = state.copyWith(track: const Track());
       if (!trackController.isClosed) {
-        trackController.add(Track());
+        trackController.add(const Track());
       }
       _loadSource(state.playlist.medias[state.playlist.index]);
       await play(synchronized: false);
@@ -956,18 +906,14 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
   @override
-  Future<void> move(
-    int from,
-    int to, {
-    bool synchronized = true,
-  }) async {
+  Future<void> move(int from, int to, {bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -977,18 +923,18 @@ class WebPlayer extends PlatformPlayer {
 
       // ---------------------------------------------
       final map = SplayTreeMap<double, Media>.from(
-        state.playlist.medias
-            .asMap()
-            .map((key, value) => MapEntry(key * 1.0, value)),
+        state.playlist.medias.asMap().map(
+              (key, value) => MapEntry(key * 1.0, value),
+            ),
       );
-      final item = map.remove(from * 1.0);
+      final Media? item = map.remove(from * 1.0);
       if (item != null) {
         map[to - 0.5] = item;
       }
-      final keys = map.keys.toList();
-      final values = map.values.toList();
+      final List<double> keys = map.keys.toList();
+      final List<Media> values = map.values.toList();
 
-      final current = state.playlist.index;
+      final int current = state.playlist.index;
 
       state = state.copyWith(
         playlist: Playlist(
@@ -1006,17 +952,14 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
   @override
-  Future<void> seek(
-    Duration duration, {
-    bool synchronized = true,
-  }) async {
+  Future<void> seek(Duration duration, {bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -1035,9 +978,9 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
@@ -1060,17 +1003,14 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
   @override
-  Future<void> setVolume(
-    double volume, {
-    bool synchronized = true,
-  }) async {
+  Future<void> setVolume(double volume, {bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -1087,17 +1027,14 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
   @override
-  Future<void> setRate(
-    double rate, {
-    bool synchronized = true,
-  }) async {
+  Future<void> setRate(double rate, {bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -1107,27 +1044,20 @@ class WebPlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
 
       if (rate <= 0.0) {
-        throw ArgumentError.value(
-          rate,
-          'rate',
-          'Must be greater than 0.0',
-        );
+        throw ArgumentError.value(rate, 'rate', 'Must be greater than 0.0');
       }
       element.playbackRate = rate;
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
   @override
-  Future<void> setPitch(
-    double pitch, {
-    bool synchronized = true,
-  }) async {
+  Future<void> setPitch(double pitch, {bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -1148,17 +1078,14 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
   @override
-  Future<void> setShuffle(
-    bool shuffle, {
-    bool synchronized = true,
-  }) async {
+  Future<void> setShuffle(bool shuffle, {bool synchronized = true}) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -1166,9 +1093,12 @@ class WebPlayer extends PlatformPlayer {
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
 
-      final current = state.playlist.medias.atOrNull(state.playlist.index);
+      final Media? current =
+          state.playlist.medias.atOrNull(state.playlist.index);
 
-      if (current == null) return;
+      if (current == null) {
+        return;
+      }
 
       if (shuffle && _playlistBeforeShuffle.isEmpty) {
         _playlistBeforeShuffle.addAll(state.playlist.medias);
@@ -1211,9 +1141,9 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
@@ -1232,9 +1162,9 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
@@ -1249,15 +1179,13 @@ class WebPlayer extends PlatformPlayer {
       }
       await waitForPlayerInitialization;
       await waitForVideoControllerInitializationIfAttached;
-      throw UnsupportedError(
-        '[Player.setVideoTrack] is not supported on web',
-      );
+      throw UnsupportedError('[Player.setVideoTrack] is not supported on web');
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
@@ -1276,7 +1204,7 @@ class WebPlayer extends PlatformPlayer {
       if (track.uri) {
         final children = <web.Element>[];
         for (var i = 0; i < element.children.length; i++) {
-          final child = element.children.item(i);
+          final web.Element? child = element.children.item(i);
           if (child != null) {
             children.add(child);
           }
@@ -1290,14 +1218,13 @@ class WebPlayer extends PlatformPlayer {
         }
 
         // Create a new <source> element.
-        final source = web.document.createElement('source');
-        source.setAttribute('src', track.id);
+        final web.Element source = web.document.createElement('source')
+          ..setAttribute('src', track.id);
 
         // Append the new <source> element.
         element.appendChild(source);
 
-        final child = web.HTMLSourceElement();
-        child.src = track.id;
+        final child = web.HTMLSourceElement()..src = track.id;
         element.append(child);
 
         state = state.copyWith(track: state.track.copyWith(audio: track));
@@ -1312,15 +1239,17 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
   @override
-  Future<void> setSubtitleTrack(SubtitleTrack track,
-      {bool synchronized = true}) async {
+  Future<void> setSubtitleTrack(
+    SubtitleTrack track, {
+    bool synchronized = true,
+  }) async {
     Future<void> function() async {
       if (disposed) {
         throw AssertionError('[Player] has been disposed');
@@ -1329,9 +1258,7 @@ class WebPlayer extends PlatformPlayer {
       await waitForVideoControllerInitializationIfAttached;
 
       // Reset existing Player.state.subtitle & Player.stream.subtitle.
-      state = state.copyWith(
-        subtitle: const PlayerState().subtitle,
-      );
+      state = state.copyWith(subtitle: const PlayerState().subtitle);
       if (!subtitleController.isClosed) {
         subtitleController.add(state.subtitle);
       }
@@ -1349,17 +1276,17 @@ class WebPlayer extends PlatformPlayer {
           }
           final bytes = Uint8List.fromList(utf8.encode(track.id));
           final blob = web.Blob(<JSUint8Array>[bytes.toJS].toJS);
-          final src = web.URL.createObjectURL(blob);
+          final String src = web.URL.createObjectURL(blob);
           _subtitleBlobUrl = src;
           uri = src;
         } else {
           return;
         }
 
-        final child = web.HTMLTrackElement();
-        child.kind = 'subtitles';
-        child.label = track.title ?? "";
-        child.srclang = track.language ?? "";
+        final child = web.HTMLTrackElement()
+          ..kind = 'subtitles'
+          ..label = track.title ?? ''
+          ..srclang = track.language ?? '';
 
         state = state.copyWith(track: state.track.copyWith(subtitle: track));
         if (!trackController.isClosed) {
@@ -1375,12 +1302,11 @@ class WebPlayer extends PlatformPlayer {
         // Set up the cue change handler function
         void handleCueChange(web.Event event) {
           try {
-            final textTrack = child.track;
-            final activeCues = textTrack.activeCues;
+            final web.TextTrackCueList? activeCues = child.track.activeCues;
             if (activeCues != null) {
               final cueList = <String>[];
               for (var i = 0; i < activeCues.length; i++) {
-                final cue = activeCues[i];
+                final web.TextTrackCue cue = activeCues[i];
                 // VTTCue has a 'text' property
                 final text = (cue as dynamic).text as String?;
                 if (text != null) {
@@ -1406,16 +1332,16 @@ class WebPlayer extends PlatformPlayer {
                 subtitleController.add(subtitle);
               }
             }
-          } catch (exception, stacktrace) {
+          } on Object catch (exception, stacktrace) {
             print(exception);
             print(stacktrace);
           }
         }
 
         child.onLoad.listen((_) {
-          final textTrack = child.track;
-          textTrack.mode = 'hidden';
-          textTrack.oncuechange = handleCueChange.toJS;
+          child.track
+            ..mode = 'hidden'
+            ..oncuechange = handleCueChange.toJS;
         });
 
         element.appendChild(child);
@@ -1429,9 +1355,9 @@ class WebPlayer extends PlatformPlayer {
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
@@ -1449,10 +1375,7 @@ class WebPlayer extends PlatformPlayer {
     bool includeLibassSubtitles = false,
   }) async {
     Future<Uint8List?> function() async {
-      if (![
-        'image/jpeg',
-        'image/png',
-      ].contains(format)) {
+      if (!['image/jpeg', 'image/png'].contains(format)) {
         throw ArgumentError.value(
           format,
           'format',
@@ -1470,28 +1393,26 @@ class WebPlayer extends PlatformPlayer {
       try {
         // Kind of limited in usage:
         // https://stackoverflow.com/questions/35244215/html5-video-screenshot-via-canvas-using-cors
-        final canvas = web.HTMLCanvasElement();
-        canvas.width = element.videoWidth;
-        canvas.height = element.videoHeight;
+        final canvas = web.HTMLCanvasElement()
+          ..width = element.videoWidth
+          ..height = element.videoHeight
+          ..context2D.drawImage(element, 0, 0);
 
-        final context = canvas.context2D;
-        context.drawImage(element, 0, 0);
-
-        final data = canvas.toDataURL(format!);
-        final bytes = base64.decode(data.split(',').last);
+        final String data = canvas.toDataURL(format!);
+        final Uint8List bytes = base64.decode(data.split(',').last);
 
         canvas.remove();
 
         return bytes;
-      } catch (_) {
+      } on Object {
         return null;
       }
     }
 
     if (synchronized) {
-      return lock.synchronized(function);
+      return await lock.synchronized(function);
     } else {
-      return function();
+      return await function();
     }
   }
 
@@ -1499,21 +1420,21 @@ class WebPlayer extends PlatformPlayer {
     try {
       if (_isHLS(media.uri)) {
         void setHlsHTTPHeaders(web.XMLHttpRequest xhr, String url) {
-          for (final header in media.httpHeaders!.entries) {
+          for (final MapEntry<String, String> header
+              in media.httpHeaders!.entries) {
             xhr.setRequestHeader(header.key, header.value);
           }
         }
 
-        final hls = Hls(
+        Hls(
           HlsOptions(
             xhrSetup: media.httpHeaders != null
                 ? setHlsHTTPHeaders.toJS as XHRSetupCallback
                 : null,
           ),
-        );
-
-        hls.loadSource(media.uri);
-        hls.attachMedia(element);
+        )
+          ..loadSource(media.uri)
+          ..attachMedia(element);
       } else {
         // Default
         String src = media.uri;
@@ -1521,14 +1442,14 @@ class WebPlayer extends PlatformPlayer {
         // https://www.w3.org/TR/media-frags/
         if (media.start != null || media.end != null) {
           src += '#t=';
-          final start = media.start?.inSeconds ?? 0;
-          final end = media.end?.inSeconds ?? 0;
+          final int start = media.start?.inSeconds ?? 0;
+          final int end = media.end?.inSeconds ?? 0;
           src += [start, if (end != 0) end].join(',');
         }
 
         element.src = src;
       }
-    } catch (exception) {
+    } on Object catch (exception) {
       // PlayerStream.error
       final e = exception as web.DOMException;
       if (!errorController.isClosed) {
@@ -1538,9 +1459,9 @@ class WebPlayer extends PlatformPlayer {
   }
 
   bool _isHLS(String src) {
-    final userAgent = web.window.navigator.userAgent;
-    final isAndroidChrome =
-        userAgent.contains("Android") && userAgent.contains("Chrome");
+    final String userAgent = web.window.navigator.userAgent;
+    final bool isAndroidChrome =
+        userAgent.contains('Android') && userAgent.contains('Chrome');
 
     if (!isAndroidChrome &&
         element.canPlayType('application/vnd.apple.mpegurl') != '') {
@@ -1558,18 +1479,12 @@ class WebPlayer extends PlatformPlayer {
     // PlayerState.state.buffering & PlayerState.stream.buffering
 
     // A minimal quirk to match the NativePlayer behavior.
-    state = state.copyWith(
-      buffering: true,
-    );
+    state = state.copyWith(buffering: true);
     if (!bufferingController.isClosed) {
       bufferingController.add(true);
     }
 
-    state = state.copyWith(
-      playing: false,
-      completed: true,
-      buffering: false,
-    );
+    state = state.copyWith(playing: false, completed: true, buffering: false);
     if (!playingController.isClosed) {
       playingController.add(false);
     }
@@ -1581,9 +1496,9 @@ class WebPlayer extends PlatformPlayer {
     }
 
     element.innerHTML = ''.toJS;
-    state = state.copyWith(track: Track());
+    state = state.copyWith(track: const Track());
     if (!trackController.isClosed) {
-      trackController.add(Track());
+      trackController.add(const Track());
     }
 
     // PlayerState.state.playlist.index & PlayerState.stream.playlist.index
@@ -1596,7 +1511,7 @@ class WebPlayer extends PlatformPlayer {
                 index: state.playlist.index + 1,
               ),
             );
-            final current = state.playlist.medias[state.playlist.index];
+            final Media current = state.playlist.medias[state.playlist.index];
             _loadSource(current);
             await play(synchronized: false);
           } else {
@@ -1606,7 +1521,7 @@ class WebPlayer extends PlatformPlayer {
         }
       case PlaylistMode.single:
         {
-          final current = state.playlist.medias[state.playlist.index];
+          final Media current = state.playlist.medias[state.playlist.index];
           _loadSource(current);
           await play(synchronized: false);
           break;
@@ -1618,7 +1533,7 @@ class WebPlayer extends PlatformPlayer {
               index: (state.playlist.index + 1) % state.playlist.medias.length,
             ),
           );
-          final current = state.playlist.medias[state.playlist.index];
+          final Media current = state.playlist.medias[state.playlist.index];
           _loadSource(current);
           await play(synchronized: false);
           break;
@@ -1637,20 +1552,20 @@ class WebPlayer extends PlatformPlayer {
 
   // --------------------------------------------------
 
-  /// Internal platform specific identifier for this [Player] instance.
+  /// Internal platform specific identifier for this `Player` instance.
   ///
-  /// Since, [int] is a primitive type, it can be used to pass this [Player] instance to native code without directly depending upon this library.
+  /// Since, [int] is a primitive type, it can be used to pass this `Player` instance to native code without directly depending upon this library.
   ///
   @override
   Future<int> get handle => Future.value(id);
 
-  /// Unique handle of this [Player] instance.
+  /// Unique handle of this `Player` instance.
   late int id;
 
-  /// [html.VideoElement] instance reference.
+  /// `html.VideoElement` instance reference.
   late web.HTMLVideoElement element;
 
-  /// Whether the [Player] has been disposed.
+  /// Whether the `Player` has been disposed.
   bool disposed = false;
 
   /// Current subtitle blob URL to revoke when changing tracks or disposing.
@@ -1659,11 +1574,11 @@ class WebPlayer extends PlatformPlayer {
   /// Synchronization & mutual exclusion between methods of this class.
   final Lock lock = Lock();
 
-  /// JavaScript object attribute used to store various [VideoElement] instances in [js.context].
-  static const kInstances = '\$com.alexmercerind.media_kit.instances';
+  /// JavaScript object attribute used to store various `VideoElement` instances in `js.context`.
+  static const kInstances = r'$com.alexmercerind.media_kit.instances';
 
-  /// JavaScript object attribute used to store the instance count of [Player] in [js.context].
-  static const kInstanceCount = '\$com.alexmercerind.media_kit.instance_count';
+  /// JavaScript object attribute used to store the instance count of `Player` in `js.context`.
+  static const kInstanceCount = r'$com.alexmercerind.media_kit.instance_count';
 
   /// Whether the [WebPlayer] is initialized for unit-testing.
   @visibleForTesting

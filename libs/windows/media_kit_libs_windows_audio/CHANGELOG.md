@@ -1,3 +1,7 @@
+## 1.0.11
+
+- Verify the x64 and ARM64 audio SDK archives with SHA-256 and extract them during CMake configuration.
+
 ## 1.0.10
 
 - feat: support ARM64

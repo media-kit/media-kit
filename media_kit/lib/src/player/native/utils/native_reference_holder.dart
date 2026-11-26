@@ -1,18 +1,19 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
-import 'package:path/path.dart' as path;
-import 'package:safe_local_storage/safe_local_storage.dart';
-import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/ffi/src/allocation.dart';
 import 'package:media_kit/src/player/native/utils/temp_file.dart';
 import 'package:media_kit/src/values.dart';
+import 'package:path/path.dart' as path;
+import 'package:safe_local_storage/safe_local_storage.dart';
+import 'package:synchronized/synchronized.dart';
 
 /// Callback invoked to notify about the released references.
 typedef NativeReferenceHolderCallback = void Function(List<Pointer<Void>>);
@@ -26,6 +27,9 @@ typedef NativeReferenceHolderCallback = void Function(List<Pointer<Void>>);
 ///
 /// {@endtemplate}
 class NativeReferenceHolder {
+  /// {@macro native_reference_holder}
+  NativeReferenceHolder._();
+
   /// Maximum number of references that can be held.
   static const int kReferenceBufferSize = 512;
 
@@ -35,36 +39,38 @@ class NativeReferenceHolder {
   /// Whether the [instance] is initialized.
   static bool initialized = false;
 
-  /// {@macro native_reference_holder}
-  NativeReferenceHolder._();
-
   /// Initializes the instance.
   static void ensureInitialized(NativeReferenceHolderCallback callback) {
-    if (!kDebugMode) return;
-    if (initialized) return;
+    if (!kDebugMode) {
+      return;
+    }
+    if (initialized) {
+      return;
+    }
     initialized = true;
     instance._ensureInitialized(callback);
   }
 
-  void _ensureInitialized(NativeReferenceHolderCallback callback) async {
+  Future<void> _ensureInitialized(
+      NativeReferenceHolderCallback callback) async {
     if (!await _file.exists_()) {
       // Allocate reference buffer.
       _referenceBuffer = calloc<IntPtr>(kReferenceBufferSize);
-      final address = _referenceBuffer.address;
+      final int address = _referenceBuffer.address;
       await _file.write_(address.toString());
       print('$kTag Allocated $address');
     } else {
       // Locate reference buffer.
-      final address = int.parse((await _file.readAsString_())!);
+      final int address = int.parse((await _file.readAsString_())!);
       _referenceBuffer = Pointer<IntPtr>.fromAddress(address);
       print('$kTag Located $address');
     }
 
     final references = <Pointer<Void>>[];
 
-    for (int i = 0; i < kReferenceBufferSize; i++) {
-      final referencePtr = _referenceBuffer + i;
-      final referenceAddress = referencePtr.value;
+    for (var i = 0; i < kReferenceBufferSize; i++) {
+      final Pointer<IntPtr> referencePtr = _referenceBuffer + i;
+      final int referenceAddress = referencePtr.value;
       referencePtr.value = 0;
       if (referenceAddress != 0) {
         references.add(Pointer.fromAddress(referenceAddress));
@@ -78,13 +84,18 @@ class NativeReferenceHolder {
 
   /// Saves the reference.
   Future<void> add(Pointer reference) async {
-    if (!initialized) return;
-    if (reference == nullptr) return;
+    if (!initialized) {
+      return;
+    }
+    if (reference == nullptr) {
+      return;
+    }
     await _completer.future;
-    return _lock.synchronized(() async {
-      for (int i = 0; i < kReferenceBufferSize; i++) {
-        final referenceValue = _referenceBuffer + i;
-        final referencePtr = Pointer.fromAddress(referenceValue.value);
+    return await _lock.synchronized(() async {
+      for (var i = 0; i < kReferenceBufferSize; i++) {
+        final Pointer<IntPtr> referenceValue = _referenceBuffer + i;
+        final Pointer<NativeType> referencePtr =
+            Pointer.fromAddress(referenceValue.value);
         // NOTE: Do not compare .value with .address. Bad things may happen on 32-bit systems.
         if (referencePtr.address == 0) {
           referenceValue.value = reference.address;
@@ -96,13 +107,18 @@ class NativeReferenceHolder {
 
   /// Removes the reference.
   Future<void> remove(Pointer reference) async {
-    if (!initialized) return;
-    if (reference == nullptr) return;
+    if (!initialized) {
+      return;
+    }
+    if (reference == nullptr) {
+      return;
+    }
     await _completer.future;
-    return _lock.synchronized(() async {
-      for (int i = 0; i < kReferenceBufferSize; i++) {
-        final referenceValue = _referenceBuffer + i;
-        final referencePtr = Pointer.fromAddress(referenceValue.value);
+    return await _lock.synchronized(() async {
+      for (var i = 0; i < kReferenceBufferSize; i++) {
+        final Pointer<IntPtr> referenceValue = _referenceBuffer + i;
+        final Pointer<NativeType> referencePtr =
+            Pointer.fromAddress(referenceValue.value);
         // NOTE: Do not compare .value with .address. Bad things may happen on 32-bit systems.
         if (referencePtr.address == reference.address) {
           referenceValue.value = 0;

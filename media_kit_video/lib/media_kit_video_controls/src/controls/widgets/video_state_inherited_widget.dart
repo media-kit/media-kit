@@ -1,13 +1,14 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:collection';
 
 import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
+import 'package:media_kit_video/src/utils/dispose_safe_notifier.dart';
 
 /// {@template video_state_inherited_widget}
 ///
@@ -15,11 +16,6 @@ import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
 ///
 /// {@endtemplate}
 class VideoStateInheritedWidget extends InheritedWidget {
-  final VideoState state;
-  final DisposeSafeNotifier<BuildContext?> contextNotifier;
-  final ValueNotifier<VideoViewParameters> videoViewParametersNotifier;
-
-  final bool disposeNotifiers;
   VideoStateInheritedWidget({
     super.key,
     required this.state,
@@ -37,6 +33,12 @@ class VideoStateInheritedWidget extends InheritedWidget {
           ),
         );
 
+  final VideoState state;
+  final DisposeSafeNotifier<BuildContext?> contextNotifier;
+  final ValueNotifier<VideoViewParameters> videoViewParametersNotifier;
+
+  final bool disposeNotifiers;
+
   static VideoStateInheritedWidget? maybeOf(BuildContext context) {
     return context
         .dependOnInheritedWidgetOfExactType<VideoStateInheritedWidget>();
@@ -44,10 +46,7 @@ class VideoStateInheritedWidget extends InheritedWidget {
 
   static VideoStateInheritedWidget of(BuildContext context) {
     final VideoStateInheritedWidget? result = maybeOf(context);
-    assert(
-      result != null,
-      'No [VideoStateInheritedWidget] found in [context]',
-    );
+    assert(result != null, 'No [VideoStateInheritedWidget] found in [context]');
     return result!;
   }
 
@@ -63,12 +62,6 @@ class VideoStateInheritedWidget extends InheritedWidget {
 ///
 /// {@endtemplate}
 class VideoStateInheritedWidgetContextNotifier extends StatefulWidget {
-  final VideoState state;
-  final DisposeSafeNotifier<BuildContext?> contextNotifier;
-  final ValueNotifier<VideoViewParameters?> videoViewParametersNotifier;
-  final bool disposeNotifiers;
-  final Widget child;
-
   const VideoStateInheritedWidgetContextNotifier({
     super.key,
     required this.state,
@@ -77,6 +70,12 @@ class VideoStateInheritedWidgetContextNotifier extends StatefulWidget {
     required this.disposeNotifiers,
     required this.child,
   });
+
+  final VideoState state;
+  final DisposeSafeNotifier<BuildContext?> contextNotifier;
+  final ValueNotifier<VideoViewParameters?> videoViewParametersNotifier;
+  final bool disposeNotifiers;
+  final Widget child;
 
   @override
   State<VideoStateInheritedWidgetContextNotifier> createState() =>

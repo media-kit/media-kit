@@ -1,8 +1,9 @@
 import 'package:flutter/widgets.dart';
 
 class DisposeSafeNotifier<T> extends ValueNotifier<T> {
+  DisposeSafeNotifier(super._value);
+
   bool disposed = false;
-  DisposeSafeNotifier(super.value);
 
   @override
   void dispose() {

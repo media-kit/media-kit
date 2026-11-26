@@ -1,3 +1,7 @@
+## 1.3.9
+
+- Migrate the plugin to Kotlin and Gradle Kotlin DSL. The build targets JVM 17 and requires Android API 24 or later.
+
 ## 1.3.8
 
 - build: AGP 8.13.0

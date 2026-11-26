@@ -1,3 +1,8 @@
+## 1.0.9
+
+- Update `media_kit_libs_windows_audio` to `^1.0.11`.
+- Update the native packages for Android (API 24+), iOS (15+), and macOS (12+).
+
 ## 1.0.8
 
 - build: bump dependencies

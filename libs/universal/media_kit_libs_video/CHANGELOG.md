@@ -1,3 +1,8 @@
+## 1.1.0
+
+- Use the Windows native libraries for direct D3D11 video output.
+- Update the native packages for Android (API 24+), iOS (15+), and macOS (12+).
+
 ## 1.0.8
 
 - build: bump dependencies

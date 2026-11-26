@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 
@@ -22,26 +23,28 @@ class _Sources {
   final List<Uint8List> bytes = [];
 
   Future<void> prepare() async {
-    if (_prepared) return;
+    if (_prepared) {
+      return;
+    }
     // Download to local [File]s.
-    for (int i = 0; i < network.length; i++) {
-      final destination = path.join(
+    for (var i = 0; i < network.length; i++) {
+      final String destination = path.join(
         Directory.systemTemp.path,
         'media_kit',
         network[i].split('/').last,
       );
-      if (!await File(destination).parent.exists()) {
+      if (!File(destination).parent.existsSync()) {
         await File(destination).parent.create(recursive: true);
       }
-      if (!await File(destination).exists()) {
-        final response = await http.get(Uri.parse(network[i]));
+      if (!File(destination).existsSync()) {
+        final http.Response response = await http.get(Uri.parse(network[i]));
         await File(destination).writeAsBytes(response.bodyBytes);
       }
       file.add(destination);
       bytes.add(await File(destination).readAsBytes());
     }
     // Force forward slashes for Windows.
-    for (int i = 0; i < file.length; i++) {
+    for (var i = 0; i < file.length; i++) {
       file[i] = file[i].replaceAll(r'\', '/');
     }
     _prepared = true;

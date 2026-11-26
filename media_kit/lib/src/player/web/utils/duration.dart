@@ -8,7 +8,7 @@ const Duration jsCompatibleTimeUnset = Duration(
   milliseconds: -9007199254740990, // Number.MIN_SAFE_INTEGER + 1. -(2^53 - 1)
 );
 
-/// Converts a `num` duration coming from a [VideoElement] into a [Duration] that
+/// Converts a `num` duration coming from a `VideoElement` into a [Duration] that
 /// the plugin can use.
 ///
 /// From the documentation, `videoDuration` is "a double-precision floating-point
@@ -23,9 +23,7 @@ const Duration jsCompatibleTimeUnset = Duration(
 /// If the `videoDuration` is `NaN`, this will return null.
 Duration? convertNumVideoDurationToPluginDuration(num duration) {
   if (duration.isFinite) {
-    return Duration(
-      milliseconds: (duration * 1000).round(),
-    );
+    return Duration(milliseconds: (duration * 1000).round());
   } else if (duration.isInfinite) {
     return jsCompatibleTimeUnset;
   }

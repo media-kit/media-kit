@@ -17,9 +17,8 @@ import 'package:video_player_media_kit/video_player_media_kit.dart';
 const Duration _playDuration = Duration(seconds: 1);
 
 // Use WebM for web to allow CI to use Chromium.
-const String _videoAssetKey = kIsWeb
-    ? 'assets/Butterfly-209.webm'
-    : 'assets/Butterfly-209.mp4';
+const String _videoAssetKey =
+    kIsWeb ? 'assets/Butterfly-209.webm' : 'assets/Butterfly-209.mp4';
 
 // Returns the URL to load an asset from this example app as a network source.
 //
@@ -45,14 +44,14 @@ void main() {
   );
 
   late VideoPlayerController controller;
-  tearDown(() async => controller.dispose());
+  tearDown(() => controller.dispose());
 
   group('asset videos', () {
     setUp(() {
       controller = VideoPlayerController.asset(_videoAssetKey);
     });
 
-    testWidgets('can be initialized', (WidgetTester tester) async {
+    testWidgets('can be initialized', (tester) async {
       await controller.initialize();
 
       expect(controller.value.isInitialized, true);
@@ -65,7 +64,7 @@ void main() {
       );
     });
 
-    testWidgets('live stream duration != 0', (WidgetTester tester) async {
+    testWidgets('live stream duration != 0', (tester) async {
       final networkController = VideoPlayerController.networkUrl(
         Uri.parse(
           'https://flutter.github.io/assets-for-api-docs/assets/videos/hls/bee.m3u8',
@@ -82,7 +81,7 @@ void main() {
       );
     }, skip: kIsWeb);
 
-    testWidgets('can be played', (WidgetTester tester) async {
+    testWidgets('can be played', (tester) async {
       await controller.initialize();
       // Mute to allow playing without DOM interaction on Web.
       // See https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
@@ -98,7 +97,7 @@ void main() {
       );
     });
 
-    testWidgets('can seek', (WidgetTester tester) async {
+    testWidgets('can seek', (tester) async {
       await controller.initialize();
 
       await controller.seekTo(const Duration(seconds: 3));
@@ -106,7 +105,7 @@ void main() {
       expect(controller.value.position, const Duration(seconds: 3));
     });
 
-    testWidgets('can be paused', (WidgetTester tester) async {
+    testWidgets('can be paused', (tester) async {
       await controller.initialize();
       // Mute to allow playing without DOM interaction on Web.
       // See https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
@@ -126,7 +125,7 @@ void main() {
 
     testWidgets(
       'stay paused when seeking after video completed',
-      (WidgetTester tester) async {
+      (tester) async {
         await controller.initialize();
         // Mute to allow playing without DOM interaction on Web.
         // See https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
@@ -164,7 +163,7 @@ void main() {
 
     testWidgets(
       'do not exceed duration on play after video completed',
-      (WidgetTester tester) async {
+      (tester) async {
         await controller.initialize();
         // Mute to allow playing without DOM interaction on Web.
         // See https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
@@ -206,7 +205,7 @@ void main() {
 
     testWidgets(
       'test video player view with local asset',
-      (WidgetTester tester) async {
+      (tester) async {
         final loaded = Completer<void>();
         Future<bool> started() async {
           await controller.initialize();
@@ -222,17 +221,16 @@ void main() {
               child: Center(
                 child: FutureBuilder<bool>(
                   future: started(),
-                  builder:
-                      (BuildContext context, AsyncSnapshot<bool> snapshot) {
-                        if (snapshot.data ?? false) {
-                          return AspectRatio(
-                            aspectRatio: controller.value.aspectRatio,
-                            child: VideoPlayer(controller),
-                          );
-                        } else {
-                          return const Text('waiting for video to load');
-                        }
-                      },
+                  builder: (context, snapshot) {
+                    if (snapshot.data ?? false) {
+                      return AspectRatio(
+                        aspectRatio: controller.value.aspectRatio,
+                        child: VideoPlayer(controller),
+                      );
+                    } else {
+                      return const Text('waiting for video to load');
+                    }
+                  },
                 ),
               ),
             ),
@@ -263,7 +261,7 @@ void main() {
     });
 
     testWidgets('test video player using static file() method as constructor', (
-      WidgetTester tester,
+      tester,
     ) async {
       await controller.initialize();
 
@@ -284,7 +282,7 @@ void main() {
 
     testWidgets(
       'reports buffering status',
-      (WidgetTester tester) async {
+      (tester) async {
         await controller.initialize();
         // Mute to allow playing without DOM interaction on Web.
         // See https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
@@ -319,8 +317,8 @@ void main() {
       skip:
           // MEDIA_ELEMENT_ERROR on web, see https://github.com/flutter/flutter/issues/169219
           kIsWeb ||
-          // Hanging on Android, see https://github.com/flutter/flutter/issues/160797
-          defaultTargetPlatform == TargetPlatform.android,
+              // Hanging on Android, see https://github.com/flutter/flutter/issues/160797
+              defaultTargetPlatform == TargetPlatform.android,
     );
   });
 
@@ -331,7 +329,7 @@ void main() {
       controller = VideoPlayerController.asset('assets/Audio.mp3');
     });
 
-    testWidgets('can be initialized', (WidgetTester tester) async {
+    testWidgets('can be initialized', (tester) async {
       await controller.initialize();
 
       expect(controller.value.isInitialized, true);
@@ -346,7 +344,7 @@ void main() {
       );
     });
 
-    testWidgets('can be played', (WidgetTester tester) async {
+    testWidgets('can be played', (tester) async {
       await controller.initialize();
       // Mute to allow playing without DOM interaction on Web.
       // See https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
@@ -362,14 +360,14 @@ void main() {
       );
     });
 
-    testWidgets('can seek', (WidgetTester tester) async {
+    testWidgets('can seek', (tester) async {
       await controller.initialize();
       await controller.seekTo(const Duration(seconds: 3));
 
       expect(controller.value.position, const Duration(seconds: 3));
     });
 
-    testWidgets('can be paused', (WidgetTester tester) async {
+    testWidgets('can be paused', (tester) async {
       await controller.initialize();
       // Mute to allow playing without DOM interaction on Web.
       // See https://developers.google.com/web/updates/2017/09/autoplay-policy-changes

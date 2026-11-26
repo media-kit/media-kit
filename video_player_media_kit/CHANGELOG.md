@@ -1,3 +1,8 @@
+## 2.0.1
+
+- Update `media_kit` to `^1.2.7` and `media_kit_video` to `^2.1.0`.
+- Move the example into the Pub workspace and update its Android, iOS, and macOS build settings.
+
 ## 2.0.0
 
 - build: bump `media_kit` & `media_kit_video`

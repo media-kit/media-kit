@@ -1,16 +1,16 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:media_kit/media_kit.dart';
-
-import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
-
-import 'package:media_kit_video/src/video_controller/native_video_controller/native_video_controller.dart';
 import 'package:media_kit_video/src/video_controller/android_video_controller/android_video_controller.dart';
+import 'package:media_kit_video/src/video_controller/native_video_controller/native_video_controller.dart';
+import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
 import 'package:media_kit_video/src/video_controller/web_video_controller/web_video_controller.dart';
 
 /// {@template video_controller}
@@ -21,7 +21,7 @@ import 'package:media_kit_video/src/video_controller/web_video_controller/web_vi
 /// [VideoController] is used to initialize & display video output.
 /// It takes reference to existing [Player] instance from `package:media_kit`.
 ///
-/// Passing [VideoController] to [Video] widget will cause the video output to be displayed.
+/// Passing [VideoController] to `Video` widget will cause the video output to be displayed.
 ///
 /// ```dart
 /// late final player = Player();
@@ -47,27 +47,12 @@ import 'package:media_kit_video/src/video_controller/web_video_controller/web_vi
 ///
 /// **Web**
 /// * [VideoControllerConfiguration.width] & [VideoControllerConfiguration.height] arguments have no effect.
-/// * Only single [Video] output can be displayed for a [VideoController].
-///   Displaying multiple [Video] widgets with same [VideoController] will cause only last mounted [Video] to be displayed.
+/// * Only single `Video` output can be displayed for a [VideoController].
+///   Displaying multiple `Video` widgets with same [VideoController] will cause only last mounted `Video` to be displayed.
 /// * [VideoControllerConfiguration.enableHardwareAcceleration] is ignored i.e. GPU usage is dependent upon the web browser.
 ///
 /// {@endtemplate}
 class VideoController {
-  /// The [Player] instance associated with this [VideoController].
-  final Player player;
-
-  /// Platform specific internal implementation initialized depending upon the current platform.
-  final platform = Completer<PlatformVideoController>();
-
-  /// Platform specific internal implementation initialized depending upon the current platform.
-  final notifier = ValueNotifier<PlatformVideoController?>(null);
-
-  /// Texture ID of the video output, registered with Flutter engine by the native implementation.
-  final ValueNotifier<int?> id = ValueNotifier<int?>(null);
-
-  /// [Rect] of the video output, received from the native implementation.
-  final ValueNotifier<Rect?> rect = ValueNotifier<Rect?>(null);
-
   /// {@macro video_controller}
   VideoController(
     this.player, {
@@ -75,39 +60,59 @@ class VideoController {
         const VideoControllerConfiguration(),
   }) {
     player.platform?.isVideoControllerAttached = true;
-
+    platform.future.ignore();
     () async {
-      final completer = Completer();
+      final completer = Completer<void>();
       WidgetsBinding.instance.addPostFrameCallback((_) => completer.complete());
-      await completer.future;
-
       try {
+        final Completer<void>? disposing = player.platform?.disposeRequested;
+        await Future.any([
+          completer.future,
+          if (disposing != null)
+            disposing.future.then((_) {
+              throw StateError(
+                'Video controller creation cancelled by dispose',
+              );
+            }),
+        ]);
+        if (disposing?.isCompleted ?? false) {
+          throw StateError('Player is disposing');
+        }
         if (NativeVideoController.supported) {
-          final result = await NativeVideoController.create(
+          final PlatformVideoController result =
+              await NativeVideoController.create(
             player,
             configuration,
           );
+          if (disposing?.isCompleted ?? false) {
+            throw StateError('Player is disposing');
+          }
           platform.complete(result);
           notifier.value = result;
         } else if (AndroidVideoController.supported) {
-          final result = await AndroidVideoController.create(
+          final PlatformVideoController result =
+              await AndroidVideoController.create(
             player,
             configuration,
           );
+          if (disposing?.isCompleted ?? false) {
+            throw StateError('Player is disposing');
+          }
           platform.complete(result);
           notifier.value = result;
         } else if (WebVideoController.supported) {
-          final result = await WebVideoController.create(
-            player,
-            configuration,
-          );
+          final PlatformVideoController result =
+              await WebVideoController.create(player, configuration);
+          if (disposing?.isCompleted ?? false) {
+            throw StateError('Player is disposing');
+          }
           platform.complete(result);
           notifier.value = result;
         }
 
         if (platform.isCompleted) {
           // Populate [id] & [rect] [ValueNotifier]s with the values from [platform] implementation of [PlatformVideoController].
-          final controller = await platform.future;
+          final PlatformVideoController controller = await platform.future;
           // Add listeners.
           void fn0() => id.value = controller.id.value;
           void fn1() => rect.value = controller.rect.value;
@@ -128,7 +133,9 @@ class VideoController {
           );
         }
       } catch (exception, stacktrace) {
-        platform.completeError(exception);
+        if (!platform.isCompleted) {
+          platform.completeError(exception, stacktrace);
+        }
         debugPrint(exception.toString());
         debugPrint(stacktrace.toString());
       }
@@ -139,26 +146,35 @@ class VideoController {
     }();
   }
 
+  /// The [Player] instance associated with this [VideoController].
+  final Player player;
+
+  /// Platform specific internal implementation initialized depending upon the current platform.
+  final platform = Completer<PlatformVideoController>();
+
+  /// Platform specific internal implementation initialized depending upon the current platform.
+  final notifier = ValueNotifier<PlatformVideoController?>(null);
+
+  /// Texture ID of the video output, registered with Flutter engine by the native implementation.
+  final ValueNotifier<int?> id = ValueNotifier<int?>(null);
+
+  /// [Rect] of the video output, received from the native implementation.
+  final ValueNotifier<Rect?> rect = ValueNotifier<Rect?>(null);
+
   /// Sets the required size of the video output.
   /// This may yield substantial performance improvements if a small [width] & [height] is specified.
   ///
   /// Remember:
   /// * “Premature optimization is the root of all evil”
   /// * “With great power comes great responsibility”
-  Future<void> setSize({
-    int? width,
-    int? height,
-  }) async {
-    final instance = await platform.future;
-    return instance.setSize(
-      width: width,
-      height: height,
-    );
+  Future<void> setSize({int? width, int? height}) async {
+    final PlatformVideoController instance = await platform.future;
+    return await instance.setSize(width: width, height: height);
   }
 
   /// A [Future] that completes when the first video frame has been rendered.
   Future<void> get waitUntilFirstFrameRendered async {
-    final instance = await platform.future;
-    return instance.waitUntilFirstFrameRendered;
+    final PlatformVideoController instance = await platform.future;
+    return await instance.waitUntilFirstFrameRendered;
   }
 }

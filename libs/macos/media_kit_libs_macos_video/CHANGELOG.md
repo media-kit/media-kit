@@ -1,3 +1,8 @@
+## 1.1.6
+
+- Require macOS 12 or later with CocoaPods and Swift Package Manager.
+- Update the libmpv XCFrameworks to `v0.7.3` and link `FlutterFramework` in the Swift package.
+
 ## 1.1.5
 
 - feat: add Swift Package Manager support

@@ -1,40 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_test/common/globals.dart';
+import 'package:media_kit_test/common/sources/sources.dart';
+import 'package:media_kit_test/tests/01.single_player_single_video.dart';
+import 'package:media_kit_test/tests/02.single_player_multiple_video.dart';
+import 'package:media_kit_test/tests/03.multiple_player_multiple_video.dart';
+import 'package:media_kit_test/tests/04.tabs_test.dart';
+import 'package:media_kit_test/tests/05.stress_test.dart';
+import 'package:media_kit_test/tests/06.paint_first_frame.dart';
+import 'package:media_kit_test/tests/07.video_controller_set_size.dart';
+import 'package:media_kit_test/tests/08.screenshot.dart';
+import 'package:media_kit_test/tests/09.seamless.dart';
+import 'package:media_kit_test/tests/10.programmatic_fullscreen.dart';
+import 'package:media_kit_test/tests/11.video_view_parameters.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
-
-import 'common/globals.dart';
-import 'common/sources/sources.dart';
-import 'tests/01.single_player_single_video.dart';
-import 'tests/02.single_player_multiple_video.dart';
-import 'tests/03.multiple_player_multiple_video.dart';
-import 'tests/04.tabs_test.dart';
-import 'tests/05.stress_test.dart';
-import 'tests/06.paint_first_frame.dart';
-import 'tests/07.video_controller_set_size.dart';
-import 'tests/08.screenshot.dart';
-import 'tests/09.seamless.dart';
-import 'tests/10.programmatic_fullscreen.dart';
-import 'tests/11.video_view_parameters.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  await SystemChrome.setPreferredOrientations(
-    [
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ],
-  );
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   runApp(const MyApp(DownloadingScreen()));
   await prepareSources();
   runApp(const MyApp(PrimaryScreen()));
 }
 
 class MyApp extends StatelessWidget {
-  final Widget child;
   const MyApp(this.child, {super.key});
+
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +73,7 @@ class PrimaryScreen extends StatelessWidget {
               child: Text(value.enableHardwareAcceleration ? 'H/W' : 'S/W'),
             ),
           ),
-          const SizedBox(width: 16.0),
+          const SizedBox(width: 16),
         ],
       ),
       body: ListView(
@@ -83,7 +81,7 @@ class PrimaryScreen extends StatelessWidget {
           ListTile(
             title: const Text(
               'single_player_single_video.dart',
-              style: TextStyle(fontSize: 14.0),
+              style: TextStyle(fontSize: 14),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -99,7 +97,7 @@ class PrimaryScreen extends StatelessWidget {
             ListTile(
               title: const Text(
                 'single_player_multiple_video.dart',
-                style: TextStyle(fontSize: 14.0),
+                style: TextStyle(fontSize: 14),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -115,7 +113,7 @@ class PrimaryScreen extends StatelessWidget {
           ListTile(
             title: const Text(
               'multiple_player_multiple_video.dart',
-              style: TextStyle(fontSize: 14.0),
+              style: TextStyle(fontSize: 14),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -131,22 +129,20 @@ class PrimaryScreen extends StatelessWidget {
           ListTile(
             title: const Text(
               'tabs_test.dart',
-              style: TextStyle(fontSize: 14.0),
+              style: TextStyle(fontSize: 14),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const TabsTest(),
-                ),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (context) => const TabsTest()));
             },
           ),
           ListTile(
             title: const Text(
               'stress_test.dart',
-              style: TextStyle(fontSize: 14.0),
+              style: TextStyle(fontSize: 14),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -161,7 +157,7 @@ class PrimaryScreen extends StatelessWidget {
           ListTile(
             title: const Text(
               'paint_first_frame.dart',
-              style: TextStyle(fontSize: 14.0),
+              style: TextStyle(fontSize: 14),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -173,7 +169,7 @@ class PrimaryScreen extends StatelessWidget {
             ListTile(
               title: const Text(
                 'video_controller_set_size.dart',
-                style: TextStyle(fontSize: 14.0),
+                style: TextStyle(fontSize: 14),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -189,37 +185,33 @@ class PrimaryScreen extends StatelessWidget {
             ListTile(
               title: const Text(
                 'screenshot.dart',
-                style: TextStyle(fontSize: 14.0),
+                style: TextStyle(fontSize: 14),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const Screenshot(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const Screenshot()),
                 );
               },
             ),
           ListTile(
             title: const Text(
               'seamless.dart',
-              style: TextStyle(fontSize: 14.0),
+              style: TextStyle(fontSize: 14),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const Seamless(),
-                ),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (context) => const Seamless()));
             },
           ),
           ListTile(
             title: const Text(
               'programmatic_fullscreen.dart',
-              style: TextStyle(fontSize: 14.0),
+              style: TextStyle(fontSize: 14),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -234,7 +226,7 @@ class PrimaryScreen extends StatelessWidget {
           ListTile(
             title: const Text(
               'video_view_parameters.dart',
-              style: TextStyle(fontSize: 14.0),
+              style: TextStyle(fontSize: 14),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -258,9 +250,7 @@ class DownloadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('package:media_kit'),
-      ),
+      appBar: AppBar(title: const Text('package:media_kit')),
       body: Center(
         child: ValueListenableBuilder<String>(
           valueListenable: progress,
@@ -268,14 +258,10 @@ class DownloadingScreen extends StatelessWidget {
           builder: (context, progress, child) => Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               child!,
-              const SizedBox(height: 16.0),
-              Text(
-                progress,
-                style: const TextStyle(fontSize: 14.0),
-              ),
+              const SizedBox(height: 16),
+              Text(progress, style: const TextStyle(fontSize: 14)),
             ],
           ),
         ),

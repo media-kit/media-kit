@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_test/common/globals.dart';
+import 'package:media_kit_test/common/sources/sources.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-
-import '../common/globals.dart';
-import '../common/sources/sources.dart';
 
 class VideoControllerSetSizeScreen extends StatefulWidget {
   const VideoControllerSetSizeScreen({super.key});
@@ -24,10 +23,11 @@ class _VideoControllerSetSizeScreenState
   @override
   void initState() {
     super.initState();
-    player.setAudioTrack(AudioTrack.no());
-    player.setPlaylistMode(PlaylistMode.loop);
-    player.open(Media(sources[0]));
-    player.stream.error.listen((error) => debugPrint(error));
+    player
+      ..setAudioTrack(AudioTrack.no())
+      ..setPlaylistMode(PlaylistMode.loop)
+      ..open(Media(sources[0]))
+      ..stream.error.listen((error) => debugPrint(error));
   }
 
   @override
@@ -39,20 +39,15 @@ class _VideoControllerSetSizeScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('package:media_kit'),
-      ),
+      appBar: AppBar(title: const Text('package:media_kit')),
       body: Stack(
         alignment: Alignment.bottomRight,
         children: [
-          Video(
-            controller: controller,
-            controls: NoVideoControls,
-          ),
+          Video(controller: controller, controls: NoVideoControls),
           Card(
-            margin: const EdgeInsets.all(16.0),
+            margin: const EdgeInsets.all(16),
             child: SizedBox(
-              width: 120.0,
+              width: 120,
               height: 64.0 * 6,
               child: ListView(
                 children: [
@@ -63,9 +58,7 @@ class _VideoControllerSetSizeScreenState
                     ),
                     title: const Text(
                       '2160p',
-                      style: TextStyle(
-                        fontSize: 14.0,
-                      ),
+                      style: TextStyle(fontSize: 14),
                     ),
                   ),
                   ListTile(
@@ -75,9 +68,7 @@ class _VideoControllerSetSizeScreenState
                     ),
                     title: const Text(
                       '1440p',
-                      style: TextStyle(
-                        fontSize: 14.0,
-                      ),
+                      style: TextStyle(fontSize: 14),
                     ),
                   ),
                   ListTile(
@@ -87,9 +78,7 @@ class _VideoControllerSetSizeScreenState
                     ),
                     title: const Text(
                       '1080p',
-                      style: TextStyle(
-                        fontSize: 14.0,
-                      ),
+                      style: TextStyle(fontSize: 14),
                     ),
                   ),
                   ListTile(
@@ -97,60 +86,35 @@ class _VideoControllerSetSizeScreenState
                       width: 16 / 9 * 720 ~/ 1,
                       height: 720,
                     ),
-                    title: const Text(
-                      '720p',
-                      style: TextStyle(
-                        fontSize: 14.0,
-                      ),
-                    ),
+                    title: const Text('720p', style: TextStyle(fontSize: 14)),
                   ),
                   ListTile(
                     onTap: () => controller.setSize(
                       width: 16 / 9 * 480 ~/ 1,
                       height: 480,
                     ),
-                    title: const Text(
-                      '480p',
-                      style: TextStyle(
-                        fontSize: 14.0,
-                      ),
-                    ),
+                    title: const Text('480p', style: TextStyle(fontSize: 14)),
                   ),
                   ListTile(
                     onTap: () => controller.setSize(
                       width: 16 / 9 * 360 ~/ 1,
                       height: 360,
                     ),
-                    title: const Text(
-                      '360p',
-                      style: TextStyle(
-                        fontSize: 14.0,
-                      ),
-                    ),
+                    title: const Text('360p', style: TextStyle(fontSize: 14)),
                   ),
                   ListTile(
                     onTap: () => controller.setSize(
                       width: 16 / 9 * 240 ~/ 1,
                       height: 240,
                     ),
-                    title: const Text(
-                      '240p',
-                      style: TextStyle(
-                        fontSize: 14.0,
-                      ),
-                    ),
+                    title: const Text('240p', style: TextStyle(fontSize: 14)),
                   ),
                   ListTile(
                     onTap: () => controller.setSize(
                       width: 16 / 9 * 144 ~/ 1,
                       height: 144,
                     ),
-                    title: const Text(
-                      '144p',
-                      style: TextStyle(
-                        fontSize: 14.0,
-                      ),
-                    ),
+                    title: const Text('144p', style: TextStyle(fontSize: 14)),
                   ),
                 ],
               ),

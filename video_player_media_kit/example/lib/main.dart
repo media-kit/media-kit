@@ -21,11 +21,7 @@ void main() {
   // --------------------------------------------------
 
   // Use package:video_player normally!
-  runApp(
-    MaterialApp(
-      home: _App(),
-    ),
-  );
+  runApp(MaterialApp(home: _App()));
 }
 
 class _App extends StatelessWidget {
@@ -45,19 +41,16 @@ class _App extends StatelessWidget {
                 Navigator.push<_PlayerVideoAndPopPage>(
                   context,
                   MaterialPageRoute<_PlayerVideoAndPopPage>(
-                    builder: (BuildContext context) => _PlayerVideoAndPopPage(),
+                    builder: (context) => _PlayerVideoAndPopPage(),
                   ),
                 );
               },
-            )
+            ),
           ],
           bottom: const TabBar(
             isScrollable: true,
             tabs: <Widget>[
-              Tab(
-                icon: Icon(Icons.cloud),
-                text: 'Remote',
-              ),
+              Tab(icon: Icon(Icons.cloud), text: 'Remote'),
               Tab(icon: Icon(Icons.insert_drive_file), text: 'Asset'),
               Tab(icon: Icon(Icons.list), text: 'List example'),
             ],
@@ -88,23 +81,27 @@ class _ButterFlyAssetVideoInList extends StatelessWidget {
         const _ExampleCard(title: 'Item f'),
         const _ExampleCard(title: 'Item g'),
         Card(
-            child: Column(children: <Widget>[
-          Column(
+          child: Column(
             children: <Widget>[
-              const ListTile(
-                leading: Icon(Icons.cake),
-                title: Text('Video video'),
+              Column(
+                children: <Widget>[
+                  const ListTile(
+                    leading: Icon(Icons.cake),
+                    title: Text('Video video'),
+                  ),
+                  Stack(
+                    alignment: FractionalOffset.bottomRight +
+                        const FractionalOffset(-0.1, -0.1),
+                    children: <Widget>[
+                      _ButterFlyAssetVideo(),
+                      Image.asset('assets/flutter-mark-square-64.png'),
+                    ],
+                  ),
+                ],
               ),
-              Stack(
-                  alignment: FractionalOffset.bottomRight +
-                      const FractionalOffset(-0.1, -0.1),
-                  children: <Widget>[
-                    _ButterFlyAssetVideo(),
-                    Image.asset('assets/flutter-mark-square-64.png'),
-                  ]),
             ],
           ),
-        ])),
+        ),
         const _ExampleCard(title: 'Item h'),
         const _ExampleCard(title: 'Item i'),
         const _ExampleCard(title: 'Item j'),
@@ -185,9 +182,7 @@ class _ButterFlyAssetVideoState extends State<_ButterFlyAssetVideo> {
     return SingleChildScrollView(
       child: Column(
         children: <Widget>[
-          Container(
-            padding: const EdgeInsets.only(top: 20.0),
-          ),
+          Container(padding: const EdgeInsets.only(top: 20)),
           const Text('With assets mp4'),
           Container(
             padding: const EdgeInsets.all(20),
@@ -221,7 +216,8 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
     final String fileContents = await DefaultAssetBundle.of(context)
         .loadString('assets/bumble_bee_captions.vtt');
     return WebVTTCaptionFile(
-        fileContents); // For vtt files, use WebVTTCaptionFile
+      fileContents,
+    ); // For vtt files, use WebVTTCaptionFile
   }
 
   @override
@@ -229,16 +225,18 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
     super.initState();
     _controller = VideoPlayerController.networkUrl(
       Uri.parse(
-          'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'),
+        'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+      ),
       closedCaptionFile: _loadCaptions(),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
 
-    _controller.addListener(() {
-      setState(() {});
-    });
-    _controller.setLooping(true);
-    _controller.initialize();
+    _controller
+      ..addListener(() {
+        setState(() {});
+      })
+      ..setLooping(true)
+      ..initialize();
   }
 
   @override
@@ -252,7 +250,7 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
     return SingleChildScrollView(
       child: Column(
         children: <Widget>[
-          Container(padding: const EdgeInsets.only(top: 20.0)),
+          Container(padding: const EdgeInsets.only(top: 20)),
           const Text('With remote mp4'),
           Container(
             padding: const EdgeInsets.all(20),
@@ -292,12 +290,12 @@ class _ControlsOverlay extends StatelessWidget {
   static const List<double> _examplePlaybackRates = <double>[
     0.25,
     0.5,
-    1.0,
+    1,
     1.5,
-    2.0,
-    3.0,
-    5.0,
-    10.0,
+    2,
+    3,
+    5,
+    10,
   ];
 
   final VideoPlayerController controller;
@@ -311,13 +309,13 @@ class _ControlsOverlay extends StatelessWidget {
           reverseDuration: const Duration(milliseconds: 200),
           child: controller.value.isPlaying
               ? const SizedBox.shrink()
-              : Container(
+              : const ColoredBox(
                   color: Colors.black26,
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.play_arrow,
                       color: Colors.white,
-                      size: 100.0,
+                      size: 100,
                       semanticLabel: 'Play',
                     ),
                   ),
@@ -333,16 +331,14 @@ class _ControlsOverlay extends StatelessWidget {
           child: PopupMenuButton<Duration>(
             initialValue: controller.value.captionOffset,
             tooltip: 'Caption Offset',
-            onSelected: (Duration delay) {
-              controller.setCaptionOffset(delay);
-            },
-            itemBuilder: (BuildContext context) {
+            onSelected: controller.setCaptionOffset,
+            itemBuilder: (context) {
               return <PopupMenuItem<Duration>>[
                 for (final Duration offsetDuration in _exampleCaptionOffsets)
                   PopupMenuItem<Duration>(
                     value: offsetDuration,
                     child: Text('${offsetDuration.inMilliseconds}ms'),
-                  )
+                  ),
               ];
             },
             child: Padding(
@@ -362,16 +358,11 @@ class _ControlsOverlay extends StatelessWidget {
           child: PopupMenuButton<double>(
             initialValue: controller.value.playbackSpeed,
             tooltip: 'Playback speed',
-            onSelected: (double speed) {
-              controller.setPlaybackSpeed(speed);
-            },
-            itemBuilder: (BuildContext context) {
+            onSelected: controller.setPlaybackSpeed,
+            itemBuilder: (context) {
               return <PopupMenuItem<double>>[
                 for (final double speed in _examplePlaybackRates)
-                  PopupMenuItem<double>(
-                    value: speed,
-                    child: Text('${speed}x'),
-                  )
+                  PopupMenuItem<double>(value: speed, child: Text('${speed}x')),
               ];
             },
             child: Padding(
@@ -404,8 +395,9 @@ class _PlayerVideoAndPopPageState extends State<_PlayerVideoAndPopPage> {
   void initState() {
     super.initState();
 
-    _videoPlayerController =
-        VideoPlayerController.asset('assets/Butterfly-209.mp4');
+    _videoPlayerController = VideoPlayerController.asset(
+      'assets/Butterfly-209.mp4',
+    );
     _videoPlayerController.addListener(() {
       if (startedPlaying && !_videoPlayerController.value.isPlaying) {
         Navigator.pop(context);
@@ -432,7 +424,7 @@ class _PlayerVideoAndPopPageState extends State<_PlayerVideoAndPopPage> {
       child: Center(
         child: FutureBuilder<bool>(
           future: started(),
-          builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          builder: (context, snapshot) {
             if (snapshot.data ?? false) {
               return AspectRatio(
                 aspectRatio: _videoPlayerController.value.aspectRatio,

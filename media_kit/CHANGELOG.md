@@ -1,3 +1,8 @@
+## 1.2.7
+
+- fix(native): complete pending property and command requests with an error when the player shuts down.
+- build(native): regenerate the Dart bindings for libmpv 0.42.0.
+
 ## 1.2.6
 
 - fix(windows): long file path support

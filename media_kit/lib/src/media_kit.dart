@@ -1,13 +1,12 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-
-import 'package:universal_platform/universal_platform.dart';
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
 import 'package:media_kit/src/player/native/player/player.dart';
 import 'package:media_kit/src/player/web/player/player.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 /// {@template media_kit}
 ///
@@ -21,7 +20,9 @@ abstract class MediaKit {
 
   /// {@macro media_kit}
   static void ensureInitialized({String? libmpv}) {
-    if (_initialized) return;
+    if (_initialized) {
+      return;
+    }
 
     try {
       if (UniversalPlatform.isWindows) {

@@ -42,16 +42,16 @@ package:video_player_media_kit allows [package:video_player](https://pub.dev/pac
 
 ```yaml
 dependencies:
-  video_player_media_kit: ^2.0.0
+  video_player_media_kit: ^2.0.1
 
   # NOTE:
   # It is not necessary to select all.
   # Select based on your usage:
-  media_kit_libs_android_video: any
-  media_kit_libs_ios_video: any
-  media_kit_libs_macos_video: any
-  media_kit_libs_windows_video: any
-  media_kit_libs_linux: any
+  media_kit_libs_android_video: ^1.3.9
+  media_kit_libs_ios_video: ^1.1.6
+  media_kit_libs_macos_video: ^1.1.6
+  media_kit_libs_windows_video: ^1.1.0
+  media_kit_libs_linux: ^1.2.1
 ```
 
 ## TL;DR

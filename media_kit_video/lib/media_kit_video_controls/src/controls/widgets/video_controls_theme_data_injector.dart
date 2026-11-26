@@ -1,10 +1,10 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'package:flutter/widgets.dart';
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
+import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/cupertino.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/material.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/material_desktop.dart';
@@ -24,15 +24,15 @@ import 'package:media_kit_video/media_kit_video_controls/src/controls/material_d
 ///
 /// {@endtemplate}
 class VideoControlsThemeDataInjector extends StatefulWidget {
-  final Widget child;
-  final BuildContext? context;
-
   /// {@macro video_controls_theme_data_injector}
   const VideoControlsThemeDataInjector({
     super.key,
     required this.child,
     this.context,
   });
+
+  final Widget child;
+  final BuildContext? context;
 
   @override
   State<VideoControlsThemeDataInjector> createState() =>
@@ -44,11 +44,13 @@ class _VideoControlsThemeDataInjectorState
   late final builders = <Widget Function(Widget)>[
     // CupertinoVideoControlsTheme
     (child) {
-      final theme = CupertinoVideoControlsTheme.maybeOf(
+      final CupertinoVideoControlsTheme? theme =
+          CupertinoVideoControlsTheme.maybeOf(
         widget.context ?? context,
       );
-      final normal = theme?.normal ?? kDefaultCupertinoVideoControlsThemeData;
-      final fullscreen = theme?.fullscreen ??
+      final CupertinoVideoControlsThemeData normal =
+          theme?.normal ?? kDefaultCupertinoVideoControlsThemeData;
+      final CupertinoVideoControlsThemeData fullscreen = theme?.fullscreen ??
           kDefaultCupertinoVideoControlsThemeDataFullscreen;
       return CupertinoVideoControlsTheme(
         normal: normal,
@@ -58,11 +60,13 @@ class _VideoControlsThemeDataInjectorState
     },
     // MaterialVideoControlsTheme
     (child) {
-      final theme = MaterialVideoControlsTheme.maybeOf(
+      final MaterialVideoControlsTheme? theme =
+          MaterialVideoControlsTheme.maybeOf(
         widget.context ?? context,
       );
-      final normal = theme?.normal ?? kDefaultMaterialVideoControlsThemeData;
-      final fullscreen =
+      final MaterialVideoControlsThemeData normal =
+          theme?.normal ?? kDefaultMaterialVideoControlsThemeData;
+      final MaterialVideoControlsThemeData fullscreen =
           theme?.fullscreen ?? kDefaultMaterialVideoControlsThemeDataFullscreen;
       return MaterialVideoControlsTheme(
         normal: normal,
@@ -72,13 +76,15 @@ class _VideoControlsThemeDataInjectorState
     },
     // MaterialDesktopVideoControlsTheme
     (child) {
-      final theme = MaterialDesktopVideoControlsTheme.maybeOf(
+      final MaterialDesktopVideoControlsTheme? theme =
+          MaterialDesktopVideoControlsTheme.maybeOf(
         widget.context ?? context,
       );
-      final normal =
+      final MaterialDesktopVideoControlsThemeData normal =
           theme?.normal ?? kDefaultMaterialDesktopVideoControlsThemeData;
-      final fullscreen = theme?.fullscreen ??
-          kDefaultMaterialDesktopVideoControlsThemeDataFullscreen;
+      final MaterialDesktopVideoControlsThemeData fullscreen =
+          theme?.fullscreen ??
+              kDefaultMaterialDesktopVideoControlsThemeDataFullscreen;
       return MaterialDesktopVideoControlsTheme(
         normal: normal,
         fullscreen: fullscreen,

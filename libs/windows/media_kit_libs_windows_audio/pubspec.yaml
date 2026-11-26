@@ -1,6 +1,6 @@
 name: media_kit_libs_windows_audio
 description: Windows package providing audio (only) native libraries for package:media_kit.
-version: 1.0.10
+version: 1.0.11
 homepage: https://github.com/media-kit/media-kit.git
 repository: https://github.com/media-kit/media-kit.git
 environment:
@@ -15,8 +15,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  flutter_lints: any
 
 flutter:
   plugin:

@@ -47,7 +47,7 @@ void main() {
   }, skip: !UniversalPlatform.isWeb);
   test('player-wait-for-player-initialization', () async {
     final player = Player();
-    final future = player.platform?.waitForPlayerInitialization;
+    final Future<void>? future = player.platform?.waitForPlayerInitialization;
     expect(future, isNotNull);
     expect(future, completes);
 
@@ -62,13 +62,11 @@ void main() {
     addTearDown(player.dispose);
   });
   test('player-configuration-ready-callback', () {
-    final expectReady = expectAsync0(() {});
+    final Func0<void> expectReady = expectAsync0(() {});
 
     final player = Player(
       configuration: PlayerConfiguration(
-        ready: () {
-          expectReady();
-        },
+        ready: expectReady,
       ),
     );
 
@@ -80,7 +78,9 @@ void main() {
     expect(
       player.stream.playlist,
       emitsInOrder([
-        Playlist([Media(sources.platform[0])], index: 0),
+        Playlist(
+          [Media(sources.platform[0])],
+        ),
         // Player.dispose
         emitsDone,
       ]),
@@ -114,7 +114,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-open-playable-playlist', () async {
     final player = Player();
 
@@ -181,7 +181,7 @@ void main() {
     await Future.delayed(const Duration(minutes: 1, seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 2)));
+  }, timeout: const Timeout(Duration(minutes: 2)));
   test('player-open-playable-media-play-false', () async {
     final player = Player();
 
@@ -189,7 +189,9 @@ void main() {
       player.stream.playlist,
       emitsInOrder([
         // Player.open
-        Playlist([Media(sources.platform[0])], index: 0),
+        Playlist(
+          [Media(sources.platform[0])],
+        ),
         // Player.dispose
         emitsDone,
       ]),
@@ -209,7 +211,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-open-playable-playlist-play-false', () async {
     final player = Player();
 
@@ -241,14 +243,16 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-open-playable-media-play-false-play', () async {
     final player = Player();
 
     expect(
       player.stream.playlist,
       emitsInOrder([
-        Playlist([Media(sources.platform[0])], index: 0),
+        Playlist(
+          [Media(sources.platform[0])],
+        ),
         // Player.dispose
         emitsDone,
       ]),
@@ -285,7 +289,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
 
   test('player-open-playable-playlist-play-false-play', () async {
     final player = Player();
@@ -353,25 +357,24 @@ void main() {
     await Future.delayed(const Duration(minutes: 1, seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 2)));
+  }, timeout: const Timeout(Duration(minutes: 2)));
   test(
     'player-open-playable-media-memory',
     () async {
       final player = Player(
-        configuration: PlayerConfiguration(
+        configuration: const PlayerConfiguration(
           logLevel: MPVLogLevel.info,
           title: '',
         ),
       );
 
-      player.stream.position.listen((e) => print(e));
+      player.stream.position.listen(print);
 
-      final expectPosition = expectAsync1(
+      final Func1<void, Duration> expectPosition = expectAsync1(
         (value) {
           print(value);
           expect(value, isA<Duration>());
         },
-        count: 1,
         max: -1,
       );
 
@@ -382,7 +385,7 @@ void main() {
         }
       });
 
-      final playable = await Media.memory(sources.bytes[0]);
+      final Media playable = await Media.memory(sources.bytes[0]);
 
       await player.open(playable);
 
@@ -391,17 +394,19 @@ void main() {
 
       await player.dispose();
     },
-    // TODO: Can't test on web.
+    // TODO(media-kit): Cover this test on the web.
     skip: UniversalPlatform.isWeb,
   );
   test('player-open-playable-media-extras', () async {
     final player = Player();
 
-    final expectExtras = expectAsync1((value) {
+    final Func1<void, Map<String, dynamic>?> expectExtras =
+        expectAsync1((value) {
       print(value);
       expect(value, isA<Map<String, dynamic>>());
-      final extras = value as Map<String, dynamic>;
-      expect(MapEquality().equals(extras, {'foo': 'bar', 'baz': 'qux'}), true);
+      final Map<String, dynamic> extras = value!;
+      expect(const MapEquality().equals(extras, {'foo': 'bar', 'baz': 'qux'}),
+          true);
     });
 
     player.stream.playlist.listen((e) {
@@ -411,21 +416,22 @@ void main() {
     });
 
     await player.open(
-      Media(sources.platform[0], extras: {'foo': 'bar', 'baz': 'qux'}),
+      Media(sources.platform[0], extras: const {'foo': 'bar', 'baz': 'qux'}),
     );
 
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-open-playable-playlist-extras', () async {
     final player = Player();
 
-    final expectExtras = expectAsync2((value, i) {
+    final Func2<void, Map<String, dynamic>?, int?> expectExtras =
+        expectAsync2((value, i) {
       print(value);
       expect(value, isA<Map<String, dynamic>>());
-      final extras = value as Map<String, dynamic>;
-      expect(MapEquality().equals(extras, {'i': i.toString()}), true);
+      final Map<String, dynamic> extras = value!;
+      expect(const MapEquality().equals(extras, {'i': i.toString()}), true);
     }, count: sources.platform.length);
 
     player.stream.playlist.listen((e) {
@@ -444,32 +450,31 @@ void main() {
     await Future.delayed(const Duration(minutes: 1));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1, seconds: 30)));
+  }, timeout: const Timeout(Duration(minutes: 1, seconds: 30)));
   test('player-open-playable-media-start-end', () async {
     final player = Player();
 
-    final expectStart = expectAsync1((value) {
+    final Func1<void, Duration?> expectStart = expectAsync1((value) {
       expect(value, isA<Duration>());
-      final start = value as Duration;
+      final Duration start = value!;
       expect(start, const Duration(seconds: 2));
     });
-    final expectEnd = expectAsync1((value) {
+    final Func1<void, Duration?> expectEnd = expectAsync1((value) {
       expect(value, isA<Duration>());
-      final end = value as Duration;
+      final Duration end = value!;
       expect(end, const Duration(seconds: 5));
     });
 
-    final expectPosition = expectAsync1(
+    final Func1<void, Duration> expectPosition = expectAsync1(
       (value) {
         print(value);
 
         expect(value, isA<Duration>());
-        final position = value as Duration;
+        final position = value;
 
         expect(position, greaterThanOrEqualTo(const Duration(seconds: 2)));
         expect(position, lessThanOrEqualTo(const Duration(seconds: 5)));
       },
-      count: 1,
       max: -1,
     );
 
@@ -480,7 +485,7 @@ void main() {
       }
     });
 
-    bool opened = false;
+    var opened = false;
 
     player.stream.position.listen((e) {
       if (!opened) {
@@ -502,26 +507,26 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-open-playable-playlist-start-end', () async {
     final player = Player();
 
-    final expectStart = expectAsync2((value, i) {
+    final Func2<void, Duration?, int?> expectStart = expectAsync2((value, i) {
       print('----- start: $value');
       expect(value, isA<Duration>());
-      final start = value as Duration;
-      expect(start, Duration(seconds: ((i as int) + 1)));
+      final Duration start = value!;
+      expect(start, Duration(seconds: (i!) + 1));
     }, count: sources.platform.length);
-    final expectEnd = expectAsync2((value, i) {
+    final Func2<void, Duration?, int?> expectEnd = expectAsync2((value, i) {
       print('----- end: $value');
       expect(value, isA<Duration>());
-      final end = value as Duration;
-      expect(end, Duration(seconds: ((i as int) + 1) * 2));
+      final Duration end = value!;
+      expect(end, Duration(seconds: ((i!) + 1) * 2));
     }, count: sources.platform.length);
 
     StreamSubscription<Duration>? subscription;
 
-    bool opened = false;
+    var opened = false;
 
     player.stream.playlist.listen((e) {
       if (e.index >= 0) {
@@ -529,7 +534,7 @@ void main() {
         expectEnd(e.medias[e.index].end, e.index);
 
         // Check for position updates of this [Media].
-        final expectPosition = expectAsync1(
+        final Func1<void, Duration> expectPosition = expectAsync1(
           (value) {
             if (!opened) {
               // Emits Duration.zero right after open(...).
@@ -540,19 +545,16 @@ void main() {
             print(value);
 
             expect(value, isA<Duration>());
-            final position = value as Duration;
+            final position = value;
 
             expect(position, greaterThanOrEqualTo(e.medias[e.index].start!));
             expect(position, lessThanOrEqualTo(e.medias[e.index].end!));
           },
-          count: 1,
           max: -1,
         );
 
         // NOTE: Make sure to unsubscribe at EOF.
-        subscription = player.stream.position.listen((e) {
-          expectPosition(e);
-        });
+        subscription = player.stream.position.listen(expectPosition);
       }
     });
 
@@ -567,7 +569,7 @@ void main() {
         for (int i = 0; i < sources.platform.length; i++)
           Media(
             sources.platform[i],
-            start: Duration(seconds: (i + 1)),
+            start: Duration(seconds: i + 1),
             end: Duration(seconds: (i + 1) * 2),
           ),
       ]),
@@ -576,33 +578,33 @@ void main() {
     await Future.delayed(const Duration(minutes: 1));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1, seconds: 30)));
+  }, timeout: const Timeout(Duration(minutes: 1, seconds: 30)));
   test(
     'player-open-playable-media-http-headers',
     () async {
       final player = Player();
 
-      final address = '127.0.0.1';
-      final port = 8081;
+      const address = '127.0.0.1';
+      const port = 8081;
 
-      final expectHTTPHeaders = expectAsync1((value) {
+      final Func1<void, HttpHeaders> expectHTTPHeaders = expectAsync1((value) {
         print(value);
         expect(value, isA<HttpHeaders>());
-        final headers = value as HttpHeaders;
+        final headers = value;
 
         expect(headers.value('X-Foo'), 'Bar');
         expect(headers.value('X-Baz'), 'Qux');
       });
 
-      final expectPlayable = expectAsync1((value) {
+      final Func1<void, Playlist> expectPlayable = expectAsync1((value) {
         print(value);
         expect(value, isA<Playlist>());
-        final playable = value as Playlist;
+        final playable = value;
         expect(
-          ListEquality().equals(playable.medias, [
+          const ListEquality().equals(playable.medias, [
             Media(
               'http://$address:$port/0',
-              httpHeaders: {'X-Foo': 'Bar', 'X-Baz': 'Qux'},
+              httpHeaders: const {'X-Foo': 'Bar', 'X-Baz': 'Qux'},
             ),
           ]),
           true,
@@ -611,19 +613,19 @@ void main() {
 
       final completed = HashSet<int>();
 
-      final socket = await ServerSocket.bind(address, port);
-      final server = HttpServer.listenOn(socket);
-      server.listen((e) async {
-        final i = int.parse(e.uri.path.split('/').last);
-        if (!completed.contains(i)) {
-          completed.add(i);
-          expectHTTPHeaders(e.headers);
-        }
-        final path = sources.platform[i];
-        e.response.headers.add('Content-Type', 'video/mp4');
-        e.response.headers.add('Accept-Ranges', 'bytes');
-        File(path).openRead().pipe(e.response);
-      });
+      final ServerSocket socket = await ServerSocket.bind(address, port);
+      final server = HttpServer.listenOn(socket)
+        ..listen((e) async {
+          final int i = int.parse(e.uri.path.split('/').last);
+          if (!completed.contains(i)) {
+            completed.add(i);
+            expectHTTPHeaders(e.headers);
+          }
+          final String path = sources.platform[i];
+          e.response.headers.add('Content-Type', 'video/mp4');
+          e.response.headers.add('Accept-Ranges', 'bytes');
+          await File(path).openRead().pipe(e.response);
+        });
 
       player.stream.playlist.listen((e) {
         if (e.index >= 0) {
@@ -634,7 +636,7 @@ void main() {
       await player.open(
         Media(
           'http://$address:$port/0',
-          httpHeaders: {'X-Foo': 'Bar', 'X-Baz': 'Qux'},
+          httpHeaders: const {'X-Foo': 'Bar', 'X-Baz': 'Qux'},
         ),
       );
 
@@ -643,7 +645,7 @@ void main() {
       await player.dispose();
       await server.close();
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: const Timeout(Duration(minutes: 1)),
     skip: UniversalPlatform.isWeb,
   );
   test(
@@ -651,22 +653,24 @@ void main() {
     () async {
       final player = Player();
 
-      final address = '127.0.0.1';
-      final port = 8082;
+      const address = '127.0.0.1';
+      const port = 8082;
 
-      final expectHTTPHeaders = expectAsync2((value, i) {
+      final Func2<void, HttpHeaders, int?> expectHTTPHeaders =
+          expectAsync2((value, i) {
         print(value);
         expect(value, isA<HttpHeaders>());
-        final headers = value as HttpHeaders;
+        final headers = value;
         expect(headers.value('X-Foo'), '$i');
       }, count: sources.platform.length);
-      final expectPlayable = expectAsync2((value, i) {
+      final Func2<void, Playlist, int?> expectPlayable =
+          expectAsync2((value, i) {
         print(value);
         expect(value, isA<Playlist>());
-        final playable = value as Playlist;
+        final playable = value;
         expect(playable.index, i);
         expect(
-          ListEquality().equals(playable.medias, [
+          const ListEquality().equals(playable.medias, [
             for (int i = 0; i < sources.platform.length; i++)
               Media('http://$address:$port/$i', httpHeaders: {'X-Foo': '$i'}),
           ]),
@@ -676,21 +680,21 @@ void main() {
 
       final completed = HashSet<int>();
 
-      final socket = await ServerSocket.bind(address, port);
-      final server = HttpServer.listenOn(socket);
-      server.listen((e) async {
-        final i = int.parse(e.uri.path.split('/').last);
-        if (!completed.contains(i)) {
-          completed.add(i);
-          expectHTTPHeaders(e.headers, i);
-        }
-        final data = sources.bytes[i];
-        e.response.headers.contentLength = data.length;
-        e.response.headers.contentType = ContentType('video', 'mp4');
-        e.response.add(data);
-        await e.response.flush();
-        await e.response.close();
-      });
+      final ServerSocket socket = await ServerSocket.bind(address, port);
+      final server = HttpServer.listenOn(socket)
+        ..listen((e) async {
+          final int i = int.parse(e.uri.path.split('/').last);
+          if (!completed.contains(i)) {
+            completed.add(i);
+            expectHTTPHeaders(e.headers, i);
+          }
+          final Uint8List data = sources.bytes[i];
+          e.response.headers.contentLength = data.length;
+          e.response.headers.contentType = ContentType('video', 'mp4');
+          e.response.add(data);
+          await e.response.flush();
+          await e.response.close();
+        });
 
       player.stream.playlist.listen((e) {
         if (e.index >= 0) {
@@ -710,13 +714,13 @@ void main() {
       await player.dispose();
       await server.close();
     },
-    timeout: Timeout(const Duration(minutes: 1, seconds: 30)),
+    timeout: const Timeout(Duration(minutes: 1, seconds: 30)),
     skip: UniversalPlatform.isWeb,
   );
   test('player-play-after-completed', () async {
     // Only applicable for PlaylistMode.none.
 
-    final completer = Completer();
+    final completer = Completer<void>();
 
     final player = Player();
 
@@ -757,12 +761,11 @@ void main() {
     // Wait for EOF.
     await completer.future;
 
-    final expectPosition = expectAsync1(
+    final Func1<void, Duration> expectPosition = expectAsync1(
       (value) {
         print(value);
         expect(value, isA<Duration>());
       },
-      count: 1,
       max: -1,
     );
 
@@ -784,9 +787,9 @@ void main() {
     await Future.delayed(const Duration(seconds: 5));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-seek-after-completed', () async {
-    final completer = Completer();
+    final completer = Completer<void>();
 
     final player = Player();
 
@@ -830,14 +833,13 @@ void main() {
     // NOTE: VOLUNTARY DELAY.
     await Future.delayed(const Duration(seconds: 5));
 
-    final expectPosition = expectAsync1(
+    final Func1<void, Duration> expectPosition = expectAsync1(
       (value) {
         print(value);
         expect(value, isA<Duration>());
-        final position = value as Duration;
+        final position = value;
         expect(position, Duration.zero);
       },
-      count: 1,
       max: -1,
     );
 
@@ -855,15 +857,19 @@ void main() {
     await Future.delayed(const Duration(seconds: 5));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-open-while-playing', () async {
     final player = Player();
 
     expect(
       player.stream.playlist,
       emitsInOrder([
-        Playlist([Media(sources.platform[0])], index: 0),
-        Playlist([Media(sources.platform[1])], index: 0),
+        Playlist(
+          [Media(sources.platform[0])],
+        ),
+        Playlist(
+          [Media(sources.platform[1])],
+        ),
       ]),
     );
     expect(player.stream.playing, emitsInOrder([false, true, false, true]));
@@ -877,7 +883,7 @@ void main() {
     await player.open(Media(sources.platform[1]));
 
     addTearDown(player.dispose);
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test(
     'player-open-playable-playlist-non-zero-index',
     () async {
@@ -895,20 +901,19 @@ void main() {
       addTearDown(player.dispose);
     },
     skip: kSkipFlakyTests,
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: const Timeout(Duration(minutes: 1)),
   );
   test('player-audio-devices', () async {
     final player = Player();
 
-    final expectAudioDevices = expectAsync1(
+    final Func1<void, List<AudioDevice>> expectAudioDevices = expectAsync1(
       (value) {
         print(value);
         expect(value, isA<List<AudioDevice>>());
-        final devices = value as List<AudioDevice>;
+        final devices = value;
         expect(devices, isNotEmpty);
         expect(devices.first, equals(AudioDevice.auto()));
       },
-      count: 1,
       max: -1,
     );
 
@@ -921,16 +926,17 @@ void main() {
   test('player-set-audio-device', () async {
     final player = Player();
 
-    final devices = await player.stream.audioDevices.first;
+    final List<AudioDevice> devices = await player.stream.audioDevices.first;
 
     if (devices.length > 1) {
       expect(devices, isNotEmpty);
       expect(devices.first, equals(AudioDevice.auto()));
 
-      final expectAudioDevice = expectAsync2((device, i) {
+      final Func2<void, AudioDevice, int?> expectAudioDevice =
+          expectAsync2((device, i) {
         print(device);
         expect(device, isA<AudioDevice>());
-        expect(device, equals(devices[i as int]));
+        expect(device, equals(devices[i!]));
       }, count: devices.length);
 
       int? index;
@@ -960,12 +966,10 @@ void main() {
   test('player-set-volume', () async {
     final player = Player();
 
-    final expectVolume = expectAsync2((volume, i) {
+    final Func2<void, double, int?> expectVolume = expectAsync2((volume, i) {
       print(volume);
       expect(volume, isA<double>());
       expect(i, isA<int>());
-      volume = volume as double;
-      i = i as int;
       expect(
         /* This round() is solely needed because floating-point arithmetic on JavaScript is retarded. */
         volume.round(),
@@ -979,7 +983,7 @@ void main() {
       expectVolume(event, index);
     });
 
-    for (int i = 0; i < 100; i++) {
+    for (var i = 0; i < 100; i++) {
       index = i;
 
       await player.setVolume(i.toDouble());
@@ -992,13 +996,13 @@ void main() {
   test('player-set-rate', () async {
     final player = Player();
 
-    final test = List.generate(10, (index) => 0.25 * (index + 1));
+    final List<double> test = List.generate(10, (index) => 0.25 * (index + 1));
 
-    final expectRate = expectAsync2((rate, i) {
+    final Func2<void, double, int?> expectRate = expectAsync2((rate, i) {
       print(rate);
       expect(rate, isA<double>());
       expect(i, isA<int>());
-      expect(rate, equals(test[i as int]));
+      expect(rate, equals(test[i!]));
     }, count: test.length);
 
     int? index;
@@ -1007,7 +1011,7 @@ void main() {
       expectRate(event, index);
     });
 
-    for (int i = 0; i < test.length; i++) {
+    for (var i = 0; i < test.length; i++) {
       index = i;
 
       await player.setRate(test[i]);
@@ -1020,20 +1024,21 @@ void main() {
   test('player-set-pitch-disabled', () async {
     final player = Player();
 
-    expect(player.setPitch(1.0), throwsArgumentError);
+    expect(player.setPitch(1), throwsArgumentError);
 
     addTearDown(player.dispose);
   }, skip: UniversalPlatform.isWeb);
   test('player-set-pitch-enabled', () async {
-    final player = Player(configuration: PlayerConfiguration(pitch: true));
+    final player =
+        Player(configuration: const PlayerConfiguration(pitch: true));
 
-    final test = List.generate(10, (index) => 0.25 * (index + 1));
+    final List<double> test = List.generate(10, (index) => 0.25 * (index + 1));
 
-    final expectPitch = expectAsync2((pitch, i) {
+    final Func2<void, double, int?> expectPitch = expectAsync2((pitch, i) {
       print(pitch);
       expect(pitch, isA<double>());
       expect(i, isA<int>());
-      expect(pitch, equals(test[i as int]));
+      expect(pitch, equals(test[i!]));
     }, count: test.length);
 
     int? index;
@@ -1042,7 +1047,7 @@ void main() {
       expectPitch(event, index);
     });
 
-    for (int i = 0; i < test.length; i++) {
+    for (var i = 0; i < test.length; i++) {
       index = i;
 
       await player.setPitch(test[i]);
@@ -1053,9 +1058,10 @@ void main() {
     addTearDown(player.dispose);
   }, skip: UniversalPlatform.isWeb);
   test('player-set-pitch-enabled', () async {
-    final player = Player(configuration: PlayerConfiguration(pitch: true));
+    final player =
+        Player(configuration: const PlayerConfiguration(pitch: true));
 
-    expect(player.setPitch(1.0), throwsUnsupportedError);
+    expect(player.setPitch(1), throwsUnsupportedError);
 
     addTearDown(player.dispose);
   }, skip: !UniversalPlatform.isWeb);
@@ -1064,12 +1070,12 @@ void main() {
 
     expect(player.stream.playlistMode, emitsInOrder([...PlaylistMode.values]));
 
-    for (final value in PlaylistMode.values) {
+    for (final PlaylistMode value in PlaylistMode.values) {
       await player.setPlaylistMode(value);
     }
 
     addTearDown(player.dispose);
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-jump', () async {
     final player = Player();
 
@@ -1081,13 +1087,13 @@ void main() {
       player.stream.playlist,
       emitsInOrder([
         // Player.open
-        TypeMatcher<Playlist>().having(
+        const TypeMatcher<Playlist>().having(
           (playlist) => playlist.index,
           'index',
           equals(0),
         ),
         // Player.jump
-        TypeMatcher<Playlist>().having(
+        const TypeMatcher<Playlist>().having(
           (playlist) => playlist.index,
           'index',
           equals(2),
@@ -1105,7 +1111,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-move', () async {
     final player = Player();
 
@@ -1134,7 +1140,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-index-transitions-playlist-mode-none', () async {
     final player = Player();
 
@@ -1159,7 +1165,7 @@ void main() {
     await Future.delayed(const Duration(minutes: 1));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1, seconds: 30)));
+  }, timeout: const Timeout(Duration(minutes: 1, seconds: 30)));
   test('player-index-transitions-playlist-mode-single', () async {
     final player = Player();
 
@@ -1183,7 +1189,7 @@ void main() {
     await Future.delayed(const Duration(minutes: 1));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1, seconds: 30)));
+  }, timeout: const Timeout(Duration(minutes: 1, seconds: 30)));
   test('player-index-transitions-playlist-mode-loop', () async {
     final player = Player();
 
@@ -1213,7 +1219,7 @@ void main() {
     await Future.delayed(const Duration(minutes: 2, seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 5)));
+  }, timeout: const Timeout(Duration(minutes: 5)));
   test('player-next-playlist-mode-none', () async {
     final player = Player();
 
@@ -1238,14 +1244,14 @@ void main() {
     final timer = Timer.periodic(const Duration(seconds: 1), (_) async {
       try {
         await player.next();
-      } catch (_) {}
+      } on Object catch (_) {}
     });
 
     await Future.delayed(const Duration(seconds: 15));
 
     timer.cancel();
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-next-playlist-mode-single', () async {
     final player = Player();
 
@@ -1270,14 +1276,14 @@ void main() {
     final timer = Timer.periodic(const Duration(seconds: 1), (_) async {
       try {
         await player.next();
-      } catch (_) {}
+      } on Object catch (_) {}
     });
 
     await Future.delayed(const Duration(seconds: 15));
 
     timer.cancel();
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-next-playlist-mode-loop', () async {
     final player = Player();
 
@@ -1307,14 +1313,14 @@ void main() {
     final timer = Timer.periodic(const Duration(seconds: 1), (_) async {
       try {
         await player.next();
-      } catch (_) {}
+      } on Object catch (_) {}
     });
 
     await Future.delayed(const Duration(seconds: 15));
 
     timer.cancel();
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-previous-playlist-mode-none', () async {
     final player = Player();
 
@@ -1346,14 +1352,14 @@ void main() {
     final timer = Timer.periodic(const Duration(seconds: 1), (_) async {
       try {
         await player.previous();
-      } catch (_) {}
+      } on Object catch (_) {}
     });
 
     await Future.delayed(const Duration(seconds: 45));
 
     timer.cancel();
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-previous-playlist-mode-single', () async {
     final player = Player();
 
@@ -1385,14 +1391,14 @@ void main() {
     final timer = Timer.periodic(const Duration(seconds: 1), (_) async {
       try {
         await player.previous();
-      } catch (_) {}
+      } on Object catch (_) {}
     });
 
     await Future.delayed(const Duration(seconds: 45));
 
     timer.cancel();
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-previous-playlist-mode-loop', () async {
     final player = Player();
 
@@ -1425,14 +1431,14 @@ void main() {
     final timer = Timer.periodic(const Duration(seconds: 1), (_) async {
       try {
         await player.previous();
-      } catch (_) {}
+      } on Object catch (_) {}
     });
 
     await Future.delayed(const Duration(seconds: 45));
 
     timer.cancel();
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-add', () async {
     final player = Player();
 
@@ -1440,12 +1446,16 @@ void main() {
       player.stream.playlist,
       emitsInOrder([
         // Player.open
-        Playlist([Media(sources.platform[0])], index: 0),
+        Playlist(
+          [Media(sources.platform[0])],
+        ),
         // Player.add
-        Playlist([
-          Media(sources.platform[0]),
-          Media(sources.platform[1]),
-        ], index: 0),
+        Playlist(
+          [
+            Media(sources.platform[0]),
+            Media(sources.platform[1]),
+          ],
+        ),
         // index transition
         Playlist([
           Media(sources.platform[0]),
@@ -1465,7 +1475,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-remove-before-current-index', () async {
     final player = Player();
 
@@ -1482,10 +1492,12 @@ void main() {
         // Player.jump
         playable.copyWith(index: 1),
         // Player.remove
-        Playlist([
-          for (int i = 0; i < sources.platform.length; i++)
-            if (i != 0) Media(sources.platform[i]),
-        ], index: 0),
+        Playlist(
+          [
+            for (int i = 0; i < sources.platform.length; i++)
+              if (i != 0) Media(sources.platform[i]),
+          ],
+        ),
         // index transition
         Playlist([
           for (int i = 0; i < sources.platform.length; i++)
@@ -1509,7 +1521,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-remove-after-current-index', () async {
     final player = Player();
 
@@ -1524,10 +1536,12 @@ void main() {
         // Player.open
         playable,
         // Player.remove
-        Playlist([
-          for (int i = 0; i < sources.platform.length; i++)
-            if (i != 1) Media(sources.platform[i]),
-        ], index: 0),
+        Playlist(
+          [
+            for (int i = 0; i < sources.platform.length; i++)
+              if (i != 1) Media(sources.platform[i]),
+          ],
+        ),
         // index transition
         Playlist([
           for (int i = 0; i < sources.platform.length; i++)
@@ -1546,7 +1560,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-remove-current-index', () async {
     final player = Player();
 
@@ -1561,11 +1575,13 @@ void main() {
         // Player.open
         playable,
         // Player.remove
-        Playlist([
-          // The next item should start playing & index will not increment because the current index is removed.
-          for (int i = 0; i < sources.platform.length; i++)
-            if (i != 0) Media(sources.platform[i]),
-        ], index: 0),
+        Playlist(
+          [
+            // The next item should start playing & index will not increment because the current index is removed.
+            for (int i = 0; i < sources.platform.length; i++)
+              if (i != 0) Media(sources.platform[i]),
+          ],
+        ),
         // index transition
         Playlist([
           for (int i = 0; i < sources.platform.length; i++)
@@ -1584,7 +1600,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-remove-current-index-stop-playlist-mode-none', () async {
     final player = Player();
 
@@ -1627,7 +1643,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 45));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-remove-current-index-stop-playlist-mode-single', () async {
     final player = Player();
 
@@ -1670,7 +1686,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 45));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-remove-current-index-stop-playlist-mode-loop', () async {
     final player = Player();
     addTearDown(player.dispose);
@@ -1678,8 +1694,9 @@ void main() {
     final playable = Playlist([
       for (final source in sources.platform) Media(source),
     ]);
-    final lastIndex = playable.medias.length - 1;
-    final playlistEvents = StreamIterator(player.stream.playlist);
+    final int lastIndex = playable.medias.length - 1;
+    final StreamIterator<Playlist> playlistEvents =
+        StreamIterator(player.stream.playlist);
     // Cancel the paused iterator before disposing the player's controllers.
     addTearDown(playlistEvents.cancel);
 
@@ -1688,7 +1705,7 @@ void main() {
       Playlist expected,
     ) async {
       // StreamIterator subscribes lazily: start listening before the command.
-      final nextEvent = playlistEvents.moveNext();
+      final Future<bool> nextEvent = playlistEvents.moveNext();
       await action();
       expect(await nextEvent, isTrue);
       expect(playlistEvents.current, expected);
@@ -1705,47 +1722,52 @@ void main() {
     // Removing the current last item must wrap to the first remaining item.
     await expectPlaylistAfter(
       () => player.remove(lastIndex),
-      Playlist(playable.medias.sublist(0, lastIndex), index: 0),
+      Playlist(
+        playable.medias.sublist(0, lastIndex),
+      ),
     );
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test('player-set-rate-negative', () async {
     final player = Player();
 
-    expect(() async => await player.setRate(-1.0), throwsArgumentError);
+    expect(() async => await player.setRate(-1), throwsArgumentError);
 
     addTearDown(player.dispose);
   });
   test('player-set-pitch-negative', () async {
-    final player = Player(configuration: PlayerConfiguration(pitch: true));
+    final player =
+        Player(configuration: const PlayerConfiguration(pitch: true));
 
-    expect(() async => await player.setPitch(-1.0), throwsArgumentError);
+    expect(() async => await player.setPitch(-1), throwsArgumentError);
 
     addTearDown(player.dispose);
   }, skip: UniversalPlatform.isWeb);
   test('player-set-pitch-negative', () async {
-    final player = Player(configuration: PlayerConfiguration(pitch: true));
+    final player =
+        Player(configuration: const PlayerConfiguration(pitch: true));
 
-    expect(() async => await player.setPitch(-1.0), throwsUnsupportedError);
+    expect(() async => await player.setPitch(-1), throwsUnsupportedError);
 
     addTearDown(player.dispose);
   }, skip: !UniversalPlatform.isWeb);
   Future<void> checkShuffle({required int repetitions}) async {
     // A single entry guarantees an unchanged shuffle order. Multiple entries
     // exercise permutations, including the valid unchanged permutation.
-    for (final length in [1, sources.platform.length]) {
+    for (final int length in [1, sources.platform.length]) {
       final player = Player();
       final playable = Playlist([
         for (var i = 0; i < length; i++)
           Media(sources.platform[i], extras: {'i': i}),
       ]);
-      final playlistEvents = player.stream.playlist.toList();
-      final shuffleEvents = player.stream.shuffle.toList();
+      final Future<List<Playlist>> playlistEvents =
+          player.stream.playlist.toList();
+      final Future<List<bool>> shuffleEvents = player.stream.shuffle.toList();
       final expectedPlaylists = <Playlist>[playable];
       final expectedShuffleStates = <bool>[false];
 
       try {
         // Keep the current entry stable while testing playlist operations.
-        final opened = player.stream.playlist.firstWhere(
+        final Future<Playlist> opened = player.stream.playlist.firstWhere(
           (playlist) => playlist == playable,
         );
         await player.open(playable, play: false);
@@ -1758,7 +1780,7 @@ void main() {
         final attempts = length > 1 ? 20 : 1;
         for (var attempt = 0; attempt < attempts; attempt++) {
           await player.setShuffle(true);
-          final shuffled = player.state.playlist;
+          final Playlist shuffled = player.state.playlist;
           expect(player.state.shuffle, isTrue);
           expect(shuffled.medias, unorderedEquals(playable.medias));
           expect(
@@ -1766,10 +1788,14 @@ void main() {
             unorderedEquals(playable.medias.map((media) => media.extras)),
           );
           expect(
-              shuffled.medias[shuffled.index], playable.medias[playable.index]);
+            shuffled.medias[shuffled.index],
+            playable.medias[playable.index],
+          );
 
-          orderChanged = !const ListEquality<Media>()
-              .equals(shuffled.medias, playable.medias);
+          orderChanged = !const ListEquality<Media>().equals(
+            shuffled.medias,
+            playable.medias,
+          );
           // Playlist streams suppress equal consecutive values with distinct.
           if (shuffled != playable) {
             expectedPlaylists.addAll([shuffled, playable]);
@@ -1788,12 +1814,16 @@ void main() {
             expect(player.state.playlist, playable);
           }
 
-          if (orderChanged) break;
+          if (orderChanged) {
+            break;
+          }
         }
         if (length > 1) {
-          expect(orderChanged, isTrue,
-              reason:
-                  'Shuffle kept the original order in all $attempts attempts');
+          expect(
+            orderChanged,
+            isTrue,
+            reason: 'Shuffle kept the original order in all $attempts attempts',
+          );
         }
       } finally {
         await player.dispose();
@@ -1808,19 +1838,19 @@ void main() {
   test(
     'player-set-shuffle',
     () => checkShuffle(repetitions: 1),
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: const Timeout(Duration(minutes: 1)),
   );
   test(
     'player-set-shuffle-consecutive',
     () => checkShuffle(repetitions: 5),
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: const Timeout(Duration(minutes: 1)),
   );
   test(
     'player-buffering-file',
     () async {
       final player = Player();
 
-      player.stream.buffering.listen((e) => print(e));
+      player.stream.buffering.listen(print);
 
       expect(
         player.stream.buffering,
@@ -1845,13 +1875,13 @@ void main() {
 
       await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: const Timeout(Duration(minutes: 1)),
     skip: UniversalPlatform.isWeb,
   );
   test('player-buffering-network', () async {
     final player = Player();
 
-    player.stream.buffering.listen((e) => print(e));
+    player.stream.buffering.listen(print);
 
     expect(
       player.stream.buffering,
@@ -1875,13 +1905,13 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
+  }, timeout: const Timeout(Duration(minutes: 1)));
   test(
     'player-buffering-file-play-false',
     () async {
       final player = Player();
 
-      player.stream.buffering.listen((e) => print(e));
+      player.stream.buffering.listen(print);
 
       expect(
         player.stream.buffering,
@@ -1903,13 +1933,13 @@ void main() {
 
       await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 1)),
+    timeout: const Timeout(Duration(minutes: 1)),
     skip: UniversalPlatform.isWeb,
   );
   test('player-buffering-network-play-false', () async {
     final player = Player();
 
-    player.stream.buffering.listen((e) => print(e));
+    player.stream.buffering.listen(print);
 
     expect(
       player.stream.buffering,
@@ -1930,121 +1960,71 @@ void main() {
     await Future.delayed(const Duration(seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1)));
-  test('player-buffering-upon-seek', () async {
+  }, timeout: const Timeout(Duration(minutes: 1)));
+  Future<void> checkBufferingAfterSeek({
+    required bool pauseWhileBuffering,
+  }) async {
     final player = Player();
-    player.stream.buffering.listen((e) => print(e));
-
-    expect(
-      player.stream.buffering,
-      emitsInOrder([
-        // Player.open: buffering = false
-        false,
-        // Player.open: buffering = true
-        true,
-        // Player.open: buffering = false
-        false,
-        // Player.seek: buffering = true
-        true,
-        // Player.seek: buffering = false
-        false,
-        // EOF
-        true,
-        false,
-        // Player.dispose
-        emitsDone,
-      ]),
-    );
-
-    // Seek to the end of the stream to trigger buffering.
-    player.stream.duration.listen((event) async {
-      if (event > Duration.zero) {
-        // VOLUNTARY DELAY.
-        await Future.delayed(const Duration(seconds: 5));
-
-        print('Seek');
-
-        await player.seek(event - const Duration(seconds: 30));
-      }
-    });
+    addTearDown(player.dispose);
+    const remaining = Duration(seconds: 30);
 
     await player.open(
       Media(
         'https://github.com/media-kit/media-kit/assets/28951144/efb4057c-6fd3-4644-a0b1-42d5fb420ce9',
       ),
     );
-
-    await Future.delayed(const Duration(minutes: 1));
-
-    await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1, seconds: 30)));
-  test('player-buffering-pause-play', () async {
-    // When pausing in buffering state, the player must exit buffering state once resumed.
-    // https://github.com/media-kit/media-kit/issues/367
-    final player = Player();
-
-    player.stream.buffering.listen((e) => print(e));
-
-    expect(
-      player.stream.buffering,
-      emitsInOrder([
-        // Player.open: buffering = false
-        false,
-        // Player.open: buffering = true
-        true,
-        // Player.open: buffering = false
-        false,
-        // Player.seek: buffering = true
-        true,
-        // Player.play: buffering = false
-        false,
-        // EOF
-        true,
-        false,
-        // Player.dispose
-        emitsDone,
-      ]),
+    await player.stream.position.firstWhere(
+      (position) =>
+          position >= const Duration(seconds: 2) &&
+          player.state.duration > remaining &&
+          !player.state.buffering,
     );
 
-    // Seek to the end of the stream to trigger buffering.
-    player.stream.duration.listen((event) async {
-      if (event > Duration.zero) {
-        // VOLUNTARY DELAY.
-        await Future.delayed(const Duration(seconds: 5));
-
-        print('Seek');
-
-        await player.seek(event - const Duration(seconds: 30));
-
-        print('Buffering...');
-
-        // Wait until buffering is started.
-        await player.stream.buffering.firstWhere((e) => e);
-
-        print('Wait...');
-        print('Pause');
-
-        await player.pause();
-
-        // VOLUNTARY DELAY.
-        await Future.delayed(const Duration(seconds: 5));
-
-        print('Play');
-
-        await player.play();
-      }
-    });
-
-    await player.open(
-      Media(
-        'https://github.com/media-kit/media-kit/assets/28951144/efb4057c-6fd3-4644-a0b1-42d5fb420ce9',
-      ),
+    final Duration target = player.state.duration - remaining;
+    // Start observing before the seek, after any buffering during startup.
+    final StreamIterator<bool> buffering = StreamIterator(
+      player.stream.buffering.skipWhile((value) => !value),
     );
+    addTearDown(buffering.cancel);
+    final Future<bool> enteredBuffering = buffering.moveNext();
+    await player.seek(target);
+    expect(await enteredBuffering, isTrue);
+    expect(buffering.current, isTrue);
 
-    await Future.delayed(const Duration(minutes: 1));
+    if (pauseWhileBuffering) {
+      // Regression test for https://github.com/media-kit/media-kit/issues/367.
+      expect(player.state.buffering, isTrue);
+      final Future<bool> paused =
+          player.stream.playing.firstWhere((playing) => !playing);
+      await player.pause();
+      await paused;
+      await Future<void>.delayed(const Duration(seconds: 2));
+      await player.play();
+    }
 
-    await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 1, seconds: 30)));
+    expect(await buffering.moveNext(), isTrue);
+    expect(buffering.current, isFalse);
+    await player.stream.position.firstWhere(
+      (position) =>
+          position >= target + const Duration(seconds: 1) &&
+          position < player.state.duration &&
+          player.state.playing &&
+          !player.state.buffering,
+    );
+    await player.stream.completed.firstWhere((completed) => completed);
+    expect(player.state.buffering, isFalse);
+  }
+
+  test(
+    'player-buffering-upon-seek',
+    () => checkBufferingAfterSeek(pauseWhileBuffering: false),
+    timeout: const Timeout(Duration(minutes: 1, seconds: 30)),
+  );
+  test(
+    'player-buffering-pause-play',
+    () => checkBufferingAfterSeek(pauseWhileBuffering: true),
+    timeout: const Timeout(Duration(minutes: 1, seconds: 30)),
+  );
   test('player-buffering-playlist', () async {
     final player = Player();
 
@@ -2121,7 +2101,7 @@ void main() {
     await Future.delayed(const Duration(minutes: 1, seconds: 30));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 2)));
+  }, timeout: const Timeout(Duration(minutes: 2)));
   test(
     'player-stop',
     () async {
@@ -2139,7 +2119,7 @@ void main() {
 
       print(player.state);
 
-      expect(player.state.playlist, equals(Playlist([])));
+      expect(player.state.playlist, equals(const Playlist([])));
       expect(player.state.playing, equals(false));
       expect(player.state.completed, equals(false));
       expect(player.state.position, equals(Duration.zero));
@@ -2155,7 +2135,7 @@ void main() {
       expect(player.state.width, equals(null));
       expect(player.state.height, equals(null));
       expect(
-        ListEquality().equals(player.state.subtitle, ['', '']),
+        const ListEquality().equals(player.state.subtitle, ['', '']),
         equals(true),
       );
 
@@ -2165,7 +2145,7 @@ void main() {
       await player.dispose();
     },
     skip: kSkipFlakyTests,
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: const Timeout(Duration(minutes: 2)),
   );
   test('player-stop-open', () async {
     final player = Player();
@@ -2180,12 +2160,11 @@ void main() {
     // VOLUNTARY DELAY.
     await Future.delayed(const Duration(seconds: 5));
 
-    final expectPosition = expectAsync1(
+    final Func1<void, Duration> expectPosition = expectAsync1(
       (value) {
         print(value);
         expect(value, isA<Duration>());
       },
-      count: 1,
       max: -1,
     );
 
@@ -2202,7 +2181,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 5));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 2)));
+  }, timeout: const Timeout(Duration(minutes: 2)));
   test(
     'player-screenshot',
     () async {
@@ -2213,7 +2192,7 @@ void main() {
       // VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
 
-      final screenshot = await player.screenshot();
+      final Uint8List? screenshot = await player.screenshot();
 
       expect(screenshot, isNotNull);
       expect(screenshot, isA<Uint8List>());
@@ -2224,7 +2203,7 @@ void main() {
 
       await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: const Timeout(Duration(minutes: 2)),
     skip: UniversalPlatform.isWeb,
   );
   test(
@@ -2237,15 +2216,15 @@ void main() {
       // VOLUNTARY DELAY.
       await Future.delayed(const Duration(seconds: 5));
 
-      final jpeg = await player.screenshot(format: 'image/jpeg');
+      final Uint8List? jpeg = await player.screenshot();
       expect(jpeg, isNotNull);
       expect(jpeg, isA<Uint8List>());
       expect(jpeg?.length ?? 0, greaterThan(0));
-      final png = await player.screenshot(format: 'image/png');
+      final Uint8List? png = await player.screenshot(format: 'image/png');
       expect(png, isNotNull);
       expect(png, isA<Uint8List>());
       expect(png?.length ?? 0, greaterThan(0));
-      final pixels = await player.screenshot(format: null);
+      final Uint8List? pixels = await player.screenshot(format: null);
       expect(pixels, isNotNull);
       expect(pixels, isA<Uint8List>());
       expect(pixels?.length ?? 0, greaterThan(0));
@@ -2255,7 +2234,7 @@ void main() {
 
       await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: const Timeout(Duration(minutes: 2)),
     skip: UniversalPlatform.isWeb,
   );
   test(
@@ -2269,7 +2248,7 @@ void main() {
       await Future.delayed(const Duration(seconds: 5));
 
       // CORS
-      final screenshot = await player.screenshot();
+      final Uint8List? screenshot = await player.screenshot();
 
       expect(screenshot, isNull);
 
@@ -2278,7 +2257,7 @@ void main() {
 
       await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: const Timeout(Duration(minutes: 2)),
     skip: !UniversalPlatform.isWeb,
   );
   test(
@@ -2292,7 +2271,8 @@ void main() {
       await Future.delayed(const Duration(seconds: 5));
 
       // CORS
-      final screenshot = await player.screenshot(format: 'image/png');
+      final Uint8List? screenshot =
+          await player.screenshot(format: 'image/png');
 
       expect(screenshot, isNull);
 
@@ -2301,7 +2281,7 @@ void main() {
 
       await player.dispose();
     },
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: const Timeout(Duration(minutes: 2)),
     skip: !UniversalPlatform.isWeb,
   );
   test('player-screenshot-argument-error', () async {
@@ -2325,26 +2305,22 @@ void main() {
     await Future.delayed(const Duration(seconds: 5));
 
     await player.dispose();
-  }, timeout: Timeout(const Duration(minutes: 2)));
+  }, timeout: const Timeout(Duration(minutes: 2)));
   test(
     'player-subtitle',
-    retry: 10, // TODO: Fix flaky test
+    retry: 10, // TODO(media-kit): Fix the flaky test.
     () async {
       final player = Player();
 
-      player.stream.tracks.listen((event) {
-        print(event);
-      });
-      player.stream.subtitle.listen((subtitle) {
-        print(subtitle);
-      });
+      player.stream.tracks.listen(print);
+      player.stream.subtitle.listen(print);
 
       expect(
         player.stream.tracks,
         emitsInOrder([
           // Player.open
-          Tracks(),
-          Tracks(
+          const Tracks(),
+          const Tracks(
             video: [
               VideoTrack('auto', null, null),
               VideoTrack('no', null, null),
@@ -2370,7 +2346,7 @@ void main() {
             ],
           ),
           // EOF
-          Tracks(),
+          const Tracks(),
           emitsDone,
         ]),
       );
@@ -2378,8 +2354,8 @@ void main() {
       expect(
         player.stream.subtitle,
         emitsInOrder([
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             '',
             isTrue,
           ),
@@ -2392,56 +2368,56 @@ void main() {
           //   'subtitle',
           //   isTrue,
           // ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               '...the colossus of Rhodes!',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['No!', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['No!', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'The colossus of Rhodes\nand it is here just for you Proog.',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
+          const TypeMatcher<List<String>>().having(
             (subtitle) =>
-                ListEquality().equals(subtitle, ['It is there...', '']),
+                const ListEquality().equals(subtitle, ['It is there...', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
-              'I\'m telling you,\nEmo...',
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
+              "I'm telling you,\nEmo...",
               '',
             ]),
             'subtitle',
@@ -2462,23 +2438,21 @@ void main() {
       await player.dispose();
     },
     skip: UniversalPlatform.isWeb,
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: const Timeout(Duration(minutes: 2)),
   );
   test(
     'player-tracks-playlist',
     () async {
       final player = Player();
 
-      player.stream.tracks.listen((event) {
-        print(event);
-      });
+      player.stream.tracks.listen(print);
 
       expect(
         player.stream.tracks,
         emitsInOrder([
           // Player.open
-          Tracks(),
-          Tracks(
+          const Tracks(),
+          const Tracks(
             video: [
               VideoTrack('auto', null, null),
               VideoTrack('no', null, null),
@@ -2503,8 +2477,8 @@ void main() {
               SubtitleTrack('8', null, 'null'),
             ],
           ),
-          Tracks(),
-          Tracks(
+          const Tracks(),
+          const Tracks(
             video: [
               VideoTrack('auto', null, null),
               VideoTrack('no', null, null),
@@ -2530,7 +2504,7 @@ void main() {
             ],
           ),
           // EOF
-          Tracks(),
+          const Tracks(),
           emitsDone,
         ]),
       );
@@ -2551,7 +2525,7 @@ void main() {
       await player.dispose();
     },
     skip: UniversalPlatform.isWeb,
-    timeout: Timeout(const Duration(minutes: 3)),
+    timeout: const Timeout(Duration(minutes: 3)),
   );
   test(
     'player-set-subtitle-track-external-uri',
@@ -2560,15 +2534,9 @@ void main() {
         configuration: const PlayerConfiguration(logLevel: MPVLogLevel.v),
       );
 
-      player.stream.log.listen((event) {
-        print(event);
-      });
-      player.stream.track.listen((event) {
-        print(event);
-      });
-      player.stream.subtitle.listen((event) {
-        print(event);
-      });
+      player.stream.log.listen(print);
+      player.stream.track.listen(print);
+      player.stream.subtitle.listen(print);
 
       expect(
         player.stream.track,
@@ -2609,8 +2577,8 @@ void main() {
       expect(
         player.stream.subtitle,
         emitsInOrder([
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
@@ -2623,102 +2591,102 @@ void main() {
           //   'subtitle',
           //   isTrue,
           // ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'Everyone wants the most from life',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'Like internet experiences that are rich and entertaining',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'Phone conversations where people truly connect',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'Your favourite TV programmes ready to watch at the touch of a button',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'Which is why we are bringing TV, internet and phone together in one super package',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'One simple way to get everything',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['UPC', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['UPC', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) =>
-                ListEquality().equals(subtitle, ['Simply for everyone', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality()
+                .equals(subtitle, ['Simply for everyone', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
@@ -2744,12 +2712,13 @@ void main() {
       await player.dispose();
     },
     skip: kSkipFlakyTests,
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: const Timeout(Duration(minutes: 2)),
   );
   test(
     'player-set-subtitle-track-external-data',
     () async {
-      final webvtt = '''WEBVTT FILE
+      const webvtt = '''
+WEBVTT FILE
 
 1
 00:00:03.500 --> 00:00:05.000 D:vertical A:start
@@ -2786,12 +2755,8 @@ Simply for <u>everyone</u>
 
       final player = Player();
 
-      player.stream.track.listen((event) {
-        print(event);
-      });
-      player.stream.subtitle.listen((event) {
-        print(event);
-      });
+      player.stream.track.listen(print);
+      player.stream.subtitle.listen(print);
 
       expect(
         player.stream.track,
@@ -2832,8 +2797,8 @@ Simply for <u>everyone</u>
       expect(
         player.stream.subtitle,
         emitsInOrder([
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
@@ -2846,102 +2811,102 @@ Simply for <u>everyone</u>
           //   'subtitle',
           //   isTrue,
           // ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'Everyone wants the most from life',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'Like internet experiences that are rich and entertaining',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'Phone conversations where people truly connect',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'Your favourite TV programmes ready to watch at the touch of a button',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'Which is why we are bringing TV, internet and phone together in one super package',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, [
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, [
               'One simple way to get everything',
               '',
             ]),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['UPC', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['UPC', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) =>
-                ListEquality().equals(subtitle, ['Simply for everyone', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality()
+                .equals(subtitle, ['Simply for everyone', '']),
             'subtitle',
             isTrue,
           ),
-          TypeMatcher<List<String>>().having(
-            (subtitle) => ListEquality().equals(subtitle, ['', '']),
+          const TypeMatcher<List<String>>().having(
+            (subtitle) => const ListEquality().equals(subtitle, ['', '']),
             'subtitle',
             isTrue,
           ),
@@ -2963,19 +2928,18 @@ Simply for <u>everyone</u>
       await player.dispose();
     },
     skip: kSkipFlakyTests,
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: const Timeout(Duration(minutes: 2)),
   );
   test(
     'player-web-player-hls',
     () async {
       final player = Player();
 
-      final expectPosition = expectAsync1(
+      final Func1<void, Duration> expectPosition = expectAsync1(
         (value) {
           print(value);
           expect(value, isA<Duration>());
         },
-        count: 1,
         max: -1,
       );
 
@@ -3000,32 +2964,33 @@ Simply for <u>everyone</u>
       await player.dispose();
     },
     skip: !UniversalPlatform.isWeb,
-    timeout: Timeout(const Duration(minutes: 2)),
+    timeout: const Timeout(Duration(minutes: 2)),
   );
   test('player-subtitle-reset-open', () async {
     final player = Player();
 
-    final subtitle = '''WEBVTT FILE
+    const subtitle = '''
+WEBVTT FILE
 
 1
 00:00:00.000 --> 00:00:15.000
 Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 ''';
 
-    player.stream.subtitle.listen((event) => print(event));
+    player.stream.subtitle.listen(print);
 
     expect(
       player.stream.subtitle,
       emitsInOrder([
         // Player.open
-        TypeMatcher<List<String>>().having(
-          (subtitle) => ListEquality().equals(subtitle, ['', '']),
+        const TypeMatcher<List<String>>().having(
+          (subtitle) => const ListEquality().equals(subtitle, ['', '']),
           'subtitle',
           isTrue,
         ),
         // Player.setSubtitleTrack
-        TypeMatcher<List<String>>().having(
-          (subtitle) => ListEquality().equals(subtitle, [
+        const TypeMatcher<List<String>>().having(
+          (subtitle) => const ListEquality().equals(subtitle, [
             'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
             '',
           ]),
@@ -3034,8 +2999,8 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
         ),
         // MUST BE RESET!
         // Player.open
-        TypeMatcher<List<String>>().having(
-          (subtitle) => ListEquality().equals(subtitle, ['', '']),
+        const TypeMatcher<List<String>>().having(
+          (subtitle) => const ListEquality().equals(subtitle, ['', '']),
           'subtitle',
           isTrue,
         ),
@@ -3057,27 +3022,28 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
   test('player-subtitle-reset-set-subtitle-track-subtitle-track-no', () async {
     final player = Player();
 
-    final subtitle = '''WEBVTT FILE
+    const subtitle = '''
+WEBVTT FILE
 
 1
 00:00:00.000 --> 00:00:15.000
 Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 ''';
 
-    player.stream.subtitle.listen((event) => print(event));
+    player.stream.subtitle.listen(print);
 
     expect(
       player.stream.subtitle,
       emitsInOrder([
         // Player.open
-        TypeMatcher<List<String>>().having(
-          (subtitle) => ListEquality().equals(subtitle, ['', '']),
+        const TypeMatcher<List<String>>().having(
+          (subtitle) => const ListEquality().equals(subtitle, ['', '']),
           'subtitle',
           isTrue,
         ),
         // Player.setSubtitleTrack
-        TypeMatcher<List<String>>().having(
-          (subtitle) => ListEquality().equals(subtitle, [
+        const TypeMatcher<List<String>>().having(
+          (subtitle) => const ListEquality().equals(subtitle, [
             'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
             '',
           ]),
@@ -3086,8 +3052,8 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
         ),
         // MUST BE RESET!
         // Player.setSubtitleTrack
-        TypeMatcher<List<String>>().having(
-          (subtitle) => ListEquality().equals(subtitle, ['', '']),
+        const TypeMatcher<List<String>>().having(
+          (subtitle) => const ListEquality().equals(subtitle, ['', '']),
           'subtitle',
           isTrue,
         ),
@@ -3108,7 +3074,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
   }, skip: kSkipFlakyTests);
   test('player-native-player-set-property', () async {
     final player = Player();
-    final property = 'volume';
+    const property = 'volume';
 
     expect(player.platform, isA<NativePlayer>());
 
@@ -3123,27 +3089,29 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
   }, skip: UniversalPlatform.isWeb);
   test('player-native-player-observe-property', () async {
     final player = Player();
-    final property = 'demuxer-cache-state';
+    const property = 'demuxer-cache-state';
 
     expect(player.platform, isA<NativePlayer>());
 
-    final expectListener = expectAsync1(
+    final Func1<void, String> expectListener = expectAsync1(
       (value) {
         print(value);
         expect(value, isA<String>());
-        final data = value as String;
+        final data = value;
         expect(() => json.decode(data), returnsNormally);
       },
-      count: 1,
       max: -1,
     );
 
-    await (player.platform as dynamic).observeProperty(property, (data) async {
+    await (player.platform as dynamic).observeProperty(property,
+        (String data) async {
       // The listener must be invoked.
       expectListener(data);
     });
     expect(
-      (player.platform as dynamic).observedProperties.containsKey(property),
+      ((player.platform as dynamic).observedProperties
+              as Map<String, Future<void> Function(String)>)
+          .containsKey(property),
       isTrue,
     );
 
@@ -3154,7 +3122,9 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 
     await (player.platform as dynamic).unobserveProperty(property);
     expect(
-      (player.platform as dynamic).observedProperties.containsKey(property),
+      ((player.platform as dynamic).observedProperties
+              as Map<String, Future<void> Function(String)>)
+          .containsKey(property),
       isFalse,
     );
 
@@ -3187,7 +3157,7 @@ List<T> move<T>(List<T> list, int from, int to) {
   final map = SplayTreeMap<double, T>.from(
     list.asMap().map((key, value) => MapEntry(key * 1.0, value)),
   );
-  final item = map.remove(from * 1.0);
+  final T? item = map.remove(from * 1.0);
   if (item != null) {
     map[to - 0.5] = item;
   }

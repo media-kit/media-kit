@@ -1,3 +1,11 @@
+## 2.1.0
+
+- Migrate the Android plugin to Kotlin and Gradle Kotlin DSL with JVM 17 and a minimum Android API level of 24.
+- Require iOS 15 or macOS 12 on Apple platforms and link `FlutterFramework` in the Swift packages.
+- Drop Windows Direct3D feature levels below 10_0.
+- On Windows, render video directly into shared D3D11 textures on the Flutter adapter.
+  Use libmpv 0.42.0 with the D3D11 render API. The plugin also supports software rendering.
+
 ## 2.0.1
 
 - fix: flutter 3.38.x crash

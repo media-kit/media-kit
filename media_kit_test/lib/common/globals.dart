@@ -5,6 +5,5 @@ final configuration = ValueNotifier<VideoControllerConfiguration>(
   const VideoControllerConfiguration(
     // PLEASE USE auto-safe IN PRODUCTION.
     hwdec: 'auto',
-    enableHardwareAcceleration: true,
   ),
 );

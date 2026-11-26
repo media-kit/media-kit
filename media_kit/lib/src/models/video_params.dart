@@ -1,8 +1,10 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
+import 'package:meta/meta.dart';
 
 /// {@template video_params}
 ///
@@ -12,7 +14,31 @@
 /// Video parameters, as output by the decoder (with overrides like aspect etc. applied). This has a number of sub-properties.
 ///
 /// {@endtemplate}
+@immutable
 class VideoParams {
+  /// {@macro video_params}
+  const VideoParams({
+    this.pixelformat,
+    this.hwPixelformat,
+    this.w,
+    this.h,
+    this.dw,
+    this.dh,
+    this.aspect,
+    this.par,
+    this.colormatrix,
+    this.colorlevels,
+    this.primaries,
+    this.gamma,
+    this.sigPeak,
+    this.light,
+    this.chromaLocation,
+    this.rotate,
+    this.stereoIn,
+    this.averageBpp,
+    this.alpha,
+  });
+
   /// The pixel format as string. This uses the same names as used in other places of mpv.
   final String? pixelformat;
 
@@ -70,32 +96,11 @@ class VideoParams {
   /// Alpha type. If the format has no alpha channel, this will be unavailable (but in future releases, it could change to no). If alpha is present, this is set to straight or premul.
   final String? alpha;
 
-  /// {@macro video_params}
-  const VideoParams({
-    this.pixelformat,
-    this.hwPixelformat,
-    this.w,
-    this.h,
-    this.dw,
-    this.dh,
-    this.aspect,
-    this.par,
-    this.colormatrix,
-    this.colorlevels,
-    this.primaries,
-    this.gamma,
-    this.sigPeak,
-    this.light,
-    this.chromaLocation,
-    this.rotate,
-    this.stereoIn,
-    this.averageBpp,
-    this.alpha,
-  });
-
   @override
-  operator ==(Object other) {
-    if (identical(this, other)) return true;
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
 
     return other is VideoParams &&
         other.pixelformat == pixelformat &&

@@ -1,11 +1,13 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:io';
-import 'package:uri_parser/uri_parser.dart';
+
 import 'package:safe_local_storage/safe_local_storage.dart';
+import 'package:uri_parser/uri_parser.dart';
 
 abstract class FallbackBitrateHandler {
   static bool supported(String uri) => extractFilePath(uri) != null;
@@ -18,20 +20,20 @@ abstract class FallbackBitrateHandler {
           formats.contains(parser.file!.extension)) {
         return parser.file!.path;
       }
-    } catch (_) {}
+    } on Object catch (_) {}
     return null;
   }
 
   static Future<double> calculateBitrate(String uri, Duration duration) async {
     try {
-      final filePath = extractFilePath(uri);
+      final String? filePath = extractFilePath(uri);
       if (filePath != null) {
         final file = File(filePath);
-        final length = await file.length_();
-        final result = length * 8 / duration.inSeconds;
+        final int length = await file.length_();
+        final double result = length * 8 / duration.inSeconds;
         return result;
       }
-    } catch (_) {}
+    } on Object catch (_) {}
     return 0;
   }
 }

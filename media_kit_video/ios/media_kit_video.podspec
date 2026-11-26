@@ -13,7 +13,7 @@ Pod::Spec.new do |s|
   mku = MediaKitUtils.new(MediaKitUtils::Platform::IOS)
 
   s.name             = 'media_kit_video'
-  s.version          = '0.0.1'
+  s.version          = '2.1.0'
   s.summary          = 'Native implementation for video playback in package:media_kit'
   s.description      = <<-DESC
   Native implementation for video playback in package:media_kit.
@@ -39,7 +39,7 @@ Pod::Spec.new do |s|
     s.pod_target_xcconfig = {
       'DEFINES_MODULE'                               => 'YES',
       'GCC_WARN_INHIBIT_ALL_WARNINGS'                => 'YES',
-      'GCC_PREPROCESSOR_DEFINITIONS'                 => '"$(inherited)" GL_SILENCE_DEPRECATION COREVIDEO_SILENCE_GL_DEPRECATION',
+      'GCC_PREPROCESSOR_DEFINITIONS'                 => '"$(inherited)" GLES_SILENCE_DEPRECATION COREVIDEO_SILENCE_GL_DEPRECATION',
       'FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]'        => sprintf('"$(inherited)" "%s"', framework_search_paths_iphoneos),
       'FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]' => sprintf('"$(inherited)" "%s"', framework_search_paths_iphonesimulator),
       'OTHER_LDFLAGS'                                => '"$(inherited)" -framework Mpv',

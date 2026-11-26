@@ -1,13 +1,14 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+
 import 'dart:io';
-import 'package:path/path.dart' as path;
-import 'package:safe_local_storage/safe_local_storage.dart';
 
 import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
+import 'package:path/path.dart' as path;
+import 'package:safe_local_storage/safe_local_storage.dart';
 
 /// {@template asset_loader}
 ///
@@ -19,7 +20,7 @@ import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
 /// {@endtemplate}
 class AssetLoader {
   static String load(String uri) {
-    final key = encodeAssetKey(uri);
+    final String key = encodeAssetKey(uri);
     final String asset;
     if (Platform.isWindows) {
       asset = path.normalize(
@@ -63,12 +64,7 @@ class AssetLoader {
       );
     } else if (Platform.isAndroid) {
       asset = path.normalize(
-        AndroidAssetLoader.loadSync(
-          path.join(
-            'flutter_assets',
-            key,
-          ),
-        ),
+        AndroidAssetLoader.loadSync(path.join('flutter_assets', key)),
       );
     } else {
       throw UnimplementedError(
@@ -87,7 +83,7 @@ class AssetLoader {
       key = key.substring(1);
     }
     // https://github.com/media-kit/media-kit/issues/121
-    return key.split('/').map((e) => Uri.encodeComponent(e)).join('/');
+    return key.split('/').map(Uri.encodeComponent).join('/');
   }
 
   /// URI scheme used to identify Flutter assets.

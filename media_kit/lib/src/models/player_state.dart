@@ -1,32 +1,59 @@
-/// This file is a part of media_kit (https://github.com/media-kit/media-kit).
-///
-/// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
-/// All rights reserved.
-/// Use of this source code is governed by MIT license that can be found in the LICENSE file.
+// This file is a part of media_kit (https://github.com/media-kit/media-kit).
+//
+// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 
-import 'package:media_kit/src/models/track.dart';
-import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/audio_device.dart';
 import 'package:media_kit/src/models/audio_params.dart';
-import 'package:media_kit/src/models/video_params.dart';
+import 'package:media_kit/src/models/playlist.dart';
 import 'package:media_kit/src/models/playlist_mode.dart';
+import 'package:media_kit/src/models/track.dart';
+import 'package:media_kit/src/models/video_params.dart';
 
 /// {@template player_state}
 ///
 /// PlayerState
 /// -----------
 ///
-/// Instantaneous state of the [Player].
+/// Instantaneous state of the `Player`.
 ///
 /// {@endtemplate}
 class PlayerState {
-  /// Currently opened [Media]s.
+  /// {@macro player_state}
+  const PlayerState({
+    this.playlist = const Playlist([]),
+    this.playing = false,
+    this.completed = false,
+    this.position = Duration.zero,
+    this.duration = Duration.zero,
+    this.volume = 100.0,
+    this.rate = 1.0,
+    this.pitch = 1.0,
+    this.buffering = false,
+    this.buffer = Duration.zero,
+    this.bufferingPercentage = 0.0,
+    this.playlistMode = PlaylistMode.none,
+    this.shuffle = false,
+    this.audioParams = const AudioParams(),
+    this.videoParams = const VideoParams(),
+    this.audioBitrate,
+    this.audioDevice = const AudioDevice('auto', ''),
+    this.audioDevices = const [AudioDevice('auto', '')],
+    this.track = const Track(),
+    this.tracks = const Tracks(),
+    this.width,
+    this.height,
+    this.subtitle = const ['', ''],
+  });
+
+  /// Currently opened `Media`s.
   final Playlist playlist;
 
   /// Whether playing or not.
   final bool playing;
 
-  /// Whether end of currently playing [Media] has been reached.
+  /// Whether end of currently playing `Media` has been reached.
   final bool completed;
 
   /// Current playback position.
@@ -60,15 +87,15 @@ class PlayerState {
   /// Whether playlist is shuffled or not.
   final bool shuffle;
 
-  /// Audio parameters of the currently playing [Media].
+  /// Audio parameters of the currently playing `Media`.
   /// e.g. sample rate, channels, etc.
   final AudioParams audioParams;
 
-  /// Video parameters of the currently playing [Media].
+  /// Video parameters of the currently playing `Media`.
   /// e.g. width, height, rotation, etc.
   final VideoParams videoParams;
 
-  /// Audio bitrate of the currently playing [Media].
+  /// Audio bitrate of the currently playing `Media`.
   final double? audioBitrate;
 
   /// Currently selected [AudioDevice].
@@ -91,33 +118,6 @@ class PlayerState {
 
   /// Currently displayed subtitle.
   final List<String> subtitle;
-
-  /// {@macro player_state}
-  const PlayerState({
-    this.playlist = const Playlist([]),
-    this.playing = false,
-    this.completed = false,
-    this.position = Duration.zero,
-    this.duration = Duration.zero,
-    this.volume = 100.0,
-    this.rate = 1.0,
-    this.pitch = 1.0,
-    this.buffering = false,
-    this.buffer = Duration.zero,
-    this.bufferingPercentage = 0.0,
-    this.playlistMode = PlaylistMode.none,
-    this.shuffle = false,
-    this.audioParams = const AudioParams(),
-    this.videoParams = const VideoParams(),
-    this.audioBitrate,
-    this.audioDevice = const AudioDevice('auto', ''),
-    this.audioDevices = const [AudioDevice('auto', '')],
-    this.track = const Track(),
-    this.tracks = const Tracks(),
-    this.width,
-    this.height,
-    this.subtitle = const ['', ''],
-  });
 
   PlayerState copyWith({
     Playlist? playlist,

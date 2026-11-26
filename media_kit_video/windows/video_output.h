@@ -9,11 +9,13 @@
 #ifndef VIDEO_OUTPUT_H_
 #define VIDEO_OUTPUT_H_
 
+#include <atomic>
 #include <optional>
+#include <vector>
 
 #include <client.h>
 #include <render.h>
-#include <render_gl.h>
+#include <render_d3d11.h>
 
 #include <future>
 #include <memory>
@@ -22,12 +24,15 @@
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
 
-#include "angle_surface_manager.h"
+#include "d3d11_surface_manager.h"
 #include "thread_pool.h"
+#include "video_frame_size.h"
 
 typedef struct _VideoOutputConfiguration {
   std::optional<int64_t> width;
   std::optional<int64_t> height;
+  // Try D3D11 first when this flag is true. Fall back to software if setup fails.
+  // The mpv hwdec option controls video decoding.
   bool enable_hardware_acceleration;
 
   _VideoOutputConfiguration(std::optional<int64_t> width = std::nullopt,
@@ -40,89 +45,85 @@ typedef struct _VideoOutputConfiguration {
 
 class VideoOutput {
  public:
-  int64_t texture_id() const { return texture_id_; }
-  int64_t width() const {
-    // H/W
-    if (surface_manager_ != nullptr && texture_id_) {
-      return surface_manager_->width();
-    }
-    // S/W
-    if (pixel_buffer_ != nullptr && texture_id_) {
-      return pixel_buffer_textures_.at(texture_id_)->width;
-    }
-    return width_.value_or(1);
-  }
-  int64_t height() const {
-    // H/W
-    if (surface_manager_ != nullptr && texture_id_) {
-      return surface_manager_->height();
-    }
-    // S/W
-    if (pixel_buffer_ != nullptr && texture_id_) {
-      return pixel_buffer_textures_.at(texture_id_)->height;
-    }
-    return height_.value_or(1);
-  }
-
+  // Create and destroy this output outside the rendering worker.
+  // Both operations wait for tasks on that worker.
+  // Keep the pool alive until destruction ends.
   VideoOutput(int64_t handle,
               VideoOutputConfiguration configuration,
-              flutter::PluginRegistrarWindows* registrar,
-              ThreadPool* thread_pool_ref);
+              flutter::TextureRegistrar* registrar,
+              ThreadPool* thread_pool_ref,
+              const std::atomic<bool>* shutting_down = nullptr,
+              IDXGIAdapter* adapter = nullptr);
 
   ~VideoOutput();
 
+  // The rendering worker reports the texture ID, width, and height.
+  // Send platform messages from the Flutter platform thread.
   void SetTextureUpdateCallback(
       std::function<void(int64_t, int64_t, int64_t)> callback);
 
+  // Pass nullopt to use the video dimension for that axis.
+  // The rendering worker resizes and redraws the frame even during pause.
   void SetSize(std::optional<int64_t> width, std::optional<int64_t> height);
 
  private:
+  struct Frame {
+    media_kit::VideoFrameSize size;
+    std::shared_ptr<D3D11SurfaceManager::Surface> first_target;
+    // The rendering worker publishes latest atomically.
+    // Only the Flutter raster thread uses imported and the GPU descriptor.
+    std::shared_ptr<D3D11SurfaceManager::Surface> latest;
+    std::shared_ptr<D3D11SurfaceManager::Surface> imported;
+    std::vector<uint8_t> pixels;
+    std::mutex pixels_mutex;
+    FlutterDesktopGpuSurfaceDescriptor gpu_descriptor{};
+    FlutterDesktopPixelBuffer pixel_descriptor{};
+  };
+  struct TextureRegistration {
+    int64_t id = -1;
+    std::shared_ptr<Frame> frame;
+    std::unique_ptr<flutter::TextureVariant> variant;
+  };
+
+  void RetireTexture();
+  void CleanUp();
   void NotifyRender();
 
   void Render();
 
   void CheckAndResize();
 
-  void Resize(int64_t required_width, int64_t required_height);
+  void Resize(
+      int64_t required_width,
+      int64_t required_height,
+      std::shared_ptr<D3D11SurfaceManager::Surface> first_target = nullptr);
 
-  int64_t GetVideoWidth();
+  std::optional<media_kit::VideoFrameSize> GetVideoSize();
 
-  int64_t GetVideoHeight();
-
-  std::optional<int64_t> height_ = std::nullopt;
   std::optional<int64_t> width_ = std::nullopt;
+  std::optional<int64_t> height_ = std::nullopt;
   VideoOutputConfiguration configuration_ = VideoOutputConfiguration{};
 
   mpv_handle* handle_ = nullptr;
   mpv_render_context* render_context_ = nullptr;
-  int64_t texture_id_ = 0;
-  flutter::PluginRegistrarWindows* registrar_ = nullptr;
+  flutter::TextureRegistrar* registrar_ = nullptr;
   ThreadPool* thread_pool_ref_ = nullptr;
-  // For preventing any asynchronous operations (primarily texture objects
-  // deletion after unregister in |Resize|) access this object after
-  // destruction.
-  bool destroyed_ = false;
-
-  std::mutex textures_mutex_ = std::mutex();
-
-  std::unordered_map<int64_t, std::unique_ptr<flutter::TextureVariant>>
-      texture_variants_ = {};
-
-  // H/W rendering.
-
-  std::unique_ptr<ANGLESurfaceManager> surface_manager_ = nullptr;
-  std::unordered_map<int64_t,
-                     std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor>>
-      textures_ = {};
-
-  // S/W rendering.
-
-  std::unique_ptr<uint8_t[]> pixel_buffer_ = nullptr;
-  std::unordered_map<int64_t, std::unique_ptr<FlutterDesktopPixelBuffer>>
-      pixel_buffer_textures_ = {};
-
-  // Public notifier. This is called when a new texture is registered & texture
-  // ID is changed. Only happens when video output resolution changes.
+  // The manager outlives its outputs. Unregister callbacks retain retired textures.
+  // During shutdown, let the platform thread return to the engine.
+  // The engine can then finish the callbacks.
+  const std::atomic<bool>* shutting_down_ = nullptr;
+  // Use this lock to stop new render requests before teardown.
+  std::mutex notification_mutex_;
+  bool render_queued_ = false;  // Protected by notification_mutex_.
+  std::atomic<bool> destroyed_{false};
+  std::unique_ptr<D3D11SurfaceManager> surface_manager_;
+  bool software_ = false;
+  int software_rotation_ = 0;
+  std::vector<uint8_t> unrotated_pixels_;
+  std::shared_ptr<TextureRegistration> texture_;
+  // Each unregister callback retains only its own texture registration.
+  std::vector<std::future<void>> retirements_;
+  // Report the first texture. Report later changes to the texture or its size.
   std::function<void(int64_t, int64_t, int64_t)> texture_update_callback_ =
       [](int64_t, int64_t, int64_t) {};
 };
