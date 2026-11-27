@@ -1668,14 +1668,17 @@ class NativePlayer extends PlatformPlayer {
             state.playlist.index < state.playlist.medias.length) {
           final uri = state.playlist.medias[state.playlist.index].uri;
           if (FallbackBitrateHandler.supported(uri)) {
-            if (!audioBitrateCache.containsKey(Media.normalizeURI(uri))) {
-              audioBitrateCache[uri] =
-                  await FallbackBitrateHandler.calculateBitrate(
-                uri,
-                duration,
+            final key = Media.normalizeURI(uri);
+            if (!audioBitrateCache.containsKey(key)) {
+              _cacheAudioBitrate(
+                key,
+                await FallbackBitrateHandler.calculateBitrate(
+                  uri,
+                  duration,
+                ),
               );
             }
-            final bitrate = audioBitrateCache[uri];
+            final bitrate = audioBitrateCache[key];
             if (bitrate != null) {
               state = state.copyWith(audioBitrate: bitrate);
               if (!audioBitrateController.isClosed) {
@@ -1771,10 +1774,11 @@ class NativePlayer extends PlatformPlayer {
           final data = prop.ref.data.cast<Double>().value;
           final uri = state.playlist.medias[state.playlist.index].uri;
           if (!FallbackBitrateHandler.supported(uri)) {
-            if (!audioBitrateCache.containsKey(Media.normalizeURI(uri))) {
-              audioBitrateCache[Media.normalizeURI(uri)] = data;
+            final key = Media.normalizeURI(uri);
+            if (!audioBitrateCache.containsKey(key)) {
+              _cacheAudioBitrate(key, data);
             }
-            final bitrate = audioBitrateCache[Media.normalizeURI(uri)];
+            final bitrate = audioBitrateCache[key];
             if (!audioBitrateController.isClosed &&
                 bitrate != state.audioBitrate) {
               audioBitrateController.add(bitrate);
@@ -2204,48 +2208,62 @@ class NativePlayer extends PlatformPlayer {
         // Handle HTTP headers specified in the [Media].
         try {
           final name = 'path'.toNativeUtf8();
-          final uri = mpv.mpv_get_property_string(
-            ctx,
-            name.cast(),
-          );
-          // Get the headers for current [Media] by looking up [uri] in the [HashMap].
-          final headers = Media(uri.cast<Utf8>().toDartString()).httpHeaders;
-          if (headers != null) {
-            final property = 'http-header-fields'.toNativeUtf8();
-            // Allocate & fill the [mpv_node] with the headers.
-            final value = calloc<generated.mpv_node>();
-            value.ref.format = generated.mpv_format.MPV_FORMAT_NODE_ARRAY;
-            value.ref.u.list = calloc<generated.mpv_node_list>();
-            value.ref.u.list.ref.num = headers.length;
-            value.ref.u.list.ref.values = calloc<generated.mpv_node>(
-              headers.length,
-            );
-            final entries = headers.entries.toList();
-            for (int i = 0; i < entries.length; i++) {
-              final k = entries[i].key;
-              final v = entries[i].value;
-              final data = '$k: $v'.toNativeUtf8();
-              value.ref.u.list.ref.values[i].format =
-                  generated.mpv_format.MPV_FORMAT_STRING;
-              value.ref.u.list.ref.values[i].u.string = data.cast();
-            }
-            mpv.mpv_set_property(
+          Pointer<Int8> uri = nullptr;
+          try {
+            uri = mpv.mpv_get_property_string(
               ctx,
-              property.cast(),
-              generated.mpv_format.MPV_FORMAT_NODE,
-              value.cast(),
+              name.cast(),
             );
-            // Free the allocated memory.
-            calloc.free(property);
-            for (int i = 0; i < value.ref.u.list.ref.num; i++) {
-              calloc.free(value.ref.u.list.ref.values[i].u.string);
+            if (uri != nullptr) {
+              // Get the headers for current [Media] by looking up [uri] in the [HashMap].
+              final headers = Media(uri.cast<Utf8>().toDartString()).httpHeaders;
+              if (headers != null) {
+                final property = 'http-header-fields'.toNativeUtf8();
+                Pointer<generated.mpv_node>? value;
+                Pointer<generated.mpv_node_list>? list;
+                Pointer<generated.mpv_node>? values;
+                final allocatedStrings = <Pointer<Utf8>>[];
+                try {
+                  // Allocate & fill the [mpv_node] with the headers.
+                  value = calloc<generated.mpv_node>();
+                  list = calloc<generated.mpv_node_list>();
+                  values = calloc<generated.mpv_node>(headers.length);
+                  value.ref.format = generated.mpv_format.MPV_FORMAT_NODE_ARRAY;
+                  value.ref.u.list = list;
+                  list.ref.num = headers.length;
+                  list.ref.values = values;
+                  final entries = headers.entries.toList();
+                  for (int i = 0; i < entries.length; i++) {
+                    final k = entries[i].key;
+                    final v = entries[i].value;
+                    final data = '$k: $v'.toNativeUtf8();
+                    allocatedStrings.add(data);
+                    values[i].format = generated.mpv_format.MPV_FORMAT_STRING;
+                    values[i].u.string = data.cast();
+                  }
+                  mpv.mpv_set_property(
+                    ctx,
+                    property.cast(),
+                    generated.mpv_format.MPV_FORMAT_NODE,
+                    value.cast(),
+                  );
+                } finally {
+                  calloc.free(property);
+                  for (final data in allocatedStrings) {
+                    calloc.free(data);
+                  }
+                  if (values != null) calloc.free(values);
+                  if (list != null) calloc.free(list);
+                  if (value != null) calloc.free(value);
+                }
+              }
             }
-            calloc.free(value.ref.u.list.ref.values);
-            calloc.free(value.ref.u.list);
-            calloc.free(value);
+          } finally {
+            if (uri != nullptr) {
+              mpv.mpv_free(uri.cast());
+            }
+            calloc.free(name);
           }
-          mpv.mpv_free(uri.cast());
-          calloc.free(name);
         } catch (exception, stacktrace) {
           print(exception);
           print(stacktrace);
@@ -2643,46 +2661,58 @@ class NativePlayer extends PlatformPlayer {
 
   Future<void> _setPropertyFlag(String name, bool value) async {
     final ptr = calloc<Bool>(1)..value = value;
-    await _setProperty(
-      name,
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      ptr.cast(),
-    );
-    calloc.free(ptr);
+    try {
+      await _setProperty(
+        name,
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        ptr.cast(),
+      );
+    } finally {
+      calloc.free(ptr);
+    }
   }
 
   Future<void> _setPropertyDouble(String name, double value) async {
     final ptr = calloc<Double>(1)..value = value;
-    await _setProperty(
-      name,
-      generated.mpv_format.MPV_FORMAT_DOUBLE,
-      ptr.cast(),
-    );
-    calloc.free(ptr);
+    try {
+      await _setProperty(
+        name,
+        generated.mpv_format.MPV_FORMAT_DOUBLE,
+        ptr.cast(),
+      );
+    } finally {
+      calloc.free(ptr);
+    }
   }
 
   Future<void> _setPropertyInt64(String name, int value) async {
     final ptr = calloc<Int64>(1)..value = value;
-    await _setProperty(
-      name,
-      generated.mpv_format.MPV_FORMAT_INT64,
-      ptr.cast(),
-    );
-    calloc.free(ptr);
+    try {
+      await _setProperty(
+        name,
+        generated.mpv_format.MPV_FORMAT_INT64,
+        ptr.cast(),
+      );
+    } finally {
+      calloc.free(ptr);
+    }
   }
 
   Future<void> _setPropertyString(String name, String value) async {
     final string = value.toNativeUtf8();
     // API requires char**.
     final ptr = calloc<Pointer<Void>>(1);
-    ptr.value = Pointer.fromAddress(string.address);
-    await _setProperty(
-      name,
-      generated.mpv_format.MPV_FORMAT_STRING,
-      ptr.cast(),
-    );
-    calloc.free(ptr);
-    calloc.free(string);
+    try {
+      ptr.value = Pointer.fromAddress(string.address);
+      await _setProperty(
+        name,
+        generated.mpv_format.MPV_FORMAT_STRING,
+        ptr.cast(),
+      );
+    } finally {
+      calloc.free(ptr);
+      calloc.free(string);
+    }
   }
 
   Future<void> _command(List<String> args) async {
@@ -2788,9 +2818,19 @@ class NativePlayer extends PlatformPlayer {
   /// Synchronization & mutual exclusion between methods of this class.
   static final Lock lock = Lock();
 
-  /// [HashMap] for retrieving previously fetched audio-bitrate(s).
-  static final HashMap<String, double> audioBitrateCache =
-      HashMap<String, double>();
+  static const int _maxAudioBitrateCacheEntries = 512;
+
+  /// Bounded LRU cache for retrieving previously fetched audio-bitrate(s).
+  static final LinkedHashMap<String, double> audioBitrateCache =
+      LinkedHashMap<String, double>();
+
+  static void _cacheAudioBitrate(String key, double value) {
+    audioBitrateCache.remove(key);
+    audioBitrateCache[key] = value;
+    while (audioBitrateCache.length > _maxAudioBitrateCacheEntries) {
+      audioBitrateCache.remove(audioBitrateCache.keys.first);
+    }
+  }
 
   /// Whether the [NativePlayer] is initialized for unit-testing.
   @visibleForTesting

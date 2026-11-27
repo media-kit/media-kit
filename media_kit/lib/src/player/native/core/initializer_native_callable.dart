@@ -39,21 +39,46 @@ class InitializerNativeCallable {
     Map<String, String> options = const {},
   }) async {
     final ctx = mpv.mpv_create();
-    for (final entry in options.entries) {
-      final name = entry.key.toNativeUtf8();
-      final value = entry.value.toNativeUtf8();
-      mpv.mpv_set_option_string(ctx, name.cast(), value.cast());
-      calloc.free(name);
-      calloc.free(value);
+    if (ctx == nullptr) {
+      throw StateError('mpv_create returned nullptr');
     }
-    mpv.mpv_initialize(ctx);
-    final nativeCallable = WakeUpNativeCallable.listener(_callback);
-    final nativeFunction = nativeCallable.nativeFunction;
-    _locks[ctx.address] = Lock();
-    _eventCallbacks[ctx.address] = callback;
-    _wakeUpNativeCallables[ctx.address] = nativeCallable;
-    mpv.mpv_set_wakeup_callback(ctx, nativeFunction.cast(), ctx.cast());
-    return ctx;
+    WakeUpNativeCallable? nativeCallable;
+    var wakeupRegistered = false;
+    try {
+      for (final entry in options.entries) {
+        final name = entry.key.toNativeUtf8();
+        Pointer<Utf8>? value;
+        try {
+          value = entry.value.toNativeUtf8();
+          mpv.mpv_set_option_string(ctx, name.cast(), value.cast());
+        } finally {
+          calloc.free(name);
+          if (value != null) calloc.free(value);
+        }
+      }
+      final initError = mpv.mpv_initialize(ctx);
+      if (initError < 0) {
+        throw StateError('mpv_initialize failed with error code $initError');
+      }
+      nativeCallable = WakeUpNativeCallable.listener(_callback);
+      final nativeFunction = nativeCallable.nativeFunction;
+      _locks[ctx.address] = Lock();
+      _eventCallbacks[ctx.address] = callback;
+      _wakeUpNativeCallables[ctx.address] = nativeCallable;
+      mpv.mpv_set_wakeup_callback(ctx, nativeFunction.cast(), ctx.cast());
+      wakeupRegistered = true;
+      return ctx;
+    } catch (_) {
+      if (wakeupRegistered) {
+        mpv.mpv_set_wakeup_callback(ctx, nullptr, nullptr);
+      }
+      _locks.remove(ctx.address);
+      _eventCallbacks.remove(ctx.address);
+      _wakeUpNativeCallables.remove(ctx.address);
+      nativeCallable?.close();
+      mpv.mpv_terminate_destroy(ctx);
+      rethrow;
+    }
   }
 
   /// Disposes [Pointer<mpv_handle>].

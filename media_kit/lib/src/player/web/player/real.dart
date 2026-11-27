@@ -72,206 +72,208 @@ class WebPlayer extends PlatformPlayer {
           .setProperty(id.toString().toJS, element);
       // --------------------------------------------------
       // Event streams handling:
-      element.onPlay.listen((_) {
-        lock.synchronized(() async {
-          // PlayerState.state.playing & PlayerState.stream.playing
-          state = state.copyWith(playing: true);
-          if (!playingController.isClosed) {
-            playingController.add(true);
-          }
-        });
-      });
-      element.onPause.listen((_) {
-        lock.synchronized(() async {
-          // PlayerState.state.playing & PlayerState.stream.playing
-          state = state.copyWith(playing: false);
-          if (!playingController.isClosed) {
-            playingController.add(false);
-          }
-        });
-      });
-      element.onPlaying.listen((_) {
-        lock.synchronized(() async {
-          // PlayerState.state.playing & PlayerState.stream.playing
-          // PlayerState.state.buffering & PlayerState.stream.buffering
-          state = state.copyWith(
-            playing: true,
-            completed: false,
-          );
-          if (!playingController.isClosed) {
-            playingController.add(true);
-          }
-          if (!completedController.isClosed) {
-            completedController.add(false);
-          }
-        });
-      });
-      element.onEnded.listen((_) {
-        lock.synchronized(() async {
-          // NOTE: Playlist index transition.
-          await _transition();
-        });
-      });
-      element.onTimeUpdate.listen((_) {
-        lock.synchronized(() async {
-          // PlayerState.state.position & PlayerState.stream.position
-          Duration? position = convertNumVideoDurationToPluginDuration(
-            element.currentTime,
-          );
+      _subscriptions.addAll([
+        element.onPlay.listen((_) {
+          lock.synchronized(() async {
+            // PlayerState.state.playing & PlayerState.stream.playing
+            state = state.copyWith(playing: true);
+            if (!playingController.isClosed) {
+              playingController.add(true);
+            }
+          });
+        }),
+        element.onPause.listen((_) {
+          lock.synchronized(() async {
+            // PlayerState.state.playing & PlayerState.stream.playing
+            state = state.copyWith(playing: false);
+            if (!playingController.isClosed) {
+              playingController.add(false);
+            }
+          });
+        }),
+        element.onPlaying.listen((_) {
+          lock.synchronized(() async {
+            // PlayerState.state.playing & PlayerState.stream.playing
+            // PlayerState.state.buffering & PlayerState.stream.buffering
+            state = state.copyWith(
+              playing: true,
+              completed: false,
+            );
+            if (!playingController.isClosed) {
+              playingController.add(true);
+            }
+            if (!completedController.isClosed) {
+              completedController.add(false);
+            }
+          });
+        }),
+        element.onEnded.listen((_) {
+          lock.synchronized(() async {
+            // NOTE: Playlist index transition.
+            await _transition();
+          });
+        }),
+        element.onTimeUpdate.listen((_) {
+          lock.synchronized(() async {
+            // PlayerState.state.position & PlayerState.stream.position
+            Duration? position = convertNumVideoDurationToPluginDuration(
+              element.currentTime,
+            );
 
-          // Clamp between current [Media]'s start & end.
-          try {
-            if (state.playlist.index >= 0 &&
-                state.playlist.index < state.playlist.medias.length) {
-              final start = state
-                  .playlist.medias[state.playlist.index].start?.inMilliseconds;
-              final end = state
-                  .playlist.medias[state.playlist.index].end?.inMilliseconds;
-              if (position != null) {
-                position = Duration(
-                  milliseconds: position.inMilliseconds.clamp(
-                    start ?? 0,
-                    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
-                    end ?? 9007199254740991,
-                  ),
+            // Clamp between current [Media]'s start & end.
+            try {
+              if (state.playlist.index >= 0 &&
+                  state.playlist.index < state.playlist.medias.length) {
+                final start = state
+                    .playlist.medias[state.playlist.index].start?.inMilliseconds;
+                final end = state
+                    .playlist.medias[state.playlist.index].end?.inMilliseconds;
+                if (position != null) {
+                  position = Duration(
+                    milliseconds: position.inMilliseconds.clamp(
+                      start ?? 0,
+                      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+                      end ?? 9007199254740991,
+                    ),
+                  );
+
+                  if (position ==
+                      state.playlist.medias[state.playlist.index].end) {
+                    // NOTE: Playlist index transition. onEnded callback will not be invoked.
+                    await _transition();
+                    return;
+                  }
+                }
+              }
+            } catch (exception, stacktrace) {
+              print(exception.toString());
+              print(stacktrace.toString());
+            }
+
+            if (position != null) {
+              state = state.copyWith(position: position);
+              if (!positionController.isClosed) {
+                positionController.add(position);
+              }
+              // PlayerState.state.buffer & PlayerState.stream.buffer
+              final i = element.buffered.length - 1;
+              if (i >= 0) {
+                final buffer = convertNumVideoDurationToPluginDuration(
+                  element.buffered.end(i),
                 );
-
-                if (position ==
-                    state.playlist.medias[state.playlist.index].end) {
-                  // NOTE: Playlist index transition. onEnded callback will not be invoked.
-                  await _transition();
-                  return;
+                if (buffer != null) {
+                  state = state.copyWith(buffer: buffer);
+                  if (!bufferController.isClosed) {
+                    bufferController.add(buffer);
+                  }
                 }
               }
             }
-          } catch (exception, stacktrace) {
-            print(exception.toString());
-            print(stacktrace.toString());
-          }
-
-          if (position != null) {
-            state = state.copyWith(position: position);
-            if (!positionController.isClosed) {
-              positionController.add(position);
+          });
+        }),
+        element.onDurationChange.listen((_) {
+          lock.synchronized(() async {
+            // PlayerState.state.duration & PlayerState.stream.duration
+            final duration = convertNumVideoDurationToPluginDuration(
+              element.duration,
+            );
+            if (duration != null) {
+              state = state.copyWith(duration: duration);
+              if (!durationController.isClosed) {
+                durationController.add(duration);
+              }
+            }
+          });
+        }),
+        element.onWaiting.listen((_) {
+          lock.synchronized(() async {
+            // PlayerState.state.buffering & PlayerState.stream.buffering
+            state = state.copyWith(buffering: true);
+            if (!bufferingController.isClosed) {
+              bufferingController.add(true);
             }
             // PlayerState.state.buffer & PlayerState.stream.buffer
             final i = element.buffered.length - 1;
             if (i >= 0) {
-              final buffer = convertNumVideoDurationToPluginDuration(
-                element.buffered.end(i),
-              );
-              if (buffer != null) {
-                state = state.copyWith(buffer: buffer);
-                if (!bufferController.isClosed) {
-                  bufferController.add(buffer);
-                }
+              final value = element.buffered.end(i) * 1000 ~/ 1;
+              final buffer = Duration(milliseconds: value);
+              if (!bufferController.isClosed) {
+                bufferController.add(buffer);
               }
             }
-          }
-        });
-      });
-      element.onDurationChange.listen((_) {
-        lock.synchronized(() async {
-          // PlayerState.state.duration & PlayerState.stream.duration
-          final duration = convertNumVideoDurationToPluginDuration(
-            element.duration,
-          );
-          if (duration != null) {
-            state = state.copyWith(duration: duration);
-            if (!durationController.isClosed) {
-              durationController.add(duration);
+          });
+        }),
+        element.onCanPlay.listen((_) {
+          lock.synchronized(() async {
+            // PlayerState.state.buffering & PlayerState.stream.buffering
+            state = state.copyWith(buffering: false);
+            if (!bufferingController.isClosed) {
+              bufferingController.add(false);
             }
-          }
-        });
-      });
-      element.onWaiting.listen((_) {
-        lock.synchronized(() async {
-          // PlayerState.state.buffering & PlayerState.stream.buffering
-          state = state.copyWith(buffering: true);
-          if (!bufferingController.isClosed) {
-            bufferingController.add(true);
-          }
-          // PlayerState.state.buffer & PlayerState.stream.buffer
-          final i = element.buffered.length - 1;
-          if (i >= 0) {
-            final value = element.buffered.end(i) * 1000 ~/ 1;
-            final buffer = Duration(milliseconds: value);
-            if (!bufferController.isClosed) {
-              bufferController.add(buffer);
+          });
+        }),
+        element.onCanPlayThrough.listen((_) {
+          lock.synchronized(() async {
+            // PlayerState.state.buffering & PlayerState.stream.buffering
+            state = state.copyWith(buffering: false);
+            if (!bufferingController.isClosed) {
+              bufferingController.add(false);
             }
-          }
-        });
-      });
-      element.onCanPlay.listen((_) {
-        lock.synchronized(() async {
-          // PlayerState.state.buffering & PlayerState.stream.buffering
-          state = state.copyWith(buffering: false);
-          if (!bufferingController.isClosed) {
-            bufferingController.add(false);
-          }
-        });
-      });
-      element.onCanPlayThrough.listen((_) {
-        lock.synchronized(() async {
-          // PlayerState.state.buffering & PlayerState.stream.buffering
-          state = state.copyWith(buffering: false);
-          if (!bufferingController.isClosed) {
-            bufferingController.add(false);
-          }
-        });
-      });
-      element.onVolumeChange.listen((_) {
-        lock.synchronized(() async {
-          // PlayerState.state.volume & PlayerState.stream.volume
-          final volume = element.volume * 100.0;
-          state = state.copyWith(volume: volume);
-          if (!volumeController.isClosed) {
-            volumeController.add(volume);
-          }
-        });
-      });
-      element.onRateChange.listen((_) {
-        lock.synchronized(() async {
-          // PlayerState.state.speed & PlayerState.stream.speed
-          final rate = element.playbackRate * 1.0;
-          state = state.copyWith(rate: rate);
-          if (!rateController.isClosed) {
-            rateController.add(rate);
-          }
-        });
-      });
-      element.onError.listen((_) {
-        lock.synchronized(() async {
-          // PlayerState.state.buffering & PlayerState.stream.buffering
-          state = state.copyWith(buffering: false);
-          if (!bufferingController.isClosed) {
-            bufferingController.add(false);
-          }
-          // PlayerStream.error
-          final error = element.error!;
-          if (!errorController.isClosed) {
-            errorController.add(error.message);
-          }
-        });
-      });
-      element.onResize.listen((_) {
-        lock.synchronized(() async {
-          // PlayerState.state.width & PlayerState.stream.width
-          // PlayerState.state.height & PlayerState.stream.height
-          final width = element.videoWidth;
-          final height = element.videoHeight;
-          state = state.copyWith(
-            width: width,
-            height: height,
-          );
-          if (!widthController.isClosed) {
-            widthController.add(width);
-          }
-          if (!heightController.isClosed) {
-            heightController.add(height);
-          }
-        });
-      });
+          });
+        }),
+        element.onVolumeChange.listen((_) {
+          lock.synchronized(() async {
+            // PlayerState.state.volume & PlayerState.stream.volume
+            final volume = element.volume * 100.0;
+            state = state.copyWith(volume: volume);
+            if (!volumeController.isClosed) {
+              volumeController.add(volume);
+            }
+          });
+        }),
+        element.onRateChange.listen((_) {
+          lock.synchronized(() async {
+            // PlayerState.state.speed & PlayerState.stream.speed
+            final rate = element.playbackRate * 1.0;
+            state = state.copyWith(rate: rate);
+            if (!rateController.isClosed) {
+              rateController.add(rate);
+            }
+          });
+        }),
+        element.onError.listen((_) {
+          lock.synchronized(() async {
+            // PlayerState.state.buffering & PlayerState.stream.buffering
+            state = state.copyWith(buffering: false);
+            if (!bufferingController.isClosed) {
+              bufferingController.add(false);
+            }
+            // PlayerStream.error
+            final error = element.error!;
+            if (!errorController.isClosed) {
+              errorController.add(error.message);
+            }
+          });
+        }),
+        element.onResize.listen((_) {
+          lock.synchronized(() async {
+            // PlayerState.state.width & PlayerState.stream.width
+            // PlayerState.state.height & PlayerState.stream.height
+            final width = element.videoWidth;
+            final height = element.videoHeight;
+            state = state.copyWith(
+              width: width,
+              height: height,
+            );
+            if (!widthController.isClosed) {
+              widthController.add(width);
+            }
+            if (!heightController.isClosed) {
+              heightController.add(height);
+            }
+          });
+        }),
+      ]);
 
       if (configuration.muted) {
         element.muted = true;
@@ -337,6 +339,10 @@ class WebPlayer extends PlatformPlayer {
       }
 
       disposed = true;
+
+      final subscriptions = List<StreamSubscription<dynamic>>.of(_subscriptions);
+      _subscriptions.clear();
+      await Future.wait(subscriptions.map((s) => s.cancel()));
 
       element
         ..src = ''
@@ -1649,6 +1655,9 @@ class WebPlayer extends PlatformPlayer {
 
   /// [html.VideoElement] instance reference.
   late web.HTMLVideoElement element;
+
+  /// Active DOM event subscriptions attached to [element].
+  final List<StreamSubscription<dynamic>> _subscriptions = [];
 
   /// Whether the [Player] has been disposed.
   bool disposed = false;

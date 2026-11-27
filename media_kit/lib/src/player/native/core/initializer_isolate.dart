@@ -41,65 +41,92 @@ class InitializerIsolate {
     Future<void> Function(Pointer<generated.mpv_event>) callback, {
     Map<String, String> options = const {},
   }) async {
-    final completer = Completer();
+    final completer = Completer<void>();
     final receiver = ReceivePort();
+    final failurePort = ReceivePort();
     late SendPort port;
     late Pointer<generated.mpv_handle> handle;
-    final isolate = await Isolate.spawn(
-      _mainloop,
-      receiver.sendPort,
-    );
-    receiver.listen(
-      (message) async {
-        if (!completer.isCompleted && message is SendPort) {
-          port = message;
-          port.send(options);
-          port.send(libmpv);
-        } else if (!completer.isCompleted && message is int) {
-          handle = Pointer.fromAddress(message);
-          // Intialiation complete.
-          completer.complete();
+    Isolate? isolate;
+    try {
+      failurePort.listen((message) {
+        if (!completer.isCompleted) {
+          completer.completeError(
+            StateError(
+              'libmpv isolate terminated before initialization: $message',
+            ),
+          );
         }
-        // Forward events to the supplied callback.
-        else if (message != null) {
-          Pointer<generated.mpv_event> event = Pointer.fromAddress(message);
-          try {
-            await callback(event);
-          } catch (exception, stacktrace) {
-            print(exception.toString());
-            print(stacktrace.toString());
+      });
+      isolate = await Isolate.spawn(
+        _mainloop,
+        receiver.sendPort,
+        onError: failurePort.sendPort,
+        onExit: failurePort.sendPort,
+      );
+      receiver.listen(
+        (message) async {
+          if (!completer.isCompleted && message is SendPort) {
+            port = message;
+            port.send(options);
+            port.send(libmpv);
+          } else if (!completer.isCompleted && message is int) {
+            handle = Pointer.fromAddress(message);
+            // Initialization complete.
+            completer.complete();
           }
-          port.send(true);
-        } else {
-          receiver.close();
-        }
-      },
-    );
-    // Awaiting the retrieval of [Pointer<mpv_handle>].
-    await completer.future;
+          // Forward events to the supplied callback.
+          else if (message is int) {
+            Pointer<generated.mpv_event> event = Pointer.fromAddress(message);
+            try {
+              await callback(event);
+            } catch (exception, stacktrace) {
+              print(exception.toString());
+              print(stacktrace.toString());
+            }
+            port.send(true);
+          } else {
+            receiver.close();
+          }
+        },
+      );
+      // Awaiting the retrieval of [Pointer<mpv_handle>].
+      await completer.future;
 
-    // Save the references.
-    _ports[handle.address] = port;
-    _isolates[handle.address] = isolate;
+      isolate.removeErrorListener(failurePort.sendPort);
+      isolate.removeOnExitListener(failurePort.sendPort);
+      failurePort.close();
 
-    return handle;
+      // Save the references.
+      _ports[handle.address] = port;
+      _isolates[handle.address] = isolate;
+      _receivers[handle.address] = receiver;
+
+      return handle;
+    } catch (_) {
+      isolate?.removeErrorListener(failurePort.sendPort);
+      isolate?.removeOnExitListener(failurePort.sendPort);
+      failurePort.close();
+      receiver.close();
+      isolate?.kill(priority: Isolate.immediate);
+      rethrow;
+    }
   }
 
   /// Disposes [Pointer<mpv_handle>].
   void dispose(generated.MPV mpv, Pointer<generated.mpv_handle> handle) {
-    final port = _ports[handle.address];
-    final isolate = _isolates[handle.address];
+    final port = _ports.remove(handle.address);
+    final isolate = _isolates.remove(handle.address);
+    final receiver = _receivers.remove(handle.address);
     if (port != null && isolate != null) {
       port.send(null);
-
-      _ports.remove(handle.address);
-      _isolates.remove(handle.address);
-
       mpv.mpv_wakeup(handle);
 
       Future.delayed(const Duration(seconds: 2), () {
         isolate.kill(priority: Isolate.immediate);
+        receiver?.close();
       });
+    } else {
+      receiver?.close();
     }
   }
 
@@ -136,18 +163,36 @@ class InitializerIsolate {
 
     await completer.future;
 
-    handle ??= mpv.mpv_create();
+    try {
+      handle ??= mpv.mpv_create();
+      if (handle == nullptr) {
+        throw StateError('mpv_create returned nullptr');
+      }
 
-    for (final entry in options.entries) {
-      final name = entry.key.toNativeUtf8();
-      final value = entry.value.toNativeUtf8();
-      mpv.mpv_set_option_string(handle, name.cast(), value.cast());
-      calloc.free(name);
-      calloc.free(value);
+      for (final entry in options.entries) {
+        final name = entry.key.toNativeUtf8();
+        Pointer<Utf8>? value;
+        try {
+          value = entry.value.toNativeUtf8();
+          mpv.mpv_set_option_string(handle, name.cast(), value.cast());
+        } finally {
+          calloc.free(name);
+          if (value != null) calloc.free(value);
+        }
+      }
+
+      final initError = mpv.mpv_initialize(handle);
+      if (initError < 0) {
+        throw StateError('mpv_initialize failed with error code $initError');
+      }
+      port.send(handle.address);
+    } catch (_) {
+      if (handle != null && handle != nullptr) {
+        mpv.mpv_terminate_destroy(handle);
+      }
+      receiver.close();
+      rethrow;
     }
-
-    mpv.mpv_initialize(handle);
-    port.send(handle.address);
 
     while (!disposed) {
       completer = Completer();
@@ -169,4 +214,5 @@ class InitializerIsolate {
 
   final _ports = HashMap<int, SendPort>();
   final _isolates = HashMap<int, Isolate>();
+  final _receivers = HashMap<int, ReceivePort>();
 }
